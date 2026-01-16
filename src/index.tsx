@@ -1,7 +1,7 @@
 import React from 'react';
 import { createRoot } from 'react-dom/client';
 import ApptiviaScorecard from './ApptiviaScorecard.tsx';
-import { AuthProvider } from './context/AuthContext';
+import { AuthProvider } from './context/AuthContext.tsx';
 import './index.css';
 
 const container = document.getElementById('root');
