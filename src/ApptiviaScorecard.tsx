@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import Navbar from './components/Navbar';
+import Navbar from './components/NavBar';
 import { 
   Plus, Settings, TrendingUp, Users, Calendar, Phone, Target, Download, Filter, X, Home, Trophy, 
   MessageCircle, Mail, GitBranch, CheckSquare, Menu, User, Gamepad2, Bot, Camera, Save, 
