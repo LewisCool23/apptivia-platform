@@ -1,13 +1,20 @@
 import React, { useState } from 'react';
-import Navbar from './components/NavBar';
 import { 
   Plus, Settings, TrendingUp, Users, Calendar, Phone, Target, Download, Filter, X, Home, Trophy, 
   MessageCircle, Mail, GitBranch, CheckSquare, Menu, User, Gamepad2, Bot, Camera, Save, 
   UserPlus, Trash2, Edit, BarChart3
 } from 'lucide-react';
+import { Role, hasPermission } from './roles';
 
 // Custom circular progress component
-const CircularProgress = ({ progress, size = 80, strokeWidth = 8, color = '#3B82F6', children }) => {
+interface CircularProgressProps {
+  progress: number;
+  size?: number;
+  strokeWidth?: number;
+  color?: string;
+  children?: React.ReactNode;
+}
+const CircularProgress = ({ progress, size = 80, strokeWidth = 8, color = '#3B82F6', children }: CircularProgressProps) => {
   const radius = (size - strokeWidth) / 2;
   const circumference = 2 * Math.PI * radius;
   const strokeDashoffset = circumference - (progress / 100) * circumference;
@@ -45,7 +52,11 @@ const CircularProgress = ({ progress, size = 80, strokeWidth = 8, color = '#3B82
 };
 
 // Aaron AI Chatbot Component
-const AaronChatbot = ({ isOpen, onClose }) => {
+interface AaronChatbotProps {
+  isOpen: boolean;
+  onClose: () => void;
+}
+const AaronChatbot = ({ isOpen, onClose }: AaronChatbotProps) => {
   const [messages] = useState([
     { id: 1, sender: 'aaron', text: "Hi! I'm Aaron, your AI productivity coach. How can I help you improve your performance today?" }
   ]);
@@ -84,15 +95,22 @@ const AaronChatbot = ({ isOpen, onClose }) => {
 };
 
 const ApptiviaScorecard = () => {
+  const currentUser: User = {
+    name: 'Demo User',
+    role: 'User',
+    phone: '',
+  };
+    // Temporary default user for demo
+  
+
   const [currentPage, setCurrentPage] = useState('home');
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [chatbotOpen, setChatbotOpen] = useState(false);
   
-  // currentUser state removed; use AuthContext instead
 
   const navigation = [
-    { id: 'home', name: 'Apptivity Scorecard', icon: Home, description: 'Performance dashboard' },
-    { id: 'coach', name: 'Apptivity Coach', icon: Trophy, description: 'Skill development' },
+    { id: 'home', name: 'Apptivia Scorecard', icon: Home, description: 'Performance dashboard' },
+    { id: 'coach', name: 'Apptivia Coach', icon: Trophy, description: 'Skill development' },
     { id: 'contests', name: 'Contests', icon: Gamepad2, description: 'Sales competitions' },
     { id: 'analytics', name: 'Analytics', icon: BarChart3, description: 'Advanced insights' },
     { id: 'systems', name: 'Systems', icon: Settings, description: 'Integrations & admin' },
@@ -101,7 +119,6 @@ const ApptiviaScorecard = () => {
 
   return (
     <div className="flex flex-col h-screen bg-gray-50">
-      <Navbar />
       {/* Sidebar */}
       <div className={`${sidebarOpen ? 'w-64' : 'w-16'} bg-white shadow-lg transition-all duration-300 flex flex-col`}>
         <div className="p-4 border-b">
@@ -111,14 +128,13 @@ const ApptiviaScorecard = () => {
             </div>
             {sidebarOpen && (
               <div>
-                <h1 className="font-bold text-lg text-gray-900">Apptiv</h1>
+                <h1 className="font-bold text-lg text-gray-900">Apptivia</h1>
                 <p className="text-xs text-gray-500">Sales Productivity Platform</p>
               </div>
             )}
           </div>
         </div>
 
-        {/* User info in sidebar removed; now handled by Navbar */}
 
         <nav className="flex-1 p-4">
           <div className="space-y-2">
@@ -156,12 +172,12 @@ const ApptiviaScorecard = () => {
 
       {/* Main Content */}
       <div className="flex-1 overflow-auto">
-        {currentPage === 'home' && <ScorecardPage />}
-        {currentPage === 'coach' && <CoachPage />}
-        {currentPage === 'contests' && <ContestsPage />}
-        {currentPage === 'analytics' && <AnalyticsPage />}
-        {currentPage === 'systems' && <SystemsPage />}
-        {currentPage === 'profile' && <ProfilePage />}
+        {currentPage === 'home' && <ScorecardPage currentUser={currentUser} />}
+        {currentPage === 'coach' && hasPermission(currentUser.role, 'coach_team') && <CoachPage currentUser={currentUser} />}
+        {currentPage === 'contests' && hasPermission(currentUser.role, 'participate_contests') && <ContestsPage currentUser={currentUser} />}
+        {currentPage === 'analytics' && hasPermission(currentUser.role, 'view_reports') && <AnalyticsPage currentUser={currentUser} />}
+        {currentPage === 'systems' && hasPermission(currentUser.role, 'edit_settings') && <SystemsPage currentUser={currentUser} />}
+        {currentPage === 'profile' && <ProfilePage currentUser={currentUser} />}
       </div>
 
       <AaronChatbot isOpen={chatbotOpen} onClose={() => setChatbotOpen(false)} />
@@ -179,7 +195,12 @@ const ApptiviaScorecard = () => {
 };
 
 // Scorecard Page
-const ScorecardPage = ({ currentUser }) => {
+interface User {
+  name: string;
+  role: Role;
+  phone?: string;
+}
+const ScorecardPage = ({ currentUser }: { currentUser: User }) => {
   const [kpis] = useState([
     { id: 1, name: 'Call Connects', goal: 100, weight: 30, icon: Phone },
     { id: 2, name: 'Talk Time Minutes', goal: 100, weight: 30, icon: TrendingUp },
@@ -200,9 +221,20 @@ const ScorecardPage = ({ currentUser }) => {
     dateRange: 'This Week'
   });
 
-  const [hoveredCell, setHoveredCell] = useState(null);
+  interface HoveredCell {
+    rep: number;
+    metric: string;
+  }
+  const [hoveredCell, setHoveredCell] = useState<HoveredCell | null>(null);
 
-  const calculateScore = (repData) => {
+  interface RepData {
+    connects: number;
+    talkTime: number;
+    meetings: number;
+    sourcedOpps: number;
+    stage2Opps: number;
+  }
+  const calculateScore = (repData: RepData) => {
     const scores = {
       connects: Math.min((repData.connects / kpis[0].goal) * 100, 200),
       talkTime: Math.min((repData.talkTime / kpis[1].goal) * 100, 200),
@@ -224,7 +256,7 @@ const ScorecardPage = ({ currentUser }) => {
     };
   };
 
-  const getScoreColor = (score) => {
+  const getScoreColor = (score: number) => {
     if (score >= 100) return 'text-green-600 bg-green-100';
     if (score >= 80) return 'text-green-500 bg-green-50';
     if (score >= 65) return 'text-yellow-600 bg-yellow-100';
@@ -232,8 +264,8 @@ const ScorecardPage = ({ currentUser }) => {
     return 'text-red-600 bg-red-100';
   };
 
-  const getCoachingSuggestion = (repName, metricName) => {
-    const suggestions = {
+  const getCoachingSuggestion = (repName: string, metricName: string) => {
+    const suggestions: Record<string, string> = {
       'Call Connects': `${repName} could benefit from call timing optimization. Try scheduling calls during peak hours.`,
       'Talk Time Minutes': `${repName} needs to practice active listening and asking open-ended questions.`,
       'Meetings': `${repName} should focus on qualifying prospects better before requesting meetings.`,
@@ -254,7 +286,7 @@ const ScorecardPage = ({ currentUser }) => {
     <div className="p-6">
       <div className="mb-6 flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Apptivity Scorecard</h1>
+          <h1 className="text-3xl font-bold text-gray-900">Apptivia Scorecard</h1>
           <p className="text-gray-600 mt-2">Real-time productivity scoring for your sales team</p>
         </div>
         
@@ -311,7 +343,7 @@ const ScorecardPage = ({ currentUser }) => {
           <p className="text-2xl font-bold text-blue-600 mt-2">
             {sortedTeam.length ? Math.round(sortedTeam.reduce((sum, rep) => sum + rep.score.total, 0) / sortedTeam.length) : 0}%
           </p>
-          <p className="text-sm text-gray-500">Apptivity Score</p>
+          <p className="text-sm text-gray-500">Apptivia Score</p>
         </div>
         
         <div className="bg-white p-6 rounded-xl shadow-sm border">
@@ -334,7 +366,7 @@ const ScorecardPage = ({ currentUser }) => {
       <div className="bg-white rounded-xl shadow-sm border overflow-hidden">
         <div className="p-6 border-b">
           <h2 className="text-xl font-semibold">Team Performance Scorecard</h2>
-          <p className="text-gray-600 mt-1">Weekly productivity metrics and Apptivity Scores</p>
+          <p className="text-gray-600 mt-1">Weekly productivity metrics and Apptivia Scores</p>
         </div>
 
         <div className="overflow-x-auto">
@@ -353,7 +385,7 @@ const ScorecardPage = ({ currentUser }) => {
                   </th>
                 ))}
                 <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider bg-blue-50">
-                  Apptivity Score
+                  Apptivia Score
                 </th>
               </tr>
             </thead>
@@ -446,7 +478,7 @@ const ScorecardPage = ({ currentUser }) => {
 };
 
 // Coach Page
-const CoachPage = ({ currentUser }) => {
+const CoachPage = ({ currentUser }: { currentUser: User }) => {
   const [filters, setFilters] = useState({
     rep: 'All',
     team: 'All'
@@ -460,7 +492,7 @@ const CoachPage = ({ currentUser }) => {
         <div>
           <div className="flex items-center gap-3 mb-2">
             <Trophy className="text-yellow-500" size={28} />
-            <h1 className="text-2xl font-bold text-gray-900">Apptivity Coach</h1>
+            <h1 className="text-2xl font-bold text-gray-900">Apptivia Coach</h1>
           </div>
           <p className="text-gray-600">Level up your sales skills and unlock your potential</p>
         </div>
@@ -497,7 +529,7 @@ const CoachPage = ({ currentUser }) => {
               <Target size={24} />
               <h2 className="text-2xl font-bold">Intermediate</h2>
             </div>
-            <p className="text-blue-100">Current Apptivity Level</p>
+            <p className="text-blue-100">Current Apptivia Level</p>
             <div className="mt-2">
               <span className="text-3xl font-bold">87%</span>
               <span className="text-blue-100 ml-2">Overall Score</span>
@@ -659,7 +691,7 @@ const CoachPage = ({ currentUser }) => {
 };
 
 // Simplified other pages to avoid errors
-const ContestsPage = ({ currentUser }) => {
+const ContestsPage = ({ currentUser }: { currentUser: User }) => {
   return (
     <div className="p-6">
       <h1 className="text-2xl font-bold text-gray-900 mb-4">Sales Contests</h1>
@@ -745,7 +777,7 @@ const ContestsPage = ({ currentUser }) => {
   );
 };
 
-const AnalyticsPage = ({ currentUser }) => {
+const AnalyticsPage = ({ currentUser }: { currentUser: User }) => {
   return (
     <div className="p-6">
       <h1 className="text-2xl font-bold text-gray-900 mb-4">Analytics Dashboard</h1>
@@ -828,7 +860,7 @@ const AnalyticsPage = ({ currentUser }) => {
   );
 };
 
-const SystemsPage = ({ currentUser }) => {
+const SystemsPage = ({ currentUser }: { currentUser: User }) => {
   const [activeTab, setActiveTab] = useState('integrations');
   
   const integrations = [
@@ -944,7 +976,7 @@ const SystemsPage = ({ currentUser }) => {
   );
 };
 
-const ProfilePage = ({ currentUser }) => {
+const ProfilePage = ({ currentUser }: { currentUser: User }) => {
   const [profile, setProfile] = useState({
     name: currentUser.name,
     phone: currentUser.phone,
@@ -966,7 +998,7 @@ const ProfilePage = ({ currentUser }) => {
           <div className="flex items-center gap-4">
             <div className="w-20 h-20 bg-blue-500 rounded-full flex items-center justify-center">
               <span className="text-white font-bold text-xl">
-                {profile.name.split(' ').map(n => n[0]).join('')}
+                {profile.name.split(' ').map((n: string) => n[0]).join('')}
               </span>
             </div>
             <div>
