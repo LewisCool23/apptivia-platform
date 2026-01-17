@@ -4,7 +4,6 @@ import {
   MessageCircle, Mail, GitBranch, CheckSquare, Menu, User, Gamepad2, Bot, Camera, Save, 
   UserPlus, Trash2, Edit, BarChart3
 } from 'lucide-react';
-import { Role, hasPermission } from './roles';
 
 // Custom circular progress component
 interface CircularProgressProps {
@@ -100,7 +99,7 @@ const ApptiviaScorecard = () => {
     role: 'User',
     phone: '',
   };
-    // Temporary default user for demo
+  // Temporary default user for demo
   
 
   const [currentPage, setCurrentPage] = useState('home');
@@ -173,10 +172,10 @@ const ApptiviaScorecard = () => {
       {/* Main Content */}
       <div className="flex-1 overflow-auto">
         {currentPage === 'home' && <ScorecardPage currentUser={currentUser} />}
-        {currentPage === 'coach' && hasPermission(currentUser.role, 'coach_team') && <CoachPage currentUser={currentUser} />}
-        {currentPage === 'contests' && hasPermission(currentUser.role, 'participate_contests') && <ContestsPage currentUser={currentUser} />}
-        {currentPage === 'analytics' && hasPermission(currentUser.role, 'view_reports') && <AnalyticsPage currentUser={currentUser} />}
-        {currentPage === 'systems' && hasPermission(currentUser.role, 'edit_settings') && <SystemsPage currentUser={currentUser} />}
+        {currentPage === 'coach' && <CoachPage currentUser={currentUser} />}
+        {currentPage === 'contests' && <ContestsPage currentUser={currentUser} />}
+        {currentPage === 'analytics' && <AnalyticsPage currentUser={currentUser} />}
+        {currentPage === 'systems' && <SystemsPage currentUser={currentUser} />}
         {currentPage === 'profile' && <ProfilePage currentUser={currentUser} />}
       </div>
 
@@ -197,7 +196,7 @@ const ApptiviaScorecard = () => {
 // Scorecard Page
 interface User {
   name: string;
-  role: Role;
+  role: string;
   phone?: string;
 }
 const ScorecardPage = ({ currentUser }: { currentUser: User }) => {

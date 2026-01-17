@@ -27,13 +27,15 @@ const JWT_SECRET = process.env.JWT_SECRET || 'changeme';
 
 // REST API: User registration
 app.post('/api/register', async (req, res) => {
-  const { email, password } = req.body;
-  if (!email || !password) return res.status(400).json({ error: 'Email and password required' });
+  const { email, password, role } = req.body;
+  if (!email || !password || !role) return res.status(400).json({ error: 'Email, password, and role required' });
+  const allowedRoles = ['Admin', 'Manager', 'Coach', 'User'];
+  if (!allowedRoles.includes(role)) return res.status(400).json({ error: 'Invalid role' });
   const hash = await bcrypt.hash(password, 10);
   // Store user in Supabase
   const { data, error } = await supabase
     .from('users')
-    .insert([{ email, password: hash }]);
+    .insert([{ email, password: hash, role }]);
   if (error) return res.status(500).json({ error: error.message });
   res.json({ message: 'User registered', user: data[0] });
 });
@@ -50,11 +52,20 @@ app.post('/api/login', async (req, res) => {
   if (error || !data) return res.status(401).json({ error: 'Invalid credentials' });
   const valid = await bcrypt.compare(password, data.password);
   if (!valid) return res.status(401).json({ error: 'Invalid credentials' });
-  const token = jwt.sign({ id: data.id, email: data.email }, JWT_SECRET, { expiresIn: '1d' });
+  const token = jwt.sign({ id: data.id, email: data.email, role: data.role }, JWT_SECRET, { expiresIn: '1d' });
   res.json({ message: 'Login successful', token });
 });
 
 // Auth middleware
+// Authorization middleware for roles
+function authorize(allowedRoles) {
+  return (req, res, next) => {
+    if (!req.user || !allowedRoles.includes(req.user.role)) {
+      return res.status(403).json({ error: 'Forbidden' });
+    }
+    next();
+  };
+}
 function authenticate(req, res, next) {
   const authHeader = req.headers.authorization;
   if (!authHeader) return res.status(401).json({ error: 'No token provided' });
@@ -72,11 +83,16 @@ function authenticate(req, res, next) {
 app.get('/api/profile', authenticate, async (req, res) => {
   const { data, error } = await supabase
     .from('users')
-    .select('id, email')
+    .select('id, email, role')
     .eq('id', req.user.id)
     .single();
   if (error) return res.status(500).json({ error: error.message });
   res.json({ user: data });
+});
+
+// Example: Admin-only route
+app.get('/api/admin', authenticate, authorize(['Admin']), (req, res) => {
+  res.json({ message: 'Welcome, Admin!' });
 });
 
 // Socket.io events
