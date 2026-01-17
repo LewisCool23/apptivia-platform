@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import { createClient } from '@supabase/supabase-js';
 
 export const supabase = createClient(
@@ -23,3 +24,6 @@ export async function getUserProfile() {
   }
   return data;
 }
+=======
+// ...existing code from /Users/adamss/Apptivia Platform/src/supabaseClient.ts
+>>>>>>> da3a302 (Initial commit for new frontend structure)

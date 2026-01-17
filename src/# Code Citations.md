@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # Code Citations
 
 ## License: GPL_3_0
@@ -18,3 +19,6 @@ after insert on auth.users
 for each row execute procedure public.handle_new_user(
 ```
 
+=======
+# ...existing code from /Users/adamss/Apptivia Platform/src/# Code Citations.md
+>>>>>>> da3a302 (Initial commit for new frontend structure)

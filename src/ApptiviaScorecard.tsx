@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import React, { useState } from 'react';
 import { 
   Plus, Settings, TrendingUp, Users, Calendar, Phone, Target, Download, Filter, X, Home, Trophy, 
@@ -1070,3 +1071,6 @@ const ProfilePage = ({ currentUser }: { currentUser: User }) => {
 };
 
 export default ApptiviaScorecard;
+=======
+// ...existing code from /Users/adamss/Apptivia Platform/src/ApptiviaScorecard.tsx
+>>>>>>> da3a302 (Initial commit for new frontend structure)

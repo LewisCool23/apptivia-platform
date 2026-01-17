@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 module.exports = {
   content: ['./src/**/*.{js,jsx,ts,tsx}', './public/index.html'],
   theme: {
@@ -5,3 +6,6 @@ module.exports = {
   },
   plugins: [],
 };
+=======
+// ...existing tailwind config from your current frontend
+>>>>>>> da3a302 (Initial commit for new frontend structure)
