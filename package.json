@@ -1,5 +1,4 @@
 {
-<<<<<<< HEAD
   "name": "apptivia-platform",
   "version": "1.0.0",
   "private": true,
@@ -14,7 +13,7 @@
     "@supabase/supabase-js": "^2.0.0",
     "ajv": "^6.12.6",
     "ajv-keywords": "^3.5.2",
-    "lucide-react": "^0.263.0",
+    "lucide-react": "^0.263.1",
     "react": "^18.0.0",
     "react-dom": "^18.0.0",
     "socket.io-client": "^4.7.5"
@@ -40,14 +39,4 @@
       "last 1 safari version"
     ]
   }
-=======
-  "name": "apptivia-frontend",
-  "version": "1.0.0",
-  "main": "index.js",
-  "scripts": {
-    "start": "react-scripts start",
-    "build": "react-scripts build"
-  },
-  "dependencies": {}
->>>>>>> da3a302 (Initial commit for new frontend structure)
 }
