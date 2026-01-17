@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 import { createClient } from '@supabase/supabase-js';
 
 export const supabase = createClient(
@@ -6,7 +5,6 @@ export const supabase = createClient(
   process.env.REACT_APP_SUPABASE_ANON_KEY!
 );
 // src/supabaseClient.ts or src/api/user.ts
-
 
 export async function getUserProfile() {
   const { data: { user } } = await supabase.auth.getUser();
@@ -24,6 +22,3 @@ export async function getUserProfile() {
   }
   return data;
 }
-=======
-// ...existing code from /Users/adamss/Apptivia Platform/src/supabaseClient.ts
->>>>>>> da3a302 (Initial commit for new frontend structure)

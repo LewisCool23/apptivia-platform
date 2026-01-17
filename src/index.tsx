@@ -1,7 +1,6 @@
-<<<<<<< HEAD
 import React from 'react';
 import { createRoot } from 'react-dom/client';
-import ApptiviaScorecard from './ApptiviaScorecard.tsx'; // Branding is already correct here
+import ApptiviaScorecard from './ApptiviaScorecard.tsx';
 import './index.css';
 
 const container = document.getElementById('root');
@@ -12,6 +11,3 @@ root.render(
     <ApptiviaScorecard />
   </React.StrictMode>
 );
-=======
-// ...existing code from /Users/adamss/Apptivia Platform/src/index.tsx
->>>>>>> da3a302 (Initial commit for new frontend structure)
