@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from './AuthContext';
 import { LogOut } from 'lucide-react';
 
-const ApptivPlatformWithAuth = () => {
+const ApptiviaPlatformWithAuth = () => {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
   const [showLogoutConfirm, setShowLogoutConfirm] = React.useState(false);
@@ -62,4 +62,4 @@ const ApptivPlatformWithAuth = () => {
   );
 };
 
-export default ApptivPlatformWithAuth;
+export default ApptiviaPlatformWithAuth;

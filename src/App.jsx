@@ -2,7 +2,7 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './AuthContext';
 import Login from './Login';
-import ApptivPlatform from './ApptivPlatformWithAuth';
+import ApptiviaPlatformWithAuth from './ApptivPlatformWithAuth';
 import ProtectedRoute from './ProtectedRoute';
 
 function App() {
@@ -18,7 +18,7 @@ function App() {
             path="/dashboard" 
             element={
               <ProtectedRoute>
-                <ApptivPlatform />
+                <ApptiviaPlatformWithAuth />
               </ProtectedRoute>
             } 
           />

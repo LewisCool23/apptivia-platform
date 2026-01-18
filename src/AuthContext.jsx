@@ -8,7 +8,7 @@ export const AuthProvider = ({ children }) => {
 
   // Check for stored session on mount
   useEffect(() => {
-    const storedUser = localStorage.getItem('apptiv_user_v2');
+    const storedUser = localStorage.getItem('apptivia_user');
     console.log('[AuthContext] Loaded from localStorage:', storedUser);
     if (storedUser) {
       try {
@@ -16,7 +16,7 @@ export const AuthProvider = ({ children }) => {
         console.log('[AuthContext] Set user from localStorage:', JSON.parse(storedUser));
       } catch (error) {
         console.error('Error parsing stored user:', error);
-        localStorage.removeItem('apptiv_user_v2');
+        localStorage.removeItem('apptivia_user');
       }
     }
     setIsLoading(false);
@@ -24,20 +24,20 @@ export const AuthProvider = ({ children }) => {
 
   const login = (userData) => {
     setUser(userData);
-    localStorage.setItem('apptiv_user_v2', JSON.stringify(userData));
+    localStorage.setItem('apptivia_user', JSON.stringify(userData));
     console.log('[AuthContext] Login called. User set and saved to localStorage:', userData);
   };
 
   const logout = () => {
     setUser(null);
-    localStorage.removeItem('apptiv_user_v2');
+    localStorage.removeItem('apptivia_user');
     console.log('[AuthContext] Logout called. User cleared and removed from localStorage.');
   };
 
   const updateUser = (updatedData) => {
     const updatedUser = { ...user, ...updatedData };
     setUser(updatedUser);
-    localStorage.setItem('apptiv_user_v2', JSON.stringify(updatedUser));
+    localStorage.setItem('apptivia_user', JSON.stringify(updatedUser));
     console.log('[AuthContext] updateUser called. User updated and saved to localStorage:', updatedUser);
   };
 
