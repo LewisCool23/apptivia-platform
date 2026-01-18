@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useAuth } from './AuthContext';
 import { 
   Plus, Settings, TrendingUp, Users, Calendar, Phone, Target, Download, Filter, X, Home, Trophy, 
   MessageCircle, Mail, GitBranch, CheckSquare, Menu, User, Gamepad2, Bot, Camera, Save, 
@@ -94,18 +95,13 @@ const AaronChatbot = ({ isOpen, onClose }: AaronChatbotProps) => {
 };
 
 const ApptiviaScorecard = () => {
-  const currentUser: User = {
-    name: 'Demo User',
-    role: 'User',
-    phone: '',
-  };
-  // Temporary default user for demo
-  
+  const { user } = useAuth();
+  if (!user) return null; // Optionally, show a spinner or redirect
+  const currentUser = user;
 
   const [currentPage, setCurrentPage] = useState('home');
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [chatbotOpen, setChatbotOpen] = useState(false);
-  
 
   const navigation = [
     { id: 'home', name: 'Apptivia Scorecard', icon: Home, description: 'Performance dashboard' },
