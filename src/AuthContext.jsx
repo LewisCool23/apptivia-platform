@@ -43,12 +43,18 @@ export const AuthProvider = ({ children }) => {
 
   useEffect(() => {
     console.log('[AuthContext] user state changed:', user);
+    console.log('[AuthContext] isAuthenticated:', !!(user && user.id && user.email));
   }, [user]);
 
+  const isAuthenticated = !!(user && user.id && user.email);
+  useEffect(() => {
+    console.log('[AuthContext] (on mount) user:', user);
+    console.log('[AuthContext] (on mount) isAuthenticated:', isAuthenticated);
+  }, []);
   const value = {
     user,
     isLoading,
-    isAuthenticated: !!user,
+    isAuthenticated,
     login,
     logout,
     updateUser
