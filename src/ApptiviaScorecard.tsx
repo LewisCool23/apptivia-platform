@@ -1,1068 +1,1205 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { X, Search } from 'lucide-react';
+import DashboardLayout from './DashboardLayout';
+import ScorecardFilters from './components/ScorecardFilters';
+import RightFilterPanel from './components/RightFilterPanel';
+import PageActionBar from './components/PageActionBar';
+import { useScorecardData } from './hooks/useScorecardData';
+import { useCoachData } from './hooks/useCoachData';
+import { exportScorecardToCSV } from './utils/exportUtils';
+import ConfigureModal from './components/ConfigureModal';
+import ConfigurePanel from './components/ConfigurePanel';
+import { StatCardSkeleton, TableRowSkeleton } from './components/Skeleton';
+import { ScoreDistributionChart, HistoricalScoresChart } from './components/Charts';
+import { supabase } from './supabaseClient';
+import { useNotifications } from './contexts/NotificationContext';
 import { useAuth } from './AuthContext';
-import { 
-  Plus, Settings, TrendingUp, Users, Calendar, Phone, Target, Download, Filter, X, Home, Trophy, 
-  MessageCircle, Mail, GitBranch, CheckSquare, Menu, User, Gamepad2, Bot, Camera, Save, 
-  UserPlus, Trash2, Edit, BarChart3
-} from 'lucide-react';
+import CoachingPlanPanel from './components/CoachingPlanPanel';
+import { useHistoricalScores } from './hooks/useHistoricalScores';
+import InfoTooltip from './components/InfoTooltip';
+import ShareScorecardSnapshotModal from './components/ShareScorecardSnapshotModal';
 
-// Custom circular progress component
-interface CircularProgressProps {
-  progress: number;
-  size?: number;
-  strokeWidth?: number;
-  color?: string;
-  children?: React.ReactNode;
-}
-const CircularProgress = ({ progress, size = 80, strokeWidth = 8, color = '#3B82F6', children }: CircularProgressProps) => {
-  const radius = (size - strokeWidth) / 2;
-  const circumference = 2 * Math.PI * radius;
-  const strokeDashoffset = circumference - (progress / 100) * circumference;
-
-  return (
-    <div className="relative inline-block">
-      <svg width={size} height={size} className="transform -rotate-90">
-        <circle
-          cx={size / 2}
-          cy={size / 2}
-          r={radius}
-          stroke="currentColor"
-          strokeWidth={strokeWidth}
-          fill="transparent"
-          className="text-gray-200"
-        />
-        <circle
-          cx={size / 2}
-          cy={size / 2}
-          r={radius}
-          stroke={color}
-          strokeWidth={strokeWidth}
-          fill="transparent"
-          strokeDasharray={circumference}
-          strokeDashoffset={strokeDashoffset}
-          strokeLinecap="round"
-          className="transition-all duration-300 ease-in-out"
-        />
-      </svg>
-      <div className="absolute inset-0 flex items-center justify-center">
-        {children}
-      </div>
-    </div>
-  );
-};
-
-// Aaron AI Chatbot Component
-interface AaronChatbotProps {
-  isOpen: boolean;
-  onClose: () => void;
-}
-const AaronChatbot = ({ isOpen, onClose }: AaronChatbotProps) => {
-  const [messages] = useState([
-    { id: 1, sender: 'aaron', text: "Hi! I'm Aaron, your AI productivity coach. How can I help you improve your performance today?" }
-  ]);
-
-  if (!isOpen) return null;
-
-  return (
-    <div className="fixed bottom-4 right-4 w-80 h-96 bg-white rounded-xl shadow-xl border z-50 flex flex-col">
-      <div className="p-4 border-b bg-blue-500 text-white rounded-t-xl flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <Bot size={20} />
-          <span className="font-semibold">Aaron AI Coach</span>
-        </div>
-        <button onClick={onClose} className="text-white hover:bg-blue-600 p-1 rounded">
-          <X size={16} />
-        </button>
-      </div>
-      
-      <div className="flex-1 p-4 overflow-y-auto">
-        {messages.map(message => (
-          <div key={message.id} className="bg-gray-100 p-3 rounded-lg text-sm">
-            <p>{message.text}</p>
-          </div>
-        ))}
-      </div>
-      
-      <div className="p-4 border-t">
-        <input
-          type="text"
-          placeholder="Ask Aaron for help..."
-          className="w-full px-3 py-2 border rounded-lg text-sm"
-        />
-      </div>
-    </div>
-  );
-};
-
-const ApptiviaScorecard = () => {
-  const { user } = useAuth();
-  if (!user) return null; // Optionally, show a spinner or redirect
-  const currentUser = user;
-
-  const [currentPage, setCurrentPage] = useState('home');
-  const [sidebarOpen, setSidebarOpen] = useState(true);
-  const [chatbotOpen, setChatbotOpen] = useState(false);
-
-  const navigation = [
-    { id: 'home', name: 'Apptivia Scorecard', icon: Home, description: 'Performance dashboard' },
-    { id: 'coach', name: 'Apptivia Coach', icon: Trophy, description: 'Skill development' },
-    { id: 'contests', name: 'Contests', icon: Gamepad2, description: 'Sales competitions' },
-    { id: 'analytics', name: 'Analytics', icon: BarChart3, description: 'Advanced insights' },
-    { id: 'systems', name: 'Systems', icon: Settings, description: 'Integrations & admin' },
-    { id: 'profile', name: 'Profile', icon: User, description: 'Personal settings' }
-  ];
-
-  return (
-    <div className="flex flex-col h-screen bg-gray-50">
-      {/* Sidebar */}
-      <div className={`${sidebarOpen ? 'w-64' : 'w-16'} bg-white shadow-lg transition-all duration-300 flex flex-col`}>
-        <div className="p-4 border-b">
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold text-sm">A</span>
-            </div>
-            {sidebarOpen && (
-              <div>
-                <h1 className="font-bold text-lg text-gray-900">Apptivia</h1>
-                <p className="text-xs text-gray-500">Sales Productivity Platform</p>
-              </div>
-            )}
-          </div>
-        </div>
-
-
-        <nav className="flex-1 p-4">
-          <div className="space-y-2">
-            {navigation.map(item => (
-              <button
-                key={item.id}
-                onClick={() => setCurrentPage(item.id)}
-                className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-left transition-colors ${
-                  currentPage === item.id 
-                    ? 'bg-blue-500 text-white' 
-                    : 'text-gray-700 hover:bg-gray-100'
-                }`}
-              >
-                <item.icon size={20} />
-                {sidebarOpen && (
-                  <div>
-                    <div className="font-medium">{item.name}</div>
-                    <div className="text-xs opacity-75">{item.description}</div>
-                  </div>
-                )}
-              </button>
-            ))}
-          </div>
-        </nav>
-
-        <div className="p-4 border-t">
-          <button
-            onClick={() => setSidebarOpen(!sidebarOpen)}
-            className="w-full flex items-center justify-center p-2 text-gray-600 hover:bg-gray-100 rounded-lg"
-          >
-            <Menu size={20} />
-          </button>
-        </div>
-      </div>
-
-      {/* Main Content */}
-      <div className="flex-1 overflow-auto">
-        {currentPage === 'home' && <ScorecardPage currentUser={currentUser} />}
-        {currentPage === 'coach' && <CoachPage currentUser={currentUser} />}
-        {currentPage === 'contests' && <ContestsPage currentUser={currentUser} />}
-        {currentPage === 'analytics' && <AnalyticsPage currentUser={currentUser} />}
-        {currentPage === 'systems' && <SystemsPage currentUser={currentUser} />}
-        {currentPage === 'profile' && <ProfilePage currentUser={currentUser} />}
-      </div>
-
-      <AaronChatbot isOpen={chatbotOpen} onClose={() => setChatbotOpen(false)} />
-      
-      {!chatbotOpen && (
-        <button
-          onClick={() => setChatbotOpen(true)}
-          className="fixed bottom-4 right-4 w-14 h-14 bg-blue-500 text-white rounded-full shadow-lg hover:bg-blue-600 flex items-center justify-center z-40"
-        >
-          <Bot size={24} />
-        </button>
-      )}
-    </div>
-  );
-};
-
-// Scorecard Page
-interface User {
+interface KPIMetric {
+  key: string;
   name: string;
-  role: string;
-  phone?: string;
+  description?: string;
+  goal: number;
+  weight: number;
+  unit: string;
+  category: string;
 }
-const ScorecardPage = ({ currentUser }: { currentUser: User }) => {
-  const [kpis] = useState([
-    { id: 1, name: 'Call Connects', goal: 100, weight: 30, icon: Phone },
-    { id: 2, name: 'Talk Time Minutes', goal: 100, weight: 30, icon: TrendingUp },
-    { id: 3, name: 'Meetings', goal: 3, weight: 10, icon: Calendar },
-    { id: 4, name: 'Sourced Opps', goal: 4, weight: 15, icon: Target },
-    { id: 5, name: 'Stage 2 Opps', goal: 3, weight: 15, icon: Users }
-  ]);
 
-  const [teamData] = useState([
-    { id: 1, name: 'Sarah Johnson', team: 'Sales Team A', connects: 515, talkTime: 710, meetings: 3, sourcedOpps: 6, stage2Opps: 4.5 },
-    { id: 2, name: 'Mike Chen', team: 'Sales Team A', connects: 205, talkTime: 120, meetings: 7.5, sourcedOpps: 5, stage2Opps: 3.33 },
-    { id: 3, name: 'Alex Rivera', team: 'Sales Team B', connects: 84, talkTime: 72, meetings: 7.5, sourcedOpps: 3.75, stage2Opps: 4.5 },
-    { id: 4, name: 'Jordan Smith', team: 'Sales Team B', connects: 108, talkTime: 108, meetings: 3, sourcedOpps: 5, stage2Opps: 4.5 }
-  ]);
-
-  const [filters, setFilters] = useState({
-    team: 'All',
-    dateRange: 'This Week'
-  });
-
-  interface HoveredCell {
-    rep: number;
-    metric: string;
-  }
-  const [hoveredCell, setHoveredCell] = useState<HoveredCell | null>(null);
-
-  interface RepData {
-    connects: number;
-    talkTime: number;
-    meetings: number;
-    sourcedOpps: number;
-    stage2Opps: number;
-  }
-  const calculateScore = (repData: RepData) => {
-    const scores = {
-      connects: Math.min((repData.connects / kpis[0].goal) * 100, 200),
-      talkTime: Math.min((repData.talkTime / kpis[1].goal) * 100, 200),
-      meetings: Math.min((repData.meetings / kpis[2].goal) * 100, 200),
-      sourcedOpps: Math.min((repData.sourcedOpps / kpis[3].goal) * 100, 200),
-      stage2Opps: Math.min((repData.stage2Opps / kpis[4].goal) * 100, 200)
-    };
-
-    const weightedScore = 
-      (scores.connects * kpis[0].weight / 100) +
-      (scores.talkTime * kpis[1].weight / 100) +
-      (scores.meetings * kpis[2].weight / 100) +
-      (scores.sourcedOpps * kpis[3].weight / 100) +
-      (scores.stage2Opps * kpis[4].weight / 100);
-
-    return {
-      individual: scores,
-      total: Math.round(weightedScore)
-    };
-  };
-
-  const getScoreColor = (score: number) => {
-    if (score >= 100) return 'text-green-600 bg-green-100';
-    if (score >= 80) return 'text-green-500 bg-green-50';
-    if (score >= 65) return 'text-yellow-600 bg-yellow-100';
-    if (score >= 50) return 'text-orange-600 bg-orange-100';
-    return 'text-red-600 bg-red-100';
-  };
-
-  const getCoachingSuggestion = (repName: string, metricName: string) => {
-    const suggestions: Record<string, string> = {
-      'Call Connects': `${repName} could benefit from call timing optimization. Try scheduling calls during peak hours.`,
-      'Talk Time Minutes': `${repName} needs to practice active listening and asking open-ended questions.`,
-      'Meetings': `${repName} should focus on qualifying prospects better before requesting meetings.`,
-      'Sourced Opps': `${repName} needs to improve lead qualification and opportunity identification.`,
-      'Stage 2 Opps': `${repName} needs help advancing opportunities through the sales process.`
-    };
-    return suggestions[metricName] || `${repName} could use coaching in ${metricName.toLowerCase()}.`;
-  };
-
-  const filteredTeam = filters.team === 'All' ? teamData : teamData.filter(rep => rep.team === filters.team);
-  const sortedTeam = filteredTeam
-    .map(rep => ({ ...rep, score: calculateScore(rep) }))
-    .sort((a, b) => b.score.total - a.score.total);
-
-  const teams = [...new Set(teamData.map(rep => rep.team))];
-
-  return (
-    <div className="p-6">
-      <div className="mb-6 flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">Apptivia Scorecard</h1>
-          <p className="text-gray-600 mt-2">Real-time productivity scoring for your sales team</p>
-        </div>
-        
-        <div className="flex gap-3">
-          <button className="bg-green-600 text-white px-3 py-2 rounded-lg hover:bg-green-700 flex items-center gap-2">
-            <Download size={16} />
-            Export
-          </button>
-          <button className="bg-blue-600 text-white px-3 py-2 rounded-lg hover:bg-blue-700 flex items-center gap-2">
-            <Settings size={16} />
-            Configure
-          </button>
-        </div>
-      </div>
-
-      <div className="mb-4 flex items-center gap-4 bg-white rounded-lg p-3 shadow-sm border">
-        <div className="flex items-center gap-2">
-          <Filter size={16} className="text-gray-500" />
-          <span className="text-sm font-medium text-gray-700">Filters:</span>
-        </div>
-        
-        <select 
-          value={filters.dateRange}
-          onChange={(e) => setFilters({...filters, dateRange: e.target.value})}
-          className="px-2 py-1 border rounded text-sm"
-        >
-          <option>Today</option>
-          <option>This Week</option>
-          <option>This Month</option>
-          <option>This Quarter</option>
-        </select>
-        
-        <select 
-          value={filters.team}
-          onChange={(e) => setFilters({...filters, team: e.target.value})}
-          className="px-2 py-1 border rounded text-sm"
-        >
-          <option>All Teams</option>
-          {teams.map(team => <option key={team}>{team}</option>)}
-        </select>
-      </div>
-
-      <div className="mb-6 grid grid-cols-1 md:grid-cols-4 gap-6">
-        <div className="bg-white p-6 rounded-xl shadow-sm border">
-          <h3 className="text-sm font-medium text-gray-600">Top Performer</h3>
-          <p className="text-2xl font-bold text-green-600 mt-2">
-            {sortedTeam[0]?.name || 'N/A'}
-          </p>
-          <p className="text-sm text-gray-500">{sortedTeam[0]?.score.total || 0}% Score</p>
-        </div>
-        
-        <div className="bg-white p-6 rounded-xl shadow-sm border">
-          <h3 className="text-sm font-medium text-gray-600">Team Average</h3>
-          <p className="text-2xl font-bold text-blue-600 mt-2">
-            {sortedTeam.length ? Math.round(sortedTeam.reduce((sum, rep) => sum + rep.score.total, 0) / sortedTeam.length) : 0}%
-          </p>
-          <p className="text-sm text-gray-500">Apptivia Score</p>
-        </div>
-        
-        <div className="bg-white p-6 rounded-xl shadow-sm border">
-          <h3 className="text-sm font-medium text-gray-600">Above Target</h3>
-          <p className="text-2xl font-bold text-purple-600 mt-2">
-            {sortedTeam.filter(rep => rep.score.total >= 100).length}
-          </p>
-          <p className="text-sm text-gray-500">of {sortedTeam.length} reps</p>
-        </div>
-        
-        <div className="bg-white p-6 rounded-xl shadow-sm border">
-          <h3 className="text-sm font-medium text-gray-600">Need Coaching</h3>
-          <p className="text-2xl font-bold text-orange-600 mt-2">
-            {sortedTeam.filter(rep => rep.score.total < 80).length}
-          </p>
-          <p className="text-sm text-gray-500">Below 80%</p>
-        </div>
-      </div>
-
-      <div className="bg-white rounded-xl shadow-sm border overflow-hidden">
-        <div className="p-6 border-b">
-          <h2 className="text-xl font-semibold">Team Performance Scorecard</h2>
-          <p className="text-gray-600 mt-1">Weekly productivity metrics and Apptivia Scores</p>
-        </div>
-
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Rep Name
-                </th>
-                {kpis.map(kpi => (
-                  <th key={kpi.id} className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    {kpi.name}
-                    <div className="text-xs text-gray-400 mt-1">
-                      Goal: {kpi.goal} | {kpi.weight}%
-                    </div>
-                  </th>
-                ))}
-                <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider bg-blue-50">
-                  Apptivia Score
-                </th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {sortedTeam.map((rep, index) => {
-                const scores = rep.score;
-                return (
-                  <tr key={rep.id} className={index < 3 ? 'bg-green-50' : ''}>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center">
-                        {index < 3 && <span className="mr-2 text-yellow-500">🏆</span>}
-                        <div>
-                          <div className="text-sm font-medium text-gray-900">{rep.name}</div>
-                          <div className="text-sm text-gray-500">#{index + 1}</div>
-                        </div>
-                      </div>
-                    </td>
-                    
-                    <td 
-                      className="px-4 py-4 text-center relative"
-                      onMouseEnter={() => setHoveredCell({rep: rep.id, metric: 'connects'})}
-                      onMouseLeave={() => setHoveredCell(null)}
-                    >
-                      <div className="text-sm font-medium">{rep.connects}</div>
-                      <div className={`text-xs px-2 py-1 rounded ${getScoreColor(scores.individual.connects)}`}>
-                        {Math.round(scores.individual.connects)}%
-                      </div>
-                      
-                      {hoveredCell?.rep === rep.id && hoveredCell?.metric === 'connects' && scores.individual.connects < 80 && (
-                        <div className="absolute z-10 top-full left-1/2 transform -translate-x-1/2 mt-2 bg-white border shadow-lg rounded-lg p-3 w-64">
-                          <div className="flex items-start gap-2">
-                            <Bot className="text-blue-500 mt-1" size={16} />
-                            <div>
-                              <div className="text-xs font-medium text-blue-900">Aaron's Coaching Suggestion</div>
-                              <div className="text-xs text-gray-700 mt-1">
-                                {getCoachingSuggestion(rep.name, 'Call Connects')}
-                              </div>
-                              <button className="text-xs text-blue-600 hover:text-blue-800 mt-2 flex items-center gap-1">
-                                <Trophy size={12} />
-                                Go to Coach →
-                              </button>
-                            </div>
-                          </div>
-                        </div>
-                      )}
-                    </td>
-                    
-                    <td className="px-4 py-4 text-center">
-                      <div className="text-sm font-medium">{rep.talkTime}</div>
-                      <div className={`text-xs px-2 py-1 rounded ${getScoreColor(scores.individual.talkTime)}`}>
-                        {Math.round(scores.individual.talkTime)}%
-                      </div>
-                    </td>
-                    
-                    <td className="px-4 py-4 text-center">
-                      <div className="text-sm font-medium">{rep.meetings}</div>
-                      <div className={`text-xs px-2 py-1 rounded ${getScoreColor(scores.individual.meetings)}`}>
-                        {Math.round(scores.individual.meetings)}%
-                      </div>
-                    </td>
-                    
-                    <td className="px-4 py-4 text-center">
-                      <div className="text-sm font-medium">{rep.sourcedOpps}</div>
-                      <div className={`text-xs px-2 py-1 rounded ${getScoreColor(scores.individual.sourcedOpps)}`}>
-                        {Math.round(scores.individual.sourcedOpps)}%
-                      </div>
-                    </td>
-                    
-                    <td className="px-4 py-4 text-center">
-                      <div className="text-sm font-medium">{rep.stage2Opps}</div>
-                      <div className={`text-xs px-2 py-1 rounded ${getScoreColor(scores.individual.stage2Opps)}`}>
-                        {Math.round(scores.individual.stage2Opps)}%
-                      </div>
-                    </td>
-                    
-                    <td className="px-6 py-4 text-center bg-blue-50">
-                      <div className={`text-lg font-bold px-3 py-2 rounded-lg ${getScoreColor(scores.total)}`}>
-                        {scores.total}%
-                      </div>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-  );
+const SKILLSET_KPI_MAP: Record<string, string[]> = {
+  conversationalist: ['talk_time_minutes', 'conversations'],
+  'call conqueror': ['call_connects', 'meetings', 'discovery_calls'],
+  'email warrior': ['emails_sent', 'social_touches'],
+  'pipeline guru': ['sourced_opps', 'stage2_opps', 'pipeline_created', 'pipeline_advanced', 'qualified_leads'],
+  'task master': ['follow_ups', 'demos_completed', 'response_time', 'sales_cycle_days', 'win_rate'],
+  'scorecard master': ['scorecard_100_percent', 'scorecard_100_percent_streak', 'key_metric_100_percent', 'key_metric_100_percent_streak', 'scorecards_completed'],
 };
 
-// Coach Page
-const CoachPage = ({ currentUser }: { currentUser: User }) => {
-  const [filters, setFilters] = useState({
-    rep: 'All',
-    team: 'All'
-  });
+const KPI_SKILLSET_MAP: Record<string, string> = Object.entries(SKILLSET_KPI_MAP).reduce(
+  (acc, [skillset, kpis]) => {
+    kpis.forEach((kpi) => {
+      acc[kpi] = skillset;
+    });
+    return acc;
+  },
+  {} as Record<string, string>
+);
 
-  const isManager = currentUser.role === 'Manager' || currentUser.role === 'Admin';
+const ApptiviaScorecard: React.FC = () => {
+  const navigate = useNavigate();
+  const { user, profile, role, hasPermission } = useAuth();
+  const userId = (user && typeof user === 'object' && 'id' in user) ? (user as any).id : null;
+  const profileTeamId = (profile as any)?.team_id;
+  const userTeamId = (user as any)?.team_id;
+  const teamId = profileTeamId ? String(profileTeamId) : userTeamId ? String(userTeamId) : null;
+  const isAdmin = role === 'admin';
+  const isManager = role === 'manager';
+  const isCoach = role === 'coach';
+  const isPowerUser = role === 'power_user';
+  const canConfigureScorecard = (hasPermission as any)('configure_scorecard');
+  const canExport = (hasPermission as any)('export_data');
+  const canViewCoach = (hasPermission as any)('view_coach');
+  const canViewAnalytics = (hasPermission as any)('view_analytics');
+  const canViewContests = (hasPermission as any)('view_contests');
+
+  const defaultFilters = useMemo(() => {
+    if (isAdmin) {
+      return {
+        dateRange: 'All Time',
+        departments: [] as string[],
+        teams: [] as string[],
+        members: [] as string[],
+      };
+    }
+    if (isManager || isCoach) {
+      return {
+        dateRange: 'This Week',
+        departments: [] as string[],
+        teams: teamId ? [teamId] : [] as string[],
+        members: [] as string[],
+      };
+    }
+    if (isPowerUser) {
+      return {
+        dateRange: 'This Week',
+        departments: [] as string[],
+        teams: [] as string[],
+        members: userId ? [String(userId)] : [] as string[],
+      };
+    }
+    return {
+      dateRange: 'This Week',
+      departments: [] as string[],
+      teams: [] as string[],
+      members: [] as string[],
+    };
+  }, [isAdmin, isManager, isCoach, isPowerUser, teamId, userId]);
+
+  const [filters, setFilters] = useState(defaultFilters);
+  const [filtersInitialized, setFiltersInitialized] = useState(false);
+  const [showConfigModal, setShowConfigModal] = useState(false);
+  const [configPanelOpen, setConfigPanelOpen] = useState(false);
+  const [filtersOpen, setFiltersOpen] = useState(false);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
+  const [kpiMetrics, setKpiMetrics] = useState<KPIMetric[]>([]);
+  const [filtersResetSignal, setFiltersResetSignal] = useState(0);
+  const [loadingKpis, setLoadingKpis] = useState(true);
+  const [coachingPlanOpen, setCoachingPlanOpen] = useState(false);
+  const [snapshotOpen, setSnapshotOpen] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [showSearchResults, setShowSearchResults] = useState(false);
+  const [searching, setSearching] = useState(false);
+  const notifications = useNotifications() as any;
+
+  useEffect(() => {
+    if (filtersInitialized) return;
+    if (!userId) return;
+    setFilters(defaultFilters);
+    setFiltersInitialized(true);
+  }, [defaultFilters, filtersInitialized, userId]);
+
+  useEffect(() => {
+    if (!filtersInitialized) return;
+    if (!(isManager || isCoach)) return;
+    if (!teamId) return;
+    if (filters.teams.length > 0 && filters.teams.includes(teamId)) return;
+    setFilters(prev => ({
+      ...prev,
+      teams: [teamId],
+    }));
+  }, [filtersInitialized, isManager, isCoach, teamId, filters.teams]);
+
+  useEffect(() => {
+    if (!userId) return;
+    if (!isAdmin) return;
+    setFilters({
+      dateRange: 'All Time',
+      departments: [],
+      teams: [],
+      members: [],
+    });
+  }, [isAdmin, userId]);
+
+  async function fetchKpiMetrics() {
+    setLoadingKpis(true);
+    try {
+      const { data, error } = await supabase
+        .from('kpi_metrics')
+        .select('key, name, description, goal, weight, unit, category')
+        .eq('is_active', true)
+        .eq('show_on_scorecard', true)
+        .order('scorecard_position');
+
+      if (error) throw error;
+      setKpiMetrics(data || []);
+    } catch (err) {
+      console.error('Error fetching KPI metrics:', err);
+    } finally {
+      setLoadingKpis(false);
+    }
+  }
+
+  // Dynamically generate KPI keys and labels from database
+  const kpiKeys = useMemo(() => kpiMetrics.map(k => k.key), [kpiMetrics]);
+  const kpiLabels: {[key: string]: string} = useMemo(() => {
+    return kpiMetrics.reduce((acc, k) => {
+      acc[k.key] = k.name;
+      return acc;
+    }, {} as {[key: string]: string});
+  }, [kpiMetrics]);
+
+  // Convert date range selection to actual dates
+  const dateRange = useMemo(() => {
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    
+    switch (filters.dateRange) {
+      case 'Today': {
+        return {
+          start: today.toISOString(),
+          end: new Date(today.getTime() + 24 * 60 * 60 * 1000).toISOString()
+        };
+      }
+      case 'All Time': {
+        const start = new Date(1970, 0, 1);
+        return { start: start.toISOString(), end: new Date().toISOString() };
+      }
+      case 'This Week': {
+        const dayOfWeek = today.getDay();
+        const monday = new Date(today.getTime() - (dayOfWeek === 0 ? 6 : dayOfWeek - 1) * 24 * 60 * 60 * 1000);
+        const sunday = new Date(monday.getTime() + 7 * 24 * 60 * 60 * 1000);
+        return { start: monday.toISOString(), end: sunday.toISOString() };
+      }
+      case 'Last Week': {
+        const dayOfWeek = today.getDay();
+        const lastMonday = new Date(today.getTime() - (dayOfWeek === 0 ? 13 : dayOfWeek + 6) * 24 * 60 * 60 * 1000);
+        const lastSunday = new Date(lastMonday.getTime() + 7 * 24 * 60 * 60 * 1000);
+        return { start: lastMonday.toISOString(), end: lastSunday.toISOString() };
+      }
+      case 'This Month': {
+        const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
+        const lastDay = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+        return { start: firstDay.toISOString(), end: lastDay.toISOString() };
+      }
+      case 'Last Month': {
+        const firstDay = new Date(today.getFullYear(), today.getMonth() - 1, 1);
+        const lastDay = new Date(today.getFullYear(), today.getMonth(), 0);
+        return { start: firstDay.toISOString(), end: lastDay.toISOString() };
+      }
+      default:
+        // Default to This Week
+        const dayOfWeek = today.getDay();
+        const monday = new Date(today.getTime() - (dayOfWeek === 0 ? 6 : dayOfWeek - 1) * 24 * 60 * 60 * 1000);
+        const sunday = new Date(monday.getTime() + 7 * 24 * 60 * 60 * 1000);
+        return { start: monday.toISOString(), end: sunday.toISOString() };
+    }
+  }, [filters.dateRange]);
+
+  // Fetch data when dependencies change
+  useEffect(() => {
+    fetchKpiMetrics();
+  }, [refreshTrigger, filters, dateRange]);
+
+  const { data, loading, error } = useScorecardData(
+    filters.departments,
+    filters.teams,
+    filters.members,
+    dateRange.start,
+    dateRange.end,
+    refreshTrigger
+  );
+
+  const { data: historicalScores } = useHistoricalScores(
+    filters.departments,
+    filters.teams,
+    filters.members,
+    dateRange,
+    filters.dateRange,
+    refreshTrigger
+  );
+
+  const shouldLoadCoach = isPowerUser && !!userId;
+  const coachDepartments = useMemo(() => [] as string[], []);
+  const coachTeams = useMemo(() => [] as string[], []);
+  const coachMembers = useMemo(
+    () => (shouldLoadCoach && userId ? [String(userId)] : [] as string[]),
+    [shouldLoadCoach, userId]
+  );
+  const { data: coachData, loading: coachLoading, error: coachError } = useCoachData(
+    coachDepartments,
+    coachTeams,
+    coachMembers,
+    { enabled: shouldLoadCoach, mode: 'summary' }
+  );
+
+  const planDepartments = useMemo(() => {
+    if (isAdmin) return filters.departments;
+    if (isManager || isCoach) return filters.departments;
+    return [] as string[];
+  }, [filters.departments, isAdmin, isManager, isCoach]);
+
+  const planTeams = useMemo(() => {
+    if (isAdmin) return filters.teams;
+    if (isManager || isCoach) return teamId ? [teamId] : filters.teams;
+    return [] as string[];
+  }, [filters.teams, isAdmin, isManager, isCoach, teamId]);
+
+  const planMembers = useMemo(() => {
+    if (isAdmin || isManager || isCoach) return filters.members;
+    if (userId) return [String(userId)];
+    return [] as string[];
+  }, [filters.members, isAdmin, isManager, isCoach, userId]);
+
+  const { data: planCoachData } = useCoachData(
+    planDepartments,
+    planTeams,
+    planMembers,
+    { enabled: coachingPlanOpen, mode: 'full' }
+  );
+
+  const applyScopedFilters = (nextFilters: typeof filters) => {
+    if (isManager || isCoach) {
+      return {
+        ...nextFilters,
+        teams: teamId ? [teamId] : [],
+      };
+    }
+    return nextFilters;
+  };
+
+  const handleFiltersChange = (nextFilters: typeof filters) => {
+    setFilters(applyScopedFilters(nextFilters));
+  };
+
+  const handleResetFilters = () => {
+    setFilters(defaultFilters);
+    setFiltersResetSignal(prev => prev + 1);
+  };
+
+  const userRow = useMemo(() => {
+    if (!userId) return null;
+    return data?.rows?.find((row: any) => String(row.profile_id) === String(userId)) || null;
+  }, [data?.rows, userId]);
+
+  const userRank = useMemo(() => {
+    if (!userRow || !data?.rows?.length) return null;
+    const idx = data.rows.findIndex((row: any) => String(row.profile_id) === String(userId));
+    return idx >= 0 ? idx + 1 : null;
+  }, [data?.rows, userId, userRow]);
+
+  const userKpiBreakdown = useMemo(() => {
+    if (!userRow?.kpis) return { exceeding: 0, onTrack: 0, needsFocus: 0, total: 0 };
+    const entries = Object.values(userRow.kpis) as any[];
+    let exceeding = 0;
+    let onTrack = 0;
+    let needsFocus = 0;
+    entries.forEach((kpi) => {
+      const pct = Number(kpi?.percentage || 0);
+      if (pct >= 100) exceeding += 1;
+      else if (pct >= 80) onTrack += 1;
+      else needsFocus += 1;
+    });
+    return { exceeding, onTrack, needsFocus, total: entries.length };
+  }, [userRow]);
+
+  const teamScoreStats = useMemo(() => {
+    if (!data?.rows?.length) return { max: 0, min: 0, spread: 0 };
+    const max = Number(data.rows[0]?.apptivityScore || 0);
+    const min = Number(data.rows[data.rows.length - 1]?.apptivityScore || 0);
+    return { max, min, spread: Math.max(0, max - min) };
+  }, [data?.rows]);
+
+  const kpiCategoryDetails = useMemo(() => {
+    const result = { exceeding: [] as string[], onTrack: [] as string[], needsFocus: [] as string[] };
+    if (!userRow?.kpis) return result;
+    kpiMetrics.forEach((metric) => {
+      const kpi = (userRow.kpis as any)?.[metric.key];
+      if (!kpi) return;
+      const pct = Number(kpi?.percentage || 0);
+      const label = kpiLabels[metric.key] || metric.name || metric.key;
+      if (pct >= 100) result.exceeding.push(label);
+      else if (pct >= 80) result.onTrack.push(label);
+      else result.needsFocus.push(label);
+    });
+    return result;
+  }, [userRow, kpiMetrics, kpiLabels]);
+
+  const coachSkillsetsByName = useMemo(() => {
+    const map = new Map<string, any>();
+    (coachData?.skillsets || []).forEach((skillset: any) => {
+      const key = skillset.skillset_name?.toLowerCase?.() || '';
+      if (key) map.set(key, skillset);
+    });
+    return map;
+  }, [coachData?.skillsets]);
+
+  const coachingOpportunities = useMemo(() => {
+    if (!isPowerUser || !userRow?.kpis) return [] as any[];
+
+    return kpiMetrics
+      .map((metric) => {
+        const kpi = (userRow.kpis as any)?.[metric.key];
+        if (!kpi) return null;
+        const pct = Number(kpi?.percentage || 0);
+        if (pct >= 80) return null;
+        const skillsetKey = KPI_SKILLSET_MAP[metric.key];
+        const skillset = skillsetKey ? coachSkillsetsByName.get(skillsetKey) : null;
+        return {
+          kpiKey: metric.key,
+          kpiLabel: kpiLabels[metric.key] || metric.name || metric.key,
+          percentage: Math.round(pct),
+          skillsetId: skillset?.skillset_id || null,
+          skillsetName: skillset?.skillset_name || skillsetKey || 'Coaching Focus',
+          skillsetColor: skillset?.color || '#3b82f6',
+          nextAchievement: skillset?.next_achievement || 'Review coach recommendations',
+        };
+      })
+      .filter(Boolean) as any[];
+  }, [isPowerUser, userRow, kpiMetrics, kpiLabels, coachSkillsetsByName]);
+
+  const buildCoachLink = (skillset: any, achievement?: string | null, kpiKey?: string) => {
+    const params = new URLSearchParams();
+    if (skillset?.skillset_id) params.set('skillsetId', String(skillset.skillset_id));
+    else if (skillset?.skillset_name) params.set('skillset', skillset.skillset_name);
+    if (achievement) params.set('achievement', achievement);
+    if (kpiKey) params.set('kpi', kpiKey);
+    const query = params.toString();
+    return query ? `/coach?${query}` : '/coach';
+  };
+
+  const openCoachForKpi = (kpiKey: string, achievement?: string | null) => {
+    if (!canViewCoach) return;
+    const skillsetKey = KPI_SKILLSET_MAP[kpiKey];
+    const skillset = skillsetKey ? coachSkillsetsByName.get(skillsetKey) : null;
+    navigate(buildCoachLink(skillset, achievement, kpiKey));
+  };
+
+  const handleExport = () => {
+    if (!canExport) return;
+    if (!loading && !error) {
+      exportScorecardToCSV(data, filters);
+    }
+  };
+
+  const handleConfigSave = () => {
+    setRefreshTrigger(prev => prev + 1);
+  };
+
+  useEffect(() => {
+    if (loading || error || !userId || data.rows.length === 0) return;
+
+    const userRow = data.rows.find(r => String(r.profile_id) === String(userId));
+    if (!userRow) return;
+
+    if (userRow.apptivityScore >= 100) {
+      notifications.addNotification({
+        type: 'performance',
+        title: 'Scorecard milestone',
+        message: `You hit ${userRow.apptivityScore}% on your scorecard.`,
+        link: '/dashboard',
+        dedupeKey: `scorecard-high-${userId}-${filters.dateRange}`,
+      });
+    }
+
+    if (userRow.apptivityScore < 80) {
+      notifications.addNotification({
+        type: 'coaching',
+        title: 'Opportunity to improve',
+        message: `Your scorecard is ${userRow.apptivityScore}%. Review coaching insights.`,
+        link: '/coach',
+        dedupeKey: `scorecard-low-${userId}-${filters.dateRange}`,
+      });
+    }
+
+    const topRow = data.rows[0];
+    if (topRow && String(topRow.profile_id) === String(userId)) {
+      notifications.addNotification({
+        type: 'performance',
+        title: 'Top performer',
+        message: 'You are the top performer this period. Keep it up!',
+        link: '/dashboard',
+        dedupeKey: `scorecard-top-${userId}-${filters.dateRange}`,
+      });
+    }
+  }, [loading, error, data.rows, userId, filters.dateRange, notifications]);
+
+  useEffect(() => {
+    if (loading || error || data.rows.length === 0) return;
+    if (!(isManager || isCoach)) return;
+    if (data.needCoaching > 0) {
+      notifications.addNotification({
+        type: 'coaching',
+        title: 'Team coaching needed',
+        message: `${data.needCoaching} rep${data.needCoaching === 1 ? '' : 's'} need coaching attention.`,
+        link: '/coach',
+        dedupeKey: `team-coaching-${data.needCoaching}-${filters.dateRange}`,
+        audience: 'team',
+      });
+    }
+  }, [loading, error, data.needCoaching, data.rows.length, isManager, isCoach, filters.dateRange, notifications]);
+
+  const filterSummary = (() => {
+    const deptLabel = filters.departments.length > 0
+      ? `${filters.departments.length} Dept${filters.departments.length > 1 ? 's' : ''}`
+      : 'All Depts';
+    const teamLabel = filters.teams.length > 0
+      ? `${filters.teams.length} Team${filters.teams.length > 1 ? 's' : ''}`
+      : 'All Teams';
+    const memberLabel = filters.members.length > 0
+      ? `${filters.members.length} Member${filters.members.length > 1 ? 's' : ''}`
+      : 'All Members';
+    return `Filters: ${filters.dateRange} • ${deptLabel} • ${teamLabel} • ${memberLabel}`;
+  })();
+
+  const canShareSnapshot = isAdmin || isManager;
+  const sortedRows = useMemo(() => {
+    return [...(data.rows || [])].sort((a, b) => (b.apptivityScore || 0) - (a.apptivityScore || 0));
+  }, [data.rows]);
+  const topPerformers = useMemo(() => sortedRows.slice(0, 3), [sortedRows]);
+  const lowestPerformers = useMemo(() => sortedRows.slice(-3).reverse(), [sortedRows]);
+
+  const snapshotHighlights = useMemo(() => {
+    if (!data || !data.rows || data.rows.length === 0) return [] as string[];
+    const topName = data.topPerformer?.name || topPerformers[0]?.name || 'N/A';
+    const topScore = data.topPerformer?.score ?? topPerformers[0]?.apptivityScore ?? 'N/A';
+    return [
+      `Team average: ${data.teamAverage ?? 'N/A'}%`,
+      `Top performer: ${topName} (${topScore}%)`,
+      `Above target: ${data.aboveTarget ?? 0} reps`,
+      `Need coaching: ${data.needCoaching ?? 0} reps`,
+      `Score spread: ${teamScoreStats.spread ?? 0}% (high ${teamScoreStats.max ?? 0}% / low ${teamScoreStats.min ?? 0}%)`,
+    ];
+  }, [data, topPerformers, teamScoreStats]);
+
+  const buildSnapshotBody = () => {
+    const lines: string[] = [];
+    lines.push('Apptivia Weekly Scorecard Snapshot');
+    lines.push(filterSummary);
+    lines.push('');
+    lines.push('Highlights:');
+    snapshotHighlights.forEach((h) => lines.push(`• ${h}`));
+    lines.push('');
+    if (topPerformers.length > 0) {
+      lines.push('Top performers:');
+      topPerformers.forEach((r, idx) => {
+        lines.push(`${idx + 1}. ${r.name} — ${r.apptivityScore || 0}%`);
+      });
+      lines.push('');
+    }
+    if (lowestPerformers.length > 0) {
+      lines.push('Needs improvement:');
+      lowestPerformers.forEach((r, idx) => {
+        lines.push(`${idx + 1}. ${r.name} — ${r.apptivityScore || 0}%`);
+      });
+      lines.push('');
+    }
+    lines.push('Generated from Apptivia Scorecard.');
+    return lines.join('\n');
+  };
+
+  const handleSearch = async (query: string) => {
+    if (!query || query.trim().length < 2) {
+      setSearchResults([]);
+      setShowSearchResults(false);
+      return;
+    }
+
+    setSearching(true);
+    setShowSearchResults(true);
+    const results: any[] = [];
+
+    try {
+      const searchTerm = query.trim().toLowerCase();
+
+      // Search profiles/users
+      const { data: profiles } = await supabase
+        .from('profiles')
+        .select('id, first_name, last_name, email, role')
+        .or(`first_name.ilike.%${searchTerm}%,last_name.ilike.%${searchTerm}%,email.ilike.%${searchTerm}%`)
+        .limit(5);
+
+      if (profiles) {
+        profiles.forEach((profile: any) => {
+          results.push({
+            type: 'User',
+            title: `${profile.first_name || ''} ${profile.last_name || ''}`.trim() || profile.email,
+            subtitle: profile.role,
+            link: `/profile?user=${profile.id}`,
+            icon: '👤'
+          });
+        });
+      }
+
+      // Search achievements
+      const { data: achievements } = await supabase
+        .from('achievements')
+        .select('id, name, description')
+        .ilike('name', `%${searchTerm}%`)
+        .limit(5);
+
+      if (achievements) {
+        achievements.forEach((achievement: any) => {
+          results.push({
+            type: 'Achievement',
+            title: achievement.name,
+            subtitle: achievement.description,
+            link: '/coach',
+            icon: '🏆'
+          });
+        });
+      }
+
+      // Search badges
+      const { data: badges } = await supabase
+        .from('badges')
+        .select('id, name, description')
+        .ilike('name', `%${searchTerm}%`)
+        .limit(5);
+
+      if (badges) {
+        badges.forEach((badge: any) => {
+          results.push({
+            type: 'Badge',
+            title: badge.name,
+            subtitle: badge.description,
+            link: '/profile',
+            icon: '🎖️'
+          });
+        });
+      }
+
+      // Search contests
+      const { data: contests } = await supabase
+        .from('contests')
+        .select('id, name, description')
+        .ilike('name', `%${searchTerm}%`)
+        .limit(5);
+
+      if (contests) {
+        contests.forEach((contest: any) => {
+          results.push({
+            type: 'Contest',
+            title: contest.name,
+            subtitle: contest.description,
+            link: '/contests',
+            icon: '🎯'
+          });
+        });
+      }
+
+      setSearchResults(results);
+    } catch (error) {
+      console.error('Search error:', error);
+    } finally {
+      setSearching(false);
+    }
+  };
+
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      if (searchQuery) {
+        handleSearch(searchQuery);
+      }
+    }, 300);
+    return () => clearTimeout(timeoutId);
+  }, [searchQuery]);
+
+  const handleRefreshAchievements = async () => {
+    setIsRefreshing(true);
+    try {
+      // Call the database function to check and award achievements
+      const { data, error } = await supabase.rpc('check_and_award_achievements');
+      
+      if (error) {
+        console.error('Error checking achievements:', error);
+        notifications.addToast('error', 'Failed to refresh achievements');
+      } else {
+        const awardsCount = data || 0;
+        if (awardsCount > 0) {
+          notifications.addToast('success', `${awardsCount} new achievement${awardsCount > 1 ? 's' : ''} awarded!`);
+        } else {
+          notifications.addToast('info', 'No new achievements earned yet. Keep pushing!');
+        }
+        // Trigger data refresh
+        setRefreshTrigger(prev => prev + 1);
+      }
+    } catch (err) {
+      console.error('Error refreshing achievements:', err);
+      notifications.addToast('error', 'Failed to refresh achievements');
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
 
   return (
-    <div className="p-6">
-      <div className="mb-6 flex justify-between items-start">
-        <div>
-          <div className="flex items-center gap-3 mb-2">
-            <Trophy className="text-yellow-500" size={28} />
-            <h1 className="text-2xl font-bold text-gray-900">Apptivia Coach</h1>
+    <DashboardLayout>
+      <div className="p-6">
+        <div className="flex items-start justify-between mb-3">
+          <div>
+            <h1 className="text-2xl font-bold text-blue-700 mb-1">Apptivia Scorecard</h1>
+            <p className="text-gray-500 text-sm">
+              {isPowerUser ? 'Your personalized productivity scorecard and progress' : 'Real-time productivity scoring for your sales team'}
+            </p>
           </div>
-          <p className="text-gray-600">Level up your sales skills and unlock your potential</p>
+          <div className="flex gap-2 items-center">
+            {/* Search Bar */}
+            <div className="relative">
+              <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+              <input
+                type="text"
+                placeholder="Search..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onFocus={() => searchQuery && setShowSearchResults(true)}
+                className="w-64 pl-9 pr-8 py-2 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              />
+              {searchQuery && (
+                <button
+                  onClick={() => {
+                    setSearchQuery('');
+                    setSearchResults([]);
+                    setShowSearchResults(false);
+                  }}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                >
+                  <X size={14} />
+                </button>
+              )}
+              {/* Search Results Dropdown */}
+              {showSearchResults && searchResults.length > 0 && (
+                <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-96 overflow-y-auto z-50">
+                  {searchResults.map((result, idx) => (
+                    <button
+                      key={idx}
+                      onClick={() => {
+                        navigate(result.link);
+                        setSearchQuery('');
+                        setSearchResults([]);
+                        setShowSearchResults(false);
+                      }}
+                      className="w-full text-left px-4 py-3 hover:bg-gray-50 border-b last:border-b-0 transition-colors"
+                    >
+                      <div className="flex items-start gap-3">
+                        <span className="text-xl">{result.icon}</span>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs font-semibold text-gray-900">{result.title}</span>
+                            <span className="text-[10px] px-1.5 py-0.5 rounded bg-gray-100 text-gray-600">{result.type}</span>
+                          </div>
+                          {result.subtitle && (
+                            <div className="text-[11px] text-gray-500 mt-0.5 truncate">{result.subtitle}</div>
+                          )}
+                        </div>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              )}
+              {showSearchResults && searchQuery && searchResults.length === 0 && !searching && (
+                <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg p-4 z-50">
+                  <div className="text-sm text-gray-500 text-center">No results found</div>
+                </div>
+              )}
+              {searching && (
+                <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg p-4 z-50">
+                  <div className="text-sm text-gray-500 text-center">Searching...</div>
+                </div>
+              )}
+            </div>
+            {/* Refresh Icon */}
+            <button
+              onClick={handleRefreshAchievements}
+              disabled={isRefreshing}
+              className={`relative p-2 rounded-lg font-semibold text-sm bg-white text-gray-700 border border-gray-200 hover:bg-gray-50 group ${
+                isRefreshing ? 'opacity-50 cursor-not-allowed' : 'transition-all duration-200 hover:scale-105 hover:shadow-md'
+              }`}
+              title="Refresh dashboard data and check for new achievements"
+            >
+              <svg 
+                className={`w-[18px] h-[18px] ${isRefreshing ? 'animate-spin' : ''}`} 
+                fill="none" 
+                stroke="currentColor" 
+                viewBox="0 0 24 24"
+              >
+                <path 
+                  strokeLinecap="round" 
+                  strokeLinejoin="round" 
+                  strokeWidth={2} 
+                  d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" 
+                />
+              </svg>
+              <span className="absolute top-full left-1/2 -translate-x-1/2 mt-2 px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 pointer-events-none group-hover:opacity-100 whitespace-nowrap transition-opacity z-50">
+                {isRefreshing ? 'Refreshing...' : 'Refresh'}
+              </span>
+            </button>
+            <PageActionBar
+              onFilterClick={() => setFiltersOpen(true)}
+              onConfigureClick={() => { if (canConfigureScorecard) setConfigPanelOpen(true); }}
+              onExportClick={handleExport}
+              onNotificationsClick={notifications.openPanel}
+              exportDisabled={loading || !canExport}
+              configureDisabled={!canConfigureScorecard}
+              notificationBadge={notifications.unreadCount}
+              actions={[
+                {
+                  label: 'See Coaching Plan',
+                  onClick: () => setCoachingPlanOpen(true),
+                },
+                ...(canShareSnapshot ? [{
+                  label: 'Share Snapshot',
+                  onClick: () => setSnapshotOpen(true),
+                }] : []),
+              ]}
+            />
+          </div>
         </div>
-
-        {isManager && (
-          <div className="flex gap-3">
-            <select 
-              value={filters.team}
-              onChange={(e) => setFilters({...filters, team: e.target.value})}
-              className="px-3 py-2 border rounded-lg text-sm"
+        {(loading || loadingKpis) && (
+          <>
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
+              <StatCardSkeleton />
+              <StatCardSkeleton />
+              <StatCardSkeleton />
+              <StatCardSkeleton />
+            </div>
+            <div className="bg-white rounded-xl p-4 shadow-sm">
+              <div className="h-6 w-64 bg-gray-200 rounded animate-pulse mb-4" />
+              <div className="overflow-x-auto">
+                <table className="min-w-full text-xs text-left table-fixed">
+                  <thead>
+                    <tr className="bg-gray-50">
+                      <th className="px-2 py-1 font-semibold w-40">Rep Name</th>
+                      {kpiKeys.map(key => (
+                        <th key={key} className="px-2 py-1 font-semibold text-center w-24">{kpiLabels[key]}</th>
+                      ))}
+                      <th className="px-2 py-1 font-semibold text-center w-24">Apptivia Score</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {Array.from({ length: 5 }).map((_, i) => (
+                      <TableRowSkeleton key={i} columns={7} />
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </>
+        )}
+        {error && <div className="text-red-500 text-center py-8">Error: {error}</div>}
+        
+        {!loading && !error && !loadingKpis && kpiKeys.length === 0 && (
+          <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-8 text-center">
+            <p className="text-yellow-800 text-lg font-semibold mb-2">No Scorecard KPIs Selected</p>
+            <p className="text-yellow-600 mb-4">Please select 5 KPI metrics to display on your scorecard.</p>
+            <button 
+              onClick={() => {
+                if (canConfigureScorecard) setShowConfigModal(true);
+              }}
+              disabled={!canConfigureScorecard}
+              className={`px-6 py-2 rounded-lg font-semibold transition-all duration-200 ${canConfigureScorecard ? 'bg-yellow-500 text-white hover:bg-yellow-600' : 'bg-gray-200 text-gray-500 cursor-not-allowed'}`}
             >
-              <option value="All">All Teams</option>
-              <option value="Sales Team A">Sales Team A</option>
-              <option value="Sales Team B">Sales Team B</option>
-            </select>
-            
-            <select 
-              value={filters.rep}
-              onChange={(e) => setFilters({...filters, rep: e.target.value})}
-              className="px-3 py-2 border rounded-lg text-sm"
-            >
-              <option value="All">All Reps</option>
-              <option value="Sarah Johnson">Sarah Johnson</option>
-              <option value="Mike Chen">Mike Chen</option>
-            </select>
+              Select Scorecard KPIs
+            </button>
           </div>
         )}
-      </div>
 
-      <div className="bg-gradient-to-r from-blue-500 to-purple-600 rounded-xl p-6 mb-6 text-white">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="text-center md:text-left">
-            <div className="flex items-center justify-center md:justify-start gap-2 mb-2">
-              <Target size={24} />
-              <h2 className="text-2xl font-bold">Intermediate</h2>
-            </div>
-            <p className="text-blue-100">Current Apptivia Level</p>
-            <div className="mt-2">
-              <span className="text-3xl font-bold">87%</span>
-              <span className="text-blue-100 ml-2">Overall Score</span>
-            </div>
-          </div>
-
-          <div className="text-center">
-            <div className="w-24 h-24 mx-auto mb-3">
-              <CircularProgress progress={75} size={96} color="white">
-                <span className="text-white font-bold text-lg">75%</span>
-              </CircularProgress>
-            </div>
-            <p className="text-blue-100">Progress to Proficient</p>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div className="text-center">
-              <div className="text-2xl font-bold">3</div>
-              <div className="text-blue-100 text-sm">Day Streak</div>
-            </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold">4</div>
-              <div className="text-blue-100 text-sm">Achievements</div>
-            </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold">12</div>
-              <div className="text-blue-100 text-sm">Milestones</div>
-            </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold">875</div>
-              <div className="text-blue-100 text-sm">Points</div>
+        {!loading && !error && !loadingKpis && kpiKeys.length > 0 && kpiKeys.length < 5 && (
+          <div className="bg-blue-50 border border-blue-300 rounded-xl p-4 mb-4 flex items-start gap-3">
+            <span className="text-blue-600 text-xl">ℹ️</span>
+            <div>
+              <p className="text-blue-800 font-semibold">Scorecard Incomplete</p>
+              <p className="text-blue-700 text-sm">
+                You have selected {kpiKeys.length} of 5 recommended KPIs.{' '}
+                <button
+                  onClick={() => {
+                    if (canConfigureScorecard) setShowConfigModal(true);
+                  }}
+                  className={`underline font-medium ${canConfigureScorecard ? 'text-blue-700' : 'text-gray-400 cursor-not-allowed'}`}
+                  disabled={!canConfigureScorecard}
+                >
+                  Configure scorecard
+                </button>{' '}
+                to select all 5.
+              </p>
             </div>
           </div>
-        </div>
-      </div>
+        )}
 
-      <div className="bg-white rounded-xl p-6 shadow-sm">
-        <h2 className="text-xl font-semibold mb-6">Skillset Mastery Progress</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {[
-            { 
-              name: 'Conversationalist', 
-              progress: 75, 
-              level: 7.5,
-              color: '#3B82F6',
-              bgColor: 'bg-blue-50',
-              borderColor: 'border-blue-200',
-              icon: MessageCircle,
-              description: 'Master meaningful sales conversations',
-              nextGoal: 'Improve talk ratio to 80%'
-            },
-            { 
-              name: 'Call Conqueror', 
-              progress: 68, 
-              level: 6.8,
-              color: '#10B981',
-              bgColor: 'bg-green-50',
-              borderColor: 'border-green-200',
-              icon: Phone,
-              description: 'Excel at call conversion',
-              nextGoal: 'Book 10 meetings this week'
-            },
-            { 
-              name: 'Email Warrior', 
-              progress: 82, 
-              level: 8.2,
-              color: '#8B5CF6',
-              bgColor: 'bg-purple-50',
-              borderColor: 'border-purple-200',
-              icon: Mail,
-              description: 'Dominate email outreach',
-              nextGoal: 'Maintain 25%+ reply rate'
-            },
-            { 
-              name: 'Pipeline Guru', 
-              progress: 59, 
-              level: 5.9,
-              color: '#F59E0B',
-              bgColor: 'bg-orange-50',
-              borderColor: 'border-orange-200',
-              icon: GitBranch,
-              description: 'Generate high-value opportunities',
-              nextGoal: 'Create $50K pipeline this month'
-            },
-            { 
-              name: 'Task Master', 
-              progress: 91, 
-              level: 9.1,
-              color: '#EF4444',
-              bgColor: 'bg-red-50',
-              borderColor: 'border-red-200',
-              icon: CheckSquare,
-              description: 'Perfect task execution',
-              nextGoal: '100% completion for 10 days'
-            }
-          ].map((skillset, index) => {
-            const Icon = skillset.icon;
-            return (
-              <div key={index} className={`${skillset.bgColor} ${skillset.borderColor} border-2 rounded-xl p-6 hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1`}>
-                <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center gap-3">
-                    <div className="p-3 rounded-lg bg-white shadow-sm">
-                      <Icon style={{ color: skillset.color }} size={24} />
-                    </div>
-                    <div>
-                      <h3 className="font-bold text-lg text-gray-900">{skillset.name}</h3>
-                      <p className="text-sm text-gray-600">{skillset.description}</p>
-                    </div>
+        {!loading && !error && !loadingKpis && kpiKeys.length > 0 && (
+          <>
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-3 mb-4">
+              {isPowerUser ? (
+                <>
+                  <div className="bg-white rounded-lg border border-gray-100 shadow-sm p-3 flex flex-col items-start justify-center transition-all duration-300 hover:shadow-lg hover:-translate-y-1">
+                    <div className="text-xs text-gray-500 mb-1">My Score</div>
+                    <div className="text-blue-700 font-bold text-base">{userRow?.apptivityScore ?? 'N/A'}%</div>
+                    <div className="text-gray-400 text-xs">Current Apptivia Score</div>
                   </div>
-                </div>
-
-                <div className="flex items-center justify-center mb-4">
-                  <CircularProgress progress={skillset.progress} size={100} color={skillset.color} strokeWidth={8}>
-                    <div className="text-center">
-                      <div className="text-2xl font-bold text-gray-900">{skillset.level}</div>
-                      <div className="text-xs text-gray-500">/ 10</div>
-                    </div>
-                  </CircularProgress>
-                </div>
-
-                <div className="space-y-3">
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm font-medium text-gray-700">Progress</span>
-                    <span className="text-sm font-bold" style={{ color: skillset.color }}>{skillset.progress}%</span>
+                  <div className="bg-white rounded-lg border border-gray-100 shadow-sm p-3 flex flex-col items-start justify-center transition-all duration-300 hover:shadow-lg hover:-translate-y-1">
+                    <div className="text-xs text-gray-500 mb-1">My Rank</div>
+                    <div className="text-green-600 font-bold text-base">{userRank ? `#${userRank}` : 'N/A'}</div>
+                    <div className="text-gray-400 text-xs">Within selected view</div>
                   </div>
-                  
-                  <div className="w-full bg-white rounded-full h-2 shadow-inner">
-                    <div 
-                      className="h-2 rounded-full transition-all duration-500 ease-out"
-                      style={{ 
-                        width: `${skillset.progress}%`,
-                        backgroundColor: skillset.color
-                      }}
-                    ></div>
+                  <div className="bg-white rounded-lg border border-gray-100 shadow-sm p-3 flex flex-col items-start justify-center transition-all duration-300 hover:shadow-lg hover:-translate-y-1">
+                    <div className="text-xs text-gray-500 mb-1">KPI On Track</div>
+                    <div className="text-blue-700 font-bold text-base">{userKpiBreakdown.onTrack + userKpiBreakdown.exceeding}</div>
+                    <div className="text-gray-400 text-xs">of {userKpiBreakdown.total} KPIs</div>
                   </div>
-
-                  <div className="bg-white rounded-lg p-3 border border-gray-100">
-                    <div className="text-xs font-medium text-gray-600 mb-1">Next Milestone</div>
-                    <div className="text-sm text-gray-900">{skillset.nextGoal}</div>
-                  </div>
-
-                  <button 
-                    className="w-full py-2 px-4 rounded-lg font-medium text-sm transition-colors hover:opacity-90"
-                    style={{ 
-                      backgroundColor: skillset.color,
-                      color: 'white'
+                  <div
+                    className={`bg-white rounded-lg border border-gray-100 shadow-sm p-3 flex flex-col items-start justify-center transition-all duration-300 hover:shadow-lg hover:-translate-y-1 ${canViewCoach ? 'cursor-pointer' : ''}`}
+                    onClick={() => {
+                      if (canViewCoach) navigate('/coach');
                     }}
                   >
-                    View Details
-                  </button>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </div>
-    </div>
-  );
-};
-
-// Simplified other pages to avoid errors
-const ContestsPage = ({ currentUser }: { currentUser: User }) => {
-  return (
-    <div className="p-6">
-      <h1 className="text-2xl font-bold text-gray-900 mb-4">Sales Contests</h1>
-      <p className="text-gray-600 mb-6">Gamify performance and drive results</p>
-      
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="bg-white rounded-xl p-6 shadow-sm border">
-          <div className="flex justify-between items-start mb-4">
-            <h3 className="font-semibold text-lg">Call Volume Challenge</h3>
-            <span className="px-2 py-1 text-xs rounded-full bg-green-100 text-green-800">Active</span>
-          </div>
-          <p className="text-gray-600 text-sm mb-4">Most calls this week wins $100 gift card</p>
-          <div className="space-y-2 text-sm">
-            <div className="flex justify-between">
-              <span className="text-gray-500">Participants:</span>
-              <span>12</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-gray-500">Leader:</span>
-              <span className="font-medium">Sarah Johnson</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-gray-500">Prize:</span>
-              <span className="text-green-600 font-medium">$100 Gift Card</span>
-            </div>
-          </div>
-          <button className="w-full mt-4 bg-blue-50 text-blue-600 py-2 rounded-lg hover:bg-blue-100">
-            View Leaderboard
-          </button>
-        </div>
-
-        <div className="bg-white rounded-xl p-6 shadow-sm border">
-          <div className="flex justify-between items-start mb-4">
-            <h3 className="font-semibold text-lg">Pipeline Generation</h3>
-            <span className="px-2 py-1 text-xs rounded-full bg-blue-100 text-blue-800">Upcoming</span>
-          </div>
-          <p className="text-gray-600 text-sm mb-4">Highest pipeline value this month</p>
-          <div className="space-y-2 text-sm">
-            <div className="flex justify-between">
-              <span className="text-gray-500">Participants:</span>
-              <span>8</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-gray-500">Starts:</span>
-              <span>Sept 9</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-gray-500">Prize:</span>
-              <span className="text-green-600 font-medium">Team Lunch</span>
-            </div>
-          </div>
-          <button className="w-full mt-4 bg-gray-50 text-gray-600 py-2 rounded-lg">
-            Coming Soon
-          </button>
-        </div>
-
-        <div className="bg-white rounded-xl p-6 shadow-sm border">
-          <div className="flex justify-between items-start mb-4">
-            <h3 className="font-semibold text-lg">Meeting Master</h3>
-            <span className="px-2 py-1 text-xs rounded-full bg-gray-100 text-gray-800">Completed</span>
-          </div>
-          <p className="text-gray-600 text-sm mb-4">Most meetings booked last quarter</p>
-          <div className="space-y-2 text-sm">
-            <div className="flex justify-between">
-              <span className="text-gray-500">Winner:</span>
-              <span className="font-medium">Mike Chen</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-gray-500">Score:</span>
-              <span>47 meetings</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-gray-500">Prize:</span>
-              <span className="text-green-600 font-medium">$500 Bonus</span>
-            </div>
-          </div>
-          <button className="w-full mt-4 bg-yellow-50 text-yellow-600 py-2 rounded-lg">
-            View Results
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-const AnalyticsPage = ({ currentUser }: { currentUser: User }) => {
-  return (
-    <div className="p-6">
-      <h1 className="text-2xl font-bold text-gray-900 mb-4">Analytics Dashboard</h1>
-      <p className="text-gray-600 mb-6">Advanced reporting and insights</p>
-      
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-        <div className="bg-white p-6 rounded-xl shadow-sm border">
-          <div className="flex items-center justify-between">
-            <div>
-              <h3 className="text-sm font-medium text-gray-600">Total Calls</h3>
-              <p className="text-2xl font-bold text-blue-600">1,247</p>
-              <p className="text-sm text-green-600">+12% vs last month</p>
-            </div>
-            <Phone className="text-blue-600" size={24} />
-          </div>
-        </div>
-        
-        <div className="bg-white p-6 rounded-xl shadow-sm border">
-          <div className="flex items-center justify-between">
-            <div>
-              <h3 className="text-sm font-medium text-gray-600">Meetings</h3>
-              <p className="text-2xl font-bold text-green-600">89</p>
-              <p className="text-sm text-green-600">+8% vs last month</p>
-            </div>
-            <Calendar className="text-green-600" size={24} />
-          </div>
-        </div>
-        
-        <div className="bg-white p-6 rounded-xl shadow-sm border">
-          <div className="flex items-center justify-between">
-            <div>
-              <h3 className="text-sm font-medium text-gray-600">Pipeline</h3>
-              <p className="text-2xl font-bold text-purple-600">$284K</p>
-              <p className="text-sm text-green-600">+15% vs last month</p>
-            </div>
-            <Target className="text-purple-600" size={24} />
-          </div>
-        </div>
-        
-        <div className="bg-white p-6 rounded-xl shadow-sm border">
-          <div className="flex items-center justify-between">
-            <div>
-              <h3 className="text-sm font-medium text-gray-600">Team Score</h3>
-              <p className="text-2xl font-bold text-orange-600">88%</p>
-              <p className="text-sm text-green-600">+5% vs last month</p>
-            </div>
-            <TrendingUp className="text-orange-600" size={24} />
-          </div>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="bg-white rounded-xl p-6 shadow-sm border">
-          <h2 className="text-xl font-semibold mb-4">Performance Trends</h2>
-          <div className="h-64 bg-gray-50 rounded-lg flex items-center justify-center">
-            <span className="text-gray-500">Chart visualization</span>
-          </div>
-        </div>
-
-        <div className="bg-white rounded-xl p-6 shadow-sm border">
-          <h2 className="text-xl font-semibold mb-4">Top Performers</h2>
-          <div className="space-y-3">
-            {['Sarah Johnson', 'Mike Chen', 'Alex Rivera', 'Jordan Smith'].map((name, index) => (
-              <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                <div className="flex items-center gap-3">
-                  <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm ${
-                    index === 0 ? 'bg-yellow-500 text-white' : 'bg-gray-200 text-gray-600'
-                  }`}>
-                    {index + 1}
+                    <div className="text-xs text-gray-500 mb-1">Needs Focus</div>
+                    <div className="text-orange-600 font-bold text-base">{userKpiBreakdown.needsFocus}</div>
+                    <div className="text-gray-400 text-xs">Coaching opportunities</div>
                   </div>
-                  <span className="font-medium">{name}</span>
-                </div>
-                <span className="font-bold">{96 - index * 3}%</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-const SystemsPage = ({ currentUser }: { currentUser: User }) => {
-  const [activeTab, setActiveTab] = useState('integrations');
-  
-  const integrations = [
-    { name: 'Salesforce', connected: true, icon: '☁️', status: 'Active' },
-    { name: 'Outreach.io', connected: true, icon: '📧', status: 'Active' },
-    { name: 'Salesloft', connected: false, icon: '📊', status: 'Not Connected' },
-    { name: 'Gong.io', connected: true, icon: '🎙️', status: 'Active' },
-    { name: 'Microsoft Outlook', connected: false, icon: '📅', status: 'Not Connected' },
-    { name: 'HubSpot', connected: false, icon: '🧡', status: 'Available' }
-  ];
-
-  return (
-    <div className="p-6">
-      <h1 className="text-2xl font-bold text-gray-900 mb-4">Systems Management</h1>
-      <p className="text-gray-600 mb-6">Manage integrations and system settings</p>
-
-      <div className="flex space-x-1 bg-white rounded-lg p-1 mb-6 shadow-sm">
-        <button
-          onClick={() => setActiveTab('integrations')}
-          className={`px-4 py-2 rounded-md transition-colors flex-1 text-center ${
-            activeTab === 'integrations' ? 'bg-blue-500 text-white' : 'text-gray-600 hover:bg-gray-50'
-          }`}
-        >
-          Integrations
-        </button>
-        <button
-          onClick={() => setActiveTab('teams')}
-          className={`px-4 py-2 rounded-md transition-colors flex-1 text-center ${
-            activeTab === 'teams' ? 'bg-blue-500 text-white' : 'text-gray-600 hover:bg-gray-50'
-          }`}
-        >
-          Teams
-        </button>
-      </div>
-
-      {activeTab === 'integrations' && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {integrations.map((integration, index) => (
-            <div key={index} className="bg-white rounded-xl p-6 shadow-sm border">
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center gap-3">
-                  <span className="text-2xl">{integration.icon}</span>
-                  <div>
-                    <h3 className="font-semibold">{integration.name}</h3>
-                    <p className="text-sm text-gray-500">Sales integration</p>
-                  </div>
-                </div>
-                <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                  integration.connected 
-                    ? 'bg-green-100 text-green-800' 
-                    : 'bg-gray-100 text-gray-800'
-                }`}>
-                  {integration.status}
-                </span>
-              </div>
-              
-              <button className={`w-full py-2 px-4 rounded-lg font-medium ${
-                integration.connected
-                  ? 'bg-red-500 text-white hover:bg-red-600'
-                  : 'bg-blue-500 text-white hover:bg-blue-600'
-              }`}>
-                {integration.connected ? 'Disconnect' : 'Connect'}
-              </button>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {activeTab === 'teams' && (
-        <div className="bg-white rounded-xl p-6 shadow-sm border">
-          <div className="flex justify-between items-center mb-6">
-            <h3 className="text-xl font-semibold">Sales Team A</h3>
-            <button className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 flex items-center gap-2">
-              <UserPlus size={16} />
-              Add Member
-            </button>
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {[
-              { name: 'Sarah Johnson', role: 'Manager', email: 'sarah.j@company.com' },
-              { name: 'Mike Chen', role: 'AE', email: 'mike.c@company.com' },
-              { name: 'Alex Rivera', role: 'SDR', email: 'alex.r@company.com' }
-            ].map((member, index) => (
-              <div key={index} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center">
-                    <span className="text-white text-sm font-semibold">
-                      {member.name.split(' ').map(n => n[0]).join('')}
-                    </span>
-                  </div>
-                  <div>
-                    <div className="font-medium text-sm">{member.name}</div>
-                    <div className="text-xs text-gray-500">{member.email}</div>
-                    <span className={`inline-block px-2 py-1 text-xs rounded-full mt-1 ${
-                      member.role === 'Manager' ? 'bg-purple-100 text-purple-800' :
-                      member.role === 'AE' ? 'bg-green-100 text-green-800' :
-                      'bg-blue-100 text-blue-800'
-                    }`}>
-                      {member.role}
-                    </span>
-                  </div>
-                </div>
-                <button className="text-red-500 hover:text-red-600 p-1">
-                  <Trash2 size={14} />
-                </button>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-    </div>
-  );
-};
-
-const ProfilePage = ({ currentUser }: { currentUser: User }) => {
-  const [profile, setProfile] = useState({
-    name: currentUser.name,
-    phone: currentUser.phone,
-    timezone: 'EST'
-  });
-
-  const [isEditing, setIsEditing] = useState(false);
-
-  return (
-    <div className="p-6">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">Profile Settings</h1>
-        <p className="text-gray-600">Manage your personal information</p>
-      </div>
-
-      <div className="max-w-2xl">
-        <div className="bg-white rounded-xl p-6 shadow-sm border mb-6">
-          <h2 className="text-lg font-semibold mb-4">Profile Photo</h2>
-          <div className="flex items-center gap-4">
-            <div className="w-20 h-20 bg-blue-500 rounded-full flex items-center justify-center">
-              <span className="text-white font-bold text-xl">
-                {profile.name.split(' ').map((n: string) => n[0]).join('')}
-              </span>
-            </div>
-            <div>
-              <button className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 flex items-center gap-2">
-                <Camera size={16} />
-                Upload Photo
-              </button>
-              <p className="text-xs text-gray-500 mt-1">JPG, PNG up to 5MB</p>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white rounded-xl p-6 shadow-sm border">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-lg font-semibold">Personal Information</h2>
-            <button
-              onClick={() => setIsEditing(!isEditing)}
-              className="text-blue-500 hover:text-blue-600 flex items-center gap-1"
-            >
-              <Edit size={16} />
-              {isEditing ? 'Cancel' : 'Edit'}
-            </button>
-          </div>
-
-          <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
-              {isEditing ? (
-                <input
-                  type="text"
-                  value={profile.name}
-                  onChange={(e) => setProfile({...profile, name: e.target.value})}
-                  className="w-full px-3 py-2 border rounded-lg"
-                />
+                </>
               ) : (
-                <p className="text-gray-900">{profile.name}</p>
+                <>
+                  <div className="bg-white rounded-lg border border-gray-100 shadow-sm p-3 flex flex-col items-start justify-center transition-all duration-300 hover:shadow-lg hover:-translate-y-1">
+                    <div className="text-xs text-gray-500 mb-1">Top Performer</div>
+                    <div className="text-green-600 font-bold text-base">{data.topPerformer?.name || 'N/A'}</div>
+                    <div className="text-gray-400 text-xs">{data.topPerformer?.score || 0}% Score</div>
+                  </div>
+                  <div className="bg-white rounded-lg border border-gray-100 shadow-sm p-3 flex flex-col items-start justify-center transition-all duration-300 hover:shadow-lg hover:-translate-y-1">
+                    <div className="text-xs text-gray-500 mb-1">Active Reps</div>
+                    <div className="text-blue-700 font-bold text-base">{data.rows.length}</div>
+                    <div className="text-gray-400 text-xs">In selected filters</div>
+                  </div>
+                  <div className="bg-white rounded-lg border border-gray-100 shadow-sm p-3 flex flex-col items-start justify-center transition-all duration-300 hover:shadow-lg hover:-translate-y-1">
+                    <div className="text-xs text-gray-500 mb-1">Score Spread</div>
+                    <div className="text-purple-600 font-bold text-base">{teamScoreStats.spread}%</div>
+                    <div className="text-gray-400 text-xs">Highest vs lowest</div>
+                  </div>
+                  <div
+                    className={`bg-white rounded-lg border border-gray-100 shadow-sm p-3 flex flex-col items-start justify-center transition-all duration-300 hover:shadow-lg hover:-translate-y-1 ${canViewCoach ? 'cursor-pointer' : ''}`}
+                    onClick={() => {
+                      if (canViewCoach) navigate('/coach');
+                    }}
+                  >
+                    <div className="text-xs text-gray-500 mb-1">Lowest Score</div>
+                    <div className="text-orange-600 font-bold text-base">{teamScoreStats.min}%</div>
+                    <div className="text-gray-400 text-xs">Bottom performer</div>
+                  </div>
+                </>
               )}
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Phone Number</label>
-              {isEditing ? (
-                <input
-                  type="tel"
-                  value={profile.phone}
-                  onChange={(e) => setProfile({...profile, phone: e.target.value})}
-                  className="w-full px-3 py-2 border rounded-lg"
-                />
-              ) : (
-                <p className="text-gray-900">{profile.phone}</p>
-              )}
-            </div>
-
-            {isEditing && (
-              <div className="flex gap-2 pt-4">
-                <button
-                  onClick={() => setIsEditing(false)}
-                  className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 flex items-center gap-2"
-                >
-                  <Save size={16} />
-                  Save Changes
-                </button>
+            {(isManager || isCoach) && (hasPermission as any)('view_team_snapshot') && (
+              <div className="bg-white rounded-lg p-4 shadow-sm mb-4">
+                <div className="flex items-start justify-between flex-wrap gap-3">
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <h3 className="text-sm font-semibold text-gray-900">Team Snapshot</h3>
+                      <InfoTooltip text="High-level summary of team scorecard health for the selected filters." />
+                    </div>
+                    <p className="text-xs text-gray-500">Quick view of your direct team performance</p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {canViewCoach && (
+                      <button
+                        onClick={() => navigate('/coach')}
+                        className="px-3 py-1.5 rounded-md text-xs font-semibold bg-purple-50 text-purple-700 hover:bg-purple-100"
+                      >
+                        Coach Team
+                      </button>
+                    )}
+                    {canViewAnalytics && (
+                      <button
+                        onClick={() => navigate('/analytics')}
+                        className="px-3 py-1.5 rounded-md text-xs font-semibold bg-blue-50 text-blue-700 hover:bg-blue-100"
+                      >
+                        View Analytics
+                      </button>
+                    )}
+                    {canViewContests && (
+                      <button
+                        onClick={() => navigate('/contests')}
+                        className="px-3 py-1.5 rounded-md text-xs font-semibold bg-green-50 text-green-700 hover:bg-green-100"
+                      >
+                        Team Contests
+                      </button>
+                    )}
+                  </div>
+                </div>
+                <div className="mt-3 grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
+                  <div className="bg-slate-50 rounded-lg p-3">
+                    <div className="text-gray-500">Team Average</div>
+                    <div className="text-lg font-bold text-blue-700">{data.teamAverage}%</div>
+                  </div>
+                  <div className="bg-slate-50 rounded-lg p-3">
+                    <div className="text-gray-500">Above Target</div>
+                    <div className="text-lg font-bold text-emerald-600">{data.aboveTarget}</div>
+                  </div>
+                  <div className="bg-slate-50 rounded-lg p-3">
+                    <div className="text-gray-500">Need Coaching</div>
+                    <div className="text-lg font-bold text-orange-600">{data.needCoaching}</div>
+                  </div>
+                </div>
               </div>
             )}
-          </div>
-        </div>
+
+            {/* Charts Section */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
+              <ScoreDistributionChart
+                title={isPowerUser ? 'My KPI Health' : 'Score Distribution'}
+                infoText="Shows the count of KPIs that are exceeding, on track, or below target for the current selection."
+                data={isPowerUser ? [
+                  { name: 'Exceeding (≥100%)', value: userKpiBreakdown.exceeding, kpis: kpiCategoryDetails.exceeding },
+                  { name: 'On Track (80-99%)', value: userKpiBreakdown.onTrack, kpis: kpiCategoryDetails.onTrack },
+                  { name: 'Needs Focus (<80%)', value: userKpiBreakdown.needsFocus, kpis: kpiCategoryDetails.needsFocus },
+                ] : [
+                  { name: 'Exceeding (≥100%)', value: data.rows.filter(r => r.apptivityScore >= 100).length },
+                  { name: 'On Track (80-99%)', value: data.rows.filter(r => r.apptivityScore >= 80 && r.apptivityScore < 100).length },
+                  { name: 'Below Target (<80%)', value: data.rows.filter(r => r.apptivityScore < 80).length },
+                ]}
+              />
+              <HistoricalScoresChart
+                title="Apptivia Score Trends"
+                infoText="Weekly trend of the average Apptivia score for the selected filters and date range."
+                data={historicalScores}
+              />
+            </div>
+
+            <div className="bg-white rounded-lg p-3 shadow-sm mb-4 ring-1 ring-blue-100/80 shadow-blue-100/40">
+              <div className="flex items-center gap-2">
+                <h2 className="text-base font-semibold">{isPowerUser ? 'My Scorecard Snapshot' : 'Team Performance Scorecard'}</h2>
+                <InfoTooltip text="Detailed KPI values and scorecard percentages for the current selection." />
+              </div>
+              <div className="flex items-center justify-between gap-3 mb-2">
+                <div className="text-xs text-gray-500">
+                  {isPowerUser ? 'Your performance metrics with optional benchmarking' : 'Detailed performance metrics and Apptivia Scores'}
+                </div>
+                <div className="text-[11px] text-gray-500 text-right whitespace-nowrap">{filterSummary}</div>
+              </div>
+              <div className="overflow-x-auto overflow-y-auto max-h-[600px]">
+                {data.rows.length === 0 ? (
+                  <div className="text-center py-8 text-gray-500">No data available for selected filters</div>
+                ) : (
+                  <table className="min-w-full text-xs text-left table-fixed">
+                    <thead>
+                      <tr className="bg-gray-50">
+                        <th className="px-2 py-1 font-semibold w-40">Rep Name</th>
+                        {kpiKeys.map(key => (
+                          <th key={key} className="px-2 py-1 font-semibold text-center w-24">
+                            {kpiLabels[key]}<br />
+                            <span className='font-normal'>Goal varies</span>
+                          </th>
+                        ))}
+                        <th className="px-2 py-1 font-semibold text-center w-24">Apptivia Score</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {data.rows.map((row, idx) => {
+                        const medal = idx === 0 ? '🏆' : idx === 1 ? '🥈' : idx === 2 ? '🥉' : '';
+                        const rowClass = row.apptivityScore >= 100 ? 'bg-green-50' : '';
+                        const scoreColor = row.apptivityScore >= 100 ? 'text-green-600' : row.apptivityScore >= 80 ? 'text-yellow-500' : 'text-red-500';
+                        return (
+                          <tr key={row.profile_id} className={`${rowClass} transition-all duration-200 hover:bg-gray-50 hover:shadow-sm`}>
+                            <td className="px-2 py-1 font-medium flex items-center gap-1 w-40">
+                              {medal && <span className="text-yellow-500">{medal}</span>} {row.name}
+                            </td>
+                            {kpiKeys.map(key => {
+                              const kpi = row.kpis[key] || { value: 0, percentage: 0 };
+                              const pct = Math.round(kpi.percentage);
+                              const color = pct >= 100 ? 'text-green-600' : pct >= 80 ? 'text-yellow-500' : 'text-red-500';
+                              const skillsetKey = KPI_SKILLSET_MAP[key];
+                              const skillset = skillsetKey ? coachSkillsetsByName.get(skillsetKey) : null;
+                              const isCoachActionable = isPowerUser && canViewCoach && pct < 80 && !!skillset;
+                              return (
+                                <td key={key} className="px-2 py-1 text-center w-24">
+                                  {isCoachActionable ? (
+                                    <button
+                                      type="button"
+                                      onClick={() => openCoachForKpi(key, skillset?.next_achievement)}
+                                      className="w-full text-center hover:text-blue-700"
+                                    >
+                                      {Math.round(kpi.value * 10) / 10}<br />
+                                      <span className={color}>{pct}%</span>
+                                      <div className="text-[10px] text-blue-600 mt-0.5">Coach</div>
+                                    </button>
+                                  ) : (
+                                    <>
+                                      {Math.round(kpi.value * 10) / 10}<br />
+                                      <span className={color}>{pct}%</span>
+                                    </>
+                                  )}
+                                </td>
+                              );
+                            })}
+                            <td className="px-2 py-1 text-center w-24">
+                              <span className={`font-bold ${scoreColor}`}>{row.apptivityScore}%</span>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                )}
+              </div>
+            </div>
+
+            {isPowerUser && (
+              <div className="bg-white rounded-lg p-4 shadow-sm mb-4">
+                <div className="flex items-start justify-between gap-3 mb-3">
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <h2 className="text-base font-semibold">Coaching Opportunities</h2>
+                      <InfoTooltip text="Highlights KPIs below target and the recommended skillset to improve next." />
+                    </div>
+                    <p className="text-xs text-gray-500">
+                      KPI areas needing focus with suggested skillset improvements and next achievements.
+                    </p>
+                  </div>
+                  {canViewCoach && (
+                    <button
+                      onClick={() => navigate('/coach')}
+                      className="px-3 py-1.5 rounded-md text-xs font-semibold bg-purple-50 text-purple-700 hover:bg-purple-100"
+                    >
+                      Open Coach
+                    </button>
+                  )}
+                </div>
+
+                {coachLoading ? (
+                  <div className="text-xs text-gray-500">Loading coaching insights...</div>
+                ) : coachError ? (
+                  <div className="text-xs text-red-600 bg-red-50 border border-red-100 rounded-lg p-3">
+                    Coaching insights are taking longer than expected. You can still open Coach to explore skillsets.
+                  </div>
+                ) : coachingOpportunities.length === 0 ? (
+                  <div className="text-xs text-emerald-600 bg-emerald-50 border border-emerald-100 rounded-lg p-3">
+                    All KPIs are on track. Keep up the momentum!
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    {coachingOpportunities.map((item) => (
+                      <button
+                        key={item.kpiKey}
+                        type="button"
+                        onClick={() => openCoachForKpi(item.kpiKey, item.nextAchievement)}
+                        className={`text-left border rounded-lg p-3 transition-all ${canViewCoach ? 'hover:shadow-md hover:border-blue-200' : ''}`}
+                        disabled={!canViewCoach}
+                      >
+                        <div className="flex items-center justify-between mb-2">
+                          <div className="font-semibold text-gray-900">{item.kpiLabel}</div>
+                          <div className="text-xs font-semibold text-red-600">{item.percentage}%</div>
+                        </div>
+                        <div className="text-xs text-gray-500 mb-1">Suggested skillset</div>
+                        <div className="flex items-center gap-2 text-sm font-medium text-gray-900">
+                          <span className="inline-flex w-2.5 h-2.5 rounded-full" style={{ backgroundColor: item.skillsetColor }} />
+                          {item.skillsetName}
+                        </div>
+                        <div className="mt-2 text-xs text-gray-500">Next achievement</div>
+                        <div className="text-sm text-gray-900">{item.nextAchievement}</div>
+                        {canViewCoach && (
+                          <div className="mt-2 text-[11px] text-blue-600 font-semibold">View in Coach →</div>
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+          </>
+        )}
       </div>
-    </div>
+      <ConfigurePanel
+        isOpen={configPanelOpen}
+        onClose={() => setConfigPanelOpen(false)}
+        onOpenAdvanced={() => setShowConfigModal(true)}
+        onSave={handleConfigSave}
+      />
+      <ConfigureModal 
+        isOpen={showConfigModal} 
+        onClose={() => setShowConfigModal(false)}
+        onSave={handleConfigSave}
+      />
+      <RightFilterPanel
+        isOpen={filtersOpen}
+        onClose={() => setFiltersOpen(false)}
+        title="Scorecard Filters"
+        subtitle="Narrow your results"
+        showReset
+        onReset={handleResetFilters}
+      >
+        <ScorecardFilters
+          onFilterChange={handleFiltersChange}
+          initialFilters={defaultFilters}
+          resetSignal={filtersResetSignal}
+          restrictToTeams={(isManager || isCoach) && teamId ? [teamId] : undefined}
+        />
+      </RightFilterPanel>
+      <ShareScorecardSnapshotModal
+        isOpen={snapshotOpen}
+        onClose={() => setSnapshotOpen(false)}
+        scorecardData={{
+          teamAverage: Math.round(data.teamAverage || 0),
+          totalMembers: data.rows?.length || 0,
+          dateRange: filters.dateRange || 'This Week',
+          topPerformers: data.rows?.slice(0, 5).map(d => ({
+            name: d.name,
+            score: d.apptivityScore,
+            percentage: `${d.apptivityScore}%`
+          })) || [],
+          needsImprovement: data.rows?.filter(d => d.apptivityScore < 80).slice(-5).reverse().map(d => ({
+            name: d.name,
+            score: d.apptivityScore,
+            percentage: `${d.apptivityScore}%`
+          })) || [],
+          scoreDistribution: {
+            excellent: data.rows?.filter(d => d.apptivityScore >= 90).length || 0,
+            good: data.rows?.filter(d => d.apptivityScore >= 70 && d.apptivityScore < 90).length || 0,
+            fair: data.rows?.filter(d => d.apptivityScore >= 50 && d.apptivityScore < 70).length || 0,
+            poor: data.rows?.filter(d => d.apptivityScore < 50).length || 0,
+          }
+        }}
+        filters={filters}
+      />
+      <CoachingPlanPanel
+        isOpen={coachingPlanOpen}
+        onClose={() => setCoachingPlanOpen(false)}
+        audienceLabel={isPowerUser ? 'My Coaching Plan' : filterSummary}
+        scorecardData={data}
+        coachData={planCoachData}
+        historicalScores={historicalScores}
+        kpiMetrics={kpiMetrics}
+        kpiLabels={kpiLabels}
+        currentUserId={userId}
+        role={role}
+        selectedMembers={planMembers}
+      />
+    </DashboardLayout>
   );
 };
 
 export default ApptiviaScorecard;
+

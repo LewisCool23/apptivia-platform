@@ -1,9 +1,19 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
 
+import React, { createContext, useContext, useState, useEffect, useMemo, useCallback } from 'react';
+import { supabase } from './supabaseClient';
+import {
+  normalizeRole,
+  getPermissionOverrides,
+  setPermissionOverrides,
+  getEffectivePermissions,
+  hasPermission as hasPermissionCheck
+} from './permissions';
 const AuthContext = createContext(null);
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
+  const [profile, setProfile] = useState(null);
+  const [permissionsVersion, setPermissionsVersion] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
 
   // Check for stored session on mount
@@ -41,6 +51,55 @@ export const AuthProvider = ({ children }) => {
     console.log('[AuthContext] updateUser called. User updated and saved to localStorage:', updatedUser);
   };
 
+  const refreshProfile = useCallback(async () => {
+    if (!user?.id) {
+      setProfile(null);
+      return;
+    }
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', user.id)
+      .single();
+
+    if (!error) {
+      setProfile(data);
+    } else {
+      console.error('Error fetching profile:', error);
+    }
+  }, [user?.id]);
+
+  useEffect(() => {
+    refreshProfile();
+  }, [refreshProfile]);
+
+  const role = useMemo(() => normalizeRole(profile?.role || user?.role), [profile?.role, user?.role]);
+  const permissionOverrides = useMemo(
+    () => getPermissionOverrides(user?.id),
+    [user?.id, permissionsVersion]
+  );
+  const effectivePermissions = useMemo(
+    () => getEffectivePermissions({
+      role,
+      permissionOverrides,
+      explicitPermissions: Array.isArray(profile?.permissions) ? profile.permissions : []
+    }),
+    [role, permissionOverrides, profile?.permissions]
+  );
+
+  const hasPermission = useCallback(
+    (permissionKey) => hasPermissionCheck(effectivePermissions, permissionKey),
+    [effectivePermissions]
+  );
+
+  const updatePermissionOverridesForUser = useCallback((userId, overrides) => {
+    setPermissionOverrides(userId, overrides);
+    setPermissionsVersion((prev) => prev + 1);
+    if (user?.id && userId === user.id) {
+      refreshProfile();
+    }
+  }, [user?.id, refreshProfile]);
+
   useEffect(() => {
     console.log('[AuthContext] user state changed:', user);
     console.log('[AuthContext] isAuthenticated:', !!(user && user.id && user.email));
@@ -53,11 +112,17 @@ export const AuthProvider = ({ children }) => {
   }, []);
   const value = {
     user,
+    profile,
+    role,
+    permissions: effectivePermissions,
+    hasPermission,
     isLoading,
     isAuthenticated,
     login,
     logout,
-    updateUser
+    updateUser,
+    refreshProfile,
+    updatePermissionOverridesForUser
   };
 
   return (

@@ -1,19 +1,55 @@
-<<<<<<< HEAD
 # Apptivia Platform
 
 A modern sales productivity platform built with React, Tailwind CSS, Supabase, and Socket.io.
 
-## Setup
-- Install dependencies
-- Configure Supabase and Socket.io
-- Build and deploy to Hostinger
-=======
-# Apptivia Frontend
+## Features
+- **Apptivia Scorecard**: Performance tracking and KPI monitoring
+- **Apptivia Coach**: Skill development and coaching insights
+- **Contests**: Sales competitions and leaderboards
+- **Analytics**: Advanced reporting and insights
+- **Real-time Updates**: Live data via Socket.io
+- **Badge & Achievement System**: Gamification and recognition
 
-This folder contains the frontend code for Apptivia.
-
 ## Setup
-- Copy .env.example to .env and fill in your secrets.
-- Run `npm install` to install dependencies.
-- Build with `npm run build` and deploy the contents of the build/ folder.
->>>>>>> da3a302 (Initial commit for new frontend structure)
+
+### Prerequisites
+- Node.js 18+
+- npm or yarn
+- Supabase account
+- Socket.io server (for real-time features)
+
+### Installation
+
+1. Clone the repository
+2. Copy `.env.example` to `.env` and configure:
+   ```bash
+   REACT_APP_SUPABASE_URL=your-supabase-url
+   REACT_APP_SUPABASE_ANON_KEY=your-supabase-anon-key
+   REACT_APP_SOCKET_IO_URL=your-socket-server-url
+   ```
+3. Install dependencies:
+   ```bash
+   npm install
+   ```
+4. Start development server:
+   ```bash
+   npm start
+   ```
+5. Build for production:
+   ```bash
+   npm run build
+   ```
+
+## Project Structure
+```
+src/
+  ├── components/     # Reusable UI components
+  ├── pages/          # Page components
+  ├── hooks/          # Custom React hooks
+  ├── contexts/       # React contexts
+  ├── utils/          # Utility functions
+  └── App.jsx         # Main app component
+```
+
+## Deployment
+Deploy the contents of the `build/` folder to your hosting provider.
