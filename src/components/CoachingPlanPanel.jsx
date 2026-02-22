@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from 'react';
+import { backendFetch } from '../utils/backendFetch';
 import { useNavigate } from 'react-router-dom';
 import { BadgeCheck, ClipboardCheck, Send, Target, TrendingUp, Users, FolderOpen, Share2 } from 'lucide-react';
 import RightFilterPanel from './RightFilterPanel';
@@ -110,6 +111,70 @@ const KPI_GUIDANCE = {
       'Focus on multi-threading to reduce single-thread risk.',
       'Capture and re-use winning talk tracks.'
     ]
+  },
+  sequences_created: {
+    title: 'Sequences Created',
+    tips: [
+      'Build sequences for common personas (champion, decision-maker, influencer).',
+      'Start with 5-7 step sequences mixing email, LinkedIn, and calls.',
+      'Clone and personalize top-performing sequences for new verticals.'
+    ]
+  },
+  prospects_enrolled: {
+    title: 'Prospects Enrolled',
+    tips: [
+      'Enroll prospects from intent signals immediately — timing matters.',
+      'Batch-enroll prospects from account intelligence research sessions.',
+      'Re-enroll warm prospects who went cold with a fresh sequence.'
+    ]
+  },
+  sequence_replies: {
+    title: 'Sequence Replies',
+    tips: [
+      'Personalize the first line of every email with account-specific context.',
+      'Use the AI Playbook Builder to generate context-rich messaging.',
+      'Test subject lines and CTAs weekly — small tweaks drive big reply gains.'
+    ]
+  },
+  accounts_researched: {
+    title: 'Accounts Researched',
+    tips: [
+      'Use the Accounts tab to research every new prospect\'s company before outreach.',
+      'Build buying committee maps for Tier 1 and Tier 2 accounts.',
+      'Review AI risk factors and strategy recommendations before meetings.'
+    ]
+  },
+  playbooks_executed: {
+    title: 'Playbooks Executed',
+    tips: [
+      'Run signal-triggered playbooks as soon as new intent signals appear.',
+      'Execute account playbooks before every first meeting.',
+      'Use pipeline playbooks to unstick deals stuck in mid-stage.'
+    ]
+  },
+  outreach_drafts_sent: {
+    title: 'Outreach Drafts Sent',
+    tips: [
+      'Use AI drafts as a starting point and add personal touches.',
+      'Generate drafts for multiple channels — email, LinkedIn, call scripts.',
+      'Batch-generate drafts weekly to maintain outreach velocity.'
+    ]
+  },
+  engage_signals_actioned: {
+    title: 'Signals Actioned',
+    tips: [
+      'Check the Signal Prospecting tab daily for new high-intent signals.',
+      'Act on funding and hiring signals within 24 hours for best results.',
+      'Pair signals with account research before reaching out.'
+    ]
+  },
+  engage_deals_influenced: {
+    title: 'Deals Influenced',
+    tips: [
+      'Track which Engage activities contributed to deal progression.',
+      'Use account intelligence to multi-thread into stalled deals.',
+      'Run playbooks on at-risk deals to find new angles and stakeholders.'
+    ]
   }
 };
 
@@ -162,6 +227,37 @@ const ACTION_PLAYBOOKS = [
       'Qualify right-fit prospects and align on success criteria early.',
       'Finish demos with mutual action plans and timelines.',
       'Run weekly deal reviews to identify risks and unblock decisions.'
+    ]
+  },
+  {
+    id: 'engage-outreach-velocity',
+    title: 'Engage Outreach Velocity',
+    kpis: ['sequences_created', 'prospects_enrolled', 'outreach_drafts_sent', 'sequence_replies'],
+    steps: [
+      'Create persona-based sequences in Engage → Sequences for each ICP segment.',
+      'Batch-enroll prospects from signal and account research sessions weekly.',
+      'Use AI drafts to maintain 25+ outreach touches per day across channels.',
+      'Review reply rates weekly and A/B test messaging in underperforming sequences.'
+    ]
+  },
+  {
+    id: 'engage-account-intelligence',
+    title: 'Account Intelligence & Signals',
+    kpis: ['accounts_researched', 'engage_signals_actioned', 'engage_deals_influenced'],
+    steps: [
+      'Research all Tier 1 accounts in Engage → Accounts and build buying committees.',
+      'Check Signal Prospecting daily and act on high-intent signals within 24 hours.',
+      'Run AI playbooks on every at-risk deal to find new angles and stakeholders.'
+    ]
+  },
+  {
+    id: 'engage-playbook-execution',
+    title: 'Playbook Execution Sprint',
+    kpis: ['playbooks_executed', 'engage_deals_influenced', 'accounts_researched'],
+    steps: [
+      'Build signal-triggered and pipeline-stage playbooks in Engage → Playbooks.',
+      'Execute at least 2 playbooks per day — one signal-based, one deal-based.',
+      'Track playbook outcomes and refine strategies based on what works.'
     ]
   }
 ];
@@ -359,19 +455,58 @@ export default function CoachingPlanPanel({
     setSavingPlan(true);
     try {
       const payload = buildPlanPayload();
-      const { error } = await supabase
+
+      // Build structured fields from auto playbooks
+      const structuredGoals = autoPlaybooks.flatMap(pb =>
+        pb.steps.slice(0, 1).map(s => s)
+      );
+      const structuredActions = autoPlaybooks.flatMap(pb => pb.steps);
+      const structuredKpis = [...new Set(autoPlaybooks.flatMap(pb => pb.kpis))];
+      const structuredMetrics = laggingKpis.map(k => `Improve ${k.label} from ${k.percentage}% to 80%+`);
+      const planName = focusMemberId
+        ? `Auto Coaching Plan — ${audienceLabel || 'Team'}`
+        : `Auto Coaching Plan — ${audienceLabel || 'Team Snapshot'}`;
+
+      // Determine who to assign to
+      const assignTo = focusMemberId ? [focusMemberId] : (selectedMembers || []);
+
+      const insertData = {
+        created_by: currentUserId,
+        name: planName,
+        plan_type: 'auto',
+        content: payload.planText,
+        goals: structuredGoals.length > 0 ? structuredGoals : null,
+        focus_kpis: structuredKpis.length > 0 ? structuredKpis : null,
+        action_items: structuredActions.length > 0 ? structuredActions : null,
+        success_metrics: structuredMetrics.length > 0 ? structuredMetrics : null,
+        notes: `Auto-generated from scorecard data. Current score: ${currentScore}%. Lagging KPIs: ${laggingKpis.length}.`,
+        highlights: payload.highlights,
+        audience_label: payload.audienceLabel,
+        member_ids: payload.memberIds,
+        assigned_to: assignTo,
+        status: 'draft',
+      };
+
+      const { data: savedPlan, error } = await supabase
         .from('coaching_plans')
-        .insert({
-          created_by: currentUserId,
-          plan_type: payload.planType,
-          plan_text: payload.planText,
-          highlights: payload.highlights,
-          audience_label: payload.audienceLabel,
-          member_ids: payload.memberIds,
-          status: 'draft',
-        });
+        .insert(insertData)
+        .select()
+        .single();
+
       if (error) throw error;
-      toast.success('Coaching plan saved.');
+
+      // Also create assignment records for assigned users
+      if (savedPlan && assignTo.length > 0) {
+        const assignments = assignTo.map(memberId => ({
+          plan_id: savedPlan.id,
+          assigned_to: memberId,
+          assigned_by: currentUserId,
+          status: 'active',
+        }));
+        await supabase.from('coaching_plan_assignments').insert(assignments);
+      }
+
+      toast.success('Coaching plan saved and assigned! View it in Coaching Plans.');
     } catch (err) {
       console.error('Failed to save coaching plan', err);
       toast.error('Failed to save coaching plan.');
@@ -395,16 +530,7 @@ export default function CoachingPlanPanel({
       const payload = buildPlanPayload();
       const subject = `Weekly Coaching Plan • ${audienceLabel || 'Team'}`;
       const body = `${payload.planText}\n\nHighlights:\n- Current score: ${currentScore}%\n- Lagging KPIs: ${laggingKpis.length}\n- On track: ${onTrackKpis.length}\n- Exceeding: ${exceedingKpis.length}\n`;
-      const backendBase = process.env.REACT_APP_BACKEND_URL || '';
-      const res = await fetch(`${backendBase}/api/send-coaching-plan`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ recipients, subject, body }),
-      });
-      if (!res.ok) {
-        const msg = await res.text();
-        throw new Error(msg || 'Email failed');
-      }
+      await backendFetch('/api/send-coaching-plan', { recipients, subject, body });
 
       const planLabel = planMode === 'custom' ? 'custom plan' : 'auto plan';
       toast.success(`Coaching plan sent to ${recipients.length} rep${recipients.length === 1 ? '' : 's'}.`);

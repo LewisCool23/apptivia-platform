@@ -1,4 +1,40 @@
+import { supabase } from './supabaseClient';
+
 const STORAGE_KEY = 'apptivia.permissionOverrides';
+
+// ── DB-backed permission overrides ──────────────────────────────────────────
+// localStorage is kept as an instant-read cache; the DB is the source of truth.
+
+export async function loadPermissionOverridesFromDb(userId) {
+  if (!userId) return {};
+  try {
+    const { data, error } = await supabase
+      .from('user_permission_overrides')
+      .select('overrides')
+      .eq('user_id', userId)
+      .maybeSingle();
+    if (error || !data) return {};
+    return data.overrides || {};
+  } catch {
+    return {};
+  }
+}
+
+export async function savePermissionOverridesToDb(userId, organizationId, overrides) {
+  if (!userId) return;
+  await supabase
+    .from('user_permission_overrides')
+    .upsert(
+      {
+        user_id: userId,
+        organization_id: organizationId || null,
+        overrides: overrides || {},
+        updated_at: new Date().toISOString(),
+        updated_by: userId,
+      },
+      { onConflict: 'user_id' }
+    );
+}
 
 export const PERMISSIONS = [
   {
@@ -10,6 +46,11 @@ export const PERMISSIONS = [
     key: 'view_coach',
     label: 'View Apptivia Coach',
     description: 'Access coaching insights, skillset progress, and coaching tools.'
+  },
+  {
+    key: 'view_engage',
+    label: 'View Apptivia Engage',
+    description: 'Access AI-powered prospecting, company research, and outreach tools.'
   },
   {
     key: 'view_contests',
@@ -112,6 +153,11 @@ export const PERMISSIONS = [
     description: 'Export scorecard, analytics, or coaching data.'
   },
   {
+    key: 'manage_coaching_plans',
+    label: 'Manage Coaching Plans',
+    description: 'Create, edit, delete, and assign coaching plans to team members.'
+  },
+  {
     key: 'notifications_self',
     label: 'Personal Notifications',
     description: 'Receive notifications about your own performance.'
@@ -125,6 +171,36 @@ export const PERMISSIONS = [
     key: 'notifications_all',
     label: 'Organization Notifications',
     description: 'Receive notifications across the organization.'
+  },
+  {
+    key: 'manage_sequences',
+    label: 'Manage Sequences',
+    description: 'Create, edit, and manage outreach sequences and cadences.'
+  },
+  {
+    key: 'manage_accounts',
+    label: 'Manage Accounts',
+    description: 'Create, score, and manage account intelligence records.'
+  },
+  {
+    key: 'manage_playbooks',
+    label: 'Manage Playbooks',
+    description: 'Create and edit AI sales playbooks.'
+  },
+  {
+    key: 'run_playbooks',
+    label: 'Run Playbooks',
+    description: 'Execute AI playbooks against accounts and prospects.'
+  },
+  {
+    key: 'view_engage_analytics',
+    label: 'View Engage Analytics',
+    description: 'Access Engage performance analytics and reports.'
+  },
+  {
+    key: 'manage_prompts',
+    label: 'Manage Prompt Library',
+    description: 'Create, edit, and manage AI prompt templates in the Prompt Library.'
   }
 ];
 
@@ -132,6 +208,7 @@ export const ROLE_DEFAULT_PERMISSIONS = {
   admin: [
     'view_dashboard',
     'view_coach',
+    'view_engage',
     'view_contests',
     'view_analytics',
     'view_systems',
@@ -152,13 +229,21 @@ export const ROLE_DEFAULT_PERMISSIONS = {
     'join_contests',
     'withdraw_contests',
     'export_data',
+    'manage_coaching_plans',
     'notifications_self',
     'notifications_team',
-    'notifications_all'
+    'notifications_all',
+    'manage_sequences',
+    'manage_accounts',
+    'manage_playbooks',
+    'run_playbooks',
+    'view_engage_analytics',
+    'manage_prompts'
   ],
   manager: [
     'view_dashboard',
     'view_coach',
+    'view_engage',
     'view_contests',
     'view_analytics',
     'view_systems',
@@ -173,12 +258,20 @@ export const ROLE_DEFAULT_PERMISSIONS = {
     'join_contests',
     'withdraw_contests',
     'export_data',
+    'manage_coaching_plans',
     'notifications_self',
-    'notifications_team'
+    'notifications_team',
+    'manage_sequences',
+    'manage_accounts',
+    'manage_playbooks',
+    'run_playbooks',
+    'view_engage_analytics',
+    'manage_prompts'
   ],
   coach: [
     'view_dashboard',
     'view_coach',
+    'view_engage',
     'view_contests',
     'view_analytics',
     'view_profile',
@@ -189,18 +282,25 @@ export const ROLE_DEFAULT_PERMISSIONS = {
     'withdraw_contests',
     'export_data',
     'notifications_self',
-    'notifications_team'
+    'notifications_team',
+    'manage_sequences',
+    'manage_accounts',
+    'run_playbooks',
+    'view_engage_analytics'
   ],
   power_user: [
     'view_dashboard',
     'view_coach',
+    'view_engage',
     'view_contests',
     'view_profile',
     'view_own_data',
     'join_contests',
     'withdraw_contests',
     'export_data',
-    'notifications_self'
+    'notifications_self',
+    'manage_sequences',
+    'run_playbooks'
   ]
 };
 

@@ -2,6 +2,9 @@ import React, { useState, useEffect } from 'react';
 import RightFilterPanel from './RightFilterPanel';
 import { supabase } from '../supabaseClient';
 import { useToast } from '../contexts/ToastContext';
+import { useNotifications } from '../contexts/NotificationContext';
+
+const useNotificationsTyped = useNotifications as () => { addNotification: (n: Record<string, unknown>) => void };
 
 interface ContestCreationModalProps {
   isOpen: boolean;
@@ -61,6 +64,7 @@ const CONTEST_TEMPLATES = [
 
 export default function ContestCreationModal({ isOpen, onClose, currentUserId, contestToEdit }: ContestCreationModalProps) {
   const toast = useToast();
+  const { addNotification } = useNotificationsTyped();
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState('');
@@ -222,6 +226,24 @@ export default function ContestCreationModal({ isOpen, onClose, currentUserId, c
         }
         toast.dismiss(loadingToast);
         toast.success('Contest created successfully!');
+        // Notify managers/admins about new contest
+        addNotification({
+          type: 'contest',
+          title: 'New Contest Created',
+          message: `"${formData.name}" has been created and is ${new Date(formData.start_date) > new Date() ? 'upcoming' : 'now active'}!`,
+          link: '/contests',
+          dedupeKey: `contest-created-${contest.id}`,
+          audience: 'team',
+        });
+        // Notify the creator
+        addNotification({
+          type: 'contest',
+          title: 'Contest Created',
+          message: `You created "${formData.name}". All team members have been enrolled.`,
+          link: '/contests',
+          dedupeKey: `contest-created-self-${contest.id}`,
+          audience: 'self',
+        });
       }
 
       setTimeout(() => {
@@ -467,6 +489,7 @@ export default function ContestCreationModal({ isOpen, onClose, currentUserId, c
           <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded">
             <div className="text-sm text-blue-800">
               <strong>Note:</strong> All active team members will be automatically enrolled in this contest. 
+              You can also add specific members later using the <strong>Add Members</strong> button on the contest card.
               Leaderboards will update in real-time based on KPI performance.
             </div>
           </div>

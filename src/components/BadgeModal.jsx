@@ -38,7 +38,7 @@ export default function BadgeModal({ isOpen, onClose, badge, profileName }) {
   const getBadgeGraphic = (badgeName) => {
     const name = badgeName?.toLowerCase() || '';
     
-    if (name.includes('gold') || name.includes('platinum') || name.includes('elite')) {
+    if (name.includes('elite') || name.includes('gold') || name.includes('platinum')) {
       return (
         <div className="relative w-32 h-32 mx-auto mb-6">
           <div className="absolute inset-0 bg-gradient-to-br from-yellow-300 via-yellow-400 to-yellow-600 rounded-full animate-pulse shadow-2xl"></div>
@@ -50,7 +50,7 @@ export default function BadgeModal({ isOpen, onClose, badge, profileName }) {
           </div>
         </div>
       );
-    } else if (name.includes('silver') || name.includes('advanced')) {
+    } else if (name.includes('proficient') || name.includes('advanced') || name.includes('silver')) {
       return (
         <div className="relative w-32 h-32 mx-auto mb-6">
           <div className="absolute inset-0 bg-gradient-to-br from-gray-300 via-gray-400 to-gray-500 rounded-full shadow-2xl"></div>
@@ -62,7 +62,7 @@ export default function BadgeModal({ isOpen, onClose, badge, profileName }) {
           </div>
         </div>
       );
-    } else if (name.includes('bronze') || name.includes('starter')) {
+    } else if (name.includes('developing') || name.includes('intermediate') || name.includes('bronze') || name.includes('starter')) {
       return (
         <div className="relative w-32 h-32 mx-auto mb-6">
           <div className="absolute inset-0 bg-gradient-to-br from-orange-300 via-orange-400 to-orange-600 rounded-full shadow-2xl"></div>
@@ -74,7 +74,7 @@ export default function BadgeModal({ isOpen, onClose, badge, profileName }) {
           </div>
         </div>
       );
-    } else if (name.includes('diamond') || name.includes('master')) {
+    } else if (name.includes('master') || name.includes('diamond')) {
       return (
         <div className="relative w-32 h-32 mx-auto mb-6">
           <div className="absolute inset-0 bg-gradient-to-br from-cyan-300 via-blue-400 to-purple-500 rounded-full animate-pulse shadow-2xl"></div>

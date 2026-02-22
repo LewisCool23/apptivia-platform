@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../supabaseClient';
 import { useToast } from '../contexts/ToastContext';
+import ConfirmModal from './ConfirmModal';
 
 interface ConfigureModalProps {
   isOpen: boolean;
@@ -46,6 +47,7 @@ export default function ConfigureModal({ isOpen, onClose, onSave, currentUserId 
 
   // Scorecard KPIs state
   const [scorecardKpis, setScorecardKpis] = useState<string[]>([]);
+  const [deleteConfirm, setDeleteConfirm] = useState<{ isOpen: boolean; kpi: KPIConfig | null; isLoading: boolean }>({ isOpen: false, kpi: null, isLoading: false });
 
   useEffect(() => {
     if (isOpen) {
@@ -178,9 +180,14 @@ export default function ConfigureModal({ isOpen, onClose, onSave, currentUserId 
       return;
     }
 
-    const confirmed = window.confirm(`Are you sure you want to delete "${kpi.name}"? This will remove it from all scorecards.`);
-    if (!confirmed) return;
+    setDeleteConfirm({ isOpen: true, kpi, isLoading: false });
+  }
 
+  async function confirmDeleteKpi() {
+    const kpi = deleteConfirm.kpi;
+    if (!kpi) return;
+
+    setDeleteConfirm(prev => ({ ...prev, isLoading: true }));
     const loadingToast = toast.loading('Deleting KPI...');
     try {
       const { error } = await supabase
@@ -192,10 +199,12 @@ export default function ConfigureModal({ isOpen, onClose, onSave, currentUserId 
 
       toast.dismiss(loadingToast);
       toast.success(`KPI "${kpi.name}" deleted successfully`);
+      setDeleteConfirm({ isOpen: false, kpi: null, isLoading: false });
       await fetchCurrentConfigs();
     } catch (err: any) {
       toast.dismiss(loadingToast);
       toast.error('Error deleting KPI: ' + err.message);
+      setDeleteConfirm({ isOpen: false, kpi: null, isLoading: false });
     }
   }
 
@@ -308,10 +317,23 @@ export default function ConfigureModal({ isOpen, onClose, onSave, currentUserId 
   const units = ['count', 'minutes', 'hours', 'days', 'currency', 'percentage'];
 
   return (
-    <div
-      className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
-      onClick={onClose}
-    >
+    <>
+      {/* Delete KPI Confirmation Modal */}
+      <ConfirmModal
+        isOpen={deleteConfirm.isOpen}
+        onClose={() => setDeleteConfirm({ isOpen: false, kpi: null, isLoading: false })}
+        onConfirm={confirmDeleteKpi}
+        title="Delete KPI?"
+        message={`Are you sure you want to delete "${deleteConfirm.kpi?.name || 'this KPI'}"? This will remove it from all scorecards.`}
+        confirmText="Delete"
+        cancelText="Cancel"
+        variant="danger"
+        isLoading={deleteConfirm.isLoading}
+      />
+      <div
+        className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+        onClick={onClose}
+      >
       <div
         className="bg-white rounded-xl shadow-2xl max-w-5xl w-full max-h-[90vh] overflow-hidden flex flex-col"
         onClick={(e) => e.stopPropagation()}
@@ -801,5 +823,6 @@ export default function ConfigureModal({ isOpen, onClose, onSave, currentUserId 
         </div>
       </div>
     </div>
+    </>
   );
 }

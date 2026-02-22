@@ -149,11 +149,11 @@ BEGIN
   
   -- Determine level based on total points
   new_level := CASE
-    WHEN current_points >= 10000 THEN 'Diamond'
-    WHEN current_points >= 5000 THEN 'Platinum'
-    WHEN current_points >= 2500 THEN 'Gold'
-    WHEN current_points >= 1000 THEN 'Silver'
-    ELSE 'Bronze'
+    WHEN current_points >= 10000 THEN 'Master'
+    WHEN current_points >= 5000 THEN 'Elite'
+    WHEN current_points >= 2500 THEN 'Proficient'
+    WHEN current_points >= 1000 THEN 'Intermediate'
+    ELSE 'Developing'
   END;
   
   -- Update the profile's level
@@ -390,7 +390,7 @@ END $$;
 -- =============================================================================
 COMMENT ON FUNCTION calculate_skillset_progress IS 'Calculates skillset mastery percentage based on cumulative achievement points earned (never decreases)';
 COMMENT ON FUNCTION award_skillset_milestone_points IS 'Awards bonus points to total_points when skillset reaches 25%, 50%, 75%, or 100% (one-time awards)';
-COMMENT ON FUNCTION update_apptivia_level IS 'Updates profile Apptivia Level based on total_points: Bronze (0-999), Silver (1000-2499), Gold (2500-4999), Platinum (5000-9999), Diamond (10000+)';
+COMMENT ON FUNCTION update_apptivia_level IS 'Updates profile Apptivia Level based on total_points: Developing (0-999), Intermediate (1000-2499), Proficient (2500-4999), Elite (5000-9999), Master (10000+)';
 COMMENT ON FUNCTION award_achievement IS 'Awards an achievement to a profile, updates skillset progress, checks milestones, and updates Apptivia Level';
 COMMENT ON FUNCTION check_and_award_achievements IS 'Scans all profiles and awards new achievements based on recent KPI performance thresholds';
 

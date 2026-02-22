@@ -101,11 +101,18 @@ export default function SkillsetDetailsModal({
         .from('achievements')
         .select('*')
         .eq('skillset_id', skillsetId)
-        .order('difficulty')
-        .order('points', { ascending: false });
+        .order('points', { ascending: true });
 
       if (achievementsError) throw achievementsError;
-      setAchievements(achievementsData || []);
+
+      // Sort achievements by points ascending (client-side to ensure consistent ordering)
+      const sortedAchievements = (achievementsData || []).slice().sort((a: any, b: any) => {
+        const pointsDiff = (a.points || 0) - (b.points || 0);
+        if (pointsDiff !== 0) return pointsDiff;
+        // Secondary sort by name for consistent ordering within same point value
+        return (a.name || '').localeCompare(b.name || '');
+      });
+      setAchievements(sortedAchievements);
 
       // Fetch KPI metrics for scorecard calculations
       const { data: metricsData, error: metricsError } = await supabase
@@ -181,12 +188,6 @@ export default function SkillsetDetailsModal({
       latestValues.forEach((v: any) => {
         const key = `${v.profile_id}|${v.kpi_id}`;
         latestValueMap.set(key, (latestValueMap.get(key) || 0) + Number(v.value || 0));
-      });
-
-      const sortedAchievements = (achievementsData || []).slice().sort((a: any, b: any) => {
-        const diffRank = difficultyRank(a.difficulty) - difficultyRank(b.difficulty);
-        if (diffRank !== 0) return diffRank;
-        return (a.points || 0) - (b.points || 0);
       });
 
       const mappedKeys = SKILLSET_KPI_MAP[skillsetName?.toLowerCase?.() || ''] || [];

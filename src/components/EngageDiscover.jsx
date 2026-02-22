@@ -1,0 +1,1593 @@
+import React, { useState, useEffect, useCallback, useRef } from 'react';
+import {
+  Search, Building2, Users, Mail, Linkedin, Globe, Sparkles,
+  RefreshCw, ExternalLink, ChevronDown, ChevronUp, Copy, Check,
+  AlertTriangle, TrendingUp, Target, Briefcase, DollarSign,
+  Star, Clock, Send, MessageSquare, BookOpen, Trash2, History, Eye,
+  Phone, UserPlus, Cpu, ArrowRight, ChevronRight
+} from 'lucide-react';
+import { engageApi, engageDb } from '../utils/engageApi';
+import PromptTemplateSelector from './PromptTemplateSelector';
+
+// ── Broad default titles for people search ───────────────────
+const DEFAULT_PEOPLE_TITLES = [
+  'VP Sales', 'VP of Sales', 'Vice President of Sales',
+  'Director of Sales', 'Director Sales', 'Head of Sales',
+  'Sales Manager', 'Regional Sales Manager', 'Area Sales Manager',
+  'CRO', 'Chief Revenue Officer',
+  'VP Revenue Operations', 'Head of Revenue Operations', 'Director Revenue Operations',
+  'VP Business Development', 'Director of Business Development', 'Head of Business Development',
+  'Business Development Manager',
+  'Account Executive', 'Senior Account Executive', 'Enterprise Account Executive',
+  'SDR Manager', 'BDR Manager', 'Sales Development Manager',
+  'Head of Sales Enablement', 'Director of Sales Enablement',
+  'VP of Sales Operations', 'Director Sales Operations',
+  'VP of Growth', 'Head of Growth',
+];
+const DEFAULT_PEOPLE_SENIORITY = ['owner', 'founder', 'c_suite', 'partner', 'vp', 'head', 'director', 'manager', 'senior'];
+
+// ── Helpers ──────────────────────────────────────────────────
+
+function ScoreBadge({ score, label }) {
+  const color = score >= 80 ? 'bg-emerald-100 text-emerald-700' :
+    score >= 60 ? 'bg-blue-100 text-blue-700' :
+    score >= 40 ? 'bg-yellow-100 text-yellow-700' :
+    'bg-red-100 text-red-700';
+  return (
+    <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold ${color}`}>
+      <Star size={10} /> {score} {label && <span className="font-normal text-[10px] opacity-80">/ 100</span>}
+    </span>
+  );
+}
+
+function DataSourceBadges({ sources }) {
+  const badges = {
+    apollo: { label: 'Apollo', color: 'bg-blue-50 text-blue-600' },
+    tavily: { label: 'Tavily', color: 'bg-purple-50 text-purple-600' },
+    claude: { label: 'Claude AI', color: 'bg-orange-50 text-orange-600' },
+    pdl: { label: 'PDL', color: 'bg-green-50 text-green-600' },
+  };
+  return (
+    <div className="flex items-center gap-1.5 flex-wrap">
+      <span className="text-[10px] text-gray-400 uppercase font-medium">Sources:</span>
+      {(sources || []).map((s) => {
+        const b = badges[s] || { label: s, color: 'bg-gray-50 text-gray-500' };
+        return <span key={s} className={`px-2 py-0.5 rounded-full text-[10px] font-medium ${b.color}`}>{b.label}</span>;
+      })}
+    </div>
+  );
+}
+
+function TokensUsed({ tokens }) {
+  if (!tokens) return null;
+  return (
+    <span className="text-[10px] text-gray-400 flex items-center gap-1">
+      <Sparkles size={10} /> {tokens.toLocaleString()} tokens used
+    </span>
+  );
+}
+
+function CopyButton({ text }) {
+  const [copied, setCopied] = useState(false);
+  const handleCopy = () => {
+    navigator.clipboard.writeText(text);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+  return (
+    <button onClick={handleCopy} className="text-gray-400 hover:text-gray-600 transition-colors" title="Copy">
+      {copied ? <Check size={12} className="text-emerald-500" /> : <Copy size={12} />}
+    </button>
+  );
+}
+
+// ── Company Brief Panel ──────────────────────────────────────
+
+function CompanyBriefPanel({ company, brief: rawBrief, dataSources, tokensUsed, errors }) {
+  const [expanded, setExpanded] = useState({ findings: true, talking: true, news: false, funding: false, competitors: false, risks: false });
+  const toggle = (key) => setExpanded((prev) => ({ ...prev, [key]: !prev[key] }));
+
+  // If brief arrived as a JSON string, try to parse it
+  const brief = React.useMemo(() => {
+    if (!rawBrief) return null;
+    if (typeof rawBrief === 'object') return rawBrief;
+    try {
+      const cleaned = String(rawBrief).replace(/^```(?:json)?\s*\n?/i, '').replace(/\n?```\s*$/i, '').trim();
+      return JSON.parse(cleaned);
+    } catch {
+      return { summary: String(rawBrief) };
+    }
+  }, [rawBrief]);
+
+  return (
+    <div className="space-y-4">
+      {/* Company Header */}
+      {company && (
+        <div className="bg-white rounded-xl border border-gray-100 p-5">
+          <div className="flex items-start gap-4">
+            {company.logo_url ? (
+              <img src={company.logo_url} alt="" className="w-12 h-12 rounded-lg border border-gray-100 object-contain" />
+            ) : (
+              <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-lg flex items-center justify-center">
+                <Building2 size={20} className="text-white" />
+              </div>
+            )}
+            <div className="flex-1 min-w-0">
+              <h3 className="text-lg font-bold text-gray-900">{company.name || company.domain}</h3>
+              <div className="flex items-center gap-3 mt-1 flex-wrap">
+                {company.industry && (
+                  <span className="text-xs text-gray-500 flex items-center gap-1">
+                    <Briefcase size={10} /> {company.industry}
+                  </span>
+                )}
+                {company.estimated_num_employees && (
+                  <span className="text-xs text-gray-500 flex items-center gap-1">
+                    <Users size={10} /> {company.estimated_num_employees.toLocaleString()} employees
+                  </span>
+                )}
+                {(company.annual_revenue_printed || company.annual_revenue) && (
+                  <span className="text-xs text-gray-500 flex items-center gap-1">
+                    <DollarSign size={10} /> {company.annual_revenue_printed || company.annual_revenue}
+                  </span>
+                )}
+                {company.website_url && (
+                  <a href={company.website_url} target="_blank" rel="noopener noreferrer"
+                    className="text-xs text-blue-500 hover:text-blue-600 flex items-center gap-1">
+                    <Globe size={10} /> Website <ExternalLink size={8} />
+                  </a>
+                )}
+                {company.linkedin_url && (
+                  <a href={company.linkedin_url} target="_blank" rel="noopener noreferrer"
+                    className="text-xs text-blue-500 hover:text-blue-600 flex items-center gap-1">
+                    <Linkedin size={10} /> LinkedIn <ExternalLink size={8} />
+                  </a>
+                )}
+              </div>
+              {company.short_description && (
+                <p className="text-xs text-gray-500 mt-2 line-clamp-2">{company.short_description}</p>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* AI Brief */}
+      {brief && (
+        <div className="bg-white rounded-xl border border-gray-100 overflow-hidden">
+          <div className="bg-gradient-to-r from-orange-500 to-amber-500 px-5 py-3 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Sparkles size={14} className="text-white" />
+              <span className="text-sm font-semibold text-white">AI Company Brief</span>
+            </div>
+            <div className="flex items-center gap-3">
+              <TokensUsed tokens={tokensUsed} />
+              <DataSourceBadges sources={dataSources} />
+            </div>
+          </div>
+
+          <div className="p-5 space-y-4">
+            {/* Summary */}
+            {brief.summary && (
+              <div className="bg-blue-50/50 border border-blue-100 rounded-lg p-4">
+                <p className="text-sm text-gray-800 leading-relaxed">{brief.summary}</p>
+              </div>
+            )}
+
+            {/* ICP Fit */}
+            {brief.icp_fit_score != null && (
+              <div className="flex items-center gap-3 bg-gray-50 rounded-lg p-3">
+                <span className="text-xs font-medium text-gray-500">ICP Fit:</span>
+                <ScoreBadge score={brief.icp_fit_score} label />
+                {brief.icp_reasoning && <span className="text-xs text-gray-500 flex-1">{brief.icp_reasoning}</span>}
+              </div>
+            )}
+
+            {/* Collapsible sections */}
+            {brief.key_findings?.length > 0 && (
+              <CollapsibleSection title="Key Findings" icon={TrendingUp} expanded={expanded.findings} onToggle={() => toggle('findings')}>
+                <ul className="space-y-1.5">
+                  {brief.key_findings.map((f, i) => (
+                    <li key={i} className="text-xs text-gray-700 flex items-start gap-2">
+                      <span className="text-blue-500 mt-0.5">•</span> {f}
+                    </li>
+                  ))}
+                </ul>
+              </CollapsibleSection>
+            )}
+
+            {brief.talking_points?.length > 0 && (
+              <CollapsibleSection title="Talking Points" icon={MessageSquare} expanded={expanded.talking} onToggle={() => toggle('talking')}>
+                <ul className="space-y-1.5">
+                  {brief.talking_points.map((p, i) => (
+                    <li key={i} className="text-xs text-gray-700 flex items-start gap-2">
+                      <span className="text-emerald-500 mt-0.5">✓</span> {p}
+                    </li>
+                  ))}
+                </ul>
+              </CollapsibleSection>
+            )}
+
+            {brief.tech_stack?.length > 0 && (
+              <div>
+                <span className="text-xs font-medium text-gray-500 mb-2 block">Tech Stack</span>
+                <div className="flex flex-wrap gap-1.5">
+                  {brief.tech_stack.map((t, i) => (
+                    <span key={i} className="px-2 py-0.5 bg-cyan-50 text-cyan-700 text-[10px] font-medium rounded-full">{t}</span>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {brief.competitors?.length > 0 && (
+              <CollapsibleSection title="Competitors" icon={Target} expanded={expanded.competitors} onToggle={() => toggle('competitors')}>
+                <div className="flex flex-wrap gap-1.5">
+                  {brief.competitors.map((c, i) => (
+                    <span key={i} className="px-2.5 py-1 bg-red-50 text-red-600 text-xs font-medium rounded-full">{c}</span>
+                  ))}
+                </div>
+              </CollapsibleSection>
+            )}
+
+            {brief.recent_news?.length > 0 && (
+              <CollapsibleSection title="Recent News" icon={Globe} expanded={expanded.news} onToggle={() => toggle('news')}>
+                <ul className="space-y-2">
+                  {brief.recent_news.map((n, i) => (
+                    <li key={i} className="text-xs">
+                      <span className="font-medium text-gray-800">{n.headline}</span>
+                      {n.date && <span className="text-gray-400 ml-2">{n.date}</span>}
+                      {n.url && (
+                        <a href={n.url} target="_blank" rel="noopener noreferrer" className="text-blue-500 ml-2 hover:underline">
+                          Source <ExternalLink size={8} className="inline" />
+                        </a>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              </CollapsibleSection>
+            )}
+
+            {brief.funding_history?.length > 0 && (
+              <CollapsibleSection title="Funding History" icon={DollarSign} expanded={expanded.funding} onToggle={() => toggle('funding')}>
+                <div className="space-y-2">
+                  {brief.funding_history.map((f, i) => (
+                    <div key={i} className="flex items-center gap-3 text-xs">
+                      <span className="font-semibold text-gray-800">{f.round}</span>
+                      <span className="text-emerald-600 font-medium">{f.amount}</span>
+                      {f.date && <span className="text-gray-400">{f.date}</span>}
+                      {f.investors?.length > 0 && <span className="text-gray-500">— {f.investors.join(', ')}</span>}
+                    </div>
+                  ))}
+                </div>
+              </CollapsibleSection>
+            )}
+
+            {brief.risk_factors?.length > 0 && (
+              <CollapsibleSection title="Risk Factors" icon={AlertTriangle} expanded={expanded.risks} onToggle={() => toggle('risks')}>
+                <ul className="space-y-1.5">
+                  {brief.risk_factors.map((r, i) => (
+                    <li key={i} className="text-xs text-red-600 flex items-start gap-2">
+                      <AlertTriangle size={10} className="mt-0.5 flex-shrink-0" /> {r}
+                    </li>
+                  ))}
+                </ul>
+              </CollapsibleSection>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Errors */}
+      {errors?.length > 0 && (
+        <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-4">
+          <div className="flex items-center gap-2 mb-2">
+            <AlertTriangle size={14} className="text-yellow-600" />
+            <span className="text-xs font-semibold text-yellow-700">Partial Results — Some data sources had issues</span>
+          </div>
+          {errors.map((e, i) => (
+            <p key={i} className="text-xs text-yellow-600">{e.step}: {e.error}</p>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── Prospect Brief Panel ─────────────────────────────────────
+
+function ProspectBriefPanel({ prospect, brief: rawBrief, dataSources, tokensUsed, errors }) {
+  // If brief arrived as a JSON string (e.g. Claude wrapped in markdown fences), try to parse it
+  const brief = React.useMemo(() => {
+    if (!rawBrief) return null;
+    if (typeof rawBrief === 'object') return rawBrief;
+    // It's a string — try to extract JSON from it
+    try {
+      const cleaned = String(rawBrief).replace(/^```(?:json)?\s*\n?/i, '').replace(/\n?```\s*$/i, '').trim();
+      return JSON.parse(cleaned);
+    } catch {
+      return { summary: String(rawBrief) };
+    }
+  }, [rawBrief]);
+
+  return (
+    <div className="space-y-4">
+      {/* Prospect Header */}
+      {prospect && (
+        <div className="bg-white rounded-xl border border-gray-100 p-5">
+          <div className="flex items-start gap-4">
+            {prospect.photo_url || prospect.avatar_url ? (
+              <img src={prospect.photo_url || prospect.avatar_url} alt="" className="w-12 h-12 rounded-full border border-gray-100 object-cover" />
+            ) : (
+              <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full flex items-center justify-center">
+                <Users size={20} className="text-white" />
+              </div>
+            )}
+            <div className="flex-1 min-w-0">
+              <h3 className="text-lg font-bold text-gray-900">
+                {prospect.name || prospect.full_name || `${prospect.first_name || ''} ${prospect.last_name || ''}`.trim() || 'Unknown'}
+              </h3>
+              <div className="flex items-center gap-3 mt-1 flex-wrap">
+                {prospect.title && (
+                  <span className="text-xs text-gray-500 flex items-center gap-1">
+                    <Briefcase size={10} /> {prospect.title}
+                  </span>
+                )}
+                {(prospect.organization?.name || prospect.company_name) && (
+                  <span className="text-xs text-gray-500 flex items-center gap-1">
+                    <Building2 size={10} /> {prospect.organization?.name || prospect.company_name}
+                  </span>
+                )}
+                {prospect.email && (
+                  <span className="text-xs text-gray-500 flex items-center gap-1">
+                    <Mail size={10} /> {prospect.email}
+                  </span>
+                )}
+                {prospect.linkedin_url && (
+                  <a href={prospect.linkedin_url} target="_blank" rel="noopener noreferrer"
+                    className="text-xs text-blue-500 hover:text-blue-600 flex items-center gap-1">
+                    <Linkedin size={10} /> LinkedIn <ExternalLink size={8} />
+                  </a>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* AI Brief */}
+      {brief && (
+        <div className="bg-white rounded-xl border border-gray-100 overflow-hidden">
+          <div className="bg-gradient-to-r from-purple-500 to-pink-500 px-5 py-3 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Sparkles size={14} className="text-white" />
+              <span className="text-sm font-semibold text-white">AI Prospect Brief</span>
+            </div>
+            <div className="flex items-center gap-3">
+              <TokensUsed tokens={tokensUsed} />
+              <DataSourceBadges sources={dataSources} />
+            </div>
+          </div>
+
+          <div className="p-5 space-y-4">
+            {brief.summary && (
+              <div className="bg-purple-50/50 border border-purple-100 rounded-lg p-4">
+                <p className="text-sm text-gray-800 leading-relaxed">{brief.summary}</p>
+              </div>
+            )}
+
+            {brief.fit_score != null && (
+              <div className="flex items-center gap-3 bg-gray-50 rounded-lg p-3">
+                <span className="text-xs font-medium text-gray-500">Prospect Fit:</span>
+                <ScoreBadge score={brief.fit_score} label />
+                {brief.fit_reasoning && <span className="text-xs text-gray-500 flex-1">{brief.fit_reasoning}</span>}
+              </div>
+            )}
+
+            {brief.professional_background && (
+              <div>
+                <span className="text-xs font-semibold text-gray-600 block mb-1">Professional Background</span>
+                <p className="text-xs text-gray-700 leading-relaxed">{brief.professional_background}</p>
+              </div>
+            )}
+
+            {brief.recent_activity?.length > 0 && (
+              <div>
+                <span className="text-xs font-semibold text-gray-600 block mb-2">Recent Activity</span>
+                <ul className="space-y-1.5">
+                  {brief.recent_activity.map((a, i) => (
+                    <li key={i} className="text-xs text-gray-700 flex items-start gap-2">
+                      <span className="text-blue-500 mt-0.5">●</span> {a}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {brief.shared_connections && (
+              <div>
+                <span className="text-xs font-semibold text-gray-600 block mb-1">Shared Connections &amp; Common Ground</span>
+                <p className="text-xs text-gray-700 leading-relaxed">{brief.shared_connections}</p>
+              </div>
+            )}
+
+            {brief.outreach_angles?.length > 0 && (
+              <div>
+                <span className="text-xs font-semibold text-gray-600 block mb-2">Outreach Angles</span>
+                <ul className="space-y-1.5">
+                  {brief.outreach_angles.map((a, i) => (
+                    <li key={i} className="text-xs text-gray-700 flex items-start gap-2">
+                      <span className="text-purple-500 mt-0.5">→</span> {a}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {brief.talking_points?.length > 0 && (
+              <div>
+                <span className="text-xs font-semibold text-gray-600 block mb-2">Talking Points</span>
+                <ul className="space-y-1.5">
+                  {brief.talking_points.map((p, i) => (
+                    <li key={i} className="text-xs text-gray-700 flex items-start gap-2">
+                      <span className="text-emerald-500 mt-0.5">✓</span> {p}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {brief.best_channel && (
+              <div className="flex items-center gap-4 bg-gray-50 rounded-lg p-3">
+                <div>
+                  <span className="text-[10px] text-gray-400 uppercase font-medium block">Best Channel</span>
+                  <span className="text-xs font-semibold text-gray-700 capitalize">{brief.best_channel}</span>
+                </div>
+                {brief.best_time_to_reach && (
+                  <div>
+                    <span className="text-[10px] text-gray-400 uppercase font-medium block">Best Time</span>
+                    <span className="text-xs font-semibold text-gray-700">{brief.best_time_to_reach}</span>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {errors?.length > 0 && (
+        <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-4">
+          <div className="flex items-center gap-2 mb-2">
+            <AlertTriangle size={14} className="text-yellow-600" />
+            <span className="text-xs font-semibold text-yellow-700">Partial Results</span>
+          </div>
+          {errors.map((e, i) => (
+            <p key={i} className="text-xs text-yellow-600">{e.step}: {e.error}</p>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── Outreach Draft Panel ────────────────────────────────────
+
+function OutreachDraftPanel({ draft, tokensUsed }) {
+  if (!draft) return null;
+  return (
+    <div className="bg-white rounded-xl border border-gray-100 overflow-hidden">
+      <div className="bg-gradient-to-r from-emerald-500 to-teal-500 px-5 py-3 flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <Send size={14} className="text-white" />
+          <span className="text-sm font-semibold text-white">AI Outreach Draft</span>
+        </div>
+        <TokensUsed tokens={tokensUsed} />
+      </div>
+      <div className="p-5 space-y-3">
+        {draft.subject && (
+          <div>
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] text-gray-400 uppercase font-medium">Subject</span>
+              <CopyButton text={draft.subject} />
+            </div>
+            <p className="text-sm font-semibold text-gray-900 mt-0.5">{draft.subject}</p>
+          </div>
+        )}
+        <div>
+          <div className="flex items-center justify-between">
+            <span className="text-[10px] text-gray-400 uppercase font-medium">Message</span>
+            <CopyButton text={draft.body} />
+          </div>
+          <div className="bg-gray-50 rounded-lg p-4 mt-1">
+            <p className="text-xs text-gray-800 leading-relaxed whitespace-pre-wrap">{draft.body}</p>
+          </div>
+        </div>
+        {draft.personalization_points?.length > 0 && (
+          <div>
+            <span className="text-[10px] text-gray-400 uppercase font-medium block mb-1">Personalization Used</span>
+            <div className="flex flex-wrap gap-1.5">
+              {draft.personalization_points.map((p, i) => (
+                <span key={i} className="px-2 py-0.5 bg-emerald-50 text-emerald-600 text-[10px] font-medium rounded-full">{p}</span>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ── Collapsible Section ─────────────────────────────────────
+
+function CollapsibleSection({ title, icon: Icon, expanded, onToggle, children }) {
+  return (
+    <div className="border border-gray-100 rounded-lg overflow-hidden">
+      <button onClick={onToggle} className="w-full flex items-center justify-between px-4 py-2.5 bg-gray-50/50 hover:bg-gray-50 transition-colors">
+        <div className="flex items-center gap-2">
+          <Icon size={12} className="text-gray-400" />
+          <span className="text-xs font-semibold text-gray-700">{title}</span>
+        </div>
+        {expanded ? <ChevronUp size={12} className="text-gray-400" /> : <ChevronDown size={12} className="text-gray-400" />}
+      </button>
+      {expanded && <div className="px-4 py-3">{children}</div>}
+    </div>
+  );
+}
+
+// ── Main Discover Component ─────────────────────────────────
+
+export default function EngageDiscover({ organizationId, userId, initialSearch, onInitialSearchConsumed }) {
+  const [mode, setMode] = useState('company'); // 'company' | 'prospect' | 'people_search'
+  const [searchInput, setSearchInput] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+
+  // Company research results
+  const [companyResult, setCompanyResult] = useState(null);
+
+  // Prospect research results
+  const [prospectResult, setProspectResult] = useState(null);
+
+  // People search results (multiple prospects from Apollo)
+  const [peopleSearchResults, setPeopleSearchResults] = useState(null);
+  const [peopleSearchFilters, setPeopleSearchFilters] = useState(null);
+
+  // Company disambiguation
+  const [disambiguationResults, setDisambiguationResults] = useState(null);
+  const [disambiguationLoading, setDisambiguationLoading] = useState(false);
+
+  // Suggested contacts (shown after company research)
+  const [suggestedContacts, setSuggestedContacts] = useState(null);
+  const [suggestedContactsLoading, setSuggestedContactsLoading] = useState(false);
+
+  // Find People sub-mode: 'company' (by domain) or 'technology' (by tech name)
+  const [findPeopleMode, setFindPeopleMode] = useState('technology');
+
+  // Outreach
+  const [outreachDraft, setOutreachDraft] = useState(null);
+  const [outreachTokens, setOutreachTokens] = useState(0);
+  const [outreachLoading, setOutreachLoading] = useState(false);
+  const [outreachChannel, setOutreachChannel] = useState('email');
+  const [outreachTone, setOutreachTone] = useState('professional');
+  const [selectedTemplate, setSelectedTemplate] = useState(null);
+
+  // Track whether we've consumed the initial search to avoid re-triggering
+  const [initialSearchApplied, setInitialSearchApplied] = useState(false);
+
+  // ── Search History ──────────────────────────────────────
+
+  const [searchHistory, setSearchHistory] = useState([]);
+  const [historyLoading, setHistoryLoading] = useState(false);
+
+  // ── Handle initialSearch from Signal Prospecting cross-tab nav ──
+  useEffect(() => {
+    if (initialSearch && !initialSearchApplied && !loading) {
+      const newMode = initialSearch.mode || 'company';
+      setMode(newMode);
+      setSearchInput(initialSearch.query || '');
+      if (initialSearch.filters) setPeopleSearchFilters(initialSearch.filters);
+      if (newMode === 'people_search') {
+        setFindPeopleMode(initialSearch.findPeopleMode || 'technology');
+      }
+      setCompanyResult(null);
+      setProspectResult(null);
+      setPeopleSearchResults(null);
+      setOutreachDraft(null);
+      setDisambiguationResults(null);
+      setSuggestedContacts(null);
+      setError(null);
+      setInitialSearchApplied(true);
+      if (onInitialSearchConsumed) onInitialSearchConsumed();
+    }
+  }, [initialSearch, initialSearchApplied, loading, onInitialSearchConsumed]);
+
+  // Auto-trigger research when initialSearch populates the input
+  useEffect(() => {
+    if (initialSearchApplied && searchInput.trim() && !loading && !companyResult && !prospectResult && !peopleSearchResults) {
+      // Small delay to let the UI render the populated input before firing
+      const timer = setTimeout(() => {
+        handleResearchRef.current?.();
+      }, 300);
+      return () => clearTimeout(timer);
+    }
+  }, [initialSearchApplied, searchInput, loading, companyResult, prospectResult, peopleSearchResults]);
+
+  const fetchSearchHistory = useCallback(async () => {
+    if (!organizationId) return;
+    setHistoryLoading(true);
+    try {
+      const { data } = await engageDb.getReports(organizationId);
+      setSearchHistory(data || []);
+    } catch {
+      // non-blocking
+    } finally {
+      setHistoryLoading(false);
+    }
+  }, [organizationId]);
+
+  useEffect(() => {
+    fetchSearchHistory();
+  }, [fetchSearchHistory]);
+
+  const saveToHistory = useCallback(async (searchType, query, result) => {
+    if (!organizationId) return;
+    try {
+      let title;
+      let content;
+      if (searchType === 'company') {
+        title = result?.company?.name || result?.company?.domain || query;
+        content = {
+          query,
+          search_type: searchType,
+          company: result?.company || null,
+          prospect: null,
+          brief: result?.brief || null,
+          data_sources: result?.data_sources || [],
+        };
+      } else if (searchType === 'people_search') {
+        const count = result?.people?.length || 0;
+        title = `${count} people — ${query}`;
+        content = {
+          query,
+          search_type: 'people_search',
+          people: result?.people || [],
+          mode: result?.mode || 'technology',
+          company: null,
+          prospect: null,
+          brief: null,
+          data_sources: ['apollo'],
+        };
+      } else {
+        title = result?.prospect?.full_name || result?.prospect?.email || query;
+        content = {
+          query,
+          search_type: searchType,
+          company: null,
+          prospect: result?.prospect || null,
+          brief: result?.brief || null,
+          data_sources: result?.data_sources || [],
+        };
+      }
+      await engageDb.saveReport({
+        organization_id: organizationId,
+        report_type: searchType,
+        title,
+        content,
+        model_used: searchType === 'people_search' ? 'apollo' : 'claude',
+        data_sources: content.data_sources,
+        tokens_used: result?.tokens_used || 0,
+        created_by: userId || undefined,
+      });
+      await fetchSearchHistory();
+    } catch {
+      // non-blocking
+    }
+  }, [organizationId, userId, fetchSearchHistory]);
+
+  const deleteFromHistory = useCallback(async (id) => {
+    try {
+      await (await import('../supabaseClient')).supabase.from('engage_research_reports').delete().eq('id', id);
+      setSearchHistory(prev => prev.filter(h => h.id !== id));
+    } catch {
+      // non-blocking
+    }
+  }, []);
+
+  const loadFromHistory = useCallback((report) => {
+    const content = report.content || {};
+    setOutreachDraft(null);
+    setError(null);
+    setDisambiguationResults(null);
+    setSuggestedContacts(null);
+
+    if (report.report_type === 'company') {
+      setMode('company');
+      setSearchInput(content.query || report.title || '');
+      setCompanyResult({
+        company: content.company,
+        brief: content.brief,
+        data_sources: content.data_sources || [],
+        tokens_used: 0,
+      });
+      setProspectResult(null);
+      setPeopleSearchResults(null);
+      // Re-fetch suggested contacts if we have a domain
+      const domain = content.company?.primary_domain || content.company?.domain || content.query;
+      if (domain) fetchSuggestedContacts(domain);
+    } else if (report.report_type === 'people_search') {
+      setMode('people_search');
+      setSearchInput(content.query || '');
+      setFindPeopleMode(content.mode || 'technology');
+      setPeopleSearchResults(content.people || []);
+      setCompanyResult(null);
+      setProspectResult(null);
+    } else {
+      setMode('prospect');
+      setSearchInput(content.query || report.title || '');
+      setProspectResult({
+        prospect: content.prospect,
+        brief: content.brief,
+        data_sources: content.data_sources || [],
+        tokens_used: 0,
+      });
+      setCompanyResult(null);
+      setPeopleSearchResults(null);
+    }
+  }, []);
+
+  // ── Research Handlers ───────────────────────────────────
+
+  const handleResearchRef = useRef(null);
+
+  const handleResearch = async () => {
+    if (!searchInput.trim()) return;
+    setLoading(true);
+    setError(null);
+    setCompanyResult(null);
+    setProspectResult(null);
+    setPeopleSearchResults(null);
+    setOutreachDraft(null);
+    setDisambiguationResults(null);
+    setSuggestedContacts(null);
+    setInitialSearchApplied(false); // Reset so it doesn't re-trigger
+
+    try {
+      if (mode === 'company') {
+        const input = searchInput.trim();
+        // If it looks like a domain (has a dot and no spaces), go straight to research
+        const looksLikeDomain = input.includes('.') && !input.includes(' ');
+        if (looksLikeDomain) {
+          const result = await engageApi.researchCompany(input);
+          setCompanyResult(result);
+          saveToHistory('company', input, result);
+          // Fetch suggested contacts in background
+          fetchSuggestedContacts(input);
+        } else {
+          // Disambiguate: search for matching companies
+          setDisambiguationLoading(true);
+          setLoading(false); // Don't show full loading, just disambiguation loading
+          try {
+            const resp = await engageApi.searchOrganizations(input);
+            const companies = resp?.companies || [];
+            if (companies.length === 1) {
+              // Only one match — go straight to research
+              setLoading(true);
+              setDisambiguationLoading(false);
+              const domain = companies[0].primary_domain || companies[0].website_url?.replace(/^https?:\/\//, '').replace(/\/.*$/, '') || input;
+              const result = await engageApi.researchCompany(domain);
+              setCompanyResult(result);
+              saveToHistory('company', domain, result);
+              fetchSuggestedContacts(domain);
+              setLoading(false);
+            } else if (companies.length > 1) {
+              setDisambiguationResults(companies);
+              setDisambiguationLoading(false);
+            } else {
+              // No results — try as-is
+              setDisambiguationLoading(false);
+              setLoading(true);
+              const result = await engageApi.researchCompany(input);
+              setCompanyResult(result);
+              saveToHistory('company', input, result);
+              fetchSuggestedContacts(input);
+              setLoading(false);
+            }
+          } catch (disambErr) {
+            // Disambiguation failed — fall back to direct research
+            setDisambiguationLoading(false);
+            setLoading(true);
+            const result = await engageApi.researchCompany(input);
+            setCompanyResult(result);
+            saveToHistory('company', input, result);
+            fetchSuggestedContacts(input);
+            setLoading(false);
+          }
+          return; // Don't hit the final finally block
+        }
+      } else if (mode === 'people_search') {
+        if (findPeopleMode === 'company') {
+          // Find people at a specific company domain
+          const domain = searchInput.trim();
+          const result = await engageApi.findPeopleAtCompany(domain);
+          const people = result?.data?.people || result?.data?.contacts || result?.data || [];
+          setPeopleSearchResults(Array.isArray(people) ? people : []);
+          saveToHistory('people_search', domain, { people: Array.isArray(people) ? people : [], mode: 'company' });
+        } else {
+          // Technology search — find people at companies using this technology
+          const filters = peopleSearchFilters || {};
+          const searchFilters = {
+            titles: filters.titles || DEFAULT_PEOPLE_TITLES,
+            seniority: filters.seniority || DEFAULT_PEOPLE_SENIORITY,
+            technology: searchInput.trim(), // uses currently_using_any_of_technology_uids
+            employee_ranges: filters.employee_ranges || [],
+            per_page: 25,
+          };
+          const result = await engageApi.searchProspects(searchFilters);
+          const people = result?.data?.people || result?.data?.contacts || result?.data || [];
+          setPeopleSearchResults(Array.isArray(people) ? people : []);
+          saveToHistory('people_search', searchInput.trim(), { people: Array.isArray(people) ? people : [], mode: 'technology' });
+        }
+      } else {
+        // Parse prospect input — support email or "First Last at Company"
+        const input = searchInput.trim();
+        let identifier = {};
+
+        if (input.includes('@')) {
+          identifier = { email: input };
+        } else if (input.includes('linkedin.com')) {
+          identifier = { linkedin_url: input };
+        } else {
+          // Try "First Last at Company" or just "First Last"
+          const atSplit = input.split(/\s+at\s+/i);
+          const nameParts = atSplit[0].trim().split(/\s+/);
+          identifier = {
+            first_name: nameParts[0] || '',
+            last_name: nameParts.slice(1).join(' ') || '',
+            company_name: atSplit[1]?.trim() || '',
+          };
+        }
+
+        const result = await engageApi.researchProspect(identifier);
+        setProspectResult(result);
+        saveToHistory('prospect', searchInput.trim(), result);
+      }
+    } catch (err) {
+      setError(err.message || 'Research failed. Make sure the backend is running.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Handle disambiguation selection
+  const handleDisambiguationSelect = async (company) => {
+    setDisambiguationResults(null);
+    setLoading(true);
+    setError(null);
+    try {
+      const domain = company.primary_domain || company.website_url?.replace(/^https?:\/\//, '').replace(/\/.*$/, '') || company.name;
+      setSearchInput(domain);
+      const result = await engageApi.researchCompany(domain);
+      setCompanyResult(result);
+      saveToHistory('company', domain, result);
+      fetchSuggestedContacts(domain);
+    } catch (err) {
+      setError(err.message || 'Research failed');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Fetch suggested contacts for a company in the background
+  const fetchSuggestedContacts = async (domain) => {
+    setSuggestedContacts(null);
+    setSuggestedContactsLoading(true);
+    try {
+      const cleanDomain = domain.replace(/^https?:\/\//, '').replace(/^www\./, '').replace(/\/.*$/, '');
+      const resp = await engageApi.getSuggestedContacts(cleanDomain);
+      const people = resp?.data?.people || resp?.data?.contacts || resp?.data || [];
+      setSuggestedContacts(Array.isArray(people) ? people : []);
+    } catch {
+      // non-blocking — just don't show suggestions
+      setSuggestedContacts([]);
+    } finally {
+      setSuggestedContactsLoading(false);
+    }
+  };
+
+  // Keep ref in sync so the auto-trigger effect can call handleResearch
+  handleResearchRef.current = handleResearch;
+
+  const handleGenerateOutreach = async () => {
+    const prospect = prospectResult?.prospect || companyResult?.company;
+    const brief = prospectResult?.brief || companyResult?.brief;
+    if (!prospect || !brief) return;
+
+    setOutreachLoading(true);
+    try {
+      const result = await engageApi.generateOutreach(prospect, brief, {
+        channel: outreachChannel,
+        tone: outreachTone,
+        template_id: selectedTemplate?.id || undefined,
+        template_system_prompt: selectedTemplate?.system_prompt || undefined,
+        template_user_prompt: selectedTemplate?.user_prompt || undefined,
+      });
+      setOutreachDraft(result.content);
+      setOutreachTokens(result.tokens_used);
+    } catch (err) {
+      setError(err.message || 'Outreach generation failed');
+    } finally {
+      setOutreachLoading(false);
+    }
+  };
+
+  const hasResults = companyResult || prospectResult || (peopleSearchResults && peopleSearchResults.length > 0) || disambiguationResults;
+  const canGenerateOutreach = (companyResult || prospectResult) && !loading;
+
+  return (
+    <div className="space-y-4">
+      {/* Search Panel */}
+      <div className="bg-white rounded-xl border border-gray-100 overflow-hidden">
+        <div className="bg-gradient-to-r from-blue-500 via-cyan-500 to-teal-500 px-6 py-5">
+          <div className="flex items-center gap-3 mb-3">
+            <div className="w-9 h-9 bg-white/20 backdrop-blur-sm rounded-lg flex items-center justify-center">
+              <Sparkles size={16} className="text-white" />
+            </div>
+            <div>
+              <h2 className="text-base font-bold text-white">AI Research & Discovery</h2>
+              <p className="text-xs text-white/70">Research companies and prospects with Apollo, Tavily &amp; Claude AI</p>
+            </div>
+          </div>
+
+          {/* Mode Toggle */}
+          <div className="flex items-center gap-2 mb-3">
+            <button
+              onClick={() => { setMode('company'); setSearchInput(''); setError(null); setCompanyResult(null); setProspectResult(null); setPeopleSearchResults(null); setOutreachDraft(null); setDisambiguationResults(null); setSuggestedContacts(null); }}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                mode === 'company'
+                  ? 'bg-white text-blue-600 shadow-sm'
+                  : 'bg-white/20 text-white/80 hover:bg-white/30'
+              }`}
+            >
+              <Building2 size={12} /> Company Research
+            </button>
+            <button
+              onClick={() => { setMode('prospect'); setSearchInput(''); setError(null); setCompanyResult(null); setProspectResult(null); setPeopleSearchResults(null); setOutreachDraft(null); setDisambiguationResults(null); setSuggestedContacts(null); }}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                mode === 'prospect'
+                  ? 'bg-white text-purple-600 shadow-sm'
+                  : 'bg-white/20 text-white/80 hover:bg-white/30'
+              }`}
+            >
+              <Users size={12} /> Prospect Research
+            </button>
+            <button
+              onClick={() => { setMode('people_search'); setSearchInput(''); setError(null); setCompanyResult(null); setProspectResult(null); setPeopleSearchResults(null); setPeopleSearchFilters(null); setOutreachDraft(null); setDisambiguationResults(null); setSuggestedContacts(null); }}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                mode === 'people_search'
+                  ? 'bg-white text-cyan-600 shadow-sm'
+                  : 'bg-white/20 text-white/80 hover:bg-white/30'
+              }`}
+            >
+              <UserPlus size={12} /> Find People
+            </button>
+          </div>
+
+          {/* Find People Sub-Mode Toggle */}
+          {mode === 'people_search' && (
+            <div className="flex items-center gap-2 mb-3">
+              <span className="text-[10px] text-white/60 uppercase font-medium mr-1">Search by:</span>
+              <button
+                onClick={() => { setFindPeopleMode('technology'); setSearchInput(''); setPeopleSearchResults(null); }}
+                className={`flex items-center gap-1 px-2.5 py-1 rounded text-[11px] font-medium transition-all ${
+                  findPeopleMode === 'technology'
+                    ? 'bg-white/30 text-white shadow-sm'
+                    : 'bg-white/10 text-white/60 hover:bg-white/20'
+                }`}
+              >
+                <Cpu size={10} /> Technology
+              </button>
+              <button
+                onClick={() => { setFindPeopleMode('company'); setSearchInput(''); setPeopleSearchResults(null); }}
+                className={`flex items-center gap-1 px-2.5 py-1 rounded text-[11px] font-medium transition-all ${
+                  findPeopleMode === 'company'
+                    ? 'bg-white/30 text-white shadow-sm'
+                    : 'bg-white/10 text-white/60 hover:bg-white/20'
+                }`}
+              >
+                <Building2 size={10} /> Company Domain
+              </button>
+            </div>
+          )}
+
+          {/* Search Input */}
+          <div className="flex gap-2">
+            <div className="flex-1 relative">
+              <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+              <input
+                type="text"
+                value={searchInput}
+                onChange={(e) => setSearchInput(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && handleResearch()}
+                placeholder={
+                  mode === 'company'
+                    ? 'Enter company name or domain (e.g., Gong, salesloft.com, Ambition)'
+                    : mode === 'people_search' && findPeopleMode === 'company'
+                    ? 'Enter company domain (e.g., gong.io, salesloft.com, outreach.io)'
+                    : mode === 'people_search'
+                    ? 'Enter a technology or software name (e.g., Ambition, Gong, Salesloft, Outreach)'
+                    : 'Enter email, LinkedIn URL, or "First Last at Company"'
+                }
+                className="w-full pl-10 pr-4 py-3 rounded-lg bg-white text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-300 shadow-sm"
+                disabled={loading}
+              />
+            </div>
+            <button
+              onClick={handleResearch}
+              disabled={loading || !searchInput.trim()}
+              className="px-5 py-3 bg-white text-blue-600 rounded-lg text-sm font-semibold hover:bg-blue-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-sm flex items-center gap-2"
+            >
+              {loading ? (
+                <>
+                  <RefreshCw size={14} className="animate-spin" />
+                  {mode === 'people_search' ? 'Searching...' : 'Researching...'}
+                </>
+              ) : (
+                <>
+                  <Search size={14} />
+                  {mode === 'people_search' ? 'Find People' : 'Research'}
+                </>
+              )}
+            </button>
+          </div>
+
+          {/* Hint */}
+          <div className="mt-2 text-[10px] text-white/50">
+            {mode === 'company'
+              ? 'Enter a name like "Ambition" to see matching companies, or a domain like gong.io for instant research'
+              : mode === 'people_search' && findPeopleMode === 'company'
+              ? 'Enter a company domain to find up to 25 sales leaders • Includes email & phone from Apollo'
+              : mode === 'people_search'
+              ? 'Finds sales leaders at companies using that technology • Includes email & phone from Apollo'
+              : 'Try: john@gong.io • linkedin.com/in/someone • "Jane Doe at Salesforce"'}
+          </div>
+        </div>
+      </div>
+
+      {/* Error */}
+      {error && (
+        <div className="bg-red-50 border border-red-200 rounded-xl p-4 flex items-start gap-3">
+          <AlertTriangle size={16} className="text-red-500 flex-shrink-0 mt-0.5" />
+          <div>
+            <span className="text-sm font-semibold text-red-700 block">Research Error</span>
+            <p className="text-xs text-red-600 mt-0.5">{error}</p>
+          </div>
+        </div>
+      )}
+
+      {/* Company Disambiguation Picker */}
+      {disambiguationLoading && (
+        <div className="bg-white rounded-xl border border-gray-100 p-6 text-center">
+          <RefreshCw size={20} className="animate-spin text-blue-500 mx-auto mb-2" />
+          <p className="text-sm text-gray-600">Finding matching companies...</p>
+        </div>
+      )}
+
+      {disambiguationResults && disambiguationResults.length > 0 && (
+        <div className="bg-white rounded-xl border border-gray-100 overflow-hidden">
+          <div className="px-5 py-3 border-b border-gray-100 bg-gradient-to-r from-blue-50 to-cyan-50">
+            <div className="flex items-center gap-2">
+              <Building2 size={14} className="text-blue-600" />
+              <span className="text-sm font-semibold text-gray-800">
+                {disambiguationResults.length} companies match &ldquo;{searchInput}&rdquo;
+              </span>
+            </div>
+            <p className="text-[10px] text-gray-500 mt-0.5">Select the company you want to research</p>
+          </div>
+          <div className="divide-y divide-gray-50">
+            {disambiguationResults.map((company, idx) => {
+              const domain = company.primary_domain || company.website_url?.replace(/^https?:\/\//, '').replace(/\/.*$/, '') || '';
+              return (
+                <button
+                  key={company.id || idx}
+                  onClick={() => handleDisambiguationSelect(company)}
+                  className="w-full px-5 py-4 flex items-center gap-4 hover:bg-blue-50/50 transition-colors text-left group"
+                >
+                  {company.logo_url ? (
+                    <img src={company.logo_url} alt="" className="w-10 h-10 rounded-lg border border-gray-100 object-contain flex-shrink-0" />
+                  ) : (
+                    <div className="w-10 h-10 bg-gradient-to-br from-blue-400 to-cyan-500 rounded-lg flex items-center justify-center flex-shrink-0">
+                      <Building2 size={16} className="text-white" />
+                    </div>
+                  )}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-semibold text-gray-900">{company.name}</span>
+                      {domain && <span className="text-[10px] text-gray-400">{domain}</span>}
+                    </div>
+                    <div className="flex items-center gap-3 mt-0.5 flex-wrap">
+                      {company.industry && (
+                        <span className="text-[10px] text-gray-500 flex items-center gap-0.5">
+                          <Briefcase size={8} /> {company.industry}
+                        </span>
+                      )}
+                      {company.estimated_num_employees && (
+                        <span className="text-[10px] text-gray-500 flex items-center gap-0.5">
+                          <Users size={8} /> {company.estimated_num_employees.toLocaleString()} employees
+                        </span>
+                      )}
+                      {company.city && (
+                        <span className="text-[10px] text-gray-500">{[company.city, company.state, company.country].filter(Boolean).join(', ')}</span>
+                      )}
+                    </div>
+                    {company.short_description && (
+                      <p className="text-[10px] text-gray-400 mt-1 line-clamp-1">{company.short_description}</p>
+                    )}
+                  </div>
+                  <ChevronRight size={16} className="text-gray-300 group-hover:text-blue-500 transition-colors flex-shrink-0" />
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Search History */}
+      {!loading && searchHistory.length > 0 && (
+        <div className="bg-white rounded-xl border border-gray-100 overflow-hidden">
+          <div className="px-5 py-3 border-b border-gray-100 flex items-center justify-between bg-gray-50/50">
+            <div className="flex items-center gap-2">
+              <History size={14} className="text-gray-500" />
+              <span className="text-sm font-bold text-gray-900">Research History</span>
+              <span className="text-[10px] text-gray-400">({searchHistory.length})</span>
+            </div>
+          </div>
+          <div className="divide-y divide-gray-50 max-h-72 overflow-y-auto">
+            {searchHistory.map((report) => (
+              <div
+                key={report.id}
+                className="px-5 py-3 flex items-center justify-between hover:bg-gray-50 transition-colors group"
+              >
+                <div
+                  className="flex items-center gap-3 flex-1 min-w-0 cursor-pointer"
+                  onClick={() => loadFromHistory(report)}
+                >
+                  <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${
+                    report.report_type === 'company'
+                      ? 'bg-blue-50 text-blue-600'
+                      : report.report_type === 'people_search'
+                      ? 'bg-cyan-50 text-cyan-600'
+                      : 'bg-purple-50 text-purple-600'
+                  }`}>
+                    {report.report_type === 'company' ? <Building2 size={14} /> : report.report_type === 'people_search' ? <UserPlus size={14} /> : <Users size={14} />}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <span className="text-xs font-semibold text-gray-900 block truncate">{report.title}</span>
+                    <div className="flex items-center gap-2 mt-0.5">
+                      <span className="text-[10px] text-gray-400 capitalize">{report.report_type}</span>
+                      <span className="text-[10px] text-gray-300">•</span>
+                      <span className="text-[10px] text-gray-400 flex items-center gap-0.5">
+                        <Clock size={8} />
+                        {new Date(report.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}
+                      </span>
+                      {report.data_sources?.length > 0 && (
+                        <>
+                          <span className="text-[10px] text-gray-300">•</span>
+                          <span className="text-[10px] text-gray-400">{report.data_sources.join(', ')}</span>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                </div>
+                <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <button
+                    onClick={() => loadFromHistory(report)}
+                    className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
+                    title="Load results"
+                  >
+                    <Eye size={12} />
+                  </button>
+                  <button
+                    onClick={() => deleteFromHistory(report.id)}
+                    className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded transition-colors"
+                    title="Delete"
+                  >
+                    <Trash2 size={12} />
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Loading State */}
+      {loading && (
+        <div className="bg-white rounded-xl border border-gray-100 p-8 text-center">
+          <RefreshCw size={24} className="animate-spin text-blue-500 mx-auto mb-3" />
+          <p className="text-sm font-medium text-gray-700">
+            {mode === 'company' ? 'Researching company...' : mode === 'people_search' ? 'Searching for people...' : 'Researching prospect...'}
+          </p>
+          <p className="text-xs text-gray-400 mt-1">
+            {mode === 'people_search'
+              ? 'Querying Apollo for people at companies using this technology • Enriching contacts'
+              : 'Enriching from Apollo → Searching the web → Generating AI brief'}
+          </p>
+          <div className="flex items-center justify-center gap-3 mt-3">
+            {['Apollo', 'Tavily', 'Claude AI'].map((step, i) => (
+              <span key={step} className="flex items-center gap-1.5 text-[10px] text-gray-400">
+                <span className={`w-1.5 h-1.5 rounded-full ${i === 0 ? 'bg-blue-400 animate-pulse' : i === 1 ? 'bg-purple-400 animate-pulse' : 'bg-orange-400 animate-pulse'}`} />
+                {step}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Results */}
+      {!loading && companyResult && (
+        <CompanyBriefPanel
+          company={companyResult.company}
+          brief={companyResult.brief}
+          dataSources={companyResult.data_sources}
+          tokensUsed={companyResult.tokens_used}
+          errors={companyResult.errors}
+        />
+      )}
+
+      {/* Suggested Contacts (after company research) */}
+      {!loading && companyResult && (
+        <div className="bg-white rounded-xl border border-gray-100 overflow-hidden">
+          <div className="px-5 py-3 border-b border-gray-100 bg-gradient-to-r from-emerald-50 to-cyan-50">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <UserPlus size={14} className="text-emerald-600" />
+                <span className="text-sm font-semibold text-gray-800">Suggested Contacts</span>
+                {suggestedContactsLoading && <RefreshCw size={12} className="animate-spin text-gray-400" />}
+              </div>
+              {suggestedContacts && suggestedContacts.length > 0 && (
+                <button
+                  onClick={() => {
+                    const domain = companyResult.company?.primary_domain || companyResult.company?.domain || searchInput;
+                    setMode('people_search');
+                    setFindPeopleMode('company');
+                    setSearchInput(domain.replace(/^https?:\/\//, '').replace(/^www\./, '').replace(/\/.*$/, ''));
+                    setCompanyResult(null);
+                    setSuggestedContacts(null);
+                    setDisambiguationResults(null);
+                    // Auto-trigger
+                    setTimeout(() => handleResearchRef.current?.(), 200);
+                  }}
+                  className="text-[10px] text-cyan-600 font-medium hover:text-cyan-700 flex items-center gap-1"
+                >
+                  View all 25 <ArrowRight size={10} />
+                </button>
+              )}
+            </div>
+            <p className="text-[10px] text-gray-500 mt-0.5">Key people to reach out to at this company</p>
+          </div>
+          {suggestedContactsLoading ? (
+            <div className="p-6 text-center">
+              <RefreshCw size={16} className="animate-spin text-emerald-400 mx-auto mb-2" />
+              <p className="text-xs text-gray-400">Finding key contacts...</p>
+            </div>
+          ) : suggestedContacts && suggestedContacts.length > 0 ? (
+            <div className="divide-y divide-gray-50">
+              {suggestedContacts.map((person, idx) => {
+                const name = person.name || `${person.first_name || ''} ${person.last_name || ''}`.trim();
+                const email = person.email || '';
+                const phone = person.phone_numbers?.[0]?.sanitized_number || person.phone_numbers?.[0]?.raw_number || person.sanitized_phone || person.phone_number || person.phone || '';
+                const linkedin = person.linkedin_url || '';
+                return (
+                  <div key={person.id || idx} className="px-5 py-3 flex items-center gap-3 hover:bg-emerald-50/30 transition-colors group">
+                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-emerald-400 to-cyan-500 flex items-center justify-center text-white text-[10px] font-bold flex-shrink-0">
+                      {(person.first_name?.[0] || '?')}{(person.last_name?.[0] || '')}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-semibold text-gray-800">{name || 'Unknown'}</span>
+                        {person.seniority && (
+                          <span className="text-[9px] text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded capitalize">{person.seniority}</span>
+                        )}
+                      </div>
+                      <span className="text-[10px] text-gray-500 block truncate">{person.title || ''}</span>
+                    </div>
+                    <div className="flex items-center gap-2 flex-shrink-0">
+                      {email && (
+                        <button
+                          onClick={() => navigator.clipboard.writeText(email)}
+                          className="text-blue-500 hover:text-blue-700" title={email}
+                        >
+                          <Mail size={12} />
+                        </button>
+                      )}
+                      {phone && (
+                        <button
+                          onClick={() => navigator.clipboard.writeText(phone)}
+                          className="text-emerald-500 hover:text-emerald-700" title={phone}
+                        >
+                          <Phone size={12} />
+                        </button>
+                      )}
+                      {linkedin && (
+                        <a href={linkedin} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:text-blue-700">
+                          <Linkedin size={12} />
+                        </a>
+                      )}
+                      <button
+                        onClick={() => {
+                          const org = person.organization?.name || person.organization_name || '';
+                          setMode('prospect');
+                          setSearchInput(org ? `${name} at ${org}` : name);
+                          setCompanyResult(null);
+                          setSuggestedContacts(null);
+                          setPeopleSearchResults(null);
+                        }}
+                        className="text-purple-400 hover:text-purple-600 opacity-0 group-hover:opacity-100 transition-opacity"
+                        title="Research this prospect"
+                      >
+                        <Eye size={12} />
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          ) : suggestedContacts && suggestedContacts.length === 0 ? (
+            <div className="p-4 text-center">
+              <p className="text-xs text-gray-400">No contacts found. Try "Find People" with this company&apos;s domain.</p>
+            </div>
+          ) : null}
+        </div>
+      )}
+
+      {!loading && prospectResult && (
+        <ProspectBriefPanel
+          prospect={prospectResult.prospect}
+          brief={prospectResult.brief}
+          dataSources={prospectResult.data_sources}
+          tokensUsed={prospectResult.tokens_used}
+          errors={prospectResult.errors}
+        />
+      )}
+
+      {/* People Search Results */}
+      {!loading && peopleSearchResults && peopleSearchResults.length > 0 && (
+        <div className="bg-white rounded-xl border border-gray-100 overflow-hidden">
+          <div className="px-5 py-4 border-b border-gray-100 bg-gradient-to-r from-cyan-50 to-blue-50">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Users size={16} className="text-cyan-600" />
+                <span className="text-sm font-semibold text-gray-800">
+                  {peopleSearchResults.length} People Found
+                </span>
+                <span className="text-xs text-gray-500">
+                  matching &ldquo;{searchInput}&rdquo;
+                </span>
+              </div>
+              <span className="text-[10px] text-gray-400 flex items-center gap-1">
+                <span className="w-1.5 h-1.5 rounded-full bg-blue-400" /> Apollo Data
+              </span>
+            </div>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full text-xs">
+              <thead>
+                <tr className="bg-gray-50 border-b border-gray-100">
+                  <th className="text-left px-4 py-2.5 font-semibold text-gray-600">Name</th>
+                  <th className="text-left px-4 py-2.5 font-semibold text-gray-600">Title</th>
+                  <th className="text-left px-4 py-2.5 font-semibold text-gray-600">Company</th>
+                  <th className="text-left px-4 py-2.5 font-semibold text-gray-600">Email</th>
+                  <th className="text-left px-4 py-2.5 font-semibold text-gray-600">Phone</th>
+                  <th className="text-left px-4 py-2.5 font-semibold text-gray-600">Location</th>
+                  <th className="text-center px-4 py-2.5 font-semibold text-gray-600">Links</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-50">
+                {peopleSearchResults.map((person, idx) => {
+                  const name = person.name || `${person.first_name || ''} ${person.last_name || ''}`.trim();
+                  const org = person.organization?.name || person.organization_name || '';
+                  const email = person.email || '';
+                  const phone = person.phone_numbers?.[0]?.sanitized_number || person.phone_numbers?.[0]?.raw_number || person.sanitized_phone || person.phone_number || person.phone || '';
+                  const linkedin = person.linkedin_url || '';
+                  const location = [person.city, person.state, person.country].filter(Boolean).join(', ');
+                  const title = person.title || person.headline || '';
+
+                  return (
+                    <tr key={person.id || idx} className="hover:bg-blue-50/50 transition-colors group">
+                      <td className="px-4 py-3">
+                        <div className="flex items-center gap-2">
+                          <div className="w-7 h-7 rounded-full bg-gradient-to-br from-cyan-400 to-blue-500 flex items-center justify-center text-white text-[10px] font-bold flex-shrink-0">
+                            {(person.first_name?.[0] || '?')}{(person.last_name?.[0] || '')}
+                          </div>
+                          <span className="font-medium text-gray-800 whitespace-nowrap">{name || 'Unknown'}</span>
+                        </div>
+                      </td>
+                      <td className="px-4 py-3 text-gray-600 max-w-[200px]">
+                        <span className="block truncate" title={title}>{title || '—'}</span>
+                        {person.seniority && (
+                          <span className="text-[10px] text-cyan-600 bg-cyan-50 px-1.5 py-0.5 rounded mt-0.5 inline-block capitalize">{person.seniority}</span>
+                        )}
+                      </td>
+                      <td className="px-4 py-3 text-gray-600 whitespace-nowrap">
+                        {org || '—'}
+                      </td>
+                      <td className="px-4 py-3">
+                        {email ? (
+                          <button
+                            onClick={() => { navigator.clipboard.writeText(email); }}
+                            className="flex items-center gap-1 text-blue-600 hover:text-blue-800 transition-colors group/email"
+                            title={`Copy: ${email}`}
+                          >
+                            <Mail size={11} className="flex-shrink-0" />
+                            <span className="truncate max-w-[160px]">{email}</span>
+                            <Copy size={9} className="opacity-0 group-hover/email:opacity-100 transition-opacity flex-shrink-0" />
+                          </button>
+                        ) : (
+                          <span className="text-gray-300">—</span>
+                        )}
+                      </td>
+                      <td className="px-4 py-3">
+                        {phone ? (
+                          <button
+                            onClick={() => { navigator.clipboard.writeText(phone); }}
+                            className="flex items-center gap-1 text-emerald-600 hover:text-emerald-800 transition-colors group/phone"
+                            title={`Copy: ${phone}`}
+                          >
+                            <Phone size={11} className="flex-shrink-0" />
+                            <span className="whitespace-nowrap">{phone}</span>
+                            <Copy size={9} className="opacity-0 group-hover/phone:opacity-100 transition-opacity flex-shrink-0" />
+                          </button>
+                        ) : (
+                          <span className="text-gray-300">—</span>
+                        )}
+                      </td>
+                      <td className="px-4 py-3 text-gray-500 whitespace-nowrap max-w-[150px]">
+                        <span className="block truncate" title={location}>{location || '—'}</span>
+                      </td>
+                      <td className="px-4 py-3">
+                        <div className="flex items-center justify-center gap-2">
+                          {linkedin && (
+                            <a href={linkedin} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:text-blue-700 transition-colors" title="LinkedIn Profile">
+                              <Linkedin size={13} />
+                            </a>
+                          )}
+                          <button
+                            onClick={() => {
+                              const fullName = name || '';
+                              const nameParts = fullName.split(' ');
+                              setMode('prospect');
+                              setSearchInput(org ? `${fullName} at ${org}` : fullName);
+                              setPeopleSearchResults(null);
+                              setPeopleSearchFilters(null);
+                            }}
+                            className="text-purple-500 hover:text-purple-700 transition-colors opacity-0 group-hover:opacity-100"
+                            title="Research this prospect"
+                          >
+                            <Eye size={13} />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+          {peopleSearchResults.length >= 25 && (
+            <div className="px-5 py-3 border-t border-gray-100 bg-gray-50 text-center">
+              <span className="text-[10px] text-gray-400">Showing first 25 results. Refine your search for more specific results.</span>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* People search empty state */}
+      {!loading && peopleSearchResults && peopleSearchResults.length === 0 && (
+        <div className="bg-white rounded-xl border border-gray-100 p-8 text-center">
+          <Users size={24} className="text-gray-300 mx-auto mb-3" />
+          <p className="text-sm font-medium text-gray-600">No people found</p>
+          <p className="text-xs text-gray-400 mt-1">Try a different technology name or broaden your search</p>
+        </div>
+      )}
+
+      {/* Outreach Generator */}
+      {canGenerateOutreach && (
+        <div className="bg-white rounded-xl border border-gray-100 p-5">
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-2">
+              <Send size={14} className="text-emerald-500" />
+              <span className="text-sm font-semibold text-gray-700">Generate AI Outreach</span>
+            </div>
+          </div>
+
+          {/* Prompt Template Selector */}
+          <div className="mb-3">
+            <label className="text-[10px] text-gray-400 uppercase font-medium block mb-1">Prompt Template</label>
+            <PromptTemplateSelector
+              category="outreach"
+              value={selectedTemplate?.id}
+              onChange={(template) => setSelectedTemplate(template)}
+              placeholder="Use library prompt or default..."
+            />
+            {selectedTemplate && (
+              <p className="text-[10px] text-violet-500 mt-1 flex items-center gap-1">
+                <BookOpen size={10} /> Using: {selectedTemplate.name}
+              </p>
+            )}
+          </div>
+
+          <div className="flex items-center gap-3">
+            <div>
+              <label className="text-[10px] text-gray-400 uppercase font-medium block mb-1">Channel</label>
+              <select
+                value={outreachChannel}
+                onChange={(e) => setOutreachChannel(e.target.value)}
+                className="text-xs border border-gray-200 rounded-lg px-3 py-1.5 bg-white focus:outline-none focus:ring-2 focus:ring-emerald-200"
+              >
+                <option value="email">Email</option>
+                <option value="linkedin">LinkedIn</option>
+              </select>
+            </div>
+            <div>
+              <label className="text-[10px] text-gray-400 uppercase font-medium block mb-1">Tone</label>
+              <select
+                value={outreachTone}
+                onChange={(e) => setOutreachTone(e.target.value)}
+                className="text-xs border border-gray-200 rounded-lg px-3 py-1.5 bg-white focus:outline-none focus:ring-2 focus:ring-emerald-200"
+              >
+                <option value="professional">Professional</option>
+                <option value="casual">Casual</option>
+                <option value="direct">Direct</option>
+                <option value="consultative">Consultative</option>
+              </select>
+            </div>
+            <div className="flex-1" />
+            <button
+              onClick={handleGenerateOutreach}
+              disabled={outreachLoading}
+              className="px-4 py-2 bg-gradient-to-r from-emerald-500 to-teal-500 text-white rounded-lg text-xs font-semibold hover:opacity-90 transition-opacity disabled:opacity-50 flex items-center gap-2"
+            >
+              {outreachLoading ? (
+                <><RefreshCw size={12} className="animate-spin" /> Generating...</>
+              ) : (
+                <><Sparkles size={12} /> Generate Draft</>
+              )}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Outreach Draft */}
+      {outreachDraft && (
+        <OutreachDraftPanel draft={outreachDraft} tokensUsed={outreachTokens} />
+      )}
+
+      {/* Empty State */}
+      {!loading && !hasResults && !error && (
+        <div className="bg-white rounded-xl border border-gray-100 p-10 text-center">
+          <div className="w-14 h-14 bg-gradient-to-br from-blue-100 to-cyan-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+            <Search size={24} className="text-blue-500" />
+          </div>
+          <h3 className="text-sm font-semibold text-gray-700 mb-1">Ready to Research</h3>
+          <p className="text-xs text-gray-400 max-w-md mx-auto">
+            Enter a company domain or prospect identifier above to generate an AI-powered research brief.
+            Results include enrichment data, web intelligence, and personalized insights.
+          </p>
+          <div className="flex items-center justify-center gap-6 mt-5">
+            {[
+              { icon: Building2, label: 'Company Brief', desc: 'Funding, tech stack, competitors' },
+              { icon: Users, label: 'Prospect Brief', desc: 'Background, outreach angles' },
+              { icon: Mail, label: 'AI Outreach', desc: 'Personalized email & LinkedIn drafts' },
+            ].map(({ icon: Icon, label, desc }) => (
+              <div key={label} className="text-center">
+                <div className="w-9 h-9 bg-gray-50 rounded-lg flex items-center justify-center mx-auto mb-1.5">
+                  <Icon size={16} className="text-gray-400" />
+                </div>
+                <span className="text-[11px] font-medium text-gray-600 block">{label}</span>
+                <span className="text-[10px] text-gray-400">{desc}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}

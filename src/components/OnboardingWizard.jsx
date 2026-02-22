@@ -10,11 +10,16 @@ const ONBOARDING_STEPS = [
   { id: 4, title: 'Complete Setup', icon: Trophy },
 ];
 
-export default function OnboardingWizard({ isOpen, onClose, organizationId }) {
-  const { profile } = useAuth();
+export default function OnboardingWizard({ isOpen, onClose, organizationId: initialOrgId }) {
+  const { profile, refreshProfile } = useAuth();
   const [currentStep, setCurrentStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [createdOrgId, setCreatedOrgId] = useState(null);
+
+  // Use the prop if provided, otherwise use the ID we created in step 1
+  const organizationId = initialOrgId || createdOrgId;
+  const isNewOrg = !initialOrgId;
 
   // Step 1: Organization Info
   const [orgData, setOrgData] = useState({
@@ -110,20 +115,57 @@ export default function OnboardingWizard({ isOpen, onClose, organizationId }) {
   };
 
   const saveOrganizationInfo = async () => {
+    if (!orgData.name?.trim()) throw new Error('Company name is required');
+    if (!orgData.primary_contact_name?.trim()) throw new Error('Contact name is required');
+    if (!orgData.primary_contact_email?.trim()) throw new Error('Contact email is required');
+
     setLoading(true);
     try {
-      const { error } = await supabase
-        .from('organizations')
-        .update({
-          name: orgData.name,
-          industry: orgData.industry,
-          subscription_plan: orgData.subscription_plan,
-          primary_contact_name: orgData.primary_contact_name,
-          primary_contact_email: orgData.primary_contact_email,
-        })
-        .eq('id', organizationId);
+      if (isNewOrg && !createdOrgId) {
+        // CREATE a new organization
+        const { data: newOrg, error: insertError } = await supabase
+          .from('organizations')
+          .insert({
+            name: orgData.name,
+            industry: orgData.industry || null,
+            subscription_plan: orgData.subscription_plan,
+            primary_contact_name: orgData.primary_contact_name,
+            primary_contact_email: orgData.primary_contact_email,
+            onboarding_status: 'in_progress',
+            onboarding_step: 1,
+          })
+          .select()
+          .single();
 
-      if (error) throw error;
+        if (insertError) throw insertError;
+        setCreatedOrgId(newOrg.id);
+
+        // Link the current user's profile to this organization
+        if (profile?.id) {
+          const { error: profileError } = await supabase
+            .from('profiles')
+            .update({ organization_id: newOrg.id })
+            .eq('id', profile.id);
+
+          if (profileError) throw profileError;
+          // Refresh the AuthContext profile so the rest of the app picks up the org
+          await refreshProfile();
+        }
+      } else {
+        // UPDATE existing organization
+        const { error } = await supabase
+          .from('organizations')
+          .update({
+            name: orgData.name,
+            industry: orgData.industry,
+            subscription_plan: orgData.subscription_plan,
+            primary_contact_name: orgData.primary_contact_name,
+            primary_contact_email: orgData.primary_contact_email,
+          })
+          .eq('id', organizationId);
+
+        if (error) throw error;
+      }
     } finally {
       setLoading(false);
     }
@@ -188,16 +230,20 @@ export default function OnboardingWizard({ isOpen, onClose, organizationId }) {
   const completeOnboarding = async () => {
     setLoading(true);
     try {
-      const { error } = await supabase
-        .from('organizations')
-        .update({
-          onboarding_status: 'completed',
-          onboarding_step: 4,
-          onboarding_completed_at: new Date().toISOString(),
-        })
-        .eq('id', organizationId);
+      if (organizationId) {
+        const { error } = await supabase
+          .from('organizations')
+          .update({
+            onboarding_status: 'completed',
+            onboarding_step: 4,
+            onboarding_completed_at: new Date().toISOString(),
+          })
+          .eq('id', organizationId);
 
-      if (error) throw error;
+        if (error) throw error;
+      }
+      // Ensure AuthContext has the latest profile data
+      await refreshProfile();
       onClose();
     } finally {
       setLoading(false);

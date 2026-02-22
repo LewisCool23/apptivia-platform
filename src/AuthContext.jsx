@@ -5,9 +5,12 @@ import {
   normalizeRole,
   getPermissionOverrides,
   setPermissionOverrides,
+  loadPermissionOverridesFromDb,
+  savePermissionOverridesToDb,
   getEffectivePermissions,
   hasPermission as hasPermissionCheck
 } from './permissions';
+
 const AuthContext = createContext(null);
 
 export const AuthProvider = ({ children }) => {
@@ -15,41 +18,52 @@ export const AuthProvider = ({ children }) => {
   const [profile, setProfile] = useState(null);
   const [permissionsVersion, setPermissionsVersion] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
+  // DB-sourced overrides (null = not yet loaded; fall back to localStorage cache)
+  const [dbOverrides, setDbOverrides] = useState(null);
 
-  // Check for stored session on mount
+  // ── Session management via Supabase onAuthStateChange ──────────────────────
+  // This is the authoritative source of auth state. It fires on:
+  //  • Initial page load  (INITIAL_SESSION)
+  //  • Sign in           (SIGNED_IN)
+  //  • Token refresh     (TOKEN_REFRESHED) — keeps the user logged in as JWT renews
+  //  • Sign out / expiry (SIGNED_OUT)      — clears state automatically
   useEffect(() => {
-    const storedUser = localStorage.getItem('apptivia_user');
-    console.log('[AuthContext] Loaded from localStorage:', storedUser);
-    if (storedUser) {
-      try {
-        setUser(JSON.parse(storedUser));
-        console.log('[AuthContext] Set user from localStorage:', JSON.parse(storedUser));
-      } catch (error) {
-        console.error('Error parsing stored user:', error);
-        localStorage.removeItem('apptivia_user');
+    // Seed initial state from the existing session (avoids flash on reload)
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null);
+      setIsLoading(false);
+    });
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED' || event === 'USER_UPDATED') {
+        setUser(session?.user ?? null);
+      } else if (event === 'SIGNED_OUT') {
+        setUser(null);
+        setProfile(null);
+        setDbOverrides(null);
+        localStorage.removeItem('apptivia_user'); // clean up legacy key
       }
-    }
-    setIsLoading(false);
+      setIsLoading(false);
+    });
+
+    return () => subscription.unsubscribe();
   }, []);
 
+  // login() — kept for backward compatibility with Login.jsx.
+  // onAuthStateChange fires automatically after signInWithPassword,
+  // so this is mostly a fallback state setter.
   const login = (userData) => {
     setUser(userData);
-    localStorage.setItem('apptivia_user', JSON.stringify(userData));
-    console.log('[AuthContext] Login called. User set and saved to localStorage:', userData);
   };
 
-  const logout = () => {
-    setUser(null);
-    localStorage.removeItem('apptivia_user');
-    console.log('[AuthContext] Logout called. User cleared and removed from localStorage.');
-  };
+  const logout = useCallback(async () => {
+    await supabase.auth.signOut();
+    // onAuthStateChange SIGNED_OUT handler clears user/profile/dbOverrides
+  }, []);
 
-  const updateUser = (updatedData) => {
-    const updatedUser = { ...user, ...updatedData };
-    setUser(updatedUser);
-    localStorage.setItem('apptivia_user', JSON.stringify(updatedUser));
-    console.log('[AuthContext] updateUser called. User updated and saved to localStorage:', updatedUser);
-  };
+  const updateUser = useCallback((updatedData) => {
+    setUser((prev) => prev ? { ...prev, ...updatedData } : prev);
+  }, []);
 
   const refreshProfile = useCallback(async () => {
     if (!user?.id) {
@@ -73,10 +87,25 @@ export const AuthProvider = ({ children }) => {
     refreshProfile();
   }, [refreshProfile]);
 
+  // Load permission overrides from DB whenever the logged-in user changes.
+  // localStorage is used for an instant first-render, then replaced by the DB value.
+  useEffect(() => {
+    if (!user?.id) {
+      setDbOverrides(null);
+      return;
+    }
+    loadPermissionOverridesFromDb(user.id).then((overrides) => {
+      setDbOverrides(overrides);
+      setPermissionOverrides(user.id, overrides);
+    }).catch(() => {
+      setDbOverrides(getPermissionOverrides(user.id));
+    });
+  }, [user?.id]);
+
   const role = useMemo(() => normalizeRole(profile?.role || user?.role), [profile?.role, user?.role]);
   const permissionOverrides = useMemo(
-    () => getPermissionOverrides(user?.id),
-    [user?.id, permissionsVersion]
+    () => dbOverrides !== null ? dbOverrides : getPermissionOverrides(user?.id),
+    [dbOverrides, user?.id, permissionsVersion]
   );
   const effectivePermissions = useMemo(
     () => getEffectivePermissions({
@@ -95,21 +124,20 @@ export const AuthProvider = ({ children }) => {
   const updatePermissionOverridesForUser = useCallback((userId, overrides) => {
     setPermissionOverrides(userId, overrides);
     setPermissionsVersion((prev) => prev + 1);
+
+    const orgId = profile?.organization_id;
+    savePermissionOverridesToDb(userId, orgId, overrides).catch((err) => {
+      console.error('[AuthContext] Failed to save permission overrides to DB:', err);
+    });
+
     if (user?.id && userId === user.id) {
+      setDbOverrides(overrides);
       refreshProfile();
     }
-  }, [user?.id, refreshProfile]);
-
-  useEffect(() => {
-    console.log('[AuthContext] user state changed:', user);
-    console.log('[AuthContext] isAuthenticated:', !!(user && user.id && user.email));
-  }, [user]);
+  }, [user?.id, profile?.organization_id, refreshProfile]);
 
   const isAuthenticated = !!(user && user.id && user.email);
-  useEffect(() => {
-    console.log('[AuthContext] (on mount) user:', user);
-    console.log('[AuthContext] (on mount) isAuthenticated:', isAuthenticated);
-  }, []);
+
   const value = {
     user,
     profile,

@@ -15,9 +15,27 @@ WHERE name LIKE '%Milestone%'
 DELETE FROM profile_achievements 
 WHERE achievement_id NOT IN (SELECT id FROM achievements);
 
--- Delete any profile_achievements records for deleted achievements
-DELETE FROM profile_achievements 
-WHERE achievement_id NOT IN (SELECT id FROM achievements);
+-- Clean up ALL achievements for the 6 skillsets this migration populates
+-- so it can be re-run idempotently
+DO $$
+DECLARE
+  skillset_names TEXT[] := ARRAY['Call Conqueror', 'Conversationalist', 'Email Warrior', 'Pipeline Guru', 'Task Master', 'Scorecard Master'];
+  sname TEXT;
+BEGIN
+  FOREACH sname IN ARRAY skillset_names LOOP
+    -- Delete profile_achievements for achievements in this skillset
+    DELETE FROM profile_achievements
+    WHERE achievement_id IN (
+      SELECT a.id FROM achievements a
+      JOIN skillsets s ON s.id = a.skillset_id
+      WHERE s.name = sname
+    );
+    -- Delete the achievements themselves
+    DELETE FROM achievements
+    WHERE skillset_id = (SELECT id FROM skillsets WHERE name = sname);
+  END LOOP;
+  RAISE NOTICE 'Cleaned up existing achievements for all 6 skillsets';
+END $$;
 
 -- =============================================================================
 -- CALL CONQUEROR - Call Connects (High Volume: 1, 10, 20, 25, 40, 50, 60, 75, 90, 100, 150, 200, 250, 300, 400, 500)
@@ -1000,8 +1018,8 @@ BEGIN
     INSERT INTO achievements (skillset_id, name, description, difficulty, points, criteria)
     VALUES (
       skillset_id_var,
-      threshold || ' Scorecards Completed',
-      'Complete ' || threshold || ' total scorecards',
+      threshold || ' Weeks Scored',
+      'Have your scorecard calculated for ' || threshold || ' total weeks',
       difficulty_val,
       points_val,
       jsonb_build_object('kpi', 'scorecards_completed', 'threshold', threshold, 'operator', '>=', 'cumulative', true)

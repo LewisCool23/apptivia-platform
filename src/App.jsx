@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { Suspense } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './AuthContext';
 import { ToastProvider } from './contexts/ToastContext';
@@ -7,104 +7,108 @@ import { NotificationProvider } from './contexts/NotificationContext';
 import Login from './Login';
 import ApptiviaScorecard from './ApptiviaScorecard';
 import ProtectedRoute from './ProtectedRoute';
-import Coach from './pages/Coach';
-import Contests from './pages/Contests';
-import Analytics from './pages/Analytics';
-import Systems from './pages/Systems';
-import PermissionsTeams from './pages/PermissionsTeams';
-import Profile from './pages/Profile';
-import CoachingPlans from './pages/CoachingPlans';
-import Integrations from './pages/Integrations';
-import OrganizationSettings from './pages/OrganizationSettings';
-import LandingPage from './pages/LandingPage';
 import { supabaseConfigMissing } from './supabaseClient';
-import ErrorBoundary from './components/ErrorBoundary';
+import ErrorBoundary, { PageErrorBoundary } from './components/ErrorBoundary';
+import DealCelebration from './components/DealCelebration';
+
+// ── Eagerly-loaded (small, needed immediately) ──────────────────────────────
+import LandingPage from './pages/LandingPage';
+
+// ── Lazily-loaded pages (split into separate chunks) ────────────────────────
+const Coach            = React.lazy(() => import('./pages/Coach'));
+const Engage           = React.lazy(() => import('./pages/Engage'));
+const Contests         = React.lazy(() => import('./pages/Contests'));
+const Analytics        = React.lazy(() => import('./pages/Analytics'));
+const Systems          = React.lazy(() => import('./pages/Systems'));
+const PermissionsTeams = React.lazy(() => import('./pages/PermissionsTeams'));
+const Profile          = React.lazy(() => import('./pages/Profile'));
+const CoachingPlans    = React.lazy(() => import('./pages/CoachingPlans'));
+const Integrations     = React.lazy(() => import('./pages/Integrations'));
+const OrganizationSettings = React.lazy(() => import('./pages/OrganizationSettings'));
+const Wallboard        = React.lazy(() => import('./pages/Wallboard'));
+const ForgotPassword   = React.lazy(() => import('./pages/ForgotPassword'));
+const UpdatePassword   = React.lazy(() => import('./pages/UpdatePassword'));
+
+// ── Simple page-level loading fallback ──────────────────────────────────────
+function PageLoader() {
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="flex flex-col items-center gap-3">
+        <div className="w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+        <span className="text-sm text-gray-400">Loading…</span>
+      </div>
+    </div>
+  );
+}
+
+// Convenience wrapper: ProtectedRoute + per-page error boundary
+function PBR({ permissions, children }) {
+  return (
+    <ProtectedRoute requiredPermissions={permissions}>
+      <PageErrorBoundary>
+        {children}
+      </PageErrorBoundary>
+    </ProtectedRoute>
+  );
+}
 
 const AppRoutes = () => {
   const { isAuthenticated, isLoading } = useAuth();
-  if (isLoading) return null; // or a spinner
+  if (isLoading) return null;
   return (
-    <Routes>
-      <Route path="/" element={<LandingPage />} />
-      <Route path="/login" element={<Login />} />
-      <Route path="/forgot-password" element={React.createElement(require('./pages/ForgotPassword').default)} />
-      <Route path="/update-password" element={React.createElement(require('./pages/UpdatePassword').default)} />
-      <Route 
-        path="/dashboard" 
-        element={
-          <ProtectedRoute requiredPermissions={['view_dashboard']}>
-            <ApptiviaScorecard initialPage="home" />
-          </ProtectedRoute>
-        } 
-      />
-        <Route path="/coach"
+    <Suspense fallback={<PageLoader />}>
+      <Routes>
+        <Route path="/" element={<LandingPage />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/update-password" element={<UpdatePassword />} />
+        <Route
+          path="/dashboard"
           element={
-            <ProtectedRoute requiredPermissions={['view_coach']}>
-              <Coach />
-            </ProtectedRoute>
+            <PBR permissions={['view_dashboard']}>
+              <ApptiviaScorecard initialPage="home" />
+            </PBR>
           }
+        />
+        <Route path="/coach"
+          element={<PBR permissions={['view_coach']}><Coach /></PBR>}
+        />
+        <Route path="/engage"
+          element={<PBR permissions={['view_engage']}><Engage /></PBR>}
         />
         <Route path="/contests"
-          element={
-            <ProtectedRoute requiredPermissions={['view_contests']}>
-              <Contests />
-            </ProtectedRoute>
-          }
+          element={<PBR permissions={['view_contests']}><Contests /></PBR>}
         />
         <Route path="/analytics"
-          element={
-            <ProtectedRoute requiredPermissions={['view_analytics']}>
-              <Analytics />
-            </ProtectedRoute>
-          }
+          element={<PBR permissions={['view_analytics']}><Analytics /></PBR>}
         />
         <Route path="/systems"
-          element={
-            <ProtectedRoute requiredPermissions={['view_systems']}>
-              <Systems />
-            </ProtectedRoute>
-          }
+          element={<PBR permissions={['view_systems']}><Systems /></PBR>}
         />
         <Route path="/permissions-teams"
-          element={
-            <ProtectedRoute requiredPermissions={['view_systems']}>
-              <PermissionsTeams />
-            </ProtectedRoute>
-          }
+          element={<PBR permissions={['view_systems']}><PermissionsTeams /></PBR>}
         />
         <Route path="/profile"
-          element={
-            <ProtectedRoute requiredPermissions={['view_profile']}>
-              <Profile />
-            </ProtectedRoute>
-          }
+          element={<PBR permissions={['view_profile']}><Profile /></PBR>}
         />
         <Route path="/coaching-plans"
-          element={
-            <ProtectedRoute requiredPermissions={['view_coach']}>
-              <CoachingPlans />
-            </ProtectedRoute>
-          }
+          element={<PBR permissions={['view_coach']}><CoachingPlans /></PBR>}
         />
         <Route path="/integrations"
-          element={
-            <ProtectedRoute requiredPermissions={['view_systems']}>
-              <Integrations />
-            </ProtectedRoute>
-          }
+          element={<PBR permissions={['view_systems']}><Integrations /></PBR>}
         />
         <Route path="/organization-settings"
-          element={
-            <ProtectedRoute requiredPermissions={['view_systems']}>
-              <OrganizationSettings />
-            </ProtectedRoute>
-          }
+          element={<PBR permissions={['view_systems']}><OrganizationSettings /></PBR>}
         />
-      <Route path="/app" element={
-        isAuthenticated ? <Navigate to="/dashboard" replace /> : <Login />
-      } />
-      <Route path="*" element={<Navigate to="/dashboard" replace />} />
-    </Routes>
+        <Route path="/wallboard"
+          element={<PBR permissions={['view_coach']}><Wallboard /></PBR>}
+        />
+        <Route path="/app" element={
+          isAuthenticated ? <Navigate to="/dashboard" replace /> : <Login />
+        } />
+        <Route path="*" element={<Navigate to="/dashboard" replace />} />
+      </Routes>
+    </Suspense>
   );
 };
 
@@ -121,6 +125,7 @@ function App() {
             )}
             <ErrorBoundary>
               <AppRoutes />
+              <DealCelebration />
             </ErrorBoundary>
           </NotificationProvider>
         </AuthProvider>

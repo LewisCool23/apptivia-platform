@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, X } from 'lucide-react';
+import { Search, X, Radar, Shield } from 'lucide-react';
 import DashboardLayout from '../DashboardLayout';
 import ScorecardFilters from '../components/ScorecardFilters';
 import RightFilterPanel from '../components/RightFilterPanel';
@@ -14,6 +14,8 @@ import { useNotifications } from '../contexts/NotificationContext';
 import { useAuth } from '../AuthContext';
 import InfoTooltip from '../components/InfoTooltip';
 import { supabase } from '../supabaseClient';
+import { TeamPerformanceChart as EngageBarChart } from '../components/Charts';
+import KpiWatchdog from '../components/KpiWatchdog';
 
 export default function Analytics() {
   const navigate = useNavigate();
@@ -66,6 +68,11 @@ export default function Analytics() {
   const [showSearchResults, setShowSearchResults] = useState(false);
   const [searching, setSearching] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [engageStats, setEngageStats] = useState(null);
+  const [engageLoading, setEngageLoading] = useState(false);
+  const [allKpiMetrics, setAllKpiMetrics] = useState([]);
+  const [allKpiValues, setAllKpiValues] = useState([]);
+  const [watchdogProfile, setWatchdogProfile] = useState(null);
 
   useEffect(() => {
     if (filtersInitialized) return;
@@ -89,6 +96,127 @@ export default function Analytics() {
     loadTeams();
     return () => { mounted = false; };
   }, [isAdmin]);
+
+  // Fetch user profile for watchdog org context
+  useEffect(() => {
+    async function loadProfile() {
+      if (!user?.id) return;
+      const { data } = await supabase.from('profiles').select('organization_id').eq('id', user.id).single();
+      if (data) setWatchdogProfile(data);
+    }
+    loadProfile();
+  }, [user?.id]);
+
+  // Fetch ALL active KPI metrics (not just scorecard ones) for comprehensive analytics
+  useEffect(() => {
+    async function loadAllKpis() {
+      try {
+        const { data: metrics, error: metricsError } = await supabase
+          .from('kpi_metrics')
+          .select('id, key, name, description, goal, weight, unit, category, show_on_scorecard')
+          .eq('is_active', true)
+          .order('scorecard_position');
+        if (metricsError) throw metricsError;
+        setAllKpiMetrics(metrics || []);
+      } catch (e) {
+        console.error('Error fetching all KPI metrics:', e);
+      }
+    }
+    loadAllKpis();
+  }, []);
+
+  // Fetch Engage analytics when Engage tab is active
+  useEffect(() => {
+    if (activeTab !== 'engage') return;
+    let mounted = true;
+    async function loadEngageStats() {
+      setEngageLoading(true);
+      try {
+        const orgId = profile?.organization_id || user?.organization_id;
+        if (!orgId) { setEngageStats(null); setEngageLoading(false); return; }
+
+        const [seqRes, enrollRes, acctRes, pbRes, execRes] = await Promise.all([
+          supabase.from('engage_sequences').select('id, status, total_enrolled, total_replied', { count: 'exact' }).eq('organization_id', orgId),
+          supabase.from('engage_sequence_enrollments').select('id, status', { count: 'exact' }).in('sequence_id',
+            (await supabase.from('engage_sequences').select('id').eq('organization_id', orgId)).data?.map(s => s.id) || []
+          ),
+          supabase.from('engage_accounts').select('id, account_score, tier, status', { count: 'exact' }).eq('organization_id', orgId),
+          supabase.from('engage_playbooks').select('id, status, times_used', { count: 'exact' }).eq('organization_id', orgId),
+          supabase.from('engage_playbook_executions').select('id, status, outcome', { count: 'exact' }).eq('organization_id', orgId),
+        ]);
+
+        const sequences = seqRes.data || [];
+        const enrollments = enrollRes.data || [];
+        const accounts = acctRes.data || [];
+        const playbooks = pbRes.data || [];
+        const executions = execRes.data || [];
+
+        const activeSequences = sequences.filter(s => s.status === 'active').length;
+        const totalEnrolled = sequences.reduce((sum, s) => sum + (s.total_enrolled || 0), 0);
+        const totalReplied = sequences.reduce((sum, s) => sum + (s.total_replied || 0), 0);
+        const replyRate = totalEnrolled > 0 ? Math.round((totalReplied / totalEnrolled) * 100) : 0;
+
+        const tier1 = accounts.filter(a => a.tier === 'tier_1').length;
+        const tier2 = accounts.filter(a => a.tier === 'tier_2').length;
+        const tier3 = accounts.filter(a => a.tier === 'tier_3').length;
+        const avgAccountScore = accounts.length > 0
+          ? Math.round(accounts.reduce((sum, a) => sum + (a.account_score || 0), 0) / accounts.length)
+          : 0;
+
+        const activePlaybooks = playbooks.filter(p => p.status === 'active').length;
+        const completedExecutions = executions.filter(e => e.status === 'completed').length;
+        const meetingsBooked = executions.filter(e => e.outcome === 'meeting_booked').length;
+
+        // Build chart data
+        const sequencePerformance = [
+          { name: 'Active', score: activeSequences },
+          { name: 'Draft', score: sequences.filter(s => s.status === 'draft').length },
+          { name: 'Completed', score: sequences.filter(s => s.status === 'completed').length },
+          { name: 'Paused', score: sequences.filter(s => s.status === 'paused').length },
+        ].filter(d => d.score > 0);
+
+        const accountTiers = [
+          { name: 'Tier 1', score: tier1 },
+          { name: 'Tier 2', score: tier2 },
+          { name: 'Tier 3', score: tier3 },
+          { name: 'Untiered', score: accounts.filter(a => a.tier === 'untiered').length },
+        ].filter(d => d.score > 0);
+
+        if (mounted) {
+          setEngageStats({
+            totalSequences: sequences.length,
+            activeSequences,
+            totalEnrolled,
+            totalReplied,
+            replyRate,
+            enrollmentsByStatus: [
+              { name: 'Active', score: enrollments.filter(e => e.status === 'active').length },
+              { name: 'Replied', score: enrollments.filter(e => e.status === 'replied').length },
+              { name: 'Completed', score: enrollments.filter(e => e.status === 'completed').length },
+              { name: 'Bounced', score: enrollments.filter(e => e.status === 'bounced').length },
+            ].filter(d => d.score > 0),
+            totalAccounts: accounts.length,
+            tier1, tier2, tier3,
+            avgAccountScore,
+            sequencePerformance,
+            accountTiers,
+            totalPlaybooks: playbooks.length,
+            activePlaybooks,
+            totalExecutions: executions.length,
+            completedExecutions,
+            meetingsBooked,
+          });
+        }
+      } catch (err) {
+        console.error('Error loading Engage stats:', err);
+        if (mounted) setEngageStats(null);
+      } finally {
+        if (mounted) setEngageLoading(false);
+      }
+    }
+    loadEngageStats();
+    return () => { mounted = false; };
+  }, [activeTab, profile?.organization_id, user?.organization_id]);
 
   // Convert date range to actual dates
   const dateRange = useMemo(() => {
@@ -185,6 +313,8 @@ export default function Analytics() {
     { id: 'score-trends', label: 'Score Trends' },
     ...(!isPowerUser ? [{ id: 'team-rankings', label: isAdmin ? 'Team Rankings' : 'Rep Rankings' }] : []),
     { id: 'kpi-attainment', label: 'KPI Attainment' },
+    { id: 'watchdog', label: 'KPI Watchdog' },
+    { id: 'engage', label: 'Engage' },
   ]), [isAdmin, isPowerUser]);
 
   // Calculate aggregate KPI metrics from filtered data
@@ -234,9 +364,15 @@ export default function Analytics() {
     const exceeding = [];
     const onTrack = [];
     const needsFocus = [];
-    Object.entries(userRow.kpis).forEach(([key, val]) => {
-      const pct = Math.round(val.percentage || 0);
-      const label = key.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+    // Use ALL KPI metrics for comprehensive health view
+    const allKeys = allKpiMetrics.length > 0
+      ? allKpiMetrics.map(m => m.key)
+      : Object.keys(userRow.kpis);
+    const labelMap = allKpiMetrics.reduce((acc, m) => { acc[m.key] = m.name; return acc; }, {});
+    allKeys.forEach((key) => {
+      const val = userRow.kpis[key];
+      const pct = Math.round(val?.percentage || 0);
+      const label = labelMap[key] || key.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
       if (pct >= 100) exceeding.push(label);
       else if (pct >= 80) onTrack.push(label);
       else needsFocus.push(label);
@@ -246,7 +382,7 @@ export default function Analytics() {
       { name: 'On Track (80-99%)', value: onTrack.length, kpis: onTrack },
       { name: 'Needs Focus (<80%)', value: needsFocus.length, kpis: needsFocus },
     ];
-  }, [userRow]);
+  }, [userRow, allKpiMetrics]);
 
   const teamPerformanceData = useMemo(() => {
     if (!isAdmin || data.rows.length === 0) return [];
@@ -275,18 +411,25 @@ export default function Analytics() {
 
   const kpiAttainmentData = useMemo(() => {
     if (!data.rows.length) return [];
-    const keys = Object.keys(data.rows[0]?.kpis || {});
-    const result = keys.map((key) => {
+    // Use ALL KPI metrics (not just scorecard ones) for comprehensive analytics
+    const allKeys = allKpiMetrics.length > 0
+      ? allKpiMetrics.map(m => m.key)
+      : Object.keys(data.rows[0]?.kpis || {});
+    const labelMap = allKpiMetrics.reduce((acc, m) => { acc[m.key] = m.name; return acc; }, {});
+
+    const result = allKeys.map((key) => {
       const avgPct = Math.round(
         data.rows.reduce((sum, row) => sum + (row.kpis[key]?.percentage || 0), 0) / data.rows.length
       );
       return {
-        name: key.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()),
+        name: labelMap[key] || key.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()),
+        key,
         score: avgPct,
+        hasData: data.rows.some(row => row.kpis[key]?.value > 0),
       };
     });
     return result.sort((a, b) => b.score - a.score);
-  }, [data.rows]);
+  }, [data.rows, allKpiMetrics]);
 
   const topMovers = useMemo(() => {
     if (!data.rows.length) return [];
@@ -673,7 +816,7 @@ export default function Analytics() {
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                   <TeamPerformanceChart
                     title="KPI Attainment (Avg %)"
-                    infoText="Average KPI attainment across the selected audience and period."
+                    infoText="Average KPI attainment across all active KPIs for the selected audience and period."
                     data={kpiAttainmentData}
                     dataKey="score"
                     barLabel="Avg KPI %"
@@ -683,7 +826,7 @@ export default function Analytics() {
                   <ScoreDistributionChart
                     title={isPowerUser ? 'KPI Health' : 'Score Distribution'}
                     infoText={isPowerUser
-                      ? 'Breakdown of your KPIs by health category for the selected period.'
+                      ? 'Breakdown of all your KPIs by health category for the selected period.'
                       : 'Distribution of reps by scorecard performance buckets for the selected period.'
                     }
                     data={isPowerUser ? kpiHealthData : [
@@ -693,7 +836,213 @@ export default function Analytics() {
                     ]}
                   />
                 </div>
+
+                {/* Detailed KPI Breakdown — All KPIs */}
+                <div className="bg-white rounded-lg p-4 shadow-sm">
+                  <div className="flex items-center gap-2 mb-4">
+                    <h3 className="text-sm font-semibold text-gray-900">All KPI Details</h3>
+                    <InfoTooltip text="Detailed view of every active KPI metric — including those not shown on the scorecard." />
+                    <span className="text-[10px] bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full font-medium">{allKpiMetrics.length} KPIs</span>
+                  </div>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left text-xs">
+                      <thead>
+                        <tr className="text-gray-500 border-b border-gray-100">
+                          <th className="py-2 px-3 font-medium">KPI Name</th>
+                          <th className="py-2 px-3 font-medium">Category</th>
+                          <th className="py-2 px-3 font-medium">Goal</th>
+                          <th className="py-2 px-3 font-medium">Avg Value</th>
+                          <th className="py-2 px-3 font-medium">Avg Attainment</th>
+                          <th className="py-2 px-3 font-medium">On Scorecard</th>
+                          <th className="py-2 px-3 font-medium">Status</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {allKpiMetrics.map((metric) => {
+                          const kpiData = kpiAttainmentData.find(k => k.key === metric.key);
+                          const avgPct = kpiData?.score || 0;
+                          const avgValue = data.rows.length > 0
+                            ? Math.round(data.rows.reduce((sum, row) => sum + (row.kpis[metric.key]?.value || 0), 0) / data.rows.length * 10) / 10
+                            : 0;
+                          return (
+                            <tr key={metric.key} className="border-b border-gray-50 hover:bg-gray-50/50">
+                              <td className="py-2.5 px-3">
+                                <div className="font-medium text-gray-900">{metric.name}</div>
+                                {metric.description && <div className="text-[10px] text-gray-400 mt-0.5 truncate max-w-[200px]">{metric.description}</div>}
+                              </td>
+                              <td className="py-2.5 px-3">
+                                <span className="text-xs text-gray-500 capitalize">{(metric.category || 'general').replace(/_/g, ' ')}</span>
+                              </td>
+                              <td className="py-2.5 px-3 font-medium text-gray-700">
+                                {metric.goal}{metric.unit === 'percent' ? '%' : metric.unit === 'minutes' ? ' min' : ''}
+                              </td>
+                              <td className="py-2.5 px-3 font-medium text-gray-700">{avgValue}</td>
+                              <td className="py-2.5 px-3">
+                                <div className="flex items-center gap-2">
+                                  <div className="w-16 bg-gray-100 rounded-full h-1.5">
+                                    <div
+                                      className={`h-full rounded-full transition-all ${
+                                        avgPct >= 100 ? 'bg-emerald-500' : avgPct >= 80 ? 'bg-yellow-500' : 'bg-red-400'
+                                      }`}
+                                      style={{ width: `${Math.min(avgPct, 100)}%` }}
+                                    />
+                                  </div>
+                                  <span className={`font-bold ${
+                                    avgPct >= 100 ? 'text-emerald-600' : avgPct >= 80 ? 'text-yellow-600' : 'text-red-500'
+                                  }`}>
+                                    {avgPct}%
+                                  </span>
+                                </div>
+                              </td>
+                              <td className="py-2.5 px-3">
+                                {metric.show_on_scorecard ? (
+                                  <span className="text-[10px] bg-emerald-50 text-emerald-700 px-1.5 py-0.5 rounded-full font-medium">Yes</span>
+                                ) : (
+                                  <span className="text-[10px] bg-gray-50 text-gray-400 px-1.5 py-0.5 rounded-full font-medium">No</span>
+                                )}
+                              </td>
+                              <td className="py-2.5 px-3">
+                                <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded-full ${
+                                  avgPct >= 100 ? 'bg-emerald-50 text-emerald-700' :
+                                  avgPct >= 80 ? 'bg-yellow-50 text-yellow-700' :
+                                  avgPct > 0 ? 'bg-red-50 text-red-600' :
+                                  'bg-gray-50 text-gray-400'
+                                }`}>
+                                  {avgPct >= 100 ? 'Exceeding' : avgPct >= 80 ? 'On Track' : avgPct > 0 ? 'Needs Focus' : 'No Data'}
+                                </span>
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                  {allKpiMetrics.length === 0 && (
+                    <div className="text-center py-8 text-sm text-gray-400">No KPI metrics configured yet.</div>
+                  )}
+                </div>
               </>
+            )}
+
+            {activeTab === 'watchdog' && (
+              <div className="space-y-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <Shield size={18} className="text-red-500" />
+                  <h2 className="text-sm font-semibold text-gray-900">KPI Anomaly Watchdog</h2>
+                  <InfoTooltip text="Automatically detect KPI drops, trigger coaching recommendations, and track resolution." />
+                </div>
+                <KpiWatchdog
+                  organizationId={watchdogProfile?.organization_id || user?.organization_id || ''}
+                  userId={user?.id}
+                />
+              </div>
+            )}
+
+            {activeTab === 'engage' && (
+              <div className="space-y-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <Radar size={18} className="text-cyan-500" />
+                  <h2 className="text-sm font-semibold text-gray-900">Engage Analytics</h2>
+                  <InfoTooltip text="Performance metrics from Apptivia Engage — sequences, accounts, playbooks, and signals." />
+                </div>
+                {engageLoading && <div className="text-center py-8 text-sm text-gray-500">Loading Engage data...</div>}
+                {!engageLoading && !engageStats && (
+                  <div className="bg-gray-50 border border-gray-200 rounded-lg p-6 text-center">
+                    <div className="text-gray-500 text-sm">No Engage data found.</div>
+                    <div className="text-xs text-gray-400 mt-1">Start using Engage to see analytics here.</div>
+                    <button
+                      onClick={() => navigate('/engage')}
+                      className="mt-3 px-4 py-2 bg-cyan-500 text-white text-xs font-semibold rounded-lg hover:bg-cyan-600 transition-colors"
+                    >
+                      Go to Engage
+                    </button>
+                  </div>
+                )}
+                {!engageLoading && engageStats && (
+                  <>
+                    {/* Summary Cards */}
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                      <div className="bg-white rounded-lg p-3 shadow-sm border-l-4 border-cyan-500">
+                        <div className="text-xs text-gray-500">Sequences</div>
+                        <div className="text-lg font-bold text-cyan-600">{engageStats.totalSequences}</div>
+                        <div className="text-[11px] text-gray-400">{engageStats.activeSequences} active</div>
+                      </div>
+                      <div className="bg-white rounded-lg p-3 shadow-sm border-l-4 border-blue-500">
+                        <div className="text-xs text-gray-500">Enrolled</div>
+                        <div className="text-lg font-bold text-blue-600">{engageStats.totalEnrolled}</div>
+                        <div className="text-[11px] text-gray-400">{engageStats.replyRate}% reply rate</div>
+                      </div>
+                      <div className="bg-white rounded-lg p-3 shadow-sm border-l-4 border-purple-500">
+                        <div className="text-xs text-gray-500">Accounts</div>
+                        <div className="text-lg font-bold text-purple-600">{engageStats.totalAccounts}</div>
+                        <div className="text-[11px] text-gray-400">Avg score: {engageStats.avgAccountScore}</div>
+                      </div>
+                      <div className="bg-white rounded-lg p-3 shadow-sm border-l-4 border-green-500">
+                        <div className="text-xs text-gray-500">Playbooks</div>
+                        <div className="text-lg font-bold text-green-600">{engageStats.totalPlaybooks}</div>
+                        <div className="text-[11px] text-gray-400">{engageStats.completedExecutions} executed</div>
+                      </div>
+                    </div>
+
+                    {/* Charts */}
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                      {engageStats.sequencePerformance.length > 0 && (
+                        <EngageBarChart
+                          title="Sequences by Status"
+                          infoText="Breakdown of outreach sequences by current status."
+                          data={engageStats.sequencePerformance}
+                        />
+                      )}
+                      {engageStats.accountTiers.length > 0 && (
+                        <EngageBarChart
+                          title="Accounts by Tier"
+                          infoText="Account intelligence records grouped by tier level."
+                          data={engageStats.accountTiers}
+                        />
+                      )}
+                    </div>
+
+                    {/* Detailed Metrics */}
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                      <div className="bg-white rounded-lg p-3 shadow-sm">
+                        <div className="text-xs text-gray-500 mb-2 font-semibold">Sequence Metrics</div>
+                        <div className="space-y-1.5 text-xs">
+                          <div className="flex justify-between"><span className="text-gray-600">Total Enrolled</span><span className="font-medium">{engageStats.totalEnrolled}</span></div>
+                          <div className="flex justify-between"><span className="text-gray-600">Total Replied</span><span className="font-medium text-green-600">{engageStats.totalReplied}</span></div>
+                          <div className="flex justify-between"><span className="text-gray-600">Reply Rate</span><span className="font-medium text-blue-600">{engageStats.replyRate}%</span></div>
+                        </div>
+                      </div>
+                      <div className="bg-white rounded-lg p-3 shadow-sm">
+                        <div className="text-xs text-gray-500 mb-2 font-semibold">Account Tiers</div>
+                        <div className="space-y-1.5 text-xs">
+                          <div className="flex justify-between"><span className="text-gray-600">Tier 1</span><span className="font-medium text-purple-600">{engageStats.tier1}</span></div>
+                          <div className="flex justify-between"><span className="text-gray-600">Tier 2</span><span className="font-medium text-blue-600">{engageStats.tier2}</span></div>
+                          <div className="flex justify-between"><span className="text-gray-600">Tier 3</span><span className="font-medium text-gray-600">{engageStats.tier3}</span></div>
+                        </div>
+                      </div>
+                      <div className="bg-white rounded-lg p-3 shadow-sm">
+                        <div className="text-xs text-gray-500 mb-2 font-semibold">Playbook Outcomes</div>
+                        <div className="space-y-1.5 text-xs">
+                          <div className="flex justify-between"><span className="text-gray-600">Active Playbooks</span><span className="font-medium">{engageStats.activePlaybooks}</span></div>
+                          <div className="flex justify-between"><span className="text-gray-600">Executions</span><span className="font-medium">{engageStats.totalExecutions}</span></div>
+                          <div className="flex justify-between"><span className="text-gray-600">Meetings Booked</span><span className="font-medium text-green-600">{engageStats.meetingsBooked}</span></div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Quick Links */}
+                    <div className="bg-gradient-to-r from-cyan-50 to-blue-50 rounded-lg p-4 border border-cyan-100">
+                      <div className="text-xs font-semibold text-gray-700 mb-2">Quick Links</div>
+                      <div className="flex flex-wrap gap-2">
+                        <button onClick={() => navigate('/engage')} className="px-3 py-1.5 bg-white text-xs font-medium text-cyan-700 rounded-lg border border-cyan-200 hover:bg-cyan-50 transition-colors">Pipeline Operator</button>
+                        <button onClick={() => navigate('/engage')} className="px-3 py-1.5 bg-white text-xs font-medium text-blue-700 rounded-lg border border-blue-200 hover:bg-blue-50 transition-colors">Signal Prospecting</button>
+                        <button onClick={() => navigate('/engage')} className="px-3 py-1.5 bg-white text-xs font-medium text-purple-700 rounded-lg border border-purple-200 hover:bg-purple-50 transition-colors">Accounts</button>
+                        <button onClick={() => navigate('/engage')} className="px-3 py-1.5 bg-white text-xs font-medium text-green-700 rounded-lg border border-green-200 hover:bg-green-50 transition-colors">Playbooks</button>
+                      </div>
+                    </div>
+                  </>
+                )}
+              </div>
             )}
 
             {activeTab === 'overview' && (

@@ -10,11 +10,18 @@ interface LeaderboardEntry {
   rank_change: 'up' | 'down' | 'same' | 'new';
 }
 
+interface ParticipantEntry {
+  profile_id: string;
+  profile_name: string;
+  team_name: string | null;
+}
+
 interface LeaderboardModalProps {
   isOpen: boolean;
   onClose: () => void;
   contestName: string;
   leaderboard: LeaderboardEntry[];
+  participants?: ParticipantEntry[];
   currentUserId?: string;
   status?: 'active' | 'upcoming' | 'completed' | 'cancelled';
 }
@@ -24,10 +31,26 @@ export default function LeaderboardModal({
   onClose,
   contestName,
   leaderboard,
+  participants = [],
   currentUserId,
   status = 'active'
 }: LeaderboardModalProps) {
   if (!isOpen) return null;
+
+  // If leaderboard is empty but we have participants, show them with score 0
+  const displayEntries: LeaderboardEntry[] = leaderboard.length > 0
+    ? leaderboard
+    : participants.map((p, idx) => ({
+        rank: idx + 1,
+        previous_rank: null,
+        score: 0,
+        profile_id: p.profile_id,
+        profile_name: p.profile_name,
+        team_name: p.team_name,
+        rank_change: 'new' as const,
+      }));
+
+  const hasNoLeaderboardData = leaderboard.length === 0 && participants.length > 0;
 
   const getRankChangeIcon = (change: string) => {
     switch (change) {
@@ -85,13 +108,18 @@ export default function LeaderboardModal({
 
         {/* Leaderboard Content */}
         <div className="flex-1 overflow-y-auto px-6 py-4">
-          {leaderboard.length === 0 ? (
+          {hasNoLeaderboardData && (
+            <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg text-sm text-blue-700">
+              Scores haven't been calculated yet. Showing enrolled participants — rankings will update as KPI data comes in.
+            </div>
+          )}
+          {displayEntries.length === 0 ? (
             <div className="text-center py-12">
               <p className="text-gray-500">No participants yet</p>
             </div>
           ) : (
             <div className="space-y-2">
-              {leaderboard.map((entry) => (
+              {displayEntries.map((entry) => (
                 <div
                   key={entry.profile_id}
                   className={`flex items-center justify-between p-4 rounded-lg transition-all ${
@@ -146,7 +174,7 @@ export default function LeaderboardModal({
         {/* Footer */}
         <div className="px-6 py-4 border-t border-gray-200 bg-gray-50">
           <div className="flex items-center justify-between text-sm text-gray-600">
-            <span>Total Participants: {leaderboard.length}</span>
+            <span>Total Participants: {displayEntries.length}</span>
             <button
               onClick={onClose}
               className="bg-blue-500 text-white px-6 py-2 rounded-lg font-semibold hover:bg-blue-600 transition-colors"

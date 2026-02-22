@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { backendFetch } from '../utils/backendFetch';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Search, X } from 'lucide-react';
 import DashboardLayout from '../DashboardLayout';
 import RightFilterPanel from '../components/RightFilterPanel';
@@ -7,14 +8,21 @@ import PageActionBar from '../components/PageActionBar';
 import ConfigurePanel from '../components/ConfigurePanel';
 import ConfigureModal from '../components/ConfigureModal';
 import CoachingPlanTemplatesModal from '../components/CoachingPlanTemplatesModal';
+import ConfirmModal from '../components/ConfirmModal';
+import PlanBuilderForm from '../components/coaching/PlanBuilderForm';
+import PlanCard from '../components/coaching/PlanCard';
+import PlanDetailModal from '../components/coaching/PlanDetailModal';
+import AssignPlanModal from '../components/coaching/AssignPlanModal';
+import { statusConfig } from '../components/coaching/planStatusConfig';
 import { useNotifications } from '../contexts/NotificationContext';
 import { useAuth } from '../AuthContext';
 import { useToast } from '../contexts/ToastContext';
 import { supabase } from '../supabaseClient';
-import { Target, Calendar, Users, Download, Mail, Share2, Plus, Edit, Trash2, UserPlus } from 'lucide-react';
+import { Target, Calendar, Users, Download, Mail, Share2, Plus, Edit, Trash2, UserPlus, Sparkles, Loader2 } from 'lucide-react';
 
 export default function CoachingPlans() {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { user, profile, role, hasPermission } = useAuth();
   const toast = useToast();
   const [filtersOpen, setFiltersOpen] = useState(false);
@@ -30,13 +38,69 @@ export default function CoachingPlans() {
   const [showAssignModal, setShowAssignModal] = useState(false);
   const [planToAssign, setPlanToAssign] = useState(null);
   const [selectedMembers, setSelectedMembers] = useState([]);
-  const { openPanel, unreadCount } = useNotifications();
+  const { openPanel, unreadCount, addNotification } = useNotifications();
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState([]);
   const [showSearchResults, setShowSearchResults] = useState(false);
   const [searching, setSearching] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [savingPlan, setSavingPlan] = useState(false);
+  const [draftingField, setDraftingField] = useState(null); // track which field is being AI-drafted
+  const [assignmentStatuses, setAssignmentStatuses] = useState({}); // planId -> { userId -> status }
+  const [deleteConfirm, setDeleteConfirm] = useState({ isOpen: false, plan: null, isLoading: false });
+
+  // AI Draft helper — calls Supabase Edge Function
+  const handleAiDraft = async (field) => {
+    setDraftingField(field);
+    try {
+      const { data, error } = await supabase.functions.invoke('ai-draft', {
+        body: {
+          field,
+          planName: planForm.name,
+          focusKpis: planForm.focus_kpis.filter(Boolean),
+          existingGoals: planForm.goals.filter(g => g.trim()),
+          existingActions: planForm.action_items.filter(a => a.trim()),
+          existingMetrics: planForm.success_metrics.filter(s => s.trim()),
+          notes: planForm.notes,
+        },
+      });
+      if (error) {
+        // Try to extract the actual error message from the edge function response
+        let errMsg = 'AI draft request failed';
+        try {
+          if (error.context && typeof error.context.json === 'function') {
+            const body = await error.context.json();
+            errMsg = body?.error || error.message || errMsg;
+          } else {
+            errMsg = error.message || errMsg;
+          }
+        } catch (_) {
+          errMsg = error.message || errMsg;
+        }
+        throw new Error(errMsg);
+      }
+      const { result } = data;
+
+      if (field === 'name') {
+        setPlanForm(prev => ({ ...prev, name: result }));
+      } else if (field === 'notes') {
+        setPlanForm(prev => ({ ...prev, notes: result }));
+      } else if (Array.isArray(result)) {
+        // For array fields (goals, action_items, success_metrics), merge with existing non-empty values
+        setPlanForm(prev => {
+          const existing = prev[field].filter(v => v.trim());
+          const merged = [...existing, ...result];
+          return { ...prev, [field]: merged.length > 0 ? merged : [''] };
+        });
+      }
+      toast.success(`AI draft generated for ${field.replace(/_/g, ' ')}!`);
+    } catch (err) {
+      console.error('AI draft error:', err);
+      toast.error(err.message || 'Failed to generate AI draft');
+    } finally {
+      setDraftingField(null);
+    }
+  };
 
   // Plan form state
   const [planForm, setPlanForm] = useState({
@@ -53,24 +117,31 @@ export default function CoachingPlans() {
 
   const isAdmin = role === 'admin';
   const isManager = role === 'manager';
+  const isPowerUser = role === 'power_user';
   const canManagePlans = hasPermission('manage_coaching_plans') || isAdmin || isManager;
+  const canCreatePlans = isAdmin || isManager || role === 'coach'; // power_user cannot create/edit/delete
 
-  // Available KPIs for dropdown
-  const availableKPIs = [
-    'pipeline_created',
-    'sourced_opps',
-    'call_connects',
-    'meetings',
-    'talk_time_minutes',
-    'emails_sent',
-    'demos_completed',
-    'win_rate',
-    'response_time',
-    'follow_ups',
-    'stage2_opps',
-    'qualified_leads',
-    'social_touches'
+  // Available KPIs for dropdown — loaded from the org's kpi_metrics table.
+  // Fallback defaults cover the case where no metrics are configured yet.
+  const DEFAULT_KPIS = [
+    'pipeline_created', 'sourced_opps', 'call_connects', 'meetings',
+    'talk_time_minutes', 'emails_sent', 'demos_completed', 'win_rate',
+    'response_time', 'follow_ups', 'stage2_opps', 'qualified_leads', 'social_touches'
   ];
+  const [availableKPIs, setAvailableKPIs] = useState(DEFAULT_KPIS);
+
+  useEffect(() => {
+    // kpi_metrics is a global table (no organization_id) — no filter needed
+    supabase
+      .from('kpi_metrics')
+      .select('key')
+      .order('name')
+      .then(({ data, error }) => {
+        if (!error && data?.length > 0) {
+          setAvailableKPIs(data.map(k => k.key).filter(Boolean));
+        }
+      });
+  }, []);
 
   const kpiSuggestions = {
     pipeline_created: {
@@ -101,10 +172,202 @@ export default function CoachingPlans() {
 
   useEffect(() => {
     loadCoachingPlans();
+  }, []);
+
+  // Load team members once we know the user has permission (role loads async)
+  useEffect(() => {
     if (canManagePlans) {
       loadTeamMembers();
     }
-  }, []);
+  }, [canManagePlans]);
+
+  // Load assignment statuses for all plans
+  const loadAssignmentStatuses = async (plans) => {
+    try {
+      const planIds = plans.filter(p => p.assigned_to?.length > 0).map(p => p.id);
+      if (planIds.length === 0) return;
+      const { data, error } = await supabase
+        .from('coaching_plan_assignments')
+        .select('plan_id, assigned_to, status, completed_at')
+        .in('plan_id', planIds);
+      if (!error && data) {
+        const statusMap = {};
+        data.forEach(a => {
+          if (!statusMap[a.plan_id]) statusMap[a.plan_id] = {};
+          statusMap[a.plan_id][a.assigned_to] = a.status;
+        });
+        setAssignmentStatuses(statusMap);
+      }
+    } catch (e) {
+      console.error('Error loading assignment statuses:', e);
+    }
+  };
+
+  // Get aggregated status for a plan
+  const getPlanStatus = (plan) => {
+    const statuses = assignmentStatuses[plan.id];
+    if (!statuses || !plan.assigned_to?.length) return plan.status || 'draft';
+    const values = Object.values(statuses);
+    if (values.every(s => s === 'completed')) return 'completed';
+    if (values.some(s => s === 'active' || s === 'in_progress')) return 'in_progress';
+    return plan.status || 'active';
+  };
+
+  // Get the current user's assignment status for a plan
+  const getMyAssignmentStatus = (plan) => {
+    return assignmentStatuses[plan.id]?.[user?.id] || 'active';
+  };
+
+  // Handle status change by assigned user — notifies manager
+  const handleStatusChange = async (plan, newStatus) => {
+    try {
+      const updateData = { status: newStatus };
+      if (newStatus === 'completed') {
+        updateData.completed_at = new Date().toISOString();
+      } else {
+        updateData.completed_at = null;
+      }
+      const { error } = await supabase
+        .from('coaching_plan_assignments')
+        .update(updateData)
+        .eq('plan_id', plan.id)
+        .eq('assigned_to', user.id);
+      if (error) throw error;
+
+      // Update local state
+      setAssignmentStatuses(prev => ({
+        ...prev,
+        [plan.id]: { ...prev[plan.id], [user.id]: newStatus }
+      }));
+
+      const userName = profile?.first_name
+        ? `${profile.first_name} ${profile.last_name || ''}`.trim()
+        : user?.email || 'A team member';
+      const statusLabel = newStatus === 'completed' ? 'completed' : 'marked as in progress';
+
+      // Notify the plan creator (manager)
+      if (plan.created_by && plan.created_by !== user.id) {
+        addNotification({
+          type: 'coaching_plan',
+          title: `Coaching Plan ${newStatus === 'completed' ? 'Completed' : 'In Progress'}`,
+          message: `${userName} has ${statusLabel} the coaching plan: "${plan.name}"`,
+          link: `/coaching-plans?planId=${plan.id}`,
+          ownerId: plan.created_by,
+          audience: 'team',
+          dedupeKey: `coaching-status-${plan.id}-${user.id}-${newStatus}-${Date.now()}`,
+          repName: userName,
+        });
+      }
+
+      toast.success(newStatus === 'completed'
+        ? 'Coaching plan marked as completed!'
+        : 'Status updated to In Progress');
+    } catch (e) {
+      console.error('Error updating status:', e);
+      toast.error('Failed to update status');
+    }
+  };
+
+  // Time-based notification checks — runs at most once per browser session per user.
+  // Without this guard the check fires on every page load, spamming duplicate notifications.
+  const checkTimeBasedNotifications = (plans) => {
+    if (!canManagePlans) return;
+    const sessionKey = `apptivia.notifChecked.${user?.id}`;
+    if (sessionStorage.getItem(sessionKey)) return;
+    sessionStorage.setItem(sessionKey, '1');
+    const now = new Date();
+    const today = now.toISOString().split('T')[0];
+
+    plans.forEach(plan => {
+      if (!plan.assigned_to?.length) return;
+      const planStatuses = assignmentStatuses[plan.id] || {};
+
+      // Check each assigned member
+      plan.assigned_to.forEach(memberId => {
+        const memberStatus = planStatuses[memberId] || 'active';
+        const member = teamMembers.find(m => m.id === memberId);
+        const memberName = member
+          ? `${member.first_name || ''} ${member.last_name || ''}`.trim() || member.email
+          : 'A team member';
+
+        // 1) Not started within 2 days of start date
+        if (plan.date_range_start && memberStatus === 'active') {
+          const startDate = new Date(plan.date_range_start);
+          const twoDaysAfterStart = new Date(startDate);
+          twoDaysAfterStart.setDate(twoDaysAfterStart.getDate() + 2);
+          if (now >= twoDaysAfterStart) {
+            addNotification({
+              type: 'coaching_plan',
+              title: 'Coaching Plan Not Started',
+              message: `${memberName} has not started the coaching plan "${plan.name}" (started ${plan.date_range_start})`,
+              link: `/coaching-plans?planId=${plan.id}`,
+              ownerId: plan.created_by || user.id,
+              audience: 'team',
+              dedupeKey: `coaching-notstarted-${plan.id}-${memberId}`,
+              repName: memberName,
+            });
+          }
+        }
+
+        // 2) Deadline approaching (within 2 days)
+        if (plan.date_range_end && memberStatus !== 'completed') {
+          const endDate = new Date(plan.date_range_end);
+          const twoDaysBefore = new Date(endDate);
+          twoDaysBefore.setDate(twoDaysBefore.getDate() - 2);
+          if (now >= twoDaysBefore && now <= endDate) {
+            addNotification({
+              type: 'coaching_plan',
+              title: 'Coaching Plan Deadline Approaching',
+              message: `${memberName}'s coaching plan "${plan.name}" is due on ${plan.date_range_end}`,
+              link: `/coaching-plans?planId=${plan.id}`,
+              ownerId: plan.created_by || user.id,
+              audience: 'team',
+              dedupeKey: `coaching-approaching-${plan.id}-${memberId}`,
+              repName: memberName,
+            });
+          }
+        }
+
+        // 3) Deadline missed
+        if (plan.date_range_end && memberStatus !== 'completed') {
+          const endDate = new Date(plan.date_range_end);
+          if (now > endDate) {
+            addNotification({
+              type: 'coaching_plan',
+              title: 'Coaching Plan Overdue',
+              message: `${memberName} did not complete the coaching plan "${plan.name}" by the deadline (${plan.date_range_end})`,
+              link: `/coaching-plans?planId=${plan.id}`,
+              ownerId: plan.created_by || user.id,
+              audience: 'team',
+              dedupeKey: `coaching-overdue-${plan.id}-${memberId}`,
+              repName: memberName,
+            });
+          }
+        }
+      });
+    });
+  };
+
+  // Deep-link: auto-open a specific plan from URL ?planId=xxx
+  useEffect(() => {
+    const planId = searchParams.get('planId');
+    if (planId && coachingPlans.length > 0 && !selectedPlan) {
+      const target = coachingPlans.find(p => p.id === planId);
+      if (target) {
+        setSelectedPlan(target);
+        // Clear the param so refresh doesn't re-open
+        searchParams.delete('planId');
+        setSearchParams(searchParams, { replace: true });
+      }
+    }
+  }, [coachingPlans, searchParams]);
+
+  // Time-based notifications: check when plans + assignment statuses + team members are loaded
+  useEffect(() => {
+    if (coachingPlans.length > 0 && Object.keys(assignmentStatuses).length > 0 && teamMembers.length > 0) {
+      checkTimeBasedNotifications(coachingPlans);
+    }
+  }, [coachingPlans, assignmentStatuses, teamMembers]);
 
   const loadCoachingPlans = async () => {
     try {
@@ -112,10 +375,12 @@ export default function CoachingPlans() {
       const { data, error } = await supabase
         .from('coaching_plans')
         .select('*')
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false })
+        .limit(200);
 
       if (!error && data) {
         setCoachingPlans(data);
+        loadAssignmentStatuses(data);
       }
     } catch (e) {
       console.error('Error loading coaching plans:', e);
@@ -126,11 +391,18 @@ export default function CoachingPlans() {
 
   const loadTeamMembers = async () => {
     try {
-      const { data, error } = await supabase
+      let query = supabase
         .from('profiles')
-        .select('id, first_name, last_name, email, role')
+        .select('id, first_name, last_name, email, role, team_id')
         .order('first_name');
 
+      // Managers: only load members from their team
+      if (isManager && !isAdmin && profile?.team_id) {
+        query = query.eq('team_id', profile.team_id);
+      }
+      // Admins: load all members (no filter)
+
+      const { data, error } = await query;
       if (!error && data) {
         setTeamMembers(data);
       }
@@ -209,20 +481,24 @@ export default function CoachingPlans() {
     setEditingPlan(null);
   };
 
-  const buildPlanPayload = (contentKey) => ({
-    name: planForm.name,
-    goals: planForm.goals.filter(g => g.trim()),
-    focus_kpis: planForm.focus_kpis.filter(k => k.trim()),
-    action_items: planForm.action_items.filter(a => a.trim()),
-    success_metrics: planForm.success_metrics.filter(s => s.trim()),
-    notes: planForm.notes,
-    date_range_start: planForm.date_range_start || null,
-    date_range_end: planForm.date_range_end || null,
-    plan_type: planForm.plan_type,
-    template_id: planForm.template_id || null,
-    created_by: user?.id,
-    [contentKey]: generatePlanContent()
-  });
+  // Build the save payload using structured columns (no text blob duplication).
+  // The contentKey fallback is only used by the base-schema path below.
+  const buildPlanPayload = () => {
+    return {
+      name: planForm.name,
+      plan_type: planForm.plan_type,
+      template_id: planForm.template_id || null,
+      created_by: user?.id,
+      goals: planForm.goals.filter(g => g.trim()),
+      focus_kpis: planForm.focus_kpis.filter(k => k.trim()),
+      action_items: planForm.action_items.filter(a => a.trim()),
+      success_metrics: planForm.success_metrics.filter(s => s.trim()),
+      notes: planForm.notes,
+      date_range_start: planForm.date_range_start || null,
+      date_range_end: planForm.date_range_end || null,
+      team_id: profile?.team_id || null,
+    };
+  };
 
   const isMissingColumnError = (error, columnName) => {
     const message = String(error?.message || '').toLowerCase();
@@ -242,8 +518,8 @@ export default function CoachingPlans() {
 
     try {
       setSavingPlan(true);
-      const saveWithContentKey = async (contentKey) => {
-        const planData = buildPlanPayload(contentKey);
+
+      const runQuery = (planData) => {
         if (editingPlan) {
           return supabase
             .from('coaching_plans')
@@ -259,9 +535,25 @@ export default function CoachingPlans() {
           .single();
       };
 
-      let result = await saveWithContentKey('content');
-      if (result.error && isMissingColumnError(result.error, 'content')) {
-        result = await saveWithContentKey('plan_text');
+      // Primary path: save structured fields (goals, action_items, etc.)
+      let result = await runQuery(buildPlanPayload());
+
+      // Fallback: enhanced columns don't exist → retry with base columns + text blob
+      if (result.error && (
+        isMissingColumnError(result.error, 'action_items') ||
+        isMissingColumnError(result.error, 'goals') ||
+        isMissingColumnError(result.error, 'focus_kpis') ||
+        isMissingColumnError(result.error, 'success_metrics')
+      )) {
+        // Try content column first, then plan_text
+        const baseData = { name: planForm.name, plan_type: planForm.plan_type, created_by: user?.id, content: generatePlanContent() };
+        result = await runQuery(baseData);
+        if (result.error && isMissingColumnError(result.error, 'content')) {
+          result = await runQuery({ ...baseData, content: undefined, plan_text: generatePlanContent() });
+        }
+        if (!result.error) {
+          toast.info('Plan saved with limited data. Run migration 027 in Supabase to enable all fields.');
+        }
       }
       if (result.error) throw result.error;
 
@@ -326,8 +618,15 @@ export default function CoachingPlans() {
     setShowBuilder(true);
   };
 
-  const handleDeletePlan = async (planId) => {
-    if (!confirm('Are you sure you want to delete this plan?')) return;
+  const handleDeletePlan = async (plan) => {
+    setDeleteConfirm({ isOpen: true, plan, isLoading: false });
+  };
+
+  const confirmDeletePlan = async () => {
+    const planId = deleteConfirm.plan?.id;
+    if (!planId) return;
+    
+    setDeleteConfirm(prev => ({ ...prev, isLoading: true }));
 
     try {
       const { error } = await supabase
@@ -335,6 +634,8 @@ export default function CoachingPlans() {
         .delete()
         .eq('id', planId);
 
+      setDeleteConfirm({ isOpen: false, plan: null, isLoading: false });
+      
       if (!error) {
         setCoachingPlans(coachingPlans.filter(p => p.id !== planId));
         toast.success('Plan deleted successfully');
@@ -342,6 +643,7 @@ export default function CoachingPlans() {
     } catch (e) {
       console.error('Error deleting plan:', e);
       toast.error('Failed to delete plan');
+      setDeleteConfirm({ isOpen: false, plan: null, isLoading: false });
     }
   };
 
@@ -369,15 +671,79 @@ export default function CoachingPlans() {
         .from('coaching_plan_assignments')
         .insert(assignments);
 
-      if (!error) {
-        toast.success(`Plan assigned to ${selectedMembers.length} member(s)`);
-        setShowAssignModal(false);
-        setPlanToAssign(null);
-        setSelectedMembers([]);
+      if (error) throw error;
+
+      // Also update the assigned_to array on the plan itself
+      const currentAssigned = planToAssign.assigned_to || [];
+      const newAssigned = [...new Set([...currentAssigned, ...selectedMembers])];
+      await supabase
+        .from('coaching_plans')
+        .update({ assigned_to: newAssigned })
+        .eq('id', planToAssign.id);
+
+      // Update local state
+      setCoachingPlans(prev => prev.map(p =>
+        p.id === planToAssign.id ? { ...p, assigned_to: newAssigned } : p
+      ));
+
+      // Get assigned member details for email + notification
+      const assignedMembers = teamMembers.filter(m => selectedMembers.includes(m.id));
+      const managerName = profile?.first_name
+        ? `${profile.first_name} ${profile.last_name || ''}`.trim()
+        : user?.email || 'Your manager';
+
+      // Send in-app notifications
+      assignedMembers.forEach(member => {
+        addNotification({
+          type: 'coaching_plan',
+          title: 'New Coaching Plan Assigned',
+          message: `${managerName} assigned you the coaching plan: "${planToAssign.name}"`,
+          link: `/coaching-plans?planId=${planToAssign.id}`,
+          ownerId: member.id,
+          audience: 'self',
+          dedupeKey: `coaching-assign-${planToAssign.id}-${member.id}`,
+          repName: member.first_name || member.email,
+        });
+      });
+
+      // Send email notifications
+      const recipientEmails = assignedMembers.map(m => m.email).filter(Boolean);
+      if (recipientEmails.length > 0) {
+        try {
+          const planContent = [
+            `You have been assigned a new coaching plan by ${managerName}.`,
+            '',
+            `Plan: ${planToAssign.name}`,
+            planToAssign.date_range_start && planToAssign.date_range_end
+              ? `Date Range: ${planToAssign.date_range_start} to ${planToAssign.date_range_end}`
+              : '',
+            '',
+            planToAssign.goals?.length > 0 ? `Goals:\n${planToAssign.goals.map(g => `  - ${g}`).join('\n')}` : '',
+            planToAssign.focus_kpis?.length > 0 ? `\nFocus KPIs:\n${planToAssign.focus_kpis.map(k => `  - ${k.replace(/_/g, ' ')}`).join('\n')}` : '',
+            planToAssign.action_items?.length > 0 ? `\nAction Items:\n${planToAssign.action_items.map((a, i) => `  ${i + 1}. ${a}`).join('\n')}` : '',
+            planToAssign.success_metrics?.length > 0 ? `\nSuccess Metrics:\n${planToAssign.success_metrics.map(s => `  - ${s}`).join('\n')}` : '',
+            planToAssign.notes ? `\nNotes:\n${planToAssign.notes}` : '',
+            '',
+            'Log in to Apptivia to view the full plan.'
+          ].filter(Boolean).join('\n');
+
+          await backendFetch('/api/send-coaching-plan', {
+            recipients: recipientEmails,
+            subject: `Coaching Plan Assigned: ${planToAssign.name}`,
+            body: planContent,
+          });
+        } catch (emailErr) {
+          console.warn('Email notification failed (plan still assigned):', emailErr);
+        }
       }
+
+      toast.success(`Plan assigned to ${selectedMembers.length} member(s) — notifications sent!`);
+      setShowAssignModal(false);
+      setPlanToAssign(null);
+      setSelectedMembers([]);
     } catch (e) {
       console.error('Error assigning plan:', e);
-      toast.error('Failed to assign plan');
+      toast.error(e?.message || 'Failed to assign plan');
     }
   };
 
@@ -425,6 +791,17 @@ export default function CoachingPlans() {
 
   return (
     <DashboardLayout>
+      {/* Delete Confirmation Modal */}
+      <ConfirmModal
+        isOpen={deleteConfirm.isOpen}
+        onClose={() => setDeleteConfirm({ isOpen: false, plan: null, isLoading: false })}
+        onConfirm={confirmDeletePlan}
+        title="Delete Coaching Plan?"
+        message={`Are you sure you want to delete "${deleteConfirm.plan?.title || 'this plan'}"? This action cannot be undone.`}
+        confirmText="Delete"
+        variant="danger"
+        isLoading={deleteConfirm.isLoading}
+      />
       <div className="p-6">
         <div className="flex items-start justify-between mb-4">
           <div>
@@ -464,7 +841,7 @@ export default function CoachingPlans() {
             exportDisabled={false}
             configureDisabled={false}
             notificationBadge={unreadCount}
-            actions={[
+            actions={canCreatePlans ? [
               {
                 label: 'Use Template',
                 onClick: () => setShowTemplates(true),
@@ -476,266 +853,58 @@ export default function CoachingPlans() {
                   setShowBuilder(true);
                 },
               }
-            ]}
+            ] : []}
           />
         </div>
       </div>
 
-      {/* Coaching Plan Builder */}
-        {showBuilder && (
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
-            <div className="flex items-center justify-between mb-6">
-              <div>
-                <h3 className="text-lg font-semibold text-gray-900">
-                  {editingPlan ? 'Edit Coaching Plan' : 'Create Coaching Plan'}
-                </h3>
-                <p className="text-xs text-gray-500">Build a structured coaching plan</p>
-              </div>
-              <div className="flex gap-2">
-                <button
-                  onClick={() => {
-                    setShowBuilder(false);
-                    resetPlanForm();
-                  }}
-                  className="px-3 py-1.5 text-xs font-semibold text-gray-600 border border-gray-300 rounded-md hover:bg-gray-50"
-                >
-                  Cancel
-                </button>
-              </div>
-            </div>
-
-            <div className="space-y-6">
-              {/* Plan Name */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Plan Name <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  value={planForm.name}
-                  onChange={(e) => setPlanForm({ ...planForm, name: e.target.value })}
-                  className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="e.g., Q1 Pipeline Acceleration Plan"
-                />
-              </div>
-
-              {/* Date Range */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Start Date
-                  </label>
-                  <input
-                    type="date"
-                    value={planForm.date_range_start}
-                    onChange={(e) => setPlanForm({ ...planForm, date_range_start: e.target.value })}
-                    className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    End Date
-                  </label>
-                  <input
-                    type="date"
-                    value={planForm.date_range_end}
-                    onChange={(e) => setPlanForm({ ...planForm, date_range_end: e.target.value })}
-                    className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  />
-                </div>
-              </div>
-
-              {/* Goals */}
-              <div>
-                <div className="flex items-center justify-between mb-2">
-                  <label className="block text-sm font-medium text-gray-700">
-                    Goals (1-3)
-                  </label>
-                  <button
-                    onClick={() => addArrayField('goals')}
-                    className="text-xs text-blue-600 hover:text-blue-700 font-medium"
-                  >
-                    + Add Goal
-                  </button>
-                </div>
-                <div className="space-y-2">
-                  {planForm.goals.map((goal, index) => (
-                    <div key={index} className="flex gap-2">
-                      <input
-                        type="text"
-                        value={goal}
-                        onChange={(e) => updateArrayField('goals', index, e.target.value)}
-                        className="flex-1 border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        placeholder="e.g., Increase pipeline by 25% this quarter"
-                      />
-                      {planForm.goals.length > 1 && (
-                        <button
-                          onClick={() => removeArrayField('goals', index)}
-                          className="px-3 py-2 text-red-600 hover:text-red-700 text-xs font-medium"
-                        >
-                          Remove
-                        </button>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Focus KPIs with Dropdown */}
-              <div>
-                <div className="flex items-center justify-between mb-2">
-                  <label className="block text-sm font-medium text-gray-700">
-                    Focus KPIs (2-5)
-                  </label>
-                  <button
-                    onClick={() => addArrayField('focus_kpis')}
-                    className="text-xs text-blue-600 hover:text-blue-700 font-medium"
-                  >
-                    + Add KPI
-                  </button>
-                </div>
-                <div className="space-y-2">
-                  {planForm.focus_kpis.map((kpi, index) => (
-                    <div key={index} className="flex gap-2">
-                      <select
-                        value={kpi}
-                        onChange={(e) => handleFocusKpiChange(index, e.target.value)}
-                        className="flex-1 border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      >
-                        <option value="">Select a KPI...</option>
-                        {availableKPIs.map(k => (
-                          <option key={k} value={k}>
-                            {k.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())}
-                          </option>
-                        ))}
-                      </select>
-                      {planForm.focus_kpis.length > 1 && (
-                        <button
-                          onClick={() => removeArrayField('focus_kpis', index)}
-                          className="px-3 py-2 text-red-600 hover:text-red-700 text-xs font-medium"
-                        >
-                          Remove
-                        </button>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Action Items */}
-              <div>
-                <div className="flex items-center justify-between mb-2">
-                  <label className="block text-sm font-medium text-gray-700">
-                    Action Items
-                  </label>
-                  <button
-                    onClick={() => addArrayField('action_items')}
-                    className="text-xs text-blue-600 hover:text-blue-700 font-medium"
-                  >
-                    + Add Action
-                  </button>
-                </div>
-                <div className="space-y-2">
-                  {planForm.action_items.map((action, index) => (
-                    <div key={index} className="flex gap-2">
-                      <input
-                        type="text"
-                        value={action}
-                        onChange={(e) => updateArrayField('action_items', index, e.target.value)}
-                        className="flex-1 border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        placeholder={`Action item ${index + 1}`}
-                      />
-                      {planForm.action_items.length > 1 && (
-                        <button
-                          onClick={() => removeArrayField('action_items', index)}
-                          className="px-3 py-2 text-red-600 hover:text-red-700 text-xs font-medium"
-                        >
-                          Remove
-                        </button>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Success Metrics */}
-              <div>
-                <div className="flex items-center justify-between mb-2">
-                  <label className="block text-sm font-medium text-gray-700">
-                    Success Metrics
-                  </label>
-                  <button
-                    onClick={() => addArrayField('success_metrics')}
-                    className="text-xs text-blue-600 hover:text-blue-700 font-medium"
-                  >
-                    + Add Metric
-                  </button>
-                </div>
-                <div className="space-y-2">
-                  {planForm.success_metrics.map((metric, index) => (
-                    <div key={index} className="flex gap-2">
-                      <input
-                        type="text"
-                        value={metric}
-                        onChange={(e) => updateArrayField('success_metrics', index, e.target.value)}
-                        className="flex-1 border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        placeholder="e.g., Achieve 20% conversion rate"
-                      />
-                      {planForm.success_metrics.length > 1 && (
-                        <button
-                          onClick={() => removeArrayField('success_metrics', index)}
-                          className="px-3 py-2 text-red-600 hover:text-red-700 text-xs font-medium"
-                        >
-                          Remove
-                        </button>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Notes */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Notes
-                </label>
-                <textarea
-                  value={planForm.notes}
-                  onChange={(e) => setPlanForm({ ...planForm, notes: e.target.value })}
-                  rows={4}
-                  className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="Additional notes or context..."
-                />
-              </div>
-
-              {/* Save Button */}
-              <div className="flex justify-end gap-2 pt-4 border-t border-gray-200">
-                <button
-                  onClick={() => {
-                    setShowBuilder(false);
-                    resetPlanForm();
-                  }}
-                  className="px-4 py-2 text-sm font-semibold border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={handleSavePlan}
-                  disabled={savingPlan}
-                  className="px-4 py-2 text-sm font-semibold bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-60"
-                >
-                  {savingPlan ? 'Saving...' : (editingPlan ? 'Update Plan' : 'Save Plan')}
-                </button>
-              </div>
-            </div>
-          </div>
+      {/* Saved Plans header with persistent Create button */}
+      <div className="flex items-center justify-between mb-4">
+        <div />
+        {canCreatePlans && (
+          <button
+            onClick={() => {
+              resetPlanForm();
+              setShowBuilder(true);
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }}
+            className="flex items-center gap-2 px-4 py-2 text-sm font-semibold bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors shadow-sm"
+          >
+            <Plus size={16} />
+            Create Coaching Plan
+          </button>
         )}
+      </div>
+
+      {/* Coaching Plan Builder */}
+        {showBuilder && canCreatePlans && (
+          <PlanBuilderForm
+            editingPlan={editingPlan}
+            planForm={planForm}
+            setPlanForm={setPlanForm}
+            handleSavePlan={handleSavePlan}
+            savingPlan={savingPlan}
+            draftingField={draftingField}
+            handleAiDraft={handleAiDraft}
+            availableKPIs={availableKPIs}
+            handleFocusKpiChange={handleFocusKpiChange}
+            addArrayField={addArrayField}
+            updateArrayField={updateArrayField}
+            removeArrayField={removeArrayField}
+            onCancel={() => { setShowBuilder(false); resetPlanForm(); }}
+          />
+        )}
+
 
         {/* Saved Coaching Plans */}
         <div id="saved-plans" className="bg-white rounded-lg shadow-sm border border-gray-200">
-          <div className="p-5 border-b border-gray-200">
-            <h3 className="text-lg font-semibold text-gray-900">Saved Plans</h3>
-            <p className="text-xs text-gray-500">View and manage all coaching plans</p>
+          <div className="p-5 border-b border-gray-200 flex items-center justify-between">
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900">Saved Plans</h3>
+              <p className="text-xs text-gray-500">
+                {isPowerUser ? 'Coaching plans assigned to you' : 'View and manage all coaching plans'}
+              </p>
+            </div>
           </div>
 
           <div className="p-5">
@@ -744,274 +913,68 @@ export default function CoachingPlans() {
             ) : coachingPlans.length === 0 ? (
               <div className="text-center py-12">
                 <Target className="mx-auto h-12 w-12 text-gray-400 mb-3" />
-                <p className="text-gray-500 mb-4">No coaching plans yet</p>
-                <button
-                  onClick={() => setShowBuilder(true)}
-                  className="px-4 py-2 text-sm font-semibold bg-blue-600 text-white rounded-md hover:bg-blue-700"
-                >
-                  Create Your First Plan
-                </button>
+                <p className="text-gray-500 mb-4">
+                  {isPowerUser ? 'No coaching plans have been assigned to you yet' : 'No coaching plans yet'}
+                </p>
+                {canCreatePlans && (
+                  <button
+                    onClick={() => setShowBuilder(true)}
+                    className="px-4 py-2 text-sm font-semibold bg-blue-600 text-white rounded-md hover:bg-blue-700"
+                  >
+                    Create Your First Plan
+                  </button>
+                )}
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {coachingPlans.map((plan) => (
-                  <div
+                  <PlanCard
                     key={plan.id}
-                    className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow"
-                  >
-                    <div className="flex items-start justify-between mb-3">
-                      <div className="flex-1">
-                        <h4 className="font-semibold text-gray-900 mb-1">{plan.name}</h4>
-                        <p className="text-xs text-gray-500">
-                          {new Date(plan.created_at).toLocaleDateString()}
-                        </p>
-                        {plan.date_range_start && plan.date_range_end && (
-                          <p className="text-xs text-gray-500">
-                            {plan.date_range_start} → {plan.date_range_end}
-                          </p>
-                        )}
-                      </div>
-                      <span className={`px-2 py-1 text-xs rounded-full ${
-                        plan.plan_type === 'auto' ? 'bg-blue-100 text-blue-700' : 'bg-purple-100 text-purple-700'
-                      }`}>
-                        {plan.plan_type === 'auto' ? 'Template' : 'Custom'}
-                      </span>
-                    </div>
-
-                    {plan.focus_kpis && plan.focus_kpis.length > 0 && (
-                      <div className="mb-3">
-                        <div className="text-xs font-medium text-gray-500 mb-1">Focus KPIs:</div>
-                        <div className="flex flex-wrap gap-1">
-                          {plan.focus_kpis.slice(0, 2).map((kpi, idx) => (
-                            <span key={idx} className="px-2 py-0.5 bg-gray-100 text-gray-700 rounded text-xs">
-                              {kpi.replace(/_/g, ' ')}
-                            </span>
-                          ))}
-                          {plan.focus_kpis.length > 2 && (
-                            <span className="px-2 py-0.5 bg-gray-100 text-gray-700 rounded text-xs">
-                              +{plan.focus_kpis.length - 2}
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                    )}
-
-                    <div className="flex gap-2">
-                      <button
-                        onClick={() => setSelectedPlan(plan)}
-                        className="flex-1 flex items-center justify-center gap-1 px-3 py-1.5 text-xs font-semibold text-blue-600 border border-blue-600 rounded-md hover:bg-blue-50"
-                      >
-                        <Target size={14} />
-                        View
-                      </button>
-                      <button
-                        onClick={() => handleEditPlan(plan)}
-                        className="flex items-center justify-center gap-1 px-3 py-1.5 text-xs font-semibold text-gray-600 border border-gray-300 rounded-md hover:bg-gray-50"
-                        title="Edit Plan"
-                      >
-                        <Edit size={14} />
-                      </button>
-                      {canManagePlans && (
-                        <button
-                          onClick={() => handleAssignPlan(plan)}
-                          className="flex items-center justify-center gap-1 px-3 py-1.5 text-xs font-semibold text-green-600 border border-green-600 rounded-md hover:bg-green-50"
-                          title="Assign to Members"
-                        >
-                          <UserPlus size={14} />
-                        </button>
-                      )}
-                      <button
-                        onClick={() => handleDeletePlan(plan.id)}
-                        className="flex items-center justify-center gap-1 px-3 py-1.5 text-xs font-semibold text-red-600 border border-red-300 rounded-md hover:bg-red-50"
-                        title="Delete Plan"
-                      >
-                        <Trash2 size={14} />
-                      </button>
-                    </div>
-                  </div>
+                    plan={plan}
+                    canCreatePlans={canCreatePlans}
+                    canManagePlans={canManagePlans}
+                    assignmentStatuses={assignmentStatuses}
+                    user={user}
+                    isPowerUser={isPowerUser}
+                    getPlanStatus={getPlanStatus}
+                    onView={setSelectedPlan}
+                    onEdit={handleEditPlan}
+                    onAssign={handleAssignPlan}
+                    onDelete={handleDeletePlan}
+                  />
                 ))}
               </div>
             )}
           </div>
         </div>
 
-        {/* Plan Detail Modal */}
+
         {selectedPlan && (
-          <div
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
-            onClick={() => setSelectedPlan(null)}
-          >
-            <div
-              className="bg-white rounded-xl shadow-2xl max-w-3xl w-full max-h-[85vh] overflow-hidden flex flex-col"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className="flex items-center justify-between p-4 border-b border-gray-200">
-                <div>
-                  <h3 className="text-lg font-bold text-gray-900">{selectedPlan.name}</h3>
-                  {selectedPlan.date_range_start && selectedPlan.date_range_end && (
-                    <p className="text-xs text-gray-500 mt-1">
-                      {selectedPlan.date_range_start} to {selectedPlan.date_range_end}
-                    </p>
-                  )}
-                </div>
-                <button
-                  onClick={() => setSelectedPlan(null)}
-                  className="text-gray-500 hover:text-gray-700"
-                >
-                  ✕
-                </button>
-              </div>
-              <div className="flex-1 overflow-y-auto p-6">
-                {selectedPlan.goals && selectedPlan.goals.length > 0 && (
-                  <div className="mb-4">
-                    <h4 className="font-semibold text-gray-900 mb-2">Goals</h4>
-                    <ul className="list-disc list-inside text-sm text-gray-700 space-y-1">
-                      {selectedPlan.goals.map((goal, idx) => (
-                        <li key={idx}>{goal}</li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-                {selectedPlan.focus_kpis && selectedPlan.focus_kpis.length > 0 && (
-                  <div className="mb-4">
-                    <h4 className="font-semibold text-gray-900 mb-2">Focus KPIs</h4>
-                    <div className="flex flex-wrap gap-2">
-                      {selectedPlan.focus_kpis.map((kpi, idx) => (
-                        <span key={idx} className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm font-medium">
-                          {kpi.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                )}
-                {selectedPlan.action_items && selectedPlan.action_items.length > 0 && (
-                  <div className="mb-4">
-                    <h4 className="font-semibold text-gray-900 mb-2">Action Items</h4>
-                    <ol className="list-decimal list-inside text-sm text-gray-700 space-y-1">
-                      {selectedPlan.action_items.map((action, idx) => (
-                        <li key={idx}>{action}</li>
-                      ))}
-                    </ol>
-                  </div>
-                )}
-                {selectedPlan.success_metrics && selectedPlan.success_metrics.length > 0 && (
-                  <div className="mb-4">
-                    <h4 className="font-semibold text-gray-900 mb-2">Success Metrics</h4>
-                    <ul className="list-disc list-inside text-sm text-gray-700 space-y-1">
-                      {selectedPlan.success_metrics.map((metric, idx) => (
-                        <li key={idx}>{metric}</li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-                {selectedPlan.notes && (
-                  <div className="mb-4">
-                    <h4 className="font-semibold text-gray-900 mb-2">Notes</h4>
-                    <p className="text-sm text-gray-700 whitespace-pre-wrap">{selectedPlan.notes}</p>
-                  </div>
-                )}
-              </div>
-              <div className="border-t border-gray-200 p-4 flex justify-end gap-2">
-                <button
-                  onClick={() => {
-                    setSelectedPlan(null);
-                    handleEditPlan(selectedPlan);
-                  }}
-                  className="px-4 py-2 text-sm font-semibold border border-blue-600 text-blue-600 rounded-md hover:bg-blue-50"
-                >
-                  Edit Plan
-                </button>
-                {canManagePlans && (
-                  <button
-                    onClick={() => {
-                      setSelectedPlan(null);
-                      handleAssignPlan(selectedPlan);
-                    }}
-                    className="px-4 py-2 text-sm font-semibold border border-green-600 text-green-600 rounded-md hover:bg-green-50"
-                  >
-                    Assign Plan
-                  </button>
-                )}
-                <button
-                  onClick={() => setSelectedPlan(null)}
-                  className="px-4 py-2 text-sm font-semibold border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50"
-                >
-                  Close
-                </button>
-              </div>
-            </div>
-          </div>
+          <PlanDetailModal
+            plan={selectedPlan}
+            onClose={() => setSelectedPlan(null)}
+            canCreatePlans={canCreatePlans}
+            canManagePlans={canManagePlans}
+            assignmentStatuses={assignmentStatuses}
+            teamMembers={teamMembers}
+            user={user}
+            isPowerUser={isPowerUser}
+            getMyAssignmentStatus={getMyAssignmentStatus}
+            handleStatusChange={handleStatusChange}
+            onEdit={handleEditPlan}
+            onAssign={handleAssignPlan}
+          />
         )}
 
-        {/* Assignment Modal */}
         {showAssignModal && planToAssign && (
-          <div
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
-            onClick={() => setShowAssignModal(false)}
-          >
-            <div
-              className="bg-white rounded-xl shadow-2xl max-w-md w-full"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className="flex items-center justify-between p-4 border-b border-gray-200">
-                <h3 className="text-lg font-bold text-gray-900">Assign Plan</h3>
-                <button
-                  onClick={() => setShowAssignModal(false)}
-                  className="text-gray-500 hover:text-gray-700"
-                >
-                  ✕
-                </button>
-              </div>
-              <div className="p-4">
-                <p className="text-sm text-gray-600 mb-4">
-                  Select team members to assign <strong>{planToAssign.name}</strong>
-                </p>
-                <div className="max-h-64 overflow-y-auto space-y-2">
-                  {teamMembers.map(member => (
-                    <label key={member.id} className="flex items-center gap-2 p-2 hover:bg-gray-50 rounded cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={selectedMembers.includes(member.id)}
-                        onChange={(e) => {
-                          if (e.target.checked) {
-                            setSelectedMembers([...selectedMembers, member.id]);
-                          } else {
-                            setSelectedMembers(selectedMembers.filter(id => id !== member.id));
-                          }
-                        }}
-                        className="rounded"
-                      />
-                      <div className="flex-1">
-                        <div className="text-sm font-medium text-gray-900">
-                          {member.first_name} {member.last_name}
-                        </div>
-                        <div className="text-xs text-gray-500">{member.email}</div>
-                      </div>
-                    </label>
-                  ))}
-                </div>
-              </div>
-              <div className="border-t border-gray-200 p-4 flex justify-end gap-2">
-                <button
-                  onClick={() => setShowAssignModal(false)}
-                  className="px-4 py-2 text-sm font-semibold border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={handleSaveAssignments}
-                  disabled={selectedMembers.length === 0}
-                  className={`px-4 py-2 text-sm font-semibold rounded-md ${
-                    selectedMembers.length > 0
-                      ? 'bg-green-600 text-white hover:bg-green-700'
-                      : 'bg-gray-200 text-gray-500 cursor-not-allowed'
-                  }`}
-                >
-                  Assign to {selectedMembers.length} Member{selectedMembers.length !== 1 ? 's' : ''}
-                </button>
-              </div>
-            </div>
-          </div>
+          <AssignPlanModal
+            plan={planToAssign}
+            teamMembers={teamMembers}
+            selectedMembers={selectedMembers}
+            setSelectedMembers={setSelectedMembers}
+            onSave={handleSaveAssignments}
+            onClose={() => setShowAssignModal(false)}
+          />
         )}
 
         {/* Template Selection Modal */}

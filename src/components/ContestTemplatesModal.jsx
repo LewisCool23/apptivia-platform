@@ -207,6 +207,9 @@ export default function ContestTemplatesModal({ isOpen, onClose, onTemplateSelec
             </div>
 
             <div className="flex justify-end gap-3 mt-6">
+              <p className="text-xs text-gray-500 flex items-center mr-auto">
+                💡 You can add specific team members after creating the contest.
+              </p>
               <button
                 onClick={() => {
                   setSelectedTemplate(null);

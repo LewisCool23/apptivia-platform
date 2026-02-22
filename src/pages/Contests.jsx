@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { Edit2, Trash2, Search, X, StopCircle, Archive, Download, Mail, CheckCircle, Link as LinkIcon, Info } from 'lucide-react';
+import { backendFetch } from '../utils/backendFetch';
+import { Edit2, Trash2, Search, X, StopCircle, Archive, Download, Mail, CheckCircle, Link as LinkIcon, Info, Users, BarChart2, LogOut, Trophy, Share2, UserPlus } from 'lucide-react';
 import html2canvas from 'html2canvas';
 import { useNavigate } from 'react-router-dom';
 import DashboardLayout from '../DashboardLayout';
@@ -16,8 +17,11 @@ import LeaderboardModal from '../components/LeaderboardModal';
 import BadgeModal from '../components/BadgeModal';
 import BadgeAssignmentModal from '../components/BadgeAssignmentModal';
 import ContestTemplatesModal from '../components/ContestTemplatesModal';
+import AddTeamMembersModal from '../components/AddTeamMembersModal';
 import InfoTooltip from '../components/InfoTooltip';
 import { useNotifications } from '../contexts/NotificationContext';
+import ConfirmModal from '../components/ConfirmModal';
+import SearchWithHistory from '../components/SearchWithHistory';
 
 export default function Contests() {
   const navigate = useNavigate();
@@ -53,9 +57,12 @@ export default function Contests() {
   const [badgeModal, setBadgeModal] = useState({ isOpen: false, badge: null });
   const [badgeAssignmentModal, setBadgeAssignmentModal] = useState({ isOpen: false, badge: null });
   const [showContestTemplatesModal, setShowContestTemplatesModal] = useState(false);
+  const [addMembersModal, setAddMembersModal] = useState({ isOpen: false, contest: null });
   const { openPanel, addNotification, unreadCount } = useNotifications();
+  const [confirmModal, setConfirmModal] = useState({ isOpen: false, type: null, contest: null, isLoading: false });
 
   const isAdmin = role === 'admin';
+  const isManager = role === 'manager';
   const canCreateContests = hasPermission('create_contests');
   const canEditContests = hasPermission('edit_contests');
   const canExport = hasPermission('export_data');
@@ -212,16 +219,7 @@ export default function Contests() {
       }
       const subject = `Contest Results • ${shareModal.contest.name}`;
       const body = buildResultsBody(shareModal.contest);
-      const backendBase = process.env.REACT_APP_BACKEND_URL || '';
-      const res = await fetch(`${backendBase}/api/send-contest-results`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ recipients, subject, body }),
-      });
-      if (!res.ok) {
-        const msg = await res.text();
-        throw new Error(msg || 'Email failed');
-      }
+      await backendFetch('/api/send-contest-results', { recipients, subject, body });
       toast.success('Contest results shared.');
       closeShareResults();
     } catch (err) {
@@ -246,19 +244,26 @@ export default function Contests() {
 
   const handleDeleteContest = async (contestId, contestName) => {
     if (!user?.id) return;
+    setConfirmModal({
+      isOpen: true,
+      type: 'delete',
+      contest: { id: contestId, name: contestName },
+      isLoading: false
+    });
+  };
+
+  const confirmDeleteContest = async () => {
+    const { contest } = confirmModal;
+    if (!contest) return;
     
-    const confirmed = window.confirm(
-      `Are you sure you want to delete "${contestName}"? This action cannot be undone.`
-    );
-    
-    if (!confirmed) return;
-    
-    const loadingToast = toast.loading(`Deleting "${contestName}"...`);
+    setConfirmModal(prev => ({ ...prev, isLoading: true }));
+    const loadingToast = toast.loading(`Deleting "${contest.name}"...`);
     
     try {
-      const result = await deleteContest(contestId, user.id);
+      const result = await deleteContest(contest.id, user.id);
       
       toast.dismiss(loadingToast);
+      setConfirmModal({ isOpen: false, type: null, contest: null, isLoading: false });
       
       if (result.success) {
         toast.success(result.message || 'Contest deleted successfully');
@@ -269,6 +274,7 @@ export default function Contests() {
       console.error('Error deleting contest:', err);
       toast.dismiss(loadingToast);
       toast.error('Failed to delete contest');
+      setConfirmModal({ isOpen: false, type: null, contest: null, isLoading: false });
     }
   };
 
@@ -286,16 +292,43 @@ export default function Contests() {
 
   const handleEndContest = async (contestId, contestName) => {
     if (!user?.id) return;
-    const confirmed = window.confirm(
-      `Are you sure you want to end "${contestName}"? This will mark it as completed.`
-    );
-    if (!confirmed) return;
-    const loadingToast = toast.loading(`Ending "${contestName}"...`);
+    setConfirmModal({
+      isOpen: true,
+      type: 'end',
+      contest: { id: contestId, name: contestName },
+      isLoading: false
+    });
+  };
+
+  const confirmEndContest = async () => {
+    const { contest } = confirmModal;
+    if (!contest) return;
+    
+    setConfirmModal(prev => ({ ...prev, isLoading: true }));
+    const loadingToast = toast.loading(`Ending "${contest.name}"...`);
     try {
-      const result = await endContest(contestId);
+      const result = await endContest(contest.id);
       toast.dismiss(loadingToast);
+      setConfirmModal({ isOpen: false, type: null, contest: null, isLoading: false });
       if (result.success) {
         toast.success('Contest ended successfully');
+        // Notify all users
+        addNotification({
+          type: 'contest',
+          title: 'Contest Ended',
+          message: `"${contest.name}" has been completed. Check the results!`,
+          link: '/contests',
+          dedupeKey: `contest-ended-${contest.id}`,
+          audience: 'self',
+        });
+        addNotification({
+          type: 'contest',
+          title: 'Contest Ended',
+          message: `"${contest.name}" has been completed. View final results and standings.`,
+          link: '/contests',
+          dedupeKey: `contest-ended-mgr-${contest.id}`,
+          audience: 'team',
+        });
       } else {
         toast.error(result.error || 'Failed to end contest');
       }
@@ -303,19 +336,30 @@ export default function Contests() {
       console.error('Error ending contest:', err);
       toast.dismiss(loadingToast);
       toast.error('Failed to end contest');
+      setConfirmModal({ isOpen: false, type: null, contest: null, isLoading: false });
     }
   };
 
   const handleArchiveContest = async (contestId, contestName) => {
     if (!user?.id) return;
-    const confirmed = window.confirm(
-      `Archive "${contestName}"? It will be moved to the Archived tab.`
-    );
-    if (!confirmed) return;
-    const loadingToast = toast.loading(`Archiving "${contestName}"...`);
+    setConfirmModal({
+      isOpen: true,
+      type: 'archive',
+      contest: { id: contestId, name: contestName },
+      isLoading: false
+    });
+  };
+
+  const confirmArchiveContest = async () => {
+    const { contest } = confirmModal;
+    if (!contest) return;
+    
+    setConfirmModal(prev => ({ ...prev, isLoading: true }));
+    const loadingToast = toast.loading(`Archiving "${contest.name}"...`);
     try {
-      const result = await archiveContest(contestId);
+      const result = await archiveContest(contest.id);
       toast.dismiss(loadingToast);
+      setConfirmModal({ isOpen: false, type: null, contest: null, isLoading: false });
       if (result.success) {
         toast.success('Contest archived successfully');
       } else {
@@ -325,6 +369,7 @@ export default function Contests() {
       console.error('Error archiving contest:', err);
       toast.dismiss(loadingToast);
       toast.error('Failed to archive contest');
+      setConfirmModal({ isOpen: false, type: null, contest: null, isLoading: false });
     }
   };
 
@@ -410,6 +455,8 @@ export default function Contests() {
   const handleEnrollment = async (contestId, isEnrolled) => {
     if (!user?.id) return;
     
+    const contest = allContests.find(c => c.id === contestId);
+    const contestName = contest?.name || 'contest';
     const loadingToast = toast.loading(isEnrolled ? 'Withdrawing from contest...' : 'Enrolling in contest...');
     
     try {
@@ -423,6 +470,46 @@ export default function Contests() {
         toast.error(result.error || 'Failed to update enrollment');
       } else {
         toast.success(isEnrolled ? 'Successfully withdrawn from contest' : 'Successfully enrolled in contest!');
+        
+        // Notification for the user
+        const userName = `${user.first_name || ''} ${user.last_name || ''}`.trim() || user.email;
+        if (isEnrolled) {
+          addNotification({
+            type: 'contest',
+            title: 'Withdrew from Contest',
+            message: `You withdrew from "${contestName}".`,
+            link: '/contests',
+            dedupeKey: `contest-withdraw-${contestId}-${Date.now()}`,
+            audience: 'self',
+          });
+          // Notification visible to managers
+          addNotification({
+            type: 'contest',
+            title: 'Contest Withdrawal',
+            message: `${userName} withdrew from "${contestName}".`,
+            link: '/contests',
+            dedupeKey: `contest-withdraw-mgr-${contestId}-${Date.now()}`,
+            audience: 'team',
+          });
+        } else {
+          addNotification({
+            type: 'contest',
+            title: 'Joined Contest',
+            message: `You joined "${contestName}". Good luck!`,
+            link: '/contests',
+            dedupeKey: `contest-join-${contestId}-${Date.now()}`,
+            audience: 'self',
+          });
+          // Notification visible to managers
+          addNotification({
+            type: 'contest',
+            title: 'Contest Enrollment',
+            message: `${userName} joined "${contestName}".`,
+            link: '/contests',
+            dedupeKey: `contest-join-mgr-${contestId}-${Date.now()}`,
+            audience: 'team',
+          });
+        }
       }
     } catch (err) {
       console.error('Error handling enrollment:', err);
@@ -583,92 +670,115 @@ export default function Contests() {
       )}
 
       {/* Action Buttons */}
-      <div className="mt-4 flex gap-2">
+      <div className="mt-4 flex items-center justify-end gap-1.5 flex-wrap">
         {contest.status === 'active' && (
           <>
             <button
               onClick={() => openLeaderboard(contest)}
-              className="flex-1 bg-blue-50 text-blue-600 py-2 rounded font-semibold hover:bg-blue-100 transition-all duration-200 hover:scale-[1.02] min-w-0"
+              className="p-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-all duration-200 hover:scale-105 flex items-center justify-center group relative"
+              title="View Leaderboard"
             >
-              View Leaderboard
+              <BarChart2 size={16} />
+              <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 px-2 py-1 bg-gray-900 text-white text-[10px] rounded opacity-0 pointer-events-none group-hover:opacity-100 whitespace-nowrap transition-opacity z-10">Leaderboard</span>
             </button>
             <button
               onClick={() => handleEnrollment(contest.id, contest.is_user_enrolled)}
-              className={`flex-1 py-2 rounded font-semibold transition-all duration-200 hover:scale-[1.02] hover:shadow-md min-w-0 ${
+              className={`p-2 rounded-lg transition-all duration-200 hover:scale-105 flex items-center justify-center group relative ${
                 contest.is_user_enrolled
-                  ? 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                  ? 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                   : 'bg-green-500 text-white hover:bg-green-600'
               }`}
+              title={contest.is_user_enrolled ? 'Withdraw' : 'Join Contest'}
             >
-              {contest.is_user_enrolled ? 'Withdraw' : 'Join Contest'}
+              {contest.is_user_enrolled ? <LogOut size={16} /> : <UserPlus size={16} />}
+              <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 px-2 py-1 bg-gray-900 text-white text-[10px] rounded opacity-0 pointer-events-none group-hover:opacity-100 whitespace-nowrap transition-opacity z-10">{contest.is_user_enrolled ? 'Withdraw' : 'Join'}</span>
             </button>
             {canShareResults && (
               <button
                 onClick={() => openShareResults(contest)}
-                className="flex-1 py-2 rounded font-semibold bg-slate-900 text-white hover:bg-slate-800 transition-all duration-200 hover:scale-[1.02] min-w-0"
+                className="p-2 bg-slate-100 text-slate-700 rounded-lg hover:bg-slate-200 transition-all duration-200 hover:scale-105 flex items-center justify-center group relative"
+                title="Share Results"
               >
-                Share Results
+                <Share2 size={16} />
+                <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 px-2 py-1 bg-gray-900 text-white text-[10px] rounded opacity-0 pointer-events-none group-hover:opacity-100 whitespace-nowrap transition-opacity z-10">Share</span>
               </button>
             )}
-            {(canEditContest(contest) || canDeleteContest(contest)) && (
-              <div className="flex gap-1">
-                {canEditContest(contest) && (
-                  <button
-                    onClick={() => handleEndContest(contest.id, contest.name)}
-                    className="p-2 bg-orange-50 text-orange-600 rounded-lg hover:bg-orange-100 transition-all duration-200 hover:scale-105 flex items-center justify-center"
-                    title="End Contest"
-                  >
-                    <StopCircle size={16} />
-                  </button>
-                )}
-                {canEditContest(contest) && (
-                  <button
-                    onClick={() => handleEditContest(contest)}
-                    className="p-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-all duration-200 hover:scale-105 flex items-center justify-center group"
-                    title="Edit Contest"
-                  >
-                    <Edit2 size={16} />
-                  </button>
-                )}
-                {canDeleteContest(contest) && (
-                  <button
-                    onClick={() => handleDeleteContest(contest.id, contest.name)}
-                    className="p-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition-all duration-200 hover:scale-105 flex items-center justify-center group"
-                    title="Delete Contest"
-                  >
-                    <Trash2 size={16} />
-                  </button>
-                )}
-              </div>
+            {(isAdmin || isManager) && (
+              <button
+                onClick={() => setAddMembersModal({ isOpen: true, contest })}
+                className="p-2 bg-indigo-50 text-indigo-600 rounded-lg hover:bg-indigo-100 transition-all duration-200 hover:scale-105 flex items-center justify-center group relative"
+                title="Add Team Members"
+              >
+                <Users size={16} />
+                <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 px-2 py-1 bg-gray-900 text-white text-[10px] rounded opacity-0 pointer-events-none group-hover:opacity-100 whitespace-nowrap transition-opacity z-10">Add Members</span>
+              </button>
+            )}
+            {canEditContest(contest) && (
+              <button
+                onClick={() => handleEndContest(contest.id, contest.name)}
+                className="p-2 bg-orange-50 text-orange-600 rounded-lg hover:bg-orange-100 transition-all duration-200 hover:scale-105 flex items-center justify-center group relative"
+                title="End Contest"
+              >
+                <StopCircle size={16} />
+                <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 px-2 py-1 bg-gray-900 text-white text-[10px] rounded opacity-0 pointer-events-none group-hover:opacity-100 whitespace-nowrap transition-opacity z-10">End</span>
+              </button>
+            )}
+            {canEditContest(contest) && (
+              <button
+                onClick={() => handleEditContest(contest)}
+                className="p-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-all duration-200 hover:scale-105 flex items-center justify-center group relative"
+                title="Edit Contest"
+              >
+                <Edit2 size={16} />
+                <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 px-2 py-1 bg-gray-900 text-white text-[10px] rounded opacity-0 pointer-events-none group-hover:opacity-100 whitespace-nowrap transition-opacity z-10">Edit</span>
+              </button>
+            )}
+            {canDeleteContest(contest) && (
+              <button
+                onClick={() => handleDeleteContest(contest.id, contest.name)}
+                className="p-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition-all duration-200 hover:scale-105 flex items-center justify-center group relative"
+                title="Delete Contest"
+              >
+                <Trash2 size={16} />
+                <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 px-2 py-1 bg-gray-900 text-white text-[10px] rounded opacity-0 pointer-events-none group-hover:opacity-100 whitespace-nowrap transition-opacity z-10">Delete</span>
+              </button>
             )}
           </>
         )}
         {contest.status === 'upcoming' && (
           <>
-            <div className="flex-1 bg-gray-50 text-center py-2 rounded text-gray-400 min-w-0">
+            <div className="px-3 py-1.5 bg-gray-50 rounded-lg text-xs text-gray-400 font-medium">
               Coming Soon
             </div>
-            {(canEditContest(contest) || canDeleteContest(contest)) && (
-              <div className="flex gap-1">
-                {canEditContest(contest) && (
-                  <button
-                    onClick={() => handleEditContest(contest)}
-                    className="p-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-all duration-200 hover:scale-105 flex items-center justify-center group"
-                    title="Edit Contest"
-                  >
-                    <Edit2 size={16} />
-                  </button>
-                )}
-                {canDeleteContest(contest) && (
-                  <button
-                    onClick={() => handleDeleteContest(contest.id, contest.name)}
-                    className="p-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition-all duration-200 hover:scale-105 flex items-center justify-center group"
-                    title="Delete Contest"
-                  >
-                    <Trash2 size={16} />
-                  </button>
-                )}
-              </div>
+            {(isAdmin || isManager) && (
+              <button
+                onClick={() => setAddMembersModal({ isOpen: true, contest })}
+                className="p-2 bg-indigo-50 text-indigo-600 rounded-lg hover:bg-indigo-100 transition-all duration-200 hover:scale-105 flex items-center justify-center group relative"
+                title="Add Team Members"
+              >
+                <Users size={16} />
+                <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 px-2 py-1 bg-gray-900 text-white text-[10px] rounded opacity-0 pointer-events-none group-hover:opacity-100 whitespace-nowrap transition-opacity z-10">Add Members</span>
+              </button>
+            )}
+            {canEditContest(contest) && (
+              <button
+                onClick={() => handleEditContest(contest)}
+                className="p-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-all duration-200 hover:scale-105 flex items-center justify-center group relative"
+                title="Edit Contest"
+              >
+                <Edit2 size={16} />
+                <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 px-2 py-1 bg-gray-900 text-white text-[10px] rounded opacity-0 pointer-events-none group-hover:opacity-100 whitespace-nowrap transition-opacity z-10">Edit</span>
+              </button>
+            )}
+            {canDeleteContest(contest) && (
+              <button
+                onClick={() => handleDeleteContest(contest.id, contest.name)}
+                className="p-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition-all duration-200 hover:scale-105 flex items-center justify-center group relative"
+                title="Delete Contest"
+              >
+                <Trash2 size={16} />
+                <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 px-2 py-1 bg-gray-900 text-white text-[10px] rounded opacity-0 pointer-events-none group-hover:opacity-100 whitespace-nowrap transition-opacity z-10">Delete</span>
+              </button>
             )}
           </>
         )}
@@ -676,48 +786,51 @@ export default function Contests() {
           <>
             <button
               onClick={() => openLeaderboard(contest)}
-              className="flex-1 bg-yellow-50 text-yellow-700 py-2 rounded font-semibold hover:bg-yellow-100 transition-all duration-200 hover:scale-[1.02] min-w-0"
+              className="p-2 bg-yellow-50 text-yellow-700 rounded-lg hover:bg-yellow-100 transition-all duration-200 hover:scale-105 flex items-center justify-center group relative"
+              title="View Results"
             >
-              View Results
+              <Trophy size={16} />
+              <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 px-2 py-1 bg-gray-900 text-white text-[10px] rounded opacity-0 pointer-events-none group-hover:opacity-100 whitespace-nowrap transition-opacity z-10">Results</span>
             </button>
             {canShareResults && (
               <button
                 onClick={() => openShareResults(contest)}
-                className="flex-1 py-2 rounded font-semibold bg-slate-900 text-white hover:bg-slate-800 transition-all duration-200 hover:scale-[1.02] min-w-0"
+                className="p-2 bg-slate-100 text-slate-700 rounded-lg hover:bg-slate-200 transition-all duration-200 hover:scale-105 flex items-center justify-center group relative"
+                title="Share Results"
               >
-                Share Results
+                <Share2 size={16} />
+                <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 px-2 py-1 bg-gray-900 text-white text-[10px] rounded opacity-0 pointer-events-none group-hover:opacity-100 whitespace-nowrap transition-opacity z-10">Share</span>
               </button>
             )}
-            {(canEditContest(contest) || canDeleteContest(contest)) && (
-              <div className="flex gap-1">
-                {canEditContest(contest) && (
-                  <button
-                    onClick={() => handleArchiveContest(contest.id, contest.name)}
-                    className="p-2 bg-purple-50 text-purple-600 rounded-lg hover:bg-purple-100 transition-all duration-200 hover:scale-105 flex items-center justify-center"
-                    title="Archive Contest"
-                  >
-                    <Archive size={16} />
-                  </button>
-                )}
-                {canEditContest(contest) && (
-                  <button
-                    onClick={() => handleEditContest(contest)}
-                    className="p-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-all duration-200 hover:scale-105 flex items-center justify-center group"
-                    title="Edit Contest"
-                  >
-                    <Edit2 size={16} />
-                  </button>
-                )}
-                {canDeleteContest(contest) && (
-                  <button
-                    onClick={() => handleDeleteContest(contest.id, contest.name)}
-                    className="p-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition-all duration-200 hover:scale-105 flex items-center justify-center group"
-                    title="Delete Contest"
-                  >
-                    <Trash2 size={16} />
-                  </button>
-                )}
-              </div>
+            {canEditContest(contest) && (
+              <button
+                onClick={() => handleArchiveContest(contest.id, contest.name)}
+                className="p-2 bg-purple-50 text-purple-600 rounded-lg hover:bg-purple-100 transition-all duration-200 hover:scale-105 flex items-center justify-center group relative"
+                title="Archive Contest"
+              >
+                <Archive size={16} />
+                <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 px-2 py-1 bg-gray-900 text-white text-[10px] rounded opacity-0 pointer-events-none group-hover:opacity-100 whitespace-nowrap transition-opacity z-10">Archive</span>
+              </button>
+            )}
+            {canEditContest(contest) && (
+              <button
+                onClick={() => handleEditContest(contest)}
+                className="p-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-all duration-200 hover:scale-105 flex items-center justify-center group relative"
+                title="Edit Contest"
+              >
+                <Edit2 size={16} />
+                <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 px-2 py-1 bg-gray-900 text-white text-[10px] rounded opacity-0 pointer-events-none group-hover:opacity-100 whitespace-nowrap transition-opacity z-10">Edit</span>
+              </button>
+            )}
+            {canDeleteContest(contest) && (
+              <button
+                onClick={() => handleDeleteContest(contest.id, contest.name)}
+                className="p-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition-all duration-200 hover:scale-105 flex items-center justify-center group relative"
+                title="Delete Contest"
+              >
+                <Trash2 size={16} />
+                <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 px-2 py-1 bg-gray-900 text-white text-[10px] rounded opacity-0 pointer-events-none group-hover:opacity-100 whitespace-nowrap transition-opacity z-10">Delete</span>
+              </button>
             )}
           </>
         )}
@@ -725,17 +838,20 @@ export default function Contests() {
           <>
             <button
               onClick={() => openLeaderboard(contest)}
-              className="flex-1 bg-gray-50 text-gray-600 py-2 rounded font-semibold hover:bg-gray-100 transition-all duration-200 hover:scale-[1.02] min-w-0"
+              className="p-2 bg-gray-50 text-gray-600 rounded-lg hover:bg-gray-100 transition-all duration-200 hover:scale-105 flex items-center justify-center group relative"
+              title="View Results"
             >
-              View Results
+              <Trophy size={16} />
+              <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 px-2 py-1 bg-gray-900 text-white text-[10px] rounded opacity-0 pointer-events-none group-hover:opacity-100 whitespace-nowrap transition-opacity z-10">Results</span>
             </button>
             {canDeleteContest(contest) && (
               <button
                 onClick={() => handleDeleteContest(contest.id, contest.name)}
-                className="p-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition-all duration-200 hover:scale-105 flex items-center justify-center group"
+                className="p-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition-all duration-200 hover:scale-105 flex items-center justify-center group relative"
                 title="Delete Contest"
               >
                 <Trash2 size={16} />
+                <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 px-2 py-1 bg-gray-900 text-white text-[10px] rounded opacity-0 pointer-events-none group-hover:opacity-100 whitespace-nowrap transition-opacity z-10">Delete</span>
               </button>
             )}
           </>
@@ -757,8 +873,47 @@ export default function Contests() {
     </div>
   );
 
+  const getConfirmModalProps = () => {
+    const { type, contest } = confirmModal;
+    switch (type) {
+      case 'delete':
+        return {
+          title: 'Delete Contest?',
+          message: `Are you sure you want to delete "${contest?.name}"? This action cannot be undone.`,
+          confirmText: 'Delete',
+          variant: 'danger',
+          onConfirm: confirmDeleteContest,
+        };
+      case 'end':
+        return {
+          title: 'End Contest?',
+          message: `Are you sure you want to end "${contest?.name}"? This will mark it as completed and finalize all results.`,
+          confirmText: 'End Contest',
+          variant: 'warning',
+          onConfirm: confirmEndContest,
+        };
+      case 'archive':
+        return {
+          title: 'Archive Contest?',
+          message: `Archive "${contest?.name}"? It will be moved to the Archived tab and hidden from active contests.`,
+          confirmText: 'Archive',
+          variant: 'warning',
+          onConfirm: confirmArchiveContest,
+        };
+      default:
+        return {};
+    }
+  };
+
   return (
     <DashboardLayout>
+      {/* Confirm Modal */}
+      <ConfirmModal
+        isOpen={confirmModal.isOpen}
+        onClose={() => setConfirmModal({ isOpen: false, type: null, contest: null, isLoading: false })}
+        isLoading={confirmModal.isLoading}
+        {...getConfirmModalProps()}
+      />
       <div className="p-6">
         <div className="flex items-start justify-between mb-4">
           <div>
@@ -918,11 +1073,12 @@ export default function Contests() {
         <div className="space-y-3">
           <div>
             <label className="block text-xs text-gray-500 mb-1">Search</label>
-            <input
+            <SearchWithHistory
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              onChange={setSearchQuery}
               placeholder="Search contests"
-              className="w-full border border-gray-200 rounded px-2 py-1 text-xs"
+              context="contests"
+              inputClassName="text-xs"
             />
           </div>
           <div>
@@ -1172,6 +1328,7 @@ export default function Contests() {
         onClose={closeLeaderboard}
         contestName={leaderboardModal.contest?.name || ''}
         leaderboard={leaderboardModal.contest?.leaderboard || []}
+        participants={leaderboardModal.contest?.participants || []}
         currentUserId={user?.id}
         status={leaderboardModal.contest?.status}
       />
@@ -1347,6 +1504,25 @@ export default function Contests() {
             title: 'Template Selected',
             message: 'Fill in the remaining details to create your contest',
             dedupeKey: 'template-selected',
+          });
+        }}
+      />
+      <AddTeamMembersModal
+        isOpen={addMembersModal.isOpen}
+        onClose={() => setAddMembersModal({ isOpen: false, contest: null })}
+        contestId={addMembersModal.contest?.id || ''}
+        contestName={addMembersModal.contest?.name || ''}
+        existingParticipantIds={(addMembersModal.contest?.participants || []).map(p => p.profile_id)}
+        onMembersAdded={async () => {
+          await refetch();
+          const contestName = addMembersModal.contest?.name || 'contest';
+          addNotification({
+            type: 'contest',
+            title: 'Team Members Added',
+            message: `New members were added to "${contestName}".`,
+            link: '/contests',
+            dedupeKey: `contest-members-added-${addMembersModal.contest?.id}-${Date.now()}`,
+            audience: 'team',
           });
         }}
       />

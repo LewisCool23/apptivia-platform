@@ -2,12 +2,14 @@ import React, { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from './AuthContext';
 import { supabase } from './supabaseClient';
-import { Home, Trophy, Gamepad2, BarChart3, Settings, User, Menu, LogOut, X, Zap, Building2, ChevronDown, ChevronRight, Search } from 'lucide-react';
+import { Home, Trophy, Gamepad2, BarChart3, Settings, User, Menu, LogOut, X, Zap, Building2, ChevronDown, ChevronRight, Search, Radar, Monitor } from 'lucide-react';
 import NotificationPanel from './components/NotificationPanel';
 
 const navigation = [
   { id: 'dashboard', name: 'Apptivia Scorecard', icon: Home, route: '/dashboard', description: 'Performance dashboard' },
   { id: 'coach', name: 'Apptivia Coach', icon: Trophy, route: '/coach', description: 'Skill development' },
+  { id: 'engage', name: 'Apptivia Engage', icon: Radar, route: '/engage', description: 'AI prospecting' },
+  { id: 'wallboard', name: 'Wallboard', icon: Monitor, route: '/wallboard', description: 'TV leaderboard display' },
   { id: 'contests', name: 'Contests', icon: Gamepad2, route: '/contests', description: 'Sales competitions' },
   { id: 'analytics', name: 'Analytics', icon: BarChart3, route: '/analytics', description: 'Advanced insights' },
   { 
@@ -171,6 +173,44 @@ function DashboardLayout({ children }) {
         });
       });
 
+      // Engage tab deep links
+      const engageTabs = [
+        { name: 'Pipeline Operator', desc: 'Monitor deals, flag risks, AI forecasts', tab: 'pipeline', keywords: ['pipeline', 'deal', 'forecast', 'risk'] },
+        { name: 'Signal Prospecting', desc: 'Detect high-intent buying signals', tab: 'signals', keywords: ['signal', 'intent', 'buying'] },
+        { name: 'Discover', desc: 'AI-powered prospect & company research', tab: 'discover', keywords: ['discover', 'research', 'prospect', 'company'] },
+        { name: 'Sequences', desc: 'Multi-step outreach cadences', tab: 'sequences', keywords: ['sequence', 'cadence', 'outreach'] },
+        { name: 'Account Intelligence', desc: 'Account-based scoring & mapping', tab: 'accounts', keywords: ['account', 'scoring', 'buying committee', 'tier'] },
+        { name: 'AI Playbooks', desc: 'AI-generated sales playbooks', tab: 'playbooks', keywords: ['playbook', 'play', 'sales play'] },
+        { name: 'Prompt Library', desc: 'Outbound AI prompt templates', tab: 'prompts', keywords: ['prompt', 'template', 'library', 'outbound prompt', 'ai prompt'] },
+      ];
+      engageTabs.forEach(et => {
+        if (et.name.toLowerCase().includes(searchTerm) || et.keywords.some(k => searchTerm.includes(k))) {
+          results.push({
+            type: 'Engage',
+            title: `Engage → ${et.name}`,
+            subtitle: et.desc,
+            link: `/engage?tab=${et.tab}`,
+            icon: '📡'
+          });
+        }
+      });
+
+      // Analytics deep links
+      const analyticsTabs = [
+        { name: 'KPI Watchdog', desc: 'Anomaly detection & coaching triggers', tab: 'watchdog', keywords: ['watchdog', 'anomaly', 'trigger', 'coaching'] },
+      ];
+      analyticsTabs.forEach(at => {
+        if (at.name.toLowerCase().includes(searchTerm) || at.keywords.some(k => searchTerm.includes(k))) {
+          results.push({
+            type: 'Analytics',
+            title: `Analytics → ${at.name}`,
+            subtitle: at.desc,
+            link: `/analytics`,
+            icon: '📊'
+          });
+        }
+      });
+
       setSearchResults(results);
     } catch (error) {
       console.error('Search error:', error);
@@ -223,7 +263,9 @@ function DashboardLayout({ children }) {
   const navPermissions = {
     dashboard: 'view_dashboard',
     coach: 'view_coach',
+    engage: 'view_engage',
     'coaching-plans': 'view_coach',
+    wallboard: 'view_coach',
     contests: 'view_contests',
     analytics: 'view_analytics',
     integrations: 'view_systems',
@@ -286,27 +328,27 @@ function DashboardLayout({ children }) {
         hidden lg:flex
         bg-white shadow-lg transition-all duration-300 flex-col fixed left-0 top-0 bottom-0 h-screen
       `}>
-        <div className="p-4 border-b">
-          <div className="relative flex items-center mb-3">
+        <div className="px-3 py-2 border-b">
+          <div className="relative flex items-center mb-2">
             {sidebarOpen ? (
-              <div className="flex items-center gap-3">
-                <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
-                  <span className="text-white font-bold text-sm">A</span>
+              <div className="flex items-center gap-2">
+                <div className="w-7 h-7 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
+                  <span className="text-white font-bold text-xs">A</span>
                 </div>
                 <div>
-                  <h1 className="font-bold text-base text-gray-900">Apptivia</h1>
-                  <p className="text-[11px] text-gray-500">Sales Productivity Platform</p>
+                  <h1 className="font-semibold text-xs text-gray-900">Apptivia</h1>
+                  <p className="text-[10px] text-gray-500">Sales Productivity Platform</p>
                 </div>
               </div>
             ) : (
               <button
                 onClick={() => setSidebarOpen(true)}
-                className="flex items-center gap-3"
+                className="flex items-center gap-2"
                 aria-label="Expand sidebar"
                 title="Expand sidebar"
               >
-                <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
-                  <span className="text-white font-bold text-sm">A</span>
+                <div className="w-7 h-7 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
+                  <span className="text-white font-bold text-xs">A</span>
                 </div>
               </button>
             )}
@@ -321,19 +363,19 @@ function DashboardLayout({ children }) {
             )}
           </div>
           {/* User Info Section */}
-          <div className="flex items-center gap-3 mt-2 mb-2">
-            <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
-              <span className="text-white font-bold text-sm">{getProfileInitials()}</span>
+          <div className="flex items-center gap-2 mt-1 mb-1">
+            <div className="w-7 h-7 bg-blue-500 rounded-full flex items-center justify-center">
+              <span className="text-white font-bold text-xs">{getProfileInitials()}</span>
             </div>
             {sidebarOpen && (
               <div>
-                <div className="font-medium text-gray-900 leading-tight text-xs">Welcome, {getProfileFirstName()}</div>
-                <div className="text-[9px] text-gray-500">{profile?.title || 'N/A'}</div>
+                <div className="font-semibold text-gray-900 leading-tight text-xs">Welcome, {getProfileFirstName()}</div>
+                <div className="text-[10px] text-gray-500">{profile?.title || 'N/A'}</div>
               </div>
             )}
           </div>
         </div>
-        <nav className="flex-1 p-4 overflow-y-auto">
+        <nav className="flex-1 px-3 py-2 overflow-y-auto">
           <div className="space-y-1">
             {filteredNavigation.map(item => (
               <div key={item.id}>
@@ -342,38 +384,38 @@ function DashboardLayout({ children }) {
                   <div>
                     <button
                       onClick={() => sidebarOpen ? toggleSubmenu(item.id) : navigate(item.route)}
-                      className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-left text-sm transition-all duration-200 hover:scale-[1.02] ${
+                      className={`w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-left text-xs transition-all duration-200 hover:scale-[1.02] ${
                         activeRoute === item.route
                           ? 'bg-blue-500 text-white shadow-md'
                           : 'text-gray-700 hover:bg-gray-100'
                       }`}
                     >
-                      <item.icon size={20} />
+                      <item.icon size={18} />
                       {sidebarOpen && (
                         <>
                           <div className="flex-1">
-                            <div className="font-medium text-sm">{item.name}</div>
-                            <div className="text-[11px] opacity-75">{item.description}</div>
+                            <div className="font-semibold text-xs">{item.name}</div>
+                            <div className="text-[10px] opacity-75">{item.description}</div>
                           </div>
-                          {expandedMenus[item.id] ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+                          {expandedMenus[item.id] ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
                         </>
                       )}
                     </button>
                     {/* Submenu items */}
                     {sidebarOpen && expandedMenus[item.id] && (
-                      <div className="ml-9 mt-1 space-y-1">
+                      <div className="ml-7 mt-0.5 space-y-0.5">
                         {item.subItems.map(subItem => (
                           <button
                             key={subItem.id}
                             onClick={() => navigate(subItem.route)}
-                            className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-left text-sm transition-all duration-200 hover:scale-[1.02] ${
+                            className={`w-full flex items-center gap-2 px-2.5 py-1 rounded-lg text-left text-xs transition-all duration-200 hover:scale-[1.02] ${
                               activeRoute === subItem.route
                                 ? 'bg-blue-100 text-blue-700 font-medium'
                                 : 'text-gray-600 hover:bg-gray-50'
                             }`}
                           >
-                            <subItem.icon size={16} />
-                            <span className="text-xs">{subItem.name}</span>
+                            <subItem.icon size={14} />
+                            <span className="text-[11px]">{subItem.name}</span>
                           </button>
                         ))}
                       </div>
@@ -383,17 +425,17 @@ function DashboardLayout({ children }) {
                   // Regular item without submenu
                   <button
                     onClick={() => navigate(item.route)}
-                    className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-left text-sm transition-all duration-200 hover:scale-[1.02] ${
+                    className={`w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-left text-xs transition-all duration-200 hover:scale-[1.02] ${
                       activeRoute === item.route
                         ? 'bg-blue-500 text-white shadow-md'
                         : 'text-gray-700 hover:bg-gray-100'
                     }`}
                   >
-                    <item.icon size={20} />
+                    <item.icon size={18} />
                     {sidebarOpen && (
                       <div>
-                        <div className="font-medium text-sm">{item.name}</div>
-                        <div className="text-[11px] opacity-75">{item.description}</div>
+                        <div className="font-semibold text-xs">{item.name}</div>
+                        <div className="text-[10px] opacity-75">{item.description}</div>
                       </div>
                     )}
                   </button>
@@ -402,12 +444,12 @@ function DashboardLayout({ children }) {
             ))}
           </div>
         </nav>
-        <div className="mt-auto p-4 border-t">
+        <div className="mt-auto px-3 py-2 border-t">
           <button
             onClick={() => { logout(); navigate('/login'); }}
-            className="w-full flex items-center gap-2 justify-center p-2 text-red-600 hover:bg-red-50 rounded-lg font-medium transition-all duration-200 hover:scale-[1.02]"
+            className="w-full flex items-center gap-2 justify-center p-1.5 text-red-600 hover:bg-red-50 rounded-lg font-medium text-xs transition-all duration-200 hover:scale-[1.02]"
           >
-            <LogOut size={20} />
+            <LogOut size={18} />
             {sidebarOpen && <span>Logout</span>}
           </button>
         </div>
@@ -427,7 +469,7 @@ function DashboardLayout({ children }) {
                 <span className="text-white font-bold text-sm">A</span>
               </div>
               <div>
-                <h1 className="font-bold text-base text-gray-900">Apptivia</h1>
+                <h1 className="font-semibold text-sm text-gray-900">Apptivia</h1>
                 <p className="text-[11px] text-gray-500">Sales Productivity</p>
               </div>
             </div>
@@ -441,12 +483,12 @@ function DashboardLayout({ children }) {
           </div>
           {/* User Info Section */}
           <div className="flex items-center gap-2 mt-2 mb-2">
-            <div className="w-7 h-7 bg-blue-500 rounded-full flex items-center justify-center">
-              <span className="text-white font-bold text-xs">{getProfileInitials()}</span>
+            <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
+              <span className="text-white font-bold text-sm">{getProfileInitials()}</span>
             </div>
             <div>
-              <div className="font-medium text-gray-900 leading-tight text-xs">Welcome, {getProfileFirstName()}</div>
-              <div className="text-[9px] text-gray-500">{profile?.title || 'N/A'}</div>
+              <div className="font-semibold text-gray-900 leading-tight text-sm">Welcome, {getProfileFirstName()}</div>
+              <div className="text-[11px] text-gray-500">{profile?.title || 'N/A'}</div>
             </div>
           </div>
         </div>
@@ -522,9 +564,9 @@ function DashboardLayout({ children }) {
                           : 'text-gray-700 hover:bg-gray-100'
                       }`}
                     >
-                      <item.icon size={20} />
+                      <item.icon size={22} />
                       <div className="flex-1">
-                        <div className="font-medium text-sm">{item.name}</div>
+                        <div className="font-semibold text-sm">{item.name}</div>
                         <div className="text-[11px] opacity-75">{item.description}</div>
                       </div>
                       {expandedMenus[item.id] ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
@@ -559,9 +601,9 @@ function DashboardLayout({ children }) {
                         : 'text-gray-700 hover:bg-gray-100'
                     }`}
                   >
-                    <item.icon size={20} />
+                    <item.icon size={22} />
                     <div>
-                      <div className="font-medium text-sm">{item.name}</div>
+                      <div className="font-semibold text-sm">{item.name}</div>
                       <div className="text-[11px] opacity-75">{item.description}</div>
                     </div>
                   </button>
@@ -575,7 +617,7 @@ function DashboardLayout({ children }) {
             onClick={() => { logout(); navigate('/login'); }}
             className="w-full flex items-center gap-2 justify-center p-3 text-red-600 hover:bg-red-50 rounded-lg font-medium transition-all duration-200 hover:scale-[1.02]"
           >
-            <LogOut size={20} />
+            <LogOut size={22} />
             <span>Logout</span>
           </button>
         </div>
@@ -588,13 +630,15 @@ function DashboardLayout({ children }) {
         {children}
       </div>
       {/* AaronChatbot Floating Button and Modal */}
-      <button
-        onClick={() => setChatbotOpen(true)}
-        className="fixed bottom-6 right-6 w-12 h-12 sm:w-14 sm:h-14 bg-blue-500 text-white rounded-full shadow-lg hover:bg-blue-600 flex items-center justify-center z-40 transition-all duration-300 hover:scale-110 hover:shadow-xl"
-        aria-label="Open Aaron AI Coach"
-      >
-        <span className="text-2xl sm:text-3xl">🤖</span>
-      </button>
+      {!chatbotOpen && (
+        <button
+          onClick={() => setChatbotOpen(true)}
+          className="fixed bottom-6 right-6 w-12 h-12 sm:w-14 sm:h-14 bg-blue-500 text-white rounded-full shadow-lg hover:bg-blue-600 flex items-center justify-center z-40 transition-all duration-300 hover:scale-110 hover:shadow-xl"
+          aria-label="Open Aaron AI Coach"
+        >
+          <span className="text-2xl sm:text-3xl">🤖</span>
+        </button>
+      )}
       <AaronChatbot isOpen={chatbotOpen} onClose={() => setChatbotOpen(false)} />
       <NotificationPanel />
     </div>

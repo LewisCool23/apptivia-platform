@@ -42,14 +42,15 @@ const SKILLSET_KPI_MAP: Record<string, string[]> = {
   'call conqueror': ['call_connects', 'meetings', 'discovery_calls'],
   'email warrior': ['emails_sent', 'social_touches'],
   'pipeline guru': ['sourced_opps', 'stage2_opps', 'pipeline_created', 'pipeline_advanced', 'qualified_leads'],
-  'task master': ['follow_ups', 'demos_completed', 'response_time', 'sales_cycle_days', 'win_rate'],  'scorecard master': ['scorecard_100_percent', 'scorecard_100_percent_streak', 'key_metric_100_percent', 'key_metric_100_percent_streak', 'scorecards_completed'],};
+  'task master': ['follow_ups', 'demos_completed', 'response_time', 'sales_cycle_days', 'win_rate'],  'scorecard master': ['scorecard_100_percent', 'scorecard_100_percent_streak', 'key_metric_100_percent', 'key_metric_100_percent_streak', 'scorecards_completed'],  'engage pro': ['sequences_created', 'prospects_enrolled', 'sequence_replies', 'accounts_researched', 'playbooks_executed', 'outreach_drafts_sent', 'ai_content_generated', 'engage_signals_actioned', 'engage_deals_influenced'],
+};
 
 const LEVELS = [
   { label: 'Developing', min: 0, max: 999 },
   { label: 'Intermediate', min: 1000, max: 2499 },
-  { label: 'Proficient', min: 2500, max: 3999 },
-  { label: 'Elite', min: 4000, max: 5499 },
-  { label: 'Master', min: 5500, max: 6000 },
+  { label: 'Proficient', min: 2500, max: 4999 },
+  { label: 'Elite', min: 5000, max: 9999 },
+  { label: 'Master', min: 10000, max: 15000 },
 ];
 
 function getLevelInfo(points: number) {
@@ -93,6 +94,10 @@ export function useCoachData(
   const cacheRef = useRef<Map<string, CoachData>>(new Map());
   const inFlightRef = useRef<Set<string>>(new Set());
   const lastKeyRef = useRef<string | null>(null);
+  // Incremented whenever a real-time kpi_values change is detected,
+  // causing the main effect to bypass the cache and re-fetch.
+  const [realtimeKey, setRealtimeKey] = useState(0);
+
   const [data, setData] = useState<CoachData>({
     profiles: [],
     avgLevel: 'Developing',
@@ -491,7 +496,26 @@ export function useCoachData(
     }
 
     fetchData();
-  }, [selectedDepartments, selectedTeams, selectedMembers, options?.enabled, options?.mode]);
+  }, [selectedDepartments, selectedTeams, selectedMembers, options?.enabled, options?.mode, realtimeKey]);
+
+  // ── Real-time subscription ─────────────────────────────────────────────────
+  // When kpi_values change in the DB (e.g. a manager logs activity), invalidate
+  // the in-memory cache and trigger a re-fetch so the scorecard updates live.
+  useEffect(() => {
+    const channel = supabase
+      .channel('coach_data_kpi_values')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'kpi_values' },
+        () => {
+          cacheRef.current.clear();
+          setRealtimeKey((k) => k + 1);
+        },
+      )
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
+  }, []);
 
   return { data, loading, error };
 }

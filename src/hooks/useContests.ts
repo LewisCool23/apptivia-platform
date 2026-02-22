@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../supabaseClient';
+import { updateContestLeaderboard } from '../utils/contestUtils';
 
 export interface ContestLeaderboardEntry {
   rank: number;
@@ -10,6 +11,12 @@ export interface ContestLeaderboardEntry {
   profile_email?: string | null;
   team_name: string | null;
   rank_change: 'up' | 'down' | 'same' | 'new';
+}
+
+export interface ContestParticipant {
+  profile_id: string;
+  profile_name: string;
+  team_name: string | null;
 }
 
 export interface Contest {
@@ -29,6 +36,7 @@ export interface Contest {
   winner_score: number | null;
   participant_count: number;
   leaderboard: ContestLeaderboardEntry[];
+  participants: ContestParticipant[];
   is_user_enrolled: boolean;
   user_rank: number | null;
   user_score: number | null;
@@ -113,19 +121,38 @@ export function useContests(currentUserId?: string) {
 
       if (leaderboardError) throw leaderboardError;
 
-      // Fetch participant counts
-      const { data: participantCounts, error: participantError } = await supabase
+      // Helper to format profile display names
+      const getProfileDisplayName = (profile: any) => {
+        const first = String(profile?.first_name || '').trim();
+        const last = String(profile?.last_name || '').trim();
+        const name = `${first} ${last}`.trim();
+        return name || profile?.email || 'Unknown';
+      };
+
+      // Fetch participant counts with profile/team data for fallback display
+      const { data: participantRows, error: participantError } = await supabase
         .from('contest_participants')
-        .select('contest_id, is_active')
+        .select('contest_id, profile_id, is_active, profile:profiles(first_name, last_name, email), team:teams(name)')
         .eq('is_active', true);
 
       if (participantError) throw participantError;
 
       // Group participant counts by contest
-      const countsByContest = participantCounts.reduce((acc: Record<string, number>, p: any) => {
+      const countsByContest = participantRows.reduce((acc: Record<string, number>, p: any) => {
         acc[p.contest_id] = (acc[p.contest_id] || 0) + 1;
         return acc;
       }, {} as Record<string, number>);
+
+      // Group participant details by contest for fallback leaderboard display
+      const participantsByContest = participantRows.reduce((acc: Record<string, ContestParticipant[]>, p: any) => {
+        if (!acc[p.contest_id]) acc[p.contest_id] = [];
+        acc[p.contest_id].push({
+          profile_id: p.profile_id,
+          profile_name: getProfileDisplayName(p.profile),
+          team_name: p.team?.name || null,
+        });
+        return acc;
+      }, {} as Record<string, ContestParticipant[]>);
 
       // Fetch user enrollment status if user ID provided
       let userEnrollments: Record<string, boolean> = {};
@@ -144,13 +171,6 @@ export function useContests(currentUserId?: string) {
       }
 
       // Group leaderboards by contest
-      const getProfileDisplayName = (profile: any) => {
-        const first = String(profile?.first_name || '').trim();
-        const last = String(profile?.last_name || '').trim();
-        const name = `${first} ${last}`.trim();
-        return name || profile?.email || 'Unknown';
-      };
-
       const leaderboardsByContest = leaderboards.reduce((acc: Record<string, ContestLeaderboardEntry[]>, entry: any) => {
         if (!acc[entry.contest_id]) acc[entry.contest_id] = [];
         
@@ -227,6 +247,7 @@ export function useContests(currentUserId?: string) {
           winner_score: winner?.score || null,
           participant_count: countsByContest[contest.id] || 0,
           leaderboard: contestLeaderboard,
+          participants: participantsByContest[contest.id] || [],
           is_user_enrolled: userEnrollments[contest.id] || false,
           user_rank: userEntry?.rank || null,
           user_score: userEntry?.score || null,
@@ -321,6 +342,13 @@ export function useContests(currentUserId?: string) {
         if (error) throw error;
       }
       
+      // Trigger leaderboard recalculation so the new participant appears
+      try {
+        await updateContestLeaderboard(contestId);
+      } catch (e) {
+        console.warn('Leaderboard recalculation after enrollment failed:', e);
+      }
+
       // Refresh contests
       await fetchContests();
       return { success: true };
