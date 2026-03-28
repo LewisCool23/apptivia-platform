@@ -17,9 +17,10 @@ import {
  * @param {boolean} [props.exportDisabled] - Whether export is disabled
  * @param {boolean} [props.configureDisabled] - Whether configure is disabled
  * @param {number} [props.notificationBadge] - Notification badge count
+ * @param {number} [props.filterBadge] - Active filter count badge
  * @param {Array<{label: string, onClick: () => void, disabled?: boolean}>} props.actions - Actions dropdown items
  */
-export default function PageActionBar({ 
+export default function PageActionBar({
   onFilterClick,
   onConfigureClick,
   onExportClick,
@@ -27,6 +28,7 @@ export default function PageActionBar({
   exportDisabled = false,
   configureDisabled = false,
   notificationBadge = 0,
+  filterBadge = 0,
   actions = []
 }) {
   const [actionsOpen, setActionsOpen] = useState(false);
@@ -70,7 +72,7 @@ export default function PageActionBar({
 
   return (
     <div className="flex gap-2 items-center">
-      {iconButton(Filter, 'Filters', onFilterClick)}
+      {iconButton(Filter, 'Filters', onFilterClick, filterBadge)}
       {iconButton(Settings, 'Configure', onConfigureClick, 0, configureDisabled)}
       {iconButton(Download, 'Export', onExportClick, 0, exportDisabled)}
       {iconButton(Bell, 'Notifications', onNotificationsClick, notificationBadge)}

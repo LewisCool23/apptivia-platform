@@ -1,5 +1,6 @@
 import React from 'react';
 import { Sparkles, Loader2 } from 'lucide-react';
+import { buildLabel } from '../../constants/kpiGuidance';
 
 export default function PlanBuilderForm({
   editingPlan,
@@ -7,23 +8,64 @@ export default function PlanBuilderForm({
   setPlanForm,
   handleSavePlan,
   savingPlan,
-  draftingField,
-  handleAiDraft,
   availableKPIs,
   handleFocusKpiChange,
   addArrayField,
   updateArrayField,
   removeArrayField,
   onCancel,
+  teamMembers,
+  managers,
+  planFor,
+  setPlanFor,
+  activeTab,
+  autoGenerating,
+  fieldsDisabled,
+  onPersonSelected,
+  skillsetPreview,
 }) {
+  const isPlaybook = activeTab === 'playbooks';
+  const repMembers = (teamMembers || []).filter(m =>
+    !['admin', 'manager', 'coach'].includes(m.role)
+  );
+
+  const inputDisabled = fieldsDisabled || autoGenerating;
+
+  const handlePersonChange = (personId) => {
+    if (isPlaybook) {
+      setPlanFor({ type: 'team', memberId: personId || null });
+    } else {
+      setPlanFor({ type: 'individual', memberId: personId || null });
+    }
+    // Trigger auto-generation for new plans (not editing)
+    if (personId && !editingPlan) {
+      onPersonSelected(personId);
+    }
+  };
+
   return (
-    <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
+    <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6 relative">
+      {/* Loading overlay during auto-generation */}
+      {autoGenerating && (
+        <div className="absolute inset-0 bg-white/70 rounded-lg flex flex-col items-center justify-center z-10">
+          <Loader2 size={32} className="animate-spin text-blue-600 mb-3" />
+          <p className="text-sm font-semibold text-blue-700">Generating AI coaching plan...</p>
+          <p className="text-xs text-gray-500 mt-1">Analyzing performance data and building recommendations</p>
+        </div>
+      )}
+
       <div className="flex items-center justify-between mb-6">
         <div>
           <h3 className="text-lg font-semibold text-gray-900">
-            {editingPlan ? 'Edit Coaching Plan' : 'Create Coaching Plan'}
+            {editingPlan
+              ? (isPlaybook ? 'Edit Manager Playbook' : 'Edit Coaching Plan')
+              : (isPlaybook ? 'Create Manager Playbook' : 'Create Coaching Plan')}
           </h3>
-          <p className="text-xs text-gray-500">Build a structured coaching plan</p>
+          <p className="text-xs text-gray-500">
+            {isPlaybook
+              ? 'Select a manager to auto-generate a data-driven playbook for their team'
+              : 'Select a rep to auto-generate a personalized coaching plan from their performance data'}
+          </p>
         </div>
         <button
           onClick={onCancel}
@@ -34,26 +76,81 @@ export default function PlanBuilderForm({
       </div>
 
       <div className="space-y-6">
+        {/* Person selector — Manager dropdown on Playbooks, Rep dropdown on Rep Plans */}
+        {setPlanFor && (
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              {isPlaybook ? 'Playbook For' : 'Plan For'} <span className="text-red-500">*</span>
+            </label>
+            {isPlaybook ? (
+              <>
+                <select
+                  value={planFor?.memberId || ''}
+                  onChange={(e) => handlePersonChange(e.target.value)}
+                  className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                >
+                  <option value="">Select a manager...</option>
+                  {(managers || []).map(m => (
+                    <option key={m.id} value={m.id}>
+                      {m.first_name} {m.last_name} — {m.email}
+                    </option>
+                  ))}
+                </select>
+                {!planFor?.memberId && !editingPlan && (
+                  <p className="text-xs text-blue-600 mt-1.5">
+                    Choose a manager to auto-generate a playbook based on their team's performance data.
+                  </p>
+                )}
+              </>
+            ) : (
+              <>
+                <select
+                  value={planFor?.memberId || ''}
+                  onChange={(e) => handlePersonChange(e.target.value)}
+                  className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                >
+                  <option value="">Select a team member...</option>
+                  {repMembers.map(m => (
+                    <option key={m.id} value={m.id}>
+                      {m.first_name} {m.last_name} — {m.email}
+                    </option>
+                  ))}
+                </select>
+                {!planFor?.memberId && !editingPlan && (
+                  <p className="text-xs text-blue-600 mt-1.5">
+                    Choose a rep to auto-generate a coaching plan from their KPI data.
+                  </p>
+                )}
+              </>
+            )}
+          </div>
+        )}
+
+        {/* Regenerate button — shown after initial generation or when editing */}
+        {planFor?.memberId && !autoGenerating && !editingPlan && (
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => onPersonSelected(planFor.memberId)}
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-purple-600 border border-purple-300 rounded-md hover:bg-purple-50 transition-colors"
+            >
+              <Sparkles size={14} />
+              Regenerate Plan
+            </button>
+            <span className="text-xs text-gray-400">Re-runs AI generation with latest data</span>
+          </div>
+        )}
+
         {/* Plan Name */}
         <div>
-          <div className="flex items-center justify-between mb-2">
-            <label className="block text-sm font-medium text-gray-700">
-              Plan Name <span className="text-red-500">*</span>
-            </label>
-            <button
-              onClick={() => handleAiDraft('name')}
-              disabled={draftingField === 'name'}
-              className="flex items-center gap-1 text-xs font-medium text-purple-600 hover:text-purple-700 disabled:opacity-50"
-            >
-              {draftingField === 'name' ? <Loader2 size={12} className="animate-spin" /> : <Sparkles size={12} />}
-              {draftingField === 'name' ? 'Drafting...' : 'Draft with AI'}
-            </button>
-          </div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Plan Name <span className="text-red-500">*</span>
+          </label>
           <input
             type="text"
             value={planForm.name}
             onChange={(e) => setPlanForm({ ...planForm, name: e.target.value })}
-            className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            disabled={inputDisabled}
+            className={`w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent ${inputDisabled ? 'bg-gray-50 text-gray-400' : ''}`}
             placeholder="e.g., Q1 Pipeline Acceleration Plan"
           />
         </div>
@@ -66,7 +163,8 @@ export default function PlanBuilderForm({
               type="date"
               value={planForm.date_range_start}
               onChange={(e) => setPlanForm({ ...planForm, date_range_start: e.target.value })}
-              className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              disabled={inputDisabled}
+              className={`w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent ${inputDisabled ? 'bg-gray-50 text-gray-400' : ''}`}
             />
           </div>
           <div>
@@ -75,7 +173,8 @@ export default function PlanBuilderForm({
               type="date"
               value={planForm.date_range_end}
               onChange={(e) => setPlanForm({ ...planForm, date_range_end: e.target.value })}
-              className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              disabled={inputDisabled}
+              className={`w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent ${inputDisabled ? 'bg-gray-50 text-gray-400' : ''}`}
             />
           </div>
         </div>
@@ -84,19 +183,11 @@ export default function PlanBuilderForm({
         <div>
           <div className="flex items-center justify-between mb-2">
             <label className="block text-sm font-medium text-gray-700">Goals (1-3)</label>
-            <div className="flex items-center gap-3">
-              <button
-                onClick={() => handleAiDraft('goals')}
-                disabled={draftingField === 'goals'}
-                className="flex items-center gap-1 text-xs font-medium text-purple-600 hover:text-purple-700 disabled:opacity-50"
-              >
-                {draftingField === 'goals' ? <Loader2 size={12} className="animate-spin" /> : <Sparkles size={12} />}
-                {draftingField === 'goals' ? 'Drafting...' : 'Draft with AI'}
-              </button>
+            {!inputDisabled && (
               <button onClick={() => addArrayField('goals')} className="text-xs text-blue-600 hover:text-blue-700 font-medium">
                 + Add Goal
               </button>
-            </div>
+            )}
           </div>
           <div className="space-y-2">
             {planForm.goals.map((goal, index) => (
@@ -105,10 +196,11 @@ export default function PlanBuilderForm({
                   type="text"
                   value={goal}
                   onChange={(e) => updateArrayField('goals', index, e.target.value)}
-                  className="flex-1 border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  disabled={inputDisabled}
+                  className={`flex-1 border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent ${inputDisabled ? 'bg-gray-50 text-gray-400' : ''}`}
                   placeholder="e.g., Increase pipeline by 25% this quarter"
                 />
-                {planForm.goals.length > 1 && (
+                {planForm.goals.length > 1 && !inputDisabled && (
                   <button onClick={() => removeArrayField('goals', index)} className="px-3 py-2 text-red-600 hover:text-red-700 text-xs font-medium">
                     Remove
                   </button>
@@ -122,9 +214,11 @@ export default function PlanBuilderForm({
         <div>
           <div className="flex items-center justify-between mb-2">
             <label className="block text-sm font-medium text-gray-700">Focus KPIs (2-5)</label>
-            <button onClick={() => addArrayField('focus_kpis')} className="text-xs text-blue-600 hover:text-blue-700 font-medium">
-              + Add KPI
-            </button>
+            {!inputDisabled && (
+              <button onClick={() => addArrayField('focus_kpis')} className="text-xs text-blue-600 hover:text-blue-700 font-medium">
+                + Add KPI
+              </button>
+            )}
           </div>
           <div className="space-y-2">
             {planForm.focus_kpis.map((kpi, index) => (
@@ -132,16 +226,17 @@ export default function PlanBuilderForm({
                 <select
                   value={kpi}
                   onChange={(e) => handleFocusKpiChange(index, e.target.value)}
-                  className="flex-1 border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  disabled={inputDisabled}
+                  className={`flex-1 border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent ${inputDisabled ? 'bg-gray-50 text-gray-400' : ''}`}
                 >
                   <option value="">Select a KPI...</option>
                   {availableKPIs.map(k => (
                     <option key={k} value={k}>
-                      {k.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())}
+                      {buildLabel(k)}
                     </option>
                   ))}
                 </select>
-                {planForm.focus_kpis.length > 1 && (
+                {planForm.focus_kpis.length > 1 && !inputDisabled && (
                   <button onClick={() => removeArrayField('focus_kpis', index)} className="px-3 py-2 text-red-600 hover:text-red-700 text-xs font-medium">
                     Remove
                   </button>
@@ -151,23 +246,37 @@ export default function PlanBuilderForm({
           </div>
         </div>
 
+        {/* Skillset Impact Preview — shown for rep plans after AI generation */}
+        {skillsetPreview && !isPlaybook && skillsetPreview.projected?.length > 0 && (
+          <div className="bg-indigo-50 border border-indigo-200 rounded-lg p-4">
+            <h4 className="text-sm font-semibold text-indigo-800 mb-3">Skillset Impact Preview</h4>
+            <div className="grid grid-cols-2 gap-2">
+              {skillsetPreview.projected.map(s => {
+                const current = (skillsetPreview.current || []).find(c => c.skillset_key === s.skillset.toLowerCase().replace(/\s+/g, '_'));
+                const currentXp = current?.current_xp || 0;
+                return (
+                  <div key={s.skillset} className="flex items-center gap-2 text-xs bg-white rounded-md px-3 py-2 border border-indigo-100">
+                    <span className={`w-2 h-2 rounded-full ${s.color}`} />
+                    <span className="font-medium text-gray-800">{s.skillset}</span>
+                    <span className="text-gray-400 ml-auto">{currentXp} XP</span>
+                    <span className="text-indigo-600 font-semibold">+{s.estimatedXp}</span>
+                  </div>
+                );
+              })}
+            </div>
+            <p className="text-[10px] text-indigo-500 mt-2">Estimated XP gain from completing this plan's focus KPIs</p>
+          </div>
+        )}
+
         {/* Action Items */}
         <div>
           <div className="flex items-center justify-between mb-2">
             <label className="block text-sm font-medium text-gray-700">Action Items</label>
-            <div className="flex items-center gap-3">
-              <button
-                onClick={() => handleAiDraft('action_items')}
-                disabled={draftingField === 'action_items'}
-                className="flex items-center gap-1 text-xs font-medium text-purple-600 hover:text-purple-700 disabled:opacity-50"
-              >
-                {draftingField === 'action_items' ? <Loader2 size={12} className="animate-spin" /> : <Sparkles size={12} />}
-                {draftingField === 'action_items' ? 'Drafting...' : 'Draft with AI'}
-              </button>
+            {!inputDisabled && (
               <button onClick={() => addArrayField('action_items')} className="text-xs text-blue-600 hover:text-blue-700 font-medium">
                 + Add Action
               </button>
-            </div>
+            )}
           </div>
           <div className="space-y-2">
             {planForm.action_items.map((action, index) => (
@@ -176,10 +285,11 @@ export default function PlanBuilderForm({
                   type="text"
                   value={action}
                   onChange={(e) => updateArrayField('action_items', index, e.target.value)}
-                  className="flex-1 border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  disabled={inputDisabled}
+                  className={`flex-1 border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent ${inputDisabled ? 'bg-gray-50 text-gray-400' : ''}`}
                   placeholder={`Action item ${index + 1}`}
                 />
-                {planForm.action_items.length > 1 && (
+                {planForm.action_items.length > 1 && !inputDisabled && (
                   <button onClick={() => removeArrayField('action_items', index)} className="px-3 py-2 text-red-600 hover:text-red-700 text-xs font-medium">
                     Remove
                   </button>
@@ -193,19 +303,11 @@ export default function PlanBuilderForm({
         <div>
           <div className="flex items-center justify-between mb-2">
             <label className="block text-sm font-medium text-gray-700">Success Metrics</label>
-            <div className="flex items-center gap-3">
-              <button
-                onClick={() => handleAiDraft('success_metrics')}
-                disabled={draftingField === 'success_metrics'}
-                className="flex items-center gap-1 text-xs font-medium text-purple-600 hover:text-purple-700 disabled:opacity-50"
-              >
-                {draftingField === 'success_metrics' ? <Loader2 size={12} className="animate-spin" /> : <Sparkles size={12} />}
-                {draftingField === 'success_metrics' ? 'Drafting...' : 'Draft with AI'}
-              </button>
+            {!inputDisabled && (
               <button onClick={() => addArrayField('success_metrics')} className="text-xs text-blue-600 hover:text-blue-700 font-medium">
                 + Add Metric
               </button>
-            </div>
+            )}
           </div>
           <div className="space-y-2">
             {planForm.success_metrics.map((metric, index) => (
@@ -214,10 +316,11 @@ export default function PlanBuilderForm({
                   type="text"
                   value={metric}
                   onChange={(e) => updateArrayField('success_metrics', index, e.target.value)}
-                  className="flex-1 border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  disabled={inputDisabled}
+                  className={`flex-1 border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent ${inputDisabled ? 'bg-gray-50 text-gray-400' : ''}`}
                   placeholder="e.g., Achieve 20% conversion rate"
                 />
-                {planForm.success_metrics.length > 1 && (
+                {planForm.success_metrics.length > 1 && !inputDisabled && (
                   <button onClick={() => removeArrayField('success_metrics', index)} className="px-3 py-2 text-red-600 hover:text-red-700 text-xs font-medium">
                     Remove
                   </button>
@@ -229,22 +332,13 @@ export default function PlanBuilderForm({
 
         {/* Notes */}
         <div>
-          <div className="flex items-center justify-between mb-2">
-            <label className="block text-sm font-medium text-gray-700">Notes</label>
-            <button
-              onClick={() => handleAiDraft('notes')}
-              disabled={draftingField === 'notes'}
-              className="flex items-center gap-1 text-xs font-medium text-purple-600 hover:text-purple-700 disabled:opacity-50"
-            >
-              {draftingField === 'notes' ? <Loader2 size={12} className="animate-spin" /> : <Sparkles size={12} />}
-              {draftingField === 'notes' ? 'Drafting...' : 'Draft with AI'}
-            </button>
-          </div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">Notes</label>
           <textarea
             value={planForm.notes}
             onChange={(e) => setPlanForm({ ...planForm, notes: e.target.value })}
+            disabled={inputDisabled}
             rows={4}
-            className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className={`w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent ${inputDisabled ? 'bg-gray-50 text-gray-400' : ''}`}
             placeholder="Additional notes or context..."
           />
         </div>
@@ -259,10 +353,10 @@ export default function PlanBuilderForm({
           </button>
           <button
             onClick={handleSavePlan}
-            disabled={savingPlan}
+            disabled={savingPlan || inputDisabled}
             className="px-4 py-2 text-sm font-semibold bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-60"
           >
-            {savingPlan ? 'Saving...' : (editingPlan ? 'Update Plan' : 'Save Plan')}
+            {savingPlan ? 'Saving...' : (editingPlan ? (isPlaybook ? 'Update Playbook' : 'Update Plan') : (isPlaybook ? 'Save Playbook' : 'Save Plan'))}
           </button>
         </div>
       </div>

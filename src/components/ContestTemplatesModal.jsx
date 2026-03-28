@@ -61,7 +61,6 @@ const CONTEST_TEMPLATES = [
 
 export default function ContestTemplatesModal({ isOpen, onClose, onTemplateSelect }) {
   const [selectedTemplate, setSelectedTemplate] = useState(null);
-  const [customizing, setCustomizing] = useState(false);
   const [customData, setCustomData] = useState({
     name: '',
     duration: 7,
@@ -97,7 +96,6 @@ export default function ContestTemplatesModal({ isOpen, onClose, onTemplateSelec
     onTemplateSelect?.(contestData);
     onClose();
     setSelectedTemplate(null);
-    setCustomizing(false);
   };
 
   if (!isOpen) return null;
@@ -211,10 +209,7 @@ export default function ContestTemplatesModal({ isOpen, onClose, onTemplateSelec
                 💡 You can add specific team members after creating the contest.
               </p>
               <button
-                onClick={() => {
-                  setSelectedTemplate(null);
-                  setCustomizing(false);
-                }}
+                onClick={() => setSelectedTemplate(null)}
                 className="px-4 py-2 text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 transition-colors"
               >
                 Back to Templates

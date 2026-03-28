@@ -1,5 +1,5 @@
 import React from 'react';
-import { X, UserPlus } from 'lucide-react';
+import { X, UserPlus, AlertTriangle } from 'lucide-react';
 
 export default function AssignPlanModal({
   plan,
@@ -36,11 +36,20 @@ export default function AssignPlanModal({
 
         {/* Member list */}
         <div className="p-4">
+          {plan.visibility === 'team' && (
+            <div className="mb-4 p-3 bg-amber-50 border border-amber-200 rounded-lg flex items-start gap-2">
+              <AlertTriangle size={16} className="text-amber-600 mt-0.5 flex-shrink-0" />
+              <p className="text-sm text-amber-800">
+                <strong>Note:</strong> This plan was generated from team-wide data and may contain cross-rep performance details.
+                Consider creating individual plans for each rep instead.
+              </p>
+            </div>
+          )}
           <p className="text-sm text-gray-600 mb-4">
             Select team members to assign <strong>{plan.name}</strong>
           </p>
           <div className="max-h-64 overflow-y-auto space-y-2">
-            {teamMembers.map(member => (
+            {teamMembers.filter(m => !['admin', 'manager', 'coach'].includes(m.role)).map(member => (
               <label key={member.id} className="flex items-center gap-2 p-2 hover:bg-gray-50 rounded cursor-pointer">
                 <input
                   type="checkbox"

@@ -5,7 +5,7 @@ import { Loader } from 'lucide-react';
 
 const ProtectedRoute = ({ children, requiredRoles = [], requiredPermissions = [], requireAllPermissions = false }) => {
   const location = useLocation();
-  const { isAuthenticated, isLoading, role, hasPermission } = useAuth();
+  const { isAuthenticated, isLoading, role, hasPermission, profile, profileLoaded } = useAuth();
 
   const fallbackRoute = (() => {
     const routes = [
@@ -33,6 +33,31 @@ const ProtectedRoute = ({ children, requiredRoles = [], requiredPermissions = []
 
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />;
+  }
+
+  // Wait for profile fetch to complete before running any profile-dependent guards.
+  // Without this, profile is null during fetch and guards would misfire.
+  if (!profileLoaded) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <Loader className="animate-spin text-blue-600 mx-auto mb-4" size={48} />
+          <p className="text-gray-600">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Redirect users without an organization to org settings (triggers onboarding wizard).
+  // Only enforce once profile has loaded (profile !== null) to avoid premature redirect.
+  if (profile && !profile.organization_id && location.pathname !== '/organization-settings') {
+    return <Navigate to="/organization-settings" replace />;
+  }
+
+  // Redirect invited users who haven't completed account setup.
+  // first_name is null for invited users (invite only sets id/email/role/org).
+  if ((!profile || !profile.first_name) && location.pathname !== '/account-setup') {
+    return <Navigate to="/account-setup" replace />;
   }
 
   if (requiredRoles.length > 0 && !requiredRoles.includes(role)) {

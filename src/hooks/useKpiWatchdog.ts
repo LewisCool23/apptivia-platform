@@ -2,7 +2,7 @@
  * useKpiWatchdog — React hook for the KPI Anomaly Watchdog workflow.
  *
  * Compares current KPI values against rolling averages,
- * detects drops >20%, and generates AI-powered coaching recommendations.
+ * detects drops >30%, and generates AI-powered coaching recommendations.
  */
 
 import { useState, useEffect, useCallback } from 'react';
@@ -57,6 +57,12 @@ interface WatchdogState {
   loading: boolean;
   error: string | null;
 }
+
+// Anomaly detection thresholds (configurable per org in future)
+const ANOMALY_DROP_THRESHOLD = -30;      // Min % drop to flag (aligned with backend)
+const ANOMALY_WARNING_THRESHOLD = -30;   // Warning severity
+const ANOMALY_CRITICAL_THRESHOLD = -50;  // Critical severity
+const ANOMALY_SPIKE_THRESHOLD = 50;      // Positive spike threshold
 
 const emptySummary: WatchdogSummary = {
   totalAnomalies: 0, activeAnomalies: 0, criticalCount: 0,
@@ -162,17 +168,28 @@ export function useKpiWatchdog(organizationId: string, userId?: string) {
 
       patch({ analysisProgress: ['Fetching KPI metrics and values...', `Found ${metrics.length} active KPIs. Fetching historical values...`] });
 
-      // Step 2: Fetch current period values (last 7 days)
+      // Build metric lookup by id for O(1) access
+      const metricById = new Map<string, any>();
+      metrics.forEach((m: any) => metricById.set(m.id, m));
+
+      // Step 2: Align to calendar Mon–Sun weeks so we never include the
+      // current incomplete week in anomaly detection.
       const now = new Date();
-      const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-      const twoWeeksAgo = new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000);
-      const fourWeeksAgo = new Date(now.getTime() - 28 * 24 * 60 * 60 * 1000);
+      const dayOfWk = now.getDay();
+      const currentMon = new Date(now.getTime() - (dayOfWk === 0 ? 6 : dayOfWk - 1) * 24 * 60 * 60 * 1000);
+      currentMon.setHours(0, 0, 0, 0);
+      const lastMonday = new Date(currentMon.getTime() - 7 * 24 * 60 * 60 * 1000);
+      const lastSunday = new Date(lastMonday.getTime() + 6 * 24 * 60 * 60 * 1000);
+      const twoWeeksAgoMon = new Date(lastMonday.getTime() - 7 * 24 * 60 * 60 * 1000);
+      // 4 prior weeks BEFORE the analyzed week (excludes lastMonday–lastSunday)
+      const fiveWeeksAgoMon = new Date(lastMonday.getTime() - 4 * 7 * 24 * 60 * 60 * 1000);
 
       // Get all profiles
       const { data: profiles } = await supabase
         .from('profiles')
         .select('id, first_name, last_name, organization_id')
-        .eq('organization_id', organizationId);
+        .eq('organization_id', organizationId)
+        .not('role', 'in', '("admin","manager","coach")');
 
       if (!profiles || profiles.length === 0) {
         patch({ isAnalyzing: false, analysisProgress: ['No profiles to analyze.'] });
@@ -180,30 +197,54 @@ export function useKpiWatchdog(organizationId: string, userId?: string) {
       }
 
       const profileIds = profiles.map((p: any) => p.id);
+      const profileMap = new Map<string, any>();
+      profiles.forEach((p: any) => profileMap.set(p.id, p));
 
-      // Current period values
-      const { data: currentValues } = await supabase
-        .from('kpi_values')
-        .select('profile_id, kpi_id, value, kpi_metrics!inner(key, name, goal)')
-        .in('profile_id', profileIds)
-        .gte('period_start', weekAgo.toISOString().split('T')[0])
-        .lte('period_end', now.toISOString().split('T')[0]);
+      // Fetch current, previous, and rolling values in parallel
+      const [currentRes, previousRes, rollingRes] = await Promise.all([
+        supabase
+          .from('kpi_values')
+          .select('profile_id, kpi_id, value, kpi_metrics!inner(key, name, goal, direction)')
+          .in('profile_id', profileIds)
+          .gte('period_start', lastMonday.toISOString().split('T')[0])
+          .lte('period_end', lastSunday.toISOString().split('T')[0]),
+        supabase
+          .from('kpi_values')
+          .select('profile_id, kpi_id, value, kpi_metrics!inner(key, name)')
+          .in('profile_id', profileIds)
+          .gte('period_start', twoWeeksAgoMon.toISOString().split('T')[0])
+          .lt('period_end', lastMonday.toISOString().split('T')[0]),
+        supabase
+          .from('kpi_values')
+          .select('profile_id, kpi_id, value, kpi_metrics!inner(key)')
+          .in('profile_id', profileIds)
+          .gte('period_start', fiveWeeksAgoMon.toISOString().split('T')[0])
+          .lt('period_start', lastMonday.toISOString().split('T')[0]),
+      ]);
 
-      // Previous period (7-14 days ago)
-      const { data: previousValues } = await supabase
-        .from('kpi_values')
-        .select('profile_id, kpi_id, value, kpi_metrics!inner(key, name)')
-        .in('profile_id', profileIds)
-        .gte('period_start', twoWeeksAgo.toISOString().split('T')[0])
-        .lt('period_end', weekAgo.toISOString().split('T')[0]);
+      const currentValues = currentRes.data;
+      const previousValues = previousRes.data;
+      const rollingValues = rollingRes.data;
 
-      // Rolling avg (last 4 weeks)
-      const { data: rollingValues } = await supabase
-        .from('kpi_values')
-        .select('profile_id, kpi_id, value, kpi_metrics!inner(key)')
-        .in('profile_id', profileIds)
-        .gte('period_start', fourWeeksAgo.toISOString().split('T')[0])
-        .lte('period_end', now.toISOString().split('T')[0]);
+      // Build O(1) lookup maps: "profileId::metricKey" -> value(s)
+      const currentMap = new Map<string, any>();
+      (currentValues || []).forEach((v: any) => {
+        const key = `${v.profile_id}::${(v.kpi_metrics as any)?.key}`;
+        currentMap.set(key, v);
+      });
+
+      const previousMap = new Map<string, any>();
+      (previousValues || []).forEach((v: any) => {
+        const key = `${v.profile_id}::${(v.kpi_metrics as any)?.key}`;
+        previousMap.set(key, v);
+      });
+
+      const rollingMap = new Map<string, number[]>();
+      (rollingValues || []).forEach((v: any) => {
+        const key = `${v.profile_id}::${(v.kpi_metrics as any)?.key}`;
+        if (!rollingMap.has(key)) rollingMap.set(key, []);
+        rollingMap.get(key)!.push(v.value);
+      });
 
       patch({
         analysisProgress: [
@@ -213,41 +254,45 @@ export function useKpiWatchdog(organizationId: string, userId?: string) {
         ],
       });
 
-      // Step 3: Detect anomalies
+      // Step 3: Detect anomalies (direction-aware, using O(1) Map lookups)
       const anomalies: any[] = [];
 
       profiles.forEach((profile: any) => {
         metrics.forEach((metric: any) => {
-          const currentVal = (currentValues || []).find(
-            (v: any) => v.profile_id === profile.id && (v.kpi_metrics as any)?.key === metric.key
-          );
-          const prevVal = (previousValues || []).find(
-            (v: any) => v.profile_id === profile.id && (v.kpi_metrics as any)?.key === metric.key
-          );
+          const lookupKey = `${profile.id}::${metric.key}`;
+          const direction = metric.direction || 'higher';
 
-          // Calculate rolling average
-          const rollingVals = (rollingValues || [])
-            .filter((v: any) => v.profile_id === profile.id && (v.kpi_metrics as any)?.key === metric.key)
-            .map((v: any) => v.value);
+          const currentVal = currentMap.get(lookupKey);
+          const prevVal = previousMap.get(lookupKey);
+          const rollingVals = rollingMap.get(lookupKey) || [];
+
+          // Skip if no data row exists for the analyzed week — "no row" means
+          // data hasn't been recorded yet, NOT that the rep scored zero.
+          if (!currentVal) return;
 
           const rollingAvg = rollingVals.length > 0
             ? rollingVals.reduce((s: number, v: number) => s + v, 0) / rollingVals.length
             : 0;
 
-          const current = currentVal?.value || 0;
+          const current = currentVal.value ?? 0;
           const previous = prevVal?.value || rollingAvg;
 
           if (rollingAvg === 0 && previous === 0) return; // No historical data
 
-          const deviationPct = rollingAvg > 0
+          // Direction-aware deviation: for "lower is better" KPIs, an INCREASE
+          // is bad (a "drop" in performance) and a DECREASE is good (a "spike").
+          // We invert the sign so the thresholds work uniformly.
+          const rawDeviation = rollingAvg > 0
             ? ((current - rollingAvg) / rollingAvg) * 100
             : previous > 0
               ? ((current - previous) / previous) * 100
               : 0;
 
-          // Detect drops > 20%
-          if (deviationPct <= -20) {
-            const severity = deviationPct <= -50 ? 'critical' : deviationPct <= -30 ? 'warning' : 'info';
+          const deviationPct = direction === 'lower' ? -rawDeviation : rawDeviation;
+
+          // Detect drops exceeding threshold
+          if (deviationPct <= ANOMALY_DROP_THRESHOLD) {
+            const severity = deviationPct <= ANOMALY_CRITICAL_THRESHOLD ? 'critical' : deviationPct <= ANOMALY_WARNING_THRESHOLD ? 'warning' : 'info';
             anomalies.push({
               organization_id: organizationId,
               profile_id: profile.id,
@@ -255,19 +300,19 @@ export function useKpiWatchdog(organizationId: string, userId?: string) {
               kpi_name: metric.name,
               anomaly_type: 'drop',
               severity,
-              current_value: current,
-              previous_value: previous,
-              rolling_avg: Math.round(rollingAvg * 100) / 100,
-              deviation_pct: Math.round(deviationPct * 100) / 100,
-              period_start: weekAgo.toISOString().split('T')[0],
-              period_end: now.toISOString().split('T')[0],
+              current_value: Math.round(current * 10) / 10,
+              previous_value: Math.round(previous * 10) / 10,
+              rolling_avg: Math.round(rollingAvg * 10) / 10,
+              deviation_pct: Math.round(deviationPct * 10) / 10,
+              period_start: lastMonday.toISOString().split('T')[0],
+              period_end: lastSunday.toISOString().split('T')[0],
               detected_at: now.toISOString(),
               status: 'active',
             });
           }
 
-          // Detect spikes > 50% (positive anomaly — info level)
-          if (deviationPct >= 50) {
+          // Detect spikes exceeding threshold (positive anomaly — info level)
+          if (deviationPct >= ANOMALY_SPIKE_THRESHOLD) {
             anomalies.push({
               organization_id: organizationId,
               profile_id: profile.id,
@@ -275,12 +320,12 @@ export function useKpiWatchdog(organizationId: string, userId?: string) {
               kpi_name: metric.name,
               anomaly_type: 'spike',
               severity: 'info',
-              current_value: current,
-              previous_value: previous,
-              rolling_avg: Math.round(rollingAvg * 100) / 100,
-              deviation_pct: Math.round(deviationPct * 100) / 100,
-              period_start: weekAgo.toISOString().split('T')[0],
-              period_end: now.toISOString().split('T')[0],
+              current_value: Math.round(current * 10) / 10,
+              previous_value: Math.round(previous * 10) / 10,
+              rolling_avg: Math.round(rollingAvg * 10) / 10,
+              deviation_pct: Math.round(deviationPct * 10) / 10,
+              period_start: lastMonday.toISOString().split('T')[0],
+              period_end: lastSunday.toISOString().split('T')[0],
               detected_at: now.toISOString(),
               status: 'active',
             });
@@ -297,7 +342,14 @@ export function useKpiWatchdog(organizationId: string, userId?: string) {
         ],
       });
 
-      // Step 4: Save anomalies (if any)
+      // Step 4: Save anomalies — clear ALL active anomalies for this org (any period),
+      // then insert new ones for the current analyzed period. Previous scans may have
+      // left anomalies from older periods that no longer reflect current data.
+      await supabase
+        .from('engage_kpi_anomalies')
+        .delete()
+        .eq('organization_id', organizationId)
+        .eq('status', 'active');
       if (anomalies.length > 0) {
         await supabase.from('engage_kpi_anomalies').insert(anomalies);
       }
@@ -318,17 +370,19 @@ export function useKpiWatchdog(organizationId: string, userId?: string) {
         try {
           const { data: json, error: fnError } = await supabase.functions.invoke('engage-watchdog', {
             body: {
-              anomalies: serious.map((a: any) => ({
+              anomalies: serious.map((a: any) => {
+                const prof = profileMap.get(a.profile_id);
+                return {
                 kpi_name: a.kpi_name,
-                profile_name: profiles.find((p: any) => p.id === a.profile_id)
-                  ? `${profiles.find((p: any) => p.id === a.profile_id)?.first_name} ${profiles.find((p: any) => p.id === a.profile_id)?.last_name}`
+                profile_name: prof
+                  ? `${prof.first_name} ${prof.last_name}`
                   : 'Rep',
                 anomaly_type: a.anomaly_type,
                 severity: a.severity,
                 current_value: a.current_value,
                 rolling_avg: a.rolling_avg,
                 deviation_pct: a.deviation_pct,
-              })),
+              }; }),
             },
           });
           if (fnError) console.warn('Watchdog AI analysis failed:', fnError.message);

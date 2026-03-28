@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../supabaseClient';
+import { SKILLSET_KPI_MAP, difficultyRank, getSkillsetLevel, getSkillsetColor } from '../constants/skillsets';
 
 interface SkillsetDetailsModalProps {
   isOpen: boolean;
@@ -32,35 +33,7 @@ interface ProfileProgress {
   completedAchievements: Set<string>;
 }
 
-const SKILLSET_KPI_MAP: Record<string, string[]> = {
-  conversationalist: ['talk_time_minutes', 'conversations'],
-  'call conqueror': ['call_connects', 'meetings', 'discovery_calls'],
-  'email warrior': ['emails_sent', 'social_touches'],
-  'pipeline guru': ['sourced_opps', 'stage2_opps', 'pipeline_created', 'pipeline_advanced', 'qualified_leads'],
-  'task master': ['follow_ups', 'demos_completed', 'response_time', 'sales_cycle_days', 'win_rate'],  'scorecard master': ['scorecard_100_percent', 'scorecard_100_percent_streak', 'key_metric_100_percent', 'key_metric_100_percent_streak', 'scorecards_completed'],};
-
-function difficultyRank(difficulty?: string) {
-  switch (difficulty) {
-    case 'easy':
-      return 1;
-    case 'medium':
-      return 2;
-    case 'hard':
-      return 3;
-    case 'expert':
-      return 4;
-    default:
-      return 5;
-  }
-}
-
-function getSkillsetLevel(progress: number) {
-  if (progress >= 100) return 'Master';
-  if (progress >= 80) return 'Advanced';
-  if (progress >= 60) return 'Intermediate';
-  if (progress >= 40) return 'Developing';
-  return 'Beginner';
-}
+// SKILLSET_KPI_MAP, difficultyRank, and getSkillsetLevel imported from '../constants/skillsets'
 
 export default function SkillsetDetailsModal({ 
   isOpen, 
@@ -80,6 +53,9 @@ export default function SkillsetDetailsModal({
   const [kpiList, setKpiList] = useState<string[]>([]);
   const [activeTab, setActiveTab] = useState<'achievements' | 'members'>('achievements');
 
+  // Ensure we have a valid color (fallback if DB color is null)
+  const resolvedColor = getSkillsetColor(skillsetName, skillsetColor);
+
   const audienceLabel = (() => {
     if (selectedMembers.length > 0) return 'Selected Members';
     if (selectedTeams.length > 0) return 'Selected Team';
@@ -96,33 +72,48 @@ export default function SkillsetDetailsModal({
   async function fetchSkillsetDetails() {
     setLoading(true);
     try {
-      // Fetch achievements for this skillset
-      const { data: achievementsData, error: achievementsError } = await supabase
-        .from('achievements')
-        .select('*')
-        .eq('skillset_id', skillsetId)
-        .order('points', { ascending: true });
+      // Phase 1: Three independent queries in parallel
+      let profileQuery = supabase
+        .from('profiles')
+        .select('id, first_name, last_name')
+        .not('role', 'in', '("admin","manager","coach")');
 
-      if (achievementsError) throw achievementsError;
+      if (selectedMembers.length > 0) {
+        profileQuery = profileQuery.in('id', selectedMembers);
+      }
+      if (selectedTeams.length > 0) {
+        profileQuery = profileQuery.in('team_id', selectedTeams);
+      }
+      if (selectedDepartments.length > 0) {
+        profileQuery = profileQuery.in('department', selectedDepartments);
+      }
 
-      // Sort achievements by points ascending (client-side to ensure consistent ordering)
-      const sortedAchievements = (achievementsData || []).slice().sort((a: any, b: any) => {
-        const pointsDiff = (a.points || 0) - (b.points || 0);
-        if (pointsDiff !== 0) return pointsDiff;
-        // Secondary sort by name for consistent ordering within same point value
-        return (a.name || '').localeCompare(b.name || '');
+      const [achievementsRes, metricsRes, profilesRes] = await Promise.all([
+        supabase
+          .from('achievements')
+          .select('*')
+          .eq('skillset_id', skillsetId)
+          .order('points', { ascending: true }),
+        supabase
+          .from('kpi_metrics')
+          .select('id, key, goal, weight, show_on_scorecard')
+          .eq('is_active', true),
+        profileQuery,
+      ]);
+
+      if (achievementsRes.error) throw achievementsRes.error;
+      if (metricsRes.error) throw metricsRes.error;
+      if (profilesRes.error) throw profilesRes.error;
+
+      // Sort achievements by difficulty then points (consistent with useCoachData)
+      const sortedAchievements = (achievementsRes.data || []).slice().sort((a: any, b: any) => {
+        const diffRank = difficultyRank(a.difficulty) - difficultyRank(b.difficulty);
+        if (diffRank !== 0) return diffRank;
+        return (a.points || 0) - (b.points || 0);
       });
       setAchievements(sortedAchievements);
 
-      // Fetch KPI metrics for scorecard calculations
-      const { data: metricsData, error: metricsError } = await supabase
-        .from('kpi_metrics')
-        .select('id, key, goal, weight, show_on_scorecard')
-        .eq('is_active', true);
-
-      if (metricsError) throw metricsError;
-
-      const metrics = (metricsData || []).map((m: any) => ({
+      const metrics = (metricsRes.data || []).map((m: any) => ({
         ...m,
         show_on_scorecard: m?.show_on_scorecard ?? true,
       }));
@@ -136,43 +127,32 @@ export default function SkillsetDetailsModal({
         .filter((m: any) => m.show_on_scorecard)
         .map((m: any) => m.key);
 
-      // Fetch profile progress for this skillset
-      let profileQuery = supabase
-        .from('profiles')
-        .select('id, first_name, last_name');
-
-      if (selectedMembers.length > 0) {
-        profileQuery = profileQuery.in('id', selectedMembers);
-      }
-      if (selectedTeams.length > 0) {
-        profileQuery = profileQuery.in('team_id', selectedTeams);
-      }
-      if (selectedDepartments.length > 0) {
-        profileQuery = profileQuery.in('department', selectedDepartments);
-      }
-
-      const { data: profilesData, error: profilesError } = await profileQuery;
-      if (profilesError) throw profilesError;
-
-      // Fetch KPI values for selected profiles
-      const profileIds = profilesData?.map((p: any) => p.id) || [];
+      const profileIds = profilesRes.data?.map((p: any) => p.id) || [];
       if (profileIds.length === 0) {
         setProfileProgress([]);
         return;
       }
 
+      // Phase 2: Two independent queries in parallel (both need profileIds)
       const metricIds = metrics.map((m: any) => m.id);
-      let valuesData: any[] = [];
-      if (metricIds.length > 0) {
-        const { data: valuesResult, error: valuesError } = await supabase
-          .from('kpi_values')
-          .select('profile_id, kpi_id, value, period_end')
-          .in('profile_id', profileIds)
-          .in('kpi_id', metricIds);
+      const [valuesRes, earnedRes] = await Promise.all([
+        metricIds.length > 0
+          ? supabase
+              .from('kpi_values')
+              .select('profile_id, kpi_id, value, period_end')
+              .in('profile_id', profileIds)
+              .in('kpi_id', metricIds)
+          : Promise.resolve({ data: [] as any[], error: null }),
+        supabase
+          .from('profile_achievements')
+          .select('profile_id, achievement_id')
+          .in('profile_id', profileIds),
+      ]);
 
-        if (valuesError) throw valuesError;
-        valuesData = valuesResult || [];
-      }
+      if (valuesRes.error) throw valuesRes.error;
+      if (earnedRes.error) throw earnedRes.error;
+
+      const valuesData = valuesRes.data || [];
 
       const latestPeriodEnd = valuesData.reduce<string | null>((acc, curr: any) => {
         if (!curr?.period_end) return acc;
@@ -211,13 +191,7 @@ export default function SkillsetDetailsModal({
       setKpiSummary(labelList.length > 0 ? `KPIs: ${labelList.join(', ')}` : '');
       setKpiList(labelList);
 
-      // Fetch actual earned achievements from profile_achievements (CUMULATIVE)
-      const { data: earnedAchievementsData, error: earnedError } = await supabase
-        .from('profile_achievements')
-        .select('profile_id, achievement_id')
-        .in('profile_id', profileIds);
-
-      if (earnedError) throw earnedError;
+      const earnedAchievementsData = earnedRes.data;
 
       // Map profile -> set of earned achievement IDs
       const earnedByProfile = new Map<string, Set<string>>();
@@ -229,33 +203,34 @@ export default function SkillsetDetailsModal({
         }
       });
 
-      // Fetch profile_skillsets for progress data
-      const { data: profileSkillsetsData, error: psError } = await supabase
-        .from('profile_skillsets')
-        .select('profile_id, progress, achievements_completed, total_points_earned')
-        .eq('skillset_id', skillsetId)
-        .in('profile_id', profileIds);
-
-      if (psError) throw psError;
-
-      const profileSkillsetMap = new Map<string, any>();
-      (profileSkillsetsData || []).forEach((ps: any) => {
-        profileSkillsetMap.set(ps.profile_id, ps);
-      });
+      // Compute progress from actual earned achievements (source of truth)
+      // instead of relying on potentially stale profile_skillsets
+      const skillsetAchievementIds = new Set(sortedAchievements.map(a => a.id));
+      const totalSkillsetPoints = sortedAchievements.reduce((sum, a) => sum + (a.points || 0), 0);
 
       const progress: ProfileProgress[] = (profilesData || []).map((profile: any) => {
-        const ps = profileSkillsetMap.get(profile.id);
-        const completedAchievements = earnedByProfile.get(profile.id) || new Set();
-        const progressValue = ps?.progress || 0;
-        const achievementsCompleted = ps?.achievements_completed || 0;
+        const allEarned = earnedByProfile.get(profile.id) || new Set();
+        // Filter to only achievements in this skillset
+        const earnedInSkillset = new Set<string>();
+        allEarned.forEach((achId: string) => {
+          if (skillsetAchievementIds.has(achId)) earnedInSkillset.add(achId);
+        });
+
+        const earnedPoints = sortedAchievements
+          .filter(a => earnedInSkillset.has(a.id))
+          .reduce((sum, a) => sum + (a.points || 0), 0);
+
+        const progressValue = totalSkillsetPoints > 0
+          ? Math.min(100, Math.round((earnedPoints / totalSkillsetPoints) * 100))
+          : 0;
 
         return {
           profile_id: profile.id,
           profile_name: `${profile.first_name} ${profile.last_name}`,
-          progress: Math.round(progressValue),
-          achievements_completed: achievementsCompleted,
+          progress: progressValue,
+          achievements_completed: earnedInSkillset.size,
           level: getSkillsetLevel(progressValue),
-          completedAchievements,
+          completedAchievements: allEarned,
         };
       });
 
@@ -291,9 +266,9 @@ export default function SkillsetDetailsModal({
         className="bg-white rounded-xl shadow-2xl max-w-6xl w-full max-h-[90vh] overflow-hidden flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="px-6 py-4 border-b flex items-center justify-between" style={{ backgroundColor: skillsetColor + '20' }}>
+        <div className="px-6 py-4 border-b flex items-center justify-between" style={{ backgroundColor: resolvedColor + '20' }}>
           <div>
-            <h2 className="text-2xl font-bold" style={{ color: skillsetColor }}>{skillsetName}</h2>
+            <h2 className="text-2xl font-bold" style={{ color: resolvedColor }}>{skillsetName}</h2>
             <div className="mt-2 flex flex-wrap items-center gap-2">
               <span className="text-sm text-gray-600">Detailed progress and achievements</span>
               {kpiList.length > 0 && (
@@ -334,7 +309,7 @@ export default function SkillsetDetailsModal({
                 <h3 className="font-semibold mb-3">{audienceLabel} Overview</h3>
                 <div className="grid grid-cols-3 gap-4">
                   <div>
-                    <div className="text-2xl font-bold" style={{ color: skillsetColor }}>{avgProgress}%</div>
+                    <div className="text-2xl font-bold" style={{ color: resolvedColor }}>{avgProgress}%</div>
                     <div className="text-xs text-gray-600">Average Progress</div>
                   </div>
                   <div>
@@ -358,7 +333,7 @@ export default function SkillsetDetailsModal({
                         ? 'border-current text-gray-900'
                         : 'border-transparent text-gray-500 hover:text-gray-700'
                     }`}
-                    style={activeTab === 'achievements' ? { borderColor: skillsetColor, color: skillsetColor } : {}}
+                    style={activeTab === 'achievements' ? { borderColor: resolvedColor, color: resolvedColor } : {}}
                   >
                     Achievements ({achievements.length})
                   </button>
@@ -369,7 +344,7 @@ export default function SkillsetDetailsModal({
                         ? 'border-current text-gray-900'
                         : 'border-transparent text-gray-500 hover:text-gray-700'
                     }`}
-                    style={activeTab === 'members' ? { borderColor: skillsetColor, color: skillsetColor } : {}}
+                    style={activeTab === 'members' ? { borderColor: resolvedColor, color: resolvedColor } : {}}
                   >
                     Member Progress ({profileProgress.length})
                   </button>
@@ -412,7 +387,7 @@ export default function SkillsetDetailsModal({
                             )}
                           </div>
                           <div className="ml-4 text-right flex-shrink-0">
-                            <div className="text-2xl font-bold" style={{ color: skillsetColor }}>{achievement.points}</div>
+                            <div className="text-2xl font-bold" style={{ color: resolvedColor }}>{achievement.points}</div>
                             <div className="text-xs text-gray-500">points</div>
                           </div>
                         </div>
@@ -453,12 +428,12 @@ export default function SkillsetDetailsModal({
                               <div className="text-xs text-gray-500">{profile.level}</div>
                             </div>
                             <div className="text-right">
-                              <div className="font-bold text-lg" style={{ color: skillsetColor }}>{profile.progress}%</div>
+                              <div className="font-bold text-lg" style={{ color: resolvedColor }}>{profile.progress}%</div>
                               <div className="text-xs text-gray-500">{profile.achievements_completed} achievements</div>
                             </div>
                           </div>
                           <div className="w-full bg-gray-200 rounded-full h-2">
-                            <div className="h-2 rounded-full transition-all" style={{ width: `${profile.progress}%`, backgroundColor: skillsetColor }}></div>
+                            <div className="h-2 rounded-full transition-all" style={{ width: `${profile.progress}%`, backgroundColor: resolvedColor }}></div>
                           </div>
                         </div>
                       ))

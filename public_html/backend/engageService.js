@@ -36,6 +36,54 @@ async function fetchJson(url, options = {}) {
 
 const APOLLO_BASE = 'https://api.apollo.io/v1';
 
+/** Hunter.io Email Finder — fills in email + LinkedIn URL when Apollo truncates last names.
+ *  Graceful no-op when HUNTER_API_KEY is not set. */
+async function hunterEnrichPeople(domain, people) {
+  const key = env('HUNTER_API_KEY');
+  if (!key || !domain || !people.length) return people;
+
+  const isLastNameTruncated = (ln) =>
+    !ln || ln.length <= 2 || /^[A-Z]\.?$/.test(ln.trim());
+
+  const enriched = await Promise.all(
+    people.map(async (p) => {
+      const needsEmail = !p.email;
+      const needsLinkedIn = !p.linkedin_url;
+      const nameTruncated = isLastNameTruncated(p.last_name || '');
+      if (!needsEmail && !needsLinkedIn && !nameTruncated) return p;
+
+      const firstName = (p.first_name || '').trim();
+      const lastName = (p.last_name || '').replace(/\.$/, '').trim();
+      if (!firstName || !lastName || lastName.length < 2) return p;
+
+      try {
+        const url = `https://api.hunter.io/v2/email-finder?domain=${encodeURIComponent(domain)}&first_name=${encodeURIComponent(firstName)}&last_name=${encodeURIComponent(lastName)}&api_key=${key}`;
+        const resp = await fetch(url);
+        if (!resp.ok) return p;
+        const json = await resp.json();
+        const d = json?.data;
+        if (!d) return p;
+
+        const fullLastName = d.last_name && d.last_name.length > (lastName?.length || 0) ? d.last_name : p.last_name;
+        const fullName = fullLastName !== p.last_name
+          ? `${firstName} ${fullLastName}`.trim()
+          : (p.name || `${firstName} ${p.last_name || ''}`.trim());
+
+        return {
+          ...p,
+          last_name: fullLastName || p.last_name,
+          name: fullName,
+          email: needsEmail && d.email && (d.score || 0) >= 70 ? d.email : p.email,
+          linkedin_url: needsLinkedIn && d.linkedin ? d.linkedin : p.linkedin_url,
+        };
+      } catch {
+        return p;
+      }
+    })
+  );
+  return enriched;
+}
+
 async function apolloSearchPeople(filters = {}) {
   const key = env('APOLLO_API_KEY');
   if (!key) throw new Error('APOLLO_API_KEY not configured');
@@ -44,7 +92,6 @@ async function apolloSearchPeople(filters = {}) {
   const perPage = Math.min(filters.per_page || 25, 25);
 
   const body = {
-    api_key: key,
     page: filters.page || 1,
     per_page: perPage,
   };
@@ -61,12 +108,12 @@ async function apolloSearchPeople(filters = {}) {
     body.currently_using_any_of_technology_uids = [techUid];
   }
 
-  // Request contact reveals inline with search (uses 1 credit per person returned)
+  // Request email reveals inline with search (uses 1 credit per person returned)
   body.reveal_personal_emails = true;
-  body.reveal_phone_number = true;
 
   const searchResult = await fetchJson(`${APOLLO_BASE}/mixed_people/api_search`, {
     method: 'POST',
+    headers: { 'X-Api-Key': key },
     body: JSON.stringify(body),
   });
 
@@ -77,16 +124,48 @@ async function apolloSearchPeople(filters = {}) {
     searchResult.people = await enrichPeopleBatch(key, people);
   }
 
+  // Hunter.io fallback: fill in still-missing emails, LinkedIn URLs, and truncated last names
+  const domain = filters.domains?.[0] || '';
+  if (domain && (searchResult.people || []).length > 0) {
+    searchResult.people = await hunterEnrichPeople(domain, searchResult.people);
+  }
+
+  // PDL fallback: fill in missing phone numbers
+  const pdlKey = process.env.PDL_API_KEY;
+  if (pdlKey && (searchResult.people || []).length > 0) {
+    searchResult.people = await pdlEnrichPhoneBatch(searchResult.people);
+  }
+
   return searchResult;
+}
+
+/** Search Apollo for companies matching a name/domain */
+async function apolloSearchOrganizations(query) {
+  const key = env('APOLLO_API_KEY');
+  if (!key) throw new Error('APOLLO_API_KEY not configured');
+
+  const isDomain = query.includes('.') && !query.includes(' ');
+  const body = { page: 1, per_page: 10 };
+  if (isDomain) {
+    body.q_organization_domains_list = [query.replace(/^https?:\/\//, '').replace(/^www\./, '').replace(/\/.*$/, '')];
+  } else {
+    body.q_organization_keyword_tags = [query];
+  }
+
+  const result = await fetchJson(`${APOLLO_BASE}/mixed_companies/search`, {
+    method: 'POST',
+    headers: { 'X-Api-Key': key },
+    body: JSON.stringify(body),
+  });
+  return result?.organizations || result?.accounts || [];
 }
 
 /** Enrich people via Apollo people/match to get email + phone */
 async function enrichPeopleBatch(apiKey, people) {
   const enrichPromises = people.map(person => {
     const matchBody = {
-      api_key: apiKey,
       reveal_personal_emails: true,
-      reveal_phone_number: true,
+      reveal_phone_number: false,  // phone reveal requires async webhook — disable explicitly
     };
     if (person.id) matchBody.id = person.id;
     if (person.first_name) matchBody.first_name = person.first_name;
@@ -97,6 +176,7 @@ async function enrichPeopleBatch(apiKey, people) {
 
     return fetchJson(`${APOLLO_BASE}/people/match`, {
       method: 'POST',
+      headers: { 'X-Api-Key': apiKey },
       body: JSON.stringify(matchBody),
     }).catch((err) => {
       console.warn(`Enrichment failed for ${person.id} (${person.first_name} ${person.last_name}):`, err.message);
@@ -134,19 +214,29 @@ async function apolloSearchCompanies(filters = {}) {
   if (!key) throw new Error('APOLLO_API_KEY not configured');
 
   const body = {
-    api_key: key,
     page: filters.page || 1,
     per_page: filters.per_page || 25,
-    organization_industry_tag_ids: filters.industries || [],
-    organization_num_employees_ranges: filters.employee_ranges || [],
-    q_organization_keyword_tags: filters.keywords ? [filters.keywords] : [],
   };
 
-  if (filters.domains?.length) body.q_organization_domains = filters.domains;
-  if (filters.locations?.length) body.organization_locations = filters.locations;
+  // Only include non-empty arrays — Apollo returns 422 on empty arrays
+  if (filters.industries?.length)      body.organization_industry_tag_ids = filters.industries;
+  if (filters.employee_ranges?.length) body.organization_num_employees_ranges = filters.employee_ranges;
+  if (filters.revenue_ranges?.length)  body.organization_annual_revenue_ranges = filters.revenue_ranges;
+  if (filters.keywords)                body.q_organization_keyword_tags = [filters.keywords];
+  if (filters.domains?.length)         body.q_organization_domains = filters.domains;
+  if (filters.locations?.length)       body.organization_locations = filters.locations;
+
+  // Companies currently using specific technologies (e.g. Salesforce, Outreach, HubSpot)
+  if (filters.technologies?.length) {
+    const techUids = filters.technologies.map(t =>
+      t.trim().toLowerCase().replace(/[\s.\-]+/g, '_')
+    );
+    body.currently_using_any_of_technology_uids = techUids;
+  }
 
   return fetchJson(`${APOLLO_BASE}/mixed_companies/search`, {
     method: 'POST',
+    headers: { 'X-Api-Key': key },
     body: JSON.stringify(body),
   });
 }
@@ -157,7 +247,8 @@ async function apolloEnrichPerson(email) {
 
   return fetchJson(`${APOLLO_BASE}/people/match`, {
     method: 'POST',
-    body: JSON.stringify({ api_key: key, email }),
+    headers: { 'X-Api-Key': key },
+    body: JSON.stringify({ email }),
   });
 }
 
@@ -167,7 +258,8 @@ async function apolloEnrichCompany(domain) {
 
   return fetchJson(`${APOLLO_BASE}/organizations/enrich`, {
     method: 'POST',
-    body: JSON.stringify({ api_key: key, domain }),
+    headers: { 'X-Api-Key': key },
+    body: JSON.stringify({ domain }),
   });
 }
 
@@ -205,6 +297,39 @@ async function pdlEnrichPerson(params = {}) {
   return fetchJson(`https://api.peopledatalabs.com/v5/person/enrich?${qs}`, {
     headers: { 'X-Api-Key': key },
   });
+}
+
+/** Enrich phone numbers for a batch of people via PDL — skips people who already have a phone */
+async function pdlEnrichPhoneBatch(people) {
+  const key = process.env.PDL_API_KEY;
+  if (!key) return people;
+
+  const results = await Promise.all(people.map(async (person) => {
+    const hasPhone = person.phone_numbers?.length || person.sanitized_phone || person.phone_number || person.phone;
+    if (hasPhone) return person;
+
+    const email = person.email || '';
+    const linkedin = person.linkedin_url || '';
+    if (!email && !linkedin) return person;
+
+    try {
+      const qs = new URLSearchParams({ min_likelihood: '5' });
+      if (email) qs.set('email', email);
+      if (linkedin) qs.set('profile', linkedin);
+      const data = await fetchJson(`https://api.peopledatalabs.com/v5/person/enrich?${qs}`, {
+        headers: { 'X-Api-Key': key },
+      });
+      const pdlPhone = data?.data?.mobile_phone || data?.data?.phone_numbers?.[0] || null;
+      if (pdlPhone) {
+        return { ...person, sanitized_phone: pdlPhone, phone_number: pdlPhone };
+      }
+    } catch {
+      // non-blocking — PDL miss is fine
+    }
+    return person;
+  }));
+
+  return results;
 }
 
 async function pdlEnrichCompany(domain) {
@@ -415,7 +540,7 @@ async function researchCompany(domain) {
 async function researchProspect(identifier) {
   const steps = { enrich: null, tavily: null, brief: null };
 
-  // Step 1: Enrich
+  // Step 1: Enrich — Apollo for email, PDL for LinkedIn
   try {
     if (identifier.email) {
       steps.enrich = await apolloEnrichPerson(identifier.email);
@@ -426,7 +551,27 @@ async function researchProspect(identifier) {
     steps.enrich = { error: err.message };
   }
 
-  const person = steps.enrich?.person || steps.enrich?.data || identifier;
+  let person = steps.enrich?.person || steps.enrich?.data || identifier;
+
+  // PDL phone fallback — runs if we have email/linkedin but no phone yet
+  const hasPhone = person.phone_numbers?.length || person.sanitized_phone || person.phone_number || person.mobile_phone;
+  if (!hasPhone && process.env.PDL_API_KEY) {
+    const email = person.email || identifier.email || '';
+    const linkedin = person.linkedin_url || identifier.linkedin_url || '';
+    if (email || linkedin) {
+      try {
+        const qs = new URLSearchParams({ min_likelihood: '5' });
+        if (email) qs.set('email', email);
+        if (linkedin) qs.set('profile', linkedin);
+        const pdlData = await fetchJson(`https://api.peopledatalabs.com/v5/person/enrich?${qs}`, {
+          headers: { 'X-Api-Key': process.env.PDL_API_KEY },
+        });
+        const pdlPhone = pdlData?.data?.mobile_phone || pdlData?.data?.phone_numbers?.[0] || null;
+        if (pdlPhone) person = { ...person, sanitized_phone: pdlPhone, phone_number: pdlPhone };
+        if (!person.email && pdlData?.data?.work_email) person = { ...person, email: pdlData.data.work_email };
+      } catch { /* non-blocking */ }
+    }
+  }
 
   // Step 2: Web search
   try {
@@ -473,8 +618,10 @@ module.exports = {
   // Low-level provider calls
   apolloSearchPeople,
   apolloSearchCompanies,
+  apolloSearchOrganizations,
   apolloEnrichPerson,
   apolloEnrichCompany,
+  hunterEnrichPeople,
   tavilySearch,
   pdlEnrichPerson,
   pdlEnrichCompany,

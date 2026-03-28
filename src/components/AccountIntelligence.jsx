@@ -1,9 +1,10 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import {
   Building2, Target, Users, TrendingUp, Shield, Sparkles, RefreshCw,
   ChevronDown, ChevronUp, Plus, Edit3, Trash2, Eye, AlertTriangle,
   Globe, Mail, Linkedin, DollarSign, BarChart3, Filter,
-  User, Star, X, ArrowRight, Briefcase, MapPin, Zap, Crown
+  User, Star, X, ArrowRight, Briefcase, MapPin, Zap, Crown,
+  Phone, Loader, CheckCircle
 } from 'lucide-react';
 import { useAccountIntelligence } from '../hooks/useAccountIntelligence';
 import { supabase } from '../supabaseClient';
@@ -125,6 +126,13 @@ const COMMITTEE_ROLES = {
 };
 
 function ScoreBadge({ score, size = 'sm' }) {
+  if (score == null || score === 0) {
+    return (
+      <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full font-bold bg-gray-50 text-gray-400 ${size === 'sm' ? 'text-[10px]' : 'text-xs'}`}>
+        —
+      </span>
+    );
+  }
   const color = score >= 80 ? 'bg-emerald-100 text-emerald-700' :
     score >= 60 ? 'bg-blue-100 text-blue-700' :
     score >= 40 ? 'bg-amber-100 text-amber-700' :
@@ -351,10 +359,13 @@ function AccountCard({ account, onSelect, icpConfig }) {
 
 // ── Account Detail View ──────────────────────────────────
 
-function AccountDetail({ account, onBack, onUpdate, onAnalyze, analyzing, onUpdateCommittee, onDelete, icpConfig }) {
+function AccountDetail({ account, onBack, onUpdate, onAnalyze, analyzing, onUpdateCommittee, onDelete, icpConfig, organizationId, userId }) {
   const icpScore = useMemo(() => computeIcpScore(account, icpConfig), [account, icpConfig]);
   const tier = TIER_STYLES[account.tier] || TIER_STYLES.untiered;
   const status = STATUS_STYLES[account.status] || STATUS_STYLES.active;
+  const [showCreateDeal, setShowCreateDeal] = useState(false);
+  const [showContacts, setShowContacts] = useState(false);
+  const signalContacts = account.metadata?.signal_contacts || [];
 
   return (
     <div className="space-y-4">
@@ -381,6 +392,10 @@ function AccountDetail({ account, onBack, onUpdate, onAnalyze, analyzing, onUpda
             </div>
           </div>
           <div className="flex items-center gap-2">
+            <button onClick={() => setShowCreateDeal(true)}
+              className="flex items-center gap-1.5 px-3 py-2 bg-emerald-50 text-emerald-700 rounded-lg text-xs font-medium hover:bg-emerald-100 transition-all">
+              <DollarSign size={14} /> Create Deal
+            </button>
             <button
               onClick={() => {
                 if (window.confirm(`Delete account "${account.account_name}"? This cannot be undone.`)) {
@@ -397,6 +412,13 @@ function AccountDetail({ account, onBack, onUpdate, onAnalyze, analyzing, onUpda
               {analyzing ? 'Analyzing...' : 'AI Analysis'}
             </button>
           </div>
+          <CreateDealModal
+            isOpen={showCreateDeal}
+            onClose={() => setShowCreateDeal(false)}
+            account={account}
+            organizationId={organizationId}
+            userId={userId}
+          />
         </div>
       </div>
 
@@ -532,6 +554,178 @@ function AccountDetail({ account, onBack, onUpdate, onAnalyze, analyzing, onUpda
         committee={account.buying_committee || []}
         onUpdate={(committee) => onUpdateCommittee(account.id, committee)}
       />
+
+      {/* Signal Contacts — only shown if promoted from Signal Prospecting */}
+      {signalContacts.length > 0 && (
+        <div className="bg-white rounded-xl border border-gray-100 p-4">
+          <button
+            onClick={() => setShowContacts(!showContacts)}
+            className="flex items-center justify-between w-full"
+          >
+            <span className="flex items-center gap-2 text-xs font-semibold text-gray-700">
+              <Users size={13} className="text-teal-500" />
+              Signal Contacts ({signalContacts.length})
+            </span>
+            {showContacts ? <ChevronUp size={13} className="text-gray-400" /> : <ChevronDown size={13} className="text-gray-400" />}
+          </button>
+          {showContacts && (
+            <div className="mt-3 space-y-2 pt-3 border-t border-gray-100">
+              {signalContacts.map((person, i) => (
+                <div key={person.id || i} className="flex items-center gap-3 group">
+                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-teal-400 to-cyan-500 flex items-center justify-center text-white text-[10px] font-bold flex-shrink-0">
+                    {(person.first_name?.[0] || person.name?.[0] || '?').toUpperCase()}
+                    {(person.last_name?.[0] || '').toUpperCase()}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <span className="text-xs font-semibold text-gray-800 block truncate">{person.name || `${person.first_name || ''} ${person.last_name || ''}`.trim() || 'Unknown'}</span>
+                    {person.title && <span className="text-[10px] text-gray-500 block truncate">{person.title}</span>}
+                  </div>
+                  <div className="flex items-center gap-1.5 opacity-50 group-hover:opacity-100 transition-opacity">
+                    {person.email && (
+                      <button onClick={() => navigator.clipboard.writeText(person.email)}
+                        className="p-1 rounded text-blue-400 hover:text-blue-600 hover:bg-blue-50 transition-colors"
+                        title={person.email}><Mail size={12} /></button>
+                    )}
+                    {person.phone && (
+                      <button onClick={() => navigator.clipboard.writeText(person.phone)}
+                        className="p-1 rounded text-emerald-400 hover:text-emerald-600 hover:bg-emerald-50 transition-colors"
+                        title={person.phone}><Phone size={12} /></button>
+                    )}
+                    {person.linkedin_url && (
+                      <a href={person.linkedin_url} target="_blank" rel="noreferrer"
+                        className="p-1 rounded text-blue-400 hover:text-blue-600 hover:bg-blue-50 transition-colors"
+                        title="LinkedIn"><Linkedin size={12} /></a>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── Create Deal Modal ────────────────────────────────────
+
+function CreateDealModal({ isOpen, onClose, account, organizationId, userId }) {
+  const defaultCloseDate = new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+  const [form, setForm] = useState({
+    deal_name: '',
+    deal_value: '',
+    close_date: defaultCloseDate,
+  });
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState(false);
+
+  useEffect(() => {
+    if (isOpen && account) {
+      setForm(f => ({ ...f, deal_name: account.account_name }));
+      setError('');
+      setSuccess(false);
+    }
+  }, [isOpen, account]);
+
+  if (!isOpen) return null;
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!form.deal_name.trim()) return;
+    setSaving(true);
+    setError('');
+    try {
+      const { error: insertError } = await supabase
+        .from('engage_pipeline_deals')
+        .insert({
+          organization_id: organizationId,
+          owner_id: userId || null,
+          deal_name: form.deal_name.trim(),
+          deal_value: parseFloat(form.deal_value) || 0,
+          stage: 'discovery',
+          probability: 20,
+          close_date: form.close_date || null,
+          forecast_category: 'pipeline',
+          source: 'signal_prospecting',
+          account_id: account.id,
+        });
+      if (insertError) throw insertError;
+      setSuccess(true);
+      setTimeout(() => { onClose(); setSuccess(false); }, 1200);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 p-6">
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <h2 className="text-base font-semibold text-gray-800">Create Deal</h2>
+            <p className="text-xs text-gray-500 mt-0.5">{account.account_name} · Starts at Discovery stage</p>
+          </div>
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-600"><X size={16} /></button>
+        </div>
+        {success ? (
+          <div className="flex items-center justify-center gap-2 py-6 text-emerald-600">
+            <CheckCircle size={18} /> <span className="text-sm font-medium">Deal created!</span>
+          </div>
+        ) : (
+          <form onSubmit={handleSubmit} className="space-y-3">
+            <div>
+              <label className="block text-xs font-medium text-gray-600 mb-1">Deal Name</label>
+              <input
+                value={form.deal_name}
+                onChange={e => setForm(f => ({ ...f, deal_name: e.target.value }))}
+                placeholder="e.g. CloudEagle.ai — Discovery"
+                className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-300"
+                required
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1">Deal Value ($)</label>
+                <input
+                  type="number"
+                  min="0"
+                  value={form.deal_value}
+                  onChange={e => setForm(f => ({ ...f, deal_value: e.target.value }))}
+                  placeholder="0"
+                  className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-300"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1">Target Close Date</label>
+                <input
+                  type="date"
+                  value={form.close_date}
+                  onChange={e => setForm(f => ({ ...f, close_date: e.target.value }))}
+                  className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-300"
+                />
+              </div>
+            </div>
+            <div className="flex items-center gap-2 px-3 py-2 bg-blue-50 rounded-lg">
+              <DollarSign size={12} className="text-blue-500 flex-shrink-0" />
+              <span className="text-[11px] text-blue-600">Stage locked to <strong>Discovery</strong> until you validate the opportunity.</span>
+            </div>
+            {error && <p className="text-xs text-red-600">{error}</p>}
+            <div className="flex gap-2 pt-1">
+              <button type="button" onClick={onClose}
+                className="flex-1 py-2 text-sm text-gray-500 border border-gray-200 rounded-lg hover:bg-gray-50">
+                Cancel
+              </button>
+              <button type="submit" disabled={saving}
+                className="flex-1 py-2 text-sm font-semibold text-white bg-gradient-to-r from-blue-500 to-indigo-500 rounded-lg hover:from-blue-600 hover:to-indigo-600 disabled:opacity-50 flex items-center justify-center gap-2">
+                {saving ? <><Loader size={13} className="animate-spin" /> Creating...</> : 'Create Deal'}
+              </button>
+            </div>
+          </form>
+        )}
+      </div>
     </div>
   );
 }
@@ -647,7 +841,7 @@ function NewAccountModal({ isOpen, onClose, onCreate }) {
 
 // ── Main Component ───────────────────────────────────────
 
-export default function AccountIntelligence({ organizationId, userId }) {
+export default function AccountIntelligence({ organizationId, userId, initialAccountId, onInitialAccountConsumed }) {
   const {
     accounts, summary, activeAccount, loading, analyzing, error,
     fetchAccounts, createAccount, updateAccount, deleteAccount,
@@ -662,6 +856,17 @@ export default function AccountIntelligence({ organizationId, userId }) {
   const [selectedAccount, setSelectedAccount] = useState(null);
   const [filterTier, setFilterTier] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
+
+  // Auto-select account when navigated from Signal Prospecting
+  useEffect(() => {
+    if (!initialAccountId || accounts.length === 0) return;
+    const found = accounts.find(a => a.id === initialAccountId);
+    if (found) {
+      setSelectedAccount(found);
+      setView('detail');
+      if (onInitialAccountConsumed) onInitialAccountConsumed();
+    }
+  }, [initialAccountId, accounts]);
 
   const filteredAccounts = useMemo(() => {
     let filtered = accounts;
@@ -702,6 +907,8 @@ export default function AccountIntelligence({ organizationId, userId }) {
         onUpdateCommittee={async (id, committee) => { await updateBuyingCommittee(id, committee); setSelectedAccount(prev => ({ ...prev, buying_committee: committee })); }}
         onDelete={async (id) => { await deleteAccount(id); setView('list'); }}
         icpConfig={icpConfig}
+        organizationId={organizationId}
+        userId={userId}
       />
     );
   }

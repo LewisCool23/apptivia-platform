@@ -37,6 +37,55 @@ async function fetchJson(url: string, options: RequestInit = {}) {
 
 const APOLLO_BASE = 'https://api.apollo.io/v1';
 
+/** Hunter.io Email Finder — fills in email + LinkedIn URL when Apollo has no credits or truncates last names.
+ *  Graceful no-op when HUNTER_API_KEY is not set.
+ *  Docs: https://hunter.io/api-documentation/v2#email-finder */
+async function hunterEnrichPeople(domain: string, people: any[]): Promise<any[]> {
+  const key = Deno.env.get('HUNTER_API_KEY');
+  if (!key || !domain || people.length === 0) return people;
+
+  const isLastNameTruncated = (ln: string) =>
+    !ln || ln.length <= 2 || /^[A-Z]\.?$/.test(ln.trim());
+
+  const enriched = await Promise.all(
+    people.map(async (p) => {
+      const needsEmail = !p.email;
+      const needsLinkedIn = !p.linkedin_url;
+      const nameTruncated = isLastNameTruncated(p.last_name || '');
+      if (!needsEmail && !needsLinkedIn && !nameTruncated) return p;
+
+      const firstName = (p.first_name || '').trim();
+      const lastName = (p.last_name || '').replace(/\.$/, '').trim();
+      if (!firstName || (!lastName || lastName.length < 2)) return p;
+
+      try {
+        const url = `https://api.hunter.io/v2/email-finder?domain=${encodeURIComponent(domain)}&first_name=${encodeURIComponent(firstName)}&last_name=${encodeURIComponent(lastName)}&api_key=${key}`;
+        const resp = await fetch(url);
+        if (!resp.ok) return p;
+        const json = await resp.json();
+        const d = json?.data;
+        if (!d) return p;
+
+        const fullLastName = d.last_name && d.last_name.length > (lastName?.length || 0) ? d.last_name : p.last_name;
+        const fullName = fullLastName !== p.last_name
+          ? `${firstName} ${fullLastName}`.trim()
+          : (p.name || `${firstName} ${p.last_name || ''}`.trim());
+
+        return {
+          ...p,
+          last_name: fullLastName || p.last_name,
+          name: fullName,
+          email: needsEmail && d.email && (d.score || 0) >= 70 ? d.email : p.email,
+          linkedin_url: needsLinkedIn && d.linkedin ? d.linkedin : p.linkedin_url,
+        };
+      } catch {
+        return p;
+      }
+    })
+  );
+  return enriched;
+}
+
 async function apolloEnrichCompany(domain: string) {
   const key = Deno.env.get('APOLLO_API_KEY');
   if (!key) throw new Error('APOLLO_API_KEY not configured');
@@ -88,7 +137,40 @@ async function apolloSearchPeople(filters: any) {
     searchResult.people = await enrichPeopleBatch(key, people);
   }
 
+  // Hunter.io fallback: fill in still-missing emails, LinkedIn URLs, and truncated last names
+  const domain = filters.domains?.[0] || '';
+  if (domain && (searchResult.people || []).length > 0) {
+    searchResult.people = await hunterEnrichPeople(domain, searchResult.people);
+  }
+
   return searchResult;
+}
+
+/** Filter-based company search — powers ICP Prospector */
+async function apolloSearchCompanies(filters: any) {
+  const key = Deno.env.get('APOLLO_API_KEY');
+  if (!key) throw new Error('APOLLO_API_KEY not configured');
+
+  const body: any = {
+    page: filters.page || 1,
+    per_page: Math.min(filters.per_page || 25, 25),
+  };
+  if (filters.employee_ranges?.length) {
+    body.organization_num_employees_ranges = filters.employee_ranges;
+  }
+  // keyword_tags: array of industry names or keywords (replaces old tech keyword approach)
+  if (filters.keyword_tags?.length) {
+    body.q_organization_keyword_tags = (filters.keyword_tags as string[]).slice(0, 5);
+  }
+  if (filters.locations?.length) {
+    body.organization_locations = filters.locations;
+  }
+
+  return fetchJson(`${APOLLO_BASE}/mixed_companies/search`, {
+    method: 'POST',
+    headers: { 'X-Api-Key': key },
+    body: JSON.stringify(body),
+  });
 }
 
 /** Search Apollo for companies matching a name/domain */
@@ -438,6 +520,26 @@ Deno.serve(async (req: Request) => {
       };
 
       const data = await apolloSearchPeople(filters);
+      return jsonResp({ ok: true, data });
+    }
+
+    if (action === 'search_companies') {
+      const data = await apolloSearchCompanies(body);
+      return jsonResp({ ok: true, data });
+    }
+
+    if (action === 'batch_enrich_companies') {
+      const { domains } = body;
+      if (!Array.isArray(domains) || !domains.length) {
+        return jsonResp({ error: 'domains array required' }, 400);
+      }
+      const results = await Promise.allSettled(
+        (domains as string[]).slice(0, 10).map((d: string) => apolloEnrichCompany(d))
+      );
+      const data = results.map((r, i) => ({
+        domain: domains[i],
+        data: r.status === 'fulfilled' ? (r.value as any)?.organization ?? null : null,
+      }));
       return jsonResp({ ok: true, data });
     }
 

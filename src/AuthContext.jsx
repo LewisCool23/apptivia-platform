@@ -16,6 +16,7 @@ const AuthContext = createContext(null);
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [profile, setProfile] = useState(null);
+  const [profileLoaded, setProfileLoaded] = useState(false);
   const [permissionsVersion, setPermissionsVersion] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   // DB-sourced overrides (null = not yet loaded; fall back to localStorage cache)
@@ -35,11 +36,12 @@ export const AuthProvider = ({ children }) => {
     });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED' || event === 'USER_UPDATED') {
+      if (event === 'INITIAL_SESSION' || event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED' || event === 'USER_UPDATED') {
         setUser(session?.user ?? null);
       } else if (event === 'SIGNED_OUT') {
         setUser(null);
         setProfile(null);
+        setProfileLoaded(false);
         setDbOverrides(null);
         localStorage.removeItem('apptivia_user'); // clean up legacy key
       }
@@ -68,6 +70,7 @@ export const AuthProvider = ({ children }) => {
   const refreshProfile = useCallback(async () => {
     if (!user?.id) {
       setProfile(null);
+      setProfileLoaded(true);
       return;
     }
     const { data, error } = await supabase
@@ -80,10 +83,13 @@ export const AuthProvider = ({ children }) => {
       setProfile(data);
     } else {
       console.error('Error fetching profile:', error);
+      setProfile(null);
     }
+    setProfileLoaded(true);
   }, [user?.id]);
 
   useEffect(() => {
+    setProfileLoaded(false);
     refreshProfile();
   }, [refreshProfile]);
 
@@ -141,6 +147,7 @@ export const AuthProvider = ({ children }) => {
   const value = {
     user,
     profile,
+    profileLoaded,
     role,
     permissions: effectivePermissions,
     hasPermission,

@@ -1,8 +1,10 @@
 import React, { useState, useRef } from 'react';
 import { X, Download, Link as LinkIcon, CheckCircle, Mail } from 'lucide-react';
 import html2canvas from 'html2canvas';
+import { backendFetch } from '../utils/backendFetch';
+import { buildScorecardSnapshotEmailHtml, buildScorecardSnapshotEmailText } from '../utils/emailTemplates';
 
-export default function ShareScorecardSnapshotModal({ isOpen, onClose, scorecardData, filters }) {
+export default function ShareScorecardSnapshotModal({ isOpen, onClose, scorecardData, filters, historicalScores, kpiMetrics, periodStart, periodEnd, scorecardRows }) {
   const [copied, setCopied] = useState(false);
   const [downloading, setDownloading] = useState(false);
   const [showEmailForm, setShowEmailForm] = useState(false);
@@ -64,139 +66,53 @@ export default function ShareScorecardSnapshotModal({ isOpen, onClose, scorecard
       const recipients = emailRecipients.split(',').map(e => e.trim()).filter(e => e);
       const subject = emailSubject.trim() || `Apptivia Weekly Scorecard Snapshot`;
       
-      const html = `
-        <!DOCTYPE html>
-        <html>
-        <head>
-          <style>
-            body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
-            .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-            .header { background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 50%, #ec4899 100%); color: white; padding: 30px; border-radius: 10px; text-align: center; }
-            .stats { display: grid; grid-template-columns: 1fr; gap: 15px; margin: 20px 0; }
-            .stat-box { background: #f3f4f6; padding: 20px; border-radius: 8px; text-align: center; }
-            .stat-value { font-size: 32px; font-weight: bold; color: #3b82f6; }
-            .stat-label { font-size: 14px; color: #6b7280; }
-            .performers { margin: 20px 0; }
-            .performer-item { background: #f9fafb; padding: 15px; border-radius: 8px; margin-bottom: 10px; border-left: 4px solid #10b981; }
-            .improvement-item { background: #fef3c7; padding: 15px; border-radius: 8px; margin-bottom: 10px; border-left: 4px solid #f59e0b; }
-            .notes { background: #e0f2fe; padding: 15px; border-radius: 8px; margin: 20px 0; }
-            .footer { text-align: center; color: #6b7280; font-size: 12px; margin-top: 30px; border-top: 1px solid #e5e7eb; padding-top: 20px; }
-          </style>
-        </head>
-        <body>
-          <div class="container">
-            <div class="header">
-              <h1>📊 Weekly Scorecard Snapshot</h1>
-              <p>Apptivia Platform</p>
-              <p style="font-size: 14px; opacity: 0.9;">${dateRange} • ${totalMembers} Team Members</p>
-            </div>
-            
-            <div class="stats">
-              <div class="stat-box">
-                <div class="stat-value">${teamAverage}%</div>
-                <div class="stat-label">Team Average</div>
-              </div>
-            </div>
+      const emailData = { teamAverage, totalMembers, dateRange, topPerformers, needsImprovement, scoreDistribution };
 
-            <div style="margin: 20px 0; background: #f9fafb; padding: 15px; border-radius: 8px;">
-              <h3 style="margin: 0 0 10px 0; font-size: 16px;">📈 Score Distribution</h3>
-              <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px;">
-                <div style="text-align: center;">
-                  <div style="font-size: 24px; font-weight: bold; color: #10b981;">${scoreDistribution.excellent}</div>
-                  <div style="font-size: 12px; color: #6b7280;">Excellent (≥90%)</div>
-                </div>
-                <div style="text-align: center;">
-                  <div style="font-size: 24px; font-weight: bold; color: #3b82f6;">${scoreDistribution.good}</div>
-                  <div style="font-size: 12px; color: #6b7280;">Good (70-89%)</div>
-                </div>
-                <div style="text-align: center;">
-                  <div style="font-size: 24px; font-weight: bold; color: #f59e0b;">${scoreDistribution.fair}</div>
-                  <div style="font-size: 12px; color: #6b7280;">Fair (50-69%)</div>
-                </div>
-                <div style="text-align: center;">
-                  <div style="font-size: 24px; font-weight: bold; color: #ef4444;">${scoreDistribution.poor}</div>
-                  <div style="font-size: 12px; color: #6b7280;">Needs Focus (&lt;50%)</div>
-                </div>
-              </div>
-            </div>
-
-            ${topPerformers.length > 0 ? `
-              <div class="performers">
-                <h3>🏆 Top Performers</h3>
-                ${topPerformers.map((performer, idx) => `
-                  <div class="performer-item">
-                    <strong>${idx + 1}. ${performer.name || 'Team Member'}</strong>
-                    <div style="font-size: 14px; color: #6b7280;">${performer.score}% (${performer.percentage || '0%'})</div>
-                  </div>
-                `).join('')}
-              </div>
-            ` : ''}
-
-            ${needsImprovement.length > 0 ? `
-              <div class="performers">
-                <h3>📈 Needs Improvement</h3>
-                ${needsImprovement.map(member => `
-                  <div class="improvement-item">
-                    <strong>${member.name || 'Team Member'}</strong>
-                    <div style="font-size: 14px; color: #6b7280;">${member.score}% (${member.percentage || '0%'})</div>
-                  </div>
-                `).join('')}
-              </div>
-            ` : ''}
-
-            ${emailNotes ? `
-              <div class="notes">
-                <strong>📝 Notes:</strong><br/>
-                ${emailNotes.replace(/\n/g, '<br/>')}
-              </div>
-            ` : ''}
-
-            <div class="footer">
-              <p>Generated on ${new Date().toLocaleDateString()}</p>
-              <p>Apptivia Platform - Team Performance Tracking</p>
-            </div>
-          </div>
-        </body>
-        </html>
-      `;
-
-      const text = `
-Apptivia Weekly Scorecard Snapshot
-
-${dateRange} • Team Members: ${totalMembers}
-Team Average: ${teamAverage}%
-
-Score Distribution:
-- Excellent (≥90%): ${scoreDistribution.excellent} members
-- Good (70-89%): ${scoreDistribution.good} members
-- Fair (50-69%): ${scoreDistribution.fair} members
-- Needs Focus (<50%): ${scoreDistribution.poor} members
-
-${topPerformers.length > 0 ? `Top Performers:\n${topPerformers.map((p, idx) => `${idx + 1}. ${p.name}: ${p.score}%`).join('\n')}` : ''}
-
-${needsImprovement.length > 0 ? `Needs Improvement:\n${needsImprovement.map(m => `- ${m.name}: ${m.score}%`).join('\n')}` : ''}
-
-${emailNotes ? `Notes:\n${emailNotes}` : ''}
-
-Generated on ${new Date().toLocaleDateString()}
-      `.trim();
-
-      const response = await fetch('/api/send-snapshot', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          recipients,
-          subject,
-          html,
-          text,
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to send email');
+      // Build 5-week trend data from historical scores
+      let trendWeeks;
+      if (historicalScores?.length > 0) {
+        const recent = historicalScores.slice(-5);
+        trendWeeks = recent.map((pt, idx) => ({
+          week: pt.week || `Week ${idx + 1}`,
+          score: Math.round(pt.score || 0),
+          delta: idx > 0 ? Math.round((pt.score || 0) - (recent[idx - 1]?.score || 0)) : undefined,
+        }));
       }
+
+      // Build per-KPI score breakdown from scorecard rows
+      let kpiScores;
+      if (kpiMetrics?.length > 0 && scorecardRows?.length > 0) {
+        kpiScores = kpiMetrics.map(metric => {
+          const percentages = scorecardRows.map(row => Number(row?.kpis?.[metric.key]?.percentage || 0));
+          const avg = percentages.length > 0
+            ? Math.round(percentages.reduce((s, v) => s + v, 0) / percentages.length)
+            : 0;
+          return { label: metric.name || metric.key.replace(/_/g, ' '), percentage: avg };
+        }).filter(k => k.percentage > 0);
+      }
+
+      // Build exact date range
+      let exactDateRange;
+      if (periodStart && periodEnd) {
+        const fmt = (iso) => new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+        exactDateRange = { start: fmt(periodStart), end: fmt(periodEnd) };
+      }
+
+      const emailOpts = {
+        notes: emailNotes || undefined,
+        trendWeeks,
+        kpiScores,
+        exactDateRange,
+      };
+      const html = buildScorecardSnapshotEmailHtml(emailData, emailOpts);
+      const text = buildScorecardSnapshotEmailText(emailData, emailOpts);
+
+      await backendFetch('/api/send-snapshot', {
+        recipients,
+        subject,
+        html,
+        text,
+      });
 
       setEmailSuccess(true);
       setTimeout(() => {

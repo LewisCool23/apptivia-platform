@@ -176,10 +176,10 @@ export default function ActivityFeed({ organizationId, maxHeight = 480, compact 
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 px-4 py-3">
       {/* Filters */}
       <div className="flex items-center gap-2 flex-wrap">
-        <Filter size={14} className="text-gray-400" />
+        <Filter size={14} className="text-gray-400 flex-shrink-0" />
         {EVENT_FILTERS.map(f => (
           <button
             key={f.id}

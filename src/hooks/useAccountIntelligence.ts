@@ -51,6 +51,9 @@ export interface Account {
   predicted_close_date?: string;
   ai_buying_stage_reason?: string;
   technographics?: Technographic[];
+  // Signal-to-Pipeline fields (migration 051)
+  source?: 'manual' | 'signal_prospecting' | 'import' | 'company_research';
+  promoted_from_signal_at?: string;
 }
 
 export interface Technographic {
@@ -242,13 +245,18 @@ export function useAccountIntelligence(organizationId: string, userId?: string) 
         industry: account.industry || null,
         tier: account.tier || 'untiered',
         status: account.status || 'active',
-        account_score: 0,
-        intent_score: 0,
-        engagement_score: 0,
-        signals_count: 0,
-        buying_committee: [],
+        account_score: account.account_score ?? 0,
+        intent_score: account.intent_score ?? 0,
+        engagement_score: account.engagement_score ?? 0,
+        signals_count: account.signals_count ?? 0,
+        buying_committee: account.buying_committee || [],
         tags: account.tags || [],
         metadata: account.metadata || {},
+        ...(account.buying_stage && { buying_stage: account.buying_stage }),
+        ...(account.readiness_score != null && { readiness_score: account.readiness_score }),
+        ...(account.signal_velocity != null && { signal_velocity: account.signal_velocity }),
+        ...(account.source && { source: account.source }),
+        ...(account.promoted_from_signal_at && { promoted_from_signal_at: account.promoted_from_signal_at }),
       })
       .select()
       .single();

@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, X } from 'lucide-react';
+import { Search, X, CheckCircle, AlertCircle, Loader2, Clock, ExternalLink, History, RefreshCw, Key } from 'lucide-react';
 import DashboardLayout from '../DashboardLayout';
 import RightFilterPanel from '../components/RightFilterPanel';
 import PageActionBar from '../components/PageActionBar';
@@ -10,6 +10,13 @@ import { useNotifications } from '../contexts/NotificationContext';
 import { useAuth } from '../AuthContext';
 import { getPermissionOverrides, listPermissionsWithState, normalizeRole } from '../permissions';
 import { supabase } from '../supabaseClient';
+import { useIntegrations } from '../hooks/useIntegrations';
+import { useTeamManagement } from '../hooks/useTeamManagement';
+import { SUPPORTED_INTEGRATIONS, API_KEY_PROVIDERS } from '../constants/integrations';
+import SyncHistoryModal from '../components/shared/SyncHistoryModal';
+import DisconnectConfirmModal from '../components/shared/DisconnectConfirmModal';
+import CredentialsModal from '../components/shared/CredentialsModal';
+import TeamManagementPanel from '../components/shared/TeamManagementPanel';
 
 export default function Systems() {
   const navigate = useNavigate();
@@ -19,17 +26,7 @@ export default function Systems() {
   const [showConfigModal, setShowConfigModal] = useState(false);
   const [showPermissionsModal, setShowPermissionsModal] = useState(false);
   const [showTeamModal, setShowTeamModal] = useState(false);
-  const [showAddMemberModal, setShowAddMemberModal] = useState(false);
-  const [showRemoveMemberModal, setShowRemoveMemberModal] = useState(false);
   const [usersList, setUsersList] = useState([]);
-  const [allProfiles, setAllProfiles] = useState([]);
-  const [teams, setTeams] = useState([]);
-  const [teamMembers, setTeamMembers] = useState([]);
-  const [selectedTeamId, setSelectedTeamId] = useState(null);
-  const [selectedAddMemberId, setSelectedAddMemberId] = useState('');
-  const [selectedRemoveMemberId, setSelectedRemoveMemberId] = useState('');
-  const [memberActionLoading, setMemberActionLoading] = useState(false);
-  const [memberActionError, setMemberActionError] = useState('');
   const [selectedUserId, setSelectedUserId] = useState(null);
   const [savedPermissionOverrides, setSavedPermissionOverrides] = useState({});
   const [draftPermissionOverrides, setDraftPermissionOverrides] = useState({});
@@ -46,44 +43,72 @@ export default function Systems() {
   const canManagePermissions = hasPermission('manage_permissions');
   const canManageTeams = hasPermission('manage_teams');
   const canManageTeamMembers = hasPermission('manage_team_members');
-  const teamId = profile?.team_id ? String(profile.team_id) : user?.team_id ? String(user.team_id) : null;
 
-  const integrations = useMemo(() => (['Salesforce', 'Gong', 'Outreach', 'Calendar']), []);
+  // ── Integrations ──────────────────────────────────────────────
+  const {
+    integrations: liveIntegrations,
+    templates,
+    loading: integrationsLoading,
+    syncing,
+    error: integrationError,
+    connectOAuth,
+    connectCredentials,
+    disconnect,
+    triggerSync,
+    getSyncHistory,
+    refresh: refreshIntegrations,
+  } = useIntegrations();
 
+  const mergedTemplates = useMemo(() => {
+    return SUPPORTED_INTEGRATIONS.map(supported => {
+      const dbTemplate = templates.find(t => t.integration_type === supported.integration_type);
+      return { ...supported, ...(dbTemplate || {}), icon: supported.icon, color: supported.color };
+    });
+  }, [templates]);
+
+  const [syncHistoryModal, setSyncHistoryModal] = useState(null);
+  const [syncHistory, setSyncHistory] = useState([]);
+  const [syncHistoryLoading, setSyncHistoryLoading] = useState(false);
+  const [confirmDisconnect, setConfirmDisconnect] = useState(null);
+  const [credentialsModal, setCredentialsModal] = useState(null);
+
+  const connectedIntegrationTypes = useMemo(() =>
+    new Set(liveIntegrations.filter(i => i.status === 'connected').map(i => i.integration_type)),
+  [liveIntegrations]);
+
+  const integrationNames = useMemo(() =>
+    SUPPORTED_INTEGRATIONS.filter(s => connectedIntegrationTypes.has(s.integration_type))
+      .map(s => ({ type: s.integration_type, name: s.display_name })),
+  [connectedIntegrationTypes]);
+
+  // ── Teams (shared hook) ───────────────────────────────────────
+  const teamHook = useTeamManagement();
+  const { loadTeams, loadAllProfiles, loadTeamMembers, selectedTeamId } = teamHook;
+
+  // ── Tabs ──────────────────────────────────────────────────────
   const tabs = useMemo(() => {
-    const baseTabs = [
-      { id: 'integrations', label: 'Integrations' }
-    ];
-    
-    // Only show Teams tab if user has permission
+    const baseTabs = [{ id: 'integrations', label: 'Integrations' }];
     if (canManageTeams || canManageTeamMembers) {
       baseTabs.push({ id: 'teams', label: 'Teams' });
     }
-    
     return baseTabs;
   }, [canManageTeams, canManageTeamMembers]);
 
-  const services = useMemo(() => ([
-    { name: 'Salesforce', status: 'active', desc: 'Sales integration' },
-    { name: 'Outreach.io', status: 'active', desc: 'Sales integration' },
-    { name: 'Salesloft', status: 'not_connected', desc: 'Sales integration' },
-    { name: 'Gong.io', status: 'active', desc: 'Sales integration' },
-    { name: 'Microsoft Outlook', status: 'not_connected', desc: 'Sales integration' },
-    { name: 'HubSpot', status: 'available', desc: 'Sales integration' }
-  ]), []);
-
+  // ── Notifications for disconnected integrations ───────────────
   useEffect(() => {
+    if (!templates.length) return;
     try {
       const stored = JSON.parse(window.localStorage.getItem('apptivia.integrationNotices') || '[]');
-      services
-        .filter(svc => svc.status === 'not_connected')
-        .forEach(svc => {
-          const key = `integration-${svc.name}`;
+      const connectedTypes = new Set(liveIntegrations.filter(i => i.status === 'connected').map(i => i.integration_type));
+      templates
+        .filter(t => !connectedTypes.has(t.integration_type))
+        .forEach(t => {
+          const key = `integration-${t.integration_type}`;
           if (stored.includes(key)) return;
           addNotification({
             type: 'integration',
-            title: 'Integration missing',
-            message: `Connect ${svc.name} to unlock data.`,
+            title: 'Integration available',
+            message: `Connect ${t.display_name} to unlock data.`,
             link: '/systems',
             dedupeKey: key,
           });
@@ -91,8 +116,9 @@ export default function Systems() {
         });
       window.localStorage.setItem('apptivia.integrationNotices', JSON.stringify(stored));
     } catch (e) {}
-  }, [services, addNotification]);
+  }, [templates, liveIntegrations, addNotification]);
 
+  // ── Permissions ───────────────────────────────────────────────
   const loadUsers = async () => {
     try {
       const { data, error } = await supabase
@@ -105,70 +131,19 @@ export default function Systems() {
     }
   };
 
-  const loadTeams = async () => {
-    try {
-      const { data, error } = await supabase.from('teams').select('*').order('name');
-      if (!error) {
-        setTeams(data || []);
-        if (!selectedTeamId) {
-          if (isManager && teamId) {
-            setSelectedTeamId(String(teamId));
-          } else if (data?.length) {
-            setSelectedTeamId(String(data[0].id));
-          }
-        }
-      }
-    } catch (e) {
-      console.error('Error loading teams:', e);
-    }
-  };
-
-  const loadTeamMembers = async (teamIdValue) => {
-    if (!teamIdValue) {
-      setTeamMembers([]);
-      return;
-    }
-    try {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('id, first_name, last_name, email, role, team_id')
-        .eq('team_id', teamIdValue)
-        .order('first_name');
-      if (!error) setTeamMembers(data || []);
-    } catch (e) {
-      console.error('Error loading team members:', e);
-    }
-  };
-
-  const loadAllProfiles = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('id, first_name, last_name, email, role, team_id')
-        .order('first_name');
-      if (!error) setAllProfiles(data || []);
-    } catch (e) {
-      console.error('Error loading profiles:', e);
-    }
-  };
-
   useEffect(() => {
-    if (showPermissionsModal) {
-      loadUsers();
-    }
+    if (showPermissionsModal) loadUsers();
   }, [showPermissionsModal]);
 
   useEffect(() => {
-    if (!showTeamModal) return;
-    loadTeams();
-    loadAllProfiles();
-    setMemberActionError('');
+    if (showTeamModal) {
+      Promise.all([loadTeams(), loadAllProfiles()]);
+      teamHook.setMemberActionError('');
+    }
   }, [showTeamModal]);
 
   useEffect(() => {
-    if (showTeamModal && selectedTeamId) {
-      loadTeamMembers(selectedTeamId);
-    }
+    if (showTeamModal && selectedTeamId) loadTeamMembers(selectedTeamId);
   }, [showTeamModal, selectedTeamId]);
 
   useEffect(() => {
@@ -194,18 +169,12 @@ export default function Systems() {
 
   const hasPermissionChanges = useMemo(() => {
     if (!selectedUserId) return false;
-    const saved = savedPermissionOverrides || {};
-    const draft = draftPermissionOverrides || {};
-    return JSON.stringify(saved) !== JSON.stringify(draft);
+    return JSON.stringify(savedPermissionOverrides || {}) !== JSON.stringify(draftPermissionOverrides || {});
   }, [selectedUserId, savedPermissionOverrides, draftPermissionOverrides]);
 
   const togglePermission = (permKey, enabled) => {
     if (!selectedUserId) return;
-    const nextOverrides = {
-      ...draftPermissionOverrides,
-      [permKey]: enabled ? false : true,
-    };
-    setDraftPermissionOverrides(nextOverrides);
+    setDraftPermissionOverrides(prev => ({ ...prev, [permKey]: !enabled }));
   };
 
   const resetPermissionOverrides = () => {
@@ -229,73 +198,7 @@ export default function Systems() {
     setDraftPermissionOverrides(savedPermissionOverrides || {});
   };
 
-  const availableMembers = useMemo(() => {
-    if (!selectedTeamId) return [];
-    return allProfiles.filter(p => String(p.team_id) !== String(selectedTeamId));
-  }, [allProfiles, selectedTeamId]);
-
-  useEffect(() => {
-    if (!showAddMemberModal) return;
-    if (!selectedAddMemberId && availableMembers.length > 0) {
-      setSelectedAddMemberId(String(availableMembers[0].id));
-    }
-  }, [showAddMemberModal, availableMembers, selectedAddMemberId]);
-
-  useEffect(() => {
-    if (!showRemoveMemberModal) return;
-    if (!selectedRemoveMemberId && teamMembers.length > 0) {
-      setSelectedRemoveMemberId(String(teamMembers[0].id));
-    }
-  }, [showRemoveMemberModal, teamMembers, selectedRemoveMemberId]);
-
-  const handleAddMember = async () => {
-    if (!selectedAddMemberId || !selectedTeamId) return;
-    setMemberActionLoading(true);
-    setMemberActionError('');
-    const { error } = await supabase
-      .from('profiles')
-      .update({ team_id: selectedTeamId })
-      .eq('id', selectedAddMemberId);
-    if (error) {
-      setMemberActionError(error.message || 'Unable to add member.');
-    } else {
-      setShowAddMemberModal(false);
-      setSelectedAddMemberId('');
-      await loadTeamMembers(selectedTeamId);
-      await loadAllProfiles();
-    }
-    setMemberActionLoading(false);
-  };
-
-  const handleRemoveMember = async () => {
-    if (!selectedRemoveMemberId) return;
-    setMemberActionLoading(true);
-    setMemberActionError('');
-    const { error } = await supabase
-      .from('profiles')
-      .update({ team_id: null })
-      .eq('id', selectedRemoveMemberId);
-    if (error) {
-      setMemberActionError(error.message || 'Unable to remove member.');
-    } else {
-      setShowRemoveMemberModal(false);
-      setSelectedRemoveMemberId('');
-      await loadTeamMembers(selectedTeamId);
-      await loadAllProfiles();
-    }
-    setMemberActionLoading(false);
-  };
-
-  const getIntegrationStatus = (memberId, integrationName) => {
-    const seed = `${memberId || ''}-${integrationName}`;
-    let hash = 0;
-    for (let i = 0; i < seed.length; i += 1) {
-      hash = (hash + seed.charCodeAt(i)) % 10;
-    }
-    return hash % 2 === 0;
-  };
-
-  // Search functionality
+  // ── Search ────────────────────────────────────────────────────
   const handleSearch = async (query) => {
     if (!query || query.trim().length < 2) {
       setSearchResults([]);
@@ -309,8 +212,8 @@ export default function Systems() {
       const searchTerm = query.trim().toLowerCase();
       const { data: profiles } = await supabase.from('profiles').select('id, first_name, last_name, email, role').or(`first_name.ilike.%${searchTerm}%,last_name.ilike.%${searchTerm}%, email.ilike.%${searchTerm}%`).limit(5);
       if (profiles) {
-        profiles.forEach((profile) => {
-          results.push({ type: 'User', title: `${profile.first_name || ''} ${profile.last_name || ''}`.trim() || profile.email, subtitle: profile.role, link: `/profile?user=${profile.id}`, icon: '👤' });
+        profiles.forEach((p) => {
+          results.push({ type: 'User', title: `${p.first_name || ''} ${p.last_name || ''}`.trim() || p.email, subtitle: p.role, link: `/profile?user=${p.id}`, icon: '👤' });
         });
       }
       setSearchResults(results);
@@ -326,15 +229,27 @@ export default function Systems() {
     return () => clearTimeout(timeoutId);
   }, [searchQuery]);
 
+  // ── Refresh ───────────────────────────────────────────────────
   const handleRefresh = async () => {
     setIsRefreshing(true);
     try {
-      window.location.reload();
+      await Promise.all([refreshIntegrations(), loadTeams(), loadAllProfiles()]);
     } catch (err) {
       console.error('Error refreshing:', err);
+    } finally {
+      setIsRefreshing(false);
     }
   };
 
+  const handleConnectCredentials = async (providerType, credentials) => {
+    await connectCredentials(providerType, credentials);
+    setCredentialsModal(null);
+    addNotification({ type: 'success', message: `${providerType} connected successfully` });
+  };
+
+  // ═════════════════════════════════════════════════════════════
+  // RENDER
+  // ═════════════════════════════════════════════════════════════
   return (
     <DashboardLayout>
       <div className="p-6">
@@ -344,13 +259,14 @@ export default function Systems() {
             <p className="text-gray-500 text-sm">Manage integrations and system settings</p>
           </div>
           <div className="flex gap-2 items-center">
+            {/* Search */}
             <div className="relative">
               <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
               <input type="text" placeholder="Search..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} onFocus={() => searchQuery && setShowSearchResults(true)} className="w-64 pl-9 pr-8 py-2 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" />
               {searchQuery && <button onClick={() => { setSearchQuery(''); setSearchResults([]); setShowSearchResults(false); }} className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"><X size={14} /></button>}
               {showSearchResults && searchResults.length > 0 && (
                 <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-96 overflow-y-auto z-50">
-                  {searchResults.map((result,idx) => (
+                  {searchResults.map((result, idx) => (
                     <button key={idx} onClick={() => { navigate(result.link); setSearchQuery(''); setSearchResults([]); setShowSearchResults(false); }} className="w-full text-left px-4 py-3 hover:bg-gray-50 border-b last:border-b-0 transition-colors">
                       <div className="flex items-start gap-3"><span className="text-xl">{result.icon}</span><div className="flex-1 min-w-0"><div className="flex items-center gap-2"><span className="text-xs font-semibold text-gray-900">{result.title}</span><span className="text-[10px] px-1.5 py-0.5 rounded bg-gray-100 text-gray-600">{result.type}</span></div>{result.subtitle && <div className="text-[11px] text-gray-500 mt-0.5 truncate">{result.subtitle}</div>}</div></div>
                     </button>
@@ -360,6 +276,7 @@ export default function Systems() {
               {showSearchResults && searchQuery && searchResults.length === 0 && !searching && <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg p-4 z-50"><div className="text-sm text-gray-500 text-center">No results found</div></div>}
               {searching && <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg p-4 z-50"><div className="text-sm text-gray-500 text-center">Searching...</div></div>}
             </div>
+            {/* Refresh */}
             <button onClick={handleRefresh} disabled={isRefreshing} className={`relative p-2 rounded-lg font-semibold text-sm bg-white text-gray-700 border border-gray-200 hover:bg-gray-50 group ${isRefreshing ? 'opacity-50 cursor-not-allowed' : 'transition-all duration-200 hover:scale-105 hover:shadow-md'}`} title="Refresh data">
               <svg className={`w-[18px] h-[18px] ${isRefreshing ? 'animate-spin' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
@@ -374,24 +291,19 @@ export default function Systems() {
               onExportClick={() => {}}
               onNotificationsClick={openPanel}
               exportDisabled={false}
-            configureDisabled={false}
-            notificationBadge={unreadCount}
-            actions={[
-              ...((isAdmin || isManager) && canManageTeamMembers ? [{
-                label: isManager ? 'Team Settings' : 'Manage Teams',
-                onClick: () => setShowTeamModal(true),
-              }] : []),
-              ...(isAdmin && canManagePermissions ? [{
-                label: 'Manage Permissions',
-                onClick: () => setShowPermissionsModal(true),
-              }] : []),
-              {
-                label: 'Integration Settings',
-                onClick: () => {},
-                disabled: true,
-              },
-            ]}
-          />
+              configureDisabled={false}
+              notificationBadge={unreadCount}
+              actions={[
+                ...((isAdmin || isManager) && canManageTeamMembers ? [{
+                  label: isManager ? 'Team Settings' : 'Manage Teams',
+                  onClick: () => setShowTeamModal(true),
+                }] : []),
+                ...(isAdmin && canManagePermissions ? [{
+                  label: 'Manage Permissions',
+                  onClick: () => setShowPermissionsModal(true),
+                }] : []),
+              ]}
+            />
           </div>
         </div>
 
@@ -403,9 +315,7 @@ export default function Systems() {
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
                 className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-all ${
-                  activeTab === tab.id
-                    ? 'bg-blue-600 text-white shadow-sm'
-                    : 'text-gray-600 hover:bg-gray-100'
+                  activeTab === tab.id ? 'bg-blue-600 text-white shadow-sm' : 'text-gray-600 hover:bg-gray-100'
                 }`}
               >
                 {tab.label}
@@ -414,40 +324,133 @@ export default function Systems() {
           </div>
         </div>
 
-        {/* Integrations Tab */}
+        {/* ════════ Integrations Tab ════════ */}
         {activeTab === 'integrations' && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {services.map((svc, idx) => (
-            <div key={idx} className="bg-white rounded-lg p-4 shadow-sm flex flex-col">
-              <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 bg-gray-100 rounded flex items-center justify-center text-sm font-semibold">{svc.name[0]}</div>
-                  <div>
-                    <div className="font-medium">{svc.name}</div>
-                    <div className="text-xs text-gray-500">{svc.desc}</div>
-                  </div>
-                </div>
-                <div>
-                  {svc.status === 'active' && <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full">Active</span>}
-                  {svc.status === 'not_connected' && <span className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded-full">Not Connected</span>}
-                  {svc.status === 'available' && <span className="text-xs bg-indigo-50 text-indigo-700 px-2 py-1 rounded-full">Available</span>}
-                </div>
-              </div>
-              <div className="mt-auto">
-                {svc.status === 'active' ? (
-                  <button className="w-full bg-red-500 text-white py-2 rounded-md">Disconnect</button>
-                ) : (
-                  <button className="w-full bg-blue-500 text-white py-2 rounded-md">Connect</button>
-                )}
-              </div>
+        <div className="mt-4">
+          {integrationError && (
+            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700 flex items-center gap-2">
+              <AlertCircle size={16} />
+              {integrationError}
             </div>
-          ))}
+          )}
+
+          {integrationsLoading ? (
+            <div className="flex items-center justify-center py-12 text-gray-400">
+              <Loader2 size={24} className="animate-spin mr-2" />
+              Loading integrations...
+            </div>
+          ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+            {mergedTemplates.map((template) => {
+              const integration = liveIntegrations.find(i => i.integration_type === template.integration_type);
+              const isConnected = integration?.status === 'connected';
+              const isSyncing = integration?.status === 'syncing' || syncing === integration?.id;
+              const isError = integration?.status === 'error';
+
+              return (
+                <div key={template.integration_type} className="bg-white rounded-xl p-5 shadow-sm border border-gray-100 flex flex-col hover:shadow-md transition-shadow">
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className={`w-11 h-11 bg-gradient-to-br ${template.color} rounded-lg flex items-center justify-center text-xs font-bold text-white shadow-sm`}>
+                      {template.icon}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="font-semibold text-gray-900">{template.display_name}</div>
+                      <div className="text-xs text-gray-500 truncate">{template.description}</div>
+                    </div>
+                    {isConnected && <div className="w-2.5 h-2.5 rounded-full bg-green-500 shrink-0" title="Connected" />}
+                    {isError && <div className="w-2.5 h-2.5 rounded-full bg-red-500 shrink-0" title="Error" />}
+                  </div>
+                  <div className="mb-3">
+                    {isConnected && !isSyncing && <span className="inline-flex items-center gap-1 text-xs bg-green-50 text-green-700 px-2.5 py-1 rounded-full font-medium"><CheckCircle size={12} /> Connected</span>}
+                    {isSyncing && <span className="inline-flex items-center gap-1 text-xs bg-blue-50 text-blue-700 px-2.5 py-1 rounded-full font-medium"><Loader2 size={12} className="animate-spin" /> Syncing...</span>}
+                    {isError && <span className="inline-flex items-center gap-1 text-xs bg-red-50 text-red-700 px-2.5 py-1 rounded-full font-medium"><AlertCircle size={12} /> Error</span>}
+                    {!integration && <span className="inline-flex items-center gap-1 text-xs bg-gray-50 text-gray-500 px-2.5 py-1 rounded-full font-medium">Available</span>}
+                    {integration && integration.status === 'disconnected' && <span className="inline-flex items-center gap-1 text-xs bg-gray-50 text-gray-500 px-2.5 py-1 rounded-full font-medium">Disconnected</span>}
+                  </div>
+                  {isConnected && integration && (
+                    <div className="text-xs text-gray-400 mb-3 space-y-1">
+                      {integration.last_sync_at && <div className="flex items-center gap-1"><Clock size={11} /> Last synced: {new Date(integration.last_sync_at).toLocaleString()}</div>}
+                      {integration.last_sync_error && <div className="text-red-500 truncate" title={integration.last_sync_error}>{integration.last_sync_error}</div>}
+                    </div>
+                  )}
+                  <div className="mt-auto flex flex-col gap-2">
+                    {isConnected ? (
+                      <>
+                        <div className="flex gap-2">
+                          <button onClick={() => triggerSync(integration.id)} disabled={isSyncing} className="flex-1 flex items-center justify-center gap-1.5 bg-blue-600 text-white py-2 rounded-md text-sm font-medium hover:bg-blue-700 disabled:opacity-50 transition-colors">
+                            {isSyncing ? <Loader2 size={14} className="animate-spin" /> : <RefreshCw size={14} />}
+                            {isSyncing ? 'Syncing...' : 'Sync Now'}
+                          </button>
+                          <button
+                            onClick={async () => {
+                              setSyncHistoryModal(integration.id);
+                              setSyncHistoryLoading(true);
+                              const history = await getSyncHistory(integration.id);
+                              setSyncHistory(history);
+                              setSyncHistoryLoading(false);
+                            }}
+                            className="px-3 py-2 bg-gray-100 text-gray-600 rounded-md hover:bg-gray-200 transition-colors"
+                            title="Sync History"
+                          >
+                            <History size={14} />
+                          </button>
+                        </div>
+                        <button onClick={() => setConfirmDisconnect(integration.id)} className="w-full py-1.5 text-xs text-red-500 hover:text-red-700 hover:bg-red-50 rounded-md transition-colors">
+                          Disconnect
+                        </button>
+                      </>
+                    ) : API_KEY_PROVIDERS[template.integration_type] ? (
+                      <button
+                        onClick={() => setCredentialsModal(template.integration_type)}
+                        className="w-full bg-blue-600 text-white py-2 rounded-md text-sm font-medium hover:bg-blue-700 transition-colors flex items-center justify-center gap-2"
+                      >
+                        <Key size={14} /> Connect with API Key
+                      </button>
+                    ) : (
+                      <button onClick={() => connectOAuth(template.integration_type)} className="w-full bg-blue-600 text-white py-2 rounded-md text-sm font-medium hover:bg-blue-700 transition-colors">
+                        Connect
+                      </button>
+                    )}
+                  </div>
+                  {template.documentation_url && (
+                    <a href={template.documentation_url} target="_blank" rel="noopener noreferrer" className="mt-2 flex items-center gap-1 text-[11px] text-gray-400 hover:text-blue-500 transition-colors">
+                      <ExternalLink size={10} /> API Docs
+                    </a>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+          )}
+
+          <SyncHistoryModal
+            isOpen={!!syncHistoryModal}
+            onClose={() => setSyncHistoryModal(null)}
+            loading={syncHistoryLoading}
+            history={syncHistory}
+          />
+
+          <CredentialsModal
+            providerType={credentialsModal}
+            onClose={() => setCredentialsModal(null)}
+            onConnect={handleConnectCredentials}
+            error={integrationError}
+          />
+
+          <DisconnectConfirmModal
+            isOpen={!!confirmDisconnect}
+            onClose={() => setConfirmDisconnect(null)}
+            onConfirm={async () => {
+              await disconnect(confirmDisconnect);
+              setConfirmDisconnect(null);
+            }}
+          />
         </div>
         )}
 
-        {/* Teams Tab */}
+        {/* ════════ Teams Tab ════════ */}
         {activeTab === 'teams' && (canManageTeams || canManageTeamMembers) && (
-        <div className="bg-white rounded-lg shadow-sm p-5">
+        <div className="bg-white rounded-lg shadow-sm p-5 mt-4">
           <div className="flex items-center justify-between mb-4">
             <div>
               <h3 className="text-lg font-semibold text-gray-900">Team Management</h3>
@@ -455,57 +458,34 @@ export default function Systems() {
                 {isManager ? 'Manage your team members and settings' : 'Manage all teams across the organization'}
               </p>
             </div>
-            <button
-              onClick={() => setShowTeamModal(true)}
-              className="px-3 py-1.5 text-xs font-semibold bg-blue-600 text-white rounded-md hover:bg-blue-700"
-            >
-              {isManager ? 'Open Team Settings' : 'Manage Teams'}
-            </button>
           </div>
-          <div className="text-sm text-gray-600">
-            Click the button above to access detailed team management features including adding/removing members and viewing team integrations.
-          </div>
+          <TeamManagementPanel
+            teamHook={teamHook}
+            canManageTeams={canManageTeams}
+            canManageTeamMembers={canManageTeamMembers}
+            isManager={isManager}
+            connectedIntegrations={integrationNames}
+            onNotify={addNotification}
+          />
         </div>
         )}
 
-        <ConfigurePanel
-          isOpen={configPanelOpen}
-          onClose={() => setConfigPanelOpen(false)}
-          onOpenAdvanced={() => setShowConfigModal(true)}
-        />
-        <ConfigureModal
-          isOpen={showConfigModal}
-          onClose={() => setShowConfigModal(false)}
-        />
-        <RightFilterPanel
-          isOpen={filtersOpen}
-          onClose={() => setFiltersOpen(false)}
-          title="System Filters"
-          subtitle="Filter integrations"
-          showReset
-        >
+        <ConfigurePanel isOpen={configPanelOpen} onClose={() => setConfigPanelOpen(false)} onOpenAdvanced={() => setShowConfigModal(true)} />
+        <ConfigureModal isOpen={showConfigModal} onClose={() => setShowConfigModal(false)} />
+        <RightFilterPanel isOpen={filtersOpen} onClose={() => setFiltersOpen(false)} title="System Filters" subtitle="Filter integrations" showReset>
           <div className="text-xs text-gray-500">No filters available yet.</div>
         </RightFilterPanel>
+
+        {/* ════════ Permissions Modal ════════ */}
         {showPermissionsModal && (
-          <div
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/40"
-            onClick={closePermissionsModal}
-          >
-            <div
-              className="bg-white w-[95%] max-w-6xl rounded-2xl shadow-2xl p-6"
-              onClick={(e) => e.stopPropagation()}
-            >
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={closePermissionsModal}>
+            <div className="bg-white w-[95%] max-w-6xl rounded-2xl shadow-2xl p-6" onClick={(e) => e.stopPropagation()}>
               <div className="flex items-start justify-between mb-4">
                 <div>
                   <h2 className="text-lg font-bold text-gray-900">User Permissions</h2>
                   <p className="text-xs text-gray-500">Enable or disable permissions for individual users</p>
                 </div>
-                <button
-                  onClick={closePermissionsModal}
-                  className="text-gray-400 hover:text-gray-600 text-sm"
-                >
-                  Close
-                </button>
+                <button onClick={closePermissionsModal} className="text-gray-400 hover:text-gray-600 text-sm">Close</button>
               </div>
               <div className="max-h-[75vh] overflow-y-auto pr-1">
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
@@ -536,11 +516,7 @@ export default function Systems() {
                           {selectedUser ? `${selectedUser.first_name || ''} ${selectedUser.last_name || ''}`.trim() || selectedUser.email : 'Choose a user'}
                         </div>
                       </div>
-                      <button
-                        onClick={resetPermissionOverrides}
-                        className="text-xs font-semibold text-blue-600 hover:text-blue-700"
-                        disabled={!selectedUserId}
-                      >
+                      <button onClick={resetPermissionOverrides} className="text-xs font-semibold text-blue-600 hover:text-blue-700" disabled={!selectedUserId}>
                         Reset to role defaults
                       </button>
                     </div>
@@ -563,18 +539,10 @@ export default function Systems() {
                       ))}
                     </div>
                     <div className="flex justify-end gap-2 mt-4">
-                      <button
-                        onClick={handleDiscardPermissions}
-                        className="px-3 py-1.5 text-xs rounded border"
-                        disabled={!selectedUserId || !hasPermissionChanges}
-                      >
+                      <button onClick={handleDiscardPermissions} className="px-3 py-1.5 text-xs rounded border" disabled={!selectedUserId || !hasPermissionChanges}>
                         Discard
                       </button>
-                      <button
-                        onClick={handleSavePermissions}
-                        className="px-3 py-1.5 text-xs rounded bg-blue-600 text-white disabled:opacity-60"
-                        disabled={!selectedUserId || !hasPermissionChanges}
-                      >
+                      <button onClick={handleSavePermissions} className="px-3 py-1.5 text-xs rounded bg-blue-600 text-white disabled:opacity-60" disabled={!selectedUserId || !hasPermissionChanges}>
                         Save changes
                       </button>
                     </div>
@@ -584,223 +552,26 @@ export default function Systems() {
             </div>
           </div>
         )}
+
+        {/* ════════ Team Modal (from header action button) ════════ */}
         {showTeamModal && (
-          <div
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/40"
-            onClick={() => setShowTeamModal(false)}
-          >
-            <div
-              className="bg-white w-[95%] max-w-6xl rounded-2xl shadow-2xl p-6"
-              onClick={(e) => e.stopPropagation()}
-            >
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={() => setShowTeamModal(false)}>
+            <div className="bg-white w-[95%] max-w-6xl rounded-2xl shadow-2xl p-6" onClick={(e) => e.stopPropagation()}>
               <div className="flex items-start justify-between mb-4">
                 <div>
                   <h2 className="text-lg font-bold text-gray-900">{isManager ? 'Team Settings' : 'Team Management'}</h2>
                   <p className="text-xs text-gray-500">{isManager ? 'Manage your assigned team members and integrations' : 'Manage teams and team members across the organization'}</p>
                 </div>
-                <button
-                  onClick={() => setShowTeamModal(false)}
-                  className="text-gray-400 hover:text-gray-600 text-sm"
-                >
-                  Close
-                </button>
+                <button onClick={() => setShowTeamModal(false)} className="text-gray-400 hover:text-gray-600 text-sm">Close</button>
               </div>
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-                <div className="bg-gray-50 rounded-xl p-3 border">
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="text-xs font-semibold text-gray-600">Teams</div>
-                    <button className="text-xs text-blue-600 font-semibold" disabled={!canManageTeams}>+ Add Team</button>
-                  </div>
-                  <div className="space-y-2 max-h-[420px] overflow-auto">
-                    {teams.length === 0 ? (
-                      <div className="text-xs text-gray-500">No teams found.</div>
-                    ) : (
-                      teams.map((team) => (
-                        <button
-                          key={team.id}
-                          onClick={() => setSelectedTeamId(String(team.id))}
-                          className={`w-full text-left px-3 py-2 rounded-lg text-xs font-medium transition-all ${String(team.id) === String(selectedTeamId) ? 'bg-blue-600 text-white' : 'bg-white text-gray-700 hover:bg-gray-100'}`}
-                        >
-                          <div>{team.name}</div>
-                          <div className={`${String(team.id) === String(selectedTeamId) ? 'text-blue-100' : 'text-gray-400'} text-[10px]`}>{team.department || 'No department'}</div>
-                        </button>
-                      ))
-                    )}
-                  </div>
-                </div>
-                <div className="lg:col-span-2 bg-white rounded-xl border p-4">
-                  <div className="flex items-center justify-between mb-3">
-                    <div>
-                      <div className="text-xs text-gray-500">Team members</div>
-                      <div className="text-sm font-semibold text-gray-900">
-                        {teams.find(t => String(t.id) === String(selectedTeamId))?.name || 'Select a team'}
-                      </div>
-                    </div>
-                    <div className="flex gap-2">
-                      <button
-                        className="text-xs font-semibold text-blue-600 disabled:text-gray-300"
-                        onClick={() => setShowAddMemberModal(true)}
-                        disabled={!canManageTeamMembers || !selectedTeamId}
-                      >
-                        + Add Member
-                      </button>
-                      <button
-                        className="text-xs font-semibold text-red-500 disabled:text-gray-300"
-                        onClick={() => setShowRemoveMemberModal(true)}
-                        disabled={!canManageTeamMembers || teamMembers.length === 0}
-                      >
-                        Remove Member
-                      </button>
-                    </div>
-                  </div>
-                  <div className="space-y-2 max-h-[420px] overflow-auto">
-                    {teamMembers.length === 0 ? (
-                      <div className="text-xs text-gray-500">No team members found.</div>
-                    ) : (
-                      teamMembers.map((member) => (
-                        <div key={member.id} className="border rounded-lg p-3 flex items-center justify-between">
-                          <div>
-                            <div className="text-sm font-semibold">{`${member.first_name || ''} ${member.last_name || ''}`.trim() || member.email}</div>
-                            <div className="text-[11px] text-gray-500">{normalizeRole(member.role)}</div>
-                          </div>
-                          <div className="flex items-center gap-2 text-[11px] text-gray-500">
-                            {integrations.map((integration) => (
-                              <div key={integration} className="flex items-center gap-1">
-                                <span className={`w-2.5 h-2.5 rounded-full ${getIntegrationStatus(member.id, integration) ? 'bg-green-500' : 'bg-gray-300'}`} />
-                                <span>{integration}</span>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      ))
-                    )}
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-        {showAddMemberModal && (
-          <div
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/40"
-            onClick={() => setShowAddMemberModal(false)}
-          >
-            <div
-              className="bg-white w-[95%] max-w-md rounded-2xl shadow-2xl p-5"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className="flex items-start justify-between mb-4">
-                <div>
-                  <h3 className="text-lg font-bold text-gray-900">Add Team Member</h3>
-                  <p className="text-xs text-gray-500">Assign a user to the selected team</p>
-                </div>
-                <button
-                  onClick={() => setShowAddMemberModal(false)}
-                  className="text-gray-400 hover:text-gray-600 text-sm"
-                >
-                  Close
-                </button>
-              </div>
-              <div className="space-y-3">
-                <div>
-                  <label className="block text-xs text-gray-500 mb-1">Available users</label>
-                  <select
-                    value={selectedAddMemberId}
-                    onChange={(e) => setSelectedAddMemberId(e.target.value)}
-                    className="w-full border rounded px-2 py-2 text-sm"
-                  >
-                    {availableMembers.length === 0 ? (
-                      <option value="">No available users</option>
-                    ) : (
-                      availableMembers.map((u) => (
-                        <option key={u.id} value={u.id}>
-                          {`${u.first_name || ''} ${u.last_name || ''}`.trim() || u.email}
-                        </option>
-                      ))
-                    )}
-                  </select>
-                </div>
-                {memberActionError && (
-                  <div className="text-xs text-red-500">{memberActionError}</div>
-                )}
-                <div className="flex justify-end gap-2">
-                  <button
-                    onClick={() => setShowAddMemberModal(false)}
-                    className="px-3 py-1.5 text-xs rounded border"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    onClick={handleAddMember}
-                    disabled={memberActionLoading || !selectedAddMemberId}
-                    className="px-3 py-1.5 text-xs rounded bg-blue-600 text-white disabled:opacity-60"
-                  >
-                    {memberActionLoading ? 'Adding...' : 'Add Member'}
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-        {showRemoveMemberModal && (
-          <div
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/40"
-            onClick={() => setShowRemoveMemberModal(false)}
-          >
-            <div
-              className="bg-white w-[95%] max-w-md rounded-2xl shadow-2xl p-5"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className="flex items-start justify-between mb-4">
-                <div>
-                  <h3 className="text-lg font-bold text-gray-900">Remove Team Member</h3>
-                  <p className="text-xs text-gray-500">Remove a user from the selected team</p>
-                </div>
-                <button
-                  onClick={() => setShowRemoveMemberModal(false)}
-                  className="text-gray-400 hover:text-gray-600 text-sm"
-                >
-                  Close
-                </button>
-              </div>
-              <div className="space-y-3">
-                <div>
-                  <label className="block text-xs text-gray-500 mb-1">Current members</label>
-                  <select
-                    value={selectedRemoveMemberId}
-                    onChange={(e) => setSelectedRemoveMemberId(e.target.value)}
-                    className="w-full border rounded px-2 py-2 text-sm"
-                  >
-                    {teamMembers.length === 0 ? (
-                      <option value="">No team members</option>
-                    ) : (
-                      teamMembers.map((u) => (
-                        <option key={u.id} value={u.id}>
-                          {`${u.first_name || ''} ${u.last_name || ''}`.trim() || u.email}
-                        </option>
-                      ))
-                    )}
-                  </select>
-                </div>
-                {memberActionError && (
-                  <div className="text-xs text-red-500">{memberActionError}</div>
-                )}
-                <div className="flex justify-end gap-2">
-                  <button
-                    onClick={() => setShowRemoveMemberModal(false)}
-                    className="px-3 py-1.5 text-xs rounded border"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    onClick={handleRemoveMember}
-                    disabled={memberActionLoading || !selectedRemoveMemberId}
-                    className="px-3 py-1.5 text-xs rounded bg-red-600 text-white disabled:opacity-60"
-                  >
-                    {memberActionLoading ? 'Removing...' : 'Remove Member'}
-                  </button>
-                </div>
-              </div>
+              <TeamManagementPanel
+                teamHook={teamHook}
+                canManageTeams={canManageTeams}
+                canManageTeamMembers={canManageTeamMembers}
+                isManager={isManager}
+                connectedIntegrations={integrationNames}
+                onNotify={addNotification}
+              />
             </div>
           </div>
         )}

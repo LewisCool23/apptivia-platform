@@ -128,25 +128,91 @@ export function exportCoachDataToCSV(data: any, filters: any) {
   });
 }
 
+export function exportContestResultsToCSV(contest: any) {
+  const headers = [
+    'Rank',
+    'Participant',
+    'Team',
+    'Score',
+    'Previous Rank',
+    'Rank Change',
+  ];
+
+  const leaderboard = contest.leaderboard || [];
+  const rows = leaderboard.map((entry: any) => [
+    entry.rank,
+    entry.profile_name || 'Unknown',
+    entry.team_name || '-',
+    entry.score,
+    entry.previous_rank ?? '-',
+    entry.rank_change || '-',
+  ]);
+
+  // Add contest metadata
+  rows.push([]);
+  rows.push(['Contest Details']);
+  rows.push(['Name', contest.name]);
+  rows.push(['Status', contest.status]);
+  rows.push(['Start Date', contest.start_date]);
+  rows.push(['End Date', contest.end_date]);
+  rows.push(['KPI', contest.kpi_key]);
+  rows.push(['Calculation', contest.calculation_type]);
+  rows.push(['Participants', contest.participant_count || leaderboard.length]);
+  if (contest.winner_name) rows.push(['Winner', contest.winner_name]);
+  if (contest.reward_value) rows.push(['Reward', contest.reward_value]);
+
+  const contestName = (contest.name || 'contest').replace(/\s+/g, '_').toLowerCase();
+  exportToCSV({
+    headers,
+    rows,
+    filename: `contest_${contestName}`,
+  });
+}
+
 export function exportAnalyticsToCSV(data: any, aggregateKPIs: any, filters: any) {
+  // Build KPI columns from scorecard keys
+  const kpiKeys: string[] = data.scorecardKpiKeys || [];
+  const prettify = (key: string) => key.replace(/_/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase());
+
   const headers = [
     'Rank',
     'Rep Name',
-    'Apptivity Score'
+    'Team',
+    'Apptivity Score',
+    ...kpiKeys.flatMap((k: string) => [prettify(k) + ' (Value)', prettify(k) + ' (% Goal)']),
   ];
 
   const rows = data.rows.map((row: any, index: number) => [
     index + 1,
     row.name,
-    row.apptivityScore + '%'
+    row.team_name || '',
+    row.apptivityScore + '%',
+    ...kpiKeys.flatMap((k: string) => {
+      const kpi = row.kpis?.[k];
+      return [kpi?.value ?? '', kpi?.percentage != null ? kpi.percentage + '%' : ''];
+    }),
   ]);
 
-  // Add aggregate KPIs
+  // Add aggregate KPIs summary (dynamic array or legacy object)
   rows.push([]);
   rows.push(['Aggregate KPIs']);
-  rows.push(['Total Call Connects', aggregateKPIs.totalCalls]);
-  rows.push(['Total Meetings', aggregateKPIs.totalMeetings]);
-  rows.push(['Total Talk Time (minutes)', aggregateKPIs.totalTalkTime]);
+  if (Array.isArray(aggregateKPIs)) {
+    aggregateKPIs.forEach((kpi: any) => {
+      rows.push([kpi.name, kpi.total]);
+    });
+  } else {
+    // Legacy fallback
+    if (aggregateKPIs.totalCalls != null) rows.push(['Total Call Connects', aggregateKPIs.totalCalls]);
+    if (aggregateKPIs.totalMeetings != null) rows.push(['Total Meetings', aggregateKPIs.totalMeetings]);
+    if (aggregateKPIs.totalTalkTime != null) rows.push(['Total Talk Time (minutes)', aggregateKPIs.totalTalkTime]);
+  }
+
+  // Add filter context
+  rows.push([]);
+  rows.push(['Export Filters']);
+  if (filters.dateRange) rows.push(['Date Range', filters.dateRange]);
+  if (filters.teams?.length) rows.push(['Teams', filters.teams.join(', ')]);
+  if (filters.departments?.length) rows.push(['Departments', filters.departments.join(', ')]);
 
   exportToCSV({
     headers,

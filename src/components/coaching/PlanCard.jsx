@@ -1,12 +1,16 @@
-import React from 'react';
-import { Target, Edit, Trash2, UserPlus, Users } from 'lucide-react';
+import React, { useMemo } from 'react';
+import { Target, Edit, Trash2, UserPlus, Users, TrendingUp, TrendingDown, Mail, Share2 } from 'lucide-react';
 import { statusConfig } from './planStatusConfig';
+import { estimateSkillsetXp } from '../../constants/skillsets';
+import { parseEnrichedContent } from '../../utils/emailTemplates';
+import { buildLabel } from '../../constants/kpiGuidance';
 
 export default function PlanCard({
   plan,
   canCreatePlans,
   canManagePlans,
   assignmentStatuses,
+  assignmentEffectiveness,
   user,
   isPowerUser,
   getPlanStatus,
@@ -14,15 +18,27 @@ export default function PlanCard({
   onEdit,
   onAssign,
   onDelete,
+  onShare,
+  onSnapshot,
 }) {
   const planStatus = getPlanStatus(plan);
   const isOverdue = plan.date_range_end && new Date() > new Date(plan.date_range_end) && planStatus !== 'completed';
   const displayStatus = isOverdue ? 'overdue' : planStatus;
+  const xpEstimate = plan.focus_kpis?.length > 0 ? estimateSkillsetXp(plan.focus_kpis) : [];
   const cfg = statusConfig[displayStatus] || statusConfig.active;
   const StatusIcon = cfg.icon;
 
+  // Aggregate effectiveness score across completed assignments
+  const effScore = useMemo(() => {
+    const effData = assignmentEffectiveness?.[plan.id];
+    if (!effData) return null;
+    const scores = Object.values(effData).filter(d => d.score != null).map(d => d.score);
+    if (scores.length === 0) return null;
+    return Math.round(scores.reduce((s, v) => s + v, 0) / scores.length);
+  }, [assignmentEffectiveness, plan.id]);
+
   return (
-    <div className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow flex flex-col">
+    <div className={`border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow flex flex-col border-l-4 ${cfg.borderColor}`}>
       {/* Header */}
       <div className="flex items-start justify-between mb-3">
         <div className="flex-1">
@@ -32,11 +48,18 @@ export default function PlanCard({
             <p className="text-xs text-gray-500">{plan.date_range_start} → {plan.date_range_end}</p>
           )}
         </div>
-        <span className={`px-2 py-1 text-xs rounded-full ${
-          plan.plan_type === 'auto' ? 'bg-blue-100 text-blue-700' : 'bg-purple-100 text-purple-700'
-        }`}>
-          {plan.plan_type === 'auto' ? 'Template' : 'Custom'}
-        </span>
+        <div className="flex flex-col items-end gap-1">
+          {plan.visibility === 'team' && (
+            <span className="px-2 py-0.5 text-[10px] rounded-full bg-amber-100 text-amber-700 font-semibold">
+              Playbook
+            </span>
+          )}
+          <span className={`px-2 py-0.5 text-[10px] rounded-full ${
+            plan.plan_type === 'auto' ? 'bg-blue-100 text-blue-700' : 'bg-purple-100 text-purple-700'
+          }`}>
+            {plan.plan_type === 'auto' ? 'Template' : 'Custom'}
+          </span>
+        </div>
       </div>
 
       {/* Focus KPIs */}
@@ -46,7 +69,7 @@ export default function PlanCard({
           <div className="flex flex-wrap gap-1">
             {plan.focus_kpis.slice(0, 2).map((kpi, idx) => (
               <span key={idx} className="px-2 py-0.5 bg-gray-100 text-gray-700 rounded text-xs">
-                {kpi.replace(/_/g, ' ')}
+                {buildLabel(kpi)}
               </span>
             ))}
             {plan.focus_kpis.length > 2 && (
@@ -58,12 +81,56 @@ export default function PlanCard({
         </div>
       )}
 
+      {/* XP Estimate */}
+      {xpEstimate.length > 0 && (
+        <div className="mb-3">
+          <div className="flex flex-wrap gap-1">
+            {xpEstimate.slice(0, 3).map(item => (
+              <span key={item.skillset} className="px-2 py-0.5 bg-yellow-50 text-yellow-700 rounded text-[10px] font-medium">
+                ~{item.estimatedXp} {item.skillset} XP
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Enriched context preview */}
+      {(() => {
+        const enriched = parseEnrichedContent(plan.content);
+        if (!enriched) return null;
+        const ctx = enriched.context;
+        const totalXp = ctx.xpEstimate?.reduce((s, e) => s + e.estimatedXp, 0) || 0;
+        return (
+          <div className="mb-3 text-xs text-gray-500">
+            <span className="font-medium">{ctx.currentScore}% score</span>
+            {ctx.laggingKpis?.length > 0 && (
+              <span> · {ctx.laggingKpis.length} lagging KPI{ctx.laggingKpis.length !== 1 ? 's' : ''}</span>
+            )}
+            {totalXp > 0 && (
+              <span> · ~{totalXp} XP potential</span>
+            )}
+          </div>
+        );
+      })()}
+
       {/* Status badge */}
       {plan.assigned_to?.length > 0 && (
         <div className="mb-3">
           <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${cfg.color}`}>
             <StatusIcon size={12} />
             {cfg.label}
+          </span>
+        </div>
+      )}
+
+      {/* Effectiveness badge (completed plans only) */}
+      {effScore != null && (
+        <div className="mb-3">
+          <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-bold ${
+            effScore >= 0 ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'
+          }`}>
+            {effScore >= 0 ? <TrendingUp size={12} /> : <TrendingDown size={12} />}
+            {effScore >= 0 ? '+' : ''}{effScore}% improvement
           </span>
         </div>
       )}
@@ -108,7 +175,7 @@ export default function PlanCard({
             <Edit size={14} />
           </button>
         )}
-        {canManagePlans && (
+        {canManagePlans && plan.visibility !== 'team' && (
           <button
             onClick={() => onAssign(plan)}
             className="flex items-center justify-center gap-1 px-3 py-1.5 text-xs font-semibold text-green-600 border border-green-600 rounded-md hover:bg-green-50"
@@ -116,6 +183,24 @@ export default function PlanCard({
           >
             <UserPlus size={14} />
           </button>
+        )}
+        {(canCreatePlans || canManagePlans) && (
+          <>
+            <button
+              onClick={() => onSnapshot && onSnapshot(plan)}
+              className="flex items-center justify-center gap-1 px-3 py-1.5 text-xs font-semibold text-indigo-500 border border-indigo-300 rounded-md hover:bg-indigo-50"
+              title="Share Snapshot"
+            >
+              <Share2 size={14} />
+            </button>
+            <button
+              onClick={() => onShare(plan)}
+              className="flex items-center justify-center gap-1 px-3 py-1.5 text-xs font-semibold text-blue-500 border border-blue-300 rounded-md hover:bg-blue-50"
+              title="Share via Email"
+            >
+              <Mail size={14} />
+            </button>
+          </>
         )}
         {canCreatePlans && (
           <button

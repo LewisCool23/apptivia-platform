@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useAuth } from '../AuthContext';
-import { Edit, Camera, Award, TrendingUp, Search, X } from 'lucide-react';
+import { Edit, Camera, Award, TrendingUp, Search, X, Gift } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import DashboardLayout from '../DashboardLayout';
 import RightFilterPanel from '../components/RightFilterPanel';
@@ -16,11 +16,13 @@ import ChangePasswordModal from '../components/ChangePasswordModal';
 import { normalizeRole } from '../permissions';
 import { supabase } from '../supabaseClient';
 import { useNotifications } from '../contexts/NotificationContext';
+import { useToast } from '../contexts/ToastContext';
+import Tooltip from '../components/shared/Tooltip';
 
 export default function Profile() {
   const navigate = useNavigate();
   const { user, profile, role, hasPermission, refreshProfile } = useAuth();
-  const [photo, setPhoto] = useState(null);
+  const toast = useToast();
   const [badges, setBadges] = useState([]);
   const [badgeModal, setBadgeModal] = useState({ isOpen: false, badge: null });
   const [viewAllBadgesModal, setViewAllBadgesModal] = useState(false);
@@ -63,6 +65,13 @@ export default function Profile() {
   const [showSearchResults, setShowSearchResults] = useState(false);
   const [searching, setSearching] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
+  const [allSkillsets, setAllSkillsets] = useState([]);
+  const [isTeamSkillsetView, setIsTeamSkillsetView] = useState(false);
+  const [showAwardBadgeModal, setShowAwardBadgeModal] = useState(false);
+  const [awardBadgeForm, setAwardBadgeForm] = useState({ badge_name: '', profile_id: '' });
+  const [awardingBadge, setAwardingBadge] = useState(false);
+  const [availableBadgeDefs, setAvailableBadgeDefs] = useState([]);
 
   const isAdmin = role === 'admin';
   const isManager = role === 'manager';
@@ -75,7 +84,6 @@ export default function Profile() {
   const canEditTeamProfiles = isManager && canManageTeamMembers;
   const canManageBadges = isAdmin || role === 'manager';
 
-  const integrations = useMemo(() => (['Salesforce', 'Gong', 'Outreach', 'Calendar']), []);
   const repName = useMemo(() => {
     const first = profile?.first_name || '';
     const last = profile?.last_name || '';
@@ -316,28 +324,141 @@ export default function Profile() {
   const fetchAchievements = async () => {
     try {
       setLoadingAchievements(true);
-      const { data, error } = await supabase
-        .from('profile_skillsets')
-        .select(`
-          *,
-          skillset:skillsets(
-            id,
-            name,
-            description,
-            color,
-            icon
-          )
-        `)
-        .eq('profile_id', user.id)
-        .order('progress', { ascending: false });
 
-      if (error) {
-        console.error('Error fetching achievements:', error);
-        throw error;
+      // Managers/admins/coaches see team-aggregated skillset progress
+      const showTeam = isManager || isAdmin || role === 'coach';
+      let targetProfileIds = [user.id];
+
+      if (showTeam) {
+        let membersQuery = supabase
+          .from('profiles')
+          .select('id')
+          .not('role', 'in', '("admin","manager","coach")');
+        if (isManager && teamId) {
+          membersQuery = membersQuery.eq('team_id', teamId);
+        }
+        const { data: members } = await membersQuery;
+        if (members && members.length > 0) {
+          targetProfileIds = members.map(m => m.id);
+        }
       }
-      
-      console.log('Profile achievements data:', data);
-      setAchievements(data || []);
+      setIsTeamSkillsetView(showTeam && targetProfileIds.length > 1);
+
+      const [progressResult, skillsetsResult, achievementsResult, earnedResult] = await Promise.all([
+        supabase
+          .from('profile_skillsets')
+          .select(`*, skillset:skillsets(id, name, description, color, icon)`)
+          .in('profile_id', targetProfileIds),
+        supabase
+          .from('skillsets')
+          .select('id, name, description, color, icon')
+          .order('name'),
+        supabase
+          .from('achievements')
+          .select('id, skillset_id, points'),
+        supabase
+          .from('profile_achievements')
+          .select('achievement_id, profile_id')
+          .in('profile_id', targetProfileIds),
+      ]);
+
+      if (progressResult.error) throw progressResult.error;
+      const userProgress = progressResult.data || [];
+      const allSkills = skillsetsResult.data || [];
+      setAllSkillsets(allSkills);
+
+      // Build achievement info: total points + total count per skillset
+      const totalPointsBySkillset = new Map();
+      const totalCountBySkillset = new Map();
+      const achievementInfoMap = new Map();
+      (achievementsResult.data || []).forEach(ach => {
+        const pts = ach.points || 0;
+        totalPointsBySkillset.set(ach.skillset_id, (totalPointsBySkillset.get(ach.skillset_id) || 0) + pts);
+        totalCountBySkillset.set(ach.skillset_id, (totalCountBySkillset.get(ach.skillset_id) || 0) + 1);
+        achievementInfoMap.set(ach.id, { skillset_id: ach.skillset_id, points: pts });
+      });
+
+      if (showTeam && targetProfileIds.length > 1) {
+        // Team aggregation: average progress across all members
+        const memberCount = targetProfileIds.length;
+        const earnedByMemberSkillset = new Map();
+        (earnedResult.data || []).forEach(ea => {
+          const info = achievementInfoMap.get(ea.achievement_id);
+          if (!info) return;
+          const key = `${ea.profile_id}|${info.skillset_id}`;
+          const existing = earnedByMemberSkillset.get(key) || { points: 0, count: 0 };
+          existing.points += info.points;
+          existing.count += 1;
+          earnedByMemberSkillset.set(key, existing);
+        });
+
+        const merged = allSkills.map(skill => {
+          const totalPts = totalPointsBySkillset.get(skill.id) || 0;
+          const totalCount = totalCountBySkillset.get(skill.id) || 0;
+          let progressSum = 0, achievementsSum = 0, pointsSum = 0;
+
+          targetProfileIds.forEach(pid => {
+            const key = `${pid}|${skill.id}`;
+            const earned = earnedByMemberSkillset.get(key) || { points: 0, count: 0 };
+            const memberProgress = totalPts > 0 ? Math.min(100, Math.round((earned.points / totalPts) * 100)) : 0;
+            progressSum += memberProgress;
+            achievementsSum += earned.count;
+            pointsSum += earned.points;
+          });
+
+          return {
+            id: `team-${skill.id}`,
+            skillset_id: skill.id,
+            profile_id: 'team',
+            progress: Math.round(progressSum / memberCount),
+            achievements_completed: Math.round(achievementsSum / memberCount),
+            total_achievements: totalCount,
+            points: Math.round(pointsSum / memberCount),
+            skillset: skill,
+          };
+        });
+        merged.sort((a, b) => {
+          if (a.progress !== b.progress) return b.progress - a.progress;
+          return (a.skillset?.name || '').localeCompare(b.skillset?.name || '');
+        });
+        setAchievements(merged);
+      } else {
+        // Individual view (power users / reps)
+        const earnedPointsBySkillset = new Map();
+        const earnedCountBySkillset = new Map();
+        (earnedResult.data || []).forEach(ea => {
+          const info = achievementInfoMap.get(ea.achievement_id);
+          if (!info) return;
+          earnedPointsBySkillset.set(info.skillset_id, (earnedPointsBySkillset.get(info.skillset_id) || 0) + info.points);
+          earnedCountBySkillset.set(info.skillset_id, (earnedCountBySkillset.get(info.skillset_id) || 0) + 1);
+        });
+
+        const progressMap = new Map(userProgress.map(p => [p.skillset_id || p.skillset?.id, p]));
+        const merged = allSkills.map(skill => {
+          const existing = progressMap.get(skill.id);
+          const totalPts = totalPointsBySkillset.get(skill.id) || 0;
+          const totalCount = totalCountBySkillset.get(skill.id) || 0;
+          const earnedPts = earnedPointsBySkillset.get(skill.id) || 0;
+          const earnedCount = earnedCountBySkillset.get(skill.id) || 0;
+          const earnedProgress = totalPts > 0 ? Math.min(100, Math.round((earnedPts / totalPts) * 100)) : 0;
+
+          return {
+            id: existing?.id || `placeholder-${skill.id}`,
+            skillset_id: skill.id,
+            profile_id: user.id,
+            progress: earnedProgress,
+            achievements_completed: earnedCount,
+            total_achievements: totalCount,
+            points: earnedPts,
+            skillset: skill,
+          };
+        });
+        merged.sort((a, b) => {
+          if (a.progress !== b.progress) return b.progress - a.progress;
+          return (a.skillset?.name || '').localeCompare(b.skillset?.name || '');
+        });
+        setAchievements(merged);
+      }
     } catch (err) {
       console.error('Error fetching achievements:', err);
     } finally {
@@ -366,7 +487,7 @@ export default function Profile() {
   }, [badges, addNotification]);
 
   useEffect(() => {
-    if (achievements.length === 0) return;
+    if (achievements.length === 0 || isTeamSkillsetView) return;
     try {
       const stored = JSON.parse(window.localStorage.getItem('apptivia.achievementCounts') || '{}');
       achievements.forEach(a => {
@@ -394,20 +515,79 @@ export default function Profile() {
     if (!name) return '?';
     return name.split(' ').map(n => n[0]).join('').toUpperCase();
   };
-  const handlePhotoUpload = (e) => {
-    if (e.target.files && e.target.files[0]) {
-      setPhoto(URL.createObjectURL(e.target.files[0]));
+
+  const handlePhotoUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file || !user?.id) return;
+    if (file.size > 2 * 1024 * 1024) {
+      toast.error('Image must be under 2MB');
+      return;
+    }
+    setUploadingPhoto(true);
+    try {
+      const ext = file.name.split('.').pop();
+      const path = `avatars/${user.id}.${ext}`;
+      const { error: uploadError } = await supabase.storage
+        .from('profile-pictures')
+        .upload(path, file, { upsert: true });
+      if (uploadError) throw uploadError;
+      const { data: urlData } = supabase.storage
+        .from('profile-pictures')
+        .getPublicUrl(path);
+      const publicUrl = urlData?.publicUrl ? `${urlData.publicUrl}?t=${Date.now()}` : null;
+      if (publicUrl) {
+        await supabase.from('profiles').update({ profile_picture: publicUrl }).eq('id', user.id);
+        refreshProfile?.();
+        toast.success('Profile picture updated');
+      }
+    } catch (err) {
+      console.error('Photo upload error:', err);
+      toast.error('Failed to upload photo');
+    } finally {
+      setUploadingPhoto(false);
     }
   };
 
-
-  const getIntegrationStatus = (memberId, integrationName) => {
-    const seed = `${memberId || ''}-${integrationName}`;
-    let hash = 0;
-    for (let i = 0; i < seed.length; i += 1) {
-      hash = (hash + seed.charCodeAt(i)) % 10;
+  // Award badge to a team member (managers/admins)
+  const handleAwardBadge = async () => {
+    if (!awardBadgeForm.badge_name || !awardBadgeForm.profile_id) {
+      toast.error('Please select a badge and a team member');
+      return;
     }
-    return hash % 2 === 0;
+    setAwardingBadge(true);
+    try {
+      const badgeDef = availableBadgeDefs.find(b => b.badge_name === awardBadgeForm.badge_name);
+      const { error } = await supabase.from('profile_badges').insert([{
+        profile_id: awardBadgeForm.profile_id,
+        badge_name: awardBadgeForm.badge_name,
+        badge_description: badgeDef?.badge_description || '',
+        icon: badgeDef?.icon || '🏆',
+        color: badgeDef?.color || '#3B82F6',
+        badge_type: badgeDef?.badge_type || 'special',
+        points: badgeDef?.points || 0,
+        earned_at: new Date().toISOString(),
+      }]);
+      if (error) throw error;
+      const member = editableProfiles.find(p => String(p.id) === String(awardBadgeForm.profile_id));
+      toast.success(`Badge "${awardBadgeForm.badge_name}" awarded to ${formatProfileName(member)}`);
+      setShowAwardBadgeModal(false);
+      setAwardBadgeForm({ badge_name: '', profile_id: '' });
+      fetchBadges();
+    } catch (err) {
+      console.error('Award badge error:', err);
+      toast.error(err?.message || 'Failed to award badge');
+    } finally {
+      setAwardingBadge(false);
+    }
+  };
+
+  const loadBadgeDefinitions = async () => {
+    try {
+      const { data } = await supabase.from('badge_definitions').select('badge_name, badge_description, icon, color, badge_type, points').order('badge_name');
+      setAvailableBadgeDefs(data || []);
+    } catch (e) {
+      console.error('Error loading badge definitions:', e);
+    }
   };
 
   // Search functionality
@@ -544,10 +724,9 @@ export default function Profile() {
               className={`relative p-2 rounded-lg font-semibold text-sm bg-white text-gray-700 border border-gray-200 hover:bg-gray-50 group ${
                 isRefreshing ? 'opacity-50 cursor-not-allowed' : 'transition-all duration-200 hover:scale-105 hover:shadow-md'
               }`}
-              title="Refresh data"
             >
-              <svg 
-                className={`w-[18px] h-[18px] ${isRefreshing ? 'animate-spin' : ''}`} 
+              <svg
+                className={`w-[18px] h-[18px] ${isRefreshing ? 'animate-spin' : ''}`}
                 fill="none" 
                 stroke="currentColor" 
                 viewBox="0 0 24 24"
@@ -646,6 +825,28 @@ export default function Profile() {
               <div className="text-sm text-gray-500">No profile selected.</div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Profile Picture */}
+                {String(activeProfile.id) === String(user?.id) && (
+                  <div className="md:col-span-2 flex items-center gap-4 pb-3 border-b border-gray-100 mb-1">
+                    <div className="relative">
+                      <div className="w-16 h-16 rounded-full bg-blue-100 flex items-center justify-center text-xl font-bold text-blue-600 overflow-hidden">
+                        {profile?.profile_picture ? (
+                          <img src={profile.profile_picture} alt="Profile" className="w-full h-full object-cover" />
+                        ) : (
+                          getInitials(repName)
+                        )}
+                      </div>
+                      <label className="absolute -bottom-1 -right-1 w-7 h-7 bg-blue-600 rounded-full flex items-center justify-center cursor-pointer hover:bg-blue-700 transition-colors shadow-sm">
+                        <Camera size={14} className="text-white" />
+                        <input type="file" accept="image/*" className="hidden" onChange={handlePhotoUpload} disabled={uploadingPhoto} />
+                      </label>
+                    </div>
+                    <div>
+                      <div className="text-sm font-medium text-gray-900">{repName}</div>
+                      <div className="text-xs text-gray-500">{uploadingPhoto ? 'Uploading...' : 'Click camera icon to update photo'}</div>
+                    </div>
+                  </div>
+                )}
                 <div>
                   <label className="block text-xs text-gray-500 mb-1">First name</label>
                   <input
@@ -776,13 +977,22 @@ export default function Profile() {
                   Share Snapshot
                 </button>
                 {canManageBadges && (
-                  <button
-                    onClick={() => setShowBadgeCreationModal(true)}
-                    className="flex items-center gap-1 px-3 py-1.5 bg-emerald-50 text-emerald-700 rounded-lg text-sm font-medium hover:bg-emerald-100 transition-colors"
-                  >
-                    <span>➕</span>
-                    Create Custom Badge
-                  </button>
+                  <>
+                    <button
+                      onClick={() => { loadBadgeDefinitions(); setShowAwardBadgeModal(true); }}
+                      className="flex items-center gap-1 px-3 py-1.5 bg-amber-50 text-amber-700 rounded-lg text-sm font-medium hover:bg-amber-100 transition-colors"
+                    >
+                      <Gift size={14} />
+                      Award Badge
+                    </button>
+                    <button
+                      onClick={() => setShowBadgeCreationModal(true)}
+                      className="flex items-center gap-1 px-3 py-1.5 bg-emerald-50 text-emerald-700 rounded-lg text-sm font-medium hover:bg-emerald-100 transition-colors"
+                    >
+                      <span>➕</span>
+                      Create Custom Badge
+                    </button>
+                  </>
                 )}
                 <button
                   onClick={() => setViewAllBadgesModal(true)}
@@ -814,19 +1024,22 @@ export default function Profile() {
                       {badges.slice(0, 3).map((badge) => (
                         <div
                           key={badge.id}
-                          onClick={() => setBadgeModal({ isOpen: true, badge: { ...badge, name: badge.badge_name, description: badge.badge_description, earned_date: badge.earned_at } })}
-                          className="rounded-lg p-4 border-2 transition-all hover:scale-105 cursor-pointer hover:shadow-lg bg-gradient-to-br from-amber-50 to-yellow-50"
+                          onClick={() => setBadgeModal({ isOpen: true, badge: { ...badge, name: badge.badge_name, description: badge.badge_description, earned_date: badge.earned_at, category: badge.badge_type, rarity: badge.is_featured ? 'epic' : 'common' } })}
+                          className="rounded-lg p-4 text-center border-2 transition-all hover:scale-105 cursor-pointer hover:shadow-lg bg-gradient-to-br from-amber-50 to-yellow-50"
                           style={{ borderColor: badge.color || '#fbbf24' }}
-                          title={badge.badge_description}
                         >
-                          <div className="text-4xl mb-2 text-center">{badge.icon}</div>
-                          <div className="font-semibold text-sm text-center">{badge.badge_name}</div>
-                          {badge.badge_description && (
-                            <div className="text-xs text-gray-600 mt-1 line-clamp-2 text-center">{badge.badge_description}</div>
-                          )}
-                          <div className="text-xs text-gray-400 mt-2 text-center">
-                            {new Date(badge.earned_at).toLocaleDateString()}
-                          </div>
+                          <Tooltip text={badge.badge_description} position="bottom" wide>
+                            <div className="cursor-pointer">
+                              <div className="text-4xl mb-2">{badge.icon}</div>
+                              <div className="font-semibold text-sm">{badge.badge_name}</div>
+                              {badge.badge_description && (
+                                <div className="text-xs text-gray-600 mt-1 line-clamp-2">{badge.badge_description}</div>
+                              )}
+                              <div className="text-xs text-gray-400 mt-2">
+                                {new Date(badge.earned_at).toLocaleDateString()}
+                              </div>
+                            </div>
+                          </Tooltip>
                         </div>
                       ))}
                     </div>
@@ -840,29 +1053,32 @@ export default function Profile() {
                     {(showAllBadges ? badges : badges.slice(0, 8)).map((badge) => (
                       <div
                         key={badge.id}
-                        onClick={() => setBadgeModal({ isOpen: true, badge: { ...badge, name: badge.badge_name, description: badge.badge_description, earned_date: badge.earned_at } })}
+                        onClick={() => setBadgeModal({ isOpen: true, badge: { ...badge, name: badge.badge_name, description: badge.badge_description, earned_date: badge.earned_at, category: badge.badge_type, rarity: badge.is_featured ? 'epic' : 'common' } })}
                         className={`rounded-lg p-4 text-center border-2 transition-all hover:scale-105 cursor-pointer hover:shadow-lg ${
-                          badge.is_featured ? 'bg-gradient-to-br from-yellow-50 to-orange-50 shadow-md' : 'bg-white'
+                          badge.is_featured ? 'bg-gradient-to-br from-amber-50 to-yellow-50 shadow-md' : 'bg-white'
                         }`}
                         style={{ borderColor: badge.color || '#e5e7eb' }}
-                        title={badge.badge_description}
                       >
-                        {badge.is_featured && (
-                          <div className="text-xs font-bold text-orange-600 mb-1">⭐ FEATURED</div>
-                        )}
-                        <div className="text-4xl mb-2">{badge.icon}</div>
-                        <div className="font-semibold text-sm">{badge.badge_name}</div>
-                        {badge.badge_description && (
-                          <div className="text-xs text-gray-600 mt-1 line-clamp-2">{badge.badge_description}</div>
-                        )}
-                        {(badge.contest?.name || badge.achievement?.name) && (
-                          <div className="text-xs text-blue-600 mt-1 font-medium truncate">
-                            {badge.contest?.name || badge.achievement?.name}
+                        <Tooltip text={badge.badge_description} position="bottom" wide>
+                          <div className="cursor-pointer">
+                            {badge.is_featured && (
+                              <div className="text-xs font-bold text-orange-600 mb-1">⭐ FEATURED</div>
+                            )}
+                            <div className="text-4xl mb-2">{badge.icon}</div>
+                            <div className="font-semibold text-sm">{badge.badge_name}</div>
+                            {badge.badge_description && (
+                              <div className="text-xs text-gray-600 mt-1 line-clamp-2">{badge.badge_description}</div>
+                            )}
+                            {(badge.contest?.name || badge.achievement?.name) && (
+                              <div className="text-xs text-blue-600 mt-1 font-medium truncate">
+                                {badge.contest?.name || badge.achievement?.name}
+                              </div>
+                            )}
+                            <div className="text-xs text-gray-400 mt-2">
+                              {new Date(badge.earned_at).toLocaleDateString()}
+                            </div>
                           </div>
-                        )}
-                        <div className="text-xs text-gray-400 mt-2">
-                          {new Date(badge.earned_at).toLocaleDateString()}
-                        </div>
+                        </Tooltip>
                       </div>
                     ))}
                   </div>
@@ -884,21 +1100,13 @@ export default function Profile() {
         {/* Skillset Progress Tab */}
         {activeTab === 'skillset-progress' && (
           <div className="bg-white rounded-lg shadow-sm p-5">
-            {/* Achievements/Skillsets Progress */}
             <div id="achievements">
               <div className="flex items-center justify-between mb-3">
                 <h3 className="font-semibold text-base flex items-center gap-2">
                   <TrendingUp size={20} className="text-green-500" />
-                  Skillset Progress
+                  {isTeamSkillsetView ? 'Team Skillset Progress' : 'Skillset Progress'}
+                  {isTeamSkillsetView && <span className="text-xs font-normal text-gray-500 ml-1">(team average)</span>}
                 </h3>
-                {achievements.length > 3 && (
-                  <button
-                    onClick={() => setShowAllAchievements(!showAllAchievements)}
-                    className="text-blue-600 hover:underline text-sm font-medium"
-                  >
-                    {showAllAchievements ? 'Show Less' : 'Show All'}
-                  </button>
-                )}
               </div>
 
               {loadingAchievements ? (
@@ -909,80 +1117,51 @@ export default function Profile() {
                   <p className="text-gray-500 text-sm">Start completing achievements to unlock rewards!</p>
                 </div>
               ) : (
-                <div className="space-y-4">
-                  {(showAllAchievements ? achievements : achievements.slice(0, 3)).map((achievement) => (
-                    <div
-                      key={achievement.id}
-                      className="border rounded-lg p-4 hover:shadow-md transition-shadow"
-                      style={{ borderLeftWidth: '4px', borderLeftColor: achievement.skillset?.color || '#3B82F6' }}
-                    >
-                      <div className="flex items-start justify-between mb-2">
-                        <div className="flex-1">
-                          <div className="font-semibold text-base flex items-center gap-2">
+                <div className="space-y-2">
+                  {achievements.map((achievement) => {
+                    const pct = Math.round(achievement.progress || 0);
+                    const color = achievement.skillset?.color || '#3B82F6';
+                    return (
+                      <div
+                        key={achievement.id}
+                        onClick={() => navigate('/coach')}
+                        className="border rounded-lg px-4 py-3 hover:shadow-md transition-shadow cursor-pointer"
+                        style={{ borderLeftWidth: '4px', borderLeftColor: color }}
+                      >
+                        <div className="flex items-center justify-between mb-1.5">
+                          <div className="flex items-center gap-2">
                             {achievement.skillset?.icon && <span>{achievement.skillset.icon}</span>}
-                            {achievement.skillset?.name || 'Unknown Skillset'}
+                            <span className="font-semibold text-sm">{achievement.skillset?.name || 'Unknown Skillset'}</span>
+                            {achievement.skillset?.description && (
+                              <span className="text-xs text-gray-500 hidden sm:inline">— {achievement.skillset.description}</span>
+                            )}
                           </div>
-                          {achievement.skillset?.description && (
-                            <div className="text-sm text-gray-600 mt-1">{achievement.skillset.description}</div>
-                          )}
-                        </div>
-                        <div className="text-right ml-4">
-                          <div className="text-2xl font-bold" style={{ color: achievement.skillset?.color || '#3B82F6' }}>
-                            {Math.round(achievement.progress || 0)}%
+                          <div className="flex items-center gap-3">
+                            <div className="flex items-center gap-2 text-xs">
+                              <span className="text-emerald-600 font-medium">{achievement.achievements_completed || 0} earned</span>
+                              <span className="text-gray-300">|</span>
+                              <span className="text-blue-600 font-medium">{achievement.points || 0} pts</span>
+                              {pct >= 100 && (
+                                <>
+                                  <span className="text-gray-300">|</span>
+                                  <span className="text-green-600 font-medium">Mastered!</span>
+                                </>
+                              )}
+                            </div>
+                            <Tooltip text="Percentage of total achievement points earned" wide>
+                              <span className="text-lg font-bold cursor-help" style={{ color }}>{pct}%</span>
+                            </Tooltip>
                           </div>
-                          <div className="text-xs text-gray-500 mt-1">
-                            {achievement.achievements_completed || 0} of 100 achievements
-                          </div>
                         </div>
-                      </div>
-                      
-                      {/* Velocity & Activity Metrics */}
-                      <div className="flex items-center gap-3 mb-3 text-xs">
-                        <div className="flex items-center gap-1 text-emerald-600">
-                          <span>📈</span>
-                          <span className="font-medium">3 this week</span>
-                        </div>
-                        <div className="flex items-center gap-1 text-blue-600">
-                          <span>🔥</span>
-                          <span className="font-medium">5 day streak</span>
-                        </div>
-                        <div className="flex items-center gap-1 text-gray-500">
-                          <span>⏳</span>
-                          <span>~{Math.ceil((100 - (achievement.achievements_completed || 0)) / 3)} weeks to 100%</span>
-                        </div>
-                      </div>
-                      
-                      <div className="mb-2">
-                        <div className="flex justify-between text-xs text-gray-600 mb-1">
-                          <span className="font-medium">Progress to next milestone</span>
-                          {achievement.next_milestone && (
-                            <span className="text-blue-600 font-semibold">{achievement.next_milestone}</span>
-                          )}
-                        </div>
-                        <div className="w-full bg-gray-200 rounded-full h-2">
+                        <div className="w-full bg-gray-200 rounded-full h-1.5">
                           <div
-                            className="h-2 rounded-full transition-all duration-300"
-                            style={{
-                              width: `${achievement.progress || 0}%`,
-                              backgroundColor: achievement.skillset?.color || '#3B82F6'
-                            }}
+                            className="h-1.5 rounded-full transition-all duration-300"
+                            style={{ width: `${pct}%`, backgroundColor: color }}
                           />
                         </div>
                       </div>
-
-                      {/* View Achievements Button */}
-                      <button
-                        onClick={() => navigate('/coach')}
-                        className="w-full mt-2 py-2 px-3 rounded-lg text-sm font-medium transition-colors hover:opacity-80"
-                        style={{ 
-                          backgroundColor: `${achievement.skillset?.color || '#3B82F6'}15`,
-                          color: achievement.skillset?.color || '#3B82F6'
-                        }}
-                      >
-                        View All Achievements →
-                      </button>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
             </div>
@@ -1017,7 +1196,7 @@ export default function Profile() {
                 <div className="bg-gray-50 rounded-xl p-3 border">
                   <div className="flex items-center justify-between mb-2">
                     <div className="text-xs font-semibold text-gray-600">Teams</div>
-                    <button className="text-xs text-blue-600 font-semibold">+ Add Team</button>
+                    <span className="text-[10px] text-gray-400">Manage in Systems</span>
                   </div>
                   <div className="space-y-2 max-h-[420px] overflow-auto">
                     {teams.length === 0 ? (
@@ -1044,9 +1223,8 @@ export default function Profile() {
                         {teams.find(t => String(t.id) === String(selectedTeamId))?.name || 'Select a team'}
                       </div>
                     </div>
-                    <div className="flex gap-2">
-                      <button className="text-xs font-semibold text-blue-600">+ Add Member</button>
-                      <button className="text-xs font-semibold text-red-500">Remove Member</button>
+                    <div className="text-xs text-gray-400">
+                      Team member management available in Systems → Permissions & Teams
                     </div>
                   </div>
                   <div className="space-y-2 max-h-[420px] overflow-auto">
@@ -1058,14 +1236,6 @@ export default function Profile() {
                           <div>
                             <div className="text-sm font-semibold">{`${member.first_name || ''} ${member.last_name || ''}`.trim() || member.email}</div>
                             <div className="text-[11px] text-gray-500">{normalizeRole(member.role)}</div>
-                          </div>
-                          <div className="flex items-center gap-2 text-[11px] text-gray-500">
-                            {integrations.map((integration) => (
-                              <div key={integration} className="flex items-center gap-1">
-                                <span className={`w-2.5 h-2.5 rounded-full ${getIntegrationStatus(member.id, integration) ? 'bg-green-500' : 'bg-gray-300'}`} />
-                                <span>{integration}</span>
-                              </div>
-                            ))}
                           </div>
                         </div>
                       ))
@@ -1105,9 +1275,8 @@ export default function Profile() {
                       {teams.find(t => String(t.id) === String(selectedTeamId))?.name || 'Your Team'}
                     </div>
                   </div>
-                  <div className="flex gap-2">
-                    <button className="text-xs font-semibold text-blue-600">+ Add Member</button>
-                    <button className="text-xs font-semibold text-red-500">Remove Member</button>
+                  <div className="text-xs text-gray-400">
+                    Manage members in Systems → Permissions & Teams
                   </div>
                 </div>
                 <div className="overflow-auto">
@@ -1115,30 +1284,21 @@ export default function Profile() {
                     <thead>
                       <tr className="text-left text-gray-500">
                         <th className="py-2">Team Member</th>
-                        {integrations.map((integration) => (
-                          <th key={integration} className="py-2 text-center">{integration}</th>
-                        ))}
+                        <th className="py-2">Role</th>
                       </tr>
                     </thead>
                     <tbody>
                       {teamMembers.length === 0 ? (
                         <tr>
-                          <td colSpan={integrations.length + 1} className="py-4 text-center text-gray-500">No team members available.</td>
+                          <td colSpan={2} className="py-4 text-center text-gray-500">No team members available.</td>
                         </tr>
                       ) : (
                         teamMembers.map((member) => (
                           <tr key={member.id} className="border-t">
                             <td className="py-2">
                               <div className="font-semibold text-gray-900">{`${member.first_name || ''} ${member.last_name || ''}`.trim() || member.email}</div>
-                              <div className="text-[11px] text-gray-500">{normalizeRole(member.role)}</div>
                             </td>
-                            {integrations.map((integration) => (
-                              <td key={integration} className="text-center">
-                                <span className={`inline-flex items-center justify-center w-5 h-5 rounded-full text-[10px] ${getIntegrationStatus(member.id, integration) ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>
-                                  {getIntegrationStatus(member.id, integration) ? '✓' : '—'}
-                                </span>
-                              </td>
-                            ))}
+                            <td className="py-2 text-gray-500">{normalizeRole(member.role)}</td>
                           </tr>
                         ))
                       )}
@@ -1225,6 +1385,78 @@ export default function Profile() {
           });
         }}
       />
+      {/* Award Badge Modal */}
+      {showAwardBadgeModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={() => setShowAwardBadgeModal(false)}>
+          <div className="bg-white rounded-xl shadow-2xl max-w-md w-full" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
+              <div className="flex items-center gap-2">
+                <Gift size={20} className="text-amber-500" />
+                <h3 className="text-lg font-bold text-gray-900">Award Badge</h3>
+              </div>
+              <button onClick={() => setShowAwardBadgeModal(false)} className="p-2 hover:bg-gray-100 rounded-lg">
+                <X size={18} className="text-gray-400" />
+              </button>
+            </div>
+            <div className="p-6 space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">Badge</label>
+                <select
+                  value={awardBadgeForm.badge_name}
+                  onChange={(e) => setAwardBadgeForm(prev => ({ ...prev, badge_name: e.target.value }))}
+                  className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                >
+                  <option value="">Select a badge...</option>
+                  {availableBadgeDefs.map((b) => (
+                    <option key={b.badge_name} value={b.badge_name}>{b.icon} {b.badge_name}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">Team Member</label>
+                <select
+                  value={awardBadgeForm.profile_id}
+                  onChange={(e) => setAwardBadgeForm(prev => ({ ...prev, profile_id: e.target.value }))}
+                  className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                >
+                  <option value="">Select a member...</option>
+                  {editableProfiles.filter(p => !['admin', 'manager'].includes(normalizeRole(p.role))).map((p) => (
+                    <option key={p.id} value={p.id}>{formatProfileName(p)}</option>
+                  ))}
+                </select>
+              </div>
+              {awardBadgeForm.badge_name && (() => {
+                const sel = availableBadgeDefs.find(b => b.badge_name === awardBadgeForm.badge_name);
+                return sel ? (
+                  <div className="flex items-center gap-3 p-3 bg-amber-50 rounded-lg border border-amber-200">
+                    <span className="text-3xl">{sel.icon}</span>
+                    <div>
+                      <div className="text-sm font-semibold text-gray-900">{sel.badge_name}</div>
+                      <div className="text-xs text-gray-600">{sel.badge_description}</div>
+                      <div className="text-xs text-amber-600 font-medium mt-0.5">{sel.points} points</div>
+                    </div>
+                  </div>
+                ) : null;
+              })()}
+              <div className="flex gap-2 pt-2">
+                <button
+                  onClick={handleAwardBadge}
+                  disabled={awardingBadge || !awardBadgeForm.badge_name || !awardBadgeForm.profile_id}
+                  className="flex-1 px-4 py-2 bg-amber-600 text-white rounded-lg text-sm font-medium hover:bg-amber-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  {awardingBadge ? 'Awarding...' : 'Award Badge'}
+                </button>
+                <button
+                  onClick={() => setShowAwardBadgeModal(false)}
+                  className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-300 transition-colors"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </DashboardLayout>
   );
 }

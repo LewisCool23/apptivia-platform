@@ -4,6 +4,7 @@ import { useAuth } from './AuthContext';
 import { supabase } from './supabaseClient';
 import { Home, Trophy, Gamepad2, BarChart3, Settings, User, Menu, LogOut, X, Zap, Building2, ChevronDown, ChevronRight, Search, Radar, Monitor } from 'lucide-react';
 import NotificationPanel from './components/NotificationPanel';
+import AaronChatbot from './AaronChatbot';
 
 const navigation = [
   { id: 'dashboard', name: 'Apptivia Scorecard', icon: Home, route: '/dashboard', description: 'Performance dashboard' },
@@ -21,7 +22,7 @@ const navigation = [
     subItems: [
       { id: 'integrations', name: 'Integrations', icon: Zap, route: '/integrations', description: 'Connect CRM systems' },
       { id: 'organization', name: 'Organization', icon: Building2, route: '/organization-settings', description: 'Manage settings' },
-      { id: 'permissions-teams', name: 'Permissions & Teams', icon: Settings, route: '/permissions-teams', description: 'Manage access' }
+      { id: 'permissions-teams', name: 'Permissions', icon: Settings, route: '/permissions-teams', description: 'Manage access' }
     ]
   },
   { id: 'profile', name: 'Profile', icon: User, route: '/profile', description: 'Personal settings' }
@@ -142,7 +143,7 @@ function DashboardLayout({ children }) {
 
       // Search contests
       const { data: contests } = await supabase
-        .from('contests')
+        .from('active_contests')
         .select('id, name, description')
         .ilike('name', `%${searchTerm}%`)
         .limit(5);
@@ -645,5 +646,4 @@ function DashboardLayout({ children }) {
   );
 }
 
-import AaronChatbot from './AaronChatbot';
 export default DashboardLayout;

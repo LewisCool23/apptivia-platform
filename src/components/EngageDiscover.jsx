@@ -4,10 +4,12 @@ import {
   RefreshCw, ExternalLink, ChevronDown, ChevronUp, Copy, Check,
   AlertTriangle, TrendingUp, Target, Briefcase, DollarSign,
   Star, Clock, Send, MessageSquare, BookOpen, Trash2, History, Eye,
-  Phone, UserPlus, Cpu, ArrowRight, ChevronRight
+  Phone, UserPlus, Cpu, ArrowRight, ChevronRight, Bookmark, BookmarkCheck,
+  MapPin, Twitter, PhoneCall, ClipboardList
 } from 'lucide-react';
 import { engageApi, engageDb } from '../utils/engageApi';
 import PromptTemplateSelector from './PromptTemplateSelector';
+import { supabase } from '../supabaseClient';
 
 // ── Broad default titles for people search ───────────────────
 const DEFAULT_PEOPLE_TITLES = [
@@ -294,7 +296,8 @@ function CompanyBriefPanel({ company, brief: rawBrief, dataSources, tokensUsed, 
 
 // ── Prospect Brief Panel ─────────────────────────────────────
 
-function ProspectBriefPanel({ prospect, brief: rawBrief, dataSources, tokensUsed, errors }) {
+function ProspectBriefPanel({ prospect, brief: rawBrief, dataSources, tokensUsed, errors, onCallContact, onSaveContact, isSaved }) {
+  const [copied, setCopied] = React.useState(null); // tracks which field was copied
   // If brief arrived as a JSON string (e.g. Claude wrapped in markdown fences), try to parse it
   const brief = React.useMemo(() => {
     if (!rawBrief) return null;
@@ -308,6 +311,29 @@ function ProspectBriefPanel({ prospect, brief: rawBrief, dataSources, tokensUsed
     }
   }, [rawBrief]);
 
+  const copyField = (field, value) => {
+    navigator.clipboard.writeText(value);
+    setCopied(field);
+    setTimeout(() => setCopied(null), 2000);
+  };
+
+  const prospectName = prospect?.name || prospect?.full_name || `${prospect?.first_name || ''} ${prospect?.last_name || ''}`.trim() || 'Unknown';
+  const phone = prospect?.sanitized_phone || prospect?.phone_number || prospect?.phone || prospect?.mobile_phone || prospect?.phone_numbers?.[0]?.sanitized_number || prospect?.phone_numbers?.[0]?.raw_number || '';
+  const location = prospect ? [prospect.city, prospect.state, prospect.country].filter(Boolean).join(', ') : '';
+  const companyWebsite = prospect?.organization?.website_url || prospect?.organization?.primary_domain || '';
+  const twitterUrl = prospect?.twitter_url || '';
+
+  const handleCopyAll = () => {
+    const lines = [prospectName];
+    if (prospect?.title) lines.push(prospect.title);
+    if (prospect?.organization?.name || prospect?.company_name) lines.push(prospect.organization?.name || prospect.company_name);
+    if (prospect?.email) lines.push(`Email: ${prospect.email}`);
+    if (phone) lines.push(`Phone: ${phone}`);
+    if (prospect?.linkedin_url) lines.push(`LinkedIn: ${prospect.linkedin_url}`);
+    if (location) lines.push(`Location: ${location}`);
+    copyField('all', lines.join('\n'));
+  };
+
   return (
     <div className="space-y-4">
       {/* Prospect Header */}
@@ -315,16 +341,21 @@ function ProspectBriefPanel({ prospect, brief: rawBrief, dataSources, tokensUsed
         <div className="bg-white rounded-xl border border-gray-100 p-5">
           <div className="flex items-start gap-4">
             {prospect.photo_url || prospect.avatar_url ? (
-              <img src={prospect.photo_url || prospect.avatar_url} alt="" className="w-12 h-12 rounded-full border border-gray-100 object-cover" />
+              <img src={prospect.photo_url || prospect.avatar_url} alt="" className="w-14 h-14 rounded-full border-2 border-gray-100 object-cover" />
             ) : (
-              <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full flex items-center justify-center">
-                <Users size={20} className="text-white" />
+              <div className="w-14 h-14 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full flex items-center justify-center">
+                <Users size={22} className="text-white" />
               </div>
             )}
             <div className="flex-1 min-w-0">
-              <h3 className="text-lg font-bold text-gray-900">
-                {prospect.name || prospect.full_name || `${prospect.first_name || ''} ${prospect.last_name || ''}`.trim() || 'Unknown'}
-              </h3>
+              <div className="flex items-center gap-2 flex-wrap">
+                <h3 className="text-lg font-bold text-gray-900">{prospectName}</h3>
+                {prospect.seniority && (
+                  <span className="text-[10px] text-purple-600 bg-purple-50 px-2 py-0.5 rounded-full font-medium capitalize">{prospect.seniority}</span>
+                )}
+              </div>
+
+              {/* Row 1: Title + Company */}
               <div className="flex items-center gap-3 mt-1 flex-wrap">
                 {prospect.title && (
                   <span className="text-xs text-gray-500 flex items-center gap-1">
@@ -336,17 +367,95 @@ function ProspectBriefPanel({ prospect, brief: rawBrief, dataSources, tokensUsed
                     <Building2 size={10} /> {prospect.organization?.name || prospect.company_name}
                   </span>
                 )}
-                {prospect.email && (
+                {location && (
                   <span className="text-xs text-gray-500 flex items-center gap-1">
-                    <Mail size={10} /> {prospect.email}
+                    <MapPin size={10} /> {location}
                   </span>
+                )}
+              </div>
+
+              {/* Row 2: Contact info with copy buttons */}
+              <div className="flex items-center gap-3 mt-2 flex-wrap">
+                {prospect.email && (
+                  <button
+                    onClick={() => copyField('email', prospect.email)}
+                    className="group/email text-xs text-blue-600 hover:text-blue-700 flex items-center gap-1 bg-blue-50 hover:bg-blue-100 px-2 py-1 rounded-lg transition-colors"
+                    title={`Copy: ${prospect.email}`}
+                  >
+                    <Mail size={10} />
+                    <span className="max-w-[180px] truncate">{prospect.email}</span>
+                    {copied === 'email' ? <Check size={9} className="text-emerald-500" /> : <Copy size={9} className="opacity-50 group-hover/email:opacity-100" />}
+                  </button>
+                )}
+                {phone && (
+                  <button
+                    onClick={() => copyField('phone', phone)}
+                    className="group/phone text-xs text-emerald-600 hover:text-emerald-700 flex items-center gap-1 bg-emerald-50 hover:bg-emerald-100 px-2 py-1 rounded-lg transition-colors"
+                    title={`Copy: ${phone}`}
+                  >
+                    <Phone size={10} />
+                    <span>{phone}</span>
+                    {copied === 'phone' ? <Check size={9} className="text-emerald-500" /> : <Copy size={9} className="opacity-50 group-hover/phone:opacity-100" />}
+                  </button>
                 )}
                 {prospect.linkedin_url && (
                   <a href={prospect.linkedin_url} target="_blank" rel="noopener noreferrer"
-                    className="text-xs text-blue-500 hover:text-blue-600 flex items-center gap-1">
+                    className="text-xs text-blue-500 hover:text-blue-600 flex items-center gap-1 bg-blue-50 hover:bg-blue-100 px-2 py-1 rounded-lg transition-colors">
                     <Linkedin size={10} /> LinkedIn <ExternalLink size={8} />
                   </a>
                 )}
+                {twitterUrl && (
+                  <a href={twitterUrl} target="_blank" rel="noopener noreferrer"
+                    className="text-xs text-sky-500 hover:text-sky-600 flex items-center gap-1 bg-sky-50 hover:bg-sky-100 px-2 py-1 rounded-lg transition-colors">
+                    <Twitter size={10} /> Twitter <ExternalLink size={8} />
+                  </a>
+                )}
+                {companyWebsite && (
+                  <a href={companyWebsite.startsWith('http') ? companyWebsite : `https://${companyWebsite}`} target="_blank" rel="noopener noreferrer"
+                    className="text-xs text-gray-500 hover:text-gray-700 flex items-center gap-1 bg-gray-50 hover:bg-gray-100 px-2 py-1 rounded-lg transition-colors">
+                    <Globe size={10} /> Website <ExternalLink size={8} />
+                  </a>
+                )}
+              </div>
+
+              {/* Row 3: Action buttons */}
+              <div className="flex items-center gap-2 mt-3">
+                {phone && onCallContact && (
+                  <button
+                    onClick={() => onCallContact({ name: prospectName, phone, company_name: prospect.organization?.name || prospect.company_name })}
+                    className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-medium rounded-lg transition-colors shadow-sm"
+                  >
+                    <PhoneCall size={11} /> Call
+                  </button>
+                )}
+                {prospect.email && (
+                  <a
+                    href={`mailto:${prospect.email}`}
+                    className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-500 hover:bg-blue-600 text-white text-xs font-medium rounded-lg transition-colors shadow-sm"
+                  >
+                    <Mail size={11} /> Email
+                  </a>
+                )}
+                {onSaveContact && (
+                  <button
+                    onClick={() => onSaveContact(prospect)}
+                    disabled={isSaved}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg transition-colors shadow-sm ${
+                      isSaved
+                        ? 'bg-gray-100 text-gray-400 cursor-default'
+                        : 'bg-purple-500 hover:bg-purple-600 text-white'
+                    }`}
+                  >
+                    {isSaved ? <><BookmarkCheck size={11} /> Saved</> : <><UserPlus size={11} /> Save Contact</>}
+                  </button>
+                )}
+                <button
+                  onClick={handleCopyAll}
+                  className="flex items-center gap-1.5 px-3 py-1.5 border border-gray-200 hover:border-gray-300 text-gray-600 hover:text-gray-800 text-xs font-medium rounded-lg transition-colors"
+                  title="Copy all contact info"
+                >
+                  {copied === 'all' ? <><Check size={11} className="text-emerald-500" /> Copied!</> : <><ClipboardList size={11} /> Copy All</>}
+                </button>
               </div>
             </div>
           </div>
@@ -534,7 +643,7 @@ function CollapsibleSection({ title, icon: Icon, expanded, onToggle, children })
 
 // ── Main Discover Component ─────────────────────────────────
 
-export default function EngageDiscover({ organizationId, userId, initialSearch, onInitialSearchConsumed }) {
+export default function EngageDiscover({ organizationId, userId, initialSearch, onInitialSearchConsumed, onCallContact }) {
   const [mode, setMode] = useState('company'); // 'company' | 'prospect' | 'people_search'
   const [searchInput, setSearchInput] = useState('');
   const [loading, setLoading] = useState(false);
@@ -549,6 +658,7 @@ export default function EngageDiscover({ organizationId, userId, initialSearch, 
   // People search results (multiple prospects from Apollo)
   const [peopleSearchResults, setPeopleSearchResults] = useState(null);
   const [peopleSearchFilters, setPeopleSearchFilters] = useState(null);
+  const [savedContactIds, setSavedContactIds] = useState(new Set());
 
   // Company disambiguation
   const [disambiguationResults, setDisambiguationResults] = useState(null);
@@ -682,6 +792,25 @@ export default function EngageDiscover({ organizationId, userId, initialSearch, 
     }
   }, [organizationId, userId, fetchSearchHistory]);
 
+  const saveContact = useCallback(async (person) => {
+    const key = person.id || person.email || `${person.first_name}${person.last_name}`;
+    if (savedContactIds.has(key)) return;
+    try {
+      await supabase.from('engage_prospects').insert({
+        organization_id: organizationId,
+        first_name: person.first_name || null,
+        last_name: person.last_name || null,
+        email: person.email || null,
+        phone: person.sanitized_phone || person.phone_number || person.phone || null,
+        linkedin_url: person.linkedin_url || null,
+        title: person.title || person.headline || null,
+        company_name: person.organization?.name || person.organization_name || null,
+        source: 'discover',
+      });
+      setSavedContactIds(prev => new Set([...prev, key]));
+    } catch { /* non-blocking */ }
+  }, [organizationId, savedContactIds]);
+
   const deleteFromHistory = useCallback(async (id) => {
     try {
       await (await import('../supabaseClient')).supabase.from('engage_research_reports').delete().eq('id', id);
@@ -804,9 +933,12 @@ export default function EngageDiscover({ organizationId, userId, initialSearch, 
         }
       } else if (mode === 'people_search') {
         if (findPeopleMode === 'company') {
-          // Find people at a specific company domain
+          // Find people at a specific company domain — pass ICP title filters if provided
           const domain = searchInput.trim();
-          const result = await engageApi.findPeopleAtCompany(domain);
+          const companyOpts = {};
+          if (peopleSearchFilters?.titles?.length) companyOpts.titles = peopleSearchFilters.titles;
+          if (peopleSearchFilters?.seniority?.length) companyOpts.seniority = peopleSearchFilters.seniority;
+          const result = await engageApi.findPeopleAtCompany(domain, Object.keys(companyOpts).length ? companyOpts : undefined);
           const people = result?.data?.people || result?.data?.contacts || result?.data || [];
           setPeopleSearchResults(Array.isArray(people) ? people : []);
           saveToHistory('people_search', domain, { people: Array.isArray(people) ? people : [], mode: 'company' });
@@ -1311,6 +1443,20 @@ export default function EngageDiscover({ organizationId, userId, initialSearch, 
                           <Linkedin size={12} />
                         </a>
                       )}
+                      {(() => {
+                        const key = person.id || person.email || `${person.first_name}${person.last_name}`;
+                        const saved = savedContactIds.has(key);
+                        return (
+                          <button
+                            onClick={() => saveContact(person)}
+                            disabled={saved}
+                            className={`transition-colors ${saved ? 'text-blue-500' : 'text-gray-300 hover:text-blue-500 opacity-0 group-hover:opacity-100'}`}
+                            title={saved ? 'Contact saved' : 'Save contact'}
+                          >
+                            {saved ? <BookmarkCheck size={12} /> : <Bookmark size={12} />}
+                          </button>
+                        );
+                      })()}
                       <button
                         onClick={() => {
                           const org = person.organization?.name || person.organization_name || '';
@@ -1345,6 +1491,9 @@ export default function EngageDiscover({ organizationId, userId, initialSearch, 
           dataSources={prospectResult.data_sources}
           tokensUsed={prospectResult.tokens_used}
           errors={prospectResult.errors}
+          onCallContact={onCallContact}
+          onSaveContact={saveContact}
+          isSaved={savedContactIds.has(prospectResult.prospect?.id || prospectResult.prospect?.email || `${prospectResult.prospect?.first_name}${prospectResult.prospect?.last_name}`)}
         />
       )}
 
@@ -1427,13 +1576,15 @@ export default function EngageDiscover({ organizationId, userId, initialSearch, 
                       <td className="px-4 py-3">
                         {phone ? (
                           <button
-                            onClick={() => { navigator.clipboard.writeText(phone); }}
+                            onClick={() => onCallContact
+                              ? onCallContact({ name, phone, company_name: org })
+                              : navigator.clipboard.writeText(phone)
+                            }
                             className="flex items-center gap-1 text-emerald-600 hover:text-emerald-800 transition-colors group/phone"
-                            title={`Copy: ${phone}`}
+                            title={onCallContact ? `Call ${name}` : `Copy: ${phone}`}
                           >
                             <Phone size={11} className="flex-shrink-0" />
                             <span className="whitespace-nowrap">{phone}</span>
-                            <Copy size={9} className="opacity-0 group-hover/phone:opacity-100 transition-opacity flex-shrink-0" />
                           </button>
                         ) : (
                           <span className="text-gray-300">—</span>
@@ -1444,6 +1595,20 @@ export default function EngageDiscover({ organizationId, userId, initialSearch, 
                       </td>
                       <td className="px-4 py-3">
                         <div className="flex items-center justify-center gap-2">
+                          {(() => {
+                            const key = person.id || email || `${person.first_name}${person.last_name}`;
+                            const saved = savedContactIds.has(key);
+                            return (
+                              <button
+                                onClick={() => saveContact(person)}
+                                disabled={saved}
+                                className={saved ? 'text-blue-500' : 'text-gray-300 hover:text-blue-500 transition-colors'}
+                                title={saved ? 'Contact saved' : 'Save contact'}
+                              >
+                                {saved ? <BookmarkCheck size={13} /> : <Bookmark size={13} />}
+                              </button>
+                            );
+                          })()}
                           {linkedin && (
                             <a href={linkedin} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:text-blue-700 transition-colors" title="LinkedIn Profile">
                               <Linkedin size={13} />
@@ -1484,7 +1649,11 @@ export default function EngageDiscover({ organizationId, userId, initialSearch, 
         <div className="bg-white rounded-xl border border-gray-100 p-8 text-center">
           <Users size={24} className="text-gray-300 mx-auto mb-3" />
           <p className="text-sm font-medium text-gray-600">No people found</p>
-          <p className="text-xs text-gray-400 mt-1">Try a different technology name or broaden your search</p>
+          <p className="text-xs text-gray-400 mt-1">
+            {findPeopleMode === 'company'
+              ? 'No contacts found at this domain — try entering the full domain (e.g. cloudeagle.ai)'
+              : 'Try a different technology name or broaden your search'}
+          </p>
         </div>
       )}
 

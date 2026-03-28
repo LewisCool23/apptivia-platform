@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, useMemo } from 'react';
 import { supabase } from '../supabaseClient';
 
 interface Props {
@@ -38,9 +38,7 @@ export default function ScorecardFilters({
   onFilterChange
 }: Props) {
   const [dateRange, setDateRange] = useState('This Week');
-  const [showCustomDate, setShowCustomDate] = useState(false);
-  const [customStartDate, setCustomStartDate] = useState('');
-  const [customEndDate, setCustomEndDate] = useState('');
+  const [customWeekDate, setCustomWeekDate] = useState('');
   const [teams, setTeams] = useState<any[]>([]);
   const [profiles, setProfiles] = useState<any[]>([]);
   const [departments, setDepartments] = useState<string[]>([]);
@@ -72,22 +70,36 @@ export default function ScorecardFilters({
     setSelectedDepartments(initialFilters?.departments || []);
     setSelectedTeams(initialFilters?.teams || []);
     setSelectedMembers(initialFilters?.members || []);
-    setShowCustomDate(nextDateRange === 'Custom');
-    setCustomStartDate('');
-    setCustomEndDate('');
+    setCustomWeekDate('');
   }, [resetSignal, initialFilters]);
 
-  // Notify parent of filter changes
+  // Snap a date string to the Monday of its week, return as YYYY-MM-DD
+  function snapToMonday(dateStr: string): string {
+    if (!dateStr) return '';
+    const d = new Date(dateStr + 'T00:00:00');
+    const day = d.getDay();
+    const diff = day === 0 ? -6 : 1 - day; // Mon=1..Sun=0
+    d.setDate(d.getDate() + diff);
+    return d.toISOString().slice(0, 10);
+  }
+
+  // Notify parent of filter changes.
+  // For Custom Week, encode the Monday date into the dateRange string so the
+  // parent can resolve it without needing extra props: "Custom Week|YYYY-MM-DD"
   useEffect(() => {
     if (onFilterChangeRef.current) {
+      let emittedDateRange = dateRange;
+      if (dateRange === 'Custom Week' && customWeekDate) {
+        emittedDateRange = `Custom Week|${snapToMonday(customWeekDate)}`;
+      }
       onFilterChangeRef.current({
-        dateRange,
+        dateRange: emittedDateRange,
         departments: selectedDepartments,
         teams: selectedTeams,
         members: selectedMembers,
       });
     }
-  }, [dateRange, selectedDepartments, selectedTeams, selectedMembers]);
+  }, [dateRange, customWeekDate, selectedDepartments, selectedTeams, selectedMembers]);
 
   useEffect(() => {
     let mounted = true;
@@ -111,7 +123,7 @@ export default function ScorecardFilters({
       }
 
       try {
-        const { data: profilesData, error: profilesErr } = await supabase.from('profiles').select('*');
+        const { data: profilesData, error: profilesErr } = await supabase.from('profiles').select('*').not('role', 'in', '("admin","manager","coach")');
         if (profilesErr) {
           console.error('Error loading profiles', profilesErr);
           if (mounted) setProfiles([]);
@@ -144,53 +156,30 @@ export default function ScorecardFilters({
       }
     };
 
+    // Helper: after teams state is updated via applyRowChange, derive
+    // departments from the CURRENT teams state (avoids stale closure).
+    const syncDepartmentsFromTeams = () => {
+      setTeams((currentTeams: any[]) => {
+        const depts = Array.from(new Set((currentTeams || []).map((t: any) => t.department).filter(Boolean)));
+        setDepartments(depts as string[]);
+        return currentTeams; // return unchanged — we just need to read the value
+      });
+    };
+
     try {
       if ((supabase as any).channel) {
         const ch = (supabase as any).channel('realtime_teams')
           .on('postgres_changes', { event: '*', schema: 'public', table: 'teams' }, (payload: any) => {
             applyRowChange(setTeams)(payload);
-            setDepartments(prev => {
-              const newTeams = (Array.isArray(teams) ? teams : []).slice();
-              try {
-                const r = payload?.new || payload?.record || payload?.after;
-                const o = payload?.old || payload?.prev || payload?.before;
-                if (r && !o) newTeams.push(r);
-                if (r && o) {
-                  const idx = newTeams.findIndex(t => String(t.id) === String(r.id));
-                  if (idx >= 0) newTeams[idx] = r;
-                }
-                if (!r && o) {
-                  const idx = newTeams.findIndex(t => String(t.id) === String(o.id));
-                  if (idx >= 0) newTeams.splice(idx, 1);
-                }
-              } catch (e) {}
-              const depts = Array.from(new Set(newTeams.map((t: any) => t.department).filter(Boolean)));
-              return depts;
-            });
+            // Derive departments after setTeams has been applied (next microtask)
+            setTimeout(syncDepartmentsFromTeams, 0);
           })
           .subscribe();
         subs.push(ch);
       } else if ((supabase as any).from) {
         const sub = (supabase as any).from('teams').on('*', (payload: any) => {
           applyRowChange(setTeams)(payload);
-          setDepartments(prev => {
-            const newTeams = (Array.isArray(teams) ? teams : []).slice();
-            try {
-              const r = payload?.new || payload?.record;
-              const o = payload?.old || null;
-              if (r && !o) newTeams.push(r);
-              if (r && o) {
-                const idx = newTeams.findIndex(t => String(t.id) === String(r.id));
-                if (idx >= 0) newTeams[idx] = r;
-              }
-              if (!r && o) {
-                const idx = newTeams.findIndex(t => String(t.id) === String(o.id));
-                if (idx >= 0) newTeams.splice(idx, 1);
-              }
-            } catch (e) {}
-            const depts = Array.from(new Set(newTeams.map((t: any) => t.department).filter(Boolean)));
-            return depts;
-          });
+          setTimeout(syncDepartmentsFromTeams, 0);
         }).subscribe();
         subs.push(sub);
       }
@@ -231,7 +220,7 @@ export default function ScorecardFilters({
     };
   }, []);
 
-  const filteredTeams = (() => {
+  const filteredTeams = useMemo(() => {
     let list = teams;
     if (selectedDepartments.length > 0) {
       list = list.filter(t => selectedDepartments.includes(t.department));
@@ -243,9 +232,9 @@ export default function ScorecardFilters({
       list = list.filter(t => restrictToDepartments.includes(String(t.department)));
     }
     return list;
-  })();
+  }, [teams, selectedDepartments, restrictToTeams, restrictToDepartments]);
 
-  const filteredMembers = (() => {
+  const filteredMembers = useMemo(() => {
     let list = profiles;
     if (selectedDepartments.length > 0) {
       list = list.filter((p: any) => selectedDepartments.includes(p.department));
@@ -263,7 +252,7 @@ export default function ScorecardFilters({
       list = list.filter((p: any) => restrictToDepartments.includes(String(p.department)));
     }
     return list;
-  })();
+  }, [profiles, selectedDepartments, selectedTeams, restrictToMembers, restrictToTeams, restrictToDepartments]);
 
   function handleMultiSelect(e: React.ChangeEvent<HTMLSelectElement>, setter: (v: any) => void) {
     const values = Array.from(e.target.selectedOptions, option => option.value);
@@ -280,19 +269,15 @@ export default function ScorecardFilters({
       {showDate && (
         <div>
           <label className="block text-xs text-gray-500 mb-1">Date Range</label>
-          <select 
-            value={dateRange} 
+          <select
+            value={dateRange}
             onChange={e => {
               const val = e.target.value;
               if (!lockedFilters?.dateRange) {
                 setDateRange(val);
               }
-              if (val === 'Custom') {
-                setShowCustomDate(true);
-              } else {
-                setShowCustomDate(false);
-              }
-            }} 
+              if (val !== 'Custom Week') setCustomWeekDate('');
+            }}
             className={`border rounded px-2 py-1 text-xs ${lockedFilters?.dateRange ? 'opacity-60 cursor-not-allowed' : ''}`}
             disabled={lockedFilters?.dateRange}
           >
@@ -301,33 +286,35 @@ export default function ScorecardFilters({
             <option>Last Week</option>
             <option>This Month</option>
             <option>Last Month</option>
-            <option>Custom</option>
+            <option>This Quarter</option>
+            <option>Last Quarter</option>
+            <option>Custom Week</option>
           </select>
         </div>
       )}
       
-      {showCustomDate && (
-        <>
-          <div>
-            <label className="block text-xs text-gray-500 mb-1">Start Date</label>
-            <input 
-              type="date" 
-              value={customStartDate}
-              onChange={e => setCustomStartDate(e.target.value)}
-              className="border rounded px-2 py-1 text-xs"
-            />
-          </div>
-          <div>
-            <label className="block text-xs text-gray-500 mb-1">End Date</label>
-            <input 
-              type="date" 
-              value={customEndDate}
-              onChange={e => setCustomEndDate(e.target.value)}
-              className="border rounded px-2 py-1 text-xs"
-            />
-          </div>
-        </>
+      {dateRange === 'Custom Week' && (
+        <div>
+          <label className="block text-xs text-gray-500 mb-1">Pick any day in the week</label>
+          <input
+            type="date"
+            title="Pick any day — the full Mon–Sun week will be selected"
+            value={customWeekDate}
+            onChange={e => setCustomWeekDate(e.target.value)}
+            className="border rounded px-2 py-1 text-xs"
+          />
+          {customWeekDate && (
+            <div className="text-[10px] text-gray-400 mt-0.5">
+              Week: {snapToMonday(customWeekDate)} → {(() => {
+                const mon = new Date(snapToMonday(customWeekDate) + 'T00:00:00');
+                mon.setDate(mon.getDate() + 6);
+                return mon.toISOString().slice(0, 10);
+              })()}
+            </div>
+          )}
+        </div>
       )}
+
 
       <div>
         <label className="block text-xs text-gray-500 mb-1">Departments</label>

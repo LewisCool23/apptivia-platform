@@ -1,0 +1,744 @@
+/**
+ * reportTemplates.js — Backend email template builders and data aggregation
+ * for scheduled reports. Plain CommonJS, importable from server.js.
+ *
+ * Ported from src/utils/emailTemplates.ts (brand colors, wrapper, stat grid, list sections).
+ * Data aggregation patterns mirror runScorecardAlerts, runKpiAnomalyAlerts, etc. in server.js.
+ */
+
+'use strict';
+
+// ── Brand Colors ─────────────────────────────────────────────────────
+const COLORS = {
+  blue: '#3b82f6',
+  purple: '#8b5cf6',
+  pink: '#ec4899',
+  green: '#10b981',
+  amber: '#f59e0b',
+  red: '#ef4444',
+  gray: '#6b7280',
+  lightGray: '#f3f4f6',
+};
+const GRADIENT = 'linear-gradient(135deg, #3b82f6 0%, #8b5cf6 50%, #ec4899 100%)';
+const FRONTEND_URL = process.env.FRONTEND_URL || 'https://apptivia.app';
+
+// ── Email Template Primitives ────────────────────────────────────────
+
+function buildEmailWrapper(title, subtitle, bodyHtml, options = {}) {
+  const { ctaUrl, ctaLabel, headerMeta, notesHtml, footerLabel } = options;
+  const date = new Date().toLocaleDateString();
+  const ctaBlock = ctaUrl && ctaLabel
+    ? `<div style="text-align: center; margin: 30px 0;">
+        <a href="${ctaUrl}" style="display: inline-block; background: ${GRADIENT}; color: white; padding: 12px 30px; text-decoration: none; border-radius: 8px; font-weight: bold;">${ctaLabel}</a>
+      </div>` : '';
+  const notesBlock = notesHtml
+    ? `<div style="background: #e0f2fe; padding: 15px; border-radius: 8px; margin: 20px 0;">
+        <strong>Notes:</strong><br/>${notesHtml}
+      </div>` : '';
+
+  return `<!DOCTYPE html>
+<html>
+<head>
+  <style>
+    body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0; }
+    .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+    .header { background: ${GRADIENT}; color: white; padding: 30px; border-radius: 10px; text-align: center; }
+    .stat-box { background: ${COLORS.lightGray}; padding: 20px; border-radius: 8px; text-align: center; }
+    .section { margin: 20px 0; }
+    .section-title { font-size: 16px; font-weight: bold; margin: 0 0 10px 0; color: #111827; }
+    .footer { text-align: center; color: ${COLORS.gray}; font-size: 12px; margin-top: 30px; border-top: 1px solid #e5e7eb; padding-top: 20px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1 style="margin: 0 0 5px 0;">${title}</h1>
+      <p style="margin: 0; opacity: 0.9;">${subtitle}</p>
+      ${headerMeta || ''}
+    </div>
+    ${bodyHtml}
+    ${notesBlock}
+    ${ctaBlock}
+    <div class="footer">
+      <p style="margin: 0 0 5px 0;">Generated on ${date}</p>
+      <p style="margin: 0;">${footerLabel || 'Apptivia Platform'}</p>
+      <p style="margin: 5px 0 0 0;"><a href="${FRONTEND_URL}" style="color: ${COLORS.blue};">Open Apptivia</a> | <a href="${FRONTEND_URL}/settings" style="color: ${COLORS.blue};">Manage Reports</a></p>
+    </div>
+  </div>
+</body>
+</html>`;
+}
+
+function buildStatGrid(stats, columns = 2) {
+  const rows = [];
+  for (let i = 0; i < stats.length; i += columns) {
+    const cells = stats.slice(i, i + columns).map(s => `
+      <td style="width: ${Math.round(100 / columns)}%; padding: 8px;">
+        <div style="background: ${COLORS.lightGray}; padding: 16px; border-radius: 8px; text-align: center;">
+          <div style="font-size: 28px; font-weight: bold; color: ${s.color || COLORS.blue};">${s.value}</div>
+          <div style="font-size: 13px; color: ${COLORS.gray};">${s.label}</div>
+        </div>
+      </td>
+    `).join('');
+    rows.push(`<tr>${cells}</tr>`);
+  }
+  return `<table style="width: 100%; border-collapse: collapse; margin: 20px 0;">${rows.join('')}</table>`;
+}
+
+function buildListSection(icon, title, items, style = 'bullet', borderColor) {
+  if (!items || items.length === 0) return '';
+  let listHtml;
+  if (style === 'numbered') {
+    listHtml = items.map((item, i) =>
+      `<div style="padding: 8px 0; border-bottom: 1px solid #f3f4f6; font-size: 14px;">${i + 1}. ${item}</div>`
+    ).join('');
+  } else if (style === 'card') {
+    listHtml = items.map(item =>
+      `<div style="background: #f9fafb; padding: 12px 15px; border-radius: 8px; margin-bottom: 8px; border-left: 4px solid ${borderColor || COLORS.blue}; font-size: 14px;">${item}</div>`
+    ).join('');
+  } else {
+    listHtml = items.map(item =>
+      `<div style="padding: 4px 0; font-size: 14px;">${'\u2022'} ${item}</div>`
+    ).join('');
+  }
+  return `<div style="margin: 20px 0;">
+    <h3 style="margin: 0 0 10px 0; font-size: 16px;">${icon} ${title}</h3>
+    ${listHtml}
+  </div>`;
+}
+
+function buildTable(headers, rows, options = {}) {
+  const headerCells = headers.map(h =>
+    `<th style="padding: 8px 12px; text-align: left; font-size: 12px; text-transform: uppercase; color: ${COLORS.gray}; background: ${COLORS.lightGray}; border-bottom: 2px solid #e5e7eb;">${h}</th>`
+  ).join('');
+  const bodyRows = rows.map(row =>
+    `<tr>${row.map(cell =>
+      `<td style="padding: 8px 12px; font-size: 14px; border-bottom: 1px solid #f3f4f6;">${cell}</td>`
+    ).join('')}</tr>`
+  ).join('');
+  return `<table style="width: 100%; border-collapse: collapse; margin: 15px 0;">
+    <thead><tr>${headerCells}</tr></thead>
+    <tbody>${bodyRows}</tbody>
+  </table>`;
+}
+
+// ── Shared Helpers (duplicated from server.js — small pure functions) ────
+
+function getWeekKey(date = new Date()) {
+  const weekNum = Math.ceil(date.getDate() / 7);
+  return `${date.getFullYear()}-W${String(weekNum).padStart(2, '0')}`;
+}
+
+async function fetchHistoricalConfig(sb, metricIds, rangeStart, rangeEnd) {
+  const { data: historyRows } = await sb
+    .from('kpi_metric_history')
+    .select('kpi_id, goal, weight, direction, valid_from, valid_to')
+    .in('kpi_id', metricIds)
+    .lte('valid_from', rangeEnd)
+    .or(`valid_to.is.null,valid_to.gte.${rangeStart}`);
+
+  function getConfigAt(kpiId, atDate, fallbackMetrics) {
+    const rows = historyRows || [];
+    const dt = typeof atDate === 'string' ? new Date(atDate) : atDate;
+    const match = rows.find(h =>
+      h.kpi_id === kpiId &&
+      new Date(h.valid_from) <= dt &&
+      (h.valid_to === null || new Date(h.valid_to) > dt)
+    );
+    if (match) return { goal: match.goal, weight: match.weight, direction: match.direction || 'higher' };
+    const fb = (fallbackMetrics || []).find(m => m.id === kpiId);
+    return fb ? { goal: fb.goal, weight: fb.weight, direction: fb.direction || 'higher' } : { goal: 1, weight: 1, direction: 'higher' };
+  }
+
+  return { historyRows: historyRows || [], getConfigAt };
+}
+
+function computeNextScheduledAt(report) {
+  const DOW_NAMES = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+  const now = new Date();
+  const next = new Date(now);
+  if (report.frequency === 'daily') {
+    next.setDate(now.getDate() + 1);
+  } else if (report.frequency === 'weekly' && report.day_of_week) {
+    const targetDow = DOW_NAMES.indexOf(report.day_of_week.toLowerCase());
+    const currentDow = now.getDay();
+    const daysUntil = ((targetDow - currentDow + 7) % 7) || 7;
+    next.setDate(now.getDate() + daysUntil);
+  } else {
+    // monthly: first of next month
+    next.setMonth(now.getMonth() + 1);
+    next.setDate(1);
+  }
+  return next.toISOString();
+}
+
+// ── Shared score computation ─────────────────────────────────────────
+
+function sumByProfileKpi(values) {
+  const map = {};
+  for (const v of (values || [])) {
+    const key = `${v.profile_id}:${v.kpi_id}`;
+    map[key] = (map[key] || 0) + (v.value || 0);
+  }
+  return map;
+}
+
+function computeScore(profileId, sums, metrics, getConfigAt, weekDate) {
+  let score = 0;
+  for (const metric of metrics) {
+    const cfg  = getConfigAt(metric.id, weekDate, metrics);
+    const val  = sums[`${profileId}:${metric.id}`] || 0;
+    const goal = cfg.goal || 1;
+    const dir  = cfg.direction || 'higher';
+    const pct  = dir === 'lower'
+      ? (val > 0 ? Math.min((goal / val) * 100, 200) : 200)
+      : (val / goal) * 100;
+    score += pct * cfg.weight;
+  }
+  return Math.round(score);
+}
+
+function repName(rep) {
+  return `${rep.first_name || ''} ${rep.last_name || ''}`.trim() || 'Team Member';
+}
+
+// ── Scorecard helpers shared across reports ──────────────────────────
+
+async function fetchScorecardData(sb, orgId) {
+  const now       = new Date();
+  const currEnd   = now.toISOString().split('T')[0];
+  const currStart = new Date(now.getTime() - 7 * 86400000).toISOString().split('T')[0];
+  const priorEnd  = currStart;
+  const priorStart = new Date(now.getTime() - 14 * 86400000).toISOString().split('T')[0];
+
+  const { data: metrics } = await sb
+    .from('kpi_metrics')
+    .select('id, kpi_key, kpi_name, goal, weight, direction')
+    .eq('is_active', true)
+    .eq('show_on_scorecard', true);
+
+  if (!metrics || metrics.length === 0) return null;
+
+  const metricIds = metrics.map(m => m.id);
+  const { getConfigAt } = await fetchHistoricalConfig(sb, metricIds, priorStart, currEnd);
+
+  const { data: reps } = await sb
+    .from('profiles')
+    .select('id, first_name, last_name, team_id')
+    .eq('organization_id', orgId)
+    .not('role', 'in', '("admin","manager","coach")');
+
+  if (!reps || reps.length === 0) return { metrics, reps: [], scores: [], teamAvg: 0 };
+
+  const repIds = reps.map(r => r.id);
+  const [{ data: currValues }, { data: priorValues }] = await Promise.all([
+    sb.from('kpi_values').select('kpi_id, profile_id, value')
+      .in('kpi_id', metricIds).in('profile_id', repIds)
+      .lte('period_start', currEnd).gte('period_end', currStart),
+    sb.from('kpi_values').select('kpi_id, profile_id, value')
+      .in('kpi_id', metricIds).in('profile_id', repIds)
+      .lte('period_start', priorEnd).gte('period_end', priorStart),
+  ]);
+
+  const currSums  = sumByProfileKpi(currValues);
+  const priorSums = sumByProfileKpi(priorValues);
+
+  const scores = reps.map(r => {
+    const curr  = computeScore(r.id, currSums, metrics, getConfigAt, currStart);
+    const prior = computeScore(r.id, priorSums, metrics, getConfigAt, priorStart);
+    return { rep: r, name: repName(r), currentScore: curr, priorScore: prior, delta: curr - prior };
+  }).sort((a, b) => b.currentScore - a.currentScore);
+
+  const teamAvg = scores.length > 0
+    ? Math.round(scores.reduce((s, r) => s + r.currentScore, 0) / scores.length)
+    : 0;
+
+  return { metrics, reps, scores, teamAvg, currStart, priorStart };
+}
+
+// ═════════════════════════════════════════════════════════════════════
+// REPORT GENERATORS (each returns { html, text, subject })
+// ═════════════════════════════════════════════════════════════════════
+
+// ── Scorecard Report ────────────────────────────────────────────────
+
+async function generateScorecardReport(sb, orgId, opts) {
+  const data = await fetchScorecardData(sb, orgId);
+  if (!data || !data.metrics || data.metrics.length === 0) {
+    return noDataReport('Scorecard Summary', 'No KPI metrics configured. Set up your scorecard KPIs to start tracking.');
+  }
+  if (data.scores.length === 0) {
+    return noDataReport('Scorecard Summary', 'No rep data available for this period.');
+  }
+
+  const { scores, teamAvg } = data;
+  const top5 = scores.slice(0, 5);
+  const bottom5 = scores.slice(-5).reverse();
+  const dist = { excellent: 0, good: 0, fair: 0, poor: 0 };
+  for (const s of scores) {
+    if (s.currentScore >= 90) dist.excellent++;
+    else if (s.currentScore >= 70) dist.good++;
+    else if (s.currentScore >= 50) dist.fair++;
+    else dist.poor++;
+  }
+
+  const priorAvg = scores.length > 0
+    ? Math.round(scores.reduce((s, r) => s + r.priorScore, 0) / scores.length) : 0;
+  const avgDelta = teamAvg - priorAvg;
+  const deltaStr = avgDelta >= 0 ? `+${avgDelta}` : `${avgDelta}`;
+
+  let bodyHtml = '';
+
+  // Stats row
+  bodyHtml += buildStatGrid([
+    { value: teamAvg, label: 'Team Average', color: teamAvg >= 80 ? COLORS.green : teamAvg >= 60 ? COLORS.amber : COLORS.red },
+    { value: `${deltaStr} pts`, label: 'vs Last Week', color: avgDelta >= 0 ? COLORS.green : COLORS.red },
+    { value: scores.length, label: 'Reps Tracked' },
+    { value: `${dist.excellent}`, label: 'Excellent (90+)', color: COLORS.green },
+  ]);
+
+  // Score distribution
+  bodyHtml += `<div style="margin: 20px 0;">
+    <h3 style="margin: 0 0 10px 0; font-size: 16px;">Score Distribution</h3>
+    <div style="display: flex; gap: 8px;">
+      <div style="flex:1; background: #d1fae5; padding: 8px; border-radius: 6px; text-align: center; font-size: 13px;"><strong>${dist.excellent}</strong> Excellent</div>
+      <div style="flex:1; background: #dbeafe; padding: 8px; border-radius: 6px; text-align: center; font-size: 13px;"><strong>${dist.good}</strong> Good</div>
+      <div style="flex:1; background: #fef3c7; padding: 8px; border-radius: 6px; text-align: center; font-size: 13px;"><strong>${dist.fair}</strong> Fair</div>
+      <div style="flex:1; background: #fee2e2; padding: 8px; border-radius: 6px; text-align: center; font-size: 13px;"><strong>${dist.poor}</strong> Poor</div>
+    </div>
+  </div>`;
+
+  // Top performers
+  bodyHtml += buildListSection('🏆', 'Top Performers', top5.map(s =>
+    `<strong>${s.name}</strong> — ${s.currentScore} pts ${s.delta >= 0 ? `<span style="color:${COLORS.green}">▲${s.delta}</span>` : `<span style="color:${COLORS.red}">▼${Math.abs(s.delta)}</span>`}`
+  ), 'numbered');
+
+  // Needs improvement
+  if (bottom5.some(s => s.currentScore < 70)) {
+    bodyHtml += buildListSection('📋', 'Needs Improvement', bottom5.filter(s => s.currentScore < 70).map(s =>
+      `<strong>${s.name}</strong> — ${s.currentScore} pts ${s.delta >= 0 ? `<span style="color:${COLORS.green}">▲${s.delta}</span>` : `<span style="color:${COLORS.red}">▼${Math.abs(s.delta)}</span>`}`
+    ), 'card', COLORS.amber);
+  }
+
+  const html = buildEmailWrapper('Scorecard Summary', `Week of ${new Date(data.currStart).toLocaleDateString()}`, bodyHtml, {
+    ctaUrl: `${FRONTEND_URL}/analytics`,
+    ctaLabel: 'View Full Scorecard',
+  });
+
+  const text = [
+    `Scorecard Summary — Week of ${new Date(data.currStart).toLocaleDateString()}`,
+    `Team Average: ${teamAvg} (${deltaStr} vs last week)`,
+    `Reps: ${scores.length} | Excellent: ${dist.excellent} | Good: ${dist.good} | Fair: ${dist.fair} | Poor: ${dist.poor}`,
+    '',
+    'Top Performers:',
+    ...top5.map((s, i) => `  ${i + 1}. ${s.name} — ${s.currentScore} pts (${s.delta >= 0 ? '+' : ''}${s.delta})`),
+    '',
+    `View full report: ${FRONTEND_URL}/analytics`,
+  ].join('\n');
+
+  return { html, text, subject: 'Your Apptivia Scorecard Summary' };
+}
+
+// ── Analytics Report ────────────────────────────────────────────────
+
+async function generateAnalyticsReport(sb, orgId, opts) {
+  const { data: metrics } = await sb
+    .from('kpi_metrics')
+    .select('id, kpi_key, kpi_name, goal, weight, direction')
+    .eq('is_active', true);
+
+  if (!metrics || metrics.length === 0) {
+    return noDataReport('Analytics Report', 'No KPI metrics configured.');
+  }
+
+  const { data: reps } = await sb
+    .from('profiles')
+    .select('id, first_name, last_name')
+    .eq('organization_id', orgId)
+    .not('role', 'in', '("admin","manager","coach")');
+
+  if (!reps || reps.length === 0) {
+    return noDataReport('Analytics Report', 'No rep data available.');
+  }
+
+  const metricIds = metrics.map(m => m.id);
+  const repIds = reps.map(r => r.id);
+  const now = new Date();
+  const currEnd = now.toISOString().split('T')[0];
+  const currStart = new Date(now.getTime() - 7 * 86400000).toISOString().split('T')[0];
+  const avgEnd = currStart;
+  const avgStart = new Date(now.getTime() - 35 * 86400000).toISOString().split('T')[0]; // 4-week lookback
+
+  const [{ data: currValues }, { data: avgValues }] = await Promise.all([
+    sb.from('kpi_values').select('kpi_id, profile_id, value')
+      .in('kpi_id', metricIds).in('profile_id', repIds)
+      .lte('period_start', currEnd).gte('period_end', currStart),
+    sb.from('kpi_values').select('kpi_id, profile_id, value')
+      .in('kpi_id', metricIds).in('profile_id', repIds)
+      .lte('period_start', avgEnd).gte('period_end', avgStart),
+  ]);
+
+  // Sum current week by KPI (org-wide)
+  const currByKpi = {};
+  for (const v of (currValues || [])) {
+    currByKpi[v.kpi_id] = (currByKpi[v.kpi_id] || 0) + (v.value || 0);
+  }
+  // 4-week average by KPI
+  const avgByKpi = {};
+  const avgCounts = {};
+  for (const v of (avgValues || [])) {
+    avgByKpi[v.kpi_id] = (avgByKpi[v.kpi_id] || 0) + (v.value || 0);
+    avgCounts[v.kpi_id] = (avgCounts[v.kpi_id] || 0) + 1;
+  }
+
+  const anomalies = [];
+  const kpiSummary = [];
+  for (const m of metrics) {
+    const currVal = currByKpi[m.id] || 0;
+    const avgTotal = avgByKpi[m.id] || 0;
+    const avgVal = avgCounts[m.id] ? avgTotal / 4 : 0; // divide by 4 weeks
+    const deviation = avgVal > 0 ? ((currVal - avgVal) / avgVal * 100) : 0;
+    kpiSummary.push({ name: m.kpi_name, current: currVal, avg: Math.round(avgVal), deviation: Math.round(deviation) });
+    if (deviation <= -30) {
+      anomalies.push({ name: m.kpi_name, deviation: Math.round(deviation), current: currVal, avg: Math.round(avgVal) });
+    }
+  }
+  anomalies.sort((a, b) => a.deviation - b.deviation);
+
+  let bodyHtml = '';
+  bodyHtml += buildStatGrid([
+    { value: metrics.length, label: 'KPIs Tracked' },
+    { value: anomalies.length, label: 'Anomalies', color: anomalies.length > 0 ? COLORS.red : COLORS.green },
+    { value: reps.length, label: 'Active Reps' },
+  ], 3);
+
+  if (anomalies.length > 0) {
+    bodyHtml += buildListSection('⚠️', 'KPI Anomalies (>30% below average)', anomalies.slice(0, 5).map(a =>
+      `<strong>${a.name}</strong> — ${a.deviation}% vs 4-week avg (current: ${a.current}, avg: ${a.avg})`
+    ), 'card', COLORS.red);
+  }
+
+  bodyHtml += '<div style="margin: 20px 0;"><h3 style="margin: 0 0 10px 0; font-size: 16px;">KPI Overview</h3>';
+  bodyHtml += buildTable(
+    ['KPI', 'This Week', '4-Wk Avg', 'Change'],
+    kpiSummary.slice(0, 10).map(k => [
+      k.name,
+      String(k.current),
+      String(k.avg),
+      `<span style="color: ${k.deviation >= 0 ? COLORS.green : COLORS.red}">${k.deviation >= 0 ? '+' : ''}${k.deviation}%</span>`,
+    ])
+  );
+  bodyHtml += '</div>';
+
+  const html = buildEmailWrapper('Analytics Report', `Week of ${new Date(currStart).toLocaleDateString()}`, bodyHtml, {
+    ctaUrl: `${FRONTEND_URL}/analytics`,
+    ctaLabel: 'View Full Analytics',
+  });
+
+  const text = [
+    `Analytics Report — Week of ${new Date(currStart).toLocaleDateString()}`,
+    `KPIs: ${metrics.length} | Anomalies: ${anomalies.length} | Reps: ${reps.length}`,
+    '',
+    ...(anomalies.length > 0 ? [
+      'Anomalies:',
+      ...anomalies.slice(0, 5).map(a => `  ${a.name}: ${a.deviation}% (current: ${a.current}, avg: ${a.avg})`),
+      '',
+    ] : []),
+    `View full report: ${FRONTEND_URL}/analytics`,
+  ].join('\n');
+
+  return { html, text, subject: 'Your Apptivia Analytics Report' };
+}
+
+// ── Coach Report ────────────────────────────────────────────────────
+
+async function generateCoachReport(sb, orgId, opts) {
+  const since7d = new Date(Date.now() - 7 * 86400000).toISOString();
+
+  // Coaching plans by status
+  const { data: plans } = await sb
+    .from('coaching_plans')
+    .select('id, status')
+    .eq('organization_id', orgId);
+
+  const planCounts = { draft: 0, active: 0, completed: 0, overdue: 0, total: 0 };
+  for (const p of (plans || [])) {
+    planCounts.total++;
+    if (planCounts[p.status] !== undefined) planCounts[p.status]++;
+  }
+
+  // Recent badges
+  const { data: orgReps } = await sb
+    .from('profiles')
+    .select('id')
+    .eq('organization_id', orgId)
+    .not('role', 'in', '("admin","manager","coach")');
+
+  const repIds = (orgReps || []).map(r => r.id);
+  let recentBadges = [];
+  if (repIds.length > 0) {
+    const { data: badges } = await sb
+      .from('profile_badges')
+      .select('badge_name, rarity, earned_at, profile:profiles(first_name, last_name)')
+      .in('profile_id', repIds)
+      .gte('earned_at', since7d)
+      .order('earned_at', { ascending: false })
+      .limit(10);
+    recentBadges = badges || [];
+  }
+
+  // Skillset progress
+  let skillsetHighlights = [];
+  if (repIds.length > 0) {
+    const { data: skillsets } = await sb
+      .from('profile_skillsets')
+      .select('skillset:skillsets(name), progress, profile:profiles(first_name, last_name)')
+      .in('profile_id', repIds)
+      .gte('progress', 80)
+      .order('progress', { ascending: false })
+      .limit(5);
+    skillsetHighlights = skillsets || [];
+  }
+
+  let bodyHtml = '';
+  bodyHtml += buildStatGrid([
+    { value: planCounts.total, label: 'Total Plans' },
+    { value: planCounts.active, label: 'Active', color: COLORS.blue },
+    { value: planCounts.completed, label: 'Completed', color: COLORS.green },
+    { value: planCounts.overdue, label: 'Overdue', color: planCounts.overdue > 0 ? COLORS.red : COLORS.gray },
+  ]);
+
+  if (recentBadges.length > 0) {
+    bodyHtml += buildListSection('🏅', 'Badges Earned This Week', recentBadges.map(b => {
+      const name = `${b.profile?.first_name || ''} ${b.profile?.last_name || ''}`.trim() || 'Team Member';
+      const rarity = b.rarity ? ` [${b.rarity.toUpperCase()}]` : '';
+      return `<strong>${b.badge_name}</strong>${rarity} — ${name}`;
+    }), 'bullet');
+  }
+
+  if (skillsetHighlights.length > 0) {
+    bodyHtml += buildListSection('📈', 'Skillset Milestones (80%+)', skillsetHighlights.map(s => {
+      const name = `${s.profile?.first_name || ''} ${s.profile?.last_name || ''}`.trim() || 'Team Member';
+      return `<strong>${s.skillset?.name || 'Skillset'}</strong> — ${name} (${s.progress}%)`;
+    }), 'card', COLORS.purple);
+  }
+
+  if (planCounts.total === 0 && recentBadges.length === 0) {
+    bodyHtml += `<div style="text-align: center; padding: 30px; color: ${COLORS.gray}; font-size: 14px;">No coaching activity this period. Create coaching plans to start tracking progress.</div>`;
+  }
+
+  const html = buildEmailWrapper('Coaching Insights', 'Weekly coaching activity summary', bodyHtml, {
+    ctaUrl: `${FRONTEND_URL}/coaching-plans`,
+    ctaLabel: 'View Coaching Dashboard',
+  });
+
+  const text = [
+    'Coaching Insights — Weekly Summary',
+    `Plans: ${planCounts.total} total (${planCounts.active} active, ${planCounts.completed} completed, ${planCounts.overdue} overdue)`,
+    `Badges earned: ${recentBadges.length}`,
+    '',
+    `View full report: ${FRONTEND_URL}/coaching-plans`,
+  ].join('\n');
+
+  return { html, text, subject: 'Your Apptivia Coaching Insights' };
+}
+
+// ── Contests Report ─────────────────────────────────────────────────
+
+async function generateContestsReport(sb, orgId, opts) {
+  const now = new Date().toISOString();
+  const since7d = new Date(Date.now() - 7 * 86400000).toISOString();
+
+  const { data: contests } = await sb
+    .from('contests')
+    .select('id, name, kpi_key, status, start_date, end_date')
+    .eq('organization_id', orgId)
+    .in('status', ['active', 'completed', 'upcoming'])
+    .order('start_date', { ascending: false });
+
+  const active = (contests || []).filter(c => c.status === 'active');
+  const completed = (contests || []).filter(c => c.status === 'completed' && c.end_date >= since7d);
+  const upcoming = (contests || []).filter(c => c.status === 'upcoming');
+
+  // Get leaderboard top 3 for active contests
+  const leaderboardData = {};
+  for (const c of active.slice(0, 5)) {
+    const { data: lb } = await sb
+      .from('contest_leaderboards')
+      .select('rank, score, profile:profiles(first_name, last_name)')
+      .eq('contest_id', c.id)
+      .order('rank', { ascending: true })
+      .limit(3);
+    leaderboardData[c.id] = lb || [];
+  }
+
+  let bodyHtml = '';
+  bodyHtml += buildStatGrid([
+    { value: active.length, label: 'Active Contests', color: COLORS.green },
+    { value: completed.length, label: 'Completed (7d)' },
+    { value: upcoming.length, label: 'Upcoming', color: COLORS.blue },
+  ], 3);
+
+  if (active.length > 0) {
+    bodyHtml += '<div style="margin: 20px 0;"><h3 style="margin: 0 0 10px 0; font-size: 16px;">🏁 Active Contests</h3>';
+    for (const c of active.slice(0, 5)) {
+      const daysLeft = Math.max(0, Math.ceil((new Date(c.end_date) - Date.now()) / 86400000));
+      bodyHtml += `<div style="background: #f9fafb; padding: 12px 15px; border-radius: 8px; margin-bottom: 10px; border-left: 4px solid ${COLORS.green};">
+        <div style="font-weight: bold; font-size: 14px; margin-bottom: 4px;">${c.name}</div>
+        <div style="font-size: 12px; color: ${COLORS.gray};">${daysLeft} days remaining | KPI: ${c.kpi_key || 'N/A'}</div>`;
+      const lb = leaderboardData[c.id] || [];
+      if (lb.length > 0) {
+        bodyHtml += '<div style="margin-top: 6px; font-size: 13px;">';
+        for (const entry of lb) {
+          const name = `${entry.profile?.first_name || ''} ${entry.profile?.last_name || ''}`.trim() || 'Team Member';
+          bodyHtml += `<div style="padding: 2px 0;">${entry.rank === 1 ? '🥇' : entry.rank === 2 ? '🥈' : '🥉'} ${name} — ${entry.score}</div>`;
+        }
+        bodyHtml += '</div>';
+      }
+      bodyHtml += '</div>';
+    }
+    bodyHtml += '</div>';
+  }
+
+  if (completed.length > 0) {
+    bodyHtml += buildListSection('✅', 'Recently Completed', completed.slice(0, 5).map(c =>
+      `<strong>${c.name}</strong> — ended ${new Date(c.end_date).toLocaleDateString()}`
+    ), 'bullet');
+  }
+
+  if (upcoming.length > 0) {
+    bodyHtml += buildListSection('📅', 'Upcoming', upcoming.slice(0, 5).map(c =>
+      `<strong>${c.name}</strong> — starts ${new Date(c.start_date).toLocaleDateString()}`
+    ), 'bullet');
+  }
+
+  if (!contests || contests.length === 0) {
+    bodyHtml += `<div style="text-align: center; padding: 30px; color: ${COLORS.gray}; font-size: 14px;">No active contests. Create a contest to start gamifying performance!</div>`;
+  }
+
+  const html = buildEmailWrapper('Contest Results', 'Weekly contest standings', bodyHtml, {
+    ctaUrl: `${FRONTEND_URL}/contests`,
+    ctaLabel: 'View Contests',
+  });
+
+  const text = [
+    'Contest Results — Weekly Summary',
+    `Active: ${active.length} | Completed (7d): ${completed.length} | Upcoming: ${upcoming.length}`,
+    '',
+    `View full report: ${FRONTEND_URL}/contests`,
+  ].join('\n');
+
+  return { html, text, subject: 'Your Apptivia Contest Results' };
+}
+
+// ── Team Performance Report ─────────────────────────────────────────
+
+async function generateTeamPerformanceReport(sb, orgId, opts) {
+  const data = await fetchScorecardData(sb, orgId);
+  if (!data || data.scores.length === 0) {
+    return noDataReport('Team Performance', 'No rep data available for this period.');
+  }
+
+  const { data: teams } = await sb
+    .from('teams')
+    .select('id, name, manager_id')
+    .eq('organization_id', orgId);
+
+  const teamMap = {};
+  for (const t of (teams || [])) {
+    teamMap[t.id] = { ...t, scores: [] };
+  }
+  // Unassigned bucket
+  teamMap['unassigned'] = { id: null, name: 'Unassigned', scores: [] };
+
+  for (const s of data.scores) {
+    const teamId = s.rep.team_id || 'unassigned';
+    if (teamMap[teamId]) {
+      teamMap[teamId].scores.push(s);
+    } else {
+      teamMap['unassigned'].scores.push(s);
+    }
+  }
+
+  const teamStats = Object.values(teamMap)
+    .filter(t => t.scores.length > 0)
+    .map(t => {
+      const avg = Math.round(t.scores.reduce((s, r) => s + r.currentScore, 0) / t.scores.length);
+      const top = t.scores[0]; // already sorted by score desc
+      return { name: t.name, avg, count: t.scores.length, topPerformer: top.name, topScore: top.currentScore };
+    })
+    .sort((a, b) => b.avg - a.avg);
+
+  let bodyHtml = '';
+  bodyHtml += buildStatGrid([
+    { value: teamStats.length, label: 'Teams' },
+    { value: data.teamAvg, label: 'Org Average', color: data.teamAvg >= 80 ? COLORS.green : COLORS.amber },
+    { value: data.scores.length, label: 'Total Reps' },
+  ], 3);
+
+  bodyHtml += '<div style="margin: 20px 0;"><h3 style="margin: 0 0 10px 0; font-size: 16px;">Team Rankings</h3>';
+  bodyHtml += buildTable(
+    ['Rank', 'Team', 'Avg Score', 'Reps', 'Top Performer'],
+    teamStats.map((t, i) => [
+      `#${i + 1}`,
+      `<strong>${t.name}</strong>`,
+      `<span style="color: ${t.avg >= 80 ? COLORS.green : t.avg >= 60 ? COLORS.amber : COLORS.red}">${t.avg}</span>`,
+      String(t.count),
+      `${t.topPerformer} (${t.topScore})`,
+    ])
+  );
+  bodyHtml += '</div>';
+
+  const html = buildEmailWrapper('Team Performance', `Week of ${new Date(data.currStart).toLocaleDateString()}`, bodyHtml, {
+    ctaUrl: `${FRONTEND_URL}/analytics`,
+    ctaLabel: 'View Full Dashboard',
+  });
+
+  const text = [
+    `Team Performance — Week of ${new Date(data.currStart).toLocaleDateString()}`,
+    `Org Average: ${data.teamAvg} | Teams: ${teamStats.length} | Reps: ${data.scores.length}`,
+    '',
+    'Team Rankings:',
+    ...teamStats.map((t, i) => `  ${i + 1}. ${t.name} — Avg: ${t.avg}, Top: ${t.topPerformer} (${t.topScore})`),
+    '',
+    `View full report: ${FRONTEND_URL}/analytics`,
+  ].join('\n');
+
+  return { html, text, subject: 'Your Apptivia Team Performance Report' };
+}
+
+// ── No-data fallback ────────────────────────────────────────────────
+
+function noDataReport(title, message) {
+  const bodyHtml = `<div style="text-align: center; padding: 40px; color: ${COLORS.gray}; font-size: 14px;">${message}</div>`;
+  const html = buildEmailWrapper(title, 'Automated Report', bodyHtml, {
+    ctaUrl: FRONTEND_URL,
+    ctaLabel: 'Open Apptivia',
+  });
+  return { html, text: `${title}\n\n${message}\n\n${FRONTEND_URL}`, subject: `Apptivia ${title}` };
+}
+
+// ── Router ──────────────────────────────────────────────────────────
+
+async function generateReport(sb, report) {
+  const opts = {
+    includeSummary: report.include_summary !== false,
+    includeCharts: report.include_charts !== false,
+  };
+  switch (report.report_type) {
+    case 'scorecard':        return generateScorecardReport(sb, report.organization_id, opts);
+    case 'analytics':        return generateAnalyticsReport(sb, report.organization_id, opts);
+    case 'coach':            return generateCoachReport(sb, report.organization_id, opts);
+    case 'contests':         return generateContestsReport(sb, report.organization_id, opts);
+    case 'team_performance': return generateTeamPerformanceReport(sb, report.organization_id, opts);
+    default:
+      return noDataReport('Report', `Unknown report type: ${report.report_type}`);
+  }
+}
+
+// ── Exports ─────────────────────────────────────────────────────────
+
+module.exports = {
+  generateReport,
+  computeNextScheduledAt,
+};

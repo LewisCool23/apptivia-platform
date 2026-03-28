@@ -2,6 +2,7 @@
   "compilerOptions": {
     "target": "es2015",
     "downlevelIteration": true,
+    "module": "esnext",
     "moduleResolution": "node",
     "lib": ["dom", "dom.iterable", "esnext"],
     "allowJs": true,

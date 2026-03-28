@@ -1,20 +1,45 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { X, Calendar, Clock, Mail, FileText } from 'lucide-react';
-import { supabase } from '../supabaseClient';
+import { backendFetch } from '../utils/backendFetch';
 
-export default function ScheduleReportModal({ isOpen, onClose, onSuccess }) {
-  const [formData, setFormData] = useState({
-    report_type: 'scorecard',
-    frequency: 'weekly',
-    day_of_week: 'monday',
-    time: '09:00',
-    recipients: '',
-    include_charts: true,
-    include_summary: true,
-    active: true
-  });
+const INITIAL_FORM = {
+  report_type: 'scorecard',
+  frequency: 'weekly',
+  day_of_week: 'monday',
+  time: '09:00',
+  recipients: '',
+  include_charts: true,
+  include_summary: true,
+  active: true
+};
+
+export default function ScheduleReportModal({ isOpen, onClose, onSuccess, editReport }) {
+  const [formData, setFormData] = useState(INITIAL_FORM);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+
+  const isEditing = !!editReport;
+
+  // Populate form when editing
+  useEffect(() => {
+    if (editReport) {
+      setFormData({
+        report_type: editReport.report_type || 'scorecard',
+        frequency: editReport.frequency || 'weekly',
+        day_of_week: editReport.day_of_week || 'monday',
+        time: editReport.time || '09:00',
+        recipients: Array.isArray(editReport.recipients)
+          ? editReport.recipients.join(', ')
+          : editReport.recipients || '',
+        include_charts: editReport.include_charts ?? true,
+        include_summary: editReport.include_summary ?? true,
+        active: editReport.active ?? true,
+      });
+    } else {
+      setFormData(INITIAL_FORM);
+    }
+    setError('');
+  }, [editReport]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -22,10 +47,16 @@ export default function ScheduleReportModal({ isOpen, onClose, onSuccess }) {
     setError('');
 
     // Validate recipients (basic email validation)
-    const emails = formData.recipients.split(',').map(e => e.trim()).filter(e => e);
+    const emails = formData.recipients.split(',').map(s => s.trim()).filter(s => s);
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     const invalidEmails = emails.filter(email => !emailRegex.test(email));
-    
+
+    if (emails.length === 0) {
+      setError('At least one recipient email is required.');
+      setSaving(false);
+      return;
+    }
+
     if (invalidEmails.length > 0) {
       setError(`Invalid email addresses: ${invalidEmails.join(', ')}`);
       setSaving(false);
@@ -33,29 +64,24 @@ export default function ScheduleReportModal({ isOpen, onClose, onSuccess }) {
     }
 
     try {
-      const { error: insertError } = await supabase
-        .from('scheduled_reports')
-        .insert([{
-          ...formData,
-          recipients: emails,
-        }]);
+      const payload = {
+        ...formData,
+        recipients: emails,
+      };
 
-      if (insertError) throw insertError;
+      if (isEditing) {
+        const res = await backendFetch(`/api/scheduled-reports/${editReport.id}`, payload, 'PATCH');
+        if (res.error) throw new Error(res.error);
+      } else {
+        const res = await backendFetch('/api/scheduled-reports', payload, 'POST');
+        if (res.error) throw new Error(res.error);
+      }
 
       onSuccess?.();
       onClose();
-      setFormData({
-        report_type: 'scorecard',
-        frequency: 'weekly',
-        day_of_week: 'monday',
-        time: '09:00',
-        recipients: '',
-        include_charts: true,
-        include_summary: true,
-        active: true
-      });
+      setFormData(INITIAL_FORM);
     } catch (err) {
-      setError(err.message || 'Failed to schedule report');
+      setError(err.message || 'Failed to save report schedule');
     } finally {
       setSaving(false);
     }
@@ -74,8 +100,12 @@ export default function ScheduleReportModal({ isOpen, onClose, onSuccess }) {
       >
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h2 className="text-xl font-bold text-gray-900">Schedule Report</h2>
-            <p className="text-sm text-gray-500 mt-1">Set up automated report delivery</p>
+            <h2 className="text-xl font-bold text-gray-900">
+              {isEditing ? 'Edit Report Schedule' : 'Schedule Report'}
+            </h2>
+            <p className="text-sm text-gray-500 mt-1">
+              {isEditing ? 'Update your automated report delivery' : 'Set up automated report delivery'}
+            </p>
           </div>
           <button
             onClick={onClose}
@@ -215,7 +245,9 @@ export default function ScheduleReportModal({ isOpen, onClose, onSuccess }) {
               className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors disabled:opacity-50"
               disabled={saving}
             >
-              {saving ? 'Scheduling...' : 'Schedule Report'}
+              {saving
+                ? (isEditing ? 'Updating...' : 'Scheduling...')
+                : (isEditing ? 'Update Schedule' : 'Schedule Report')}
             </button>
           </div>
         </form>

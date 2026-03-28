@@ -13,6 +13,7 @@ import DealCelebration from './components/DealCelebration';
 
 // ── Eagerly-loaded (small, needed immediately) ──────────────────────────────
 import LandingPage from './pages/LandingPage';
+import AccountSetup from './pages/AccountSetup';
 
 // ── Lazily-loaded pages (split into separate chunks) ────────────────────────
 const Coach            = React.lazy(() => import('./pages/Coach'));
@@ -54,14 +55,15 @@ function PBR({ permissions, children }) {
 
 const AppRoutes = () => {
   const { isAuthenticated, isLoading } = useAuth();
-  if (isLoading) return null;
+  if (isLoading) return <PageLoader />;
   return (
     <Suspense fallback={<PageLoader />}>
       <Routes>
-        <Route path="/" element={<LandingPage />} />
+        <Route path="/" element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <LandingPage />} />
         <Route path="/login" element={<Login />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/update-password" element={<UpdatePassword />} />
+        <Route path="/account-setup" element={<AccountSetup />} />
         <Route
           path="/dashboard"
           element={

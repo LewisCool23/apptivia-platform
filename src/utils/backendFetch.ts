@@ -6,8 +6,9 @@
  */
 
 import { supabase } from '../supabaseClient';
+import { getEnv } from '../env';
 
-const BACKEND_BASE = process.env.REACT_APP_BACKEND_URL || '';
+const BACKEND_BASE = getEnv(['VITE_BACKEND_URL', 'REACT_APP_BACKEND_URL'], '');
 
 async function getAuthHeaders(): Promise<Record<string, string>> {
   const { data: { session } } = await supabase.auth.getSession();
@@ -21,7 +22,7 @@ export async function backendFetch<T = any>(
   method: string = 'POST',
 ): Promise<T> {
   if (!BACKEND_BASE) {
-    throw new Error('No backend URL configured (REACT_APP_BACKEND_URL)');
+    throw new Error('No backend URL configured (VITE_BACKEND_URL or REACT_APP_BACKEND_URL)');
   }
 
   const authHeaders = await getAuthHeaders();
@@ -38,7 +39,7 @@ export async function backendFetch<T = any>(
   const res = await fetch(`${BACKEND_BASE}${path}`, options);
   const contentType = res.headers.get('content-type') || '';
   if (contentType.includes('text/html')) {
-    throw new Error('Backend returned HTML instead of JSON — check REACT_APP_BACKEND_URL');
+    throw new Error('Backend returned HTML instead of JSON — check VITE_BACKEND_URL or REACT_APP_BACKEND_URL');
   }
   if (!res.ok) {
     const text = await res.text().catch(() => '');
@@ -61,7 +62,7 @@ export async function* backendStream(
   body: Record<string, any>,
 ): AsyncGenerator<string, void, unknown> {
   if (!BACKEND_BASE) {
-    throw new Error('No backend URL configured (REACT_APP_BACKEND_URL)');
+    throw new Error('No backend URL configured (VITE_BACKEND_URL or REACT_APP_BACKEND_URL)');
   }
 
   const authHeaders = await getAuthHeaders();

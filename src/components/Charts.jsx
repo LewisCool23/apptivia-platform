@@ -144,11 +144,12 @@ export const ScoreDistributionChart = ({ data, title, infoText, footer = null })
   };
 
   return (
-    <div className="bg-white rounded-lg p-4 shadow-sm">
+    <div className="bg-white rounded-lg p-4 shadow-sm h-full flex flex-col overflow-hidden">
       <div className="flex items-center gap-2 mb-3">
         <h3 className="text-sm font-semibold">{title}</h3>
         <InfoTooltip text={infoText} />
       </div>
+      <div className="flex-1 min-h-0 overflow-y-auto">
       <ResponsiveContainer width="100%" height={220}>
         <PieChart margin={{ top: 16, right: 12, bottom: 8, left: 12 }}>
           <Pie
@@ -167,7 +168,7 @@ export const ScoreDistributionChart = ({ data, title, infoText, footer = null })
               <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
             ))}
           </Pie>
-          <Tooltip 
+          <Tooltip
             contentStyle={{
               backgroundColor: '#fff',
               border: '1px solid #e5e7eb',
@@ -181,8 +182,8 @@ export const ScoreDistributionChart = ({ data, title, infoText, footer = null })
       <div className="mt-1 flex items-center justify-center gap-4 flex-wrap">
         {data.map((entry, index) => (
           <div key={entry.name} className="flex items-center gap-1.5 text-xs">
-            <div 
-              className="w-3 h-3 rounded-full" 
+            <div
+              className="w-3 h-3 rounded-full"
               style={{ backgroundColor: COLORS[index % COLORS.length] }}
             />
             <span className="text-gray-700">{entry.name}: <span className="font-semibold">{entry.value}</span></span>
@@ -190,32 +191,35 @@ export const ScoreDistributionChart = ({ data, title, infoText, footer = null })
         ))}
       </div>
       {footer ? <div className="mt-2">{footer}</div> : null}
+      </div>
     </div>
   );
 };
 
 // Historical Apptivia Scores Line Chart
-export const HistoricalScoresChart = ({ data, title, infoText }) => {
+const REP_OVERLAY_COLORS = ['#f59e0b', '#10b981', '#ef4444', '#8b5cf6', '#ec4899', '#06b6d4', '#f97316'];
+
+export const HistoricalScoresChart = ({ data, title, infoText, overlayRepIds = [], repNames = {}, lineName = 'Team Avg', chartHeight }) => {
   return (
-    <div className="bg-white rounded-lg p-4 shadow-sm">
+    <div className="bg-white rounded-lg p-4 shadow-sm h-full flex flex-col">
       <div className="flex items-center gap-2 mb-3">
-        <h3 className="text-sm font-semibold">{title}</h3>
+        {title && <h3 className="text-sm font-semibold">{title}</h3>}
         <InfoTooltip text={infoText} />
       </div>
-      <ResponsiveContainer width="100%" height={220}>
+      <ResponsiveContainer width="100%" height={chartHeight || 220}>
         <LineChart data={data} margin={{ top: 8, right: 16, bottom: 0, left: 0 }}>
           <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-          <XAxis 
-            dataKey="week" 
+          <XAxis
+            dataKey="week"
             stroke="#6b7280"
             style={{ fontSize: '10px' }}
           />
-          <YAxis 
+          <YAxis
             stroke="#6b7280"
             style={{ fontSize: '10px' }}
-            domain={[0, 100]}
+            domain={[0, 'auto']}
           />
-          <Tooltip 
+          <Tooltip
             contentStyle={{
               backgroundColor: '#fff',
               border: '1px solid #e5e7eb',
@@ -237,8 +241,20 @@ export const HistoricalScoresChart = ({ data, title, infoText }) => {
             strokeWidth={2}
             dot={{ fill: '#3b82f6', r: 3 }}
             activeDot={{ r: 5 }}
-            name="Apptivia Score"
+            name={lineName}
           />
+          {(overlayRepIds || []).map((repId, idx) => (
+            <Line
+              key={repId}
+              type="monotone"
+              dataKey={repId}
+              stroke={REP_OVERLAY_COLORS[idx % REP_OVERLAY_COLORS.length]}
+              strokeWidth={1.5}
+              strokeDasharray="4 2"
+              dot={{ r: 2 }}
+              name={repNames?.[repId] || repId.slice(0, 8)}
+            />
+          ))}
         </LineChart>
       </ResponsiveContainer>
     </div>
@@ -258,11 +274,12 @@ export const TeamPerformanceChart = ({
   const chartHeight = Math.max(220, (data?.length || 0) * 32 + 40);
   const domain = xDomain || [0, 'dataMax'];
   return (
-    <div className="bg-white rounded-lg p-4 shadow-sm">
+    <div className="bg-white rounded-lg p-4 shadow-sm h-full flex flex-col overflow-hidden">
       <div className="flex items-center gap-2 mb-3">
         <h3 className="text-sm font-semibold">{title}</h3>
         <InfoTooltip text={infoText} />
       </div>
+      <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden">
       <ResponsiveContainer width="100%" height={chartHeight}>
         <BarChart data={data} layout="vertical" margin={{ top: 8, right: 24, bottom: 8, left: 8 }}>
           <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
@@ -301,8 +318,9 @@ export const TeamPerformanceChart = ({
           </Bar>
         </BarChart>
       </ResponsiveContainer>
+      </div>
     </div>
   );
 };
 
-export default { TrendChart, KPIBarChart, ScoreDistributionChart, TeamPerformanceChart };
+// Named exports above — no default export needed for tree-shaking

@@ -1,6 +1,6 @@
 /**
  * Contest Leaderboard Utilities
- * 
+ *
  * Functions to calculate and update contest leaderboards from real-time KPI data.
  * Can be called:
  * - On-demand via UI button
@@ -9,6 +9,26 @@
  */
 
 import { supabase } from '../supabaseClient';
+
+// ── Shared display helpers (used by Contests.jsx + LeaderboardModal) ──
+
+export function getRankChangeIcon(change: string): string {
+  switch (change) {
+    case 'up': return '\u2B06\uFE0F';
+    case 'down': return '\u2B07\uFE0F';
+    case 'new': return '\uD83C\uDD95';
+    default: return '';
+  }
+}
+
+export function getRankDisplay(rank: number): string {
+  switch (rank) {
+    case 1: return '\uD83E\uDD47';
+    case 2: return '\uD83E\uDD48';
+    case 3: return '\uD83E\uDD49';
+    default: return `#${rank}`;
+  }
+}
 
 export interface LeaderboardUpdateResult {
   success: boolean;
@@ -54,21 +74,34 @@ export async function updateAllContestLeaderboards(): Promise<LeaderboardUpdateR
 }
 
 /**
- * Update leaderboard for a specific contest
+ * Update leaderboard for a specific contest.
+ * Resolves kpi_key → kpi_id via kpi_metrics, batch-fetches KPI values,
+ * uses standard competition ranking (ties share rank), and batch-upserts.
  */
 export async function updateContestLeaderboard(contestId: string): Promise<LeaderboardUpdateResult> {
   try {
     // Fetch contest details
     const { data: contest, error: contestError } = await supabase
       .from('active_contests')
-      .select('*')
+      .select('id, kpi_key, calculation_type, participant_type, start_date, end_date')
       .eq('id', contestId)
       .single();
 
     if (contestError) throw contestError;
     if (!contest) throw new Error('Contest not found');
 
-    // Fetch all participants
+    // Resolve kpi_key → kpi_id (kpi_values uses kpi_id UUID, not kpi_key text)
+    const { data: kpiMetric, error: kpiMetricError } = await supabase
+      .from('kpi_metrics')
+      .select('id')
+      .eq('key', contest.kpi_key)
+      .single();
+
+    if (kpiMetricError || !kpiMetric) {
+      throw new Error(`KPI metric not found for key: ${contest.kpi_key}`);
+    }
+
+    // Fetch all active participants
     const { data: participants, error: participantsError } = await supabase
       .from('contest_participants')
       .select('profile_id, team_id')
@@ -76,31 +109,42 @@ export async function updateContestLeaderboard(contestId: string): Promise<Leade
       .eq('is_active', true);
 
     if (participantsError) throw participantsError;
+    if (!participants || participants.length === 0) {
+      return { success: true, contestsUpdated: 1, participantsUpdated: 0 };
+    }
+
+    // Batch-fetch KPI values for all participants at once (fixes N+1 query)
+    const participantIds = participants.map((p: any) => p.profile_id);
+    const { data: allKpiValues, error: kpiError } = await supabase
+      .from('kpi_values')
+      .select('profile_id, value')
+      .in('profile_id', participantIds)
+      .eq('kpi_id', kpiMetric.id)
+      .lte('period_start', contest.end_date)
+      .gte('period_end', contest.start_date);
+
+    if (kpiError) {
+      console.error('Error fetching KPI values:', kpiError);
+    }
+
+    // Group values by profile_id
+    const kpiByProfile: Record<string, number[]> = {};
+    for (const kv of (allKpiValues || [])) {
+      if (!kpiByProfile[kv.profile_id]) kpiByProfile[kv.profile_id] = [];
+      kpiByProfile[kv.profile_id].push(Number(kv.value));
+    }
 
     // Calculate scores for each participant
-    const scorePromises = participants.map(async (participant: any) => {
-      const { data: kpiValues, error: kpiError } = await supabase
-        .from('kpi_values')
-        .select('value')
-        .eq('profile_id', participant.profile_id)
-        .eq('kpi_key', contest.kpi_key)
-        .gte('recorded_at', contest.start_date)
-        .lte('recorded_at', contest.end_date);
-
-      if (kpiError) {
-        console.error(`Error fetching KPI values for ${participant.profile_id}:`, kpiError);
-        return { profile_id: participant.profile_id, team_id: participant.team_id, score: 0 };
-      }
-
+    const individualScores = participants.map((participant: any) => {
+      const values = kpiByProfile[participant.profile_id] || [];
       let score = 0;
-      const values = (kpiValues as any[] | null)?.map((kv: any) => kv.value) || [];
 
       switch (contest.calculation_type) {
         case 'sum':
-          score = values.reduce((sum: number, val: number) => sum + val, 0);
+          score = values.reduce((sum, val) => sum + val, 0);
           break;
         case 'average':
-          score = values.length > 0 ? values.reduce((sum: number, val: number) => sum + val, 0) / values.length : 0;
+          score = values.length > 0 ? values.reduce((sum, val) => sum + val, 0) / values.length : 0;
           break;
         case 'max':
           score = values.length > 0 ? Math.max(...values) : 0;
@@ -109,45 +153,73 @@ export async function updateContestLeaderboard(contestId: string): Promise<Leade
           score = values.length;
           break;
         default:
-          score = values.reduce((sum: number, val: number) => sum + val, 0);
+          score = values.reduce((sum, val) => sum + val, 0);
       }
 
       return {
         profile_id: participant.profile_id,
         team_id: participant.team_id,
-        score: Math.round(score * 100) / 100, // Round to 2 decimals
+        score: Math.round(score * 100) / 100,
       };
     });
 
-    const scores = await Promise.all(scorePromises);
+    // Team aggregation: if participant_type is 'team', sum scores by team
+    let scores: typeof individualScores;
+    if (contest.participant_type === 'team') {
+      const teamMap: Record<string, { team_id: string; profile_id: string; score: number }> = {};
+      for (const entry of individualScores) {
+        const teamKey = entry.team_id || entry.profile_id;
+        if (!teamMap[teamKey]) {
+          teamMap[teamKey] = { team_id: entry.team_id, profile_id: entry.profile_id, score: 0 };
+        } else if (entry.profile_id < teamMap[teamKey].profile_id) {
+          // Deterministic: pick smallest profile_id as team representative
+          teamMap[teamKey].profile_id = entry.profile_id;
+        }
+        teamMap[teamKey].score += entry.score;
+      }
+      scores = Object.values(teamMap);
+    } else {
+      scores = individualScores;
+    }
 
-    // Sort by score descending and assign ranks
+    // Sort by score descending and assign ranks (standard competition ranking — ties share rank)
     scores.sort((a, b) => b.score - a.score);
-    const rankedScores = scores.map((entry, index) => ({
-      ...entry,
-      rank: index + 1,
+    let currentRank = 1;
+    const rankedScores = scores.map((entry, index, arr) => {
+      if (index > 0 && entry.score < arr[index - 1].score) {
+        currentRank = index + 1;
+      }
+      return { ...entry, rank: currentRank };
+    });
+
+    // Fetch existing ranks for previous_rank tracking
+    const { data: existingLeaderboard } = await supabase
+      .from('contest_leaderboards')
+      .select('profile_id, rank')
+      .eq('contest_id', contestId);
+    const prevRankMap: Record<string, number> = {};
+    (existingLeaderboard || []).forEach((row: any) => {
+      prevRankMap[row.profile_id] = row.rank;
+    });
+
+    // Batch upsert all leaderboard entries at once
+    const upsertData = rankedScores.map(entry => ({
+      contest_id: contestId,
+      profile_id: entry.profile_id,
+      team_id: entry.team_id,
+      rank: entry.rank,
+      previous_rank: prevRankMap[entry.profile_id] ?? null,
+      score: entry.score,
+      last_updated: new Date().toISOString(),
     }));
 
-    // Update leaderboard entries
-    for (const entry of rankedScores) {
+    if (upsertData.length > 0) {
       const { error: upsertError } = await supabase
         .from('contest_leaderboards')
-        .upsert(
-          {
-            contest_id: contestId,
-            profile_id: entry.profile_id,
-            team_id: entry.team_id,
-            rank: entry.rank,
-            score: entry.score,
-            last_updated: new Date().toISOString(),
-          },
-          {
-            onConflict: 'contest_id,profile_id',
-          }
-        );
+        .upsert(upsertData, { onConflict: 'contest_id,profile_id' });
 
       if (upsertError) {
-        console.error(`Error updating leaderboard for ${entry.profile_id}:`, upsertError);
+        console.error('Error batch updating leaderboard:', upsertError);
       }
     }
 

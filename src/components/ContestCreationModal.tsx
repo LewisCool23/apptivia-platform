@@ -178,6 +178,17 @@ export default function ContestCreationModal({ isOpen, onClose, currentUserId, c
           .eq('id', contestToEdit.id);
 
         if (updateError) throw updateError;
+
+        // If participant_type changed, trigger leaderboard recalculation
+        if (contestToEdit.participant_type !== formData.participant_type) {
+          try {
+            const { updateContestLeaderboard } = await import('../utils/contestUtils');
+            await updateContestLeaderboard(contestToEdit.id);
+          } catch (recalcErr) {
+            console.warn('Leaderboard recalculation after participant_type change failed:', recalcErr);
+          }
+        }
+
         toast.dismiss(loadingToast);
         toast.success('Contest updated successfully!');
       } else {

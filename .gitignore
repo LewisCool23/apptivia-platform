@@ -1,3 +1,11 @@
 node_modules/
 .env
 build/
+dist/
+dist-upload.zip
+.claude/
+
+# Environment files in subdirectories
+public_html/backend/.env
+public_html/backend/env
+public_html/frontend/env

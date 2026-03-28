@@ -1,10 +1,12 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import {
   Shield, AlertTriangle, TrendingDown, TrendingUp, Zap, RefreshCw,
   ChevronDown, Eye, CheckCircle, XCircle, ArrowDown, ArrowUp,
   Sparkles, BarChart3, Activity, Users, Filter, Clock
 } from 'lucide-react';
 import { useKpiWatchdog } from '../hooks/useKpiWatchdog';
+import { useNotifications } from '../contexts/NotificationContext';
+import FeedbackThumb from './shared/FeedbackThumb';
 
 const SEVERITY_STYLES = {
   critical: { bg: 'bg-red-50', border: 'border-red-200', text: 'text-red-700', badge: 'bg-red-100 text-red-700', icon: AlertTriangle, iconColor: 'text-red-500' },
@@ -166,7 +168,7 @@ function AnomalyCard({ anomaly, onAcknowledge, onDismiss, onResolve }) {
           <div className="flex items-center gap-4 mb-2">
             <div className="flex items-center gap-1.5">
               <span className="text-xs text-gray-500">Current:</span>
-              <span className="text-sm font-bold text-gray-900">{anomaly.current_value}</span>
+              <span className="text-sm font-bold text-gray-900">{Number(anomaly.current_value).toFixed(1)}</span>
             </div>
             <div className="flex items-center gap-1">
               {anomaly.deviation_pct < 0 ? (
@@ -179,8 +181,8 @@ function AnomalyCard({ anomaly, onAcknowledge, onDismiss, onResolve }) {
               </span>
             </div>
             <div className="flex items-center gap-1.5">
-              <span className="text-xs text-gray-500">Rolling Avg:</span>
-              <span className="text-sm text-gray-700">{anomaly.rolling_avg}</span>
+              <span className="text-xs text-gray-500">4-Wk Avg:</span>
+              <span className="text-sm text-gray-700">{Number(anomaly.rolling_avg).toFixed(1)}</span>
             </div>
           </div>
 
@@ -210,6 +212,9 @@ function AnomalyCard({ anomaly, onAcknowledge, onDismiss, onResolve }) {
                       <p className="text-xs text-gray-700">{anomaly.ai_recommendation}</p>
                     </div>
                   )}
+                  <div className="mt-2 flex justify-end">
+                    <FeedbackThumb featureArea="kpi_watchdog" contentKey={anomaly.id} context={{ kpi: anomaly.kpi_name, severity: anomaly.severity }} />
+                  </div>
                 </div>
               )}
             </>
@@ -217,15 +222,17 @@ function AnomalyCard({ anomaly, onAcknowledge, onDismiss, onResolve }) {
         </div>
 
         {/* Actions */}
-        {anomaly.status === 'active' && (
+        {(anomaly.status === 'active' || anomaly.status === 'acknowledged') && (
           <div className="flex flex-col gap-1 flex-shrink-0">
-            <button
-              onClick={() => onAcknowledge(anomaly.id)}
-              className="p-1.5 rounded-lg bg-white/80 text-yellow-600 hover:bg-yellow-100 transition-colors"
-              title="Acknowledge"
-            >
-              <Eye size={14} />
-            </button>
+            {anomaly.status === 'active' && (
+              <button
+                onClick={() => onAcknowledge(anomaly.id)}
+                className="p-1.5 rounded-lg bg-white/80 text-yellow-600 hover:bg-yellow-100 transition-colors"
+                title="Acknowledge"
+              >
+                <Eye size={14} />
+              </button>
+            )}
             <button
               onClick={() => onResolve(anomaly.id)}
               className="p-1.5 rounded-lg bg-white/80 text-emerald-600 hover:bg-emerald-100 transition-colors"
@@ -233,13 +240,15 @@ function AnomalyCard({ anomaly, onAcknowledge, onDismiss, onResolve }) {
             >
               <CheckCircle size={14} />
             </button>
-            <button
-              onClick={() => onDismiss(anomaly.id)}
-              className="p-1.5 rounded-lg bg-white/80 text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-colors"
-              title="Dismiss"
-            >
-              <XCircle size={14} />
-            </button>
+            {anomaly.status === 'active' && (
+              <button
+                onClick={() => onDismiss(anomaly.id)}
+                className="p-1.5 rounded-lg bg-white/80 text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-colors"
+                title="Dismiss"
+              >
+                <XCircle size={14} />
+              </button>
+            )}
           </div>
         )}
       </div>
@@ -274,34 +283,96 @@ function KpiBreakdown({ byKpi }) {
 
 // ── Main Component ────────────────────────────────────────
 
-export default function KpiWatchdog({ organizationId, userId }) {
+export default function KpiWatchdog({ organizationId, userId, filterProfileIds }) {
   const watchdog = useKpiWatchdog(organizationId, userId);
   const [filterSeverity, setFilterSeverity] = useState('all');
   const [filterStatus, setFilterStatus] = useState('active');
+  const [expandedRep, setExpandedRep] = useState(null);
+  const hasAutoRun = useRef(false);
+  const hasNotifiedAnomalies = useRef(false);
+  const { addNotification } = useNotifications() || {};
+
+  // Auto-run analysis on mount (once per session)
+  useEffect(() => {
+    if (!organizationId || hasAutoRun.current || watchdog.isAnalyzing) return;
+    hasAutoRun.current = true;
+    watchdog.runAnalysis();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [organizationId]);
+
+  // Fire a notification once per session when critical/warning anomalies are found
+  useEffect(() => {
+    if (!addNotification || hasNotifiedAnomalies.current || watchdog.isAnalyzing) return;
+    const serious = watchdog.anomalies.filter(a => a.severity === 'critical' || a.severity === 'warning');
+    if (serious.length === 0) return;
+    hasNotifiedAnomalies.current = true;
+    addNotification({
+      id: `kpi-anomaly-session-${Date.now()}`,
+      type: 'kpi_anomaly',
+      title: `${serious.length} KPI Anomaly${serious.length > 1 ? 'ies' : ''} Detected`,
+      message: `${serious.length} rep${serious.length > 1 ? 's have' : ' has'} significant KPI drops this week. Review the KPI Watchdog for details.`,
+      link: '/analytics?tab=watchdog',
+      createdAt: new Date().toISOString(),
+      read: false,
+      audience: 'self',
+    });
+  }, [watchdog.anomalies, watchdog.isAnalyzing, addNotification]);
 
   const filteredAnomalies = useMemo(() => {
     return watchdog.anomalies.filter((a) => {
+      // Respect Analytics page profile filters when provided
+      if (filterProfileIds && filterProfileIds.length > 0 && a.profile_id && !filterProfileIds.includes(a.profile_id)) return false;
       if (filterSeverity !== 'all' && a.severity !== filterSeverity) return false;
       if (filterStatus !== 'all' && a.status !== filterStatus) return false;
       return true;
     });
   }, [watchdog.anomalies, filterSeverity, filterStatus]);
 
+  // Group filtered anomalies by rep for accordion view
+  const groupedByRep = useMemo(() => {
+    const map = {};
+    filteredAnomalies.forEach((a) => {
+      const key = a.profile_id || 'unknown';
+      if (!map[key]) {
+        map[key] = { profileId: key, name: a.profile_name || 'Unknown Rep', anomalies: [], criticalCount: 0, warningCount: 0, infoCount: 0 };
+      }
+      map[key].anomalies.push(a);
+      if (a.severity === 'critical') map[key].criticalCount++;
+      else if (a.severity === 'warning') map[key].warningCount++;
+      else map[key].infoCount++;
+    });
+    // Sort anomalies within each rep: critical first, then by deviation
+    Object.values(map).forEach((group) => {
+      const sevOrder = { critical: 0, warning: 1, info: 2 };
+      group.anomalies.sort((a, b) => (sevOrder[a.severity] ?? 2) - (sevOrder[b.severity] ?? 2) || (a.deviation_pct - b.deviation_pct));
+      // Worst KPI = first anomaly (most severe / biggest drop)
+      group.worstKpi = group.anomalies[0]?.kpi_name || '';
+      group.worstDeviation = group.anomalies[0]?.deviation_pct ?? 0;
+    });
+    // Sort reps: most critical anomalies first, then total count
+    return Object.values(map).sort((a, b) => b.criticalCount - a.criticalCount || b.anomalies.length - a.anomalies.length);
+  }, [filteredAnomalies]);
+
   return (
     <div className="space-y-4">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-base font-semibold text-gray-900">KPI Anomaly Watchdog</h2>
+          <div className="flex items-center gap-2">
+            <h2 className="text-base font-semibold text-gray-900">KPI Anomaly Watchdog</h2>
+            <span className="inline-flex items-center gap-1 text-[10px] font-medium px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-100">
+              <Shield size={8} /> Auto-monitored weekly
+            </span>
+          </div>
           <p className="text-xs text-gray-500 mt-0.5">Automatically detect KPI drops, trigger coaching recommendations, and track resolution</p>
         </div>
         <button
           onClick={watchdog.runAnalysis}
           disabled={watchdog.isAnalyzing}
-          className="inline-flex items-center gap-1.5 text-xs font-medium px-4 py-2 rounded-lg bg-gradient-to-r from-red-500 to-amber-500 text-white hover:from-red-600 hover:to-amber-600 disabled:opacity-50 transition-all shadow-sm"
+          className="inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg bg-gray-100 text-gray-600 hover:bg-gray-200 disabled:opacity-50 transition-all"
         >
-          {watchdog.isAnalyzing ? <RefreshCw size={12} className="animate-spin" /> : <Shield size={12} />}
-          {watchdog.isAnalyzing ? 'Analyzing...' : 'Run KPI Analysis'}
+          {watchdog.isAnalyzing ? <RefreshCw size={11} className="animate-spin" /> : <RefreshCw size={11} />}
+          {watchdog.isAnalyzing ? 'Analyzing...' : 'Rerun'}
         </button>
       </div>
 
@@ -348,7 +419,7 @@ export default function KpiWatchdog({ organizationId, userId }) {
             </select>
           </div>
 
-          {/* Anomaly List */}
+          {/* Anomaly List — grouped by rep */}
           {watchdog.loading && !watchdog.anomalies.length ? (
             <div className="flex items-center justify-center py-16">
               <RefreshCw size={20} className="animate-spin text-blue-400 mr-2" />
@@ -368,15 +439,66 @@ export default function KpiWatchdog({ organizationId, userId }) {
             </div>
           ) : (
             <div className="space-y-2">
-              {filteredAnomalies.map((anomaly) => (
-                <AnomalyCard
-                  key={anomaly.id}
-                  anomaly={anomaly}
-                  onAcknowledge={(id) => watchdog.updateAnomalyStatus(id, 'acknowledged')}
-                  onResolve={(id) => watchdog.updateAnomalyStatus(id, 'resolved')}
-                  onDismiss={(id) => watchdog.dismissAnomaly(id)}
-                />
-              ))}
+              {groupedByRep.map((group) => {
+                const isOpen = expandedRep === group.profileId;
+                return (
+                  <div key={group.profileId} className={`rounded-xl border transition-colors ${
+                    isOpen ? 'border-red-200 bg-red-50/20' : 'border-gray-100 bg-white hover:bg-gray-50/50'
+                  }`}>
+                    {/* Accordion header */}
+                    <button
+                      type="button"
+                      onClick={() => setExpandedRep(prev => prev === group.profileId ? null : group.profileId)}
+                      className="w-full flex items-center gap-3 px-4 py-3 text-left"
+                    >
+                      <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0">
+                        <Users size={14} className="text-gray-500" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <span className="text-sm font-semibold text-gray-900">{group.name}</span>
+                        <div className="flex items-center gap-2 mt-0.5">
+                          {group.criticalCount > 0 && (
+                            <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-red-100 text-red-700">
+                              {group.criticalCount} critical
+                            </span>
+                          )}
+                          {group.warningCount > 0 && (
+                            <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700">
+                              {group.warningCount} warning
+                            </span>
+                          )}
+                          {group.infoCount > 0 && (
+                            <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-blue-100 text-blue-700">
+                              {group.infoCount} info
+                            </span>
+                          )}
+                          <span className="text-[10px] text-gray-400 ml-1">
+                            Worst: {group.worstKpi} ({group.worstDeviation.toFixed(1)}%)
+                          </span>
+                        </div>
+                      </div>
+                      <span className="text-xs font-bold text-gray-500 mr-1">{group.anomalies.length}</span>
+                      <svg className={`w-4 h-4 text-gray-400 shrink-0 transition-transform ${isOpen ? 'rotate-180' : ''}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M19 9l-7 7-7-7" />
+                      </svg>
+                    </button>
+                    {/* Expanded anomaly cards */}
+                    {isOpen && (
+                      <div className="px-4 pb-4 space-y-2" style={{ maxHeight: 480, overflowY: 'auto' }}>
+                        {group.anomalies.map((anomaly) => (
+                          <AnomalyCard
+                            key={anomaly.id}
+                            anomaly={anomaly}
+                            onAcknowledge={(id) => watchdog.updateAnomalyStatus(id, 'acknowledged')}
+                            onResolve={(id) => watchdog.updateAnomalyStatus(id, 'resolved')}
+                            onDismiss={(id) => watchdog.dismissAnomaly(id)}
+                          />
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
             </div>
           )}
         </div>
@@ -399,7 +521,7 @@ export default function KpiWatchdog({ organizationId, userId }) {
                 <div className="w-5 h-5 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0 mt-0.5">
                   <span className="text-[10px] font-bold text-blue-600">2</span>
                 </div>
-                <p className="text-xs text-gray-600">Flags drops &gt;20% as warnings, &gt;50% as critical anomalies</p>
+                <p className="text-xs text-gray-600">Flags drops &gt;30% as warnings, &gt;50% as critical anomalies</p>
               </div>
               <div className="flex items-start gap-2">
                 <div className="w-5 h-5 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0 mt-0.5">

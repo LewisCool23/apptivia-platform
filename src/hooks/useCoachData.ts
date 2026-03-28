@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { supabase } from '../supabaseClient';
+import { SKILLSET_KPI_MAP, LEVELS, getLevelInfo, getEffectiveLevel, difficultyRank, getSkillsetColor } from '../constants/skillsets';
 
 interface ProfileCoachData {
   id: string;
@@ -19,6 +20,7 @@ interface SkillsetProgress {
   progress: number;
   next_achievement: string;
   achievements_completed: number;
+  total_achievements: number;
   points: number;
 }
 
@@ -34,62 +36,17 @@ interface CoachData {
   avgPoints: number;
   levelProgress: number;
   pointsToNextLevel: number;
+  cappedByBreadth: boolean;
   skillsets: SkillsetProgress[];
 }
 
-const SKILLSET_KPI_MAP: Record<string, string[]> = {
-  conversationalist: ['talk_time_minutes', 'conversations'],
-  'call conqueror': ['call_connects', 'meetings', 'discovery_calls'],
-  'email warrior': ['emails_sent', 'social_touches'],
-  'pipeline guru': ['sourced_opps', 'stage2_opps', 'pipeline_created', 'pipeline_advanced', 'qualified_leads'],
-  'task master': ['follow_ups', 'demos_completed', 'response_time', 'sales_cycle_days', 'win_rate'],  'scorecard master': ['scorecard_100_percent', 'scorecard_100_percent_streak', 'key_metric_100_percent', 'key_metric_100_percent_streak', 'scorecards_completed'],  'engage pro': ['sequences_created', 'prospects_enrolled', 'sequence_replies', 'accounts_researched', 'playbooks_executed', 'outreach_drafts_sent', 'ai_content_generated', 'engage_signals_actioned', 'engage_deals_influenced'],
-};
-
-const LEVELS = [
-  { label: 'Developing', min: 0, max: 999 },
-  { label: 'Intermediate', min: 1000, max: 2499 },
-  { label: 'Proficient', min: 2500, max: 4999 },
-  { label: 'Elite', min: 5000, max: 9999 },
-  { label: 'Master', min: 10000, max: 15000 },
-];
-
-function getLevelInfo(points: number) {
-  const safePoints = Math.max(0, Math.round(points || 0));
-  const level = LEVELS.find((l, index) => {
-    if (index === LEVELS.length - 1) return safePoints >= l.min;
-    return safePoints >= l.min && safePoints <= l.max;
-  }) || LEVELS[0];
-
-  const isTop = level.label === LEVELS[LEVELS.length - 1].label;
-  const span = Math.max(1, level.max - level.min);
-  const progress = isTop
-    ? 100
-    : Math.min(100, Math.max(0, Math.round(((safePoints - level.min) / span) * 100)));
-  const pointsToNext = isTop ? 0 : Math.max(0, level.max - safePoints + 1);
-
-  return { level: level.label, progress, pointsToNext };
-}
-
-function difficultyRank(difficulty?: string) {
-  switch (difficulty) {
-    case 'easy':
-      return 1;
-    case 'medium':
-      return 2;
-    case 'hard':
-      return 3;
-    case 'expert':
-      return 4;
-    default:
-      return 5;
-  }
-}
+// SKILLSET_KPI_MAP, LEVELS, getLevelInfo, difficultyRank imported from '../constants/skillsets'
 
 export function useCoachData(
   selectedDepartments: string[],
   selectedTeams: string[],
   selectedMembers: string[],
-  options?: { enabled?: boolean; mode?: 'summary' | 'full' }
+  options?: { enabled?: boolean; mode?: 'summary' | 'full'; refreshTrigger?: number }
 ) {
   const cacheRef = useRef<Map<string, CoachData>>(new Map());
   const inFlightRef = useRef<Set<string>>(new Set());
@@ -110,6 +67,7 @@ export function useCoachData(
     avgPoints: 0,
     levelProgress: 0,
     pointsToNextLevel: 0,
+    cappedByBreadth: false,
     skillsets: [],
   });
   const [loading, setLoading] = useState(true);
@@ -124,7 +82,8 @@ export function useCoachData(
     }
 
     const mode = options?.mode ?? 'full';
-    const cacheKey = `${mode}|d:${selectedDepartments.join(',')}|t:${selectedTeams.join(',')}|m:${selectedMembers.join(',')}`;
+    const refreshSuffix = options?.refreshTrigger ? `|r:${options.refreshTrigger}` : '';
+    const cacheKey = `${mode}|d:${selectedDepartments.join(',')}|t:${selectedTeams.join(',')}|m:${selectedMembers.join(',')}${refreshSuffix}`;
     const cached = cacheRef.current.get(cacheKey);
 
     if (cached) {
@@ -145,10 +104,11 @@ export function useCoachData(
         setLoading(true);
         setError(null);
 
-        // Build profiles query with filters
+        // ── Stage 1: Independent queries (parallel) ──────────────────────
         let profilesQuery = supabase
           .from('profiles')
-          .select('id, first_name, last_name, apptivia_level, current_score, day_streak, total_points, department, team_id');
+          .select('id, first_name, last_name, apptivia_level, current_score, day_streak, total_points, department, team_id')
+          .not('role', 'in', '("admin","manager","coach")');
 
         if (selectedDepartments.length > 0) {
           profilesQuery = profilesQuery.in('department', selectedDepartments);
@@ -160,30 +120,21 @@ export function useCoachData(
           profilesQuery = profilesQuery.in('id', selectedMembers);
         }
 
-        const { data: profilesData, error: profilesError } = await profilesQuery;
-        if (profilesError) throw profilesError;
+        const [profilesResult, skillsetsResult, metricsResult] = await Promise.all([
+          profilesQuery,
+          supabase.from('skillsets').select('id, name, description, color').order('name'),
+          supabase.from('kpi_metrics').select('id, key, goal, weight, show_on_scorecard, direction').eq('is_active', true),
+        ]);
 
-        const profiles: ProfileCoachData[] = profilesData || [];
+        if (profilesResult.error) throw profilesResult.error;
+        if (skillsetsResult.error) throw skillsetsResult.error;
+        if (metricsResult.error) throw metricsResult.error;
 
+        const profiles: ProfileCoachData[] = profilesResult.data || [];
+        const allSkillsetsData = skillsetsResult.data;
         const totalMembers = profiles.length;
 
-        // Fetch all skillsets
-        const { data: allSkillsetsData, error: allSkillsetsError } = await supabase
-          .from('skillsets')
-          .select('id, name, description, color')
-          .order('name');
-
-        if (allSkillsetsError) throw allSkillsetsError;
-
-        // Fetch KPI metrics
-        const { data: metricsData, error: metricsError } = await supabase
-          .from('kpi_metrics')
-          .select('id, key, goal, weight, show_on_scorecard')
-          .eq('is_active', true);
-
-        if (metricsError) throw metricsError;
-
-        const metrics = (metricsData || []).map((m: any) => ({
+        const metrics = (metricsResult.data || []).map((m: any) => ({
           ...m,
           show_on_scorecard: m?.show_on_scorecard ?? true,
         }));
@@ -196,47 +147,75 @@ export function useCoachData(
         });
 
         const scorecardMetrics = metrics.filter((m: any) => m.show_on_scorecard);
-        const scorecardMetricKeys = scorecardMetrics.map((m: any) => m.key);
 
-        // Fetch KPI values for selected profiles
-        let valuesData: any[] = [];
-        if (profiles.length > 0 && metrics.length > 0) {
-          const profileIds = profiles.map((p: any) => p.id);
-          const metricIds = metrics.map((m: any) => m.id);
+        // ── Stage 2: Dependent queries (parallel) ────────────────────────
+        const profileIds = profiles.map(p => p.id);
+        const metricIds = metrics.map((m: any) => m.id);
+        const skillsetIds = (allSkillsetsData || []).map((item: any) => item.id).filter(Boolean);
 
+        // Build kpi_values promise
+        let valuesPromise: Promise<{ data: any[] | null; error: any }>;
+        if (profileIds.length > 0 && metricIds.length > 0) {
           if (mode === 'summary' && profileIds.length === 1) {
-            const { data: latestPeriodRows, error: latestError } = await supabase
+            // For summary mode, fetch latest period first then values for that period
+            valuesPromise = supabase
               .from('kpi_values')
               .select('period_end')
               .in('profile_id', profileIds)
               .order('period_end', { ascending: false })
-              .limit(1);
-
-            if (latestError) throw latestError;
-            const latestPeriodEnd = latestPeriodRows?.[0]?.period_end || null;
-
-            if (latestPeriodEnd) {
-              const { data: valuesResult, error: valuesError } = await supabase
-                .from('kpi_values')
-                .select('profile_id, kpi_id, value, period_start, period_end')
-                .in('profile_id', profileIds)
-                .in('kpi_id', metricIds)
-                .eq('period_end', latestPeriodEnd);
-
-              if (valuesError) throw valuesError;
-              valuesData = valuesResult || [];
-            }
+              .limit(1)
+              .then(({ data: latestRows, error: latestErr }) => {
+                if (latestErr) return { data: null, error: latestErr };
+                const latestEnd = latestRows?.[0]?.period_end || null;
+                if (!latestEnd) return { data: [], error: null };
+                return supabase
+                  .from('kpi_values')
+                  .select('profile_id, kpi_id, value, period_start, period_end')
+                  .in('profile_id', profileIds)
+                  .in('kpi_id', metricIds)
+                  .eq('period_end', latestEnd);
+              });
           } else {
-            const { data: valuesResult, error: valuesError } = await supabase
+            valuesPromise = supabase
               .from('kpi_values')
               .select('profile_id, kpi_id, value, period_start, period_end')
               .in('profile_id', profileIds)
-              .in('kpi_id', metricIds);
-
-            if (valuesError) throw valuesError;
-            valuesData = valuesResult || [];
+              .in('kpi_id', metricIds)
+              .limit(50000);
           }
+        } else {
+          valuesPromise = Promise.resolve({ data: [], error: null });
         }
+
+        // Build all Stage 2 promises
+        const stage2Promises: [
+          Promise<{ data: any[] | null; error: any }>,                    // kpi_values
+          Promise<{ data: any[] | null; error: any }>,                    // achievements
+          Promise<{ data: any[] | null; error: any }>,                    // profile_skillsets
+          Promise<{ data: any[] | null; error: any }>,                    // profile_achievements
+          Promise<{ data: any[] | null; error: any }>,                    // profile_badges
+        ] = [
+          valuesPromise,
+          mode === 'full' && skillsetIds.length > 0
+            ? supabase.from('achievements').select('id, skillset_id, name, description, points, difficulty').in('skillset_id', skillsetIds)
+            : Promise.resolve({ data: [], error: null }),
+          profileIds.length > 0
+            ? supabase.from('profile_skillsets').select('profile_id, skillset_id, progress, achievements_completed, total_points_earned').in('profile_id', profileIds)
+            : Promise.resolve({ data: [], error: null }),
+          mode === 'full' && profileIds.length > 0
+            ? supabase.from('profile_achievements').select('profile_id, achievement_id').in('profile_id', profileIds)
+            : Promise.resolve({ data: [], error: null }),
+          mode === 'full' && profileIds.length > 0
+            ? supabase.from('profile_badges').select('id, profile_id').in('profile_id', profileIds)
+            : Promise.resolve({ data: [], error: null }),
+        ];
+
+        const [valuesResult, achievementsResult, profileSkillsetsResult, earnedResult, badgesResult] = await Promise.all(stage2Promises);
+
+        if (valuesResult.error) throw valuesResult.error;
+        if (achievementsResult.error) throw achievementsResult.error;
+
+        const valuesData: any[] = valuesResult.data || [];
 
         // Latest period determination
         const latestPeriodEnd = valuesData.reduce<string | null>((acc, curr: any) => {
@@ -261,7 +240,10 @@ export function useCoachData(
           let totalScore = 0;
           scorecardMetrics.forEach((metric: any) => {
             const value = latestValueMap.get(`${profile.id}|${metric.id}`) || 0;
-            const percentage = metric.goal > 0 ? (value / metric.goal) * 100 : 0;
+            const dir = metric.direction || 'higher';
+            const percentage = metric.goal > 0
+              ? (dir === 'lower' ? (value > 0 ? Math.min((metric.goal / value) * 100, 200) : 200) : (value / metric.goal) * 100)
+              : 0;
             totalScore += percentage * (metric.weight || 0);
           });
           profileScores.set(profile.id, Math.round(totalScore));
@@ -296,7 +278,10 @@ export function useCoachData(
               let periodScore = 0;
               scorecardMetrics.forEach((metric: any) => {
                 const value = valueByProfilePeriodMetric.get(`${profile.id}|${periodEnd}|${metric.id}`) || 0;
-                const percentage = metric.goal > 0 ? (value / metric.goal) * 100 : 0;
+                const dir = metric.direction || 'higher';
+                const percentage = metric.goal > 0
+                  ? (dir === 'lower' ? (value > 0 ? Math.min((metric.goal / value) * 100, 200) : 200) : (value / metric.goal) * 100)
+                  : 0;
                 periodScore += percentage * (metric.weight || 0);
               });
               if (Math.round(periodScore) >= 100) {
@@ -314,18 +299,10 @@ export function useCoachData(
           ? Math.round(totalStreak / totalMembers)
           : 0;
 
-        // Fetch achievements for skillsets (skip for summary mode)
+        // Process achievements (already fetched in Stage 2)
         const achievementsBySkillset = new Map<string, any[]>();
         if (mode === 'full') {
-          const skillsetIds = (allSkillsetsData || []).map((item: any) => item.id).filter(Boolean);
-          const { data: achievementsData, error: achievementsError } = await supabase
-            .from('achievements')
-            .select('id, skillset_id, name, description, points, difficulty')
-            .in('skillset_id', skillsetIds);
-
-          if (achievementsError) throw achievementsError;
-
-          (achievementsData || []).forEach((achievement: any) => {
+          (achievementsResult.data || []).forEach((achievement: any) => {
             if (!achievementsBySkillset.has(achievement.skillset_id)) {
               achievementsBySkillset.set(achievement.skillset_id, []);
             }
@@ -351,27 +328,42 @@ export function useCoachData(
           pointsByProfile.set(profile.id, 0);
         });
 
-        // Fetch profile_skillsets data for cumulative progress
-        const profileIds = profiles.map(p => p.id);
-        const { data: profileSkillsetsData, error: profileSkillsetsError } = await supabase
-          .from('profile_skillsets')
-          .select('profile_id, skillset_id, progress, achievements_completed, total_points_earned')
-          .in('profile_id', profileIds);
-
-        if (profileSkillsetsError) {
-          console.error('Error fetching profile_skillsets:', profileSkillsetsError);
+        // Process profile_skillsets (already fetched in Stage 2)
+        if (profileSkillsetsResult.error) {
+          console.error('Error fetching profile_skillsets:', profileSkillsetsResult.error);
         }
 
-        // Create map of profile skillset progress
         const profileSkillsetMap = new Map<string, any>();
-        (profileSkillsetsData || []).forEach((ps: any) => {
+        (profileSkillsetsResult.data || []).forEach((ps: any) => {
           const key = `${ps.profile_id}|${ps.skillset_id}`;
           profileSkillsetMap.set(key, ps);
         });
 
+        // Process earned achievements (already fetched in Stage 2)
+        let earnedByProfileSkillset = new Map<string, { count: number; points: number }>();
+        if (mode === 'full' && !earnedResult.error && earnedResult.data) {
+          const achievementInfoMap = new Map<string, { skillset_id: string; points: number }>();
+          achievementsBySkillset.forEach((achList, skillsetId) => {
+            achList.forEach((ach: any) => {
+              achievementInfoMap.set(ach.id, { skillset_id: skillsetId, points: ach.points || 0 });
+            });
+          });
+
+          earnedResult.data.forEach((ea: any) => {
+            const info = achievementInfoMap.get(ea.achievement_id);
+            if (!info) return;
+            const key = `${ea.profile_id}|${info.skillset_id}`;
+            const existing = earnedByProfileSkillset.get(key) || { count: 0, points: 0 };
+            existing.count += 1;
+            existing.points += info.points;
+            earnedByProfileSkillset.set(key, existing);
+          });
+        }
+
         const skillsets: SkillsetProgress[] = (allSkillsetsData || []).map((skillset: any) => {
           const achievementList = achievementsBySkillset.get(skillset.id) || [];
           const totalAchievementsForSkillset = achievementList.length;
+          const totalSkillsetPoints = achievementList.reduce((sum: number, a: any) => sum + (a.points || 0), 0);
 
           let progressSum = 0;
           let achievementsSum = 0;
@@ -380,11 +372,26 @@ export function useCoachData(
           profiles.forEach((profile: any) => {
             const key = `${profile.id}|${skillset.id}`;
             const profileSkillset = profileSkillsetMap.get(key);
+            const earned = earnedByProfileSkillset.get(key);
 
-            // Use persistent cumulative data from database
-            const progress = profileSkillset?.progress || 0;
-            const achievementsCompleted = profileSkillset?.achievements_completed || 0;
-            const pointsEarned = profileSkillset?.total_points_earned || 0;
+            // Live-calculated values from profile_achievements are the source of truth.
+            // DB cache (profile_skillsets) is only used as a fallback when live data
+            // is unavailable (e.g., summary mode where profile_achievements isn't fetched).
+            const dbAchievements = profileSkillset?.achievements_completed || 0;
+            const dbPoints = profileSkillset?.total_points_earned || 0;
+            const dbProgress = profileSkillset?.progress || 0;
+
+            const earnedAchievements = earned?.count || 0;
+            const earnedPoints = earned?.points || 0;
+            const earnedProgress = (totalSkillsetPoints > 0 && earnedPoints > 0)
+              ? Math.min(100, Math.round((earnedPoints / totalSkillsetPoints) * 100))
+              : 0;
+
+            // Use live data when available (full mode); fall back to DB cache (summary mode)
+            const hasLiveData = mode === 'full';
+            const achievementsCompleted = hasLiveData ? earnedAchievements : (earnedAchievements || dbAchievements);
+            const pointsEarned = hasLiveData ? earnedPoints : (earnedPoints || dbPoints);
+            const progress = hasLiveData ? earnedProgress : (earnedProgress || dbProgress);
 
             progressSum += progress;
             achievementsSum += achievementsCompleted;
@@ -401,44 +408,43 @@ export function useCoachData(
           totalAchievementCount += achievementsSum;
           totalPointSum += pointsSum;
 
-          const nextAchievement = mode === 'full'
-            ? (avgAchievements < totalAchievementsForSkillset
-                ? achievementList[avgAchievements]?.description || achievementList[avgAchievements]?.name || 'Keep progressing to unlock the next achievement'
-                : 'All achievements complete')
-            : 'View details to see next achievement';
+          // Find next unearned achievement by checking which ones the average member hasn't completed
+          let nextAchievement = 'View details to see next achievement';
+          if (mode === 'full') {
+            if (avgAchievements >= totalAchievementsForSkillset) {
+              nextAchievement = 'All achievements complete';
+            } else {
+              const ach = achievementList[avgAchievements];
+              nextAchievement = ach?.description || ach?.name || 'Keep progressing to unlock the next achievement';
+            }
+          }
 
           return {
             skillset_id: skillset.id,
             skillset_name: skillset.name,
             description: skillset.description,
-            color: skillset.color,
+            color: getSkillsetColor(skillset.name, skillset.color),
             progress: avgProgress,
             next_achievement: nextAchievement,
             achievements_completed: avgAchievements,
+            total_achievements: totalAchievementsForSkillset,
             points: avgPoints,
           };
         });
 
-        // Badge counts from earned badges (skip for summary mode)
+        // Sort skillsets by progress descending, then alphabetically as tiebreaker
+        skillsets.sort((a, b) => {
+          if (b.progress !== a.progress) return b.progress - a.progress;
+          return a.skillset_name.localeCompare(b.skillset_name);
+        });
+
+        // Badge counts (already fetched in Stage 2)
         let totalBadges = 0;
         if (mode === 'full') {
-          let badgeQuerySucceeded = false;
-          if (profiles.length > 0) {
-            const profileIds = profiles.map(p => p.id);
-            const { data: badgeRows, error: badgeError } = await supabase
-              .from('profile_badges')
-              .select('id, profile_id')
-              .in('profile_id', profileIds);
-
-            if (!badgeError) {
-              totalBadges = (badgeRows || []).length;
-              badgeQuerySucceeded = true;
-            } else {
-              console.error('Error fetching profile badges for coach view:', badgeError);
-            }
-          }
-
-          if (!badgeQuerySucceeded) {
+          if (!badgesResult.error) {
+            totalBadges = (badgesResult.data || []).length;
+          } else {
+            console.error('Error fetching profile badges for coach view:', badgesResult.error);
             // Fallback: derive badge counts from scorecard performance and achievement milestones
             const achievementThresholds = [10, 25, 50, 100];
             const streakThresholds = [5, 10, 30, 90, 180];
@@ -463,7 +469,10 @@ export function useCoachData(
 
         const totalPoints = totalPointSum;
         const avgPoints = totalMembers > 0 ? Math.round(totalPointSum / totalMembers) : 0;
-        const levelInfo = getLevelInfo(avgPoints);
+
+        // Use effective level (points + skillset breadth) for accurate level
+        const skillsetProgresses = skillsets.map(s => s.progress);
+        const levelInfo = getEffectiveLevel(avgPoints, skillsetProgresses);
 
         const nextData: CoachData = {
           profiles,
@@ -477,6 +486,7 @@ export function useCoachData(
           avgPoints,
           levelProgress: levelInfo.progress,
           pointsToNextLevel: levelInfo.pointsToNext,
+          cappedByBreadth: levelInfo.cappedByBreadth,
           skillsets,
         };
 
@@ -496,7 +506,7 @@ export function useCoachData(
     }
 
     fetchData();
-  }, [selectedDepartments, selectedTeams, selectedMembers, options?.enabled, options?.mode, realtimeKey]);
+  }, [selectedDepartments, selectedTeams, selectedMembers, options?.enabled, options?.mode, realtimeKey, options?.refreshTrigger]);
 
   // ── Real-time subscription ─────────────────────────────────────────────────
   // When kpi_values change in the DB (e.g. a manager logs activity), invalidate
@@ -514,7 +524,19 @@ export function useCoachData(
       )
       .subscribe();
 
-    return () => { supabase.removeChannel(channel); };
+    // Also subscribe to achievement/skillset changes for real-time updates
+    const channel2 = supabase
+      .channel('coach_data_achievements')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'profile_achievements' },
+        () => { cacheRef.current.clear(); setRealtimeKey((k) => k + 1); })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'profile_skillsets' },
+        () => { cacheRef.current.clear(); setRealtimeKey((k) => k + 1); })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+      supabase.removeChannel(channel2);
+    };
   }, []);
 
   return { data, loading, error };

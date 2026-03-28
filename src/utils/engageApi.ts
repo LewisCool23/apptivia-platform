@@ -182,35 +182,33 @@ export const engageApi = {
     'engage-search', undefined, { action: 'status' }, '/api/engage/status', 'GET'
   ),
 
-  /** Search for prospects via Apollo (routes through engage-research which is deployed) */
+  /** Search for prospects via Apollo — goes directly to backend for Hunter enrichment */
   searchProspects: (filters: SearchFilters) =>
-    invokeWithFallback<{ ok: boolean; data: any }>(
-      'engage-research', filters as any, { action: 'search_people' }, '/api/engage/search/prospects'
+    fetchBackend<{ ok: boolean; data: any }>('/api/engage/search/prospects', filters as any),
+
+  /** Search for companies via Apollo — ICP Prospector filter-based search */
+  searchCompanies: (filters: SearchFilters) =>
+    invokeEdge<{ ok: boolean; data: any }>(
+      'engage-research', filters as any, { action: 'search_companies' }
     ),
 
-  /** Search for companies via Apollo */
-  searchCompanies: (filters: SearchFilters) =>
-    invokeWithFallback<{ ok: boolean; data: any }>(
-      'engage-search', filters as any, { action: 'companies' }, '/api/engage/search/companies'
+  /** Batch enrich companies by domain — returns tech stack, revenue, founded_year, keywords */
+  batchEnrichCompanies: (domains: string[]) =>
+    invokeEdge<{ ok: boolean; data: Array<{ domain: string; data: any }> }>(
+      'engage-research', { domains }, { action: 'batch_enrich_companies' }
     ),
 
   /** Company disambiguation — search for matching companies by name */
   searchOrganizations: (query: string) =>
-    invokeWithFallback<{ ok: boolean; companies: any[] }>(
-      'engage-research', { query }, { action: 'company_search' }, '/api/engage/search/organizations'
-    ),
+    fetchBackend<{ ok: boolean; companies: any[] }>('/api/engage/search/organizations', { query }),
 
-  /** Find people at a specific company by domain */
+  /** Find people at a specific company — goes directly to backend for Hunter enrichment */
   findPeopleAtCompany: (domain: string, opts?: { titles?: string[]; seniority?: string[]; per_page?: number }) =>
-    invokeWithFallback<{ ok: boolean; data: any }>(
-      'engage-research', { domain, ...(opts || {}) }, { action: 'find_people_at_company' }, '/api/engage/search/people-at-company'
-    ),
+    fetchBackend<{ ok: boolean; data: any }>('/api/engage/search/people-at-company', { domain, ...(opts || {}) }),
 
-  /** Get suggested contacts after company research */
+  /** Get suggested contacts after company research — goes directly to backend for Hunter enrichment */
   getSuggestedContacts: (domain: string) =>
-    invokeWithFallback<{ ok: boolean; data: any }>(
-      'engage-research', { domain }, { action: 'suggested_contacts' }, '/api/engage/search/suggested-contacts'
-    ),
+    fetchBackend<{ ok: boolean; data: any }>('/api/engage/search/suggested-contacts', { domain }),
 
   /** Full company research (Apollo + Tavily + Claude brief) */
   researchCompany: (domain: string) =>
@@ -444,7 +442,20 @@ export const engageDb = {
     return supabase.from('engage_outreach_drafts').update({ status }).eq('id', id).select().single();
   },
 
-  // ─ Activity Log ─
+  // ─ Activity Feed Events (shown in the Activity Feed panel) ─
+  async logActivityEvent(entry: {
+    organization_id: string;
+    actor_id?: string;
+    event_type: string; // e.g. 'deal.created', 'signal.actioned', 'outreach.generated'
+    title: string;
+    description?: string;
+    icon?: string;
+    color?: string;
+  }) {
+    return supabase.from('engage_activity_events').insert(entry);
+  },
+
+  // ─ Activity Log (API usage tracking) ─
   async logActivity(entry: {
     organization_id: string;
     user_id?: string;

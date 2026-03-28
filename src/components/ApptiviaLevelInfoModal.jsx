@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { X, Zap, Award, Target, TrendingUp, Star, ChevronRight, Trophy, BookOpen } from 'lucide-react';
+import { SKILLSET_CATEGORIES } from '../constants/skillsets';
 
 const APPTIVIA_LEVELS = [
   { name: 'Developing', range: '0 – 999 pts', color: 'from-orange-400 to-orange-600', bg: 'bg-orange-50', border: 'border-orange-200', text: 'text-orange-700', icon: '🌱', description: 'Building foundational habits and early KPI consistency.' },
@@ -222,14 +223,7 @@ export default function ApptiviaLevelInfoModal({ isOpen, onClose }) {
               <div className="bg-white border border-gray-200 rounded-xl p-4">
                 <h4 className="text-xs font-semibold text-gray-900 mb-2">Skillset Categories</h4>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                  {[
-                    { name: 'Conversationalist', kpis: 'Talk Time, Conversations', color: 'bg-blue-500' },
-                    { name: 'Call Conqueror', kpis: 'Call Connects, Meetings, Discovery', color: 'bg-green-500' },
-                    { name: 'Email Warrior', kpis: 'Emails Sent, Social Touches', color: 'bg-purple-500' },
-                    { name: 'Pipeline Guru', kpis: 'Sourced Opps, Pipeline Created', color: 'bg-orange-500' },
-                    { name: 'Task Master', kpis: 'Follow-ups, Demos, Win Rate', color: 'bg-red-500' },
-                    { name: 'Scorecard Master', kpis: 'Scorecard Streaks, 100% Weeks', color: 'bg-yellow-500' },
-                  ].map(s => (
+                  {SKILLSET_CATEGORIES.map(s => (
                     <div key={s.name} className="flex items-center gap-2 p-2 rounded-lg hover:bg-gray-50">
                       <div className={`w-2 h-8 rounded-full ${s.color}`} />
                       <div>

@@ -334,12 +334,17 @@ export default function ViewAllBadgesModal({ isOpen, onClose, userId, refreshKey
                       </div>
                     )}
 
-                    {/* Status */}
+                    {/* Status & Requirements */}
                     <div className="text-xs mt-2">
                       {earned ? (
                         <span className="text-green-600 font-medium">✓ Earned {earnedDate}</span>
                       ) : (
-                        <span className="text-gray-400 font-medium">🔒 Locked</span>
+                        <>
+                          <span className="text-gray-400 font-medium">🔒 Locked</span>
+                          {badge.badge_description && (
+                            <div className="text-[10px] text-gray-400 mt-1 line-clamp-2">{badge.badge_description}</div>
+                          )}
+                        </>
                       )}
                     </div>
                   </div>

@@ -93,19 +93,24 @@ export function useContests(currentUserId?: string) {
           winner:profiles!active_contests_winner_id_fkey(first_name, last_name, email),
           winner_team:teams!active_contests_winner_team_id_fkey(name)
         `)
-        .order('start_date', { ascending: false });
+        .order('start_date', { ascending: false })
+        .limit(200);
 
       if (contestsError) throw contestsError;
 
-      // Fetch leaderboards for all contests
-      const { data: leaderboards, error: leaderboardError } = await supabase
-        .from('contest_leaderboards')
-        .select(`
-          *,
-          profile:profiles(first_name, last_name, email),
-          team:teams(name)
-        `)
-        .order('rank', { ascending: true });
+      // Fetch leaderboards only for non-archived contests (limit scope)
+      const contestIds = (contests || []).map((c: any) => c.id);
+      const { data: leaderboards, error: leaderboardError } = contestIds.length > 0
+        ? await supabase
+            .from('contest_leaderboards')
+            .select(`
+              *,
+              profile:profiles(first_name, last_name, email),
+              team:teams(name)
+            `)
+            .in('contest_id', contestIds)
+            .order('rank', { ascending: true })
+        : { data: [], error: null };
       const { data: kpiMetrics, error: kpiError } = await supabase
         .from('kpi_metrics')
         .select('key, name');
@@ -195,7 +200,6 @@ export function useContests(currentUserId?: string) {
 
       // Calculate days remaining and format contests
       const now = new Date();
-      const staleActiveIds: string[] = [];
       const formattedContests: Contest[] = contests.map((contest: any) => {
         const endDate = new Date(contest.end_date);
         const startDate = new Date(contest.start_date);
@@ -208,12 +212,8 @@ export function useContests(currentUserId?: string) {
           ? 'upcoming'
           : 'active';
 
-        if (!isTerminalStatus && computedStatus === 'completed') {
-          staleActiveIds.push(contest.id);
-        }
-
         const daysRemaining = computedStatus === 'active'
-          ? Math.max(0, Math.ceil((endDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)))
+          ? Math.max(0, Math.floor((endDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)))
           : computedStatus === 'upcoming'
           ? Math.max(0, Math.ceil((startDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)))
           : null;
@@ -255,13 +255,6 @@ export function useContests(currentUserId?: string) {
           created_by: contest.created_by,
         };
       });
-
-      if (staleActiveIds.length > 0) {
-        await supabase
-          .from('active_contests')
-          .update({ status: 'completed', updated_at: new Date().toISOString() })
-          .in('id', staleActiveIds);
-      }
 
       // Fetch user badges if user ID provided
       let userBadges: Badge[] = [];
@@ -308,6 +301,17 @@ export function useContests(currentUserId?: string) {
 
   const enrollInContest = async (contestId: string, profileId: string) => {
     try {
+      // Guard: only allow enrollment in active contests
+      const { data: contestData } = await supabase
+        .from('active_contests')
+        .select('status')
+        .eq('id', contestId)
+        .single();
+
+      if (!contestData || contestData.status !== 'active') {
+        return { success: false, error: 'Can only enroll in active contests' };
+      }
+
       const { data: profile } = await supabase
         .from('profiles')
         .select('team_id')
@@ -342,6 +346,14 @@ export function useContests(currentUserId?: string) {
         if (error) throw error;
       }
       
+      // Optimistic UI update
+      setData(prev => ({
+        ...prev,
+        active: prev.active.map(c => c.id === contestId
+          ? { ...c, is_user_enrolled: true, participant_count: c.participant_count + 1 }
+          : c),
+      }));
+
       // Trigger leaderboard recalculation so the new participant appears
       try {
         await updateContestLeaderboard(contestId);
@@ -349,7 +361,7 @@ export function useContests(currentUserId?: string) {
         console.warn('Leaderboard recalculation after enrollment failed:', e);
       }
 
-      // Refresh contests
+      // Background sync for full consistency
       await fetchContests();
       return { success: true };
     } catch (err) {
@@ -367,8 +379,28 @@ export function useContests(currentUserId?: string) {
         .eq('profile_id', profileId);
 
       if (error) throw error;
-      
-      // Refresh contests
+
+      // Optimistic UI update
+      setData(prev => ({
+        ...prev,
+        active: prev.active.map(c => c.id === contestId
+          ? { ...c, is_user_enrolled: false, participant_count: Math.max(0, c.participant_count - 1) }
+          : c),
+      }));
+
+      // Remove withdrawn participant's stale leaderboard entry and recalculate ranks
+      try {
+        await supabase
+          .from('contest_leaderboards')
+          .delete()
+          .eq('contest_id', contestId)
+          .eq('profile_id', profileId);
+        await updateContestLeaderboard(contestId);
+      } catch (e) {
+        console.warn('Leaderboard cleanup after withdrawal failed:', e);
+      }
+
+      // Background sync for full consistency
       await fetchContests();
       return { success: true };
     } catch (err) {

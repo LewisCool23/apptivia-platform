@@ -1,15 +1,27 @@
 /**
  * usePipelineOperator — React hook for the Pipeline Operator workflow.
  *
- * Fetches deals from engage_pipeline_deals, computes at-risk flags, 
+ * Fetches deals from engage_pipeline_deals, computes at-risk flags,
  * generates AI-powered forecasts, and manages pipeline snapshots.
+ * When CEP stages are provided, enriches deals with CEP deal-stage data.
  */
 
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../supabaseClient';
 import { backendStream } from '../utils/backendFetch';
+import type { CepStage } from './useCepConfig';
 
 // ── Types ──────────────────────────────────────────────────
+
+export interface CepDealStageData {
+  id: string;
+  cep_stage_id: string;
+  checklist_completed: Record<string, boolean>;
+  exit_criteria_met: Record<string, boolean>;
+  entered_at: string;
+  notes?: string;
+  advanced_by?: string;
+}
 
 export interface PipelineDeal {
   id: string;
@@ -35,6 +47,11 @@ export interface PipelineDeal {
   // Populated from join
   owner_name?: string;
   is_at_risk?: boolean;
+  // Signal-to-Pipeline link (migration 051)
+  account_id?: string;
+  // CEP (migration 095)
+  cep_stage_id?: string;
+  currentCepDealStage?: CepDealStageData | null;
 }
 
 export interface PipelineSnapshot {
@@ -74,7 +91,7 @@ interface PipelineState {
   error: string | null;
 }
 
-const PIPELINE_STAGES = ['discovery', 'qualification', 'proposal', 'negotiation', 'closed_won', 'closed_lost'];
+export const DEFAULT_PIPELINE_STAGES = ['discovery', 'qualification', 'proposal', 'negotiation', 'closed_won', 'closed_lost'];
 const AT_RISK_DAYS = 7;
 const AT_RISK_MIN_VALUE = 10000;
 
@@ -87,7 +104,11 @@ const emptySummary: PipelineSummary = {
 
 // ── Hook ───────────────────────────────────────────────────
 
-export function usePipelineOperator(organizationId: string, userId?: string) {
+export function usePipelineOperator(
+  organizationId: string,
+  userId?: string,
+  cepStages?: CepStage[],
+) {
   const [state, setState] = useState<PipelineState>({
     deals: [],
     summary: emptySummary,
@@ -99,6 +120,8 @@ export function usePipelineOperator(organizationId: string, userId?: string) {
   const [refreshing, setRefreshing] = useState(false);
 
   const patch = useCallback((p: Partial<PipelineState>) => setState((prev) => ({ ...prev, ...p })), []);
+
+  const hasCep = (cepStages?.length ?? 0) > 0;
 
   // ── Fetch all active deals ─────────────────────────────
 
@@ -118,15 +141,13 @@ export function usePipelineOperator(organizationId: string, userId?: string) {
 
       const now = new Date();
       const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
-      const endOfQuarter = new Date(now.getFullYear(), Math.ceil((now.getMonth() + 1) / 3) * 3, 0);
 
-      const deals: PipelineDeal[] = (data || []).map((d: any) => {
+      let deals: PipelineDeal[] = (data || []).map((d: any) => {
         const ownerProfile = d.profiles;
         const ownerName = ownerProfile
           ? `${ownerProfile.first_name || ''} ${ownerProfile.last_name || ''}`.trim()
           : 'Unassigned';
 
-        // Compute days_inactive from last_activity_at (column doesn't exist in DB)
         const lastActivity = d.last_activity_at ? new Date(d.last_activity_at) : new Date(d.created_at);
         const daysInactive = Math.floor((now.getTime() - lastActivity.getTime()) / (1000 * 60 * 60 * 24));
         const isAtRisk = d.deal_value >= AT_RISK_MIN_VALUE && daysInactive >= AT_RISK_DAYS;
@@ -134,9 +155,32 @@ export function usePipelineOperator(organizationId: string, userId?: string) {
         return { ...d, days_inactive: daysInactive, owner_name: ownerName, is_at_risk: isAtRisk };
       });
 
-      // Summary
+      // Enrich with CEP deal-stage data if CEP is active
+      if (cepStages && cepStages.length > 0 && deals.length > 0) {
+        const dealIds = deals.map(d => d.id);
+        const { data: dealStages } = await supabase
+          .from('cep_deal_stages')
+          .select('*')
+          .in('deal_id', dealIds)
+          .is('exited_at', null);
+
+        const dealStageMap = new Map(
+          (dealStages || []).map((ds: any) => [ds.deal_id, ds as CepDealStageData])
+        );
+
+        deals = deals.map(d => ({
+          ...d,
+          currentCepDealStage: dealStageMap.get(d.id) || null,
+        }));
+      }
+
+      // Summary — use CEP stage keys if available, otherwise defaults
+      const stageList = (cepStages && cepStages.length > 0)
+        ? cepStages.map(s => s.stage_key)
+        : DEFAULT_PIPELINE_STAGES;
+
       const stageBreakdown: Record<string, { count: number; value: number }> = {};
-      PIPELINE_STAGES.forEach((s) => {
+      stageList.forEach((s) => {
         stageBreakdown[s] = { count: 0, value: 0 };
       });
 
@@ -180,7 +224,7 @@ export function usePipelineOperator(organizationId: string, userId?: string) {
     } catch (err: any) {
       patch({ error: err.message, loading: false });
     }
-  }, [organizationId, patch]);
+  }, [organizationId, patch, cepStages]);
 
   // ── Fetch historical snapshots ─────────────────────────
 
@@ -212,14 +256,50 @@ export function usePipelineOperator(organizationId: string, userId?: string) {
         forecast_category: deal.forecast_category || 'pipeline',
         organization_id: organizationId,
         owner_id: userId || null,
-        source: 'manual',
+        source: deal.source || 'manual',
+        ...(deal.account_id && { account_id: deal.account_id }),
       })
       .select()
       .single();
     if (error) throw error;
+
+    // If CEP is active, create initial deal-stage entry
+    if (cepStages && cepStages.length > 0 && data) {
+      const nonTerminal = cepStages.filter(s => !s.is_terminal);
+      const matchingStage = nonTerminal.find(s => s.stage_key === (deal.stage || 'discovery'));
+      const firstStage = matchingStage || nonTerminal.reduce(
+        (min, s) => (s.stage_order < min.stage_order ? s : min),
+        nonTerminal[0],
+      );
+
+      if (firstStage) {
+        await supabase.from('cep_deal_stages').insert({
+          deal_id: data.id,
+          cep_stage_id: firstStage.id,
+          organization_id: organizationId,
+          advanced_by: userId || null,
+        });
+
+        await supabase.from('engage_pipeline_deals')
+          .update({ cep_stage_id: firstStage.id })
+          .eq('id', data.id);
+      }
+    }
+
+    // Fire-and-forget: log to Activity Feed
+    if (organizationId && data) {
+      supabase.from('engage_activity_events').insert({
+        organization_id: organizationId, actor_id: userId,
+        event_type: 'deal.created',
+        title: 'Deal Created',
+        description: `${data.deal_name} — $${((data.deal_value || 0) / 1000).toFixed(0)}K`,
+        icon: '\uD83D\uDCB0', color: '#3b82f6',
+      }).then(() => {}, () => {});
+    }
+
     await fetchDeals();
     return data;
-  }, [organizationId, userId, fetchDeals]);
+  }, [organizationId, userId, fetchDeals, cepStages]);
 
   // ── Update a deal ──────────────────────────────────────
 
@@ -242,6 +322,81 @@ export function usePipelineOperator(organizationId: string, userId?: string) {
     if (error) throw error;
     await fetchDeals();
   }, [fetchDeals]);
+
+  // ── CEP: Advance deal to next stage ────────────────────
+
+  const advanceDealStage = useCallback(async (
+    dealId: string,
+    _fromStageId: string,
+    toStageId: string,
+    toStageKey: string,
+    toWinProbability: number,
+  ) => {
+    // 1. Close current cep_deal_stages row
+    await supabase
+      .from('cep_deal_stages')
+      .update({ exited_at: new Date().toISOString() })
+      .eq('deal_id', dealId)
+      .is('exited_at', null);
+
+    // 2. Insert new cep_deal_stages row for target stage
+    await supabase.from('cep_deal_stages').insert({
+      deal_id: dealId,
+      cep_stage_id: toStageId,
+      organization_id: organizationId,
+      advanced_by: userId || null,
+    });
+
+    // 3. Update deal's cep_stage_id, stage text, and probability
+    await supabase
+      .from('engage_pipeline_deals')
+      .update({
+        cep_stage_id: toStageId,
+        stage: toStageKey,
+        probability: toWinProbability,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', dealId);
+
+    // 4. Refresh
+    await fetchDeals();
+  }, [organizationId, userId, fetchDeals]);
+
+  // ── CEP: Update deal checklist ─────────────────────────
+
+  const updateDealChecklist = useCallback(async (
+    dealStageId: string,
+    checklistCompleted: Record<string, boolean>,
+  ) => {
+    await supabase
+      .from('cep_deal_stages')
+      .update({ checklist_completed: checklistCompleted })
+      .eq('id', dealStageId);
+
+    await fetchDeals();
+  }, [fetchDeals]);
+
+  // ── CEP: Assign CEP stage to a deal that has none ──────
+
+  const assignCepStage = useCallback(async (dealId: string, stageId: string, stageKey: string, winProbability: number) => {
+    await supabase.from('cep_deal_stages').insert({
+      deal_id: dealId,
+      cep_stage_id: stageId,
+      organization_id: organizationId,
+      advanced_by: userId || null,
+    });
+
+    await supabase.from('engage_pipeline_deals')
+      .update({
+        cep_stage_id: stageId,
+        stage: stageKey,
+        probability: winProbability,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', dealId);
+
+    await fetchDeals();
+  }, [organizationId, userId, fetchDeals]);
 
   // ── Generate AI Forecast (streaming SSE) ─────────────
   // Streams tokens progressively from the backend so the UI updates
@@ -322,6 +477,7 @@ export function usePipelineOperator(organizationId: string, userId?: string) {
   return {
     ...state,
     refreshing,
+    hasCep,
     fetchDeals,
     fetchSnapshots,
     refreshAll,
@@ -329,6 +485,9 @@ export function usePipelineOperator(organizationId: string, userId?: string) {
     updateDeal,
     deleteDeal,
     generateForecast,
-    PIPELINE_STAGES,
+    advanceDealStage,
+    updateDealChecklist,
+    assignCepStage,
+    DEFAULT_PIPELINE_STAGES,
   };
 }

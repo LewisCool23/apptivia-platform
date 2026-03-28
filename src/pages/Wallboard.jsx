@@ -1,22 +1,46 @@
 /**
  * Wallboard — Full-screen TV display for sales floor visibility.
  *
- * Designed to be displayed on office monitors/TVs. Auto-rotates through:
- *   1. Leaderboard  — top 10 reps ranked by score
- *   2. Top Performer — spotlight on the current #1 rep
- *   3. Contests     — active contest standings
- *   4. Team Stats   — aggregate performance snapshot
+ * Designed to be displayed on office monitors/TVs. Auto-rotates through
+ * configurable slides with animated transitions. Supports:
+ *   1. Leaderboard      — top 10 reps ranked by score
+ *   2. Top Performer    — spotlight on the current #1 rep
+ *   3. Contests         — active contest standings
+ *   4. Team Stats       — aggregate performance snapshot
+ *   5. Badges           — recently earned badges
+ *   6. This Week's Activity — live team KPI totals with week-over-week deltas
+ *   7. Achievements     — recent achievement feed
+ *   8. Goal Progress    — progress bars toward team goals
  *
- * Uses Supabase realtime on kpi_values so scores update live.
- * No nav chrome — press F for fullscreen, Esc to exit.
+ * Features:
+ *   - Animated slide transitions (CSS fade/slide)
+ *   - Celebration overlay (confetti for level-ups, rare badges, contest wins)
+ *   - Multi-team filtering via dropdown
+ *   - Configurable slides & per-slide duration via Org Settings
+ *   - Supabase realtime for live updates
+ *   - Press F for fullscreen, Space to pause, arrow keys to navigate
  */
 
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../AuthContext';
 import { supabase } from '../supabaseClient';
-import { Maximize2, Minimize2, Trophy, TrendingUp, Zap, Users, Star, Flame, Award } from 'lucide-react';
+import { Maximize2, Minimize2, Trophy, TrendingUp, Zap, Users, Star, Flame, Award, ArrowLeft, Target } from 'lucide-react';
 
-const SLIDE_DURATION = 15000; // ms per slide
-const SLIDES = ['leaderboard', 'spotlight', 'contests', 'team_stats'];
+// ── Constants ────────────────────────────────────────────────────────────────
+
+const ALL_SLIDES = ['leaderboard', 'spotlight', 'contests', 'team_stats', 'badges', 'activity', 'achievements', 'goals'];
+
+const DEFAULT_SLIDE_CONFIG = {
+  leaderboard:  { enabled: true, duration: 15 },
+  spotlight:    { enabled: true, duration: 15 },
+  contests:     { enabled: true, duration: 15 },
+  team_stats:   { enabled: true, duration: 15 },
+  badges:       { enabled: true, duration: 15 },
+  activity:     { enabled: true, duration: 15 },
+  achievements: { enabled: true, duration: 15 },
+  goals:        { enabled: true, duration: 15 },
+};
 
 const LEVEL_COLORS = {
   Developing:   { bg: 'from-slate-600 to-slate-700',   badge: 'bg-slate-500' },
@@ -26,42 +50,164 @@ const LEVEL_COLORS = {
   Master:       { bg: 'from-rose-500 to-pink-600',     badge: 'bg-rose-500' },
 };
 
-function useWallboardData() {
+const RARITY_COLORS = {
+  legendary: { border: '#FFD700', glow: 'shadow-yellow-400/40', label: 'text-yellow-300' },
+  epic:      { border: '#9333ea', glow: 'shadow-purple-400/40', label: 'text-purple-300' },
+  rare:      { border: '#3b82f6', glow: 'shadow-blue-400/40',   label: 'text-blue-300'   },
+  common:    { border: '#6b7280', glow: '',                      label: 'text-gray-400'   },
+};
+
+const DIFFICULTY_COLORS = {
+  easy:   { bg: 'bg-green-500/20', text: 'text-green-300', border: 'border-green-500/30' },
+  medium: { bg: 'bg-blue-500/20',  text: 'text-blue-300',  border: 'border-blue-500/30' },
+  hard:   { bg: 'bg-purple-500/20', text: 'text-purple-300', border: 'border-purple-500/30' },
+  expert: { bg: 'bg-amber-500/20', text: 'text-amber-300', border: 'border-amber-500/30' },
+};
+
+const CELEBRATION_COLORS = [
+  '#f59e0b', '#fcd34d', '#10b981', '#34d399',
+  '#3b82f6', '#93c5fd', '#8b5cf6', '#c4b5fd',
+  '#ef4444', '#fca5a5', '#ec4899', '#f9a8d4',
+];
+const CELEBRATION_CONFETTI = Array.from({ length: 90 }, (_, i) => ({
+  color: CELEBRATION_COLORS[i % CELEBRATION_COLORS.length],
+  left: Math.random() * 100,
+  delay: Math.random() * 2,
+  duration: 2.5 + Math.random() * 2.5,
+  size: 7 + Math.random() * 9,
+  rotation: Math.random() * 360,
+  isRect: i % 3 !== 0,
+}));
+
+// ── Helpers ──────────────────────────────────────────────────────────────────
+
+function getMonday(date) {
+  const d = new Date(date);
+  d.setHours(0, 0, 0, 0);
+  const day = d.getDay();
+  const diff = day === 0 ? -6 : 1 - day;
+  d.setDate(d.getDate() + diff);
+  return d;
+}
+
+function formatKpiValue(val, unit) {
+  if (unit === 'currency' || unit === 'dollars') return '$' + Math.round(val).toLocaleString();
+  if (unit === 'percentage' || unit === 'percent') return val.toFixed(1) + '%';
+  if (unit === 'minutes') return Math.round(val).toLocaleString() + 'm';
+  if (unit === 'seconds') return Math.round(val).toLocaleString() + 's';
+  return Math.round(val).toLocaleString();
+}
+
+// ── Data Hook ────────────────────────────────────────────────────────────────
+
+function useWallboardData(orgId, selectedTeamId) {
   const [profiles, setProfiles] = useState([]);
   const [contests, setContests] = useState([]);
+  const [recentBadges, setRecentBadges] = useState([]);
+  const [teams, setTeams] = useState([]);
+  const [weeklyKpis, setWeeklyKpis] = useState([]);
+  const [priorWeekKpis, setPriorWeekKpis] = useState([]);
+  const [recentAchievements, setRecentAchievements] = useState([]);
+  const [wallboardConfig, setWallboardConfig] = useState(null);
   const [loading, setLoading] = useState(true);
   const refreshRef = useRef(0);
 
   const fetchData = useCallback(async () => {
     try {
-      const [profilesRes, contestsRes] = await Promise.all([
+      const since7d = new Date(Date.now() - 7 * 86400000).toISOString();
+      const monday = getMonday(new Date());
+      const sunday = new Date(monday.getTime() + 6 * 86400000);
+      const priorMonday = new Date(monday.getTime() - 7 * 86400000);
+      const priorSunday = new Date(monday.getTime() - 86400000);
+      const mondayStr = monday.toISOString().split('T')[0];
+      const sundayStr = sunday.toISOString().split('T')[0];
+      const priorMondayStr = priorMonday.toISOString().split('T')[0];
+      const priorSundayStr = priorSunday.toISOString().split('T')[0];
+
+      // Build profiles query with optional team filter
+      let profilesQuery = supabase
+        .from('profiles')
+        .select('id, first_name, last_name, apptivia_level, current_score, total_points, day_streak, role, team_id')
+        .not('role', 'in', '("admin","manager","coach")');
+      if (selectedTeamId) profilesQuery = profilesQuery.eq('team_id', selectedTeamId);
+
+      // Stage 1: parallel queries
+      const [profilesRes, contestsRes, badgesRes, teamsRes, configRes] = await Promise.all([
+        profilesQuery.order('total_points', { ascending: false }).limit(20),
         supabase
-          .from('profiles')
-          .select('id, first_name, last_name, apptivia_level, current_score, total_points, day_streak, role')
-          .order('total_points', { ascending: false })
-          .limit(20),
-        supabase
-          .from('contests')
-          .select('id, title, contest_type, start_date, end_date, entries')
+          .from('active_contests')
+          .select(`id, name, participant_type, start_date, end_date,
+            contest_leaderboards(profile_id, rank, score,
+              profile:profiles(first_name, last_name))`)
           .eq('status', 'active')
           .order('start_date', { ascending: false })
           .limit(3),
+        supabase
+          .from('profile_badges')
+          .select('id, badge_name, icon, color, rarity, earned_at, profile:profiles(first_name, last_name)')
+          .gte('earned_at', since7d)
+          .order('earned_at', { ascending: false })
+          .limit(15),
+        supabase.from('teams').select('id, name').order('name'),
+        orgId
+          ? supabase.from('organizations').select('settings').eq('id', orgId).single()
+          : Promise.resolve({ data: null }),
       ]);
 
       if (profilesRes.data) setProfiles(profilesRes.data);
       if (contestsRes.data) setContests(contestsRes.data);
+      if (badgesRes.data) setRecentBadges(badgesRes.data);
+      if (teamsRes.data) setTeams(teamsRes.data);
+      if (configRes.data?.settings?.wallboard) setWallboardConfig(configRes.data.settings.wallboard);
+
+      // Stage 2: queries that depend on profile IDs
+      const profileIds = (profilesRes.data || []).map(p => p.id);
+      if (profileIds.length > 0) {
+        const [currentKpiRes, priorKpiRes, achievementsRes] = await Promise.all([
+          supabase.from('kpi_values')
+            .select('kpi_id, profile_id, value, kpi_metrics!inner(key, name, goal, unit, category, show_on_scorecard)')
+            .in('profile_id', profileIds)
+            .gte('period_start', mondayStr)
+            .lte('period_start', sundayStr),
+          supabase.from('kpi_values')
+            .select('kpi_id, profile_id, value, kpi_metrics!inner(key, name, goal, unit, category, show_on_scorecard)')
+            .in('profile_id', profileIds)
+            .gte('period_start', priorMondayStr)
+            .lte('period_start', priorSundayStr),
+          supabase.from('profile_achievements')
+            .select('id, profile_id, achievement_id, completed_at, points_awarded, achievement:achievements(name, description, difficulty, points, icon), profile:profiles(first_name, last_name)')
+            .in('profile_id', profileIds)
+            .gte('completed_at', since7d)
+            .order('completed_at', { ascending: false })
+            .limit(20),
+        ]);
+
+        // Aggregate KPI values per key across all profiles
+        const aggregate = (data) => {
+          const sums = {};
+          (data || []).forEach(v => {
+            const m = v.kpi_metrics;
+            if (!m?.key) return;
+            if (!sums[m.key]) sums[m.key] = { kpi_key: m.key, name: m.name, value: 0, goal: m.goal, unit: m.unit, category: m.category, show_on_scorecard: m.show_on_scorecard };
+            sums[m.key].value += Number(v.value || 0);
+          });
+          return Object.values(sums);
+        };
+
+        setWeeklyKpis(aggregate(currentKpiRes.data));
+        setPriorWeekKpis(aggregate(priorKpiRes.data));
+        if (achievementsRes.data) setRecentAchievements(achievementsRes.data);
+      }
     } catch (e) {
       console.error('Wallboard fetch error:', e);
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [orgId, selectedTeamId]);
 
-  useEffect(() => {
-    fetchData();
-  }, [fetchData]);
+  useEffect(() => { fetchData(); }, [fetchData]);
 
-  // Live updates when KPI values change
+  // Live updates
   useEffect(() => {
     const channel = supabase
       .channel('wallboard_live')
@@ -69,18 +215,18 @@ function useWallboardData() {
         refreshRef.current += 1;
         fetchData();
       })
-      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'profiles' }, () => {
-        fetchData();
-      })
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'profiles' }, () => fetchData())
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'profile_badges' }, () => fetchData())
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'profile_achievements' }, () => fetchData())
       .subscribe();
 
     return () => { supabase.removeChannel(channel); };
   }, [fetchData]);
 
-  return { profiles, contests, loading };
+  return { profiles, contests, recentBadges, teams, weeklyKpis, priorWeekKpis, recentAchievements, wallboardConfig, loading };
 }
 
-// ── Clock ──────────────────────────────────────────────────────────────────
+// ── Clock ────────────────────────────────────────────────────────────────────
 
 function Clock() {
   const [time, setTime] = useState(new Date());
@@ -100,11 +246,11 @@ function Clock() {
   );
 }
 
-// ── Slide: Leaderboard ─────────────────────────────────────────────────────
+// ── Slide: Leaderboard ───────────────────────────────────────────────────────
 
 function LeaderboardSlide({ profiles }) {
   const top10 = profiles.slice(0, 10);
-  const medals = ['🥇', '🥈', '🥉'];
+  const medals = ['\u{1F947}', '\u{1F948}', '\u{1F949}'];
 
   return (
     <div className="flex flex-col h-full">
@@ -130,7 +276,6 @@ function LeaderboardSlide({ profiles }) {
                   : 'bg-white/5 border border-white/10'
               }`}
             >
-              {/* Rank */}
               <div className="w-10 text-center flex-shrink-0">
                 {medals[i] ? (
                   <span className="text-3xl">{medals[i]}</span>
@@ -138,13 +283,9 @@ function LeaderboardSlide({ profiles }) {
                   <span className="text-2xl font-bold text-white/40">#{i + 1}</span>
                 )}
               </div>
-
-              {/* Avatar */}
               <div className={`w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0 text-xl font-black ${isTop3 ? 'bg-white/20' : 'bg-white/10'}`}>
                 {(rep.first_name?.[0] || '?').toUpperCase()}
               </div>
-
-              {/* Info */}
               <div className="flex-1 min-w-0">
                 <div className="font-bold text-white text-lg leading-tight truncate">
                   {rep.first_name} {rep.last_name}
@@ -161,8 +302,6 @@ function LeaderboardSlide({ profiles }) {
                   )}
                 </div>
               </div>
-
-              {/* Score */}
               <div className="text-right flex-shrink-0">
                 <div className="text-2xl font-black text-white tabular-nums">
                   {(rep.total_points || 0).toLocaleString()}
@@ -177,7 +316,7 @@ function LeaderboardSlide({ profiles }) {
   );
 }
 
-// ── Slide: Top Performer Spotlight ─────────────────────────────────────────
+// ── Slide: Top Performer Spotlight ───────────────────────────────────────────
 
 function SpotlightSlide({ profiles }) {
   const top = profiles[0];
@@ -199,7 +338,7 @@ function SpotlightSlide({ profiles }) {
   return (
     <div className="flex flex-col items-center justify-center h-full gap-8">
       <div className="text-center">
-        <div className="text-6xl mb-4">🏆</div>
+        <div className="text-6xl mb-4">{'\u{1F3C6}'}</div>
         <div className="text-2xl text-white/60 font-semibold uppercase tracking-widest mb-2">Top Performer</div>
         <div className="text-8xl font-black text-white leading-none mb-4">
           {top.first_name}<br />{top.last_name}
@@ -236,7 +375,7 @@ function SpotlightSlide({ profiles }) {
         <div className="flex gap-6 items-end">
           {runnerUp && (
             <div className="text-center bg-white/5 rounded-xl px-6 py-3">
-              <div className="text-3xl mb-1">🥈</div>
+              <div className="text-3xl mb-1">{'\u{1F948}'}</div>
               <div className="text-white font-bold">{runnerUp.first_name} {runnerUp.last_name}</div>
               <div className="text-white/50 text-sm">{(runnerUp.total_points || 0).toLocaleString()} pts</div>
               {gap1 !== null && <div className="text-xs text-red-400 mt-1">-{gap1.toLocaleString()} pts behind</div>}
@@ -244,7 +383,7 @@ function SpotlightSlide({ profiles }) {
           )}
           {third && (
             <div className="text-center bg-white/5 rounded-xl px-6 py-3">
-              <div className="text-3xl mb-1">🥉</div>
+              <div className="text-3xl mb-1">{'\u{1F949}'}</div>
               <div className="text-white font-bold">{third.first_name} {third.last_name}</div>
               <div className="text-white/50 text-sm">{(third.total_points || 0).toLocaleString()} pts</div>
             </div>
@@ -255,7 +394,7 @@ function SpotlightSlide({ profiles }) {
   );
 }
 
-// ── Slide: Contests ────────────────────────────────────────────────────────
+// ── Slide: Contests ──────────────────────────────────────────────────────────
 
 function ContestsSlide({ contests }) {
   if (!contests.length) {
@@ -277,8 +416,8 @@ function ContestsSlide({ contests }) {
 
       <div className="grid gap-6 flex-1">
         {contests.map((contest) => {
-          const entries = Array.isArray(contest.entries)
-            ? [...contest.entries].sort((a, b) => (b.value ?? b.score ?? 0) - (a.value ?? a.score ?? 0)).slice(0, 5)
+          const entries = Array.isArray(contest.contest_leaderboards)
+            ? [...contest.contest_leaderboards].sort((a, b) => (b.score ?? 0) - (a.score ?? 0)).slice(0, 5)
             : [];
           const end = contest.end_date ? new Date(contest.end_date) : null;
           const daysLeft = end ? Math.max(0, Math.ceil((end - new Date()) / (1000 * 60 * 60 * 24))) : null;
@@ -286,7 +425,7 @@ function ContestsSlide({ contests }) {
           return (
             <div key={contest.id} className="bg-white/5 border border-white/10 rounded-2xl p-6">
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-2xl font-bold text-white">{contest.title}</h3>
+                <h3 className="text-2xl font-bold text-white">{contest.name}</h3>
                 {daysLeft !== null && (
                   <span className={`text-sm px-3 py-1 rounded-full font-semibold ${daysLeft <= 3 ? 'bg-red-500/30 text-red-300' : 'bg-white/10 text-white/60'}`}>
                     {daysLeft === 0 ? 'Ends today' : `${daysLeft}d left`}
@@ -297,11 +436,13 @@ function ContestsSlide({ contests }) {
               {entries.length > 0 ? (
                 <div className="space-y-2">
                   {entries.map((entry, i) => (
-                    <div key={i} className="flex items-center gap-4">
-                      <span className="text-xl w-8">{['🥇','🥈','🥉','4️⃣','5️⃣'][i] || `${i+1}.`}</span>
-                      <span className="flex-1 text-white font-semibold text-lg truncate">{entry.name || entry.participant_name || 'Rep'}</span>
+                    <div key={entry.profile_id || i} className="flex items-center gap-4">
+                      <span className="text-xl w-8">{['\u{1F947}','\u{1F948}','\u{1F949}','4\uFE0F\u20E3','5\uFE0F\u20E3'][i] || `${i+1}.`}</span>
+                      <span className="flex-1 text-white font-semibold text-lg truncate">
+                        {entry.profile ? `${entry.profile.first_name || ''} ${entry.profile.last_name || ''}`.trim() || 'Rep' : 'Rep'}
+                      </span>
                       <span className="text-amber-400 font-black text-xl tabular-nums">
-                        {typeof entry.value === 'number' ? entry.value.toLocaleString() : (entry.score ?? '-')}
+                        {typeof entry.score === 'number' ? entry.score.toLocaleString() : '-'}
                       </span>
                     </div>
                   ))}
@@ -317,7 +458,7 @@ function ContestsSlide({ contests }) {
   );
 }
 
-// ── Slide: Team Stats ──────────────────────────────────────────────────────
+// ── Slide: Team Stats ────────────────────────────────────────────────────────
 
 function TeamStatsSlide({ profiles }) {
   if (!profiles.length) {
@@ -384,7 +525,337 @@ function TeamStatsSlide({ profiles }) {
   );
 }
 
-// ── Slide Indicator ────────────────────────────────────────────────────────
+// ── Slide: Recent Badges ─────────────────────────────────────────────────────
+
+function BadgesSlide({ recentBadges }) {
+  if (!recentBadges.length) {
+    return (
+      <div className="flex flex-col items-center justify-center h-full gap-4">
+        <Award size={80} className="text-white/20" />
+        <p className="text-white/40 text-3xl font-bold">No Badges Earned This Week</p>
+        <p className="text-white/25 text-lg">Badges will appear here as the team earns them</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex flex-col h-full">
+      <div className="flex items-center gap-4 mb-8">
+        <Award className="text-amber-400" size={40} />
+        <h2 className="text-5xl font-black text-white tracking-tight">Badges Earned</h2>
+        <span className="ml-auto text-white/40 text-lg">Last 7 days</span>
+      </div>
+
+      <div className="grid grid-cols-3 gap-4 flex-1 content-start">
+        {recentBadges.map((b) => {
+          const rarity = b.rarity?.toLowerCase() || 'common';
+          const rc = RARITY_COLORS[rarity] || RARITY_COLORS.common;
+          const name = `${b.profile?.first_name || ''} ${b.profile?.last_name || ''}`.trim() || 'Rep';
+          const when = new Date(b.earned_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+
+          return (
+            <div
+              key={b.id}
+              className={`flex items-center gap-4 bg-white/5 border rounded-2xl p-4 shadow-lg ${rc.glow}`}
+              style={{ borderColor: rc.border }}
+            >
+              <div className="text-4xl flex-shrink-0">{b.icon || '\u{1F3C6}'}</div>
+              <div className="min-w-0 flex-1">
+                <div className={`text-xs font-bold uppercase tracking-wider mb-0.5 ${rc.label}`}>{rarity}</div>
+                <div className="text-white font-bold text-lg leading-tight truncate">{b.badge_name}</div>
+                <div className="text-white/60 text-sm truncate">{name}</div>
+                <div className="text-white/30 text-xs mt-0.5">{when}</div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+// ── Slide: This Week's Activity ──────────────────────────────────────────────
+
+function ActivitySlide({ weeklyKpis, priorWeekKpis }) {
+  if (!weeklyKpis.length) {
+    return (
+      <div className="flex flex-col items-center justify-center h-full gap-4">
+        <Zap size={80} className="text-white/20" />
+        <p className="text-white/40 text-3xl font-bold">No Activity Data</p>
+        <p className="text-white/25 text-lg">KPI data will appear as it's recorded this week</p>
+      </div>
+    );
+  }
+
+  const priorMap = {};
+  priorWeekKpis.forEach(k => { priorMap[k.kpi_key] = k.value; });
+
+  // Show top 8 KPIs by value
+  const top8 = [...weeklyKpis].sort((a, b) => b.value - a.value).slice(0, 8);
+
+  return (
+    <div className="flex flex-col h-full">
+      <div className="flex items-center gap-4 mb-8">
+        <Zap className="text-cyan-400" size={40} />
+        <h2 className="text-5xl font-black text-white tracking-tight">This Week's Activity</h2>
+        <span className="ml-auto text-white/40 text-lg">Live</span>
+        <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
+      </div>
+
+      <div className="grid grid-cols-4 gap-4 flex-1 content-start">
+        {top8.map((kpi) => {
+          const prior = priorMap[kpi.kpi_key] || 0;
+          const delta = prior > 0 ? ((kpi.value - prior) / prior * 100) : 0;
+          const isUp = delta > 2;
+          const isDown = delta < -2;
+
+          return (
+            <div key={kpi.kpi_key} className="bg-white/5 border border-white/10 rounded-2xl p-6 flex flex-col justify-center">
+              <div className="text-white/50 text-sm font-medium mb-2 truncate">{kpi.name}</div>
+              <div className="text-4xl font-black text-white tabular-nums">
+                {formatKpiValue(kpi.value, kpi.unit)}
+              </div>
+              {prior > 0 && (
+                <div className={`flex items-center gap-1 mt-2 text-sm font-semibold ${
+                  isUp ? 'text-green-400' : isDown ? 'text-red-400' : 'text-white/40'
+                }`}>
+                  {isUp ? '\u2191' : isDown ? '\u2193' : '\u2192'}
+                  {Math.abs(delta).toFixed(1)}% vs last week
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+// ── Slide: Recent Achievements ───────────────────────────────────────────────
+
+function AchievementsSlide({ recentAchievements }) {
+  if (!recentAchievements.length) {
+    return (
+      <div className="flex flex-col items-center justify-center h-full gap-4">
+        <Star size={80} className="text-white/20" />
+        <p className="text-white/40 text-3xl font-bold">No Recent Achievements</p>
+        <p className="text-white/25 text-lg">Achievements will appear as the team earns them</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex flex-col h-full">
+      <div className="flex items-center gap-4 mb-8">
+        <Star className="text-yellow-400" size={40} />
+        <h2 className="text-5xl font-black text-white tracking-tight">Recent Achievements</h2>
+        <span className="ml-auto text-white/40 text-lg">Last 7 days</span>
+      </div>
+
+      <div className="grid grid-cols-2 gap-4 flex-1 content-start">
+        {recentAchievements.map((a) => {
+          const name = `${a.profile?.first_name || ''} ${a.profile?.last_name || ''}`.trim() || 'Rep';
+          const diff = a.achievement?.difficulty || 'medium';
+          const dc = DIFFICULTY_COLORS[diff] || DIFFICULTY_COLORS.medium;
+          const when = new Date(a.completed_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+
+          return (
+            <div key={a.id} className={`flex items-center gap-4 bg-white/5 border ${dc.border} rounded-2xl p-4`}>
+              <div className="text-4xl flex-shrink-0">{a.achievement?.icon || '\u{1F3C5}'}</div>
+              <div className="min-w-0 flex-1">
+                <div className="text-white font-bold text-lg leading-tight truncate">
+                  {a.achievement?.name || 'Achievement'}
+                </div>
+                <div className="text-white/60 text-sm truncate">{name}</div>
+                <div className="flex items-center gap-2 mt-1">
+                  <span className={`text-xs px-2 py-0.5 rounded-full font-semibold ${dc.bg} ${dc.text}`}>{diff}</span>
+                  <span className="text-amber-400 text-xs font-bold">+{a.points_awarded || a.achievement?.points || 0} pts</span>
+                  <span className="text-white/30 text-xs">{when}</span>
+                </div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+// ── Slide: Goal Progress ─────────────────────────────────────────────────────
+
+function GoalProgressSlide({ weeklyKpis, profileCount }) {
+  if (!weeklyKpis.length || !profileCount) {
+    return (
+      <div className="flex flex-col items-center justify-center h-full gap-4">
+        <Target size={80} className="text-white/20" />
+        <p className="text-white/40 text-3xl font-bold">No Goal Data</p>
+        <p className="text-white/25 text-lg">Goal progress will appear once KPI data is available</p>
+      </div>
+    );
+  }
+
+  const kpisWithProgress = weeklyKpis
+    .filter(k => k.goal > 0)
+    .map(k => {
+      const teamGoal = k.goal * profileCount;
+      const pct = teamGoal > 0 ? (k.value / teamGoal) * 100 : 0;
+      return { ...k, teamGoal, pct };
+    })
+    .sort((a, b) => b.pct - a.pct);
+
+  const overallPct = kpisWithProgress.length > 0
+    ? Math.round(kpisWithProgress.reduce((s, k) => s + k.pct, 0) / kpisWithProgress.length)
+    : 0;
+
+  const pctColor = (pct) => pct >= 80 ? 'bg-green-500' : pct >= 60 ? 'bg-amber-500' : 'bg-red-500';
+  const pctText = (pct) => pct >= 80 ? 'text-green-400' : pct >= 60 ? 'text-amber-400' : 'text-red-400';
+
+  return (
+    <div className="flex flex-col h-full">
+      <div className="flex items-center gap-4 mb-8">
+        <Target className="text-emerald-400" size={40} />
+        <h2 className="text-5xl font-black text-white tracking-tight">Goal Progress</h2>
+        <div className="ml-auto text-right">
+          <div className={`text-3xl font-black ${pctText(overallPct)}`}>{overallPct}%</div>
+          <div className="text-white/40 text-sm">Team Average</div>
+        </div>
+      </div>
+
+      <div className="space-y-4 flex-1 overflow-y-auto">
+        {kpisWithProgress.slice(0, 10).map((kpi) => (
+          <div key={kpi.kpi_key} className="bg-white/5 border border-white/10 rounded-xl p-4">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-white font-semibold text-lg">{kpi.name}</span>
+              <span className={`font-bold ${pctText(kpi.pct)}`}>
+                {formatKpiValue(kpi.value, kpi.unit)} / {formatKpiValue(kpi.teamGoal, kpi.unit)} ({Math.round(kpi.pct)}%)
+              </span>
+            </div>
+            <div className="w-full bg-white/10 rounded-full h-3">
+              <div
+                className={`h-3 rounded-full transition-all duration-500 ${pctColor(kpi.pct)}`}
+                style={{ width: `${Math.min(100, kpi.pct)}%` }}
+              />
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ── Celebration Overlay ──────────────────────────────────────────────────────
+
+function WallboardCelebration({ orgId, enabled }) {
+  const [queue, setQueue] = useState([]);
+  const [active, setActive] = useState(null);
+  const dismissTimer = useRef(null);
+  const seenIds = useRef(new Set());
+
+  useEffect(() => {
+    if (!orgId || enabled === false) return;
+
+    const channel = supabase
+      .channel(`wallboard-celebrations-${orgId}`)
+      .on('postgres_changes', {
+        event: 'INSERT',
+        schema: 'public',
+        table: 'notifications',
+      }, (payload) => {
+        const n = payload.new;
+        if (seenIds.current.has(n.id)) return;
+        if (!['level_up', 'rare_badge_earned', 'contest_winner'].includes(n.type)) return;
+        seenIds.current.add(n.id);
+
+        setQueue(q => [...q, {
+          id: n.id,
+          type: n.type,
+          title: n.title || 'Celebration!',
+          message: n.message || '',
+          icon: n.icon || (n.type === 'level_up' ? '\u{1F680}' : n.type === 'contest_winner' ? '\u{1F3C6}' : '\u{1F48E}'),
+        }]);
+      })
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
+  }, [orgId, enabled]);
+
+  // Process queue
+  useEffect(() => {
+    if (active || queue.length === 0) return;
+    const [next, ...rest] = queue;
+    setActive(next);
+    setQueue(rest);
+    clearTimeout(dismissTimer.current);
+    dismissTimer.current = setTimeout(() => setActive(null), 8000);
+    return () => clearTimeout(dismissTimer.current);
+  }, [active, queue]);
+
+  if (!active) return null;
+
+  const typeLabel = active.type === 'level_up' ? 'Level Up!' : active.type === 'contest_winner' ? 'Contest Winner!' : 'Rare Badge!';
+
+  return (
+    <>
+      <style>{`
+        @keyframes wbConfettiFall {
+          0%   { transform: translateY(-20px) rotate(0deg); opacity: 1; }
+          80%  { opacity: 0.8; }
+          100% { transform: translateY(110vh) rotate(720deg); opacity: 0; }
+        }
+        @keyframes wbCardIn {
+          0%   { transform: translate(-50%, -45%); opacity: 0; }
+          60%  { transform: translate(-50%, -51%); }
+          100% { transform: translate(-50%, -50%); opacity: 1; }
+        }
+      `}</style>
+
+      <div
+        onClick={() => { clearTimeout(dismissTimer.current); setActive(null); }}
+        style={{ position: 'fixed', inset: 0, zIndex: 9999, background: 'rgba(0,0,0,0.75)', backdropFilter: 'blur(6px)', cursor: 'pointer' }}
+      >
+        <div style={{ position: 'absolute', inset: 0, overflow: 'hidden', pointerEvents: 'none' }}>
+          {CELEBRATION_CONFETTI.map((p, i) => (
+            <div key={i} style={{
+              position: 'absolute', top: -16, left: `${p.left}%`,
+              width: p.size, height: p.isRect ? p.size * 0.55 : p.size,
+              borderRadius: p.isRect ? 2 : '50%', backgroundColor: p.color,
+              animation: `wbConfettiFall ${p.duration}s ${p.delay}s linear forwards`,
+              transform: `rotate(${p.rotation}deg)`,
+            }} />
+          ))}
+        </div>
+
+        <div
+          onClick={e => e.stopPropagation()}
+          style={{
+            position: 'absolute', top: '50%', left: '50%',
+            animation: 'wbCardIn 0.5s cubic-bezier(0.34,1.56,0.64,1) forwards',
+            background: 'linear-gradient(145deg, #0f172a 0%, #1e1b4b 50%, #0f172a 100%)',
+            border: '2px solid rgba(245,158,11,0.5)', borderRadius: 28,
+            padding: '52px 72px 44px', textAlign: 'center', minWidth: 460, maxWidth: '88vw', cursor: 'default',
+            boxShadow: '0 0 0 1px rgba(245,158,11,0.15), 0 0 80px rgba(245,158,11,0.25), 0 40px 80px rgba(0,0,0,0.6)',
+          }}
+        >
+          <div style={{ fontSize: 72, lineHeight: 1, marginBottom: 20 }}>{active.icon}</div>
+          <div style={{ fontSize: 11, fontWeight: 800, letterSpacing: '0.2em', color: '#fcd34d', textTransform: 'uppercase', marginBottom: 16 }}>
+            {typeLabel}
+          </div>
+          <div style={{ fontSize: 26, fontWeight: 800, color: '#f8fafc', marginBottom: 10, lineHeight: 1.25 }}>{active.title}</div>
+          {active.message && <div style={{ fontSize: 16, color: 'rgba(255,255,255,0.6)', maxWidth: 380, margin: '0 auto' }}>{active.message}</div>}
+          {queue.length > 0 && (
+            <div style={{ marginTop: 20, color: 'rgba(255,255,255,0.3)', fontSize: 12 }}>
+              +{queue.length} more celebration{queue.length > 1 ? 's' : ''}
+            </div>
+          )}
+          <div style={{ height: 1, background: 'linear-gradient(90deg, transparent, rgba(245,158,11,0.3), transparent)', margin: '28px 0 18px' }} />
+          <div style={{ color: 'rgba(255,255,255,0.25)', fontSize: 12, letterSpacing: '0.05em' }}>Click anywhere to dismiss</div>
+        </div>
+      </div>
+    </>
+  );
+}
+
+// ── Slide Indicator ──────────────────────────────────────────────────────────
 
 function SlideIndicator({ slides, current, onSelect }) {
   return (
@@ -402,26 +873,74 @@ function SlideIndicator({ slides, current, onSelect }) {
   );
 }
 
-// ── Main Wallboard ──────────────────────────────────────────────────────────
+// ── Main Wallboard ───────────────────────────────────────────────────────────
 
 export default function Wallboard() {
-  const { profiles, contests, loading } = useWallboardData();
-  const [slideIndex, setSlideIndex] = useState(0);
+  const navigate = useNavigate();
+  const { profile } = useAuth();
+  const orgId = profile?.organization_id;
+
+  // Multi-team filter
+  const [selectedTeamId, setSelectedTeamId] = useState(null);
+
+  // Data
+  const {
+    profiles, contests, recentBadges, teams,
+    weeklyKpis, priorWeekKpis, recentAchievements,
+    wallboardConfig, loading,
+  } = useWallboardData(orgId, selectedTeamId);
+
+  // Slide config
+  const slideConfig = wallboardConfig?.slides || DEFAULT_SLIDE_CONFIG;
+  const celebrationsEnabled = wallboardConfig?.celebrations !== false;
+
+  const activeSlides = useMemo(() =>
+    ALL_SLIDES.filter(s => (slideConfig[s]?.enabled) !== false),
+    [slideConfig]
+  );
+
+  // Slide state with animation
+  const [displayIndex, setDisplayIndex] = useState(0);
+  const [animClass, setAnimClass] = useState('wb-slide-enter');
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [paused, setPaused] = useState(false);
   const timerRef = useRef(null);
+  const animTimer = useRef(null);
 
-  const advance = useCallback(() => {
-    setSlideIndex((i) => (i + 1) % SLIDES.length);
+  // Keep displayIndex in bounds when activeSlides changes
+  useEffect(() => {
+    if (displayIndex >= activeSlides.length && activeSlides.length > 0) {
+      setDisplayIndex(0);
+    }
+  }, [activeSlides.length, displayIndex]);
+
+  const currentSlideDuration = useMemo(() =>
+    (slideConfig[activeSlides[displayIndex]]?.duration || 15) * 1000,
+    [slideConfig, activeSlides, displayIndex]
+  );
+
+  const changeSlide = useCallback((newIndex) => {
+    clearTimeout(animTimer.current);
+    setAnimClass('wb-slide-exit');
+    animTimer.current = setTimeout(() => {
+      setDisplayIndex(newIndex);
+      setAnimClass('wb-slide-enter');
+    }, 300);
   }, []);
 
-  useEffect(() => {
-    if (paused) { clearInterval(timerRef.current); return; }
-    timerRef.current = setInterval(advance, SLIDE_DURATION);
-    return () => clearInterval(timerRef.current);
-  }, [advance, paused]);
+  const advance = useCallback(() => {
+    if (activeSlides.length === 0) return;
+    changeSlide((displayIndex + 1) % activeSlides.length);
+  }, [displayIndex, activeSlides.length, changeSlide]);
 
-  const toggleFullscreen = () => {
+  // Auto-advance timer
+  useEffect(() => {
+    if (paused || activeSlides.length === 0) { clearInterval(timerRef.current); return; }
+    timerRef.current = setInterval(advance, currentSlideDuration);
+    return () => clearInterval(timerRef.current);
+  }, [advance, paused, currentSlideDuration]);
+
+  const toggleFullscreen = useCallback(() => {
     if (!document.fullscreenElement) {
       document.documentElement.requestFullscreen?.();
       setIsFullscreen(true);
@@ -429,7 +948,7 @@ export default function Wallboard() {
       document.exitFullscreen?.();
       setIsFullscreen(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     const handler = () => setIsFullscreen(!!document.fullscreenElement);
@@ -437,22 +956,39 @@ export default function Wallboard() {
     return () => document.removeEventListener('fullscreenchange', handler);
   }, []);
 
-  // Keyboard: left/right arrows to navigate, space to pause, F for fullscreen
+  // Keyboard navigation
   useEffect(() => {
     const handler = (e) => {
       if (e.key === 'ArrowRight') advance();
-      if (e.key === 'ArrowLeft') setSlideIndex((i) => (i - 1 + SLIDES.length) % SLIDES.length);
+      if (e.key === 'ArrowLeft') changeSlide((displayIndex - 1 + activeSlides.length) % activeSlides.length);
       if (e.key === ' ') { e.preventDefault(); setPaused((p) => !p); }
       if (e.key === 'f' || e.key === 'F') toggleFullscreen();
     };
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
-  }, [advance]);
+  }, [advance, changeSlide, displayIndex, activeSlides.length, toggleFullscreen]);
 
-  const currentSlide = SLIDES[slideIndex];
+  const currentSlide = activeSlides[displayIndex];
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-950 via-slate-900 to-blue-950 flex flex-col select-none overflow-hidden">
+      {/* Celebration overlay */}
+      <WallboardCelebration orgId={orgId} enabled={celebrationsEnabled} />
+
+      {/* Transition CSS */}
+      <style>{`
+        @keyframes wbSlideEnter {
+          0%   { opacity: 0; transform: translateX(40px); }
+          100% { opacity: 1; transform: translateX(0); }
+        }
+        @keyframes wbSlideExit {
+          0%   { opacity: 1; transform: translateX(0); }
+          100% { opacity: 0; transform: translateX(-40px); }
+        }
+        .wb-slide-enter { animation: wbSlideEnter 0.3s ease-out forwards; }
+        .wb-slide-exit  { animation: wbSlideExit 0.3s ease-in forwards; }
+      `}</style>
+
       {/* Header bar */}
       <div className="flex items-center justify-between px-8 py-4 border-b border-white/5">
         <div className="flex items-center gap-3">
@@ -463,14 +999,38 @@ export default function Wallboard() {
           <span className="text-white/30 text-sm">Sales Floor</span>
         </div>
 
-        <SlideIndicator
-          slides={SLIDES}
-          current={slideIndex}
-          onSelect={(i) => { setSlideIndex(i); setPaused(true); setTimeout(() => setPaused(false), SLIDE_DURATION); }}
-        />
+        <div className="flex items-center gap-4">
+          {/* Team filter */}
+          {teams.length > 1 && (
+            <select
+              value={selectedTeamId || ''}
+              onChange={(e) => setSelectedTeamId(e.target.value || null)}
+              className="bg-white/5 border border-white/10 text-white rounded-lg px-3 py-1.5 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none cursor-pointer"
+            >
+              <option value="" className="bg-gray-900">All Teams</option>
+              {teams.map(t => (
+                <option key={t.id} value={t.id} className="bg-gray-900">{t.name}</option>
+              ))}
+            </select>
+          )}
+
+          <SlideIndicator
+            slides={activeSlides}
+            current={displayIndex}
+            onSelect={(i) => { changeSlide(i); setPaused(true); setTimeout(() => setPaused(false), currentSlideDuration); }}
+          />
+        </div>
 
         <div className="flex items-center gap-4">
           <Clock />
+          <button
+            onClick={() => navigate('/dashboard')}
+            className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white/5 hover:bg-white/10 text-white/60 hover:text-white transition-colors text-sm font-medium"
+            title="Back to Dashboard"
+          >
+            <ArrowLeft size={16} />
+            Dashboard
+          </button>
           <button
             onClick={toggleFullscreen}
             className="p-2 rounded-lg bg-white/5 hover:bg-white/10 text-white/60 hover:text-white transition-colors"
@@ -487,21 +1047,29 @@ export default function Wallboard() {
           <div className="flex items-center justify-center h-full">
             <div className="w-12 h-12 border-4 border-white/20 border-t-white rounded-full animate-spin" />
           </div>
+        ) : activeSlides.length === 0 ? (
+          <div className="flex items-center justify-center h-full">
+            <p className="text-white/40 text-2xl">No slides enabled. Configure slides in Organization Settings.</p>
+          </div>
         ) : (
-          <div className="h-full">
-            {currentSlide === 'leaderboard' && <LeaderboardSlide profiles={profiles} />}
-            {currentSlide === 'spotlight'   && <SpotlightSlide profiles={profiles} />}
-            {currentSlide === 'contests'    && <ContestsSlide contests={contests} />}
-            {currentSlide === 'team_stats'  && <TeamStatsSlide profiles={profiles} />}
+          <div key={`${displayIndex}-${currentSlide}`} className={`h-full ${animClass}`}>
+            {currentSlide === 'leaderboard'   && <LeaderboardSlide profiles={profiles} />}
+            {currentSlide === 'spotlight'     && <SpotlightSlide profiles={profiles} />}
+            {currentSlide === 'contests'      && <ContestsSlide contests={contests} />}
+            {currentSlide === 'team_stats'    && <TeamStatsSlide profiles={profiles} />}
+            {currentSlide === 'badges'        && <BadgesSlide recentBadges={recentBadges} />}
+            {currentSlide === 'activity'      && <ActivitySlide weeklyKpis={weeklyKpis} priorWeekKpis={priorWeekKpis} />}
+            {currentSlide === 'achievements'  && <AchievementsSlide recentAchievements={recentAchievements} />}
+            {currentSlide === 'goals'         && <GoalProgressSlide weeklyKpis={weeklyKpis} profileCount={profiles.length} />}
           </div>
         )}
       </div>
 
       {/* Footer */}
       <div className="flex items-center justify-between px-8 py-3 border-t border-white/5 text-white/25 text-xs">
-        <span>← → Navigate  ·  Space Pause  ·  F Fullscreen</span>
-        {paused && <span className="text-amber-400">⏸ Paused</span>}
-        <span>Auto-advances every {SLIDE_DURATION / 1000}s</span>
+        <span>{'\u2190'} {'\u2192'} Navigate  {'\u00B7'}  Space Pause  {'\u00B7'}  F Fullscreen</span>
+        {paused && <span className="text-amber-400">{'\u23F8'} Paused</span>}
+        <span>Auto-advances every {currentSlideDuration / 1000}s</span>
       </div>
     </div>
   );

@@ -1,6 +1,8 @@
 import React, { useState, useRef } from 'react';
 import { X, Download, Link as LinkIcon, CheckCircle, Mail } from 'lucide-react';
 import html2canvas from 'html2canvas';
+import { backendFetch } from '../utils/backendFetch';
+import { buildAchievementSnapshotEmailHtml, buildAchievementSnapshotEmailText } from '../utils/emailTemplates';
 
 export default function ShareSnapshotModal({ isOpen, onClose, userData }) {
   const [copied, setCopied] = useState(false);
@@ -67,93 +69,16 @@ export default function ShareSnapshotModal({ isOpen, onClose, userData }) {
       const recipients = emailRecipients.split(',').map(e => e.trim()).filter(e => e);
       const subject = emailSubject.trim() || `${name}'s Achievement Snapshot - Apptivia Platform`;
       
-      const html = `
-        <!DOCTYPE html>
-        <html>
-        <head>
-          <style>
-            body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
-            .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-            .header { background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 50%, #ec4899 100%); color: white; padding: 30px; border-radius: 10px; text-align: center; }
-            .stats { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin: 20px 0; }
-            .stat-box { background: #f3f4f6; padding: 20px; border-radius: 8px; text-align: center; }
-            .stat-value { font-size: 32px; font-weight: bold; color: #3b82f6; }
-            .stat-label { font-size: 14px; color: #6b7280; }
-            .cta { text-align: center; margin: 30px 0; }
-            .button { display: inline-block; background: #3b82f6; color: white; padding: 12px 30px; text-decoration: none; border-radius: 8px; font-weight: bold; }
-            .footer { text-align: center; color: #6b7280; font-size: 12px; margin-top: 30px; border-top: 1px solid #e5e7eb; padding-top: 20px; }
-          </style>
-        </head>
-        <body>
-          <div class="container">
-            <div class="header">
-              <h1>🎉 Achievement Snapshot</h1>
-              <h2>${name}</h2>
-              <p>Apptivia Platform</p>
-            </div>
-            
-            <div class="stats">
-              <div class="stat-box">
-                <div class="stat-value">${totalBadges}</div>
-                <div class="stat-label">Badges Earned</div>
-              </div>
-              <div class="stat-box">
-                <div class="stat-value">${totalAchievements}</div>
-                <div class="stat-label">Achievements</div>
-              </div>
-              <div class="stat-box">
-                <div class="stat-value">${avgSkillsetProgress}%</div>
-                <div class="stat-label">Avg Progress</div>
-              </div>
-              <div class="stat-box">
-                <div class="stat-value">${points?.toLocaleString() || 0}</div>
-                <div class="stat-label">Total Points</div>
-              </div>
-            </div>
+      const emailData = { name, userId: userData.id, totalBadges, totalAchievements, avgSkillsetProgress, points: points || 0 };
+      const html = buildAchievementSnapshotEmailHtml(emailData);
+      const text = buildAchievementSnapshotEmailText(emailData);
 
-            <div class="cta">
-              <p>View full profile and achievements:</p>
-              <a href="${window.location.origin}/profile/${userData.id}" class="button">View Profile</a>
-            </div>
-
-            <div class="footer">
-              <p>Generated on ${new Date().toLocaleDateString()}</p>
-              <p>Apptivia Platform - Achievement & Skills Management</p>
-            </div>
-          </div>
-        </body>
-        </html>
-      `;
-
-      const text = `
-${name}'s Achievement Snapshot - Apptivia Platform
-
-🏆 Badges Earned: ${totalBadges}
-✅ Achievements: ${totalAchievements}
-📊 Average Progress: ${avgSkillsetProgress}%
-⭐ Total Points: ${points?.toLocaleString() || 0}
-
-View full profile: ${window.location.origin}/profile/${userData.id}
-
-Generated on ${new Date().toLocaleDateString()}
-      `.trim();
-
-      const response = await fetch('/api/send-snapshot', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          recipients,
-          subject,
-          html,
-          text,
-        }),
+      await backendFetch('/api/send-snapshot', {
+        recipients,
+        subject,
+        html,
+        text,
       });
-
-      if (!response.ok) {
-        throw new Error('Failed to send email');
-      }
 
       setEmailSuccess(true);
       setTimeout(() => {

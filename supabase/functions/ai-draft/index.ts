@@ -29,7 +29,7 @@ Deno.serve(async (req: Request) => {
       );
     }
 
-    const { field, planName, focusKpis, existingGoals, existingActions, existingMetrics, notes } = await req.json();
+    const { field, planName, focusKpis, existingGoals, existingActions, existingMetrics, notes, playbookInsights } = await req.json();
 
     if (!field) {
       return new Response(
@@ -40,6 +40,35 @@ Deno.serve(async (req: Request) => {
 
     const kpiList = (focusKpis || []).filter(Boolean).map((k: string) => k.replace(/_/g, ' ')).join(', ');
 
+    // Build performance context from playbook insights (scorecard data)
+    const performanceParts: string[] = [];
+    if (playbookInsights) {
+      if (playbookInsights.teamSize) {
+        performanceParts.push(`Team size: ${playbookInsights.teamSize} reps`);
+      }
+      if (playbookInsights.teamTrend) {
+        const t = playbookInsights.teamTrend;
+        const dir = t.delta > 0 ? 'up' : t.delta < 0 ? 'down' : 'flat';
+        performanceParts.push(`Team score trend (${t.weeks} weeks): ${dir} ${Math.abs(Math.round(t.delta))} points (current: ${Math.round(t.current)})`);
+      }
+      if (playbookInsights.teamWeaknesses?.length) {
+        const weakList = playbookInsights.teamWeaknesses
+          .map((w: any) => `${w.label} (${w.avgPct}% avg, ${w.belowCount}/${w.totalReps} reps below target)`)
+          .join('; ');
+        performanceParts.push(`Lagging team KPIs: ${weakList}`);
+      }
+      if (playbookInsights.repsNeedingCoaching?.length) {
+        const repList = playbookInsights.repsNeedingCoaching
+          .map((r: any) => {
+            let desc = `${r.name} (score: ${Math.round(r.recent)}, 5-wk avg: ${r.avg5w}, trend: ${r.trendDelta > 0 ? '+' : ''}${Math.round(r.trendDelta)})`;
+            if (r.weakestKpi) desc += ` — weakest: ${r.weakestKpi.label} at ${r.weakestKpi.pct}%`;
+            return desc;
+          })
+          .join('; ');
+        performanceParts.push(`Reps needing coaching: ${repList}`);
+      }
+    }
+
     const contextParts = [
       'You are an expert sales coaching assistant for Apptivia, a sales performance platform.',
       planName ? `The coaching plan is called: "${planName}"` : '',
@@ -48,14 +77,20 @@ Deno.serve(async (req: Request) => {
       existingActions?.length ? `Existing action items: ${existingActions.join('; ')}` : '',
       existingMetrics?.length ? `Existing success metrics: ${existingMetrics.join('; ')}` : '',
       notes ? `Manager notes: ${notes}` : '',
+      performanceParts.length > 0 ? `\nACTUAL TEAM PERFORMANCE DATA (from Apptivia Scorecard):\n${performanceParts.join('\n')}` : '',
     ].filter(Boolean).join('\n');
 
+    const hasPerformanceData = performanceParts.length > 0;
+    const perfNote = hasPerformanceData
+      ? ' Use the ACTUAL TEAM PERFORMANCE DATA provided above to make suggestions specific and data-driven. Reference specific lagging KPIs, rep trends, and team weaknesses.'
+      : '';
+
     const fieldPrompts: Record<string, string> = {
-      goals: 'Generate 1-3 specific, measurable coaching goals for a sales rep. Each goal should be achievable within 1-2 weeks. Return ONLY the goals as a JSON array of strings, no other text.',
-      action_items: 'Generate 3-5 specific, actionable coaching action items for a sales rep. Be prescriptive with daily/weekly activities. Return ONLY the action items as a JSON array of strings, no other text.',
-      success_metrics: 'Generate 2-4 measurable success metrics to track coaching plan effectiveness. Include specific numbers/percentages where possible. Return ONLY the metrics as a JSON array of strings, no other text.',
-      notes: 'Write a brief 2-3 sentence coaching note from a manager to a sales rep, providing context and encouragement for this coaching plan. Return ONLY the note text, no JSON wrapping.',
-      name: 'Suggest a short, descriptive coaching plan name (3-6 words) based on the context. Return ONLY the plan name text, no quotes or JSON.',
+      goals: `Generate 1-3 specific, measurable coaching goals for a sales rep.${perfNote} Each goal should be achievable within 1-2 weeks. Return ONLY the goals as a JSON array of strings, no other text.`,
+      action_items: `Generate 3-5 specific, actionable coaching action items for a sales rep.${perfNote} Be prescriptive with daily/weekly activities that target the identified weaknesses. Return ONLY the action items as a JSON array of strings, no other text.`,
+      success_metrics: `Generate 2-4 measurable success metrics to track coaching plan effectiveness.${perfNote} Include specific numbers/percentages based on current performance levels. Return ONLY the metrics as a JSON array of strings, no other text.`,
+      notes: `Write a brief 2-3 sentence coaching note from a manager to a sales rep, providing context and encouragement for this coaching plan.${perfNote} Return ONLY the note text, no JSON wrapping.`,
+      name: `Suggest a short, descriptive coaching plan name (3-6 words) based on the context.${hasPerformanceData ? ' The name should reflect the specific coaching focus areas identified from the team performance data.' : ''} Return ONLY the plan name text, no quotes or JSON.`,
     };
 
     const prompt = fieldPrompts[field];
@@ -75,7 +110,7 @@ Deno.serve(async (req: Request) => {
         'anthropic-version': '2023-06-01',
       },
       body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
+        model: 'claude-sonnet-4-6',
         max_tokens: 512,
         messages: [
           { role: 'user', content: `${contextParts}\n\n${prompt}` },

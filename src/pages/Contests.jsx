@@ -1,11 +1,12 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { backendFetch } from '../utils/backendFetch';
-import { Edit2, Trash2, Search, X, StopCircle, Archive, Download, Mail, CheckCircle, Link as LinkIcon, Info, Users, BarChart2, LogOut, Trophy, Share2, UserPlus } from 'lucide-react';
+import { Edit2, Trash2, Search, X, StopCircle, Archive, Download, Mail, CheckCircle, Info, Users, BarChart2, LogOut, Trophy, Share2, UserPlus } from 'lucide-react';
 import html2canvas from 'html2canvas';
 import { useNavigate } from 'react-router-dom';
 import DashboardLayout from '../DashboardLayout';
 import { supabase } from '../supabaseClient';
 import { useContests } from '../hooks/useContests';
+import { getRankChangeIcon, getRankDisplay } from '../utils/contestUtils';
 import { useAuth } from '../AuthContext';
 import { useToast } from '../contexts/ToastContext';
 import ContestCreationModal from '../components/ContestCreationModal';
@@ -22,6 +23,7 @@ import InfoTooltip from '../components/InfoTooltip';
 import { useNotifications } from '../contexts/NotificationContext';
 import ConfirmModal from '../components/ConfirmModal';
 import SearchWithHistory from '../components/SearchWithHistory';
+import { exportContestResultsToCSV } from '../utils/exportUtils';
 
 export default function Contests() {
   const navigate = useNavigate();
@@ -51,6 +53,8 @@ export default function Contests() {
   const [dateFilter, setDateFilter] = useState('all');
   const [sortKey, setSortKey] = useState('recent');
   const [statusTab, setStatusTab] = useState('all');
+  const [badgeLeaderboard, setBadgeLeaderboard] = useState([]);
+  const [badgeLeaderboardLoading, setBadgeLeaderboardLoading] = useState(false);
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [configPanelOpen, setConfigPanelOpen] = useState(false);
   const [showConfigModal, setShowConfigModal] = useState(false);
@@ -87,14 +91,7 @@ export default function Contests() {
     return kpiNameByKey[kpiKey] || kpiKey;
   };
 
-  const getRankChangeIcon = (change) => {
-    switch (change) {
-      case 'up': return '⬆️';
-      case 'down': return '⬇️';
-      case 'new': return '🆕';
-      default: return '';
-    }
-  };
+
 
   const formatDaysRemaining = (days, status) => {
     if (!days) return '';
@@ -121,9 +118,100 @@ export default function Contests() {
           stored.push(contest.id);
         }
       });
-      window.localStorage.setItem('apptivia.contestWins', JSON.stringify(stored));
+      // Prune IDs for contests that no longer exist
+      const allIds = new Set([
+        ...(data.active || []).map(c => c.id),
+        ...(data.completed || []).map(c => c.id),
+        ...(data.upcoming || []).map(c => c.id),
+        ...(data.archived || []).map(c => c.id),
+      ]);
+      const pruned = stored.filter(id => allIds.has(id));
+      window.localStorage.setItem('apptivia.contestWins', JSON.stringify(pruned));
     } catch (e) {}
   }, [data, user?.name, addNotification]);
+
+  // Mid-contest milestone notifications — detect rank changes for current user
+  useEffect(() => {
+    if (!user?.id || !data?.active?.length) return;
+    try {
+      const stored = JSON.parse(window.localStorage.getItem('apptivia.contestRanks') || '{}');
+      const updated = { ...stored };
+      data.active.forEach(contest => {
+        if (!contest.user_rank) return;
+        const prevRank = stored[contest.id];
+        if (prevRank !== undefined && prevRank !== contest.user_rank) {
+          const moved = prevRank > contest.user_rank ? 'up' : 'down';
+          if (moved === 'up') {
+            addNotification({
+              type: 'contest',
+              title: 'Rank change',
+              message: `You moved up to #${contest.user_rank} in ${contest.name}!`,
+              link: '/contests',
+              dedupeKey: `contest-rank-${contest.id}-${contest.user_rank}`,
+            });
+          }
+          if (contest.user_rank <= 3 && prevRank > 3) {
+            addNotification({
+              type: 'contest',
+              title: 'Top 3',
+              message: `You're now in the top 3 for ${contest.name}!`,
+              link: '/contests',
+              dedupeKey: `contest-top3-${contest.id}`,
+            });
+          }
+        }
+        updated[contest.id] = contest.user_rank;
+      });
+      // Prune rank entries for contests no longer active
+      const activeIds = new Set((data.active || []).map(c => c.id));
+      const prunedRanks = {};
+      for (const [key, val] of Object.entries(updated)) {
+        if (activeIds.has(key)) prunedRanks[key] = val;
+      }
+      window.localStorage.setItem('apptivia.contestRanks', JSON.stringify(prunedRanks));
+    } catch (e) {}
+  }, [data?.active, user?.id, addNotification]);
+
+  useEffect(() => {
+    if (statusTab !== 'badges') return;
+    setBadgeLeaderboardLoading(true);
+
+    Promise.all([
+      supabase
+        .from('profile_badges')
+        .select('profile_id, badge_name, earned_at, profile:profiles(first_name, last_name)'),
+      supabase
+        .from('badge_definitions')
+        .select('badge_name, rarity'),
+    ])
+      .then(([{ data: rows, error: badgeErr }, { data: defs, error: defErr }]) => {
+        if (badgeErr) throw badgeErr;
+        if (defErr) throw defErr;
+        if (!rows) return;
+
+        // Build rarity lookup from badge_definitions (rarity lives there, not on profile_badges)
+        const rarityMap = {};
+        for (const d of (defs || [])) rarityMap[d.badge_name] = d.rarity;
+
+        const map = {};
+        for (const r of rows) {
+          const id = r.profile_id;
+          const rarity = rarityMap[r.badge_name] || 'common';
+          if (!map[id]) map[id] = { id, name: `${r.profile?.first_name || ''} ${r.profile?.last_name || ''}`.trim(), count: 0, legendary: 0, epic: 0, rare: 0, latest: r.earned_at };
+          map[id].count++;
+          if (rarity === 'legendary') map[id].legendary++;
+          else if (rarity === 'epic') map[id].epic++;
+          else if (rarity === 'rare') map[id].rare++;
+          if (r.earned_at > map[id].latest) map[id].latest = r.earned_at;
+        }
+        setBadgeLeaderboard(Object.values(map).sort((a, b) => b.count - a.count || b.legendary - a.legendary));
+      })
+      .catch((err) => {
+        console.error('Failed to load badge leaderboard:', err);
+        toast.error('Failed to load badge leaderboard');
+      })
+      .finally(() => setBadgeLeaderboardLoading(false));
+  }, [statusTab]);
 
   const openLeaderboard = (contest) => {
     setLeaderboardModal({ isOpen: true, contest });
@@ -211,7 +299,8 @@ export default function Contests() {
       const recipients = shareRecipients
         .split(',')
         .map((r) => r.trim())
-        .filter(Boolean);
+        .filter(Boolean)
+        .slice(0, 50); // Backend enforces 50 max
       if (recipients.length === 0) {
         toast.error('Please provide at least one recipient.');
         setSendingResults(false);
@@ -554,7 +643,7 @@ export default function Contests() {
 
       // Search contests
       const { data: contests } = await supabase
-        .from('contests')
+        .from('active_contests')
         .select('id, name, description')
         .ilike('name', `%${searchTerm}%`)
         .limit(5);
@@ -573,17 +662,17 @@ export default function Contests() {
 
       // Search badges
       const { data: badges } = await supabase
-        .from('badges')
-        .select('id, name, description')
-        .ilike('name', `%${searchTerm}%`)
+        .from('badge_definitions')
+        .select('id, badge_name, badge_description')
+        .ilike('badge_name', `%${searchTerm}%`)
         .limit(5);
 
       if (badges) {
         badges.forEach((badge) => {
           results.push({
             type: 'Badge',
-            title: badge.name,
-            subtitle: badge.description,
+            title: badge.badge_name,
+            subtitle: badge.badge_description,
             link: '/profile',
             icon: '🎖️'
           });
@@ -593,6 +682,7 @@ export default function Contests() {
       setGlobalSearchResults(results);
     } catch (error) {
       console.error('Search error:', error);
+      toast.error('Search failed. Please try again.');
     } finally {
       setGlobalSearching(false);
     }
@@ -618,7 +708,15 @@ export default function Contests() {
     }
   };
 
-  const renderContest = (contest: any) => (
+  const formatKpiKey = (key) =>
+    key ? key.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()) : '';
+
+  const formatDateShort = (iso) => {
+    if (!iso) return '';
+    return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  };
+
+  const renderContest = (contest) => (
     <div key={contest.id} className="bg-white rounded-lg p-6 shadow-sm transition-all duration-300 hover:shadow-lg hover:-translate-y-1">
       <div className="flex justify-between items-start">
         <div className="flex-1">
@@ -640,6 +738,13 @@ export default function Contests() {
           <div className={`text-xs font-semibold ${getStatusColor(contest.status)}`}>
             {getStatusLabel(contest.status)}
           </div>
+          {contest.status === 'completed' && contest.winner_name && (
+            <div className="mt-0.5">
+              <span className="inline-flex items-center gap-1 text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-100">
+                <CheckCircle size={8} /> Auto-awarded
+              </span>
+            </div>
+          )}
           {contest.winner_name && (
             <>
               <div className="text-sm font-bold mt-2">{contest.winner_score}</div>
@@ -670,9 +775,30 @@ export default function Contests() {
       )}
 
       {/* Action Buttons */}
-      <div className="mt-4 flex items-center justify-end gap-1.5 flex-wrap">
+      <div className="mt-4 flex items-center justify-between gap-3">
+        {/* Bottom-left contextual info */}
+        <div className="text-xs text-gray-500">
+          {(contest.status === 'completed' || contest.status === 'archived') && contest.winner_name ? (
+            <div className="flex items-center gap-1.5">
+              <Trophy size={14} className="text-yellow-500" />
+              <span className="font-semibold text-gray-800">{contest.winner_name}</span>
+              <span className="text-gray-300">·</span>
+              <span>{contest.winner_score}</span>
+            </div>
+          ) : (contest.status === 'active' || contest.status === 'upcoming') ? (
+            <div className="flex items-center gap-2">
+              <span>{formatDateShort(contest.start_date)} – {formatDateShort(contest.end_date)}</span>
+              {contest.kpi_key && (
+                <span className="px-2 py-0.5 bg-blue-50 text-blue-600 rounded-full font-medium">
+                  {formatKpiKey(contest.kpi_key)}
+                </span>
+              )}
+            </div>
+          ) : <div />}
+        </div>
+
         {contest.status === 'active' && (
-          <>
+          <div className="flex items-center gap-1.5 flex-wrap">
             <button
               onClick={() => openLeaderboard(contest)}
               className="p-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-all duration-200 hover:scale-105 flex items-center justify-center group relative"
@@ -743,10 +869,10 @@ export default function Contests() {
                 <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 px-2 py-1 bg-gray-900 text-white text-[10px] rounded opacity-0 pointer-events-none group-hover:opacity-100 whitespace-nowrap transition-opacity z-10">Delete</span>
               </button>
             )}
-          </>
+          </div>
         )}
         {contest.status === 'upcoming' && (
-          <>
+          <div className="flex items-center gap-1.5 flex-wrap">
             <div className="px-3 py-1.5 bg-gray-50 rounded-lg text-xs text-gray-400 font-medium">
               Coming Soon
             </div>
@@ -780,10 +906,10 @@ export default function Contests() {
                 <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 px-2 py-1 bg-gray-900 text-white text-[10px] rounded opacity-0 pointer-events-none group-hover:opacity-100 whitespace-nowrap transition-opacity z-10">Delete</span>
               </button>
             )}
-          </>
+          </div>
         )}
         {contest.status === 'completed' && (
-          <>
+          <div className="flex items-center gap-1.5 flex-wrap">
             <button
               onClick={() => openLeaderboard(contest)}
               className="p-2 bg-yellow-50 text-yellow-700 rounded-lg hover:bg-yellow-100 transition-all duration-200 hover:scale-105 flex items-center justify-center group relative"
@@ -832,10 +958,10 @@ export default function Contests() {
                 <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 px-2 py-1 bg-gray-900 text-white text-[10px] rounded opacity-0 pointer-events-none group-hover:opacity-100 whitespace-nowrap transition-opacity z-10">Delete</span>
               </button>
             )}
-          </>
+          </div>
         )}
         {contest.status === 'archived' && (
-          <>
+          <div className="flex items-center gap-1.5 flex-wrap">
             <button
               onClick={() => openLeaderboard(contest)}
               className="p-2 bg-gray-50 text-gray-600 rounded-lg hover:bg-gray-100 transition-all duration-200 hover:scale-105 flex items-center justify-center group relative"
@@ -854,7 +980,7 @@ export default function Contests() {
                 <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 px-2 py-1 bg-gray-900 text-white text-[10px] rounded opacity-0 pointer-events-none group-hover:opacity-100 whitespace-nowrap transition-opacity z-10">Delete</span>
               </button>
             )}
-          </>
+          </div>
         )}
       </div>
       {contest.status === 'completed' && contest.leaderboard?.length > 0 && (
@@ -992,11 +1118,10 @@ export default function Contests() {
               className={`relative p-2 rounded-lg font-semibold text-sm bg-white text-gray-700 border border-gray-200 hover:bg-gray-50 group ${
                 isRefreshing ? 'opacity-50 cursor-not-allowed' : 'transition-all duration-200 hover:scale-105 hover:shadow-md'
               }`}
-              title="Refresh data"
             >
-              <svg 
-                className={`w-[18px] h-[18px] ${isRefreshing ? 'animate-spin' : ''}`} 
-                fill="none" 
+              <svg
+                className={`w-[18px] h-[18px] ${isRefreshing ? 'animate-spin' : ''}`}
+                fill="none"
                 stroke="currentColor" 
                 viewBox="0 0 24 24"
               >
@@ -1014,7 +1139,15 @@ export default function Contests() {
             <PageActionBar
               onFilterClick={() => setFiltersOpen(true)}
               onConfigureClick={() => { if (canConfigure) setConfigPanelOpen(true); }}
-              onExportClick={() => {}}
+              onExportClick={() => {
+                const allContests = [...(data.active || []), ...(data.completed || [])];
+                const withLeaderboard = allContests.find(c => c.leaderboard?.length > 0);
+                if (withLeaderboard) {
+                  exportContestResultsToCSV(withLeaderboard);
+                } else if (allContests.length > 0) {
+                  exportContestResultsToCSV(allContests[0]);
+                }
+              }}
               onNotificationsClick={openPanel}
               exportDisabled={!canExport}
               configureDisabled={!canConfigure}
@@ -1168,9 +1301,6 @@ export default function Contests() {
           <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-4">
             <div className="font-semibold mb-1">Failed to load contests</div>
             <div className="text-sm">{error}</div>
-            <div className="text-xs mt-2 text-red-600">
-              💡 Have you run migration 005_contests_and_badges.sql in your Supabase database?
-            </div>
           </div>
         )}
 
@@ -1215,6 +1345,8 @@ export default function Contests() {
                 { key: 'upcoming', label: `Upcoming (${totalUpcoming})` },
                 { key: 'completed', label: `Completed (${totalCompleted})` },
                 { key: 'archived', label: `Archived (${totalArchived})` },
+                { key: 'badges', label: '🎖️ Badge Leaderboard' },
+                { key: 'analytics', label: '📊 Analytics' },
               ].map((tab) => (
                 <button
                   key={tab.key}
@@ -1297,13 +1429,150 @@ export default function Contests() {
               </div>
             )}
 
-            {filteredActive.length === 0 && filteredUpcoming.length === 0 && filteredCompleted.length === 0 && filteredArchived.length === 0 && (
+            {/* Badge Leaderboard */}
+            {statusTab === 'badges' && (
+              <div>
+                <h2 className="text-lg font-semibold text-gray-700 mb-4 flex items-center gap-2">🎖️ Badge Leaderboard</h2>
+                {badgeLeaderboardLoading ? (
+                  <div className="text-center py-8 text-gray-400 text-sm">Loading...</div>
+                ) : badgeLeaderboard.length === 0 ? (
+                  <div className="text-center py-8 text-gray-400 text-sm">No badges earned yet.</div>
+                ) : (
+                  <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="bg-gray-50 border-b border-gray-200">
+                          <th className="text-left px-4 py-3 font-semibold text-gray-600 w-10">#</th>
+                          <th className="text-left px-4 py-3 font-semibold text-gray-600">Rep</th>
+                          <th className="text-center px-4 py-3 font-semibold text-gray-600">Total</th>
+                          <th className="text-center px-4 py-3 font-semibold text-yellow-600">👑 Legendary</th>
+                          <th className="text-center px-4 py-3 font-semibold text-purple-600">💜 Epic</th>
+                          <th className="text-center px-4 py-3 font-semibold text-blue-600">💙 Rare</th>
+                          <th className="text-right px-4 py-3 font-semibold text-gray-600">Latest</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {badgeLeaderboard.map((rep, i) => (
+                          <tr key={rep.id} className={`border-b border-gray-100 ${i < 3 ? 'bg-amber-50/40' : 'hover:bg-gray-50'}`}>
+                            <td className="px-4 py-3 text-gray-500 font-medium">
+                              {i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `#${i + 1}`}
+                            </td>
+                            <td className="px-4 py-3 font-semibold text-gray-900">{rep.name}</td>
+                            <td className="px-4 py-3 text-center font-bold text-gray-800">{rep.count}</td>
+                            <td className="px-4 py-3 text-center text-yellow-700 font-medium">{rep.legendary || '—'}</td>
+                            <td className="px-4 py-3 text-center text-purple-700 font-medium">{rep.epic || '—'}</td>
+                            <td className="px-4 py-3 text-center text-blue-700 font-medium">{rep.rare || '—'}</td>
+                            <td className="px-4 py-3 text-right text-gray-400 text-xs">{new Date(rep.latest).toLocaleDateString()}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Contest Analytics */}
+            {statusTab === 'analytics' && (() => {
+              const all = [...(data.active || []), ...(data.upcoming || []), ...(data.completed || []), ...(data.archived || [])];
+              const completed = data.completed || [];
+              const avgDuration = completed.length > 0
+                ? Math.round(completed.reduce((sum, c) => sum + Math.max(1, Math.ceil((new Date(c.end_date).getTime() - new Date(c.start_date).getTime()) / (1000 * 60 * 60 * 24))), 0) / completed.length)
+                : 0;
+              const kpiCounts = {};
+              all.forEach(c => { kpiCounts[c.kpi_key] = (kpiCounts[c.kpi_key] || 0) + 1; });
+              const topKpi = Object.entries(kpiCounts).sort((a, b) => b[1] - a[1])[0];
+              const avgParticipants = all.length > 0
+                ? Math.round(all.reduce((sum, c) => sum + (c.participant_count || 0), 0) / all.length)
+                : 0;
+              const winnerCounts = {};
+              completed.forEach(c => { if (c.winner_name) winnerCounts[c.winner_name] = (winnerCounts[c.winner_name] || 0) + 1; });
+              const topWinners = Object.entries(winnerCounts).sort((a, b) => b[1] - a[1]).slice(0, 5);
+
+              return (
+                <div className="space-y-6">
+                  <h2 className="text-lg font-semibold text-gray-700 flex items-center gap-2">📊 Contest Analytics</h2>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div className="bg-white rounded-lg border border-gray-200 p-4 text-center">
+                      <div className="text-2xl font-bold text-blue-600">{all.length}</div>
+                      <div className="text-xs text-gray-500">Total Contests</div>
+                    </div>
+                    <div className="bg-white rounded-lg border border-gray-200 p-4 text-center">
+                      <div className="text-2xl font-bold text-emerald-600">{completed.length}</div>
+                      <div className="text-xs text-gray-500">Completed</div>
+                    </div>
+                    <div className="bg-white rounded-lg border border-gray-200 p-4 text-center">
+                      <div className="text-2xl font-bold text-purple-600">{avgDuration}d</div>
+                      <div className="text-xs text-gray-500">Avg Duration</div>
+                    </div>
+                    <div className="bg-white rounded-lg border border-gray-200 p-4 text-center">
+                      <div className="text-2xl font-bold text-amber-600">{avgParticipants}</div>
+                      <div className="text-xs text-gray-500">Avg Participants</div>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {/* Most Popular KPI */}
+                    <div className="bg-white rounded-lg border border-gray-200 p-4">
+                      <h3 className="text-sm font-semibold text-gray-700 mb-3">Most Popular KPIs</h3>
+                      {Object.entries(kpiCounts).sort((a, b) => b[1] - a[1]).map(([kpi, count]) => (
+                        <div key={kpi} className="flex items-center justify-between py-1.5 border-b border-gray-50 last:border-0">
+                          <span className="text-sm text-gray-600">{getKpiDisplayName(kpi)}</span>
+                          <div className="flex items-center gap-2">
+                            <div className="w-24 bg-gray-100 rounded-full h-2">
+                              <div className="bg-blue-500 rounded-full h-2" style={{ width: `${(count / all.length) * 100}%` }} />
+                            </div>
+                            <span className="text-xs text-gray-400 w-6 text-right">{count}</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Top Winners */}
+                    <div className="bg-white rounded-lg border border-gray-200 p-4">
+                      <h3 className="text-sm font-semibold text-gray-700 mb-3">Top Winners</h3>
+                      {topWinners.length === 0 ? (
+                        <p className="text-sm text-gray-400 py-4 text-center">No completed contests yet</p>
+                      ) : topWinners.map(([name, wins], i) => (
+                        <div key={name} className="flex items-center justify-between py-1.5 border-b border-gray-50 last:border-0">
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm font-medium">{i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `#${i + 1}`}</span>
+                            <span className="text-sm text-gray-700">{name}</span>
+                          </div>
+                          <span className="text-xs font-semibold text-blue-600">{wins} win{wins !== 1 ? 's' : ''}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Export section */}
+                  {completed.length > 0 && (
+                    <div className="bg-white rounded-lg border border-gray-200 p-4">
+                      <h3 className="text-sm font-semibold text-gray-700 mb-3">Export Results</h3>
+                      <div className="flex flex-wrap gap-2">
+                        {completed.map(c => (
+                          <button
+                            key={c.id}
+                            onClick={() => exportContestResultsToCSV(c)}
+                            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-gray-600 bg-gray-50 border border-gray-200 rounded-lg hover:bg-gray-100 transition-colors"
+                          >
+                            <Download size={12} /> {c.name}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              );
+            })()}
+
+            {statusTab === 'all' && filteredActive.length === 0 && filteredUpcoming.length === 0 && filteredCompleted.length === 0 && filteredArchived.length === 0 && (
               <div className="text-center py-12">
                 <div className="text-gray-400 text-lg mb-2">No contests available</div>
                 <p className="text-gray-500 text-sm">Check back soon for new challenges!</p>
               </div>
             )}
-            {(statusTab !== 'all') && (
+            {statusTab !== 'all' && statusTab !== 'badges' && statusTab !== 'analytics' && (
               (statusTab === 'active' && filteredActive.length === 0) ||
               (statusTab === 'upcoming' && filteredUpcoming.length === 0) ||
               (statusTab === 'completed' && filteredCompleted.length === 0) ||
@@ -1466,6 +1735,9 @@ export default function Contests() {
                       placeholder="rep@company.com, rep2@company.com"
                       className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     />
+                    {shareRecipients.split(',').filter(r => r.trim()).length > 50 && (
+                      <p className="text-xs text-red-500 mt-1">Maximum 50 recipients per email. Only the first 50 will receive the message.</p>
+                    )}
                   </div>
                   <div className="flex gap-2">
                     <button

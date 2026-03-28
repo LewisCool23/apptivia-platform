@@ -183,24 +183,24 @@ export const PERMISSIONS = [
     description: 'Create, score, and manage account intelligence records.'
   },
   {
-    key: 'manage_playbooks',
-    label: 'Manage Playbooks',
-    description: 'Create and edit AI sales playbooks.'
-  },
-  {
-    key: 'run_playbooks',
-    label: 'Run Playbooks',
-    description: 'Execute AI playbooks against accounts and prospects.'
-  },
-  {
     key: 'view_engage_analytics',
     label: 'View Engage Analytics',
     description: 'Access Engage performance analytics and reports.'
   },
   {
-    key: 'manage_prompts',
-    label: 'Manage Prompt Library',
-    description: 'Create, edit, and manage AI prompt templates in the Prompt Library.'
+    key: 'connect_own_integrations',
+    label: 'Connect Personal Integrations',
+    description: 'Connect personal integrations like calendar, Salesforce OAuth, or Gong.'
+  },
+  {
+    key: 'manage_idps',
+    label: 'Manage Development Plans',
+    description: 'Create, edit, and manage Individual Development Plans (IDPs) for team members.'
+  },
+  {
+    key: 'manage_reviews',
+    label: 'Manage Performance Reviews',
+    description: 'Create and manage mid-year and annual performance reviews.'
   }
 ];
 
@@ -235,10 +235,10 @@ export const ROLE_DEFAULT_PERMISSIONS = {
     'notifications_all',
     'manage_sequences',
     'manage_accounts',
-    'manage_playbooks',
-    'run_playbooks',
     'view_engage_analytics',
-    'manage_prompts'
+    'connect_own_integrations',
+    'manage_idps',
+    'manage_reviews'
   ],
   manager: [
     'view_dashboard',
@@ -263,10 +263,10 @@ export const ROLE_DEFAULT_PERMISSIONS = {
     'notifications_team',
     'manage_sequences',
     'manage_accounts',
-    'manage_playbooks',
-    'run_playbooks',
     'view_engage_analytics',
-    'manage_prompts'
+    'connect_own_integrations',
+    'manage_idps',
+    'manage_reviews'
   ],
   coach: [
     'view_dashboard',
@@ -285,8 +285,8 @@ export const ROLE_DEFAULT_PERMISSIONS = {
     'notifications_team',
     'manage_sequences',
     'manage_accounts',
-    'run_playbooks',
-    'view_engage_analytics'
+    'view_engage_analytics',
+    'connect_own_integrations'
   ],
   power_user: [
     'view_dashboard',
@@ -300,7 +300,7 @@ export const ROLE_DEFAULT_PERMISSIONS = {
     'export_data',
     'notifications_self',
     'manage_sequences',
-    'run_playbooks'
+    'connect_own_integrations'
   ]
 };
 

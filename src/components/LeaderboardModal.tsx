@@ -1,4 +1,5 @@
 import React from 'react';
+import { getRankChangeIcon, getRankDisplay } from '../utils/contestUtils';
 
 interface LeaderboardEntry {
   rank: number;
@@ -51,24 +52,6 @@ export default function LeaderboardModal({
       }));
 
   const hasNoLeaderboardData = leaderboard.length === 0 && participants.length > 0;
-
-  const getRankChangeIcon = (change: string) => {
-    switch (change) {
-      case 'up': return '⬆️';
-      case 'down': return '⬇️';
-      case 'new': return '🆕';
-      default: return '';
-    }
-  };
-
-  const getRankDisplay = (rank: number) => {
-    switch (rank) {
-      case 1: return '🥇';
-      case 2: return '🥈';
-      case 3: return '🥉';
-      default: return `#${rank}`;
-    }
-  };
 
   const getRankTextClass = (rank: number) => {
     switch (rank) {

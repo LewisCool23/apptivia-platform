@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { X, Target, Calendar as CalendarIcon, Users, CheckCircle } from 'lucide-react';
 import { supabase } from '../supabaseClient';
+import { buildLabel } from '../constants/kpiGuidance';
 
 export default function CoachingPlanTemplatesModal({ isOpen, onClose, onTemplateSelect }) {
   const [templates, setTemplates] = useState([]);
@@ -228,7 +229,7 @@ export default function CoachingPlanTemplatesModal({ isOpen, onClose, onTemplate
                       <div className="flex flex-wrap gap-1">
                         {template.focus_kpis?.slice(0, 3).map((kpi, idx) => (
                           <span key={idx} className="px-2 py-0.5 bg-blue-100 text-blue-700 rounded text-xs">
-                            {kpi.replace(/_/g, ' ')}
+                            {buildLabel(kpi)}
                           </span>
                         ))}
                         {template.focus_kpis?.length > 3 && (

@@ -1,6 +1,8 @@
 import React, { useState, useRef } from 'react';
 import { X, Download, Link as LinkIcon, CheckCircle, Mail } from 'lucide-react';
 import html2canvas from 'html2canvas';
+import { backendFetch } from '../utils/backendFetch';
+import { buildCoachSnapshotEmailHtml, buildCoachSnapshotEmailText } from '../utils/emailTemplates';
 
 export default function ShareCoachSnapshotModal({ isOpen, onClose, coachData, scorecardData, filters }) {
   const [copied, setCopied] = useState(false);
@@ -69,121 +71,17 @@ export default function ShareCoachSnapshotModal({ isOpen, onClose, coachData, sc
       const recipients = emailRecipients.split(',').map(e => e.trim()).filter(e => e);
       const subject = emailSubject.trim() || `Apptivia Coach Snapshot`;
       
-      const html = `
-        <!DOCTYPE html>
-        <html>
-        <head>
-          <style>
-            body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
-            .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-            .header { background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 50%, #ec4899 100%); color: white; padding: 30px; border-radius: 10px; text-align: center; }
-            .stats { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin: 20px 0; }
-            .stat-box { background: #f3f4f6; padding: 20px; border-radius: 8px; text-align: center; }
-            .stat-value { font-size: 32px; font-weight: bold; color: #3b82f6; }
-            .stat-label { font-size: 14px; color: #6b7280; }
-            .actions { margin: 20px 0; }
-            .action-item { background: #f9fafb; padding: 15px; border-radius: 8px; margin-bottom: 10px; border-left: 4px solid #3b82f6; }
-            .notes { background: #fef3c7; padding: 15px; border-radius: 8px; margin: 20px 0; }
-            .footer { text-align: center; color: #6b7280; font-size: 12px; margin-top: 30px; border-top: 1px solid #e5e7eb; padding-top: 20px; }
-          </style>
-        </head>
-        <body>
-          <div class="container">
-            <div class="header">
-              <h1>📋 Coaching Progress Snapshot</h1>
-              <p>Apptivia Platform</p>
-              ${totalMembers > 0 ? `<p style="font-size: 14px; opacity: 0.9;">Team Members: ${totalMembers}</p>` : ''}
-            </div>
-            
-            <div class="stats">
-              <div class="stat-box">
-                <div class="stat-value">${apptiviaLevel || 'N/A'}</div>
-                <div class="stat-label">Apptivia Level</div>
-              </div>
-              <div class="stat-box">
-                <div class="stat-value">${levelPoints || 0}</div>
-                <div class="stat-label">Level Points</div>
-              </div>
-              <div class="stat-box">
-                <div class="stat-value">${averageScore || 0}%</div>
-                <div class="stat-label">Average Score</div>
-              </div>
-              <div class="stat-box">
-                <div class="stat-value">${scorecardStreak}</div>
-                <div class="stat-label">Scorecard Streak</div>
-              </div>
-              <div class="stat-box">
-                <div class="stat-value">${totalBadges}</div>
-                <div class="stat-label">Total Badges</div>
-              </div>
-              <div class="stat-box">
-                <div class="stat-value">${totalAchievements}</div>
-                <div class="stat-label">Achievements</div>
-              </div>
-            </div>
+      const emailData = { apptiviaLevel, levelPoints, averageScore, scorecardStreak, totalBadges, totalAchievements, totalMembers, allSkillsets };
+      const emailOpts = { notes: emailNotes || undefined };
+      const html = buildCoachSnapshotEmailHtml(emailData, emailOpts);
+      const text = buildCoachSnapshotEmailText(emailData, emailOpts);
 
-            ${allSkillsets.length > 0 ? `
-              <div class="actions">
-                <h3>🎯 Skillset Mastery Progress</h3>
-                ${allSkillsets.map(skillset => `
-                  <div class="action-item">
-                    <strong>${skillset.skillset_name || skillset.name}</strong>
-                    <div style="font-size: 14px; color: #6b7280;">Progress: ${Math.round(skillset.progress || 0)}% • Achievements: ${skillset.achievements_completed || 0} • Points: ${skillset.points || 0}</div>
-                  </div>
-                `).join('')}
-              </div>
-            ` : ''}
-
-            ${emailNotes ? `
-              <div class="notes">
-                <strong>📝 Notes:</strong><br/>
-                ${emailNotes.replace(/\n/g, '<br/>')}
-              </div>
-            ` : ''}
-
-            <div class="footer">
-              <p>Generated on ${new Date().toLocaleDateString()}</p>
-              <p>Apptivia Platform - Coaching & Development</p>
-            </div>
-          </div>
-        </body>
-        </html>
-      `;
-
-      const text = `
-Apptivia Coach Snapshot
-
-Apptivia Level: ${apptiviaLevel || 'N/A'}
-Level Points: ${levelPoints || 0}
-Average Score: ${averageScore || 0}%
-Scorecard Streak: ${scorecardStreak}
-Total Badges: ${totalBadges}
-Achievements: ${totalAchievements}
-${totalMembers > 0 ? `Team Members: ${totalMembers}` : ''}
-
-${allSkillsets.length > 0 ? `Skillset Mastery Progress:\n${allSkillsets.map(s => `- ${s.skillset_name || s.name}: ${Math.round(s.progress || 0)}% (${s.achievements_completed || 0} achievements, ${s.points || 0} pts)`).join('\n')}` : ''}
-
-${emailNotes ? `Notes:\n${emailNotes}` : ''}
-
-Generated on ${new Date().toLocaleDateString()}
-      `.trim();
-
-      const response = await fetch('/api/send-snapshot', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          recipients,
-          subject,
-          html,
-          text,
-        }),
+      await backendFetch('/api/send-snapshot', {
+        recipients,
+        subject,
+        html,
+        text,
       });
-
-      if (!response.ok) {
-        throw new Error('Failed to send email');
-      }
 
       setEmailSuccess(true);
       setTimeout(() => {

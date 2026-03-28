@@ -1,6 +1,19 @@
 RewriteEngine On
 RewriteBase /
+
+# Proxy /api/ and /track/ and /socket.io/ to Node.js backend
+RewriteCond %{REQUEST_URI} ^/(api|track|socket\.io)(/|$)
+RewriteRule ^(.*)$ http://localhost:3000/$1 [P,L]
+
+# React SPA — all other routes serve index.html
 RewriteRule ^index\.html$ - [L]
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
 RewriteRule . /index.html [L]
+
+# Never cache index.html so browsers always get the latest build
+<Files "index.html">
+  Header set Cache-Control "no-cache, no-store, must-revalidate"
+  Header set Pragma "no-cache"
+  Header set Expires "0"
+</Files>

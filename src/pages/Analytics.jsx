@@ -1,5 +1,5 @@
-import React, { useEffect, useState, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useEffect, useState, useMemo, useRef } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { Search, X, Radar, Shield } from 'lucide-react';
 import DashboardLayout from '../DashboardLayout';
 import ScorecardFilters from '../components/ScorecardFilters';
@@ -13,12 +13,14 @@ import { useHistoricalScores } from '../hooks/useHistoricalScores';
 import { useNotifications } from '../contexts/NotificationContext';
 import { useAuth } from '../AuthContext';
 import InfoTooltip from '../components/InfoTooltip';
+import { scoreTextColor, scoreBgColor } from '../constants/scoreColors';
 import { supabase } from '../supabaseClient';
-import { TeamPerformanceChart as EngageBarChart } from '../components/Charts';
 import KpiWatchdog from '../components/KpiWatchdog';
+import SalesFunnel from '../components/SalesFunnel';
 
 export default function Analytics() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { user, profile, role, hasPermission } = useAuth();
   const teamId = profile?.team_id ? String(profile.team_id) : user?.team_id ? String(user.team_id) : null;
   const isManager = role === 'manager';
@@ -60,7 +62,10 @@ export default function Analytics() {
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [teams, setTeams] = useState([]);
   const [filtersResetSignal, setFiltersResetSignal] = useState(0);
-  const [activeTab, setActiveTab] = useState('overview');
+  const [activeTab, setActiveTab] = useState(() => {
+    const params = new URLSearchParams(location.search);
+    return params.get('tab') || 'overview';
+  });
   const [showScheduleReportModal, setShowScheduleReportModal] = useState(false);
   const { openPanel, addNotification, unreadCount } = useNotifications();
   const [searchQuery, setSearchQuery] = useState('');
@@ -71,8 +76,35 @@ export default function Analytics() {
   const [engageStats, setEngageStats] = useState(null);
   const [engageLoading, setEngageLoading] = useState(false);
   const [allKpiMetrics, setAllKpiMetrics] = useState([]);
-  const [allKpiValues, setAllKpiValues] = useState([]);
-  const [watchdogProfile, setWatchdogProfile] = useState(null);
+  const [funnelKpiValues, setFunnelKpiValues] = useState({});
+  const [funnelBenchmarks, setFunnelBenchmarks] = useState({});
+  const [funnelLoading, setFunnelLoading] = useState(false);
+
+  // Sync active tab to URL search params
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const currentTab = params.get('tab');
+    if (currentTab !== activeTab) {
+      params.set('tab', activeTab);
+      navigate(`${location.pathname}?${params.toString()}`, { replace: true });
+    }
+  }, [activeTab]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Accept filter state from scorecard navigation
+  useEffect(() => {
+    const incoming = location.state?.filters;
+    if (incoming) {
+      setFilters(prev => ({
+        ...prev,
+        dateRange: incoming.dateRange || prev.dateRange,
+        departments: incoming.departments || prev.departments,
+        teams: incoming.teams || prev.teams,
+        members: incoming.members || prev.members,
+      }));
+      setFiltersInitialized(true);
+      navigate(location.pathname, { replace: true, state: {} });
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (filtersInitialized) return;
@@ -97,23 +129,13 @@ export default function Analytics() {
     return () => { mounted = false; };
   }, [isAdmin]);
 
-  // Fetch user profile for watchdog org context
-  useEffect(() => {
-    async function loadProfile() {
-      if (!user?.id) return;
-      const { data } = await supabase.from('profiles').select('organization_id').eq('id', user.id).single();
-      if (data) setWatchdogProfile(data);
-    }
-    loadProfile();
-  }, [user?.id]);
-
   // Fetch ALL active KPI metrics (not just scorecard ones) for comprehensive analytics
   useEffect(() => {
     async function loadAllKpis() {
       try {
         const { data: metrics, error: metricsError } = await supabase
           .from('kpi_metrics')
-          .select('id, key, name, description, goal, weight, unit, category, show_on_scorecard')
+          .select('id, key, name, description, goal, weight, unit, category, show_on_scorecard, direction')
           .eq('is_active', true)
           .order('scorecard_position');
         if (metricsError) throw metricsError;
@@ -125,9 +147,36 @@ export default function Analytics() {
     loadAllKpis();
   }, []);
 
+  // Fetch global kpi_benchmarks once on mount
+  useEffect(() => {
+    async function loadBenchmarks() {
+      try {
+        const { data: rows, error } = await supabase
+          .from('kpi_benchmarks')
+          .select('kpi_key, benchmark_type, value')
+          .is('org_id', null);
+        if (error) throw error;
+        const map = {};
+        (rows || []).forEach(r => {
+          if (!map[r.kpi_key]) map[r.kpi_key] = {};
+          map[r.kpi_key][r.benchmark_type] = r.value;
+        });
+        setFunnelBenchmarks(map);
+      } catch (e) {
+        console.error('Error fetching benchmarks:', e);
+      }
+    }
+    loadBenchmarks();
+  }, []);
+
+  // Cache refs to prevent refetching tab data on tab switches
+  const engageCacheRef = useRef(null);
+  const funnelCacheRef = useRef(false);
+
   // Fetch Engage analytics when Engage tab is active
   useEffect(() => {
     if (activeTab !== 'engage') return;
+    if (engageCacheRef.current) return; // Already cached
     let mounted = true;
     async function loadEngageStats() {
       setEngageLoading(true);
@@ -183,7 +232,7 @@ export default function Analytics() {
         ].filter(d => d.score > 0);
 
         if (mounted) {
-          setEngageStats({
+          const stats = {
             totalSequences: sequences.length,
             activeSequences,
             totalEnrolled,
@@ -205,7 +254,9 @@ export default function Analytics() {
             totalExecutions: executions.length,
             completedExecutions,
             meetingsBooked,
-          });
+          };
+          setEngageStats(stats);
+          engageCacheRef.current = stats;
         }
       } catch (err) {
         console.error('Error loading Engage stats:', err);
@@ -218,12 +269,34 @@ export default function Analytics() {
     return () => { mounted = false; };
   }, [activeTab, profile?.organization_id, user?.organization_id]);
 
+  const [customWeekDate, setCustomWeekDate] = useState('');
+
   // Convert date range to actual dates
   const dateRange = useMemo(() => {
     const now = new Date();
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    
-    switch (filters.dateRange) {
+    const label = filters.dateRange || 'This Week';
+
+    // Custom Week — user picked a specific week via the inline date picker
+    // ScorecardFilters encodes as "Custom Week|YYYY-MM-DD"
+    if (label.startsWith('Custom Week|')) {
+      const mondayStr = label.split('|')[1];
+      const monday = new Date(mondayStr + 'T00:00:00');
+      const sunday = new Date(monday.getTime() + 7 * 24 * 60 * 60 * 1000);
+      return { start: monday.toISOString(), end: sunday.toISOString() };
+    }
+    if (label === 'Custom Week') {
+      if (customWeekDate) {
+        const d = new Date(customWeekDate + 'T00:00:00');
+        const day = d.getDay();
+        const monday = new Date(d.getTime() - (day === 0 ? 6 : day - 1) * 24 * 60 * 60 * 1000);
+        const sunday = new Date(monday.getTime() + 7 * 24 * 60 * 60 * 1000);
+        return { start: monday.toISOString(), end: sunday.toISOString() };
+      }
+      // fall through to This Week until a date is chosen
+    }
+
+    switch (label) {
       case 'Today': {
         return {
           start: today.toISOString(),
@@ -256,12 +329,62 @@ export default function Analytics() {
         const lastDay = new Date(today.getFullYear(), today.getMonth(), 0);
         return { start: firstDay.toISOString(), end: lastDay.toISOString() };
       }
-      default:
+      case 'This Quarter': {
+        const q = Math.floor(today.getMonth() / 3);
+        const firstDay = new Date(today.getFullYear(), q * 3, 1);
+        const lastDay = new Date(today.getFullYear(), q * 3 + 3, 0);
+        return { start: firstDay.toISOString(), end: lastDay.toISOString() };
+      }
+      case 'Last Quarter': {
+        const q = Math.floor(today.getMonth() / 3);
+        const prevQ = q === 0 ? 3 : q - 1;
+        const yr = q === 0 ? today.getFullYear() - 1 : today.getFullYear();
+        const firstDay = new Date(yr, prevQ * 3, 1);
+        const lastDay = new Date(yr, prevQ * 3 + 3, 0);
+        return { start: firstDay.toISOString(), end: lastDay.toISOString() };
+      }
+      default: {
         const dayOfWeek = today.getDay();
         const monday = new Date(today.getTime() - (dayOfWeek === 0 ? 6 : dayOfWeek - 1) * 24 * 60 * 60 * 1000);
         const sunday = new Date(monday.getTime() + 7 * 24 * 60 * 60 * 1000);
         return { start: monday.toISOString(), end: sunday.toISOString() };
+      }
     }
+  }, [filters.dateRange, customWeekDate]);
+
+  // Weekly average mode for multi-week periods
+  const weeklyAverage = useMemo(() => {
+    const label = filters.dateRange || 'This Week';
+    return !['This Week', 'Last Week', 'Today', 'Custom Week'].includes(label) && !label.startsWith('Custom Week|');
+  }, [filters.dateRange]);
+
+  const analyticsNumWeeks = useMemo(() => {
+    const label = filters.dateRange || 'This Week';
+    const today = new Date();
+    if (label === 'This Month') {
+      const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
+      return Math.max(1 / 7, (today.getTime() - firstDay.getTime()) / (7 * 24 * 60 * 60 * 1000));
+    }
+    if (label === 'Last Month') {
+      const firstDay = new Date(today.getFullYear(), today.getMonth() - 1, 1);
+      const lastDay = new Date(today.getFullYear(), today.getMonth(), 0);
+      return Math.max(1, (lastDay.getTime() - firstDay.getTime()) / (7 * 24 * 60 * 60 * 1000));
+    }
+    if (label === 'This Quarter') {
+      const q = Math.floor(today.getMonth() / 3);
+      const firstDay = new Date(today.getFullYear(), q * 3, 1);
+      return Math.max(1 / 7, (today.getTime() - firstDay.getTime()) / (7 * 24 * 60 * 60 * 1000));
+    }
+    if (label === 'Last Quarter') {
+      const q = Math.floor(today.getMonth() / 3);
+      const prevQ = q === 0 ? 3 : q - 1;
+      const yr = q === 0 ? today.getFullYear() - 1 : today.getFullYear();
+      const firstDay = new Date(yr, prevQ * 3, 1);
+      const lastDay = new Date(yr, prevQ * 3 + 3, 0);
+      return Math.max(1, (lastDay.getTime() - firstDay.getTime()) / (7 * 24 * 60 * 60 * 1000));
+    }
+    if (label === 'All Time') return 0; // hook computes from min(period_start)
+    return 1;
   }, [filters.dateRange]);
 
   const { data, loading, error } = useScorecardData(
@@ -269,15 +392,20 @@ export default function Analytics() {
     filters.teams,
     filters.members,
     dateRange.start,
-    dateRange.end
+    dateRange.end,
+    0,
+    weeklyAverage,
+    analyticsNumWeeks
   );
 
-  const { data: historicalScores } = useHistoricalScores(
+  // Historical trend data for the overview chart
+  const { data: historicalData, repNames: historicalRepNames, loading: historicalLoading } = useHistoricalScores(
     filters.departments,
     filters.teams,
     filters.members,
     dateRange,
-    filters.dateRange
+    filters.dateRange || 'This Week',
+    0
   );
 
   const handleFiltersChange = (nextFilters) => {
@@ -303,40 +431,73 @@ export default function Analytics() {
     }
   };
 
-  const quickRanges = ['This Week', 'Last Week', 'This Month', 'Last Month', 'All Time'];
+  const quickRanges = ['This Week', 'Last Week', 'This Month', 'Last Month', 'This Quarter', 'Last Quarter', 'All Time', 'Custom Week'];
   const applyQuickRange = (range) => {
     setFilters(prev => ({ ...prev, dateRange: range }));
+    if (range !== 'Custom Week') setCustomWeekDate('');
   };
+
+  const funnelGoals = useMemo(() => {
+    const map = {};
+    allKpiMetrics.forEach(m => { map[m.key] = m.goal; });
+    return map;
+  }, [allKpiMetrics]);
+
+  // Scale benchmarks and goals by team size × date range weeks so they match team-total funnel values
+  const scaledFunnelBenchmarks = useMemo(() => {
+    const numReps = data.rows.length || 1;
+    const numDays = Math.max(7, (new Date(dateRange.end) - new Date(dateRange.start)) / (1000 * 60 * 60 * 24));
+    const numWeeks = numDays / 7;
+    const scaled = {};
+    Object.entries(funnelBenchmarks).forEach(([key, types]) => {
+      scaled[key] = {};
+      Object.entries(types).forEach(([type, value]) => {
+        scaled[key][type] = Math.round(value * numReps * numWeeks);
+      });
+    });
+    return scaled;
+  }, [funnelBenchmarks, data.rows.length, dateRange.end, dateRange.start]);
+
+  const scaledFunnelGoals = useMemo(() => {
+    const numReps = data.rows.length || 1;
+    const numDays = Math.max(7, (new Date(dateRange.end) - new Date(dateRange.start)) / (1000 * 60 * 60 * 24));
+    const numWeeks = numDays / 7;
+    const scaled = {};
+    allKpiMetrics.forEach(m => { scaled[m.key] = Math.round((m.goal || 0) * numReps * numWeeks); });
+    return scaled;
+  }, [allKpiMetrics, data.rows.length, dateRange.end, dateRange.start]);
 
   const tabs = useMemo(() => ([
     { id: 'overview', label: 'Overview' },
-    { id: 'score-trends', label: 'Score Trends' },
-    ...(!isPowerUser ? [{ id: 'team-rankings', label: isAdmin ? 'Team Rankings' : 'Rep Rankings' }] : []),
     { id: 'kpi-attainment', label: 'KPI Attainment' },
+    { id: 'funnel', label: 'Sales Funnel' },
     { id: 'watchdog', label: 'KPI Watchdog' },
     { id: 'engage', label: 'Engage' },
-  ]), [isAdmin, isPowerUser]);
+  ]), []);
 
-  // Calculate aggregate KPI metrics from filtered data
+  // Calculate aggregate KPI metrics from filtered data — dynamic top KPIs by total value
   const aggregateKPIs = useMemo(() => {
-    if (!data.rows.length) return { totalCalls: 0, totalMeetings: 0, totalTalkTime: 0 };
-    
-    let totalCalls = 0;
-    let totalMeetings = 0;
-    let totalTalkTime = 0;
-
+    if (!data.rows.length || !allKpiMetrics.length) return [];
+    const sums = {};
+    allKpiMetrics.forEach(m => { sums[m.key] = 0; });
     data.rows.forEach(row => {
-      totalCalls += row.kpis.call_connects?.value || 0;
-      totalMeetings += row.kpis.meetings?.value || 0;
-      totalTalkTime += row.kpis.talk_time_minutes?.value || 0;
+      allKpiMetrics.forEach(m => {
+        sums[m.key] += row.kpis[m.key]?.value || 0;
+      });
     });
-
-    return {
-      totalCalls: Math.round(totalCalls),
-      totalMeetings: Math.round(totalMeetings),
-      totalTalkTime: Math.round(totalTalkTime)
-    };
-  }, [data]);
+    // Pick top 6 KPIs that actually have data, sorted by total value descending
+    return allKpiMetrics
+      .filter(m => sums[m.key] > 0)
+      .sort((a, b) => sums[b.key] - sums[a.key])
+      .slice(0, 6)
+      .map(m => ({
+        key: m.key,
+        name: m.name,
+        total: Math.round(sums[m.key] * 10) / 10,
+        unit: m.unit,
+        goal: m.goal,
+      }));
+  }, [data, allKpiMetrics]);
 
   const teamNameMap = useMemo(() => {
     const map = new Map();
@@ -417,9 +578,10 @@ export default function Analytics() {
       : Object.keys(data.rows[0]?.kpis || {});
     const labelMap = allKpiMetrics.reduce((acc, m) => { acc[m.key] = m.name; return acc; }, {});
 
+    const rowCount = data.rows.length || 1;
     const result = allKeys.map((key) => {
       const avgPct = Math.round(
-        data.rows.reduce((sum, row) => sum + (row.kpis[key]?.percentage || 0), 0) / data.rows.length
+        data.rows.reduce((sum, row) => sum + (row.kpis[key]?.percentage || 0), 0) / rowCount
       );
       return {
         name: labelMap[key] || key.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()),
@@ -431,6 +593,11 @@ export default function Analytics() {
     return result.sort((a, b) => b.score - a.score);
   }, [data.rows, allKpiMetrics]);
 
+  // Filtered version for charts — excludes KPIs with no data to avoid 0% noise
+  const kpiAttainmentChartData = useMemo(() => {
+    return kpiAttainmentData.filter(k => k.hasData);
+  }, [kpiAttainmentData]);
+
   const topMovers = useMemo(() => {
     if (!data.rows.length) return [];
     const sorted = [...data.rows].sort((a, b) => b.apptivityScore - a.apptivityScore);
@@ -439,10 +606,53 @@ export default function Analytics() {
     return [...top, ...bottom];
   }, [data.rows]);
 
+  // Fetch funnel KPI values — placed here so data and dateRange are already declared
+  const FUNNEL_KEYS = ['call_connects', 'meetings', 'sourced_opps', 'stage2_opps', 'stage3_opps', 'closed_won'];
   useEffect(() => {
-    if (!data.rows.length) return;
-    const callsTarget = data.rows.length * 50;
-    if (aggregateKPIs.totalCalls >= callsTarget) {
+    if (activeTab !== 'funnel') return;
+    if (!data.rows.length) { setFunnelKpiValues({}); return; }
+    // Skip refetch if the data context hasn't changed
+    const cacheKey = `${data.rows.map(r => r.profile_id).join(',')}|${dateRange.start}|${dateRange.end}`;
+    if (funnelCacheRef.current === cacheKey) return;
+    let mounted = true;
+    async function loadFunnelValues() {
+      setFunnelLoading(true);
+      try {
+        const profileIds = data.rows.map(r => r.profile_id);
+        const { data: kpiRows, error } = await supabase
+          .from('kpi_values')
+          .select('value, kpi_metrics!inner(key)')
+          .in('profile_id', profileIds)
+          .lte('period_start', dateRange.end.slice(0, 10))
+          .gte('period_end', dateRange.start.slice(0, 10))
+          .in('kpi_metrics.key', FUNNEL_KEYS);
+        if (error) throw error;
+        const sums = {};
+        (kpiRows || []).forEach(r => {
+          const key = r.kpi_metrics?.key;
+          if (key) sums[key] = (sums[key] || 0) + (r.value || 0);
+        });
+        if (mounted) {
+          setFunnelKpiValues(sums);
+          funnelCacheRef.current = cacheKey;
+        }
+      } catch (e) {
+        console.error('Error fetching funnel KPI values:', e);
+      } finally {
+        if (mounted) setFunnelLoading(false);
+      }
+    }
+    loadFunnelValues();
+    return () => { mounted = false; };
+  }, [activeTab, data.rows, dateRange.start, dateRange.end]);
+
+  useEffect(() => {
+    if (!data.rows.length || !allKpiMetrics.length) return;
+    const callsMetric = allKpiMetrics.find(m => m.key === 'call_connects');
+    const callsGoal = callsMetric?.goal || 100;
+    const callsTarget = data.rows.length * callsGoal;
+    const totalCalls = data.rows.reduce((sum, row) => sum + (row.kpis.call_connects?.value || 0), 0);
+    if (totalCalls >= callsTarget) {
       addNotification({
         type: 'trend',
         title: 'Weekly trend win',
@@ -451,7 +661,7 @@ export default function Analytics() {
         dedupeKey: `analytics-trend-${filters.dateRange}`,
       });
     }
-  }, [aggregateKPIs.totalCalls, data.rows.length, filters.dateRange, addNotification]);
+  }, [data.rows, allKpiMetrics, filters.dateRange, addNotification]);
 
   // Search functionality
   const handleSearch = async (query) => {
@@ -596,11 +806,10 @@ export default function Analytics() {
               className={`relative p-2 rounded-lg font-semibold text-sm bg-white text-gray-700 border border-gray-200 hover:bg-gray-50 group ${
                 isRefreshing ? 'opacity-50 cursor-not-allowed' : 'transition-all duration-200 hover:scale-105 hover:shadow-md'
               }`}
-              title="Refresh data"
             >
-              <svg 
-                className={`w-[18px] h-[18px] ${isRefreshing ? 'animate-spin' : ''}`} 
-                fill="none" 
+              <svg
+                className={`w-[18px] h-[18px] ${isRefreshing ? 'animate-spin' : ''}`}
+                fill="none"
                 stroke="currentColor" 
                 viewBox="0 0 24 24"
               >
@@ -661,9 +870,14 @@ export default function Analytics() {
               </div>
             </div>
             <div className="bg-white rounded-lg p-3 shadow-sm flex flex-wrap items-center justify-between gap-3">
-              <div>
-                <div className="text-xs text-gray-500">Quick date presets</div>
-                <div className="flex flex-wrap gap-2 mt-2">
+              <div className="flex-1">
+                <div className="flex items-center gap-2 mb-1">
+                  <div className="text-xs text-gray-500">Quick date presets</div>
+                  {weeklyAverage && (
+                    <span className="text-[10px] bg-blue-50 text-blue-600 px-1.5 py-0.5 rounded-full font-semibold">avg/wk</span>
+                  )}
+                </div>
+                <div className="flex flex-wrap gap-2 mt-1">
                   {quickRanges.map((range) => (
                     <button
                       key={range}
@@ -678,6 +892,23 @@ export default function Analytics() {
                     </button>
                   ))}
                 </div>
+                {filters.dateRange === 'Custom Week' && (
+                  <div className="flex items-center gap-2 mt-2">
+                    <label className="text-xs text-gray-500">Pick any day in the week:</label>
+                    <input
+                      type="date"
+                      title="Pick any day — the full Mon–Sun week will be used"
+                      value={customWeekDate}
+                      onChange={e => setCustomWeekDate(e.target.value)}
+                      className="border border-gray-200 rounded px-2 py-0.5 text-xs"
+                    />
+                    {customWeekDate && (
+                      <span className="text-[11px] text-gray-400">
+                        {dateRange.start.slice(0, 10)} → {dateRange.end.slice(0, 10)}
+                      </span>
+                    )}
+                  </div>
+                )}
               </div>
               <button
                 onClick={() => setFiltersOpen(true)}
@@ -697,7 +928,8 @@ export default function Analytics() {
             {data.rows.length > 0 && (
               <>
             {activeTab === 'overview' && (
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              <>
+              <div className="grid grid-cols-1 lg:grid-cols-2 lg:grid-rows-[300px] gap-4">
                 <ScoreDistributionChart
                   title={isPowerUser ? 'KPI Health' : 'Team Score Distribution'}
                   infoText={isPowerUser
@@ -710,7 +942,7 @@ export default function Analytics() {
                     { name: 'Needs Improvement (<80%)', value: data.rows.filter(r => r.apptivityScore < 80).length },
                   ]}
                   footer={isAdmin && teamNamesInView.length > 0 ? (
-                    <div className="text-[11px] text-gray-500">
+                    <div className="text-[11px] text-gray-500 truncate" title={teamNamesInView.join(', ')}>
                       Teams in view: {teamNamesInView.join(', ')}
                     </div>
                   ) : null}
@@ -719,7 +951,7 @@ export default function Analytics() {
                   <TeamPerformanceChart
                     title="KPI Attainment (Avg %)"
                     infoText="Average KPI attainment across the selected audience and period."
-                    data={kpiAttainmentData}
+                    data={kpiAttainmentChartData}
                     dataKey="score"
                     barLabel="Avg KPI %"
                     xDomain={[0, 120]}
@@ -736,88 +968,50 @@ export default function Analytics() {
                   />
                 )}
               </div>
-            )}
 
-            {activeTab === 'score-trends' && (
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                <HistoricalScoresChart
-                  title="Apptivia Score Trends"
-                  infoText="Weekly trend of average Apptivia score for the selected filters and date range."
-                  data={historicalScores}
-                />
-                {isPowerUser ? (
-                  <TeamPerformanceChart
-                    title="KPI Attainment (Avg %)"
-                    infoText="Average KPI attainment across the selected audience and period."
-                    data={kpiAttainmentData}
-                    dataKey="score"
-                    barLabel="Avg KPI %"
-                    xDomain={[0, 120]}
-                    xTickFormatter={(value) => `${value}%`}
+              {/* Historical Trend Chart */}
+              {!historicalLoading && historicalData.length > 1 && (
+                <div className="mt-4">
+                  <HistoricalScoresChart
+                    data={historicalData}
+                    title="Score Trend"
+                    infoText="Average Apptivia score trend over the selected date range."
+                    repNames={historicalRepNames}
+                    lineName="Team Avg"
+                    chartHeight={220}
                   />
-                ) : (
-                  <TeamPerformanceChart
-                    title={isAdmin ? 'Team Performance Rankings' : 'Rep Performance Rankings'}
-                    infoText={isAdmin
-                      ? 'Ranked by average Apptivia score across each team.'
-                      : 'Top reps ranked by Apptivia score for the selected filters.'
-                    }
-                    data={isAdmin ? teamPerformanceData : repPerformanceData}
-                  />
-                )}
-              </div>
-            )}
-
-            {activeTab === 'team-rankings' && !isPowerUser && (
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                <TeamPerformanceChart
-                  title={isAdmin ? 'Team Performance Rankings' : 'Rep Performance Rankings'}
-                  infoText={isAdmin
-                    ? 'Ranked by average Apptivia score across each team.'
-                    : 'Top reps ranked by Apptivia score for the selected filters.'
-                  }
-                  data={isAdmin ? teamPerformanceData : repPerformanceData}
-                />
-                <ScoreDistributionChart
-                  title="Score Distribution"
-                  infoText="Distribution of reps by scorecard performance buckets for the selected period."
-                  data={[
-                    { name: 'Excellent (>100%)', value: data.rows.filter(r => r.apptivityScore >= 100).length },
-                    { name: 'Good (80-99%)', value: data.rows.filter(r => r.apptivityScore >= 80 && r.apptivityScore < 100).length },
-                    { name: 'Needs Improvement (<80%)', value: data.rows.filter(r => r.apptivityScore < 80).length },
-                  ]}
-                />
-              </div>
+                </div>
+              )}
+              </>
             )}
 
             {activeTab === 'kpi-attainment' && (
               <>
                 <div className="flex items-center gap-2">
                   <h2 className="text-sm font-semibold text-gray-900">Summary Metrics</h2>
-                  <InfoTooltip text="Totals of key activities for the selected filters and date range." />
+                  <InfoTooltip text={weeklyAverage ? "Weekly averages of key activities for the selected filters and date range." : "Totals of key activities for the selected filters and date range."} />
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                  <div className="bg-white rounded-lg p-3 shadow-sm transition-all duration-300 hover:shadow-lg hover:-translate-y-1">
-                    <div className="text-xs text-gray-500 mb-1">Total Calls</div>
-                    <div className="text-base font-bold text-blue-600">{aggregateKPIs.totalCalls.toLocaleString()}</div>
-                    <div className="text-xs text-gray-400 mt-1">Across all team members</div>
-                  </div>
-                  <div className="bg-white rounded-lg p-3 shadow-sm transition-all duration-300 hover:shadow-lg hover:-translate-y-1">
-                    <div className="text-xs text-gray-500 mb-1">Total Meetings</div>
-                    <div className="text-base font-bold text-green-600">{aggregateKPIs.totalMeetings.toLocaleString()}</div>
-                    <div className="text-xs text-gray-400 mt-1">Booked in {filters.dateRange}</div>
-                  </div>
-                  <div className="bg-white rounded-lg p-3 shadow-sm transition-all duration-300 hover:shadow-lg hover:-translate-y-1">
-                    <div className="text-xs text-gray-500 mb-1">Total Talk Time</div>
-                    <div className="text-base font-bold text-purple-600">{aggregateKPIs.totalTalkTime.toLocaleString()}</div>
-                    <div className="text-xs text-gray-400 mt-1">Minutes of conversation</div>
-                  </div>
+                {aggregateKPIs.length > 0 && (
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+                  {aggregateKPIs.map((kpi, idx) => {
+                    const colors = ['text-blue-600', 'text-green-600', 'text-purple-600', 'text-cyan-600', 'text-amber-600', 'text-rose-600'];
+                    const unitSuffix = kpi.unit === 'currency' ? '' : kpi.unit === 'minutes' ? ' min' : kpi.unit === 'hours' ? ' hrs' : kpi.unit === 'percentage' || kpi.unit === 'percent' ? '%' : '';
+                    const formatted = kpi.unit === 'currency' ? `$${kpi.total.toLocaleString()}` : `${kpi.total.toLocaleString()}${unitSuffix}`;
+                    return (
+                      <div key={kpi.key} className="bg-white rounded-lg p-3 shadow-sm transition-all duration-300 hover:shadow-lg hover:-translate-y-1">
+                        <div className="text-xs text-gray-500 mb-1 truncate" title={kpi.name}>{kpi.name}</div>
+                        <div className={`text-base font-bold ${colors[idx % colors.length]}`}>{formatted}</div>
+                        <div className="text-xs text-gray-400 mt-1">{weeklyAverage ? 'Avg/week' : 'Team total'}</div>
+                      </div>
+                    );
+                  })}
                 </div>
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                )}
+                <div className="grid grid-cols-1 lg:grid-cols-2 lg:grid-rows-[300px] gap-4">
                   <TeamPerformanceChart
                     title="KPI Attainment (Avg %)"
                     infoText="Average KPI attainment across all active KPIs for the selected audience and period."
-                    data={kpiAttainmentData}
+                    data={kpiAttainmentChartData}
                     dataKey="score"
                     barLabel="Avg KPI %"
                     xDomain={[0, 120]}
@@ -874,22 +1068,24 @@ export default function Analytics() {
                                 <span className="text-xs text-gray-500 capitalize">{(metric.category || 'general').replace(/_/g, ' ')}</span>
                               </td>
                               <td className="py-2.5 px-3 font-medium text-gray-700">
-                                {metric.goal}{metric.unit === 'percent' ? '%' : metric.unit === 'minutes' ? ' min' : ''}
+                                {metric.unit === 'currency' ? `$${Number(metric.goal).toLocaleString()}` : metric.goal}
+                                {metric.unit === 'percentage' || metric.unit === 'percent' ? '%' : ''}
+                                {metric.unit === 'minutes' ? ' min' : ''}
+                                {metric.unit === 'hours' ? ' hrs' : ''}
+                                {metric.unit === 'seconds' ? ' sec' : ''}
+                                {metric.unit === 'days' ? ' days' : ''}
+                                {metric.direction === 'lower' && <span className="text-[10px] text-gray-400 ml-1">(lower=better)</span>}
                               </td>
                               <td className="py-2.5 px-3 font-medium text-gray-700">{avgValue}</td>
                               <td className="py-2.5 px-3">
                                 <div className="flex items-center gap-2">
                                   <div className="w-16 bg-gray-100 rounded-full h-1.5">
                                     <div
-                                      className={`h-full rounded-full transition-all ${
-                                        avgPct >= 100 ? 'bg-emerald-500' : avgPct >= 80 ? 'bg-yellow-500' : 'bg-red-400'
-                                      }`}
+                                      className={`h-full rounded-full transition-all ${scoreBgColor(avgPct)}`}
                                       style={{ width: `${Math.min(avgPct, 100)}%` }}
                                     />
                                   </div>
-                                  <span className={`font-bold ${
-                                    avgPct >= 100 ? 'text-emerald-600' : avgPct >= 80 ? 'text-yellow-600' : 'text-red-500'
-                                  }`}>
+                                  <span className={`font-bold ${scoreTextColor(avgPct)}`}>
                                     {avgPct}%
                                   </span>
                                 </div>
@@ -903,12 +1099,13 @@ export default function Analytics() {
                               </td>
                               <td className="py-2.5 px-3">
                                 <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded-full ${
-                                  avgPct >= 100 ? 'bg-emerald-50 text-emerald-700' :
+                                  avgPct >= 90 ? 'bg-emerald-50 text-emerald-700' :
                                   avgPct >= 80 ? 'bg-yellow-50 text-yellow-700' :
+                                  avgPct >= 60 ? 'bg-orange-50 text-orange-700' :
                                   avgPct > 0 ? 'bg-red-50 text-red-600' :
                                   'bg-gray-50 text-gray-400'
                                 }`}>
-                                  {avgPct >= 100 ? 'Exceeding' : avgPct >= 80 ? 'On Track' : avgPct > 0 ? 'Needs Focus' : 'No Data'}
+                                  {avgPct >= 90 ? 'On Track' : avgPct >= 80 ? 'Acceptable' : avgPct >= 60 ? 'Needs Focus' : avgPct > 0 ? 'Critical' : 'No Data'}
                                 </span>
                               </td>
                             </tr>
@@ -924,6 +1121,73 @@ export default function Analytics() {
               </>
             )}
 
+            {activeTab === 'funnel' && (
+              <div className="space-y-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <h2 className="text-sm font-semibold text-gray-900">Sales Funnel</h2>
+                  <InfoTooltip text="Conversion rates across each stage of the sales funnel for the selected filters and date range. Benchmarks compare your actuals against industry averages or top-quartile performers." />
+                </div>
+                {funnelLoading && <div className="text-center py-8 text-sm text-gray-500">Loading funnel data...</div>}
+                {!funnelLoading && (
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                    <SalesFunnel
+                      kpiValues={funnelKpiValues}
+                      benchmarks={scaledFunnelBenchmarks}
+                      goals={scaledFunnelGoals}
+                      viewMode="team"
+                    />
+                    {/* Summary conversion stats */}
+                    <div className="bg-white rounded-xl border border-gray-100 p-6">
+                      <h3 className="text-sm font-semibold text-gray-800 mb-4">Conversion Rates</h3>
+                      {[
+                        { from: 'call_connects', to: 'meetings', label: 'Call → Meeting Rate', desc: 'How many calls result in a booked meeting' },
+                        { from: 'meetings', to: 'sourced_opps', label: 'Meeting → Opp Rate', desc: 'How many meetings result in a sourced opportunity' },
+                        { from: 'sourced_opps', to: 'stage2_opps', label: 'Opp → SQL Rate', desc: 'How many sourced opps get accepted as SQLs' },
+                        { from: 'stage2_opps', to: 'stage3_opps', label: 'SQL → Stage 3 Rate', desc: 'How many SQLs advance to Stage 3' },
+                        { from: 'stage3_opps', to: 'closed_won', label: 'Stage 3 → Won Rate', desc: 'Win rate from late-stage opportunities' },
+                      ].map(({ from, to, label, desc }) => {
+                        const fromVal = funnelKpiValues[from] || 0;
+                        const toVal = funnelKpiValues[to] || 0;
+                        const rate = fromVal > 0 ? ((toVal / fromVal) * 100).toFixed(1) : null;
+                        const industryFrom = funnelBenchmarks[from]?.industry;
+                        const industryTo = funnelBenchmarks[to]?.industry;
+                        const industryRate = industryFrom > 0 && industryTo != null
+                          ? ((industryTo / industryFrom) * 100).toFixed(1)
+                          : null;
+                        const pctOfIndustry = rate != null && industryRate > 0
+                          ? (parseFloat(rate) / parseFloat(industryRate)) * 100
+                          : null;
+                        const color = pctOfIndustry == null ? 'text-gray-400'
+                          : pctOfIndustry >= 100 ? 'text-emerald-600'
+                          : pctOfIndustry >= 75 ? 'text-amber-600'
+                          : 'text-red-500';
+                        const bg = pctOfIndustry == null ? 'bg-gray-50'
+                          : pctOfIndustry >= 100 ? 'bg-emerald-50'
+                          : pctOfIndustry >= 75 ? 'bg-amber-50'
+                          : 'bg-red-50';
+                        return (
+                          <div key={`${from}-${to}`} className={`flex items-center justify-between p-3 rounded-lg mb-2 ${bg}`}>
+                            <div>
+                              <div className="text-xs font-semibold text-gray-800">{label}</div>
+                              <div className="text-[11px] text-gray-500 mt-0.5">{desc}</div>
+                            </div>
+                            <div className="text-right">
+                              <div className={`text-lg font-bold ${color}`}>
+                                {rate != null ? `${rate}%` : '—'}
+                              </div>
+                              {industryRate && (
+                                <div className="text-[10px] text-gray-400">Ind. avg: {industryRate}%</div>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
             {activeTab === 'watchdog' && (
               <div className="space-y-4">
                 <div className="flex items-center gap-2 mb-2">
@@ -932,8 +1196,9 @@ export default function Analytics() {
                   <InfoTooltip text="Automatically detect KPI drops, trigger coaching recommendations, and track resolution." />
                 </div>
                 <KpiWatchdog
-                  organizationId={watchdogProfile?.organization_id || user?.organization_id || ''}
+                  organizationId={profile?.organization_id || user?.organization_id || ''}
                   userId={user?.id}
+                  filterProfileIds={data.rows.length > 0 ? data.rows.map(r => r.profile_id) : undefined}
                 />
               </div>
             )}
@@ -987,14 +1252,14 @@ export default function Analytics() {
                     {/* Charts */}
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                       {engageStats.sequencePerformance.length > 0 && (
-                        <EngageBarChart
+                        <TeamPerformanceChart
                           title="Sequences by Status"
                           infoText="Breakdown of outreach sequences by current status."
                           data={engageStats.sequencePerformance}
                         />
                       )}
                       {engageStats.accountTiers.length > 0 && (
-                        <EngageBarChart
+                        <TeamPerformanceChart
                           title="Accounts by Tier"
                           infoText="Account intelligence records grouped by tier level."
                           data={engageStats.accountTiers}
@@ -1068,7 +1333,7 @@ export default function Analytics() {
                           <tr key={`${row.profile_id}-${row.trend}`} className="border-t">
                             <td className="py-2 w-1/4 font-medium text-gray-900 truncate">{row.name}</td>
                             <td className="py-2 w-1/4">
-                              <span className={`font-semibold ${row.apptivityScore >= 100 ? 'text-green-600' : row.apptivityScore >= 80 ? 'text-yellow-600' : 'text-red-600'}`}>
+                              <span className={`font-semibold ${scoreTextColor(row.apptivityScore)}`}>
                                 {row.apptivityScore}%
                               </span>
                             </td>
@@ -1108,11 +1373,7 @@ export default function Analytics() {
                           </div>
                         </div>
                         <div className="text-right">
-                          <div className={`text-lg font-bold ${
-                            performer.apptivityScore >= 100 ? 'text-green-600' :
-                            performer.apptivityScore >= 80 ? 'text-yellow-500' :
-                            'text-red-500'
-                          }`}>
+                          <div className={`text-lg font-bold ${scoreTextColor(performer.apptivityScore)}`}>
                             {performer.apptivityScore}%
                           </div>
                           <div className="text-xs text-gray-500">Apptivia Score</div>
@@ -1160,7 +1421,7 @@ export default function Analytics() {
           addNotification({
             type: 'success',
             title: 'Report Scheduled',
-            message: 'Your report has been scheduled successfully',
+            message: 'Your report has been scheduled. Manage it in Settings → Reports.',
             dedupeKey: 'report-scheduled',
           });
         }}
