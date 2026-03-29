@@ -721,12 +721,15 @@ app.post('/api/reviews/:id/transition', loadProfile, requireMinRole('power_user'
   try {
     const { id } = req.params;
     const { newStatus, extraData = {} } = req.body || {};
-    const userId = req.profile?.id;
+    const userId = req.userProfile?.id;
 
     if (!id || !newStatus) return res.status(400).json({ error: 'id and newStatus are required' });
 
     // Fetch current review
-    const { data: review, error: fetchErr } = await supabase
+    const sb = getSupabaseAdmin();
+    if (!sb) return res.status(503).json({ error: 'Database unavailable' });
+
+    const { data: review, error: fetchErr } = await sb
       .from('performance_reviews')
       .select('id, status, profile_id, manager_id, title')
       .eq('id', id)
@@ -774,7 +777,7 @@ app.post('/api/reviews/:id/transition', loadProfile, requireMinRole('power_user'
     if (newStatus === 'reopened') updates.reopened_at = new Date().toISOString();
     if (newStatus === 'acknowledged') updates.acknowledged_at = new Date().toISOString();
 
-    const { error: updateErr } = await supabase
+    const { error: updateErr } = await sb
       .from('performance_reviews')
       .update(updates)
       .eq('id', id);
@@ -787,7 +790,7 @@ app.post('/api/reviews/:id/transition', loadProfile, requireMinRole('power_user'
     try {
       if (newStatus === 'pending_self_assessment') {
         // Notify rep: review is ready for self-assessment
-        await supabase.from('notifications').insert({
+        await sb.from('notifications').insert({
           profile_id: review.profile_id,
           type: 'coaching_suggestion',
           title: 'Self-Assessment Required',
@@ -801,7 +804,7 @@ app.post('/api/reviews/:id/transition', loadProfile, requireMinRole('power_user'
         });
       } else if (newStatus === 'self_assessment_submitted') {
         // Notify manager: rep submitted self-assessment
-        await supabase.from('notifications').insert({
+        await sb.from('notifications').insert({
           profile_id: review.manager_id,
           type: 'general_info',
           title: 'Self-Assessment Submitted',
@@ -815,7 +818,7 @@ app.post('/api/reviews/:id/transition', loadProfile, requireMinRole('power_user'
         });
       } else if (newStatus === 'finalized') {
         // Notify rep: review has been finalized
-        await supabase.from('notifications').insert({
+        await sb.from('notifications').insert({
           profile_id: review.profile_id,
           type: 'coaching_suggestion',
           title: 'Review Finalized',
@@ -829,7 +832,7 @@ app.post('/api/reviews/:id/transition', loadProfile, requireMinRole('power_user'
         });
       } else if (newStatus === 'acknowledged') {
         // Notify manager: rep acknowledged the review
-        await supabase.from('notifications').insert({
+        await sb.from('notifications').insert({
           profile_id: review.manager_id,
           type: 'general_info',
           title: 'Review Acknowledged',
@@ -858,7 +861,7 @@ app.get('/', (req, res) => {
   res.send('Apptivia Backend Running');
 });
 
-app.post('/api/send-coaching-plan', async (req, res) => {
+app.post('/api/send-coaching-plan', loadProfile, requireMinRole('manager'), async (req, res) => {
   try {
     const { recipients, subject, body, html, text } = req.body || {};
     if (!Array.isArray(recipients) || recipients.length === 0) {
@@ -886,7 +889,7 @@ app.post('/api/send-coaching-plan', async (req, res) => {
   }
 });
 
-app.post('/api/send-contest-results', async (req, res) => {
+app.post('/api/send-contest-results', loadProfile, requireMinRole('manager'), async (req, res) => {
   try {
     const { recipients, subject, body } = req.body || {};
     if (!Array.isArray(recipients) || recipients.length === 0) {
@@ -910,7 +913,7 @@ app.post('/api/send-contest-results', async (req, res) => {
   }
 });
 
-app.post('/api/contests/refresh-leaderboards', async (req, res) => {
+app.post('/api/contests/refresh-leaderboards', loadProfile, requireMinRole('manager'), async (req, res) => {
   try {
     const result = await runLeaderboardRefresh();
     return res.json({ ok: true, ...result });
@@ -919,7 +922,7 @@ app.post('/api/contests/refresh-leaderboards', async (req, res) => {
   }
 });
 
-app.post('/api/send-snapshot', async (req, res) => {
+app.post('/api/send-snapshot', loadProfile, requireMinRole('manager'), async (req, res) => {
   try {
     const { recipients, subject, html, text } = req.body || {};
     if (!Array.isArray(recipients) || recipients.length === 0) {
@@ -1428,7 +1431,8 @@ ${deals.map(d => `- ${d.deal_name}: $${d.deal_value?.toLocaleString()} | Stage: 
 // Signal-Based Prospecting — AI Signal Scan (manager+ access, AI rate limited)
 app.post('/api/engage/signals/scan', aiLimiter, loadProfile, requireMinRole('manager'), async (req, res) => {
   try {
-    const { organization_id, user_id, config } = req.body;
+    const { user_id, config } = req.body;
+    const organization_id = req.userProfile.organization_id;
     if (!organization_id) return res.status(400).json({ error: 'organization_id is required' });
     if (!config) return res.status(400).json({ error: 'config is required' });
 
@@ -1515,11 +1519,8 @@ app.post('/api/engage/signals/scan', aiLimiter, loadProfile, requireMinRole('man
       });
     }
 
-    // ── Step 2: Wipe existing signals for this org ───────────────────────────
+    // ── Step 2: Get Supabase admin (signal wipe moved to Step 6 — only delete right before insert) ──
     const sb = getSupabaseAdmin();
-    if (sb) {
-      await sb.from('engage_intent_signals').delete().eq('organization_id', organization_id);
-    }
 
     // ── Step 3: Per-company Tavily queries + SEC Edgar ────────────────────────
     const rawResults = [];
@@ -2019,9 +2020,7 @@ async function runDealRiskCheck() {
     }
 
     // Current ISO week for dedupe key (prevents re-notifying same deal same week)
-    const now = new Date();
-    const weekNum = Math.ceil(now.getDate() / 7);
-    const weekKey = `${now.getFullYear()}-W${String(weekNum).padStart(2, '0')}`;
+    const weekKey = getWeekKey();
 
     let notified = 0;
     for (const deal of riskyDeals) {
@@ -2112,8 +2111,12 @@ const CronManager = {
 
 // ── Helper: ISO week key (used across multiple cron jobs for dedup) ────────
 function getWeekKey(date = new Date()) {
-  const weekNum = Math.ceil(date.getDate() / 7);
-  return `${date.getFullYear()}-W${String(weekNum).padStart(2, '0')}`;
+  // ISO week number calculation (avoids month-boundary collisions)
+  const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+  d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay() || 7));
+  const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+  const weekNum = Math.ceil(((d - yearStart) / 86400000 + 1) / 7);
+  return `${d.getUTCFullYear()}-W${String(weekNum).padStart(2, '0')}`;
 }
 
 // ── Shared: Point-in-time KPI config resolution ────────────────────────────
@@ -2432,17 +2435,20 @@ async function runScorecardAlerts() {
     // Compute score for a profile given a sum map — uses historical config for the given week date
     function computeScore(profileId, sums, weekDate) {
       let score = 0;
+      let totalWeight = 0;
       for (const metric of metrics) {
         const cfg  = getConfigAt(metric.id, weekDate, metrics);
         const val  = sums[`${profileId}:${metric.id}`] || 0;
         const goal = cfg.goal || 1;
         const dir  = cfg.direction || 'higher';
+        const w    = cfg.weight || 1;
         const pct  = dir === 'lower'
           ? (val > 0 ? Math.min((goal / val) * 100, 200) : 200)
-          : (val / goal) * 100;
-        score += pct * cfg.weight;
+          : Math.min((val / goal) * 100, 200);
+        score += pct * w;
+        totalWeight += w;
       }
-      return Math.round(score);
+      return totalWeight > 0 ? Math.round(score / totalWeight) : 0;
     }
 
     let notified = 0;
@@ -4254,6 +4260,7 @@ Guidelines:
       // Update conversation history for this socket
       socket.chatHistory.push({ role: 'user', content: message });
       socket.chatHistory.push({ role: 'assistant', content: responseText });
+      if (socket.chatHistory.length > 40) socket.chatHistory = socket.chatHistory.slice(-40);
 
       socket.emit('aaron_message', { message: responseText });
     } catch (err) {
@@ -4399,9 +4406,10 @@ app.post('/track/visit', cors({ origin: '*', methods: ['POST', 'OPTIONS'] }), tr
 
 // ── Website Visitors list (authenticated) ─────────────────
 
-app.get('/api/track/visitors', async (req, res) => {
+app.get('/api/track/visitors', loadProfile, async (req, res) => {
   try {
-    const { organization_id, days = 7 } = req.query;
+    const organization_id = req.userProfile.organization_id;
+    const { days = 7 } = req.query;
     if (!organization_id) return res.status(400).json({ error: 'organization_id required' });
     const sb = getSupabaseAdmin();
     if (!sb) return res.status(503).json({ error: 'Database unavailable' });
@@ -4432,7 +4440,7 @@ app.get('/api/track/visitors', async (req, res) => {
 
 // Generate a short-lived Twilio access token for the frontend Voice SDK Device.
 // The frontend uses this token to register a Device and initiate outbound calls.
-app.post('/api/engage/calls/token', async (req, res) => {
+app.post('/api/engage/calls/token', loadProfile, async (req, res) => {
   try {
     const accountSid  = process.env.TWILIO_ACCOUNT_SID;
     const apiKeySid   = process.env.TWILIO_API_KEY_SID;
@@ -4791,8 +4799,10 @@ app.get('/api/integrations/oauth/:provider/callback', async (req, res) => {
     await integrations.handleOAuthCallback(sb, req.params.provider, code, state);
     const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3001';
     // Return a small HTML page that sends a message to the opener and closes itself
+    const safeProviders = ['salesforce', 'hubspot', 'outreach', 'salesloft', 'gong', 'apollo', 'google', 'microsoft', 'marketo', 'sendoso'];
+    const safeProvider = safeProviders.includes(req.params.provider) ? req.params.provider : 'unknown';
     return res.send(`<!DOCTYPE html><html><body><script>
-      if (window.opener) { window.opener.postMessage({ type: 'oauth-success', provider: '${req.params.provider}' }, '*'); }
+      if (window.opener) { window.opener.postMessage({ type: 'oauth-success', provider: '${safeProvider}' }, '${frontendUrl}'); }
       window.close();
     </script><p>Connected! You can close this window.</p></body></html>`);
   } catch (err) {

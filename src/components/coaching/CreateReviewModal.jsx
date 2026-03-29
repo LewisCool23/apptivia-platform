@@ -45,7 +45,12 @@ export default function CreateReviewModal({ isOpen, onClose, repId, repName, tea
     }
     setSaving(true);
     try {
-      const snapshots = await aggregateReviewData(form.profile_id, orgId, form.period_start, form.period_end);
+      let snapshots = {};
+      try {
+        snapshots = await aggregateReviewData(form.profile_id, orgId, form.period_start, form.period_end);
+      } catch (aggErr) {
+        console.error('aggregateReviewData failed, proceeding with empty snapshots:', aggErr);
+      }
 
       const row = {
         organization_id: orgId,

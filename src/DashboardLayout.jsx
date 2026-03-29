@@ -283,14 +283,13 @@ function DashboardLayout({ children }) {
   const filteredNavigation = navigation.filter((item) => {
     const hasMainPermission = hasPermission(navPermissions[item.id]);
     if (!hasMainPermission) return false;
-    
-    // If item has subItems, filter them too
-    if (item.subItems) {
-      item.subItems = item.subItems.filter(subItem => 
-        hasPermission(navPermissions[subItem.id])
-      );
-    }
     return true;
+  }).map(item => {
+    // Create a shallow copy to avoid mutating the module-level navigation constant
+    if (item.subItems) {
+      return { ...item, subItems: item.subItems.filter(subItem => hasPermission(navPermissions[subItem.id])) };
+    }
+    return item;
   });
 
   return (
@@ -447,7 +446,7 @@ function DashboardLayout({ children }) {
         </nav>
         <div className="mt-auto px-3 py-2 border-t">
           <button
-            onClick={() => { logout(); navigate('/login'); }}
+            onClick={async () => { await logout(); navigate('/login'); }}
             className="w-full flex items-center gap-2 justify-center p-1.5 text-red-600 hover:bg-red-50 rounded-lg font-medium text-xs transition-all duration-200 hover:scale-[1.02]"
           >
             <LogOut size={18} />
@@ -615,7 +614,7 @@ function DashboardLayout({ children }) {
         </nav>
         <div className="mt-auto p-4 border-t">
           <button
-            onClick={() => { logout(); navigate('/login'); }}
+            onClick={async () => { await logout(); navigate('/login'); }}
             className="w-full flex items-center gap-2 justify-center p-3 text-red-600 hover:bg-red-50 rounded-lg font-medium transition-all duration-200 hover:scale-[1.02]"
           >
             <LogOut size={22} />

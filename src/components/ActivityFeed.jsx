@@ -72,7 +72,6 @@ export default function ActivityFeed({ organizationId, maxHeight = 480, compact 
   const [filter, setFilter] = useState('all');
   const [newEventIds, setNewEventIds] = useState(new Set());
   const channelRef = useRef(null);
-  const newIdTimer = useRef(null);
 
   const fetchEvents = useCallback(async () => {
     if (!organizationId) return;
@@ -132,9 +131,8 @@ export default function ActivityFeed({ organizationId, maxHeight = 480, compact 
           setEvents(prev => [withActor, ...prev].slice(0, compact ? 25 : 60));
           setNewEventIds(prev => new Set([...prev, newEvent.id]));
 
-          // Remove the "new" highlight after 3s
-          clearTimeout(newIdTimer.current);
-          newIdTimer.current = setTimeout(() => {
+          // Remove the "new" highlight after 3s (per-event timeout so multiple rapid events each clear independently)
+          setTimeout(() => {
             setNewEventIds(prev => { const s = new Set(prev); s.delete(newEvent.id); return s; });
           }, 3000);
         }
@@ -144,7 +142,6 @@ export default function ActivityFeed({ organizationId, maxHeight = 480, compact 
     channelRef.current = channel;
     return () => {
       supabase.removeChannel(channel);
-      clearTimeout(newIdTimer.current);
     };
   }, [organizationId, filter, compact]);
 

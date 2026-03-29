@@ -125,8 +125,11 @@ function buildTable(headers, rows, options = {}) {
 // ── Shared Helpers (duplicated from server.js — small pure functions) ────
 
 function getWeekKey(date = new Date()) {
-  const weekNum = Math.ceil(date.getDate() / 7);
-  return `${date.getFullYear()}-W${String(weekNum).padStart(2, '0')}`;
+  const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+  d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay() || 7));
+  const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+  const weekNum = Math.ceil(((d - yearStart) / 86400000 + 1) / 7);
+  return `${d.getUTCFullYear()}-W${String(weekNum).padStart(2, '0')}`;
 }
 
 async function fetchHistoricalConfig(sb, metricIds, rangeStart, rangeEnd) {
@@ -213,7 +216,7 @@ async function fetchScorecardData(sb, orgId) {
 
   const { data: metrics } = await sb
     .from('kpi_metrics')
-    .select('id, kpi_key, kpi_name, goal, weight, direction')
+    .select('id, key, name, goal, weight, direction')
     .eq('is_active', true)
     .eq('show_on_scorecard', true);
 
@@ -344,7 +347,7 @@ async function generateScorecardReport(sb, orgId, opts) {
 async function generateAnalyticsReport(sb, orgId, opts) {
   const { data: metrics } = await sb
     .from('kpi_metrics')
-    .select('id, kpi_key, kpi_name, goal, weight, direction')
+    .select('id, key, name, goal, weight, direction')
     .eq('is_active', true);
 
   if (!metrics || metrics.length === 0) {
@@ -398,9 +401,9 @@ async function generateAnalyticsReport(sb, orgId, opts) {
     const avgTotal = avgByKpi[m.id] || 0;
     const avgVal = avgCounts[m.id] ? avgTotal / 4 : 0; // divide by 4 weeks
     const deviation = avgVal > 0 ? ((currVal - avgVal) / avgVal * 100) : 0;
-    kpiSummary.push({ name: m.kpi_name, current: currVal, avg: Math.round(avgVal), deviation: Math.round(deviation) });
+    kpiSummary.push({ name: m.name, current: currVal, avg: Math.round(avgVal), deviation: Math.round(deviation) });
     if (deviation <= -30) {
-      anomalies.push({ name: m.kpi_name, deviation: Math.round(deviation), current: currVal, avg: Math.round(avgVal) });
+      anomalies.push({ name: m.name, deviation: Math.round(deviation), current: currVal, avg: Math.round(avgVal) });
     }
   }
   anomalies.sort((a, b) => a.deviation - b.deviation);

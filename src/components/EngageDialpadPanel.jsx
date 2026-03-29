@@ -20,18 +20,19 @@ function timeAgo(ts) {
   return 'just now';
 }
 
-export default function EngageDialpadPanel({ onCall, isDeviceReady, onClose }) {
+export default function EngageDialpadPanel({ onCall, isDeviceReady, onClose, userId }) {
   const [number, setNumber] = useState('');
   const [name, setName] = useState('');
   const [recentCalls, setRecentCalls] = useState([]);
 
   useEffect(() => {
-    supabase.from('engage_call_logs')
-      .select('id, contact_name, phone_number, created_at, duration_seconds')
+    let q = supabase.from('engage_call_logs')
+      .select('id, contact_name, phone_number, created_at, duration_minutes')
       .order('created_at', { ascending: false })
-      .limit(5)
-      .then(({ data }) => setRecentCalls(data || []));
-  }, []);
+      .limit(5);
+    if (userId) q = q.eq('user_id', userId);
+    q.then(({ data }) => setRecentCalls(data || []));
+  }, [userId]);
 
   const handleKey = (key) => setNumber(prev => prev + key);
   const handleBackspace = () => setNumber(prev => prev.slice(0, -1));

@@ -81,13 +81,13 @@ const CELEBRATION_CONFETTI = Array.from({ length: 90 }, (_, i) => ({
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
-function getMonday(date) {
-  const d = new Date(date);
-  d.setHours(0, 0, 0, 0);
-  const day = d.getDay();
+function getMonday(d) {
+  const result = new Date(d);
+  result.setHours(0, 0, 0, 0);
+  const day = result.getDay();
   const diff = day === 0 ? -6 : 1 - day;
-  d.setDate(d.getDate() + diff);
-  return d;
+  result.setDate(result.getDate() + diff);
+  return result;
 }
 
 function formatKpiValue(val, unit) {

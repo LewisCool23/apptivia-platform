@@ -110,18 +110,28 @@ function ActionQueuePanel({ actionQueue, actionQueueLoading, lastScanAt, nextSca
 
   const handleBulkApprove = async () => {
     setBulkProcessing(true);
-    for (const item of actionQueue) {
-      await onApprove(item.id);
+    try {
+      for (const item of actionQueue) {
+        await onApprove(item.id);
+      }
+    } catch (err) {
+      console.error('Bulk approve error:', err);
+    } finally {
+      setBulkProcessing(false);
     }
-    setBulkProcessing(false);
   };
 
   const handleBulkDismiss = async () => {
     setBulkProcessing(true);
-    for (const item of actionQueue) {
-      await onDismiss(item.id);
+    try {
+      for (const item of actionQueue) {
+        await onDismiss(item.id);
+      }
+    } catch (err) {
+      console.error('Bulk dismiss error:', err);
+    } finally {
+      setBulkProcessing(false);
     }
-    setBulkProcessing(false);
   };
 
   return (

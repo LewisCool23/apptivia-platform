@@ -23,6 +23,7 @@ import ShareScorecardSnapshotModal from './components/ShareScorecardSnapshotModa
 import { KPI_GUIDANCE } from './constants/kpiGuidance';
 import { scoreTextColor, scoreBgColor, scoreHex, scoreRowBg } from './constants/scoreColors';
 import FeedbackThumb from './components/shared/FeedbackThumb';
+import { SKILLSET_KPI_MAP } from './constants/skillsets';
 
 interface KPIMetric {
   id: number;
@@ -38,15 +39,6 @@ interface KPIMetric {
 
 // KPIs that should show 1 decimal place; all others display as whole numbers
 const DECIMAL_KPI_KEYS = new Set(['talk_time_minutes']);
-
-const SKILLSET_KPI_MAP: Record<string, string[]> = {
-  conversationalist: ['talk_time_minutes', 'conversations'],
-  'call conqueror': ['call_connects', 'meetings', 'discovery_calls'],
-  'email warrior': ['emails_sent', 'social_touches'],
-  'pipeline guru': ['sourced_opps', 'stage2_opps', 'pipeline_created', 'pipeline_advanced', 'qualified_leads'],
-  'task master': ['follow_ups', 'demos_completed', 'response_time', 'sales_cycle_days', 'win_rate'],
-  'scorecard master': ['scorecard_100_percent', 'scorecard_100_percent_streak', 'key_metric_100_percent', 'key_metric_100_percent_streak', 'scorecards_completed'],
-};
 
 const KPI_SKILLSET_MAP: Record<string, string> = Object.entries(SKILLSET_KPI_MAP).reduce(
   (acc, [skillset, kpis]) => {

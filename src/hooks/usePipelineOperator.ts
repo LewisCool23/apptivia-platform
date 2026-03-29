@@ -421,9 +421,6 @@ export function usePipelineOperator(
     let fullForecast = '';
 
     try {
-      // Show empty forecast immediately so the UI renders the streaming container
-      patch({ loading: false });
-
       const stream = backendStream('/api/engage/pipeline/forecast', {
         deals: dealPayload,
         summary: state.summary,
@@ -450,8 +447,9 @@ export function usePipelineOperator(
       }, { onConflict: 'organization_id,snapshot_date' });
 
       await fetchSnapshots();
+      patch({ loading: false });
     } catch (err: any) {
-      patch({ error: err.message });
+      patch({ error: err.message, loading: false });
     }
   }, [state.deals, state.summary, organizationId, patch, fetchSnapshots]);
 

@@ -234,11 +234,11 @@ export function useScorecardData(
         if (valuesResult.error) throw valuesResult.error;
 
         // Process kpi_metric_history → histGoalMap
-        let histGoalMap: Record<string, { goal: number; weight: number; direction?: string }> = {};
+        let histGoalMap: Record<string, { goal: number; weight: number; direction?: string; valid_from?: string }> = {};
         (histResult.data || []).forEach((h: any) => {
           const existing = histGoalMap[h.kpi_id];
-          if (!existing || new Date(h.valid_from) > new Date(existing as any)) {
-            histGoalMap[h.kpi_id] = { goal: h.goal, weight: h.weight, direction: h.direction };
+          if (!existing || new Date(h.valid_from) > new Date(existing.valid_from || '')) {
+            histGoalMap[h.kpi_id] = { goal: h.goal, weight: h.weight, direction: h.direction, valid_from: h.valid_from };
           }
         });
 
@@ -261,7 +261,7 @@ export function useScorecardData(
             // value=0 → perfect (cap at 200%), value=goal → 100%, value>goal → <100%
             return value > 0 ? Math.min((goal / value) * 100, 200) : 200;
           }
-          return (value / goal) * 100;
+          return Math.min((value / goal) * 100, 200);
         }
 
         // Process teams → teamNameMap

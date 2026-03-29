@@ -16,11 +16,11 @@ export async function aggregateReviewData(
   try {
     const { data: kpiValues } = await supabase
       .from('kpi_values')
-      .select('week_start, value, kpi_metric_id')
+      .select('period_start, value, kpi_id')
       .eq('profile_id', profileId)
-      .gte('week_start', periodStart)
-      .lte('week_start', periodEnd)
-      .order('week_start', { ascending: true });
+      .gte('period_start', periodStart)
+      .lte('period_start', periodEnd)
+      .order('period_start', { ascending: true });
 
     const { data: kpiMetrics } = await supabase
       .from('kpi_metrics')
@@ -32,9 +32,9 @@ export async function aggregateReviewData(
     // Group by week and compute weekly scores
     const weekMap: Record<string, { total: number; weightSum: number; kpis: any[] }> = {};
     (kpiValues || []).forEach(v => {
-      const w = v.week_start;
+      const w = v.period_start;
       if (!weekMap[w]) weekMap[w] = { total: 0, weightSum: 0, kpis: [] };
-      const metric = metricsMap[v.kpi_metric_id];
+      const metric = metricsMap[v.kpi_id];
       if (metric && metric.show_on_scorecard && metric.goal > 0) {
         const pct = Math.min((v.value / metric.goal) * 100, 150);
         const weight = metric.weight || 1;
@@ -61,15 +61,15 @@ export async function aggregateReviewData(
     const { data: kpiMetrics } = await supabase.from('kpi_metrics').select('id, key, name, goal').eq('is_active', true);
     const { data: kpiValues } = await supabase
       .from('kpi_values')
-      .select('kpi_metric_id, value')
+      .select('kpi_id, value')
       .eq('profile_id', profileId)
-      .gte('week_start', periodStart)
-      .lte('week_start', periodEnd);
+      .gte('period_start', periodStart)
+      .lte('period_start', periodEnd);
 
     const metricMap = Object.fromEntries((kpiMetrics || []).map(m => [m.id, m]));
     const accum: Record<string, { sum: number; count: number; metric: any }> = {};
     (kpiValues || []).forEach(v => {
-      const m = metricMap[v.kpi_metric_id];
+      const m = metricMap[v.kpi_id];
       if (!m) return;
       if (!accum[m.key]) accum[m.key] = { sum: 0, count: 0, metric: m };
       accum[m.key].sum += v.value;

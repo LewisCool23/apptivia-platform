@@ -558,9 +558,10 @@ export default function OrganizationSettings() {
 
   // ── Add Team (via shared hook) ────────────────────────
   const handleAddTeam = async () => {
+    const teamName = teamHook.newTeamName.trim();
     const result = await teamHook.handleAddTeam();
     if (result.success) {
-      setMessage({ type: 'success', text: `Team "${teamHook.newTeamName.trim()}" created` });
+      setMessage({ type: 'success', text: `Team "${teamName}" created` });
     } else {
       setMessage({ type: 'error', text: 'Failed to create team: ' + (result.error || '') });
     }

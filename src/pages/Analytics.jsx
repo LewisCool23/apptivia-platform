@@ -412,7 +412,7 @@ export default function Analytics() {
     if (isManager || isCoach) {
       setFilters({
         ...nextFilters,
-        teams: teamId ? [teamId] : [],
+        teams: teamId ? [teamId] : (profile?.team_id ? [String(profile.team_id)] : []),
       });
       return;
     }

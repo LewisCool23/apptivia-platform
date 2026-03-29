@@ -6,8 +6,8 @@ const FUNNEL_STAGES = [
   { key: 'meetings',      label: 'Meetings',       color: '#8b5cf6', shortLabel: 'Meetings' },
   { key: 'sourced_opps',  label: 'Sourced Opps',   color: '#a855f7', shortLabel: 'S. Opps' },
   { key: 'stage2_opps',   label: 'SQLs (Stage 2)', color: '#d946ef', shortLabel: 'SQLs' },
-  { key: 'stage3_opps',   label: 'Stage 3 Opps',  color: '#ec4899', shortLabel: 'Stage 3' },
-  { key: 'closed_won',    label: 'Closed Won',     color: '#f43f5e', shortLabel: 'Won' },
+  { key: 'qualified_leads', label: 'Qualified Leads', color: '#ec4899', shortLabel: 'Qualified' },
+  { key: 'closed_won_deals', label: 'Closed Won',  color: '#f43f5e', shortLabel: 'Won' },
 ];
 
 function conversionRate(from, to) {

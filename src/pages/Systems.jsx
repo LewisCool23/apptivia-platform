@@ -290,7 +290,7 @@ export default function Systems() {
               onConfigureClick={() => setConfigPanelOpen(true)}
               onExportClick={() => {}}
               onNotificationsClick={openPanel}
-              exportDisabled={false}
+              exportDisabled={true}
               configureDisabled={false}
               notificationBadge={unreadCount}
               actions={[

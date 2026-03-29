@@ -240,7 +240,7 @@ export default function ScorecardFilters({
       list = list.filter((p: any) => selectedDepartments.includes(p.department));
     }
     if (selectedTeams.length > 0) {
-      list = list.filter((p: any) => selectedTeams.includes(String(p.team_id) || ''));
+      list = list.filter((p: any) => selectedTeams.includes(p.team_id != null ? String(p.team_id) : ''));
     }
     if (Array.isArray(restrictToMembers) && restrictToMembers.length > 0) {
       list = list.filter((p: any) => restrictToMembers.includes(String(p.id)));

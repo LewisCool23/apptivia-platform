@@ -214,10 +214,11 @@ export default function ContestCreationModal({ isOpen, onClose, currentUserId, c
 
         if (contestError) throw contestError;
 
-        // Auto-enroll all profiles
+        // Auto-enroll all non-admin/manager/coach profiles (reps only)
         const { data: profiles, error: profilesError } = await supabase
           .from('profiles')
-          .select('id, team_id');
+          .select('id, team_id, role')
+          .not('role', 'in', '("admin","manager","coach")');
 
         if (profilesError) throw profilesError;
 

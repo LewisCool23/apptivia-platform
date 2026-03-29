@@ -20,7 +20,7 @@ export default function IdpTemplatesModal({ onClose, onSelect, organizationId })
       const { data } = await supabase
         .from('idp_templates')
         .select('*')
-        .or(`is_system.eq.true,organization_id.eq.${organizationId}`)
+        .or(`is_system.eq.true,organization_id.eq.${organizationId || '00000000-0000-0000-0000-000000000000'}`)
         .eq('is_active', true)
         .order('is_system', { ascending: false });
       setTemplates(data || []);

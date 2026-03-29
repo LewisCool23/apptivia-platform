@@ -114,7 +114,7 @@ export async function fetchScorecardDataForTeam(
       const value = vals[m.key] || 0;
       const dir = (m as any).direction || 'higher';
       const percentage = m.goal > 0
-        ? Math.round(dir === 'lower' ? (value > 0 ? (m.goal / value) * 100 : 200) : (value / m.goal) * 100)
+        ? (dir === 'lower' ? (value > 0 ? (m.goal / value) * 100 : 200) : Math.min((value / m.goal) * 100, 200))
         : 0;
       kpis[m.key] = { value, percentage };
       weightedSum += percentage * (m.weight || 0);
@@ -326,7 +326,7 @@ export async function fetchRepTrend(
       const value = kpiSums[m.key] || 0;
       const dir = (m as any).direction || 'higher';
       const percentage = m.goal > 0
-        ? Math.round(dir === 'lower' ? (value > 0 ? (m.goal / value) * 100 : 200) : (value / m.goal) * 100)
+        ? (dir === 'lower' ? (value > 0 ? (m.goal / value) * 100 : 200) : Math.min((value / m.goal) * 100, 200))
         : 0;
       kpis[m.key] = { value, percentage };
       weightedSum += percentage * (m.weight || 0);
@@ -365,7 +365,7 @@ export async function fetchRepTrend(
       const current = latestWeek.kpis[m.key]?.percentage || 0;
 
       // Compute 5-week average for this KPI
-      const kpiWeeks = withData.map(w => w.kpis[m.key]?.percentage || 0).filter(v => v > 0);
+      const kpiWeeks = withData.map(w => w.kpis[m.key]?.percentage || 0);
       const kpiAvg5w = kpiWeeks.length > 0 ? Math.round(kpiWeeks.reduce((s, v) => s + v, 0) / kpiWeeks.length) : 0;
 
       // KPI trend

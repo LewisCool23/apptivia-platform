@@ -202,7 +202,7 @@ export function useHistoricalScores(
                 const value = repKpiSums.get(repId)?.get(kpiId) || 0;
                 const dir = config.direction || 'higher';
                 const percentage = config.goal > 0
-                  ? (dir === 'lower' ? (value > 0 ? (config.goal / value) * 100 : 200) : (value / config.goal) * 100)
+                  ? (dir === 'lower' ? (value > 0 ? Math.min((config.goal / value) * 100, 200) : 200) : Math.min((value / config.goal) * 100, 200))
                   : 0;
                 repTotal += percentage * (config.weight || 0);
               });

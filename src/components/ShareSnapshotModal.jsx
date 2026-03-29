@@ -49,7 +49,7 @@ export default function ShareSnapshotModal({ isOpen, onClose, userData }) {
   };
 
   const handleCopyLink = () => {
-    const url = `${window.location.origin}/profile/${userData.id}`;
+    const url = `${window.location.origin}/profile?user=${userData.id}`;
     navigator.clipboard.writeText(url);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { X, UserPlus, AlertTriangle } from 'lucide-react';
 
 export default function AssignPlanModal({
@@ -9,6 +9,18 @@ export default function AssignPlanModal({
   onSave,
   onClose,
 }) {
+  const [saving, setSaving] = useState(false);
+
+  const handleSave = async () => {
+    if (saving) return;
+    setSaving(true);
+    try {
+      await onSave();
+    } finally {
+      setSaving(false);
+    }
+  };
+
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
@@ -80,15 +92,15 @@ export default function AssignPlanModal({
             Cancel
           </button>
           <button
-            onClick={onSave}
-            disabled={selectedMembers.length === 0}
+            onClick={handleSave}
+            disabled={selectedMembers.length === 0 || saving}
             className={`px-4 py-2 text-sm font-semibold rounded-md ${
-              selectedMembers.length > 0
+              selectedMembers.length > 0 && !saving
                 ? 'bg-green-600 text-white hover:bg-green-700'
                 : 'bg-gray-200 text-gray-500 cursor-not-allowed'
             }`}
           >
-            Assign to {selectedMembers.length} Member{selectedMembers.length !== 1 ? 's' : ''}
+            {saving ? 'Assigning...' : `Assign to ${selectedMembers.length} Member${selectedMembers.length !== 1 ? 's' : ''}`}
           </button>
         </div>
       </div>

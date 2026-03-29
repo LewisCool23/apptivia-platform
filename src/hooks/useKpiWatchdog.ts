@@ -59,7 +59,7 @@ interface WatchdogState {
 }
 
 // Anomaly detection thresholds (configurable per org in future)
-const ANOMALY_DROP_THRESHOLD = -30;      // Min % drop to flag (aligned with backend)
+const ANOMALY_DROP_THRESHOLD = -15;      // Min % drop to flag; drops between -15% and -30% are "info"
 const ANOMALY_WARNING_THRESHOLD = -30;   // Warning severity
 const ANOMALY_CRITICAL_THRESHOLD = -50;  // Critical severity
 const ANOMALY_SPIKE_THRESHOLD = 50;      // Positive spike threshold

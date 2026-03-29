@@ -265,6 +265,14 @@ export default function PlanDetailModal({
                 </span>
               </div>
               <div className="flex gap-2 flex-wrap">
+                {(myStatus === 'active' || myStatus === 'draft') && (
+                  <button
+                    onClick={() => handleStatusChange(plan, 'in_progress')}
+                    className="px-3 py-1.5 text-xs font-semibold rounded-md transition-colors bg-yellow-500 text-white hover:bg-yellow-600"
+                  >
+                    Mark In Progress
+                  </button>
+                )}
                 <button
                   onClick={() => handleStatusChange(plan, 'completed')}
                   disabled={myStatus === 'completed'}

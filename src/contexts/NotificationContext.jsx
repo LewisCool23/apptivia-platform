@@ -162,9 +162,9 @@ export function NotificationProvider({ children }) {
 
     visibleNotifications.forEach(n => {
       const groupKey =
-        (n.type === 'coaching' && n.audience === 'team') ? 'group-coaching-team' :
-        (n.type === 'contest' && n.title === 'Rank change') ? 'group-contest-rank' :
-        (n.type === 'achievement') ? 'group-achievements' :
+        ((n.type === 'coaching' || n.type === 'coaching_suggestion') && n.audience === 'team') ? 'group-coaching-team' :
+        ((n.type === 'contest' || n.type === 'contest_started') && n.title === 'Rank change') ? 'group-contest-rank' :
+        ((n.type === 'achievement' || n.type === 'achievement_earned')) ? 'group-achievements' :
         null;
 
       // Normalize DB field names for the panel (read/createdAt/link/message compat)

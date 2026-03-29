@@ -390,7 +390,7 @@ export default function ReviewTab({ teamMembers, startForRepId }) {
           onTransition={handleTransition}
           onManagerSave={handleManagerSave}
           onAcknowledge={handleAcknowledge}
-          isManager={isManager || selectedReview.manager_id === profile?.id}
+          isManager={isManager || (selectedReview.manager_id === profile?.id && (role === 'manager' || role === 'admin'))}
           isRep={selectedReview.profile_id === profile?.id}
           teamMembers={teamMembers}
           saving={saving}

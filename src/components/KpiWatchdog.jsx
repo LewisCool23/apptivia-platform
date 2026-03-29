@@ -326,7 +326,7 @@ export default function KpiWatchdog({ organizationId, userId, filterProfileIds }
       if (filterStatus !== 'all' && a.status !== filterStatus) return false;
       return true;
     });
-  }, [watchdog.anomalies, filterSeverity, filterStatus]);
+  }, [watchdog.anomalies, filterSeverity, filterStatus, filterProfileIds]);
 
   // Group filtered anomalies by rep for accordion view
   const groupedByRep = useMemo(() => {

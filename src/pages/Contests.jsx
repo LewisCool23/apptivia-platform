@@ -94,7 +94,8 @@ export default function Contests() {
 
 
   const formatDaysRemaining = (days, status) => {
-    if (!days) return '';
+    if (days === null || days === undefined) return '';
+    if (days === 0) return 'Ends today';
     if (status === 'upcoming') return `Starts in ${days} days`;
     if (status === 'active') return `${days} days left`;
     return '';

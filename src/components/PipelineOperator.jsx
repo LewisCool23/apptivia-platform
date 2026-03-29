@@ -207,6 +207,9 @@ function DealCepPanel({ deal, cepStages, onClose, onAdvance, onUpdateChecklist, 
   const currentStage = cepStages.find(s => s.id === deal.cep_stage_id);
   const dealStageData = deal.currentCepDealStage;
 
+  // All hooks must be called unconditionally (React rules of hooks)
+  const [checklist, setChecklist] = useState(dealStageData?.checklist_completed || {});
+
   // If deal has no CEP stage, show assign prompt
   if (!currentStage || !dealStageData) {
     const nonTerminal = cepStages.filter(s => !s.is_terminal);
@@ -237,8 +240,6 @@ function DealCepPanel({ deal, cepStages, onClose, onAdvance, onUpdateChecklist, 
   const nextStage = cepStages.find(s => s.stage_order === currentStage.stage_order + 1 && !s.is_terminal);
   const terminalWon = cepStages.find(s => s.stage_key === 'closed_won');
   const terminalLost = cepStages.find(s => s.stage_key === 'closed_lost');
-
-  const [checklist, setChecklist] = useState(dealStageData.checklist_completed || {});
 
   const toggleCheck = (key) => {
     const updated = { ...checklist, [key]: !checklist[key] };

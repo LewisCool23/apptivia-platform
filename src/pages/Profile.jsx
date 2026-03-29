@@ -308,7 +308,7 @@ export default function Profile() {
           contest:active_contests(name),
           achievement:achievements(name)
         `)
-        .eq('profile_id', user.id)
+        .eq('profile_id', selectedProfileId || user.id)
         .order('is_featured', { ascending: false })
         .order('earned_at', { ascending: false });
 

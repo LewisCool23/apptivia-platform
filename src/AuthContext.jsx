@@ -59,7 +59,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   const logout = useCallback(async () => {
-    await supabase.auth.signOut();
+    try { await supabase.auth.signOut(); } catch (err) { console.error('Sign out error:', err); }
     // onAuthStateChange SIGNED_OUT handler clears user/profile/dbOverrides
   }, []);
 

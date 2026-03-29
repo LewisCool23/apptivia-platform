@@ -142,10 +142,6 @@ export default function RequestCoachingPlanModal({ isOpen, onClose }) {
   }, [isOpen, user?.id, profile?.team_id]);
 
   const handleSubmit = async () => {
-    if (!managerId) {
-      toast.error('No manager found for your team. Please contact an admin.');
-      return;
-    }
     setSubmitting(true);
     try {
       const { data, error } = await supabase
@@ -276,7 +272,7 @@ export default function RequestCoachingPlanModal({ isOpen, onClose }) {
           </button>
           <button
             onClick={handleSubmit}
-            disabled={submitting || loading || !managerId}
+            disabled={submitting || loading}
             className="flex items-center gap-1.5 px-4 py-2 text-sm font-semibold bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-60"
           >
             {submitting ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />}

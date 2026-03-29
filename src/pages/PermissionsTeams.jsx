@@ -82,10 +82,20 @@ export default function PermissionsTeams() {
     setDraftPermissionOverrides({});
   };
 
-  const handleSavePermissions = () => {
+  const handleSavePermissions = async () => {
     if (!selectedUserId) return;
     updatePermissionOverridesForUser(selectedUserId, draftPermissionOverrides);
     setSavedPermissionOverrides(draftPermissionOverrides);
+    // Persist to DB as well (not just localStorage)
+    try {
+      const orgId = profile?.organization_id;
+      if (orgId) {
+        const { savePermissionOverridesToDb } = await import('../permissions');
+        await savePermissionOverridesToDb(selectedUserId, orgId, draftPermissionOverrides);
+      }
+    } catch (err) {
+      console.error('Failed to persist permission overrides to DB:', err);
+    }
   };
 
   const handleDiscardPermissions = () => {
