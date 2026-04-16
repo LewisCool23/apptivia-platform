@@ -33,21 +33,19 @@ module.exports = {
       if (!res.ok) throw new Error(`Apollo API error: ${res.status} ${res.statusText}`);
       const data = await res.json();
 
-      const calls = (data.calls || []).filter(c => {
-        const created = new Date(c.created_at);
+      const calls = (data.phone_calls || []).filter(c => {
+        const created = new Date(c.start_time);
         return created >= new Date(since);
       });
 
       const kpiMappings = [];
 
       for (const call of calls) {
-        // Only connected calls
-        const disposition = (call.disposition || '').toLowerCase();
-        const isConnected = disposition.includes('connected') || call.connected === true;
-        if (!isConnected) continue;
+        // Only completed calls (Apollo uses status: "completed" for connected calls)
+        if (call.status !== 'completed') continue;
 
         const callId = call.id;
-        const weekStart = getWeekStart(call.created_at);
+        const weekStart = getWeekStart(call.start_time);
 
         // call_connects — 1 per connected call
         kpiMappings.push({
