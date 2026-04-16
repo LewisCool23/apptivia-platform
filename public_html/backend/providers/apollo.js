@@ -22,8 +22,14 @@ module.exports = {
       }
 
       // Fetch calls from Apollo
-      const url = `https://api.apollo.io/api/v1/calls?api_key=${encodeURIComponent(api_key)}&sort_by_field=created_at&sort_ascending=false&per_page=100`;
-      const res = await fetch(url);
+      const url = `https://api.apollo.io/api/v1/phone_calls/search?per_page=100&sort_by_field=created_at&sort_ascending=false`;
+      const res = await fetch(url, {
+        headers: {
+          'Cache-Control': 'no-cache',
+          'Content-Type': 'application/json',
+          'X-Api-Key': api_key,
+        },
+      });
       if (!res.ok) throw new Error(`Apollo API error: ${res.status} ${res.statusText}`);
       const data = await res.json();
 
