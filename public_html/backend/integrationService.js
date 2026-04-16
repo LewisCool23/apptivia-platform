@@ -1053,6 +1053,28 @@ async function markPushItem(sb, item, status, errorMessage) {
   });
 }
 
+// ── Auto-register providers ─────────────────────────────────
+// Load all provider modules from ./providers/ so integrationService
+// is self-contained and does not depend on server.js having run first.
+try {
+  const path = require('path');
+  const fs = require('fs');
+  const providersDir = path.join(__dirname, 'providers');
+  if (fs.existsSync(providersDir)) {
+    for (const file of fs.readdirSync(providersDir)) {
+      if (file.endsWith('.js')) {
+        const provider = require(path.join(providersDir, file));
+        if (provider && provider.type) {
+          registerProvider(provider);
+          console.log(`[integrations] Registered provider: ${provider.type}`);
+        }
+      }
+    }
+  }
+} catch (err) {
+  console.warn('[integrations] Error auto-loading providers:', err.message);
+}
+
 // ── Exports ──────────────────────────────────────────────────
 
 module.exports = {

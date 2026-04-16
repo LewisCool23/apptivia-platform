@@ -6856,7 +6856,7 @@ CronManager.register('coaching-nudges',    runCoachingNudges,      ONE_WEEK, 200
 // [ENHANCEMENT 9.1] Follow-up nudge agent — daily, runs after coaching-nudges
 CronManager.register('follow-up-nudges',   runFollowUpNudges,      ONE_DAY,  230_000);
 CronManager.register('leaderboard-refresh', runLeaderboardRefresh, SIX_HOURS, 250_000);
-CronManager.register('integration-sync',  async () => { const sb = getSupabaseAdmin(); return integrations.runScheduledSyncs(sb); }, SIX_HOURS, 300_000);
+CronManager.register('integration-sync',  async () => { const sb = getSupabaseAdmin(); return integrations.runScheduledSyncs(sb); }, ONE_HOUR, 300_000);
 // [ENHANCEMENT 10.1] Competitive intelligence agent — weekly, after all other crons
 CronManager.register('competitive-intel',  runCompetitiveIntelligence, ONE_WEEK, 400_000);
 CronManager.register('integration-push',  async () => { const sb = getSupabaseAdmin(); return integrations.processPushQueue(sb); }, 15 * 60_000, 330_000);
@@ -8035,25 +8035,6 @@ app.post('/api/badges/check-and-award', loadProfile, requireMinRole('admin'), wi
 }));
 
 // ── Integration Framework Routes ──────────────────────────────────────────────
-
-// Load provider modules (each registers itself)
-try {
-  const path = require('path');
-  const providersDir = path.join(__dirname, 'providers');
-  if (fs.existsSync(providersDir)) {
-    for (const file of fs.readdirSync(providersDir)) {
-      if (file.endsWith('.js')) {
-        const provider = require(path.join(providersDir, file));
-        if (provider && provider.type) {
-          integrations.registerProvider(provider);
-          console.log(`[integrations] Registered provider: ${provider.type}`);
-        }
-      }
-    }
-  }
-} catch (err) {
-  console.warn('[integrations] Error loading providers:', err.message);
-}
 
 // List all integrations for the user's organization
 app.get('/api/integrations', loadProfile, async (req, res) => {
