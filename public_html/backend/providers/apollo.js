@@ -71,9 +71,14 @@ module.exports = {
         }
       }
 
+      // Advance cursor to latest call's start_time, or keep current cursor if no calls
+      const latestCallTime = calls.length > 0
+        ? calls.reduce((max, c) => c.start_time > max ? c.start_time : max, calls[0].start_time)
+        : since;
+
       return {
         records: calls,
-        nextCursor: new Date().toISOString(),
+        nextCursor: latestCallTime,
         kpiMappings,
       };
     },
