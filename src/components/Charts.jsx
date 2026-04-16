@@ -150,8 +150,8 @@ export const ScoreDistributionChart = ({ data, title, infoText, footer = null })
         <InfoTooltip text={infoText} />
       </div>
       <div className="flex-1 min-h-0 overflow-y-auto">
-      <ResponsiveContainer width="100%" height={220}>
-        <PieChart margin={{ top: 16, right: 12, bottom: 8, left: 12 }}>
+      <ResponsiveContainer width="100%" height={200}>
+        <PieChart margin={{ top: 10, right: 12, bottom: 4, left: 12 }}>
           <Pie
             data={data}
             cx="50%"
@@ -199,7 +199,7 @@ export const ScoreDistributionChart = ({ data, title, infoText, footer = null })
 // Historical Apptivia Scores Line Chart
 const REP_OVERLAY_COLORS = ['#f59e0b', '#10b981', '#ef4444', '#8b5cf6', '#ec4899', '#06b6d4', '#f97316'];
 
-export const HistoricalScoresChart = ({ data, title, infoText, overlayRepIds = [], repNames = {}, lineName = 'Team Avg', chartHeight }) => {
+export const HistoricalScoresChart = ({ data, title, infoText, overlayRepIds = [], repNames = {}, lineName = 'Team Avg', chartHeight = 220 }) => {
   return (
     <div className="bg-white rounded-lg p-4 shadow-sm h-full flex flex-col">
       <div className="flex items-center gap-2 mb-3">

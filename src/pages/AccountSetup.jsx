@@ -13,42 +13,54 @@ export default function AccountSetup() {
     last_name: '',
     password: '',
     confirmPassword: '',
-    title: '',
-    department: '',
   });
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [departments, setDepartments] = useState([]);
-  const [titles, setTitles] = useState([]);
 
-  // Fetch available departments (from teams) and titles (from profiles) for dropdowns
+  // Auth guard: redirect if not authenticated or if setup already complete.
+  // When a user clicks an invite magic link, Supabase redirects here with auth
+  // tokens in the URL hash (#access_token=...). The Supabase client processes
+  // these asynchronously, so we must wait before concluding "not authenticated."
+  const [authSettled, setAuthSettled] = useState(false);
   useEffect(() => {
-    (async () => {
-      const [teamsRes, profilesRes] = await Promise.all([
-        supabase.from('teams').select('department').not('department', 'is', null),
-        supabase.from('profiles').select('title').not('title', 'is', null),
-      ]);
-      if (teamsRes.data) {
-        setDepartments([...new Set(teamsRes.data.map(t => t.department).filter(Boolean))].sort());
-      }
-      if (profilesRes.data) {
-        setTitles([...new Set(profilesRes.data.map(p => p.title).filter(Boolean))].sort());
-      }
-    })();
-  }, []);
+    // If URL contains auth tokens (hash fragment or code param), give Supabase
+    // time to exchange them for a session before we redirect to /login.
+    const hasAuthParams = window.location.hash.includes('access_token')
+      || window.location.hash.includes('type=invite')
+      || new URLSearchParams(window.location.search).has('code');
+    if (hasAuthParams && !isAuthenticated && !isLoading) {
+      const timer = setTimeout(() => setAuthSettled(true), 3000);
+      return () => clearTimeout(timer);
+    }
+    setAuthSettled(!isLoading);
+  }, [isLoading, isAuthenticated]);
 
-  // Auth guard: redirect if not authenticated or if setup already complete
   useEffect(() => {
-    if (!isLoading && !isAuthenticated) {
+    if (authSettled && !isAuthenticated) {
       navigate('/login', { replace: true });
       return;
     }
     if (profile && profile.first_name) {
       navigate('/dashboard', { replace: true });
     }
-  }, [isLoading, isAuthenticated, profile, navigate]);
+  }, [authSettled, isAuthenticated, profile, navigate]);
+
+  // Pre-fill names from profile (set during invite by admin)
+  useEffect(() => {
+    if (!user?.id) return;
+    supabase.from('profiles').select('first_name, last_name').eq('id', user.id).single()
+      .then(({ data }) => {
+        if (data?.first_name || data?.last_name) {
+          setFormData(prev => ({
+            ...prev,
+            first_name: data.first_name || prev.first_name,
+            last_name: data.last_name || prev.last_name,
+          }));
+        }
+      });
+  }, [user?.id]);
 
   const handleChange = (field) => (e) => {
     setFormData((prev) => ({ ...prev, [field]: e.target.value }));
@@ -85,8 +97,6 @@ export default function AccountSetup() {
       const profileFields = {
         first_name: trimmedFirst,
         last_name: trimmedLast,
-        ...(formData.title.trim() ? { title: formData.title.trim() } : {}),
-        ...(formData.department.trim() ? { department: formData.department.trim() } : {}),
       };
       const { data: updated, error: profileError } = await supabase
         .from('profiles')
@@ -111,13 +121,14 @@ export default function AccountSetup() {
       }
 
       // 3. Mark invitation as accepted (non-fatal — RLS may block)
-      await supabase
+      const { error: inviteErr } = await supabase
         .from('invitations')
         .update({ status: 'accepted', accepted_at: new Date().toISOString() })
         .eq('email', user.email)
-        .eq('status', 'pending')
-        .then(() => {})
-        .catch(() => {});
+        .eq('status', 'pending');
+      if (inviteErr) {
+        console.warn('Could not mark invitation as accepted:', inviteErr.message);
+      }
 
       // 4. Refresh profile so ProtectedRoute sees first_name
       await refreshProfile();
@@ -248,36 +259,6 @@ export default function AccountSetup() {
               {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
             </button>
           </div>
-        </div>
-
-        {/* Title (optional) */}
-        <div className="mb-4 w-full">
-          <label className="block mb-1 font-medium text-sm text-gray-700">
-            Title <span className="text-gray-400 text-xs">(optional)</span>
-          </label>
-          <select
-            value={formData.title}
-            onChange={handleChange('title')}
-            className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200 text-sm"
-          >
-            <option value="">Select a title</option>
-            {titles.map(t => <option key={t} value={t}>{t}</option>)}
-          </select>
-        </div>
-
-        {/* Department (optional) */}
-        <div className="mb-6 w-full">
-          <label className="block mb-1 font-medium text-sm text-gray-700">
-            Department <span className="text-gray-400 text-xs">(optional)</span>
-          </label>
-          <select
-            value={formData.department}
-            onChange={handleChange('department')}
-            className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200 text-sm"
-          >
-            <option value="">Select a department</option>
-            {departments.map(d => <option key={d} value={d}>{d}</option>)}
-          </select>
         </div>
 
         {/* Submit */}

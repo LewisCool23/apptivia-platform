@@ -13,23 +13,27 @@ import ContestCreationModal from '../components/ContestCreationModal';
 import RightFilterPanel from '../components/RightFilterPanel';
 import PageActionBar from '../components/PageActionBar';
 import ConfigurePanel from '../components/ConfigurePanel';
+import { ROLES } from '../constants/roles';
 import ConfigureModal from '../components/ConfigureModal';
 import LeaderboardModal from '../components/LeaderboardModal';
 import BadgeModal from '../components/BadgeModal';
 import BadgeAssignmentModal from '../components/BadgeAssignmentModal';
-import ContestTemplatesModal from '../components/ContestTemplatesModal';
 import AddTeamMembersModal from '../components/AddTeamMembersModal';
 import InfoTooltip from '../components/InfoTooltip';
 import { useNotifications } from '../contexts/NotificationContext';
 import ConfirmModal from '../components/ConfirmModal';
 import SearchWithHistory from '../components/SearchWithHistory';
 import { exportContestResultsToCSV } from '../utils/exportUtils';
+import { exportContestToPDF } from '../utils/exportPdf';
+import ExportReportModal from '../components/ExportReportModal';
+import ScheduleReportModal from '../components/ScheduleReportModal';
 
 export default function Contests() {
   const navigate = useNavigate();
-  const { user, role, hasPermission } = useAuth();
+  const { user, profile, role, hasPermission } = useAuth();
   const toast = useToast();
-  const { data, loading, error, kpiNameByKey, refetch, enrollInContest, withdrawFromContest, deleteContest, endContest, archiveContest } = useContests(user?.id);
+  const orgId = profile?.organization_id;
+  const { data, loading, error, kpiNameByKey, refetch, enrollInContest, withdrawFromContest, deleteContest, endContest, archiveContest } = useContests(user?.id, orgId);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [contestToEdit, setContestToEdit] = useState(null);
   const [leaderboardModal, setLeaderboardModal] = useState({ isOpen: false, contest: null });
@@ -60,18 +64,19 @@ export default function Contests() {
   const [showConfigModal, setShowConfigModal] = useState(false);
   const [badgeModal, setBadgeModal] = useState({ isOpen: false, badge: null });
   const [badgeAssignmentModal, setBadgeAssignmentModal] = useState({ isOpen: false, badge: null });
-  const [showContestTemplatesModal, setShowContestTemplatesModal] = useState(false);
+  const [showExportModal, setShowExportModal] = useState(false);
+  const [showScheduleReportModal, setShowScheduleReportModal] = useState(false);
   const [addMembersModal, setAddMembersModal] = useState({ isOpen: false, contest: null });
   const { openPanel, addNotification, unreadCount } = useNotifications();
   const [confirmModal, setConfirmModal] = useState({ isOpen: false, type: null, contest: null, isLoading: false });
 
-  const isAdmin = role === 'admin';
-  const isManager = role === 'manager';
+  const isAdmin = role === ROLES.ADMIN;
+  const isManager = role === ROLES.MANAGER;
   const canCreateContests = hasPermission('create_contests');
   const canEditContests = hasPermission('edit_contests');
   const canExport = hasPermission('export_data');
   const canConfigure = hasPermission('configure_scorecard');
-  const canShareResults = isAdmin || role === 'manager';
+  const canShareResults = isAdmin || role === ROLES.MANAGER;
 
   const getStatusColor = (status) => {
     switch (status) {
@@ -84,6 +89,7 @@ export default function Contests() {
   };
 
   const getStatusLabel = (status) => {
+    if (!status) return 'Unknown';
     return status.charAt(0).toUpperCase() + status.slice(1);
   };
 
@@ -178,9 +184,12 @@ export default function Contests() {
     setBadgeLeaderboardLoading(true);
 
     Promise.all([
-      supabase
-        .from('profile_badges')
-        .select('profile_id, badge_name, earned_at, profile:profiles(first_name, last_name)'),
+      orgId
+        ? supabase
+            .from('profile_badges')
+            .select('profile_id, badge_name, earned_at, profile:profiles!inner(first_name, last_name, organization_id)')
+            .eq('profile.organization_id', orgId)
+        : Promise.resolve({ data: [], error: null }),
       supabase
         .from('badge_definitions')
         .select('badge_name, rarity'),
@@ -470,7 +479,7 @@ export default function Contests() {
   const totalArchived = data?.archived?.length || 0;
   const totalEnrolled = [...(data?.active || []), ...(data?.upcoming || [])].filter(c => c.is_user_enrolled).length;
 
-  const allContests = [...(data?.active || []), ...(data?.upcoming || []), ...(data?.completed || []), ...(data?.archived || [])];
+  const allContests = React.useMemo(() => [...(data?.active || []), ...(data?.upcoming || []), ...(data?.completed || []), ...(data?.archived || [])], [data]);
 
   const analytics = React.useMemo(() => {
     if (allContests.length === 0) {
@@ -608,7 +617,7 @@ export default function Contests() {
     }
   };
 
-  // Global search functionality
+  // Global search functionality (org-scoped)
   const handleGlobalSearch = async (query) => {
     if (!query || query.trim().length < 2) {
       setGlobalSearchResults([]);
@@ -623,12 +632,14 @@ export default function Contests() {
     try {
       const searchTerm = query.trim().toLowerCase();
 
-      // Search profiles/users
-      const { data: profiles } = await supabase
+      // Search profiles/users (org-scoped)
+      let profilesSearch = supabase
         .from('profiles')
         .select('id, first_name, last_name, email, role')
         .or(`first_name.ilike.%${searchTerm}%,last_name.ilike.%${searchTerm}%,email.ilike.%${searchTerm}%`)
         .limit(5);
+      if (orgId) profilesSearch = profilesSearch.eq('organization_id', orgId);
+      const { data: profiles } = await profilesSearch;
 
       if (profiles) {
         profiles.forEach((profile) => {
@@ -643,11 +654,13 @@ export default function Contests() {
       }
 
       // Search contests
-      const { data: contests } = await supabase
+      let contestsQ = supabase
         .from('active_contests')
         .select('id, name, description')
         .ilike('name', `%${searchTerm}%`)
         .limit(5);
+      if (orgId) contestsQ = contestsQ.eq('organization_id', orgId);
+      const { data: contests } = await contestsQ;
 
       if (contests) {
         contests.forEach((contest) => {
@@ -661,7 +674,7 @@ export default function Contests() {
         });
       }
 
-      // Search badges
+      // Search badges (global table — no org filter needed)
       const { data: badges } = await supabase
         .from('badge_definitions')
         .select('id, badge_name, badge_description')
@@ -779,14 +792,15 @@ export default function Contests() {
       <div className="mt-4 flex items-center justify-between gap-3">
         {/* Bottom-left contextual info */}
         <div className="text-xs text-gray-500">
-          {(contest.status === 'completed' || contest.status === 'archived') && contest.winner_name ? (
-            <div className="flex items-center gap-1.5">
-              <Trophy size={14} className="text-yellow-500" />
-              <span className="font-semibold text-gray-800">{contest.winner_name}</span>
-              <span className="text-gray-300">·</span>
-              <span>{contest.winner_score}</span>
-            </div>
-          ) : (contest.status === 'active' || contest.status === 'upcoming') ? (
+          <div className="flex flex-col gap-1">
+            {(contest.status === 'completed' || contest.status === 'archived') && contest.winner_name && (
+              <div className="flex items-center gap-1.5">
+                <Trophy size={14} className="text-yellow-500" />
+                <span className="font-semibold text-gray-800">{contest.winner_name}</span>
+                <span className="text-gray-300">·</span>
+                <span>{contest.winner_score}</span>
+              </div>
+            )}
             <div className="flex items-center gap-2">
               <span>{formatDateShort(contest.start_date)} – {formatDateShort(contest.end_date)}</span>
               {contest.kpi_key && (
@@ -795,7 +809,7 @@ export default function Contests() {
                 </span>
               )}
             </div>
-          ) : <div />}
+          </div>
         </div>
 
         {contest.status === 'active' && (
@@ -1140,28 +1154,23 @@ export default function Contests() {
             <PageActionBar
               onFilterClick={() => setFiltersOpen(true)}
               onConfigureClick={() => { if (canConfigure) setConfigPanelOpen(true); }}
-              onExportClick={() => {
-                const allContests = [...(data.active || []), ...(data.completed || [])];
-                const withLeaderboard = allContests.find(c => c.leaderboard?.length > 0);
-                if (withLeaderboard) {
-                  exportContestResultsToCSV(withLeaderboard);
-                } else if (allContests.length > 0) {
-                  exportContestResultsToCSV(allContests[0]);
-                }
-              }}
               onNotificationsClick={openPanel}
-              exportDisabled={!canExport}
               configureDisabled={!canConfigure}
               notificationBadge={unreadCount}
               actions={[
                 {
-                  label: 'Create Contest',
-                  onClick: () => { if (canCreateContests) setShowCreateModal(true); },
-                  disabled: !canCreateContests,
+                  label: 'Export Report',
+                  onClick: () => setShowExportModal(true),
+                  disabled: !canExport,
                 },
                 {
-                  label: 'Contest Templates',
-                  onClick: () => setShowContestTemplatesModal(true),
+                  label: 'Schedule Report',
+                  onClick: () => setShowScheduleReportModal(true),
+                  disabled: !canExport,
+                },
+                {
+                  label: 'Create Contest',
+                  onClick: () => { if (canCreateContests) setShowCreateModal(true); },
                   disabled: !canCreateContests,
                 },
               ]}
@@ -1339,7 +1348,7 @@ export default function Contests() {
               </div>
             </div>
 
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               {[
                 { key: 'all', label: 'All' },
                 { key: 'active', label: `Active (${totalActive})` },
@@ -1361,6 +1370,14 @@ export default function Contests() {
                   {tab.label}
                 </button>
               ))}
+              {canCreateContests && (
+                <button
+                  onClick={() => setShowCreateModal(true)}
+                  className="ml-auto px-4 py-1.5 rounded-lg text-xs font-semibold bg-blue-600 text-white hover:bg-blue-700 transition-colors shadow-sm"
+                >
+                  + Create Contest
+                </button>
+              )}
             </div>
 
             {myActiveContest && statusTab !== 'completed' && (
@@ -1568,9 +1585,15 @@ export default function Contests() {
             })()}
 
             {statusTab === 'all' && filteredActive.length === 0 && filteredUpcoming.length === 0 && filteredCompleted.length === 0 && filteredArchived.length === 0 && (
-              <div className="text-center py-12">
-                <div className="text-gray-400 text-lg mb-2">No contests available</div>
-                <p className="text-gray-500 text-sm">Check back soon for new challenges!</p>
+              <div className="text-center py-16">
+                <Trophy size={48} className="mx-auto text-gray-300 mb-3" />
+                <div className="text-gray-500 text-lg font-medium mb-1">No contests yet</div>
+                <p className="text-gray-400 text-sm mb-4">Contests drive friendly competition and boost team performance.</p>
+                {(isAdmin || isManager) && (
+                  <button onClick={() => setShowCreateModal(true)} className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors">
+                    Create Your First Contest
+                  </button>
+                )}
               </div>
             )}
             {statusTab !== 'all' && statusTab !== 'badges' && statusTab !== 'analytics' && (
@@ -1587,10 +1610,11 @@ export default function Contests() {
           </div>
         )}
       </div>
-      <ContestCreationModal 
-        isOpen={showCreateModal} 
+      <ContestCreationModal
+        isOpen={showCreateModal}
         onClose={handleCloseModal}
         currentUserId={user?.id}
+        organizationId={orgId}
         contestToEdit={contestToEdit}
       />
       <LeaderboardModal
@@ -1766,20 +1790,6 @@ export default function Contests() {
           </div>
         </div>
       )}
-      <ContestTemplatesModal
-        isOpen={showContestTemplatesModal}
-        onClose={() => setShowContestTemplatesModal(false)}
-        onTemplateSelect={(templateData) => {
-          setShowCreateModal(true);
-          // You can pre-fill the contest creation modal with template data
-          addNotification({
-            type: 'success',
-            title: 'Template Selected',
-            message: 'Fill in the remaining details to create your contest',
-            dedupeKey: 'template-selected',
-          });
-        }}
-      />
       <AddTeamMembersModal
         isOpen={addMembersModal.isOpen}
         onClose={() => setAddMembersModal({ isOpen: false, contest: null })}
@@ -1797,6 +1807,25 @@ export default function Contests() {
             dedupeKey: `contest-members-added-${addMembersModal.contest?.id}-${Date.now()}`,
             audience: 'team',
           });
+        }}
+      />
+      <ExportReportModal
+        isOpen={showExportModal}
+        onClose={() => setShowExportModal(false)}
+        onSelectFormat={(format) => {
+          const allContests = [...(data.active || []), ...(data.completed || [])];
+          const target = allContests.find(c => c.leaderboard?.length > 0) || allContests[0];
+          if (!target) return;
+          if (format === 'csv') exportContestResultsToCSV(target);
+          else if (format === 'pdf') exportContestToPDF(target);
+        }}
+        title="Export Contest Report"
+      />
+      <ScheduleReportModal
+        isOpen={showScheduleReportModal}
+        onClose={() => setShowScheduleReportModal(false)}
+        onSuccess={() => {
+          if (addNotification) addNotification({ type: 'success', title: 'Report Scheduled', message: 'Your report has been scheduled. Manage it in Settings → Reports.', dedupeKey: 'report-scheduled' });
         }}
       />
     </DashboardLayout>

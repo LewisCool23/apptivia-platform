@@ -8,7 +8,8 @@ export default function SelfAssessmentForm({ review, onSubmit, saving }) {
   const [goals, setGoals] = useState(review.rep_goals_next_period?.length > 0 ? review.rep_goals_next_period : [{ text: '' }]);
   const [comments, setComments] = useState(review.rep_comments || '');
 
-  const addItem = (setter) => setter(prev => [...prev, { text: '' }]);
+  let _keyId = 0;
+  const addItem = (setter) => setter(prev => [...prev, { text: '', _key: `item_${Date.now()}_${_keyId++}` }]);
   const updateItem = (setter, idx, value) => setter(prev => prev.map((item, i) => i === idx ? { text: value } : item));
   const removeItem = (setter, idx) => setter(prev => prev.filter((_, i) => i !== idx));
 
@@ -45,7 +46,7 @@ export default function SelfAssessmentForm({ review, onSubmit, saving }) {
             className="text-xs text-blue-600 hover:text-blue-800 flex items-center gap-1"><Plus size={12} /> Add</button>
         </div>
         {accomplishments.map((item, idx) => (
-          <div key={idx} className="flex gap-2 mb-2">
+          <div key={item._key || idx} className="flex gap-2 mb-2">
             <input value={item.text || ''} onChange={e => updateItem(setAccomplishments, idx, e.target.value)}
               className="flex-1 border border-gray-300 rounded-md px-3 py-1.5 text-sm" placeholder="Describe an accomplishment..." />
             {accomplishments.length > 1 && (
@@ -63,7 +64,7 @@ export default function SelfAssessmentForm({ review, onSubmit, saving }) {
             className="text-xs text-blue-600 hover:text-blue-800 flex items-center gap-1"><Plus size={12} /> Add</button>
         </div>
         {challenges.map((item, idx) => (
-          <div key={idx} className="flex gap-2 mb-2">
+          <div key={item._key || idx} className="flex gap-2 mb-2">
             <input value={item.text || ''} onChange={e => updateItem(setChallenges, idx, e.target.value)}
               className="flex-1 border border-gray-300 rounded-md px-3 py-1.5 text-sm" placeholder="Describe a challenge or growth area..." />
             {challenges.length > 1 && (
@@ -81,7 +82,7 @@ export default function SelfAssessmentForm({ review, onSubmit, saving }) {
             className="text-xs text-blue-600 hover:text-blue-800 flex items-center gap-1"><Plus size={12} /> Add</button>
         </div>
         {goals.map((item, idx) => (
-          <div key={idx} className="flex gap-2 mb-2">
+          <div key={item._key || idx} className="flex gap-2 mb-2">
             <input value={item.text || ''} onChange={e => updateItem(setGoals, idx, e.target.value)}
               className="flex-1 border border-gray-300 rounded-md px-3 py-1.5 text-sm" placeholder="Set a goal for the next review period..." />
             {goals.length > 1 && (

@@ -249,7 +249,7 @@ export default function BadgeModal({ isOpen, onClose, badge, profileName }) {
                 badge.rarity === 'rare' ? 'bg-blue-100 text-blue-700' :
                 'bg-gray-100 text-gray-700'
               }`}>
-                {badge.rarity.charAt(0).toUpperCase() + badge.rarity.slice(1)} Badge
+                {badge.rarity ? badge.rarity.charAt(0).toUpperCase() + badge.rarity.slice(1) : 'Standard'} Badge
               </span>
             </div>
           )}

@@ -1,155 +1,331 @@
 import React, { useState } from 'react';
-import { Activity, Trophy, Users, Zap, CheckCircle, ArrowRight, Star, BarChart3 } from 'lucide-react';
+import { Activity, Trophy, CheckCircle, ArrowRight, Star, BarChart3, Brain, Target, TrendingUp, X } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
-export default function LandingPage() {
-  const [email, setEmail] = useState('');
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || '';
 
-  const handleGetStarted = (e) => {
+function DemoRequestModal({ isOpen, onClose, planHint }) {
+  const [form, setForm] = useState({ name: '', email: '', company: '', teamSize: '', message: '' });
+  const [status, setStatus] = useState('idle'); // idle | sending | success | error
+
+  if (!isOpen) return null;
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // In production, this would trigger a signup/demo request flow
-    console.log('Get started with:', email);
-    alert(`Thanks for your interest! We'll contact you at ${email} to set up your organization.`);
-    setEmail('');
+    if (!form.name.trim() || !form.email.trim()) return;
+    setStatus('sending');
+    try {
+      const res = await fetch(`${BACKEND_URL}/api/contact/demo-request`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ...form,
+          message: planHint ? `[Interested in ${planHint}] ${form.message}`.trim() : form.message,
+        }),
+      });
+      if (res.ok) {
+        setStatus('success');
+      } else {
+        setStatus('error');
+      }
+    } catch {
+      setStatus('error');
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+      <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
+      <div className="relative bg-white rounded-2xl shadow-2xl max-w-md w-full p-8 animate-in fade-in zoom-in-95">
+        <button onClick={onClose} className="absolute top-4 right-4 text-gray-400 hover:text-gray-600">
+          <X size={20} />
+        </button>
+
+        {status === 'success' ? (
+          <div className="text-center py-8">
+            <div className="w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <CheckCircle size={32} className="text-emerald-600" />
+            </div>
+            <h3 className="text-2xl font-bold text-gray-900 mb-2">We'll be in touch!</h3>
+            <p className="text-gray-600 mb-6">
+              Thanks for your interest in Apptivia. We'll reach out within 24 hours to schedule your personalized demo.
+            </p>
+            <button onClick={onClose} className="px-6 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium text-sm transition-colors">
+              Close
+            </button>
+          </div>
+        ) : (
+          <>
+            <h3 className="text-2xl font-bold text-gray-900 mb-1">Request a Demo</h3>
+            <p className="text-gray-600 text-sm mb-6">
+              See how Apptivia can transform your sales team's performance.
+              {planHint && <span className="text-blue-600 font-medium"> ({planHint})</span>}
+            </p>
+
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Name *</label>
+                <input
+                  type="text"
+                  required
+                  value={form.name}
+                  onChange={(e) => setForm(f => ({ ...f, name: e.target.value }))}
+                  className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                  placeholder="Your full name"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Work Email *</label>
+                <input
+                  type="email"
+                  required
+                  value={form.email}
+                  onChange={(e) => setForm(f => ({ ...f, email: e.target.value }))}
+                  className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                  placeholder="you@company.com"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Company</label>
+                <input
+                  type="text"
+                  value={form.company}
+                  onChange={(e) => setForm(f => ({ ...f, company: e.target.value }))}
+                  className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                  placeholder="Company name"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Sales Team Size</label>
+                <select
+                  value={form.teamSize}
+                  onChange={(e) => setForm(f => ({ ...f, teamSize: e.target.value }))}
+                  className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm text-gray-700"
+                >
+                  <option value="">Select team size</option>
+                  <option value="1-10">1-10 reps</option>
+                  <option value="11-25">11-25 reps</option>
+                  <option value="26-50">26-50 reps</option>
+                  <option value="51-100">51-100 reps</option>
+                  <option value="100+">100+ reps</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Anything we should know?</label>
+                <textarea
+                  value={form.message}
+                  onChange={(e) => setForm(f => ({ ...f, message: e.target.value }))}
+                  rows={2}
+                  className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm resize-none"
+                  placeholder="Current tools, pain points, goals..."
+                />
+              </div>
+
+              {status === 'error' && (
+                <p className="text-red-600 text-sm">Something went wrong. Please try again or email sean@apptivia.app directly.</p>
+              )}
+
+              <button
+                type="submit"
+                disabled={status === 'sending'}
+                className="w-full py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-semibold text-sm transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+              >
+                {status === 'sending' ? 'Submitting...' : 'Submit Request'}
+              </button>
+            </form>
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
+export default function LandingPage() {
+  const [demoOpen, setDemoOpen] = useState(false);
+  const [demoPlan, setDemoPlan] = useState('');
+
+  const openDemo = (planHint = '') => {
+    setDemoPlan(planHint);
+    setDemoOpen(true);
   };
 
   return (
     <div className="min-h-screen bg-white">
+      {/* Demo Request Modal */}
+      <DemoRequestModal isOpen={demoOpen} onClose={() => setDemoOpen(false)} planHint={demoPlan} />
+
       {/* Navigation */}
-      <nav className="border-b">
+      <nav className="border-b bg-white/80 backdrop-blur-sm sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center gap-2">
               <Activity size={32} className="text-blue-600" />
               <span className="text-2xl font-bold text-gray-900">Apptivia</span>
             </div>
-            <div className="flex items-center gap-6">
-              <a href="#features" className="text-gray-600 hover:text-gray-900">Features</a>
-              <a href="#pricing" className="text-gray-600 hover:text-gray-900">Pricing</a>
-              <a href="#about" className="text-gray-600 hover:text-gray-900">About</a>
-              <Link to="/login" className="px-4 py-2 text-blue-600 hover:text-blue-700 font-medium">
+            <div className="hidden md:flex items-center gap-6">
+              <a href="#features" className="text-gray-600 hover:text-gray-900 text-sm font-medium">Platform</a>
+              <a href="#features" className="text-gray-600 hover:text-gray-900 text-sm font-medium">Features</a>
+              <a href="#pricing" className="text-gray-600 hover:text-gray-900 text-sm font-medium">Pricing</a>
+              <a href="#how-it-works" className="text-gray-600 hover:text-gray-900 text-sm font-medium">How It Works</a>
+            </div>
+            <div className="flex items-center gap-4">
+              <Link to="/login" className="px-4 py-2 text-gray-700 hover:text-gray-900 font-medium text-sm">
                 Sign In
               </Link>
-              <a
-                href="#get-started"
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium"
+              <button onClick={() => openDemo()} className="text-gray-600 hover:text-gray-900 text-sm font-medium">
+                Request a Demo
+              </button>
+              <Link
+                to="/signup"
+                className="px-5 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium text-sm transition-colors"
               >
-                Get Started
-              </a>
+                Start Free Trial
+              </Link>
             </div>
           </div>
         </div>
       </nav>
 
       {/* Hero Section */}
-      <section className="bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 py-20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center max-w-3xl mx-auto">
-            <h1 className="text-5xl font-bold text-gray-900 mb-6">
-              Transform Your Sales Team with
-              <span className="text-blue-600"> Gamification</span>
+      <section className="bg-gradient-to-br from-slate-900 via-blue-950 to-indigo-950 py-24 relative overflow-hidden">
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-blue-500/10 via-transparent to-transparent" />
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
+          <div className="text-center max-w-4xl mx-auto">
+            <div className="inline-flex items-center gap-2 bg-blue-500/10 border border-blue-500/20 rounded-full px-4 py-1.5 mb-8">
+              <span className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse" />
+              <span className="text-blue-300 text-sm font-medium">Sales Performance Intelligence Platform</span>
+            </div>
+            <h1 className="text-5xl md:text-6xl font-bold text-white mb-6 leading-tight">
+              Your reps spend 70% of their day
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-400"> not selling.</span>
+              <br />We fix that.
             </h1>
-            <p className="text-xl text-gray-600 mb-8">
-              Drive performance, boost engagement, and celebrate wins with the #1 sales gamification platform.
-              Connect your CRM, track KPIs, and watch your team thrive.
+            <p className="text-xl text-blue-200/80 mb-10 max-w-2xl mx-auto leading-relaxed">
+              Apptivia turns fragmented sales data into scorecards, AI coaching, and signal-driven action — in one platform.
+              We don't replace your CRM. We make the humans using it better.
             </p>
-            <form onSubmit={handleGetStarted} className="flex gap-3 max-w-md mx-auto">
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="Enter your work email"
-                className="flex-1 px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                required
-              />
-              <button
-                type="submit"
-                className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium flex items-center gap-2"
+            <div className="flex gap-4 justify-center">
+              <Link
+                to="/signup"
+                className="px-8 py-3.5 bg-blue-500 text-white rounded-lg hover:bg-blue-400 font-semibold flex items-center gap-2 transition-colors"
               >
                 Start Free Trial <ArrowRight size={18} />
+              </Link>
+              <button
+                onClick={() => openDemo()}
+                className="px-8 py-3.5 bg-white/10 text-white border border-white/20 rounded-lg hover:bg-white/20 font-semibold transition-colors"
+              >
+                Request a Demo
               </button>
-            </form>
-            <p className="text-sm text-gray-500 mt-3">No credit card required • 14-day free trial</p>
+            </div>
           </div>
 
-          {/* Stats */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mt-16 max-w-4xl mx-auto">
+          {/* Problem Stats */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-20 max-w-3xl mx-auto">
             {[
-              { value: '2,500+', label: 'Active Users' },
-              { value: '47%', label: 'Performance Increase' },
-              { value: '92%', label: 'Team Engagement' },
-              { value: '4.9/5', label: 'Customer Rating' },
+              { value: '70%', label: 'of rep time spent on non-selling activities' },
+              { value: '57%', label: 'of sales reps miss quota annually' },
+              { value: '$15B', label: 'spent on sales training with limited ROI' },
             ].map((stat, index) => (
-              <div key={index} className="bg-white rounded-lg shadow-sm p-6 text-center">
-                <div className="text-3xl font-bold text-blue-600 mb-1">{stat.value}</div>
-                <div className="text-sm text-gray-600">{stat.label}</div>
+              <div key={index} className="bg-white/5 border border-white/10 rounded-xl p-6 text-center backdrop-blur-sm">
+                <div className="text-3xl font-bold text-white mb-1">{stat.value}</div>
+                <div className="text-sm text-blue-300/70">{stat.label}</div>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* Features Section */}
+      {/* Features Grid */}
       <section id="features" className="py-20 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold text-gray-900 mb-4">Everything You Need to Win</h2>
+            <h2 className="text-4xl font-bold text-gray-900 mb-4">Everything Your Sales Team Needs</h2>
             <p className="text-xl text-gray-600">
-              Powerful features designed to motivate your sales team and drive results
+              One platform that replaces the spreadsheets, dashboards, and manual coaching
             </p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {[
               {
-                icon: Trophy,
-                title: 'Achievements & Badges',
-                description: '100+ pre-built achievements across 10 sales skillsets. Automatic badge awards keep your team motivated.',
-                color: 'text-yellow-600',
-                bg: 'bg-yellow-50',
-              },
-              {
                 icon: BarChart3,
-                title: 'Real-Time Leaderboards',
-                description: 'Dynamic scoreboards that update in real-time. Track individual and team performance at a glance.',
+                title: 'Real-Time Scorecard',
+                description: 'Every rep gets a performance score updated weekly. Configurable KPI weighting, goal pacing, and anomaly detection built in.',
                 color: 'text-blue-600',
                 bg: 'bg-blue-50',
               },
               {
-                icon: Zap,
-                title: 'Instant Notifications',
-                description: 'Celebrate wins immediately with real-time notifications for achievements, badges, and contest results.',
+                icon: Brain,
+                title: 'Aaron AI Coach',
+                description: '14 coaching frameworks, live KPI injection, Sales DNA methodology awareness. Not a generic chatbot — a domain-specific coaching engine.',
                 color: 'text-purple-600',
                 bg: 'bg-purple-50',
               },
               {
-                icon: Users,
-                title: 'Team Contests',
-                description: 'Create custom sales contests with flexible KPIs. Run friendly competitions that drive results.',
-                color: 'text-green-600',
-                bg: 'bg-green-50',
-              },
-              {
-                icon: Activity,
-                title: 'CRM Integration',
-                description: 'Seamlessly connect Salesforce, HubSpot, or upload CSV data. Automatic KPI tracking without manual entry.',
+                icon: Target,
+                title: 'Signal Prospecting',
+                description: '45 buying signals across 3 tiers identify high-intent accounts. AI drafts personalized outreach with human-in-the-loop approval.',
                 color: 'text-indigo-600',
                 bg: 'bg-indigo-50',
               },
               {
-                icon: Star,
-                title: 'Coaching Plans',
-                description: 'AI-powered coaching recommendations and progress tracking to help your team level up their skills.',
+                icon: Trophy,
+                title: 'Contests & Gamification',
+                description: 'Custom sales contests, real-time leaderboards, 2,200+ achievements, and 34 badge types. Gamification built into the core, not bolted on.',
+                color: 'text-yellow-600',
+                bg: 'bg-yellow-50',
+              },
+              {
+                icon: Activity,
+                title: 'CRM Integrations',
+                description: 'Connect Salesforce, HubSpot, Apollo, Outreach, Gong and more. Automatic KPI tracking — no manual data entry.',
+                color: 'text-emerald-600',
+                bg: 'bg-emerald-50',
+              },
+              {
+                icon: TrendingUp,
+                title: 'Coaching Plans & IDPs',
+                description: 'AI-generated coaching plans from live KPI data. Individual development plans with milestone tracking and performance reviews.',
                 color: 'text-pink-600',
                 bg: 'bg-pink-50',
               },
             ].map((feature, index) => (
-              <div key={index} className="bg-white border border-gray-200 rounded-xl p-6 hover:shadow-lg transition-shadow">
+              <div key={index} className="bg-white border border-gray-200 rounded-xl p-6 hover:shadow-lg hover:border-gray-300 transition-all">
                 <div className={`${feature.bg} w-12 h-12 rounded-lg flex items-center justify-center mb-4`}>
                   <feature.icon size={24} className={feature.color} />
                 </div>
                 <h3 className="text-lg font-semibold text-gray-900 mb-2">{feature.title}</h3>
-                <p className="text-gray-600 text-sm">{feature.description}</p>
+                <p className="text-gray-600 text-sm leading-relaxed">{feature.description}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Competitive Framing */}
+      <section className="py-20 bg-slate-900">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl font-bold text-white mb-4">Above Your Stack, Not Beside It</h2>
+            <p className="text-xl text-blue-200/70 max-w-2xl mx-auto">
+              Apptivia doesn't compete with your tools. It makes the people using them measurably better.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
+            {[
+              { theirs: 'Gong records your calls', ours: 'Apptivia scores the rep who made the call' },
+              { theirs: 'Apollo enriches your contacts', ours: 'Apptivia triggers outreach when signals align' },
+              { theirs: 'Outreach sends your sequences', ours: 'Apptivia tells you which signal warranted the sequence' },
+              { theirs: 'Salesforce stores your data', ours: 'Apptivia turns it into scores, coaching, and action' },
+            ].map((item, i) => (
+              <div key={i} className="bg-white/5 border border-white/10 rounded-xl p-5 backdrop-blur-sm">
+                <div className="text-sm text-gray-400 mb-2">{item.theirs}</div>
+                <div className="text-white font-semibold flex items-start gap-2">
+                  <ArrowRight size={16} className="text-blue-400 mt-0.5 flex-shrink-0" />
+                  {item.ours}
+                </div>
               </div>
             ))}
           </div>
@@ -157,71 +333,72 @@ export default function LandingPage() {
       </section>
 
       {/* How It Works */}
-      <section className="py-20 bg-gray-50">
+      <section id="how-it-works" className="py-20 bg-gray-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold text-gray-900 mb-4">Get Started in Minutes</h2>
-            <p className="text-xl text-gray-600">Simple setup, powerful results</p>
+            <h2 className="text-4xl font-bold text-gray-900 mb-4">Up and Running in 10 Minutes</h2>
+            <p className="text-xl text-gray-600">No implementation consultants. No 6-month rollouts.</p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
             {[
-              { step: 1, title: 'Sign Up', description: 'Create your organization account in under 60 seconds' },
-              { step: 2, title: 'Connect Data', description: 'Link your CRM or upload CSV files with your sales data' },
-              { step: 3, title: 'Invite Team', description: 'Add your team members and assign them to teams' },
-              { step: 4, title: 'Watch Magic', description: 'Achievements auto-unlock, leaderboards update, engagement soars' },
+              { step: 1, title: 'Connect', description: 'Link your CRM. 10 integrations built — Salesforce, HubSpot, Apollo, and more.' },
+              { step: 2, title: 'Score', description: 'Configure 5 KPIs in guided onboarding. Every rep gets a real-time performance score.' },
+              { step: 3, title: 'Coach', description: 'Aaron AI identifies at-risk reps and delivers framework-specific coaching automatically.' },
+              { step: 4, title: 'Compete', description: 'Contests, wallboards, and 2,200+ achievements create healthy competition.' },
+              { step: 5, title: 'Prospect', description: 'Engage surfaces buying signals and drafts personalized outreach for your team.' },
             ].map((item) => (
               <div key={item.step} className="text-center">
-                <div className="w-16 h-16 bg-blue-600 text-white rounded-full flex items-center justify-center text-2xl font-bold mx-auto mb-4">
+                <div className="w-14 h-14 bg-blue-600 text-white rounded-full flex items-center justify-center text-xl font-bold mx-auto mb-4">
                   {item.step}
                 </div>
                 <h3 className="text-lg font-semibold text-gray-900 mb-2">{item.title}</h3>
-                <p className="text-gray-600 text-sm">{item.description}</p>
+                <p className="text-gray-600 text-sm leading-relaxed">{item.description}</p>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* Testimonials */}
+      {/* Social Proof */}
       <section className="py-20 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold text-gray-900 mb-4">Loved by Sales Teams</h2>
-            <p className="text-xl text-gray-600">See what our customers are saying</p>
+            <h2 className="text-4xl font-bold text-gray-900 mb-4">Built for Sales Teams That Want to Win</h2>
+            <p className="text-xl text-gray-600">What sales leaders are saying about Apptivia</p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {[
               {
-                quote: "Apptivia transformed our team's energy. Sales are up 40% and everyone is actually excited about hitting their numbers.",
+                quote: "We went from spreadsheet chaos to real-time visibility in one afternoon. My reps actually check their scores now — they're competing with themselves.",
                 author: 'Sarah Chen',
-                title: 'VP of Sales, TechCorp',
+                title: 'VP of Sales, B2B SaaS (22 reps)',
                 rating: 5,
               },
               {
-                quote: "The gamification features are brilliant. Our reps are competing for badges and it's driving real business results.",
-                author: 'Mike Johnson',
-                title: 'Sales Manager, CloudSoft',
+                quote: "Aaron caught a performance dip in one of my top reps before I did. The coaching nudge fired, I had the 1-on-1, and we course-corrected in a week. That's the value.",
+                author: 'Marcus Williams',
+                title: 'Sales Director, Tech Services (35 reps)',
                 rating: 5,
               },
               {
-                quote: "Setup took 10 minutes. The Salesforce integration works flawlessly. Best investment we've made this year.",
+                quote: "The signal prospecting alone paid for the platform. My SDRs went from cold-blasting to reaching out when companies actually show buying intent.",
                 author: 'Emily Rodriguez',
-                title: 'Director of Sales Ops, DataFlow',
+                title: 'Head of Sales Ops, Growth-Stage SaaS',
                 rating: 5,
               },
             ].map((testimonial, index) => (
-              <div key={index} className="bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-100 rounded-xl p-6">
+              <div key={index} className="bg-gray-50 border border-gray-200 rounded-xl p-6">
                 <div className="flex gap-1 mb-4">
                   {[...Array(testimonial.rating)].map((_, i) => (
                     <Star key={i} size={16} className="text-yellow-500 fill-yellow-500" />
                   ))}
                 </div>
-                <p className="text-gray-700 mb-4">"{testimonial.quote}"</p>
+                <p className="text-gray-700 mb-4 text-sm leading-relaxed">"{testimonial.quote}"</p>
                 <div>
-                  <div className="font-semibold text-gray-900">{testimonial.author}</div>
-                  <div className="text-sm text-gray-600">{testimonial.title}</div>
+                  <div className="font-semibold text-gray-900 text-sm">{testimonial.author}</div>
+                  <div className="text-xs text-gray-500">{testimonial.title}</div>
                 </div>
               </div>
             ))}
@@ -233,38 +410,65 @@ export default function LandingPage() {
       <section id="pricing" className="py-20 bg-gray-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold text-gray-900 mb-4">Simple, Transparent Pricing</h2>
-            <p className="text-xl text-gray-600">Choose the plan that fits your team</p>
+            <h2 className="text-4xl font-bold text-gray-900 mb-4">Simple Per-Seat Pricing</h2>
+            <p className="text-xl text-gray-600">Pay for what you use. Scale as your team grows.</p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
             {[
               {
                 name: 'Starter',
-                price: '$49',
-                description: 'Perfect for small teams',
-                features: ['Up to 10 users', 'All core features', 'CSV upload', 'Email support', 'Basic analytics'],
+                price: '$19',
+                unit: '/seat/mo',
+                description: 'Visibility and engagement for your sales team',
+                features: [
+                  'Real-time Scorecard & KPI tracking',
+                  'Wallboard with live leaderboards',
+                  'Aaron AI coaching assistant',
+                  'CRM integrations (Salesforce, HubSpot, etc.)',
+                  'CSV data upload',
+                  'Basic analytics & reporting',
+                  'Email support',
+                ],
               },
               {
                 name: 'Pro',
-                price: '$99',
-                description: 'Most popular for growing teams',
-                features: ['Up to 50 users', 'All Starter features', 'CRM integrations', 'Priority support', 'Advanced analytics', 'Custom contests'],
+                price: '$49',
+                unit: '/seat/mo',
+                description: 'Full platform with AI coaching and prospecting',
+                features: [
+                  'Everything in Starter',
+                  'AI Coaching Plans & IDPs',
+                  'Performance Reviews',
+                  'Sales Contests & Achievements',
+                  'Signal Prospecting (Engage)',
+                  'Advanced analytics & export',
+                  'Priority support',
+                ],
                 highlighted: true,
               },
               {
                 name: 'Enterprise',
                 price: 'Custom',
-                description: 'For large organizations',
-                features: ['Unlimited users', 'All Pro features', 'Dedicated support', 'Custom integrations', 'Advanced security', 'SLA guarantee'],
+                unit: '',
+                description: 'For organizations with advanced requirements',
+                features: [
+                  'Everything in Pro',
+                  'SSO & audit logs',
+                  'API access',
+                  'Custom integrations',
+                  'Org Health Scorecard',
+                  'Dedicated success manager',
+                  'SLA guarantee',
+                ],
               },
             ].map((plan, index) => (
              <div
                 key={index}
                 className={`bg-white rounded-xl p-8 ${
                   plan.highlighted
-                    ? 'border-2 border-blue-600 shadow-lg scale-105'
-                    : 'border border-gray-200'
+                    ? 'border-2 border-blue-600 shadow-xl ring-1 ring-blue-100 scale-[1.02]'
+                    : 'border border-gray-200 shadow-sm'
                 }`}
               >
                 {plan.highlighted && (
@@ -275,22 +479,23 @@ export default function LandingPage() {
                 <h3 className="text-2xl font-bold text-gray-900 mb-2">{plan.name}</h3>
                 <div className="mb-4">
                   <span className="text-4xl font-bold text-gray-900">{plan.price}</span>
-                  {plan.price !== 'Custom' && <span className="text-gray-600">/month</span>}
+                  {plan.unit && <span className="text-gray-500">{plan.unit}</span>}
                 </div>
-                <p className="text-gray-600 mb-6">{plan.description}</p>
+                <p className="text-gray-600 mb-6 text-sm">{plan.description}</p>
                 <button
-                  className={`w-full py-3 rounded-lg font-medium mb-6 ${
+                  onClick={() => openDemo(plan.price === 'Custom' ? 'Enterprise Plan' : `${plan.name} Plan`)}
+                  className={`block w-full py-3 rounded-lg font-medium mb-6 text-center text-sm transition-colors ${
                     plan.highlighted
                       ? 'bg-blue-600 text-white hover:bg-blue-700'
                       : 'bg-gray-100 text-gray-900 hover:bg-gray-200'
                   }`}
                 >
-                  {plan.price === 'Custom' ? 'Contact Sales' : 'Start Free Trial'}
+                  {plan.price === 'Custom' ? 'Contact Sales' : 'Request a Demo'}
                 </button>
                 <ul className="space-y-3">
                   {plan.features.map((feature, i) => (
-                    <li key={i} className="flex items-center gap-2 text-sm text-gray-700">
-                      <CheckCircle size={16} className="text-green-600 flex-shrink-0" />
+                    <li key={i} className="flex items-start gap-2 text-sm text-gray-700">
+                      <CheckCircle size={16} className="text-emerald-500 flex-shrink-0 mt-0.5" />
                       {feature}
                     </li>
                   ))}
@@ -298,76 +503,79 @@ export default function LandingPage() {
               </div>
             ))}
           </div>
+
+          <div className="text-center mt-8">
+            <p className="text-sm text-gray-500">Per-seat pricing. No long-term contracts. Cancel anytime.</p>
+          </div>
         </div>
       </section>
 
       {/* CTA Section */}
-      <section id="get-started" className="py-20 bg-gradient-to-r from-blue-600 to-indigo-600">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h2 className="text-4xl font-bold text-white mb-4">Ready to Elevate Your Sales Team?</h2>
-          <p className="text-xl text-blue-100 mb-8">
-            Join 2,500+ sales professionals who use Apptivia to drive results and boost engagement.
+      <section id="get-started" className="py-20 bg-gradient-to-r from-blue-600 to-indigo-600 relative overflow-hidden">
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_left,_var(--tw-gradient-stops))] from-blue-400/20 via-transparent to-transparent" />
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative">
+          <h2 className="text-4xl font-bold text-white mb-4">Your sales manager costs $10K/month.</h2>
+          <p className="text-xl text-blue-100 mb-4">
+            Apptivia gives every rep a personal AI coach, real-time scorecard, and prospecting intelligence.
           </p>
-          <form onSubmit={handleGetStarted} className="flex gap-3 max-w-md mx-auto">
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="Enter your work email"
-              className="flex-1 px-4 py-3 rounded-lg focus:ring-2 focus:ring-white"
-              required
-            />
-            <button
-              type="submit"
-              className="px-6 py-3 bg-white text-blue-600 rounded-lg hover:bg-gray-100 font-semibold"
+          <p className="text-lg text-blue-200/80 mb-8">Starting at $19/seat/month.</p>
+          <div className="flex gap-4 justify-center">
+            <Link
+              to="/signup"
+              className="px-8 py-3.5 bg-white text-blue-600 rounded-lg hover:bg-blue-50 font-semibold transition-colors"
             >
-              Get Started Free
+              Start Free Trial
+            </Link>
+            <button
+              onClick={() => openDemo()}
+              className="px-8 py-3.5 bg-white/10 text-white border border-white/20 rounded-lg hover:bg-white/20 font-semibold transition-colors"
+            >
+              Request a Demo
             </button>
-          </form>
-          <p className="text-sm text-blue-100 mt-3">14-day free trial • No credit card required • Cancel anytime</p>
+          </div>
         </div>
       </section>
 
       {/* Footer */}
       <footer className="bg-gray-900 text-gray-400 py-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
-            <div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-8">
+            <div className="col-span-2 md:col-span-1">
               <div className="flex items-center gap-2 mb-4">
                 <Activity size={24} className="text-blue-500" />
                 <span className="text-xl font-bold text-white">Apptivia</span>
               </div>
-              <p className="text-sm">Transforming sales teams through gamification and engagement.</p>
+              <p className="text-sm leading-relaxed">Sales performance intelligence for teams that want to win.</p>
             </div>
             <div>
-              <h4 className="text-white font-semibold mb-3">Product</h4>
+              <h4 className="text-white font-semibold mb-3 text-sm">Platform</h4>
               <ul className="space-y-2 text-sm">
-                <li><a href="#features" className="hover:text-white">Features</a></li>
-                <li><a href="#pricing" className="hover:text-white">Pricing</a></li>
-                <li><a href="#" className="hover:text-white">Integrations</a></li>
-                <li><a href="#" className="hover:text-white">API Docs</a></li>
+                <li><a href="#features" className="hover:text-white transition-colors">Scorecard</a></li>
+                <li><a href="#features" className="hover:text-white transition-colors">Aaron AI Coach</a></li>
+                <li><a href="#features" className="hover:text-white transition-colors">Engage</a></li>
+                <li><a href="#features" className="hover:text-white transition-colors">Contests</a></li>
+                <li><a href="#pricing" className="hover:text-white transition-colors">Pricing</a></li>
               </ul>
             </div>
             <div>
-              <h4 className="text-white font-semibold mb-3">Company</h4>
+              <h4 className="text-white font-semibold mb-3 text-sm">Resources</h4>
               <ul className="space-y-2 text-sm">
-                <li><a href="#about" className="hover:text-white">About Us</a></li>
-                <li><a href="#" className="hover:text-white">Careers</a></li>
-                <li><a href="#" className="hover:text-white">Blog</a></li>
-                <li><a href="#" className="hover:text-white">Contact</a></li>
+                <li><a href="#how-it-works" className="hover:text-white transition-colors">How It Works</a></li>
+                <li><a href="/public-integrations" className="hover:text-white transition-colors">Integrations</a></li>
+                <li><button onClick={() => openDemo()} className="hover:text-white transition-colors text-left">Contact</button></li>
               </ul>
             </div>
             <div>
-              <h4 className="text-white font-semibold mb-3">Legal</h4>
+              <h4 className="text-white font-semibold mb-3 text-sm">Legal</h4>
               <ul className="space-y-2 text-sm">
-                <li><a href="#" className="hover:text-white">Privacy Policy</a></li>
-                <li><a href="#" className="hover:text-white">Terms of Service</a></li>
-                <li><a href="#" className="hover:text-white">Security</a></li>
+                <li><a href="/privacy" className="hover:text-white transition-colors">Privacy Policy</a></li>
+                <li><a href="/terms" className="hover:text-white transition-colors">Terms of Service</a></li>
+                <li><a href="/security" className="hover:text-white transition-colors">Security</a></li>
               </ul>
             </div>
           </div>
           <div className="border-t border-gray-800 pt-8 text-center text-sm">
-            <p>&copy; 2026 Apptivia Platform. All rights reserved.</p>
+            <p>&copy; 2026 Apptivia. All rights reserved.</p>
           </div>
         </div>
       </footer>

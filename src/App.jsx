@@ -14,6 +14,13 @@ import DealCelebration from './components/DealCelebration';
 // ── Eagerly-loaded (small, needed immediately) ──────────────────────────────
 import LandingPage from './pages/LandingPage';
 import AccountSetup from './pages/AccountSetup';
+import SignUp from './pages/SignUp';
+
+// ── Public pages (lazily-loaded) ─────────────────────────────────────────────
+const PublicIntegrations = React.lazy(() => import('./pages/PublicIntegrations'));
+const PrivacyPolicy      = React.lazy(() => import('./pages/PrivacyPolicy'));
+const TermsOfService     = React.lazy(() => import('./pages/TermsOfService'));
+const SecurityPage       = React.lazy(() => import('./pages/Security'));
 
 // ── Lazily-loaded pages (split into separate chunks) ────────────────────────
 const Coach            = React.lazy(() => import('./pages/Coach'));
@@ -29,6 +36,7 @@ const OrganizationSettings = React.lazy(() => import('./pages/OrganizationSettin
 const Wallboard        = React.lazy(() => import('./pages/Wallboard'));
 const ForgotPassword   = React.lazy(() => import('./pages/ForgotPassword'));
 const UpdatePassword   = React.lazy(() => import('./pages/UpdatePassword'));
+const PilotDashboard   = React.lazy(() => import('./pages/PilotDashboard'));
 
 // ── Simple page-level loading fallback ──────────────────────────────────────
 function PageLoader() {
@@ -63,7 +71,12 @@ const AppRoutes = () => {
         <Route path="/login" element={<Login />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/update-password" element={<UpdatePassword />} />
+        <Route path="/signup" element={<SignUp />} />
         <Route path="/account-setup" element={<AccountSetup />} />
+        <Route path="/public-integrations" element={<PublicIntegrations />} />
+        <Route path="/privacy" element={<PrivacyPolicy />} />
+        <Route path="/terms" element={<TermsOfService />} />
+        <Route path="/security" element={<SecurityPage />} />
         <Route
           path="/dashboard"
           element={
@@ -104,6 +117,13 @@ const AppRoutes = () => {
         />
         <Route path="/wallboard"
           element={<PBR permissions={['view_coach']}><Wallboard /></PBR>}
+        />
+        <Route path="/admin/pilot"
+          element={
+            <ProtectedRoute requiredRoles={['admin']}>
+              <PageErrorBoundary><PilotDashboard /></PageErrorBoundary>
+            </ProtectedRoute>
+          }
         />
         <Route path="/app" element={
           isAuthenticated ? <Navigate to="/dashboard" replace /> : <Login />

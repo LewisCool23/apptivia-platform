@@ -1,5 +1,8 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../supabaseClient';
+import { getMonday } from '../utils/dateUtils';
+import { calcPct } from '../utils/kpiCalc';
+import { LEADERSHIP_ROLE_FILTER } from '../constants/roles';
 
 interface KPIMetric {
   id: string;
@@ -36,6 +39,7 @@ interface ScorecardRow {
   email?: string;
   kpis: { [key: string]: { value: number; percentage: number } };
   apptivityScore: number;
+  hasData: boolean; // M13 fix: true if rep has any kpi_values for this period
 }
 
 interface TrendData {
@@ -59,17 +63,10 @@ interface ScorecardData {
   scorecardKpiKeys: string[];
 }
 
-// Returns the Monday of the week containing the given date.
-function getMonday(date: Date): Date {
-  const d = new Date(date);
-  d.setHours(0, 0, 0, 0);
-  const day = d.getDay(); // 0=Sun, 1=Mon … 6=Sat
-  const diff = day === 0 ? -6 : 1 - day;
-  d.setDate(d.getDate() + diff);
-  return d;
-}
+// getMonday imported from ../utils/dateUtils (X1 fix: single implementation)
 
 export function useScorecardData(
+  organizationId: string | null,
   selectedDepartments: string[],
   selectedTeams: string[],
   selectedMembers: string[],
@@ -119,18 +116,12 @@ export function useScorecardData(
         const anchorMon = getMonday(endAdj);
 
         if (weeklyAverage && numWeeks > 0) {
-          // Multi-week average: snap to exact N Mon–Sun weeks
-          const daysDiff = Math.floor(
-            (new Date(periodEnd).getTime() - new Date(periodStart).getTime()) /
-            (1000 * 60 * 60 * 24)
-          );
-          const weekCount = Math.max(1, Math.round(daysDiff / 7));
-          const alignedStart = new Date(anchorMon.getTime() - (weekCount - 1) * 7 * 24 * 60 * 60 * 1000);
-          const alignedEnd   = new Date(anchorMon.getTime() + 6 * 24 * 60 * 60 * 1000);
-
-          qStart = alignedStart.toISOString().split('T')[0];
-          qEnd   = alignedEnd.toISOString().split('T')[0];
-          alignedNumWeeks = weekCount;
+          // Multi-week (This Month, This Quarter, etc.): use the actual period
+          // boundaries directly. The overlap query (period_start <= qEnd AND
+          // period_end >= qStart) naturally captures any week that overlaps.
+          // e.g. "This Month" Apr 1–30 → any week with period_end >= Apr 1 is included.
+          qStart = new Date(periodStart).toISOString().split('T')[0];
+          qEnd   = new Date(periodEnd).toISOString().split('T')[0];
         } else {
           // Single-week or All-Time: snap to the anchor week's Mon–Sun
           // For All-Time (numWeeks=0), use the original wide start so we
@@ -151,20 +142,45 @@ export function useScorecardData(
         let profilesQuery = supabase
           .from('profiles')
           .select('id, first_name, last_name, team_id, department, email')
-          .not('role', 'in', '("admin","manager","coach")');
+          .not('role', 'in', LEADERSHIP_ROLE_FILTER);
+        if (organizationId) profilesQuery = profilesQuery.eq('organization_id', organizationId);
         if (selectedDepartments.length > 0) profilesQuery = profilesQuery.in('department', selectedDepartments);
         if (selectedTeams.length > 0) profilesQuery = profilesQuery.in('team_id', selectedTeams);
         if (selectedMembers.length > 0) profilesQuery = profilesQuery.in('id', selectedMembers);
 
+        // Org-scoped query: kpi_org_configs joined with kpi_metrics catalog.
+        // Falls back to global kpi_metrics if no organizationId (shouldn't happen in practice).
+        const metricsQuery = organizationId
+          ? supabase
+              .from('kpi_org_configs')
+              .select('kpi_id, goal, weight, is_active, show_on_scorecard, scorecard_position, kpi_metrics!inner(id, key, name, description, unit, category, direction)')
+              .eq('organization_id', organizationId)
+              .eq('is_active', true)
+              .order('scorecard_position')
+          : supabase.from('kpi_metrics').select('*').eq('is_active', true).order('scorecard_position');
+
         const [metricsResult, profilesResult] = await Promise.all([
-          supabase.from('kpi_metrics').select('*').eq('is_active', true).order('scorecard_position'),
+          metricsQuery,
           profilesQuery,
         ]);
 
         if (metricsResult.error) throw metricsResult.error;
         if (profilesResult.error) throw profilesResult.error;
 
-        const metrics: KPIMetric[] = metricsResult.data || [];
+        // Map org-scoped result to same KPIMetric shape used downstream
+        const metrics: KPIMetric[] = organizationId
+          ? (metricsResult.data || []).map((c: any) => ({
+              id: (c.kpi_metrics as any).id,
+              key: (c.kpi_metrics as any).key,
+              name: (c.kpi_metrics as any).name,
+              goal: c.goal,
+              weight: c.weight,
+              unit: (c.kpi_metrics as any).unit,
+              direction: (c.kpi_metrics as any).direction,
+              show_on_scorecard: c.show_on_scorecard,
+              scorecard_position: c.scorecard_position,
+            }))
+          : (metricsResult.data || []);
         const profiles: ProfileData[] = profilesResult.data || [];
 
         // Derive scorecard KPI keys from already-fetched metrics
@@ -252,17 +268,7 @@ export function useScorecardData(
           return histGoalMap[metric.id]?.direction ?? metric.direction ?? 'higher';
         }
 
-        // Direction-aware percentage: for "lower is better" KPIs, invert so
-        // beating the goal (lower value) yields >100% and missing it yields <100%.
-        // Existing "higher" KPIs are completely unaffected.
-        function calcPct(value: number, goal: number, dir: string): number {
-          if (goal <= 0) return 0;
-          if (dir === 'lower') {
-            // value=0 → perfect (cap at 200%), value=goal → 100%, value>goal → <100%
-            return value > 0 ? Math.min((goal / value) * 100, 200) : 200;
-          }
-          return Math.min((value / goal) * 100, 200);
-        }
+        // calcPct imported from ../utils/kpiCalc (X3 fix: single implementation)
 
         // Process teams → teamNameMap
         const teamNameMap: Record<string, string> = {};
@@ -308,6 +314,8 @@ export function useScorecardData(
         const rows: ScorecardRow[] = profiles.map((profile: any) => {
           const kpis: { [key: string]: { value: number; percentage: number } } = {};
           let totalScore = 0;
+          // M13 fix: distinguish "no data" from "scored zero"
+          const hasData = !!sums[profile.id];
 
           metrics.forEach((metric: any) => {
             const total = sums[profile.id]?.[metric.key] || 0;
@@ -336,6 +344,7 @@ export function useScorecardData(
             email: profile.email || null,
             kpis,
             apptivityScore: Math.round(scorecardTotalWeight > 0 ? totalScore / scorecardTotalWeight : 0),
+            hasData,
           };
         });
 
@@ -347,8 +356,10 @@ export function useScorecardData(
           ? { name: rows[0].name, score: rows[0].apptivityScore }
           : null;
 
-        const teamAverage = rows.length > 0
-          ? Math.round(rows.reduce((sum, r) => sum + r.apptivityScore, 0) / rows.length)
+        // M13 fix: exclude zero-data reps from team average so they don't drag it down
+        const rowsWithData = rows.filter(r => r.hasData);
+        const teamAverage = rowsWithData.length > 0
+          ? Math.round(rowsWithData.reduce((sum, r) => sum + r.apptivityScore, 0) / rowsWithData.length)
           : 0;
 
         const aboveTarget = rows.filter(r => r.apptivityScore >= 100).length;
@@ -435,20 +446,22 @@ export function useScorecardData(
           const direction = delta >  2 ? 'up' : delta < -2 ? 'down' : 'flat';
 
           // Goal pacing: project current score to end of period based on elapsed time.
-          // Only meaningful for current (live) periods — caller decides whether to show it.
+          // H9 fix: only compute for single-week (non-averaged) live periods.
+          // When weeklyAverage is true, apptivityScore is already normalised per week,
+          // so dividing by fractionElapsed would double-normalise.
           let goalPacing = 0;
-          const now = new Date();
-          const pStart = new Date(periodStart);
-          const pEnd = new Date(periodEnd);
-          const totalMs = pEnd.getTime() - pStart.getTime();
-          const elapsedMs = now.getTime() - pStart.getTime();
-          if (totalMs > 0 && elapsedMs > 0) {
-            const fractionElapsed = Math.min(1, elapsedMs / totalMs);
-            // Project: if rep achieved score% in fractionElapsed of the period,
-            // they're on pace for score / fractionElapsed by end of period.
-            goalPacing = fractionElapsed > 0
-              ? Math.min(150, Math.round(row.apptivityScore / fractionElapsed))
-              : 0;
+          if (!weeklyAverage) {
+            const now = new Date();
+            const pStart = new Date(periodStart);
+            const pEnd = new Date(periodEnd);
+            const totalMs = pEnd.getTime() - pStart.getTime();
+            const elapsedMs = now.getTime() - pStart.getTime();
+            if (totalMs > 0 && elapsedMs > 0) {
+              const fractionElapsed = Math.min(1, elapsedMs / totalMs);
+              goalPacing = fractionElapsed > 0
+                ? Math.min(150, Math.round(row.apptivityScore / fractionElapsed))
+                : 0;
+            }
           }
 
           return { profile_id: row.profile_id, currentScore: currentWeekScore, priorScore, delta, direction, goalPacing };
@@ -496,7 +509,7 @@ export function useScorecardData(
 
     fetchData();
     return () => { cancelled = true; };
-  }, [selectedDepartments, selectedTeams, selectedMembers, periodStart, periodEnd, refreshTrigger, weeklyAverage, numWeeks]);
+  }, [organizationId, selectedDepartments, selectedTeams, selectedMembers, periodStart, periodEnd, refreshTrigger, weeklyAverage, numWeeks]);
 
   return { data, loading, error };
 }

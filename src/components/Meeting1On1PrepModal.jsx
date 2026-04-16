@@ -1,8 +1,10 @@
 import React, { useMemo, useState } from 'react';
-import { X, Printer, TrendingUp, TrendingDown, Minus, CheckCircle, AlertTriangle, FileText } from 'lucide-react';
+import { X, Printer, TrendingUp, TrendingDown, Minus, CheckCircle, AlertTriangle, FileText, Send, Check } from 'lucide-react';
 import { KPI_GUIDANCE, buildLabel, LAGGING_THRESHOLD } from '../constants/kpiGuidance';
 import { getKpiTier, TIER_LABELS, TIER_COLORS } from '../constants/skillsets';
 import FeedbackThumb from './shared/FeedbackThumb';
+import { useNotifications } from '../contexts/NotificationContext';
+import { useAuth } from '../AuthContext';
 
 export default function Meeting1On1PrepModal({
   isOpen,
@@ -17,6 +19,13 @@ export default function Meeting1On1PrepModal({
   onBuildRepPlan,
 }) {
   const [notes, setNotes] = useState('');
+  const [showSharePreview, setShowSharePreview] = useState(false);
+  const [synopsisText, setSynopsisText] = useState('');
+  const [shared, setShared] = useState(false);
+  const [copiedAgenda, setCopiedAgenda] = useState(false);
+
+  const { addNotification } = useNotifications();
+  const { profile } = useAuth();
 
   const scKpiSet = useMemo(() => new Set(scorecardKpiKeys || []), [scorecardKpiKeys]);
 
@@ -82,6 +91,85 @@ export default function Meeting1On1PrepModal({
 
   const handlePrint = () => window.print();
 
+  const generateSynopsis = useMemo(() => {
+    const lines = [];
+    lines.push(`1:1 Agenda — ${repName}`);
+    lines.push(new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' }));
+    lines.push('');
+
+    // Discussion Topics
+    lines.push('Discussion Topics:');
+    let topicNum = 1;
+    if (laggingKpis.length > 0) {
+      laggingKpis.slice(0, 2).forEach(kpi => {
+        const question = kpi.guidance?.coachingQuestion ? ` — "${kpi.guidance.coachingQuestion}"` : '';
+        lines.push(`  ${topicNum}. ${kpi.label} — needs attention${question}`);
+        topicNum++;
+      });
+    }
+    if (strengths.length > 0) {
+      lines.push(`  ${topicNum}. Acknowledge strengths: ${strengths.map(s => s.label).join(', ')}`);
+      topicNum++;
+    }
+    if (laggingKpis.length === 0 && strengths.length === 0) {
+      lines.push('  1. General performance check-in');
+    }
+    lines.push('');
+
+    // Action Items
+    if (actionItems.length > 0) {
+      lines.push('Action Items to Follow Up:');
+      actionItems.forEach((item, i) => {
+        lines.push(`  ${i + 1}. ${item.tip}`);
+      });
+      lines.push('');
+    }
+
+    // Manager notes
+    if (notes.trim()) {
+      lines.push('Manager Notes:');
+      lines.push(`  ${notes.trim()}`);
+      lines.push('');
+    }
+
+    lines.push('---');
+    lines.push('Is there anything you would like to discuss?');
+    return lines.join('\n');
+  }, [repName, laggingKpis, strengths, actionItems, notes]);
+
+  const handleOpenSharePreview = () => {
+    setSynopsisText(generateSynopsis);
+    setShowSharePreview(true);
+    setShared(false);
+    setCopiedAgenda(false);
+  };
+
+  const handleShareAgenda = async () => {
+    if (!repId || !profile) return;
+
+    // Send in-app notification to the rep
+    await addNotification({
+      type: 'coaching',
+      title: '1:1 Agenda Shared',
+      message: synopsisText.length > 300 ? synopsisText.slice(0, 297) + '...' : synopsisText,
+      link: '/coach',
+      ownerId: repId,
+      organizationId: profile.organization_id,
+      dedupeKey: `agenda-${repId}-${new Date().toISOString().split('T')[0]}`,
+      priority: 3,
+    });
+
+    // Copy to clipboard
+    try {
+      await navigator.clipboard.writeText(synopsisText);
+      setCopiedAgenda(true);
+      setTimeout(() => setCopiedAgenda(false), 2000);
+    } catch { /* clipboard may fail in some environments */ }
+
+    setShared(true);
+    setTimeout(() => setShared(false), 3000);
+  };
+
   // Auto-assessment
   const trendDelta = repAnalysis?.trendDelta || 0;
   const assessment = trendDelta > 5
@@ -97,8 +185,9 @@ export default function Meeting1On1PrepModal({
       {/* Print styles */}
       <style>{`
         @media print {
-          body > *:not(.meeting-prep-overlay) { display: none !important; }
-          .meeting-prep-overlay { position: static !important; background: none !important; }
+          body * { visibility: hidden; }
+          .meeting-prep-overlay, .meeting-prep-overlay * { visibility: visible; }
+          .meeting-prep-overlay { position: absolute !important; left: 0; top: 0; width: 100%; background: none !important; }
           .meeting-prep-overlay > .meeting-prep-backdrop { display: none !important; }
           .meeting-prep-content { position: static !important; max-height: none !important; overflow: visible !important; box-shadow: none !important; border-radius: 0 !important; }
           .no-print { display: none !important; }
@@ -116,6 +205,14 @@ export default function Meeting1On1PrepModal({
               <p className="text-xs text-blue-200 mt-0.5">{new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
             </div>
             <div className="flex items-center gap-2 no-print">
+              <button
+                onClick={handleOpenSharePreview}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/20 hover:bg-white/30 transition-colors text-xs font-medium"
+                title="Share agenda with rep"
+              >
+                <Send size={14} />
+                Share Agenda
+              </button>
               {onBuildRepPlan && (
                 <button
                   onClick={() => onBuildRepPlan(repId, repName)}
@@ -287,6 +384,54 @@ export default function Meeting1On1PrepModal({
                 className="w-full border rounded-lg p-3 text-xs text-gray-700 resize-none h-24 focus:outline-none focus:ring-2 focus:ring-blue-300"
               />
             </div>
+
+            {/* 6. Share Agenda Preview */}
+            {showSharePreview && (
+              <div className="border-2 border-blue-200 rounded-lg p-4 bg-blue-50/50 no-print">
+                <h3 className="text-sm font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                  <span className="w-6 h-6 rounded-full bg-blue-500 text-white flex items-center justify-center text-xs font-bold">
+                    <Send size={12} />
+                  </span>
+                  Preview Agenda for {repName}
+                </h3>
+                <textarea
+                  value={synopsisText}
+                  onChange={(e) => setSynopsisText(e.target.value)}
+                  className="w-full border rounded-lg p-3 text-xs text-gray-700 resize-none h-48 focus:outline-none focus:ring-2 focus:ring-blue-300 bg-white font-mono"
+                />
+                <div className="flex items-center justify-between mt-3">
+                  <button
+                    onClick={() => setShowSharePreview(false)}
+                    className="text-xs text-gray-500 hover:text-gray-700"
+                  >
+                    Cancel
+                  </button>
+                  <div className="flex items-center gap-2">
+                    {shared && (
+                      <span className="text-xs text-green-600 font-medium flex items-center gap-1">
+                        <Check size={12} /> Sent & Copied!
+                      </span>
+                    )}
+                    <button
+                      onClick={handleShareAgenda}
+                      disabled={shared}
+                      className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-semibold text-white transition-colors ${
+                        shared ? 'bg-green-500' : 'bg-blue-600 hover:bg-blue-700'
+                      }`}
+                    >
+                      {shared ? (
+                        <><Check size={14} /> Shared</>
+                      ) : (
+                        <><Send size={14} /> Send to {repName?.split(' ')[0] || 'Rep'} & Copy</>
+                      )}
+                    </button>
+                  </div>
+                </div>
+                <p className="text-[10px] text-gray-400 mt-2">
+                  This will send an in-app notification to {repName?.split(' ')[0] || 'the rep'} and copy the full agenda to your clipboard.
+                </p>
+              </div>
+            )}
           </div>
         </div>
       </div>

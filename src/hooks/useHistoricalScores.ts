@@ -1,6 +1,9 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '../supabaseClient';
 import { DEFAULT_TREND_WEEKS } from '../constants/kpiGuidance';
+import { getMonday } from '../utils/dateUtils';
+import { calcPct } from '../utils/kpiCalc';
+import { LEADERSHIP_ROLE_FILTER } from '../constants/roles';
 
 interface HistoricalScorePoint {
   week: string;
@@ -14,18 +17,10 @@ interface DateRange {
   end: string;
 }
 
-// Returns the Monday of the week containing the given date.
-// This ensures weekly windows align with the Mon–Sun periods stored in kpi_values.
-function getMonday(date: Date): Date {
-  const d = new Date(date);
-  d.setHours(0, 0, 0, 0);
-  const day = d.getDay(); // 0=Sun, 1=Mon … 6=Sat
-  const diff = day === 0 ? -6 : 1 - day;
-  d.setDate(d.getDate() + diff);
-  return d;
-}
+// getMonday imported from ../utils/dateUtils (X1 fix: single implementation)
 
 export function useHistoricalScores(
+  organizationId: string | null,
   selectedDepartments: string[],
   selectedTeams: string[],
   selectedMembers: string[],
@@ -46,26 +41,46 @@ export function useHistoricalScores(
         setLoading(true);
         setError(null);
 
-        // Current scorecard KPI list — used as fallback if no history row found.
-        const { data: scorecardKpis, error: kpiError } = await supabase
-          .from('kpi_metrics')
-          .select('id, weight, goal, direction')
-          .eq('is_active', true)
-          .eq('show_on_scorecard', true);
+        // Current scorecard KPI list — org-scoped via kpi_org_configs.
+        // Falls back to global kpi_metrics if no organizationId.
+        let scorecardKpis: any[] = [];
+        if (organizationId) {
+          const { data, error: kpiError } = await supabase
+            .from('kpi_org_configs')
+            .select('kpi_id, goal, weight, show_on_scorecard, kpi_metrics!inner(id, direction)')
+            .eq('organization_id', organizationId)
+            .eq('is_active', true)
+            .eq('show_on_scorecard', true);
+          if (kpiError) throw kpiError;
+          scorecardKpis = (data || []).map((c: any) => ({
+            id: (c.kpi_metrics as any).id,
+            weight: c.weight,
+            goal: c.goal,
+            direction: (c.kpi_metrics as any).direction,
+          }));
+        } else {
+          const { data, error: kpiError } = await supabase
+            .from('kpi_metrics')
+            .select('id, weight, goal, direction')
+            .eq('is_active', true)
+            .eq('show_on_scorecard', true);
+          if (kpiError) throw kpiError;
+          scorecardKpis = data || [];
+        }
 
-        if (kpiError) throw kpiError;
-
-        if (!scorecardKpis || scorecardKpis.length === 0) {
+        if (scorecardKpis.length === 0) {
           if (!cancelled) setData([]);
           return;
         }
 
         const kpiIds = scorecardKpis.map((k: any) => k.id);
 
+        if (!organizationId) { if (!cancelled) setData([]); return; }
         let profilesQuery = supabase
           .from('profiles')
           .select('id, first_name, last_name, team_id, department')
-          .not('role', 'in', '("admin","manager","coach")');
+          .not('role', 'in', LEADERSHIP_ROLE_FILTER)
+          .eq('organization_id', organizationId);
 
         if (selectedDepartments.length > 0) {
           profilesQuery = profilesQuery.in('department', selectedDepartments);
@@ -144,30 +159,43 @@ export function useHistoricalScores(
           return (scorecardKpis || []).find((k: any) => k.id === kpiId);
         }
 
-        // ── Weekly score loop ─────────────────────────────────────────────────
+        // ── H3 fix: Single batched query for all weeks ────────────────────────
         const scoreData: HistoricalScorePoint[] = [];
 
+        // Build week boundaries for all weeks
+        const weekBoundaries: { weekStart: Date; weekEnd: Date }[] = [];
         for (let i = weeks - 1; i >= 0; i -= 1) {
-          // Generate exact Mon–Sun week boundaries anchored to the calendar week
-          // containing endDate. This prevents any window from spanning two DB records.
           const weekStart = new Date(anchorMonday.getTime() - i * 7 * 24 * 60 * 60 * 1000);
           const weekEnd   = new Date(weekStart.getTime() + 6 * 24 * 60 * 60 * 1000);
+          weekBoundaries.push({ weekStart, weekEnd });
+        }
 
+        // Single query spanning entire date range instead of one per week
+        const firstWeekStart = weekBoundaries[0].weekStart.toISOString().split('T')[0];
+        const lastWeekEnd = weekBoundaries[weekBoundaries.length - 1].weekEnd.toISOString().split('T')[0];
+
+        const { data: allKpiValues, error: valuesError } = await supabase
+          .from('kpi_values')
+          .select('value, kpi_id, profile_id, period_start, period_end')
+          .in('kpi_id', kpiIds)
+          .in('profile_id', profileIds)
+          .lte('period_start', lastWeekEnd)
+          .gte('period_end', firstWeekStart);
+
+        if (valuesError) throw valuesError;
+
+        // Bucket values into weeks client-side
+        for (const { weekStart, weekEnd } of weekBoundaries) {
           const weekStartStr = weekStart.toISOString().split('T')[0];
           const weekEndStr   = weekEnd.toISOString().split('T')[0];
 
-          const { data: kpiValues, error: valuesError } = await supabase
-            .from('kpi_values')
-            .select('value, kpi_id, profile_id')
-            .in('kpi_id', kpiIds)
-            .in('profile_id', profileIds)
-            .lte('period_start', weekEndStr)
-            .gte('period_end', weekStartStr);
-
-          if (valuesError) throw valuesError;
+          // Filter values that overlap this week's range
+          const kpiValues = (allKpiValues || []).filter((kv: any) =>
+            kv.period_start <= weekEndStr && kv.period_end >= weekStartStr
+          );
 
           let weightedScore = 0;
-          const hasData = !!(kpiValues && kpiValues.length > 0);
+          const hasData = kpiValues.length > 0;
           const weekPoint: HistoricalScorePoint = {
             week: `${weekEnd.getMonth() + 1}/${weekEnd.getDate()}`,
             score: 0,
@@ -201,9 +229,7 @@ export function useHistoricalScores(
                 if (!config) return;
                 const value = repKpiSums.get(repId)?.get(kpiId) || 0;
                 const dir = config.direction || 'higher';
-                const percentage = config.goal > 0
-                  ? (dir === 'lower' ? (value > 0 ? Math.min((config.goal / value) * 100, 200) : 200) : Math.min((value / config.goal) * 100, 200))
-                  : 0;
+                const percentage = calcPct(value, config.goal, dir);
                 repTotal += percentage * (config.weight || 0);
               });
               const score = weekTotalWeight > 0 ? repTotal / weekTotalWeight : 0;
@@ -241,7 +267,7 @@ export function useHistoricalScores(
     return () => {
       cancelled = true;
     };
-  }, [selectedDepartments, selectedTeams, selectedMembers, dateRange.start, dateRange.end, dateRangeLabel, refreshTrigger]);
+  }, [organizationId, selectedDepartments, selectedTeams, selectedMembers, dateRange.start, dateRange.end, dateRangeLabel, refreshTrigger]);
 
   return { data, repNames, loading, error };
 }

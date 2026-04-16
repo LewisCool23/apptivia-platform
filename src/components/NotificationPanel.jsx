@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Bell, Check, Trash2, X, Trophy, Award, TrendingUp, AlertTriangle, Flame, Plug, Star } from 'lucide-react';
 import { useNotifications } from '../contexts/NotificationContext';
 import { useAuth } from '../AuthContext';
+import { ROLES } from '../constants/roles';
 
 export default function NotificationPanel() {
     const getTypeIcon = (type) => {
@@ -43,7 +44,7 @@ export default function NotificationPanel() {
     closePanel,
   } = useNotifications();
 
-  const showRep = role === 'admin' || role === 'manager';
+  const showRep = role === ROLES.ADMIN || role === ROLES.MANAGER;
 
   const formatRepName = (value) => {
     if (!value) return 'Unknown';
@@ -122,7 +123,7 @@ export default function NotificationPanel() {
               {notifications.map((n) => {
                 const meta = getTypeIcon(n.type);
                 const Icon = meta.icon;
-                const shouldShowRep = role === 'admin' || role === 'manager';
+                const shouldShowRep = role === ROLES.ADMIN || role === ROLES.MANAGER;
                 const repRaw = n.repName || n.ownerName || (String(n.ownerId) === String(user?.id) ? 'You' : 'Unknown');
                 const repLabel = formatRepName(repRaw);
                 return (

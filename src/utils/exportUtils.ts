@@ -6,6 +6,21 @@ interface ExportData {
   filename: string;
 }
 
+/** Map of kpi_key → unit string (e.g. 'currency', 'minutes', 'percentage') */
+export type KpiUnitMap = Record<string, string>;
+
+/** Format a raw KPI value based on its unit type */
+export function formatKpiValue(value: number, unit?: string): string {
+  if (value == null || isNaN(value)) return '0';
+  if (unit === 'currency' || unit === 'dollars') return '$' + Math.round(value).toLocaleString();
+  if (unit === 'percentage' || unit === 'percent') return value.toFixed(1) + '%';
+  if (unit === 'minutes') return Math.round(value).toLocaleString() + 'm';
+  if (unit === 'seconds') return Math.round(value).toLocaleString() + 's';
+  if (unit === 'hours') return Math.round(value).toLocaleString() + ' hrs';
+  if (unit === 'days') return Math.round(value).toLocaleString() + ' days';
+  return Math.round(value).toLocaleString();
+}
+
 export function exportToCSV(data: ExportData) {
   const { headers, rows, filename } = data;
 
@@ -44,42 +59,30 @@ export function exportToCSV(data: ExportData) {
   document.body.removeChild(link);
 }
 
-export function exportScorecardToCSV(data: any, filters: any) {
+export function exportScorecardToCSV(data: any, filters: any, kpiUnits: KpiUnitMap = {}) {
+  const kpiKeys: string[] = data.scorecardKpiKeys || [];
+  const prettify = (key: string) => key.replace(/_/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase());
+
   const headers = [
     'Rep Name',
-    'Call Connects',
-    'Call Connects %',
-    'Talk Time Minutes',
-    'Talk Time %',
-    'Meetings',
-    'Meetings %',
-    'Sourced Opportunities',
-    'Sourced Opps %',
-    'Stage 2 Opportunities',
-    'Stage 2 Opps %',
+    ...kpiKeys.flatMap((k: string) => [prettify(k), prettify(k) + ' %']),
     'Apptivity Score'
   ];
 
   const rows = data.rows.map((row: any) => [
     row.name,
-    Math.round(row.kpis.call_connects?.value || 0),
-    Math.round(row.kpis.call_connects?.percentage || 0),
-    Math.round(row.kpis.talk_time_minutes?.value || 0),
-    Math.round(row.kpis.talk_time_minutes?.percentage || 0),
-    Math.round(row.kpis.meetings?.value || 0),
-    Math.round(row.kpis.meetings?.percentage || 0),
-    Math.round(row.kpis.sourced_opps?.value || 0),
-    Math.round(row.kpis.sourced_opps?.percentage || 0),
-    Math.round(row.kpis.stage2_opps?.value || 0),
-    Math.round(row.kpis.stage2_opps?.percentage || 0),
+    ...kpiKeys.flatMap((k: string) => [
+      formatKpiValue(row.kpis?.[k]?.value || 0, kpiUnits[k]),
+      Math.round(row.kpis?.[k]?.percentage || 0),
+    ]),
     row.apptivityScore
   ]);
 
   // Add summary row
   rows.push([]);
   rows.push(['Summary Statistics']);
-  rows.push(['Top Performer', data.topPerformer?.name || 'N/A', '', '', '', '', '', '', '', '', '', data.topPerformer?.score || 0]);
-  rows.push(['Team Average', '', '', '', '', '', '', '', '', '', '', data.teamAverage]);
+  rows.push(['Top Performer', data.topPerformer?.name || 'N/A', ...Array(kpiKeys.length * 2 - 1).fill(''), data.topPerformer?.score || 0]);
+  rows.push(['Team Average', ...Array(kpiKeys.length * 2).fill(''), data.teamAverage]);
   rows.push(['Above Target', data.aboveTarget]);
   rows.push(['Need Coaching', data.needCoaching]);
 
@@ -169,7 +172,36 @@ export function exportContestResultsToCSV(contest: any) {
   });
 }
 
-export function exportAnalyticsToCSV(data: any, aggregateKPIs: any, filters: any) {
+export function exportBadgesToCSV(badges: any[], profile?: any) {
+  const earned = badges.filter((b: any) => b.earned_at || b.is_earned);
+  const headers = ['Badge Name', 'Category', 'Rarity', 'Points', 'Earned Date'];
+
+  const rows = earned.map((b: any) => [
+    b.badge_name || b.name || 'Badge',
+    b.badge_type || b.category || '',
+    b.rarity || 'common',
+    b.points || 0,
+    b.earned_at ? new Date(b.earned_at).toLocaleDateString() : '-',
+  ]);
+
+  // Summary
+  rows.push([]);
+  rows.push(['Badge Summary']);
+  rows.push(['Total Earned', earned.length]);
+  rows.push(['Legendary', earned.filter((b: any) => b.rarity === 'legendary').length]);
+  rows.push(['Epic', earned.filter((b: any) => b.rarity === 'epic').length]);
+  rows.push(['Rare', earned.filter((b: any) => b.rarity === 'rare').length]);
+  rows.push(['Uncommon', earned.filter((b: any) => b.rarity === 'uncommon').length]);
+  rows.push(['Common', earned.filter((b: any) => b.rarity === 'common').length]);
+  if (profile) {
+    rows.push([]);
+    rows.push(['Profile', `${profile.first_name || ''} ${profile.last_name || ''}`.trim()]);
+  }
+
+  exportToCSV({ headers, rows, filename: 'apptivia_badges' });
+}
+
+export function exportAnalyticsToCSV(data: any, aggregateKPIs: any, filters: any, kpiUnits: KpiUnitMap = {}) {
   // Build KPI columns from scorecard keys
   const kpiKeys: string[] = data.scorecardKpiKeys || [];
   const prettify = (key: string) => key.replace(/_/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase());
@@ -189,7 +221,7 @@ export function exportAnalyticsToCSV(data: any, aggregateKPIs: any, filters: any
     row.apptivityScore + '%',
     ...kpiKeys.flatMap((k: string) => {
       const kpi = row.kpis?.[k];
-      return [kpi?.value ?? '', kpi?.percentage != null ? kpi.percentage + '%' : ''];
+      return [kpi?.value != null ? formatKpiValue(kpi.value, kpiUnits[k]) : '', kpi?.percentage != null ? kpi.percentage + '%' : ''];
     }),
   ]);
 
@@ -198,7 +230,7 @@ export function exportAnalyticsToCSV(data: any, aggregateKPIs: any, filters: any
   rows.push(['Aggregate KPIs']);
   if (Array.isArray(aggregateKPIs)) {
     aggregateKPIs.forEach((kpi: any) => {
-      rows.push([kpi.name, kpi.total]);
+      rows.push([kpi.name, formatKpiValue(kpi.total, kpi.unit)]);
     });
   } else {
     // Legacy fallback

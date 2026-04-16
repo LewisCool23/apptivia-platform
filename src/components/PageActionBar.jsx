@@ -1,9 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { 
-  Filter, 
-  Download, 
-  Settings, 
-  Bell, 
+import {
+  Filter,
+  Settings,
+  Bell,
   MoreVertical
 } from 'lucide-react';
 
@@ -74,7 +73,6 @@ export default function PageActionBar({
     <div className="flex gap-2 items-center">
       {iconButton(Filter, 'Filters', onFilterClick, filterBadge)}
       {iconButton(Settings, 'Configure', onConfigureClick, 0, configureDisabled)}
-      {iconButton(Download, 'Export', onExportClick, 0, exportDisabled)}
       {iconButton(Bell, 'Notifications', onNotificationsClick, notificationBadge)}
       
       {/* Actions Dropdown */}

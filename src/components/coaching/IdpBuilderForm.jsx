@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Plus, Trash2, GripVertical, Sparkles } from 'lucide-react';
 import { buildLabel } from '../../constants/kpiGuidance';
 import { idpPlanTypes } from './idpStatusConfig';
+import { LEADERSHIP_ROLES } from '../../constants/roles';
 
 export default function IdpBuilderForm({
   editingIdp,
@@ -17,7 +18,8 @@ export default function IdpBuilderForm({
 }) {
   const updateField = (field, value) => setForm(prev => ({ ...prev, [field]: value }));
 
-  const addArrayItem = (field, item) => setForm(prev => ({ ...prev, [field]: [...(prev[field] || []), item] }));
+  let _keyCounter = 0;
+  const addArrayItem = (field, item) => setForm(prev => ({ ...prev, [field]: [...(prev[field] || []), { ...item, _key: `${field}_${Date.now()}_${_keyCounter++}` }] }));
   const updateArrayItem = (field, idx, item) => setForm(prev => ({
     ...prev, [field]: (prev[field] || []).map((v, i) => i === idx ? { ...v, ...item } : v)
   }));
@@ -25,7 +27,7 @@ export default function IdpBuilderForm({
     ...prev, [field]: (prev[field] || []).filter((_, i) => i !== idx)
   }));
 
-  const repMembers = (teamMembers || []).filter(m => !['admin', 'manager', 'coach'].includes(m.role));
+  const repMembers = (teamMembers || []).filter(m => !LEADERSHIP_ROLES.includes(m.role));
 
   return (
     <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6 relative">
@@ -166,7 +168,7 @@ export default function IdpBuilderForm({
               className="text-xs text-blue-600 hover:text-blue-800 flex items-center gap-1"><Plus size={12} /> Add</button>
           </div>
           {(form.career_goals || []).map((item, idx) => (
-            <div key={idx} className="flex gap-2 mb-2">
+            <div key={item._key || idx} className="flex gap-2 mb-2">
               <input value={item.goal || ''} onChange={e => updateArrayItem('career_goals', idx, { goal: e.target.value })}
                 className="flex-1 border border-gray-300 rounded-md px-3 py-1.5 text-sm" placeholder="Goal description" />
               <input value={item.timeframe || ''} onChange={e => updateArrayItem('career_goals', idx, { timeframe: e.target.value })}
@@ -184,7 +186,7 @@ export default function IdpBuilderForm({
               className="text-xs text-blue-600 hover:text-blue-800 flex items-center gap-1"><Plus size={12} /> Add</button>
           </div>
           {(form.development_areas || []).map((item, idx) => (
-            <div key={idx} className="flex gap-2 mb-2 items-center">
+            <div key={item._key || idx} className="flex gap-2 mb-2 items-center">
               <input value={item.area || ''} onChange={e => updateArrayItem('development_areas', idx, { area: e.target.value })}
                 className="flex-1 border border-gray-300 rounded-md px-3 py-1.5 text-sm" placeholder="Area name" />
               <select value={item.current_level || 'beginner'} onChange={e => updateArrayItem('development_areas', idx, { current_level: e.target.value })}
@@ -211,7 +213,7 @@ export default function IdpBuilderForm({
               className="text-xs text-blue-600 hover:text-blue-800 flex items-center gap-1"><Plus size={12} /> Add</button>
           </div>
           {(form.milestones || []).map((item, idx) => (
-            <div key={idx} className="flex gap-2 mb-2 items-center">
+            <div key={item._key || idx} className="flex gap-2 mb-2 items-center">
               <input value={item.title || ''} onChange={e => updateArrayItem('milestones', idx, { title: e.target.value })}
                 className="flex-1 border border-gray-300 rounded-md px-3 py-1.5 text-sm" placeholder="Milestone title" />
               <input type="date" value={item.target_date || ''} onChange={e => updateArrayItem('milestones', idx, { target_date: e.target.value })}
@@ -233,7 +235,7 @@ export default function IdpBuilderForm({
               className="text-xs text-blue-600 hover:text-blue-800 flex items-center gap-1"><Plus size={12} /> Add</button>
           </div>
           {(form.action_items || []).map((item, idx) => (
-            <div key={idx} className="flex gap-2 mb-2 items-center">
+            <div key={item._key || idx} className="flex gap-2 mb-2 items-center">
               <input value={item.action || ''} onChange={e => updateArrayItem('action_items', idx, { action: e.target.value })}
                 className="flex-1 border border-gray-300 rounded-md px-3 py-1.5 text-sm" placeholder="Action item" />
               <select value={item.category || 'practice'} onChange={e => updateArrayItem('action_items', idx, { category: e.target.value })}
@@ -254,7 +256,7 @@ export default function IdpBuilderForm({
               className="text-xs text-blue-600 hover:text-blue-800 flex items-center gap-1"><Plus size={12} /> Add</button>
           </div>
           {(form.resources || []).map((item, idx) => (
-            <div key={idx} className="flex gap-2 mb-2 items-center">
+            <div key={item._key || idx} className="flex gap-2 mb-2 items-center">
               <input value={item.title || ''} onChange={e => updateArrayItem('resources', idx, { title: e.target.value })}
                 className="flex-1 border border-gray-300 rounded-md px-3 py-1.5 text-sm" placeholder="Resource title" />
               <select value={item.type || 'guide'} onChange={e => updateArrayItem('resources', idx, { type: e.target.value })}
@@ -275,7 +277,7 @@ export default function IdpBuilderForm({
               className="text-xs text-blue-600 hover:text-blue-800 flex items-center gap-1"><Plus size={12} /> Add</button>
           </div>
           {(form.success_criteria || []).map((item, idx) => (
-            <div key={idx} className="flex gap-2 mb-2 items-center">
+            <div key={item._key || idx} className="flex gap-2 mb-2 items-center">
               <input value={item.criterion || ''} onChange={e => updateArrayItem('success_criteria', idx, { criterion: e.target.value })}
                 className="flex-1 border border-gray-300 rounded-md px-3 py-1.5 text-sm" placeholder="Success criterion" />
               <button type="button" onClick={() => removeArrayItem('success_criteria', idx)} className="text-red-400 hover:text-red-600"><Trash2 size={14} /></button>

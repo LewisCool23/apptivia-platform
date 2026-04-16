@@ -11,8 +11,11 @@ const levelColors = {
   advanced: 'bg-purple-100 text-purple-700',
 };
 
-export default function IdpDetailModal({ idp, onClose, onStatusChange, onMilestoneToggle, canManage }) {
+export default function IdpDetailModal({ idp, onClose, onStatusChange, onMilestoneToggle, canManage, teamMembers }) {
   if (!idp) return null;
+
+  const assignedRep = (teamMembers || []).find(m => m.id === idp.profile_id);
+  const repName = assignedRep ? (assignedRep.full_name || `${assignedRep.first_name || ''} ${assignedRep.last_name || ''}`.trim() || assignedRep.email) : null;
 
   const isOverdue = idp.period_end && new Date() > new Date(idp.period_end) && idp.status !== 'completed' && idp.status !== 'cancelled';
   const displayStatus = isOverdue ? 'overdue' : idp.status;
@@ -54,6 +57,7 @@ export default function IdpDetailModal({ idp, onClose, onStatusChange, onMilesto
                 {idpPlanTypes[idp.plan_type]?.label || idp.plan_type}
               </span>
             </div>
+            {repName && <p className="text-sm text-gray-500 mt-1">Assigned to: {repName}</p>}
             {idp.description && <p className="text-sm text-gray-600">{idp.description}</p>}
             {idp.period_start && idp.period_end && (
               <div className="flex items-center gap-1.5 mt-2 text-xs text-gray-500">

@@ -341,8 +341,12 @@ export function getRolePermissions(role) {
   return ROLE_DEFAULT_PERMISSIONS[normalized] || ROLE_DEFAULT_PERMISSIONS.power_user;
 }
 
-export function getEffectivePermissions({ role, permissionOverrides = {}, explicitPermissions = [] }) {
+export function getEffectivePermissions({ role, secondaryRole, permissionOverrides = {}, explicitPermissions = [] }) {
   const base = new Set(getRolePermissions(role));
+  // Merge permissions from secondary role (dual admin+manager support)
+  if (secondaryRole) {
+    getRolePermissions(secondaryRole).forEach(p => base.add(p));
+  }
   if (Array.isArray(explicitPermissions)) {
     explicitPermissions.forEach(p => base.add(p));
   }

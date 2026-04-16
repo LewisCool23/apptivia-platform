@@ -14,6 +14,9 @@
 
 const Anthropic = require('@anthropic-ai/sdk');
 
+// ── Anti-AI-Slop Style Rule ──────────────────────────────────
+const AI_STYLE_RULE = `\nSTYLE RULE: Write in plain, direct business language. Never use these words or phrases: "delve", "unleash", "game-changer", "transformative", "unlock potential", "leverage" (as a verb), "cutting-edge", "revolutionary", "paradigm shift", "synergy", "elevate", "empower", "holistic", "robust", "seamless", "streamline", "harness". Be specific and concrete — not vague or generic.`;
+
 // ── Helpers ──────────────────────────────────────────────────
 
 function env(key) {
@@ -30,6 +33,31 @@ async function fetchJson(url, options = {}) {
     throw new Error(`${res.status} ${res.statusText}: ${text}`);
   }
   return res.json();
+}
+
+// ── Enrichment Logging ───────────────────────────────────────
+
+/**
+ * Non-blocking enrichment log writer.
+ * Never throws — a logging failure must never affect the enrichment pipeline.
+ */
+async function logEnrichment({ supabase, organizationId, domain, prospectEmail, enrichmentType, provider, hit, fieldsFilled = [], errorMessage = null, fromCache = false }) {
+  if (!supabase) return; // supabase client is optional — skip if not passed
+  try {
+    await supabase.from('engage_enrichment_log').insert({
+      organization_id: organizationId || null,
+      domain:          domain         || null,
+      prospect_email:  prospectEmail  || null,
+      enrichment_type: enrichmentType,
+      provider,
+      hit,
+      fields_filled:   fieldsFilled,
+      error_message:   errorMessage   || null,
+      from_cache:      fromCache,
+    });
+  } catch (err) {
+    console.warn('[enrichment_log] write failed:', err.message);
+  }
 }
 
 // ── Apollo.io ────────────────────────────────────────────────
@@ -84,8 +112,8 @@ async function hunterEnrichPeople(domain, people) {
   return enriched;
 }
 
-async function apolloSearchPeople(filters = {}) {
-  const key = env('APOLLO_API_KEY');
+async function apolloSearchPeople(filters = {}, opts = {}) {
+  const key = opts.apiKeyOverride || env('APOLLO_API_KEY');
   if (!key) throw new Error('APOLLO_API_KEY not configured');
 
   // Cap results — we enrich each one individually to get contact info
@@ -367,7 +395,7 @@ Return ONLY valid JSON with this exact shape:
   "risk_factors": ["risk 1"],
   "icp_fit_score": 75,
   "icp_reasoning": "Why this company is/isn't a good fit"
-}`;
+}` + AI_STYLE_RULE;
 
   const userMessage = `Company data:\n${JSON.stringify(companyData, null, 2)}\n\nWeb search results:\n${JSON.stringify(webResults, null, 2)}`;
 
@@ -408,7 +436,7 @@ Return ONLY valid JSON with this shape:
   "best_time_to_reach": "Suggested timing",
   "fit_score": 80,
   "fit_reasoning": "Why this prospect is a good/poor fit"
-}`;
+}` + AI_STYLE_RULE;
 
   const userMessage = `Prospect:\n${JSON.stringify(prospectData, null, 2)}\n\nCompany:\n${JSON.stringify(companyData, null, 2)}\n\nWeb results:\n${JSON.stringify(webResults, null, 2)}`;
 
@@ -437,7 +465,32 @@ async function generateOutreachDraft(prospectData, companyBrief, options = {}) {
   const channel = options.channel || 'email';
   const tone = options.tone || 'professional';
 
-  const systemPrompt = `You are an expert sales copywriter for Apptivia Engage.
+  // If a prompt template was selected, use its prompts with variable substitution
+  let systemPrompt, userMessage;
+
+  if (options.template_system_prompt || options.template_user_prompt) {
+    const prospectName = prospectData?.name || `${prospectData?.first_name || ''} ${prospectData?.last_name || ''}`.trim() || 'the prospect';
+    const companyName = prospectData?.organization?.name || prospectData?.company_name || companyBrief?.company?.name || 'the company';
+    const vars = {
+      COMPANY: companyName,
+      PROSPECT: prospectName,
+      SELECTED_ANGLE: options.selected_angle || '',
+      TONE: tone,
+      CHANNEL: channel,
+    };
+    const replaceVars = (str) => str.replace(/\{\{(\w+)\}\}/g, (_, k) => vars[k] || '');
+
+    systemPrompt = (options.template_system_prompt
+      ? replaceVars(options.template_system_prompt)
+      : `You are an expert sales copywriter.`) + '\n\n' +
+      `Return ONLY valid JSON. The JSON structure depends on the task.` + AI_STYLE_RULE;
+
+    userMessage = options.template_user_prompt
+      ? replaceVars(options.template_user_prompt) +
+        `\n\nProspect data:\n${JSON.stringify(prospectData, null, 2)}\n\nCompany brief:\n${JSON.stringify(companyBrief, null, 2)}\n\nTone: ${tone}\nChannel: ${channel}`
+      : `Prospect:\n${JSON.stringify(prospectData, null, 2)}\n\nCompany brief:\n${JSON.stringify(companyBrief, null, 2)}\n\nTone: ${tone}\nChannel: ${channel}`;
+  } else {
+    systemPrompt = `You are an expert sales copywriter for Apptivia Engage.
 Write a personalised ${channel} outreach message with a ${tone} tone.
 
 Rules:
@@ -453,9 +506,10 @@ Return ONLY valid JSON:
   "body": "The message body",
   "personalization_points": ["detail 1 used", "detail 2 used"],
   "cta_type": "meeting|resource|question|intro"
-}`;
+}` + AI_STYLE_RULE;
 
-  const userMessage = `Prospect:\n${JSON.stringify(prospectData, null, 2)}\n\nCompany brief:\n${JSON.stringify(companyBrief, null, 2)}\n\nTone: ${tone}\nChannel: ${channel}`;
+    userMessage = `Prospect:\n${JSON.stringify(prospectData, null, 2)}\n\nCompany brief:\n${JSON.stringify(companyBrief, null, 2)}\n\nTone: ${tone}\nChannel: ${channel}`;
+  }
 
   const response = await client.messages.create({
     model: 'claude-sonnet-4-20250514',
@@ -479,13 +533,49 @@ Return ONLY valid JSON:
 // ── Composite Orchestration Functions ────────────────────────
 
 /**
+ * Returns an object describing which key company fields are present vs missing.
+ * Used to determine enrichment sufficiency and decide whether additional providers are needed.
+ *
+ * @param {object} company — merged company object (Apollo + any prior enrichment)
+ * @returns {{ sufficient: boolean, missing: string[], present: string[] }}
+ */
+function checkCompanySufficiency(company = {}) {
+  const KEY_FIELDS = [
+    { key: 'industry',        check: v => !!v },
+    { key: 'employee_count',  check: v => v != null },
+    { key: 'annual_revenue',  check: v => !!v },
+    { key: 'technologies',    check: v => Array.isArray(v) && v.length > 0 },
+    { key: 'total_funding',   check: v => v != null },
+    { key: 'founded_year',    check: v => v != null },
+    { key: 'linkedin_url',    check: v => !!v },
+  ];
+
+  const present = [];
+  const missing = [];
+
+  for (const { key, check } of KEY_FIELDS) {
+    if (check(company[key])) {
+      present.push(key);
+    } else {
+      missing.push(key);
+    }
+  }
+
+  return {
+    sufficient: missing.length === 0,
+    missing,
+    present,
+  };
+}
+
+/**
  * Full company research pipeline:
  * 1. Enrich from Apollo
  * 2. AI web search via Tavily
  * 3. Generate AI brief
  */
-async function researchCompany(domain) {
-  const steps = { apollo: null, tavily: null, brief: null };
+async function researchCompany(domain, context = {}) {
+  const steps = { apollo: null, pdl: null, tavily: null, brief: null };
 
   // Step 1: Apollo enrichment
   try {
@@ -494,9 +584,63 @@ async function researchCompany(domain) {
     steps.apollo = { error: err.message };
   }
 
-  // Step 2: Web search
+  await logEnrichment({
+    supabase:       context.supabase,
+    organizationId: context.organizationId,
+    domain,
+    enrichmentType: 'company',
+    provider:       'apollo',
+    hit:            !steps.apollo?.error && !!steps.apollo?.organization,
+    fieldsFilled:   steps.apollo?.organization
+      ? Object.keys(steps.apollo.organization).filter(k => steps.apollo.organization[k] != null)
+      : [],
+    errorMessage:   steps.apollo?.error || null,
+  });
+
+  // Step 2: PDL company enrichment — always fires as a complement to Apollo
+  const apolloOrg = steps.apollo?.organization || {};
+
+  if (process.env.PDL_API_KEY) {
+    try {
+      steps.pdl = await pdlEnrichCompany(domain);
+    } catch (err) {
+      steps.pdl = { error: err.message }; // non-blocking
+    }
+  }
+
+  await logEnrichment({
+    supabase:       context.supabase,
+    organizationId: context.organizationId,
+    domain,
+    enrichmentType: 'company',
+    provider:       'pdl',
+    hit:            !steps.pdl?.error && !!steps.pdl?.data,
+    fieldsFilled:   steps.pdl?.data
+      ? Object.keys(steps.pdl.data).filter(k => steps.pdl.data[k] != null)
+      : [],
+    errorMessage:   steps.pdl?.error || null,
+  });
+
+  // Merge: Apollo fields take precedence, PDL fills gaps
+  const pdlData = steps.pdl?.data || {};
+  const mergedCompany = {
+    ...apolloOrg,
+    industry:        apolloOrg.industry               || pdlData.industry             || null,
+    employee_count:  apolloOrg.num_employees          || pdlData.employee_count       || null,
+    annual_revenue:  apolloOrg.annual_revenue_printed || pdlData.annual_revenue       || null,
+    technologies:    apolloOrg.technologies?.length
+                       ? apolloOrg.technologies
+                       : (pdlData.technologies || []),
+    tech_categories: pdlData.tech_category            || null,
+    total_funding:   apolloOrg.total_funding          || pdlData.total_funding_raised || null,
+    founded_year:    apolloOrg.founded_year           || pdlData.founded              || null,
+    linkedin_url:    apolloOrg.linkedin_url           || pdlData.linkedin_url         || null,
+    pdl_enriched:    !!steps.pdl?.data,
+  };
+
+  // Step 3: Web search
   try {
-    const companyName = steps.apollo?.organization?.name || domain;
+    const companyName = mergedCompany.name || domain;
     steps.tavily = await tavilySearch(
       `${companyName} company news funding tech stack 2024 2025`,
       { depth: 'advanced', max_results: 8 }
@@ -505,10 +649,10 @@ async function researchCompany(domain) {
     steps.tavily = { error: err.message };
   }
 
-  // Step 3: AI brief
+  // Step 4: AI brief — receives merged Apollo + PDL data
   try {
     steps.brief = await generateCompanyBrief(
-      steps.apollo?.organization || { domain },
+      mergedCompany,
       steps.tavily?.results || []
     );
   } catch (err) {
@@ -516,14 +660,16 @@ async function researchCompany(domain) {
   }
 
   return {
-    company: steps.apollo?.organization || null,
+    company: mergedCompany,
+    sufficiency: checkCompanySufficiency(mergedCompany),
     web_results: steps.tavily?.results || [],
     brief: steps.brief?.content || null,
     tokens_used: steps.brief?.tokens_used || 0,
     data_sources: [
       steps.apollo?.error ? null : 'apollo',
+      steps.pdl?.data     ? 'pdl' : null,
       steps.tavily?.error ? null : 'tavily',
-      steps.brief?.error ? null : 'claude',
+      steps.brief?.error  ? null : 'claude',
     ].filter(Boolean),
     errors: Object.entries(steps)
       .filter(([, v]) => v?.error)
@@ -630,6 +776,10 @@ module.exports = {
   generateCompanyBrief,
   generateProspectBrief,
   generateOutreachDraft,
+
+  // Logging & analysis
+  logEnrichment,
+  checkCompanySufficiency,
 
   // High-level orchestration
   researchCompany,

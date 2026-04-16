@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { backendFetch } from '../utils/backendFetch';
+import { calcPct } from '../utils/kpiCalc';
 import { useNavigate, useSearchParams, useLocation } from 'react-router-dom';
 import { Search, X } from 'lucide-react';
 import DashboardLayout from '../DashboardLayout';
@@ -9,6 +10,7 @@ import ConfigurePanel from '../components/ConfigurePanel';
 import ConfigureModal from '../components/ConfigureModal';
 import CoachingPlanTemplatesModal from '../components/CoachingPlanTemplatesModal';
 import ConfirmModal from '../components/ConfirmModal';
+import { ROLES, LEADERSHIP_ROLES } from '../constants/roles';
 import PlanBuilderForm from '../components/coaching/PlanBuilderForm';
 import PlanCard from '../components/coaching/PlanCard';
 import PlanDetailModal from '../components/coaching/PlanDetailModal';
@@ -23,6 +25,8 @@ import { useToast } from '../contexts/ToastContext';
 import { supabase } from '../supabaseClient';
 import { buildCoachingPlanEmailHtml, buildCoachingPlanEmailText, parseEnrichedContent, buildEnrichedContent } from '../utils/emailTemplates';
 import { KPI_GUIDANCE, buildLabel } from '../constants/kpiGuidance';
+import { useBilling } from '../hooks/useBilling';
+import UpgradePrompt from '../components/UpgradePrompt';
 import { estimateSkillsetXp } from '../constants/skillsets';
 import { fetchScorecardDataForTeam, fetchHistoricalScoresForTeam } from '../utils/scorecardFetch';
 import { buildPlaybookSummary } from '../components/DataDrivenPlaybook';
@@ -34,6 +38,9 @@ export default function CoachingPlans() {
   const [searchParams, setSearchParams] = useSearchParams();
   const { user, profile, role, hasPermission } = useAuth();
   const toast = useToast();
+  const { plan: billingPlan } = useBilling();
+  const isBasic = billingPlan === 'Basic';
+  const [showUpgradeNudge, setShowUpgradeNudge] = useState(false);
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [configPanelOpen, setConfigPanelOpen] = useState(false);
   const [showConfigModal, setShowConfigModal] = useState(false);
@@ -63,12 +70,17 @@ export default function CoachingPlans() {
   const [sharingPlan, setSharingPlan] = useState(false);
   const [savedCoachingContext, setSavedCoachingContext] = useState(null); // coaching context for enriched content on save
   const [planFor, setPlanFor] = useState({ type: 'individual', memberId: null }); // who is this plan for?
-  const [activeTab, setActiveTab] = useState('rep-plans'); // 'rep-plans' | 'playbooks'
+  const [activeTab, setActiveTab] = useState('rep-plans'); // 'rep-plans' | 'playbooks' | 'aaron-actions'
   const [managers, setManagers] = useState([]);
   const [autoGenerating, setAutoGenerating] = useState(false);
   const [skillsetPreview, setSkillsetPreview] = useState(null);
   const [fulfillingRequestId, setFulfillingRequestId] = useState(null);
   const [planRequests, setPlanRequests] = useState([]);
+
+  // [FEATURE 5] Aaron coaching actions
+  const [coachingActions, setCoachingActions] = useState([]);
+  const [actionsLoading, setActionsLoading] = useState(false);
+  const [actionsSummary, setActionsSummary] = useState(null);
   const [planRequestsLoading, setPlanRequestsLoading] = useState(false);
   const [snapshotPlan, setSnapshotPlan] = useState(null);
 
@@ -110,10 +122,11 @@ export default function CoachingPlans() {
         audienceLabel = `${mgr.first_name} ${mgr.last_name}'s Team`;
 
         // Fetch full scorecard + historical data in parallel
+        const cpOrgId = profile?.organization_id || null;
         const [currentWeekData, lastWeekData, historicalResult] = await Promise.all([
-          fetchScorecardDataForTeam(mgr.team_id, fmtDate(monday), fmtDate(sunday)),
-          fetchScorecardDataForTeam(mgr.team_id, fmtDate(lastMonday), fmtDate(lastSunday)),
-          fetchHistoricalScoresForTeam(mgr.team_id, 5),
+          fetchScorecardDataForTeam(mgr.team_id, fmtDate(monday), fmtDate(sunday), cpOrgId),
+          fetchScorecardDataForTeam(mgr.team_id, fmtDate(lastMonday), fmtDate(lastSunday), cpOrgId),
+          fetchHistoricalScoresForTeam(mgr.team_id, 5, cpOrgId),
         ]);
 
         // Use buildPlaybookSummary for rich insights (team weaknesses, reps needing coaching, trends)
@@ -170,9 +183,7 @@ export default function CoachingPlans() {
           const rawSum = kpiSums[metric.id] || 0;
           const weeklyAvg = rawSum / numWeeks;
           const dir = metric.direction || 'higher';
-          const pct = metric.goal > 0
-            ? Math.round(dir === 'lower' ? (weeklyAvg > 0 ? Math.min((metric.goal / weeklyAvg) * 100, 200) : 200) : (weeklyAvg / metric.goal) * 100)
-            : 0;
+          const pct = Math.round(calcPct(weeklyAvg, metric.goal, dir));
           const weight = metric.weight || 0;
           totalWeightedPct += pct * weight;
           totalWeight += weight;
@@ -313,11 +324,11 @@ export default function CoachingPlans() {
     }
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const isAdmin = role === 'admin';
-  const isManager = role === 'manager';
-  const isPowerUser = role === 'power_user';
+  const isAdmin = role === ROLES.ADMIN;
+  const isManager = role === ROLES.MANAGER;
+  const isPowerUser = role === ROLES.POWER_USER;
   const canManagePlans = hasPermission('manage_coaching_plans') || isAdmin || isManager;
-  const canCreatePlans = isAdmin || isManager || role === 'coach'; // power_user cannot create/edit/delete
+  const canCreatePlans = isAdmin || isManager || role === ROLES.COACH; // power_user cannot create/edit/delete
 
   // Hash-based tab navigation (e.g. /coaching-plans#idps or #reviews)
   useEffect(() => {
@@ -330,10 +341,34 @@ export default function CoachingPlans() {
     }
   }, [location.hash]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // [FEATURE 5] Load coaching actions when Aaron Actions tab is active
+  useEffect(() => {
+    if (activeTab !== 'aaron-actions') return;
+    let mounted = true;
+    async function loadActions() {
+      setActionsLoading(true);
+      try {
+        const [actionsData, summaryData] = await Promise.all([
+          backendFetch('/api/aaron/coaching-actions', undefined, 'GET'),
+          (isAdmin || role === ROLES.MANAGER)
+            ? backendFetch('/api/aaron/coaching-actions/summary?weeks=4', undefined, 'GET').catch(() => null)
+            : Promise.resolve(null),
+        ]);
+        if (mounted) {
+          setCoachingActions(actionsData || []);
+          setActionsSummary(summaryData);
+        }
+      } catch { /* non-fatal */ }
+      finally { if (mounted) setActionsLoading(false); }
+    }
+    loadActions();
+    return () => { mounted = false; };
+  }, [activeTab, isAdmin, role]);
+
   // Filter rep members: admins see all reps, managers only see their team's reps
   const filteredRepMembers = useMemo(() => {
     if (!teamMembers?.length) return [];
-    const reps = teamMembers.filter(m => !['admin', 'manager', 'coach'].includes(m.role));
+    const reps = teamMembers.filter(m => !LEADERSHIP_ROLES.includes(m.role));
     if (isAdmin) return reps;
     // Managers see only their direct team
     return reps.filter(m => m.team_id === profile?.team_id);
@@ -708,11 +743,15 @@ export default function CoachingPlans() {
   const loadCoachingPlans = async () => {
     try {
       setLoading(true);
-      const { data, error } = await supabase
+      let cpQuery = supabase
         .from('coaching_plans')
         .select('*')
         .order('created_at', { ascending: false })
         .limit(200);
+      // Org-scope: filter by organization_id (added in migration 114)
+      const cpOrgIdForPlans = profile?.organization_id || null;
+      if (cpOrgIdForPlans) cpQuery = cpQuery.eq('organization_id', cpOrgIdForPlans);
+      const { data, error } = await cpQuery;
 
       if (!error && data) {
         setCoachingPlans(data);
@@ -731,8 +770,10 @@ export default function CoachingPlans() {
         .from('profiles')
         .select('id, first_name, last_name, email, role, team_id')
         .order('first_name');
-
-      // Load all profiles so assignment names resolve correctly
+      // Org-scope: mandatory — load only profiles within the same organization
+      const cpOrgId = profile?.organization_id || null;
+      if (cpOrgId) query = query.eq('organization_id', cpOrgId);
+      else return;
 
       const { data, error } = await query;
       if (!error && data) {
@@ -745,11 +786,16 @@ export default function CoachingPlans() {
 
   const loadManagers = async () => {
     try {
-      const { data, error } = await supabase
+      let managersQ = supabase
         .from('profiles')
         .select('id, first_name, last_name, email, team_id')
         .eq('role', 'manager')
         .order('first_name');
+      // Org-scope: mandatory
+      const cpOrgId2 = profile?.organization_id || null;
+      if (cpOrgId2) managersQ = managersQ.eq('organization_id', cpOrgId2);
+      else return;
+      const { data, error } = await managersQ;
       if (!error && data) {
         setManagers(data);
       }
@@ -761,11 +807,14 @@ export default function CoachingPlans() {
   const loadPlanRequests = async () => {
     setPlanRequestsLoading(true);
     try {
-      const { data, error } = await supabase
+      let reqQuery = supabase
         .from('coaching_plan_requests')
         .select('id, requested_by, manager_id, message, current_score, lagging_kpis, status, created_at')
         .eq('status', 'pending')
         .order('created_at', { ascending: false });
+      // Org-scope: coaching_plan_requests has organization_id
+      if (profile?.organization_id) reqQuery = reqQuery.eq('organization_id', profile.organization_id);
+      const { data, error } = await reqQuery;
       if (!error && data) setPlanRequests(data);
     } catch (e) {
       console.error('Error loading plan requests:', e);
@@ -896,6 +945,7 @@ export default function CoachingPlans() {
       plan_type: planForm.plan_type,
       template_id: planForm.template_id || null,
       created_by: user?.id,
+      organization_id: profile?.organization_id || null,
       content,
       goals: planForm.goals.filter(g => g.trim()),
       focus_kpis: planForm.focus_kpis.filter(k => k.trim()),
@@ -920,8 +970,26 @@ export default function CoachingPlans() {
       toast.error('Please enter a plan name');
       return;
     }
+    if (!planFor?.memberId && !editingPlan) {
+      toast.error('Please select who this plan is for');
+      return;
+    }
     if (!user?.id) {
       toast.error('You must be signed in to save a plan');
+      return;
+    }
+    const activeGoals = (planForm.goals || []).filter(g => g.trim());
+    if (activeGoals.length > 0 && (activeGoals.length < 1 || activeGoals.length > 3)) {
+      toast.error('Plans should have 1-3 goals');
+      return;
+    }
+    const activeKpis = (planForm.focus_kpis || []).filter(k => k.trim());
+    if (activeKpis.length > 0 && activeKpis.length > 5) {
+      toast.error('Maximum 5 focus KPIs allowed');
+      return;
+    }
+    if (planForm.date_range_start && planForm.date_range_end && planForm.date_range_start > planForm.date_range_end) {
+      toast.error('End date must be after start date');
       return;
     }
     if (savingPlan) return;
@@ -979,6 +1047,7 @@ export default function CoachingPlans() {
               plan_id: result.data.id,
               assigned_to: planFor.memberId,
               assigned_by: user.id,
+              organization_id: profile?.organization_id || null,
               status: 'active',
             }]);
             const member = teamMembers.find(m => m.id === planFor.memberId);
@@ -992,6 +1061,11 @@ export default function CoachingPlans() {
           toast.success('Plan saved successfully! View it in Saved Plans below.');
         }
       }
+      // Show upgrade nudge after 3rd plan on Basic tier
+      if (!editingPlan && isBasic && coachingPlans.length + 1 >= 3) {
+        setShowUpgradeNudge(true);
+      }
+
       setTimeout(() => {
         document.getElementById('saved-plans')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
       }, 300);
@@ -1164,6 +1238,7 @@ export default function CoachingPlans() {
         plan_id: planToAssign.id,
         assigned_to: memberId,
         assigned_by: user.id,
+        organization_id: profile?.organization_id || null,
         status: 'active'
       }));
 
@@ -1296,7 +1371,9 @@ export default function CoachingPlans() {
     const results = [];
     try {
       const searchTerm = query.trim().toLowerCase();
-      const { data: profiles } = await supabase.from('profiles').select('id, first_name, last_name, email, role').or(`first_name.ilike.%${searchTerm}%,last_name.ilike.%${searchTerm}%,email.ilike.%${searchTerm}%`).limit(5);
+      if (!profile?.organization_id) { setSearching(false); return; }
+      let cpSearchQ = supabase.from('profiles').select('id, first_name, last_name, email, role').eq('organization_id', profile.organization_id).or(`first_name.ilike.%${searchTerm}%,last_name.ilike.%${searchTerm}%,email.ilike.%${searchTerm}%`).limit(5);
+      const { data: profiles } = await cpSearchQ;
       if (profiles) {
         profiles.forEach((profile) => {
           results.push({ type: 'User', title: `${profile.first_name || ''} ${profile.last_name || ''}`.trim() || profile.email, subtitle: profile.role, link: `/profile?user=${profile.id}`, icon: '👤' });
@@ -1405,6 +1482,7 @@ export default function CoachingPlans() {
             ] : []),
             { id: 'idps', label: 'Development Plans' },
             { id: 'reviews', label: 'Performance Reviews' },
+            { id: 'aaron-actions', label: 'Aaron Actions' },
           ].map((tab) => (
             <button
               key={tab.id}
@@ -1437,6 +1515,78 @@ export default function CoachingPlans() {
       {/* Reviews Tab */}
       {activeTab === 'reviews' && (
         <ReviewTab teamMembers={teamMembers} startForRepId={searchParams.get('startReviewFor')} />
+      )}
+
+      {/* [FEATURE 5] Aaron Actions Tab */}
+      {activeTab === 'aaron-actions' && (
+        <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-5">
+          <div className="flex items-center gap-2 mb-4">
+            <Target size={18} className="text-purple-500" />
+            <h2 className="text-base font-bold text-gray-900">Aaron Coaching Actions</h2>
+          </div>
+          <p className="text-xs text-gray-500 mb-4">Actions logged from Aaron AI coaching conversations.</p>
+
+          {/* ROI Summary (managers+) */}
+          {actionsSummary && (
+            <div className="grid grid-cols-3 gap-3 mb-4">
+              <div className="bg-indigo-50 rounded-lg p-3 text-center">
+                <div className="text-2xl font-semibold text-indigo-700">{actionsSummary.total_actions}</div>
+                <div className="text-xs text-indigo-500 mt-0.5">Actions logged</div>
+              </div>
+              <div className="bg-green-50 rounded-lg p-3 text-center">
+                <div className="text-2xl font-semibold text-green-700">{actionsSummary.total_crm_synced}</div>
+                <div className="text-xs text-green-500 mt-0.5">Synced to CRM</div>
+              </div>
+              <div className="bg-gray-50 rounded-lg p-3 text-center">
+                <div className="text-2xl font-semibold text-gray-700 capitalize">
+                  {actionsSummary.top_frameworks?.[0]?.name?.replace(/_/g, ' ') || '—'}
+                </div>
+                <div className="text-xs text-gray-400 mt-0.5">Top framework</div>
+              </div>
+            </div>
+          )}
+
+          {actionsLoading ? (
+            <div className="text-sm text-gray-500 text-center py-8">Loading actions...</div>
+          ) : coachingActions.length === 0 ? (
+            <div className="text-sm text-gray-400 text-center py-8">
+              No coaching actions yet. Use the "Log Action" button in Aaron's chat to track your coaching follow-ups.
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-4 py-2 text-left text-xs font-semibold text-gray-600">Date</th>
+                    <th className="px-4 py-2 text-left text-xs font-semibold text-gray-600">Type</th>
+                    <th className="px-4 py-2 text-left text-xs font-semibold text-gray-600">Action</th>
+                    <th className="px-4 py-2 text-left text-xs font-semibold text-gray-600">Framework</th>
+                    <th className="px-4 py-2 text-center text-xs font-semibold text-gray-600">CRM Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {coachingActions.map(action => {
+                    const typeLabels = { task_created: 'Task', call_logged: 'Call', meeting_scheduled: 'Meeting', note_added: 'Note', follow_up_set: 'Follow-up' };
+                    const crmColors = { pending: 'bg-gray-100 text-gray-600', pushed: 'bg-green-100 text-green-700', skipped: 'bg-blue-100 text-blue-600', failed: 'bg-red-100 text-red-700' };
+                    return (
+                      <tr key={action.id} className="border-t hover:bg-gray-50">
+                        <td className="px-4 py-3 text-gray-500 whitespace-nowrap">{new Date(action.created_at).toLocaleDateString()}</td>
+                        <td className="px-4 py-3 text-gray-700">{typeLabels[action.action_type] || action.action_type}</td>
+                        <td className="px-4 py-3 text-gray-800 font-medium">{action.action_label}</td>
+                        <td className="px-4 py-3 text-gray-500 capitalize">{action.source_framework || '—'}</td>
+                        <td className="px-4 py-3 text-center">
+                          <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${crmColors[action.crm_push_status] || crmColors.pending}`}>
+                            {action.crm_push_status === 'pushed' ? 'Synced' : action.crm_push_status === 'skipped' ? 'No CRM' : action.crm_push_status || 'Pending'}
+                          </span>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
       )}
 
       {/* Coaching Plans content (rep-plans + playbooks) */}
@@ -1560,6 +1710,13 @@ export default function CoachingPlans() {
                 {tab.label}
               </button>
             ))}
+          </div>
+        )}
+
+        {/* Upgrade nudge after 3rd coaching plan on Basic */}
+        {showUpgradeNudge && (
+          <div className="mb-4">
+            <UpgradePrompt variant="feature_gate" context="inline" />
           </div>
         )}
 

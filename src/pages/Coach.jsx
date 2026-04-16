@@ -8,7 +8,12 @@ import PageActionBar from '../components/PageActionBar';
 import { useCoachData } from '../hooks/useCoachData';
 import { useScorecardData } from '../hooks/useScorecardData';
 import { useHistoricalScores } from '../hooks/useHistoricalScores';
+import { calcPct } from '../utils/kpiCalc';
 import { exportCoachDataToCSV } from '../utils/exportUtils';
+import { exportCoachToPDF } from '../utils/exportPdf';
+import ExportReportModal from '../components/ExportReportModal';
+import ScheduleReportModal from '../components/ScheduleReportModal';
+import { ROLES } from '../constants/roles';
 import ConfigureModal from '../components/ConfigureModal';
 import ConfigurePanel from '../components/ConfigurePanel';
 import SkillsetDetailsModal from '../components/SkillsetDetailsModal';
@@ -40,10 +45,10 @@ export default function Coach() {
   const { user, profile, role, hasPermission } = useAuth();
   const userId = user?.id ? String(user.id) : null;
   const teamId = profile?.team_id ? String(profile.team_id) : user?.team_id ? String(user.team_id) : null;
-  const isManager = role === 'manager';
-  const isCoach = role === 'coach';
-  const isPowerUser = role === 'power_user';
-  const isAdmin = role === 'admin';
+  const isManager = role === ROLES.MANAGER;
+  const isCoach = role === ROLES.COACH;
+  const isPowerUser = role === ROLES.POWER_USER;
+  const isAdmin = role === ROLES.ADMIN;
   const canConfigure = hasPermission('configure_scorecard');
   const canExport = hasPermission('export_data');
 
@@ -137,18 +142,20 @@ export default function Coach() {
     setFiltersInitialized(true);
   }, [defaultFilters, filtersInitialized, userId]);
 
+  const orgId = profile?.organization_id;
+
   const { data: summaryData, loading: summaryLoading, error: summaryError } = useCoachData(
     filters.departments,
     filters.teams,
     filters.members,
-    { mode: 'summary', refreshTrigger }
+    { mode: 'summary', refreshTrigger, organizationId: orgId }
   );
 
   const { data: fullData, loading: fullLoading, error: fullError } = useCoachData(
     filters.departments,
     filters.teams,
     filters.members,
-    { mode: 'full', enabled: loadFullData, refreshTrigger }
+    { mode: 'full', enabled: loadFullData, refreshTrigger, organizationId: orgId }
   );
 
   const data = fullData?.skillsets?.length ? fullData : summaryData;
@@ -229,6 +236,7 @@ export default function Coach() {
   }, [filters.dateRange]);
 
   const { data: scorecardData } = useScorecardData(
+    orgId,
     filters.departments,
     filters.teams,
     filters.members,
@@ -249,6 +257,7 @@ export default function Coach() {
   }, []);
 
   const { data: lastWeekScorecardData } = useScorecardData(
+    orgId,
     filters.departments,
     filters.teams,
     filters.members,
@@ -258,6 +267,7 @@ export default function Coach() {
   );
 
   const { data: historicalScores, repNames: historicalRepNames } = useHistoricalScores(
+    orgId,
     filters.departments,
     filters.teams,
     filters.members,
@@ -297,10 +307,15 @@ export default function Coach() {
     setFiltersResetSignal(prev => prev + 1);
   };
 
-  const handleExport = () => {
-    if (!canExport) return;
-    if (!loading && !error) {
+  const [showExportModal, setShowExportModal] = useState(false);
+  const [showScheduleReportModal, setShowScheduleReportModal] = useState(false);
+
+  const handleExportFormat = (format) => {
+    if (!canExport || loading || error) return;
+    if (format === 'csv') {
       exportCoachDataToCSV(data, filters);
+    } else if (format === 'pdf') {
+      exportCoachToPDF(data, filters);
     }
   };
 
@@ -447,9 +462,7 @@ export default function Coach() {
             // Use historical config for this week
             const cfg = getConfigAt(metric.id, wEnd);
             const dir = cfg.direction || 'higher';
-            const pct = cfg.goal > 0
-              ? Math.round(dir === 'lower' ? (weekVal > 0 ? Math.min((cfg.goal / weekVal) * 100, 200) : 200) : (weekVal / cfg.goal) * 100)
-              : 0;
+            const pct = Math.round(calcPct(weekVal, cfg.goal, dir));
             weeklyData.push({ week: weekLabel, value: Math.round(weekVal * 10) / 10, pct });
           }
           const latestPct = weeklyData[weeklyData.length - 1]?.pct || 0;
@@ -549,12 +562,14 @@ export default function Coach() {
     const fetchIdps = async () => {
       setMyIdpsLoading(true);
       try {
-        const { data } = await supabase
+        let idpQuery = supabase
           .from('individual_development_plans')
           .select('id, name, description, plan_type, status, period_start, period_end, focus_kpis, milestones, career_goals, development_areas, action_items, resources, success_criteria, notes, baseline_kpi_snapshot, created_at')
           .eq('profile_id', userId)
           .in('status', ['draft', 'active', 'in_progress', 'completed'])
           .order('created_at', { ascending: false });
+        if (orgId) idpQuery = idpQuery.eq('organization_id', orgId);
+        const { data } = await idpQuery;
         if (!cancelled) setMyIdps(data || []);
       } catch (err) {
         console.error('Error fetching IDPs:', err);
@@ -574,11 +589,13 @@ export default function Coach() {
     const fetchReviews = async () => {
       setMyReviewsLoading(true);
       try {
-        const { data } = await supabase
+        let reviewQuery = supabase
           .from('performance_reviews')
           .select('*')
           .eq('profile_id', userId)
           .order('created_at', { ascending: false });
+        if (orgId) reviewQuery = reviewQuery.eq('organization_id', orgId);
+        const { data } = await reviewQuery;
         if (!cancelled) setMyReviews(data || []);
       } catch (err) {
         console.error('Error fetching reviews:', err);
@@ -701,9 +718,7 @@ export default function Coach() {
           for (const m of metrics) {
             const val = (vals || []).filter(v => v.kpi_id === m.id).reduce((s, v) => s + (v.value || 0), 0);
             const { goal, dir } = getGoalAndDir(m.id);
-            const pct = goal > 0
-              ? Math.round(dir === 'lower' ? (val > 0 ? Math.min((goal / val) * 100, 200) : 200) : (val / goal) * 100)
-              : 0;
+            const pct = Math.round(calcPct(val, goal, dir));
             finalSnapshot[m.key] = { value: val, pct };
           }
           const baseline = myAssignments[plan.id]?.baseline_kpi_snapshot || {};
@@ -763,12 +778,15 @@ export default function Coach() {
     try {
       const searchTerm = query.trim().toLowerCase();
 
-      // Search profiles/users
-      const { data: profiles } = await supabase
+      // Search profiles/users (org-scoped — mandatory)
+      let profilesSearch = supabase
         .from('profiles')
         .select('id, first_name, last_name, email, role')
         .or(`first_name.ilike.%${searchTerm}%,last_name.ilike.%${searchTerm}%,email.ilike.%${searchTerm}%`)
         .limit(5);
+      if (orgId) profilesSearch = profilesSearch.eq('organization_id', orgId);
+      else { setSearching(false); return; }
+      const { data: profiles } = await profilesSearch;
 
       if (profiles) {
         profiles.forEach((profile) => {
@@ -782,12 +800,14 @@ export default function Coach() {
         });
       }
 
-      // Search achievements
-      const { data: achievements } = await supabase
+      // Search achievements (org-scoped)
+      let achievementsSearch = supabase
         .from('achievements')
         .select('id, name, description')
         .ilike('name', `%${searchTerm}%`)
         .limit(5);
+      if (orgId) achievementsSearch = achievementsSearch.eq('organization_id', orgId);
+      const { data: achievements } = await achievementsSearch;
 
       if (achievements) {
         achievements.forEach((achievement) => {
@@ -801,12 +821,14 @@ export default function Coach() {
         });
       }
 
-      // Search skillsets
-      const { data: skillsets } = await supabase
+      // Search skillsets (org-scoped)
+      let skillsetsSearch = supabase
         .from('skillsets')
         .select('id, name, description')
         .ilike('name', `%${searchTerm}%`)
         .limit(5);
+      if (orgId) skillsetsSearch = skillsetsSearch.eq('organization_id', orgId);
+      const { data: skillsets } = await skillsetsSearch;
 
       if (skillsets) {
         skillsets.forEach((skillset) => {
@@ -956,12 +978,20 @@ export default function Coach() {
             <PageActionBar
               onFilterClick={() => setFiltersOpen(true)}
               onConfigureClick={() => { if (canConfigure) setConfigPanelOpen(true); }}
-              onExportClick={handleExport}
               onNotificationsClick={openPanel}
-              exportDisabled={loading || !canExport}
               configureDisabled={!canConfigure}
               notificationBadge={unreadCount}
               actions={[
+                {
+                  label: 'Export Report',
+                  onClick: () => setShowExportModal(true),
+                  disabled: loading || !canExport,
+                },
+                {
+                  label: 'Schedule Report',
+                  onClick: () => setShowScheduleReportModal(true),
+                  disabled: !canExport,
+                },
                 ...(isAdmin || isManager || isCoach ? [{
                   label: 'View Coaching Plans',
                   onClick: () => navigate('/coaching-plans'),
@@ -1770,6 +1800,7 @@ export default function Coach() {
       >
         <ScorecardFilters
           showDate={false}
+          organizationId={orgId}
           onFilterChange={handleFiltersChange}
           initialFilters={defaultFilters}
           resetSignal={filtersResetSignal}
@@ -1791,6 +1822,7 @@ export default function Coach() {
           selectedMembers={filters.members}
           selectedTeams={filters.teams}
           selectedDepartments={filters.departments}
+          organizationId={profile?.organization_id}
           highlightAchievementName={highlightAchievement}
         />
       )}
@@ -1888,6 +1920,19 @@ export default function Coach() {
         repName={startReviewFor?.repName}
         teamMembers={managerTeamMembers}
         onReviewCreated={() => setRefreshTrigger(prev => prev + 1)}
+      />
+      <ExportReportModal
+        isOpen={showExportModal}
+        onClose={() => setShowExportModal(false)}
+        onSelectFormat={handleExportFormat}
+        title="Export Coach Report"
+      />
+      <ScheduleReportModal
+        isOpen={showScheduleReportModal}
+        onClose={() => setShowScheduleReportModal(false)}
+        onSuccess={() => {
+          if (addNotification) addNotification({ type: 'success', title: 'Report Scheduled', message: 'Your report has been scheduled. Manage it in Settings → Reports.', dedupeKey: 'report-scheduled' });
+        }}
       />
     </DashboardLayout>
   );

@@ -3,6 +3,7 @@ import { supabase } from '../supabaseClient';
 
 interface Props {
   showDate?: boolean;
+  organizationId?: string;
   initialFilters?: {
     dateRange?: string;
     departments?: string[];
@@ -29,6 +30,7 @@ interface Props {
 
 export default function ScorecardFilters({
   showDate = true,
+  organizationId,
   initialFilters,
   resetSignal,
   lockedFilters,
@@ -106,16 +108,15 @@ export default function ScorecardFilters({
 
     async function loadData() {
       try {
-        const { data: teamsData, error: teamsErr } = await supabase.from('teams').select('*');
+        let teamsQ = supabase.from('teams').select('*');
+        if (organizationId) teamsQ = teamsQ.eq('organization_id', organizationId);
+        const { data: teamsData, error: teamsErr } = await teamsQ;
         if (teamsErr) {
           console.error('Error loading teams', teamsErr);
           if (mounted) setTeams([]);
         } else {
-          console.log('Loaded teams:', teamsData);
           if (mounted) setTeams(teamsData || []);
           const depts = Array.from(new Set((teamsData || []).map((t: any) => t.department).filter(Boolean))) as string[];
-          console.log('Extracted departments:', depts);
-          console.log('Teams data structure:', teamsData?.map((t: any) => ({ id: t.id, name: t.name, department: t.department })));
           if (mounted) setDepartments(depts);
         }
       } catch (err) {
@@ -123,12 +124,13 @@ export default function ScorecardFilters({
       }
 
       try {
-        const { data: profilesData, error: profilesErr } = await supabase.from('profiles').select('*').not('role', 'in', '("admin","manager","coach")');
+        let profilesQ = supabase.from('profiles').select('*').not('role', 'in', '("admin","manager","coach")');
+        if (organizationId) profilesQ = profilesQ.eq('organization_id', organizationId);
+        const { data: profilesData, error: profilesErr } = await profilesQ;
         if (profilesErr) {
           console.error('Error loading profiles', profilesErr);
           if (mounted) setProfiles([]);
         } else {
-          console.log('Loaded profiles:', profilesData?.length, 'profiles');
           if (mounted) setProfiles(profilesData || []);
         }
       } catch (err) {
@@ -168,8 +170,12 @@ export default function ScorecardFilters({
 
     try {
       if ((supabase as any).channel) {
+        const teamsSubConfig: any = { event: '*', schema: 'public', table: 'teams' };
+        if (organizationId) teamsSubConfig.filter = `organization_id=eq.${organizationId}`;
         const ch = (supabase as any).channel('realtime_teams')
-          .on('postgres_changes', { event: '*', schema: 'public', table: 'teams' }, (payload: any) => {
+          .on('postgres_changes', teamsSubConfig, (payload: any) => {
+            const row = payload?.new || payload?.old;
+            if (organizationId && row?.organization_id && row.organization_id !== organizationId) return;
             applyRowChange(setTeams)(payload);
             // Derive departments after setTeams has been applied (next microtask)
             setTimeout(syncDepartmentsFromTeams, 0);
@@ -178,6 +184,8 @@ export default function ScorecardFilters({
         subs.push(ch);
       } else if ((supabase as any).from) {
         const sub = (supabase as any).from('teams').on('*', (payload: any) => {
+          const row = payload?.new || payload?.old;
+          if (organizationId && row?.organization_id && row.organization_id !== organizationId) return;
           applyRowChange(setTeams)(payload);
           setTimeout(syncDepartmentsFromTeams, 0);
         }).subscribe();
@@ -189,14 +197,20 @@ export default function ScorecardFilters({
 
     try {
       if ((supabase as any).channel) {
+        const profilesSubConfig: any = { event: '*', schema: 'public', table: 'profiles' };
+        if (organizationId) profilesSubConfig.filter = `organization_id=eq.${organizationId}`;
         const ch2 = (supabase as any).channel('realtime_profiles')
-          .on('postgres_changes', { event: '*', schema: 'public', table: 'profiles' }, (payload: any) => {
+          .on('postgres_changes', profilesSubConfig, (payload: any) => {
+            const row = payload?.new || payload?.old;
+            if (organizationId && row?.organization_id && row.organization_id !== organizationId) return;
             applyRowChange(setProfiles)(payload);
           })
           .subscribe();
         subs.push(ch2);
       } else if ((supabase as any).from) {
         const sub2 = (supabase as any).from('profiles').on('*', (payload: any) => {
+          const row = payload?.new || payload?.old;
+          if (organizationId && row?.organization_id && row.organization_id !== organizationId) return;
           applyRowChange(setProfiles)(payload);
         }).subscribe();
         subs.push(sub2);
@@ -218,7 +232,7 @@ export default function ScorecardFilters({
         });
       } catch (e) {}
     };
-  }, []);
+  }, [organizationId]);
 
   const filteredTeams = useMemo(() => {
     let list = teams;

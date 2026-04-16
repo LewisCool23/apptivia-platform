@@ -7,33 +7,51 @@ import RightFilterPanel from '../components/RightFilterPanel';
 import PageActionBar from '../components/PageActionBar';
 import { useScorecardData } from '../hooks/useScorecardData';
 import { exportAnalyticsToCSV } from '../utils/exportUtils';
+import { exportAnalyticsToPDF } from '../utils/exportPdf';
+import ExportReportModal from '../components/ExportReportModal';
 import ConfigureModal from '../components/ConfigureModal';
 import ConfigurePanel from '../components/ConfigurePanel';import ScheduleReportModal from '../components/ScheduleReportModal';import { ScoreDistributionChart, TeamPerformanceChart, HistoricalScoresChart } from '../components/Charts';
 import { useHistoricalScores } from '../hooks/useHistoricalScores';
 import { useNotifications } from '../contexts/NotificationContext';
+import { ROLES } from '../constants/roles';
 import { useAuth } from '../AuthContext';
 import InfoTooltip from '../components/InfoTooltip';
 import { scoreTextColor, scoreBgColor } from '../constants/scoreColors';
+import { formatPresetDateRange } from '../utils/dateUtils';
 import { supabase } from '../supabaseClient';
 import KpiWatchdog from '../components/KpiWatchdog';
 import SalesFunnel from '../components/SalesFunnel';
+import OrgHealthScorecard from '../components/OrgHealthScorecard';
+import UpgradePrompt from '../components/UpgradePrompt';
+import { backendFetch } from '../utils/backendFetch';
+import { useBilling } from '../hooks/useBilling';
+
+const FUNNEL_KEYS = ['call_connects', 'meetings', 'sourced_opps', 'stage2_opps', 'stage3_opps', 'closed_won'];
 
 export default function Analytics() {
   const navigate = useNavigate();
   const location = useLocation();
   const { user, profile, role, hasPermission } = useAuth();
   const teamId = profile?.team_id ? String(profile.team_id) : user?.team_id ? String(user.team_id) : null;
-  const isManager = role === 'manager';
-  const isCoach = role === 'coach';
-  const isAdmin = role === 'admin';
-  const isPowerUser = role === 'power_user';
+  const isManager = role === ROLES.MANAGER;
+  const isCoach = role === ROLES.COACH;
+  const isAdmin = role === ROLES.ADMIN;
+  const isPowerUser = role === ROLES.POWER_USER;
   const canExport = hasPermission('export_data');
   const canConfigure = hasPermission('configure_scorecard');
+  const { plan: billingPlan } = useBilling();
+  const isPro = billingPlan === 'Pro' || billingPlan === 'Enterprise';
+  const isEnterprise = billingPlan === 'Enterprise';
+
+  // [FEATURE 4] Benchmarks state
+  const [benchmarks, setBenchmarks] = useState([]);
+  const [benchmarksLoading, setBenchmarksLoading] = useState(false);
+  const [benchmarksError, setBenchmarksError] = useState(null);
 
   const defaultFilters = useMemo(() => {
     if (isAdmin) {
       return {
-        dateRange: 'All Time',
+        dateRange: 'Last Week',
         departments: [],
         teams: [],
         members: [],
@@ -41,14 +59,14 @@ export default function Analytics() {
     }
     if (isManager || isCoach) {
       return {
-        dateRange: 'This Week',
+        dateRange: 'Last Week',
         departments: [],
         teams: teamId ? [teamId] : [],
         members: [],
       };
     }
     return {
-      dateRange: 'This Week',
+      dateRange: 'Last Week',
       departments: [],
       teams: [],
       members: [],
@@ -67,18 +85,22 @@ export default function Analytics() {
     return params.get('tab') || 'overview';
   });
   const [showScheduleReportModal, setShowScheduleReportModal] = useState(false);
+  const [showExportModal, setShowExportModal] = useState(false);
   const { openPanel, addNotification, unreadCount } = useNotifications();
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState([]);
   const [showSearchResults, setShowSearchResults] = useState(false);
   const [searching, setSearching] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [engageStats, setEngageStats] = useState(null);
   const [engageLoading, setEngageLoading] = useState(false);
   const [allKpiMetrics, setAllKpiMetrics] = useState([]);
   const [funnelKpiValues, setFunnelKpiValues] = useState({});
   const [funnelBenchmarks, setFunnelBenchmarks] = useState({});
   const [funnelLoading, setFunnelLoading] = useState(false);
+  const [cohortData, setCohortData] = useState(null);
+  const [cohortLoading, setCohortLoading] = useState(false);
 
   // Sync active tab to URL search params
   useEffect(() => {
@@ -115,37 +137,57 @@ export default function Analytics() {
 
   useEffect(() => {
     if (!isAdmin) return;
+    const orgId = profile?.organization_id || user?.organization_id;
     let mounted = true;
     async function loadTeams() {
       try {
-        const { data: teamsData, error: teamsError } = await supabase
-          .from('teams')
-          .select('id, name')
-          .order('name');
+        let query = supabase.from('teams').select('id, name').order('name');
+        if (orgId) query = query.eq('organization_id', orgId);
+        else return;
+        const { data: teamsData, error: teamsError } = await query;
         if (!teamsError && mounted) setTeams(teamsData || []);
       } catch (e) {}
     }
     loadTeams();
     return () => { mounted = false; };
-  }, [isAdmin]);
+  }, [isAdmin, profile?.organization_id, user?.organization_id]);
 
-  // Fetch ALL active KPI metrics (not just scorecard ones) for comprehensive analytics
+  // Fetch ALL active KPI metrics — org-specific when available, fallback to global
   useEffect(() => {
+    const analyticsOrgId = profile?.organization_id || user?.organization_id;
     async function loadAllKpis() {
       try {
-        const { data: metrics, error: metricsError } = await supabase
-          .from('kpi_metrics')
-          .select('id, key, name, description, goal, weight, unit, category, show_on_scorecard, direction')
-          .eq('is_active', true)
-          .order('scorecard_position');
-        if (metricsError) throw metricsError;
-        setAllKpiMetrics(metrics || []);
+        let metrics = [];
+        if (analyticsOrgId) {
+          const { data } = await supabase
+            .from('kpi_org_configs')
+            .select('kpi_id, goal, weight, is_active, show_on_scorecard, kpi_metrics!inner(id, key, name, description, unit, category, direction, scorecard_position)')
+            .eq('organization_id', analyticsOrgId)
+            .eq('is_active', true);
+          metrics = (data || []).map(c => ({
+            id: c.kpi_metrics.id, key: c.kpi_metrics.key, name: c.kpi_metrics.name,
+            description: c.kpi_metrics.description, unit: c.kpi_metrics.unit,
+            category: c.kpi_metrics.category, direction: c.kpi_metrics.direction,
+            goal: c.goal, weight: c.weight, show_on_scorecard: c.show_on_scorecard ?? true,
+          }));
+        }
+        // Fallback to global kpi_metrics
+        if (metrics.length === 0) {
+          const { data, error } = await supabase
+            .from('kpi_metrics')
+            .select('id, key, name, description, goal, weight, unit, category, show_on_scorecard, direction')
+            .eq('is_active', true)
+            .order('scorecard_position');
+          if (error) throw error;
+          metrics = data || [];
+        }
+        setAllKpiMetrics(metrics);
       } catch (e) {
         console.error('Error fetching all KPI metrics:', e);
       }
     }
     loadAllKpis();
-  }, []);
+  }, [profile?.organization_id, user?.organization_id]);
 
   // Fetch global kpi_benchmarks once on mount
   useEffect(() => {
@@ -184,26 +226,11 @@ export default function Analytics() {
         const orgId = profile?.organization_id || user?.organization_id;
         if (!orgId) { setEngageStats(null); setEngageLoading(false); return; }
 
-        const [seqRes, enrollRes, acctRes, pbRes, execRes] = await Promise.all([
-          supabase.from('engage_sequences').select('id, status, total_enrolled, total_replied', { count: 'exact' }).eq('organization_id', orgId),
-          supabase.from('engage_sequence_enrollments').select('id, status', { count: 'exact' }).in('sequence_id',
-            (await supabase.from('engage_sequences').select('id').eq('organization_id', orgId)).data?.map(s => s.id) || []
-          ),
+        const [acctRes] = await Promise.all([
           supabase.from('engage_accounts').select('id, account_score, tier, status', { count: 'exact' }).eq('organization_id', orgId),
-          supabase.from('engage_playbooks').select('id, status, times_used', { count: 'exact' }).eq('organization_id', orgId),
-          supabase.from('engage_playbook_executions').select('id, status, outcome', { count: 'exact' }).eq('organization_id', orgId),
         ]);
 
-        const sequences = seqRes.data || [];
-        const enrollments = enrollRes.data || [];
         const accounts = acctRes.data || [];
-        const playbooks = pbRes.data || [];
-        const executions = execRes.data || [];
-
-        const activeSequences = sequences.filter(s => s.status === 'active').length;
-        const totalEnrolled = sequences.reduce((sum, s) => sum + (s.total_enrolled || 0), 0);
-        const totalReplied = sequences.reduce((sum, s) => sum + (s.total_replied || 0), 0);
-        const replyRate = totalEnrolled > 0 ? Math.round((totalReplied / totalEnrolled) * 100) : 0;
 
         const tier1 = accounts.filter(a => a.tier === 'tier_1').length;
         const tier2 = accounts.filter(a => a.tier === 'tier_2').length;
@@ -211,18 +238,6 @@ export default function Analytics() {
         const avgAccountScore = accounts.length > 0
           ? Math.round(accounts.reduce((sum, a) => sum + (a.account_score || 0), 0) / accounts.length)
           : 0;
-
-        const activePlaybooks = playbooks.filter(p => p.status === 'active').length;
-        const completedExecutions = executions.filter(e => e.status === 'completed').length;
-        const meetingsBooked = executions.filter(e => e.outcome === 'meeting_booked').length;
-
-        // Build chart data
-        const sequencePerformance = [
-          { name: 'Active', score: activeSequences },
-          { name: 'Draft', score: sequences.filter(s => s.status === 'draft').length },
-          { name: 'Completed', score: sequences.filter(s => s.status === 'completed').length },
-          { name: 'Paused', score: sequences.filter(s => s.status === 'paused').length },
-        ].filter(d => d.score > 0);
 
         const accountTiers = [
           { name: 'Tier 1', score: tier1 },
@@ -233,27 +248,10 @@ export default function Analytics() {
 
         if (mounted) {
           const stats = {
-            totalSequences: sequences.length,
-            activeSequences,
-            totalEnrolled,
-            totalReplied,
-            replyRate,
-            enrollmentsByStatus: [
-              { name: 'Active', score: enrollments.filter(e => e.status === 'active').length },
-              { name: 'Replied', score: enrollments.filter(e => e.status === 'replied').length },
-              { name: 'Completed', score: enrollments.filter(e => e.status === 'completed').length },
-              { name: 'Bounced', score: enrollments.filter(e => e.status === 'bounced').length },
-            ].filter(d => d.score > 0),
             totalAccounts: accounts.length,
             tier1, tier2, tier3,
             avgAccountScore,
-            sequencePerformance,
             accountTiers,
-            totalPlaybooks: playbooks.length,
-            activePlaybooks,
-            totalExecutions: executions.length,
-            completedExecutions,
-            meetingsBooked,
           };
           setEngageStats(stats);
           engageCacheRef.current = stats;
@@ -268,6 +266,62 @@ export default function Analytics() {
     loadEngageStats();
     return () => { mounted = false; };
   }, [activeTab, profile?.organization_id, user?.organization_id]);
+
+  // Fetch coaching cohort data when overview tab is active (managers+)
+  useEffect(() => {
+    if (activeTab !== 'overview' || isPowerUser) return;
+    let mounted = true;
+    async function loadCohorts() {
+      setCohortLoading(true);
+      try {
+        const data = await backendFetch('/api/analytics/coaching-cohorts?weeks=4');
+        if (mounted) setCohortData(data);
+      } catch { /* non-critical */ }
+      finally { if (mounted) setCohortLoading(false); }
+    }
+    loadCohorts();
+    return () => { mounted = false; };
+  }, [activeTab, isPowerUser]);
+
+  // Enterprise full benchmark data
+  const [enterpriseBenchmarkData, setEnterpriseBenchmarkData] = useState(null);
+
+  // [FEATURE 4] Fetch benchmarks when Benchmarks tab is active (tier-aware)
+  useEffect(() => {
+    if (activeTab !== 'benchmarks' || !isPro) return;
+    let mounted = true;
+    async function loadBenchmarks() {
+      setBenchmarksLoading(true);
+      setBenchmarksError(null);
+      try {
+        if (isEnterprise) {
+          const data = await backendFetch('/api/analytics/cross-org-benchmarks', undefined, 'GET');
+          if (mounted) {
+            setEnterpriseBenchmarkData(data);
+            if (data.insufficient_data && !data.using_industry_baseline) {
+              setBenchmarksError(data.message || 'Not enough peer data yet');
+            }
+          }
+        } else {
+          const data = await backendFetch('/api/analytics/benchmarks-summary', undefined, 'GET');
+          if (mounted) {
+            if (data.insufficient_data) {
+              setBenchmarks([]);
+              setBenchmarksError(data.message || 'Not enough peer data yet');
+            } else {
+              setBenchmarks(data.benchmarks || []);
+            }
+          }
+        }
+      } catch (err) {
+        if (mounted) setBenchmarksError(err.message || 'Failed to load benchmarks');
+      } finally {
+        if (mounted) setBenchmarksLoading(false);
+      }
+    }
+    loadBenchmarks();
+    return () => { mounted = false; };
+  }, [activeTab, isPro, isEnterprise]);
 
   const [customWeekDate, setCustomWeekDate] = useState('');
 
@@ -387,19 +441,23 @@ export default function Analytics() {
     return 1;
   }, [filters.dateRange]);
 
+  const orgId = profile?.organization_id || user?.organization_id || null;
+
   const { data, loading, error } = useScorecardData(
+    orgId,
     filters.departments,
     filters.teams,
     filters.members,
     dateRange.start,
     dateRange.end,
-    0,
+    refreshTrigger,
     weeklyAverage,
     analyticsNumWeeks
   );
 
   // Historical trend data for the overview chart
   const { data: historicalData, repNames: historicalRepNames, loading: historicalLoading } = useHistoricalScores(
+    orgId,
     filters.departments,
     filters.teams,
     filters.members,
@@ -424,10 +482,12 @@ export default function Analytics() {
     setFiltersResetSignal(prev => prev + 1);
   };
 
-  const handleExport = () => {
-    if (!canExport) return;
-    if (!loading && !error) {
-      exportAnalyticsToCSV(data, aggregateKPIs, filters);
+  const handleExportFormat = (format) => {
+    if (!canExport || loading || error) return;
+    if (format === 'csv') {
+      exportAnalyticsToCSV(data, aggregateKPIs, filters, kpiUnits);
+    } else if (format === 'pdf') {
+      exportAnalyticsToPDF(data, aggregateKPIs, filters, kpiUnits);
     }
   };
 
@@ -436,6 +496,12 @@ export default function Analytics() {
     setFilters(prev => ({ ...prev, dateRange: range }));
     if (range !== 'Custom Week') setCustomWeekDate('');
   };
+
+  const kpiUnits = useMemo(() => {
+    const map = {};
+    allKpiMetrics.forEach(m => { map[m.key] = m.unit || 'count'; });
+    return map;
+  }, [allKpiMetrics]);
 
   const funnelGoals = useMemo(() => {
     const map = {};
@@ -455,8 +521,16 @@ export default function Analytics() {
         scaled[key][type] = Math.round(value * numReps * numWeeks);
       });
     });
+    // Compute Team Top 25% (75th percentile of actual rep values)
+    const funnelKeys = ['call_connects', 'meetings', 'sourced_opps', 'stage2_opps', 'stage3_opps', 'closed_won'];
+    funnelKeys.forEach(key => {
+      const vals = data.rows.map(r => r.kpis[key]?.value || 0).sort((a, b) => a - b);
+      const p75 = vals.length > 0 ? vals[Math.min(Math.ceil(vals.length * 0.75) - 1, vals.length - 1)] : 0;
+      if (!scaled[key]) scaled[key] = {};
+      scaled[key].team_p75 = Math.round(p75 * numReps * numWeeks);
+    });
     return scaled;
-  }, [funnelBenchmarks, data.rows.length, dateRange.end, dateRange.start]);
+  }, [funnelBenchmarks, data.rows, dateRange.end, dateRange.start]);
 
   const scaledFunnelGoals = useMemo(() => {
     const numReps = data.rows.length || 1;
@@ -473,7 +547,9 @@ export default function Analytics() {
     { id: 'funnel', label: 'Sales Funnel' },
     { id: 'watchdog', label: 'KPI Watchdog' },
     { id: 'engage', label: 'Engage' },
-  ]), []);
+    { id: 'benchmarks', label: 'Benchmarks' },
+    ...((isAdmin || isManager) ? [{ id: 'org-health', label: 'Org Health' }] : []),
+  ]), [isAdmin, isManager]);
 
   // Calculate aggregate KPI metrics from filtered data — dynamic top KPIs by total value
   const aggregateKPIs = useMemo(() => {
@@ -607,7 +683,6 @@ export default function Analytics() {
   }, [data.rows]);
 
   // Fetch funnel KPI values — placed here so data and dateRange are already declared
-  const FUNNEL_KEYS = ['call_connects', 'meetings', 'sourced_opps', 'stage2_opps', 'stage3_opps', 'closed_won'];
   useEffect(() => {
     if (activeTab !== 'funnel') return;
     if (!data.rows.length) { setFunnelKpiValues({}); return; }
@@ -678,12 +753,15 @@ export default function Analytics() {
     try {
       const searchTerm = query.trim().toLowerCase();
 
-      // Search profiles/users
-      const { data: profiles } = await supabase
+      // Search profiles/users — org-scoped (mandatory)
+      if (!orgId) { setSearching(false); return; }
+      let profilesSearchQ = supabase
         .from('profiles')
         .select('id, first_name, last_name, email, role')
+        .eq('organization_id', orgId)
         .or(`first_name.ilike.%${searchTerm}%,last_name.ilike.%${searchTerm}%,email.ilike.%${searchTerm}%`)
         .limit(5);
+      const { data: profiles } = await profilesSearchQ;
 
       if (profiles) {
         profiles.forEach((profile) => {
@@ -714,13 +792,11 @@ export default function Analytics() {
     return () => clearTimeout(timeoutId);
   }, [searchQuery]);
 
-  const handleRefresh = async () => {
+  const handleRefresh = () => {
     setIsRefreshing(true);
-    try {
-      window.location.reload();
-    } catch (err) {
-      console.error('Error refreshing:', err);
-    }
+    setRefreshTrigger(prev => prev + 1);
+    // Loading state will be cleared when data comes back
+    setTimeout(() => setIsRefreshing(false), 1500);
   };
 
   return (
@@ -827,24 +903,22 @@ export default function Analytics() {
             <PageActionBar
               onFilterClick={() => setFiltersOpen(true)}
               onConfigureClick={() => { if (canConfigure) setConfigPanelOpen(true); }}
-              onExportClick={handleExport}
               onNotificationsClick={openPanel}
-              exportDisabled={loading || !canExport}
               configureDisabled={!canConfigure}
               notificationBadge={unreadCount}
               actions={[
                 {
                   label: 'Export Report',
-                  onClick: handleExport,
+                  onClick: () => setShowExportModal(true),
                   disabled: loading || !canExport,
                 },
                 {
-                label: 'Schedule Report',
-                onClick: () => setShowScheduleReportModal(true),
-                disabled: !canExport,
-              },
-            ]}
-          />
+                  label: 'Schedule Report',
+                  onClick: () => setShowScheduleReportModal(true),
+                  disabled: !canExport,
+                },
+              ]}
+            />
         </div>
       </div>
       {loading && <div className="text-center py-8">Loading analytics...</div>}
@@ -875,6 +949,11 @@ export default function Analytics() {
                   <div className="text-xs text-gray-500">Quick date presets</div>
                   {weeklyAverage && (
                     <span className="text-[10px] bg-blue-50 text-blue-600 px-1.5 py-0.5 rounded-full font-semibold">avg/wk</span>
+                  )}
+                  {formatPresetDateRange(filters.dateRange || 'This Week') && (
+                    <span className="text-xs font-medium text-gray-700">
+                      {formatPresetDateRange(filters.dateRange || 'This Week')}
+                    </span>
                   )}
                 </div>
                 <div className="flex flex-wrap gap-2 mt-1">
@@ -941,11 +1020,7 @@ export default function Analytics() {
                     { name: 'Good (80-99%)', value: data.rows.filter(r => r.apptivityScore >= 80 && r.apptivityScore < 100).length },
                     { name: 'Needs Improvement (<80%)', value: data.rows.filter(r => r.apptivityScore < 80).length },
                   ]}
-                  footer={isAdmin && teamNamesInView.length > 0 ? (
-                    <div className="text-[11px] text-gray-500 truncate" title={teamNamesInView.join(', ')}>
-                      Teams in view: {teamNamesInView.join(', ')}
-                    </div>
-                  ) : null}
+                  footer={null}
                 />
                 {isPowerUser ? (
                   <TeamPerformanceChart
@@ -1125,7 +1200,7 @@ export default function Analytics() {
               <div className="space-y-4">
                 <div className="flex items-center gap-2 mb-2">
                   <h2 className="text-sm font-semibold text-gray-900">Sales Funnel</h2>
-                  <InfoTooltip text="Conversion rates across each stage of the sales funnel for the selected filters and date range. Benchmarks compare your actuals against industry averages or top-quartile performers." />
+                  <InfoTooltip text="Conversion rates across each stage of the sales funnel for the selected filters and date range. Benchmarks compare your actuals against industry averages, your team's top 25% performers, or configured goals." />
                 </div>
                 {funnelLoading && <div className="text-center py-8 text-sm text-gray-500">Loading funnel data...</div>}
                 {!funnelLoading && (
@@ -1226,38 +1301,24 @@ export default function Analytics() {
                 {!engageLoading && engageStats && (
                   <>
                     {/* Summary Cards */}
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                      <div className="bg-white rounded-lg p-3 shadow-sm border-l-4 border-cyan-500">
-                        <div className="text-xs text-gray-500">Sequences</div>
-                        <div className="text-lg font-bold text-cyan-600">{engageStats.totalSequences}</div>
-                        <div className="text-[11px] text-gray-400">{engageStats.activeSequences} active</div>
-                      </div>
-                      <div className="bg-white rounded-lg p-3 shadow-sm border-l-4 border-blue-500">
-                        <div className="text-xs text-gray-500">Enrolled</div>
-                        <div className="text-lg font-bold text-blue-600">{engageStats.totalEnrolled}</div>
-                        <div className="text-[11px] text-gray-400">{engageStats.replyRate}% reply rate</div>
-                      </div>
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                       <div className="bg-white rounded-lg p-3 shadow-sm border-l-4 border-purple-500">
                         <div className="text-xs text-gray-500">Accounts</div>
                         <div className="text-lg font-bold text-purple-600">{engageStats.totalAccounts}</div>
                         <div className="text-[11px] text-gray-400">Avg score: {engageStats.avgAccountScore}</div>
                       </div>
-                      <div className="bg-white rounded-lg p-3 shadow-sm border-l-4 border-green-500">
-                        <div className="text-xs text-gray-500">Playbooks</div>
-                        <div className="text-lg font-bold text-green-600">{engageStats.totalPlaybooks}</div>
-                        <div className="text-[11px] text-gray-400">{engageStats.completedExecutions} executed</div>
+                      <div className="bg-white rounded-lg p-3 shadow-sm border-l-4 border-blue-500">
+                        <div className="text-xs text-gray-500">Tier 1</div>
+                        <div className="text-lg font-bold text-blue-600">{engageStats.tier1}</div>
+                      </div>
+                      <div className="bg-white rounded-lg p-3 shadow-sm border-l-4 border-cyan-500">
+                        <div className="text-xs text-gray-500">Tier 2 / Tier 3</div>
+                        <div className="text-lg font-bold text-cyan-600">{engageStats.tier2} / {engageStats.tier3}</div>
                       </div>
                     </div>
 
                     {/* Charts */}
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                      {engageStats.sequencePerformance.length > 0 && (
-                        <TeamPerformanceChart
-                          title="Sequences by Status"
-                          infoText="Breakdown of outreach sequences by current status."
-                          data={engageStats.sequencePerformance}
-                        />
-                      )}
                       {engageStats.accountTiers.length > 0 && (
                         <TeamPerformanceChart
                           title="Accounts by Tier"
@@ -1268,29 +1329,13 @@ export default function Analytics() {
                     </div>
 
                     {/* Detailed Metrics */}
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                      <div className="bg-white rounded-lg p-3 shadow-sm">
-                        <div className="text-xs text-gray-500 mb-2 font-semibold">Sequence Metrics</div>
-                        <div className="space-y-1.5 text-xs">
-                          <div className="flex justify-between"><span className="text-gray-600">Total Enrolled</span><span className="font-medium">{engageStats.totalEnrolled}</span></div>
-                          <div className="flex justify-between"><span className="text-gray-600">Total Replied</span><span className="font-medium text-green-600">{engageStats.totalReplied}</span></div>
-                          <div className="flex justify-between"><span className="text-gray-600">Reply Rate</span><span className="font-medium text-blue-600">{engageStats.replyRate}%</span></div>
-                        </div>
-                      </div>
+                    <div className="grid grid-cols-1 md:grid-cols-1 gap-3">
                       <div className="bg-white rounded-lg p-3 shadow-sm">
                         <div className="text-xs text-gray-500 mb-2 font-semibold">Account Tiers</div>
                         <div className="space-y-1.5 text-xs">
                           <div className="flex justify-between"><span className="text-gray-600">Tier 1</span><span className="font-medium text-purple-600">{engageStats.tier1}</span></div>
                           <div className="flex justify-between"><span className="text-gray-600">Tier 2</span><span className="font-medium text-blue-600">{engageStats.tier2}</span></div>
                           <div className="flex justify-between"><span className="text-gray-600">Tier 3</span><span className="font-medium text-gray-600">{engageStats.tier3}</span></div>
-                        </div>
-                      </div>
-                      <div className="bg-white rounded-lg p-3 shadow-sm">
-                        <div className="text-xs text-gray-500 mb-2 font-semibold">Playbook Outcomes</div>
-                        <div className="space-y-1.5 text-xs">
-                          <div className="flex justify-between"><span className="text-gray-600">Active Playbooks</span><span className="font-medium">{engageStats.activePlaybooks}</span></div>
-                          <div className="flex justify-between"><span className="text-gray-600">Executions</span><span className="font-medium">{engageStats.totalExecutions}</span></div>
-                          <div className="flex justify-between"><span className="text-gray-600">Meetings Booked</span><span className="font-medium text-green-600">{engageStats.meetingsBooked}</span></div>
                         </div>
                       </div>
                     </div>
@@ -1302,12 +1347,127 @@ export default function Analytics() {
                         <button onClick={() => navigate('/engage')} className="px-3 py-1.5 bg-white text-xs font-medium text-cyan-700 rounded-lg border border-cyan-200 hover:bg-cyan-50 transition-colors">Pipeline Operator</button>
                         <button onClick={() => navigate('/engage')} className="px-3 py-1.5 bg-white text-xs font-medium text-blue-700 rounded-lg border border-blue-200 hover:bg-blue-50 transition-colors">Signal Prospecting</button>
                         <button onClick={() => navigate('/engage')} className="px-3 py-1.5 bg-white text-xs font-medium text-purple-700 rounded-lg border border-purple-200 hover:bg-purple-50 transition-colors">Accounts</button>
-                        <button onClick={() => navigate('/engage')} className="px-3 py-1.5 bg-white text-xs font-medium text-green-700 rounded-lg border border-green-200 hover:bg-green-50 transition-colors">Playbooks</button>
                       </div>
                     </div>
                   </>
                 )}
               </div>
+            )}
+
+            {/* [FEATURE 4] Team Benchmarks Tab */}
+            {activeTab === 'benchmarks' && (
+              <div className="space-y-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <Shield size={18} className="text-purple-500" />
+                  <h2 className="text-base font-bold text-gray-900">Team Benchmarks</h2>
+                </div>
+                <p className="text-xs text-gray-500">See how your team compares to similar sales organizations. All peer data is anonymized.</p>
+
+                {!isPro ? (
+                  <div>
+                    {/* Blurred placeholder rows */}
+                    <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+                      <table className="w-full text-sm">
+                        <thead className="bg-gray-50">
+                          <tr><th className="px-4 py-2 text-left text-xs font-semibold text-gray-600">Metric</th><th className="px-4 py-2 text-center text-xs font-semibold text-gray-600">Your Avg</th><th className="px-4 py-2 text-center text-xs font-semibold text-gray-600">Peer Avg</th><th className="px-4 py-2 text-center text-xs font-semibold text-gray-600">Percentile</th></tr>
+                        </thead>
+                        <tbody className="blur-[3px] pointer-events-none select-none">
+                          <tr className="border-t"><td className="px-4 py-3 text-gray-700">Calls Made</td><td className="px-4 py-3 text-center">72%</td><td className="px-4 py-3 text-center">65-75%</td><td className="px-4 py-3 text-center"><span className="px-2 py-0.5 rounded-full bg-green-100 text-green-700 text-xs">Top 25%</span></td></tr>
+                          <tr className="border-t"><td className="px-4 py-3 text-gray-700">Meetings Set</td><td className="px-4 py-3 text-center">58%</td><td className="px-4 py-3 text-center">50-60%</td><td className="px-4 py-3 text-center"><span className="px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 text-xs">Top 50%</span></td></tr>
+                        </tbody>
+                      </table>
+                    </div>
+                    <UpgradePrompt variant="feature_gate" feature="benchmarks" context="inline" />
+                  </div>
+                ) : benchmarksLoading ? (
+                  <div className="text-sm text-gray-500 text-center py-8">Loading benchmarks...</div>
+                ) : isEnterprise && enterpriseBenchmarkData ? (
+                  <div className="space-y-3">
+                    {enterpriseBenchmarkData.org_count > 0 && (
+                      <p className="text-xs text-gray-400">Compared against {enterpriseBenchmarkData.org_count} peer organization{enterpriseBenchmarkData.org_count !== 1 ? 's' : ''} (anonymized){enterpriseBenchmarkData.using_industry_baseline ? ' · Showing industry medians' : ''}</p>
+                    )}
+                    {(enterpriseBenchmarkData.benchmarks || []).length > 0 ? (
+                      <div className="bg-white rounded-lg border border-gray-200 divide-y divide-gray-50">
+                        {enterpriseBenchmarkData.benchmarks.map((b, i) => (
+                          <div key={i} className="px-4 py-3">
+                            <div className="flex items-center justify-between mb-1">
+                              <span className="text-sm font-medium text-gray-800">{b.kpi_name || b.kpi_key}</span>
+                              {b.your_percentile != null ? (
+                                <span className={`text-xs px-1.5 py-0.5 rounded-full font-medium ${
+                                  b.your_percentile >= 75 ? 'bg-green-100 text-green-700' :
+                                  b.your_percentile >= 50 ? 'bg-yellow-100 text-yellow-700' :
+                                  'bg-red-100 text-red-700'
+                                }`}>
+                                  {b.your_percentile}th percentile
+                                </span>
+                              ) : (
+                                <span className="text-xs text-gray-400">—</span>
+                              )}
+                            </div>
+                            <div className="grid grid-cols-3 gap-2 text-xs text-gray-500">
+                              <div>Your avg: <span className="font-medium text-gray-800">{b.your_avg ?? b.value ?? '—'}</span></div>
+                              <div>Peer median: <span className="font-medium text-gray-800">{b.peer_median ?? (b.benchmark_type === 'industry_median' ? b.value : '—')}</span></div>
+                              <div>Top quartile: <span className="font-medium text-gray-800">{b.top_quartile ?? '—'}</span></div>
+                            </div>
+                            {b.trend != null && (
+                              <div className="mt-1 text-xs text-gray-400">
+                                Trend vs prior period: {b.trend >= 0 ? '+' : ''}{b.trend}%
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="text-sm text-gray-500 text-center py-8">{enterpriseBenchmarkData.message || 'No benchmark data available yet.'}</div>
+                    )}
+                  </div>
+                ) : benchmarksError ? (
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-center">
+                    <p className="text-sm text-blue-700">Benchmarks activate once more Apptivia organizations join your segment. Check back soon.</p>
+                  </div>
+                ) : benchmarks.length > 0 ? (
+                  <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+                    <table className="w-full text-sm">
+                      <thead className="bg-gray-50">
+                        <tr>
+                          <th className="px-4 py-2 text-left text-xs font-semibold text-gray-600">Metric</th>
+                          <th className="px-4 py-2 text-center text-xs font-semibold text-gray-600">Your Avg</th>
+                          <th className="px-4 py-2 text-center text-xs font-semibold text-gray-600">Peer Avg</th>
+                          <th className="px-4 py-2 text-center text-xs font-semibold text-gray-600">Percentile</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {benchmarks.map(b => {
+                          const pctColor = b.percentile >= 75 ? 'bg-green-100 text-green-700' : b.percentile >= 50 ? 'bg-blue-100 text-blue-700' : 'bg-amber-100 text-amber-700';
+                          const trendIcon = b.trend === 'improving' ? '↑' : b.trend === 'declining' ? '↓' : '→';
+                          const trendColor = b.trend === 'improving' ? 'text-green-600' : b.trend === 'declining' ? 'text-red-600' : 'text-gray-400';
+                          return (
+                            <tr key={b.metric_name} className="border-t hover:bg-gray-50">
+                              <td className="px-4 py-3 text-gray-700 font-medium">{b.metric_name}</td>
+                              <td className="px-4 py-3 text-center">
+                                {b.org_avg}% <span className={`ml-1 ${trendColor}`}>{trendIcon}</span>
+                              </td>
+                              <td className="px-4 py-3 text-center text-gray-500">{b.peer_range}</td>
+                              <td className="px-4 py-3 text-center">
+                                <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${pctColor}`}>
+                                  Top {100 - b.percentile}%
+                                </span>
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                ) : (
+                  <div className="text-sm text-gray-500 text-center py-8">No benchmark data available yet.</div>
+                )}
+              </div>
+            )}
+
+            {/* 4E: Org Health Scorecard — admins/managers only */}
+            {activeTab === 'org-health' && (isAdmin || isManager) && (
+              <OrgHealthScorecard />
             )}
 
             {activeTab === 'overview' && (
@@ -1345,6 +1505,40 @@ export default function Analytics() {
                     </table>
                   </div>
                 </div>
+
+                {/* Coached vs Uncoached Cohort Comparison */}
+                {!isPowerUser && cohortData && (
+                  <div className="bg-white rounded-xl border border-gray-100 p-4">
+                    <h3 className="font-semibold text-gray-900 text-sm mb-1">Coached vs. Uncoached — KPI Impact</h3>
+                    <p className="text-xs text-gray-400 mb-4">Last {cohortData.period_weeks || 4} weeks · Coached = received AI coaching suggestion</p>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="text-center">
+                        <div className="text-3xl font-semibold text-indigo-600">
+                          {cohortData.coached?.avg_attainment != null ? `${cohortData.coached.avg_attainment}%` : '—'}
+                        </div>
+                        <div className="text-xs text-gray-500 mt-1">Coached ({cohortData.coached?.count || 0} reps)</div>
+                      </div>
+                      <div className="text-center">
+                        <div className="text-3xl font-semibold text-gray-400">
+                          {cohortData.uncoached?.avg_attainment != null ? `${cohortData.uncoached.avg_attainment}%` : '—'}
+                        </div>
+                        <div className="text-xs text-gray-500 mt-1">Uncoached ({cohortData.uncoached?.count || 0} reps)</div>
+                      </div>
+                    </div>
+                    {cohortData.coached?.avg_attainment != null && cohortData.uncoached?.avg_attainment != null && (
+                      <div className="mt-3 text-center">
+                        <span className={`text-sm font-medium ${
+                          cohortData.coached.avg_attainment > cohortData.uncoached.avg_attainment
+                            ? 'text-green-600' : 'text-gray-500'
+                        }`}>
+                          {cohortData.coached.avg_attainment > cohortData.uncoached.avg_attainment
+                            ? `+${cohortData.coached.avg_attainment - cohortData.uncoached.avg_attainment}% lift from coaching`
+                            : 'Not enough data yet'}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                )}
 
                 {/* Top Performers List */}
                 <div className="bg-white rounded-lg p-4 shadow-sm">
@@ -1414,6 +1608,12 @@ export default function Analytics() {
               restrictToTeams={(isManager || isCoach) && teamId ? [teamId] : undefined}
             />
       </RightFilterPanel>
+      <ExportReportModal
+        isOpen={showExportModal}
+        onClose={() => setShowExportModal(false)}
+        onSelectFormat={handleExportFormat}
+        title="Export Scorecard Report"
+      />
       <ScheduleReportModal
         isOpen={showScheduleReportModal}
         onClose={() => setShowScheduleReportModal(false)}

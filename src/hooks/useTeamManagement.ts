@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { supabase } from '../supabaseClient';
 import { useAuth } from '../AuthContext';
+import { ROLES } from '../constants/roles';
 
 export interface TeamProfile {
   id: string;
@@ -15,13 +16,15 @@ export interface Team {
   id: string;
   name: string;
   department?: string;
+  department_id?: string;
   description?: string;
   organization_id?: string;
 }
 
 export function useTeamManagement() {
-  const { profile, role } = useAuth();
-  const isManager = role === 'manager';
+  const { profile: rawProfile, role } = useAuth();
+  const profile = rawProfile as any;
+  const isManager = role === ROLES.MANAGER;
   const teamId = profile?.team_id ? String(profile.team_id) : null;
 
   const [teams, setTeams] = useState<Team[]>([]);
@@ -41,11 +44,15 @@ export function useTeamManagement() {
   const [showAddTeamModal, setShowAddTeamModal] = useState(false);
   const [newTeamName, setNewTeamName] = useState('');
   const [newTeamDescription, setNewTeamDescription] = useState('');
+  const [newTeamManagerId, setNewTeamManagerId] = useState('');
   const [addingTeam, setAddingTeam] = useState(false);
 
+  const orgId = profile?.organization_id;
+
   const loadTeams = useCallback(async () => {
+    if (!orgId) { setTeams([]); return; }
     try {
-      const { data, error } = await supabase.from('teams').select('*').order('name');
+      const { data, error } = await supabase.from('teams').select('*').eq('organization_id', orgId).order('name');
       if (!error) {
         setTeams(data || []);
         setSelectedTeamId(prev => {
@@ -58,7 +65,7 @@ export function useTeamManagement() {
     } catch (e) {
       console.error('Error loading teams:', e);
     }
-  }, [isManager, teamId]);
+  }, [isManager, teamId, orgId]);
 
   const loadTeamMembers = useCallback(async (tid: string | null) => {
     if (!tid) { setTeamMembers([]); return; }
@@ -75,16 +82,18 @@ export function useTeamManagement() {
   }, []);
 
   const loadAllProfiles = useCallback(async () => {
+    if (!orgId) { setAllProfiles([]); return; }
     try {
       const { data, error } = await supabase
         .from('profiles')
         .select('id, first_name, last_name, email, role, team_id')
+        .eq('organization_id', orgId)
         .order('first_name');
       if (!error) setAllProfiles(data || []);
     } catch (e) {
       console.error('Error loading profiles:', e);
     }
-  }, []);
+  }, [orgId]);
 
   const availableMembers = useMemo(() => {
     if (!selectedTeamId) return [];
@@ -145,6 +154,29 @@ export function useTeamManagement() {
     setMemberActionLoading(false);
   }, [selectedRemoveMemberId, selectedTeamId, loadTeamMembers, loadAllProfiles]);
 
+  const handleDeleteTeam = useCallback(async (teamId: string): Promise<{ success: boolean; error?: string }> => {
+    try {
+      // Unassign all members from this team first
+      const { error: unassignErr } = await supabase
+        .from('profiles')
+        .update({ team_id: null })
+        .eq('team_id', teamId);
+      if (unassignErr) throw unassignErr;
+
+      // Delete the team
+      const { error: deleteErr } = await supabase
+        .from('teams')
+        .delete()
+        .eq('id', teamId);
+      if (deleteErr) throw deleteErr;
+
+      await loadTeams();
+      return { success: true };
+    } catch (err: any) {
+      return { success: false, error: err.message || 'Failed to delete team' };
+    }
+  }, [loadTeams]);
+
   const handleAddTeam = useCallback(async (): Promise<{ success: boolean; error?: string }> => {
     if (!newTeamName.trim() || !profile?.organization_id) {
       return { success: false, error: 'Team name and organization required' };
@@ -155,11 +187,13 @@ export function useTeamManagement() {
         name: newTeamName.trim(),
         description: newTeamDescription.trim() || null,
         organization_id: profile.organization_id,
+        ...(newTeamManagerId ? { manager_id: newTeamManagerId } : {}),
       });
       if (error) throw error;
       setShowAddTeamModal(false);
       setNewTeamName('');
       setNewTeamDescription('');
+      setNewTeamManagerId('');
       await loadTeams();
       return { success: true };
     } catch (err: any) {
@@ -167,12 +201,13 @@ export function useTeamManagement() {
     } finally {
       setAddingTeam(false);
     }
-  }, [newTeamName, newTeamDescription, profile?.organization_id, loadTeams]);
+  }, [newTeamName, newTeamDescription, newTeamManagerId, profile?.organization_id, loadTeams]);
 
   const openAddTeamModal = useCallback(() => {
     setShowAddTeamModal(true);
     setNewTeamName('');
     setNewTeamDescription('');
+    setNewTeamManagerId('');
   }, []);
 
   return {
@@ -199,6 +234,8 @@ export function useTeamManagement() {
     setMemberActionError,
     handleAddMember,
     handleRemoveMember,
+    // Delete Team
+    handleDeleteTeam,
     // Add Team
     showAddTeamModal,
     setShowAddTeamModal,
@@ -207,6 +244,8 @@ export function useTeamManagement() {
     setNewTeamName,
     newTeamDescription,
     setNewTeamDescription,
+    newTeamManagerId,
+    setNewTeamManagerId,
     addingTeam,
     handleAddTeam,
   };

@@ -75,28 +75,45 @@ const SIGNAL_OUTREACH_CONTEXT = {
   icp_prospector: 'This is a direct ICP match found through a company database search. There is no specific trigger event — make the relevance clear upfront by tying your product directly to their industry, team size, and likely pain points.',
 };
 
+// 4F: Outreach style variants — pre-selected by buying stage
+const OUTREACH_STYLES = [
+  { key: 'direct', label: 'Direct', tone: 'direct', description: 'Straight to the point, clear ask' },
+  { key: 'consultative', label: 'Consultative', tone: 'professional', description: 'Problem-solving framing, advisory' },
+  { key: 'social_proof', label: 'Social Proof', tone: 'casual', description: 'Lead with results & similar companies' },
+  { key: 'outcome', label: 'Outcome', tone: 'professional', description: 'Lead with the business outcome' },
+];
+
+const BUYING_STAGE_DEFAULT_STYLE = {
+  awareness: 'consultative',    // early stage → educate & advise
+  consideration: 'social_proof', // mid stage → show proof
+  decision: 'direct',           // late stage → clear ask
+};
+
 export default function SignalOutreachModal({ isOpen, onClose, signal, contact }) {
   const [channel, setChannel] = useState('email');
   const [tone, setTone] = useState('professional');
-  const [draft, setDraft] = useState(null);
+  const [activeStyle, setActiveStyle] = useState('direct');
+  const [variants, setVariants] = useState({}); // { [styleKey]: draft }
   const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState(null);
   const [copied, setCopied] = useState(false);
 
-  // Reset state when modal opens — user clicks "Generate" explicitly to avoid wasted API tokens
+  // Reset state when modal opens — pre-select style by buying stage
   useEffect(() => {
     if (isOpen && signal) {
-      setDraft(null);
+      const defaultStyle = BUYING_STAGE_DEFAULT_STYLE[signal.buying_stage_indicator] || 'direct';
+      setActiveStyle(defaultStyle);
+      setVariants({});
       setError(null);
       setCopied(false);
     }
   }, [isOpen, signal?.id]);
 
-  const handleGenerate = async () => {
+  const handleGenerate = async (styleKey) => {
     if (!signal) return;
+    const style = OUTREACH_STYLES.find(s => s.key === (styleKey || activeStyle)) || OUTREACH_STYLES[0];
     setIsGenerating(true);
     setError(null);
-    setDraft(null);
 
     const prospect = contact
       ? { name: contact.name, title: contact.title, email: contact.email, company: signal.company_name }
@@ -113,14 +130,23 @@ export default function SignalOutreachModal({ isOpen, onClose, signal, contact }
     };
 
     const signalContext = SIGNAL_OUTREACH_CONTEXT[signal.signal_type] || signal.ai_outreach_angle || '';
+    // 4F: Append style instruction to the context prompt
+    const styleInstruction = {
+      direct: 'Write in a DIRECT style — be concise, state the value prop clearly, and make a clear ask.',
+      consultative: 'Write in a CONSULTATIVE style — frame around their challenges, ask a diagnostic question, position as an advisor.',
+      social_proof: 'Write in a SOCIAL PROOF style — lead with specific results from similar companies, mention numbers and outcomes.',
+      outcome: 'Write in an OUTCOME style — lead with the business outcome they can achieve, paint a before/after picture.',
+    };
+    const enhancedContext = `${signalContext}\n\nSTYLE: ${styleInstruction[style.key] || ''}`;
 
     try {
       const result = await engageApi.generateOutreach(prospect, companyBrief, {
         channel,
-        tone,
-        template_user_prompt: signalContext,
+        tone: style.tone,
+        template_user_prompt: enhancedContext,
       });
-      setDraft(result?.content || null);
+      const content = result?.content || null;
+      setVariants(prev => ({ ...prev, [style.key]: content }));
 
       // Fire-and-forget: log to Activity Feed
       if (signal.organization_id) {
@@ -130,7 +156,7 @@ export default function SignalOutreachModal({ isOpen, onClose, signal, contact }
           actor_id: signal.actioned_by || undefined,
           event_type: 'outreach.generated',
           title: 'Outreach Draft Generated',
-          description: `${channel === 'email' ? 'Email' : 'LinkedIn'} draft for ${signal.company_name || 'Unknown'}`,
+          description: `${channel === 'email' ? 'Email' : 'LinkedIn'} ${style.label} draft for ${signal.company_name || 'Unknown'}`,
           icon: channel === 'email' ? '✉️' : '💼',
           color: '#8b5cf6',
         }).then(() => {}, () => {});
@@ -141,6 +167,8 @@ export default function SignalOutreachModal({ isOpen, onClose, signal, contact }
       setIsGenerating(false);
     }
   };
+
+  const draft = variants[activeStyle] || null;
 
   const handleCopy = () => {
     if (!draft) return;
@@ -209,7 +237,7 @@ export default function SignalOutreachModal({ isOpen, onClose, signal, contact }
           </div>
 
           {/* Controls row */}
-          <div className="grid grid-cols-3 gap-2">
+          <div className="grid grid-cols-2 gap-2">
             {/* To */}
             <div>
               <label className="text-[10px] font-semibold text-gray-500 uppercase tracking-wide block mb-1">To</label>
@@ -234,33 +262,38 @@ export default function SignalOutreachModal({ isOpen, onClose, signal, contact }
                 <ChevronDown size={10} className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
               </div>
             </div>
+          </div>
 
-            {/* Tone */}
-            <div>
-              <label className="text-[10px] font-semibold text-gray-500 uppercase tracking-wide block mb-1">Tone</label>
-              <div className="relative">
-                <select
-                  value={tone}
-                  onChange={(e) => setTone(e.target.value)}
-                  className="w-full text-xs border border-gray-200 rounded-lg px-2.5 py-1.5 bg-white appearance-none focus:outline-none focus:ring-2 focus:ring-purple-300 pr-6"
+          {/* 4F: Outreach Style Variant Pills */}
+          <div>
+            <label className="text-[10px] font-semibold text-gray-500 uppercase tracking-wide block mb-1.5">Outreach Style</label>
+            <div className="flex gap-1.5 flex-wrap">
+              {OUTREACH_STYLES.map((style) => (
+                <button
+                  key={style.key}
+                  onClick={() => { setActiveStyle(style.key); setCopied(false); }}
+                  className={`text-xs px-3 py-1.5 rounded-full border transition-colors ${
+                    activeStyle === style.key
+                      ? 'border-purple-400 bg-purple-50 text-purple-700 font-semibold'
+                      : 'border-gray-200 bg-white text-gray-600 hover:bg-gray-50'
+                  }`}
+                  title={style.description}
                 >
-                  <option value="professional">Professional</option>
-                  <option value="casual">Casual</option>
-                  <option value="direct">Direct</option>
-                </select>
-                <ChevronDown size={10} className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
-              </div>
+                  {style.label}
+                  {variants[style.key] && <span className="ml-1 text-green-500">✓</span>}
+                </button>
+              ))}
             </div>
           </div>
 
           {/* Generate button (shown before first generation or to regenerate) */}
           {!isGenerating && (
             <button
-              onClick={handleGenerate}
+              onClick={() => handleGenerate(activeStyle)}
               className="w-full inline-flex items-center justify-center gap-1.5 text-xs font-medium px-4 py-2 rounded-lg bg-gradient-to-r from-purple-500 to-indigo-600 text-white hover:from-purple-600 hover:to-indigo-700 transition-all shadow-sm"
             >
               <Sparkles size={12} />
-              {draft ? 'Regenerate' : 'Generate Message'}
+              {draft ? 'Regenerate' : `Generate ${OUTREACH_STYLES.find(s => s.key === activeStyle)?.label || ''} Message`}
             </button>
           )}
 

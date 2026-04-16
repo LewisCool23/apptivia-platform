@@ -12,6 +12,7 @@ import type { RealtimeChannel } from '@supabase/supabase-js';
 export interface Notification {
   id: string;
   profile_id: string;
+  organization_id: string;
   type: string;
   title: string;
   message: string;
@@ -249,6 +250,7 @@ export async function createNotification(
     action_url?: string;
     priority?: number;
     dedupe_key?: string;
+    organization_id?: string;
   }
 ): Promise<{ success: boolean; error?: string }> {
   try {
@@ -262,6 +264,7 @@ export async function createNotification(
       p_action_url: options?.action_url || null,
       p_priority: options?.priority || 5,
       p_dedupe_key: options?.dedupe_key || null,
+      p_organization_id: options?.organization_id || null,
     });
 
     if (error) throw error;

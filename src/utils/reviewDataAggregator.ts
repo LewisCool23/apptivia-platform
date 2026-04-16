@@ -1,4 +1,5 @@
 import { supabase } from '../supabaseClient';
+import { calcPct } from './kpiCalc';
 
 /**
  * Aggregates historical data for a performance review period.
@@ -24,19 +25,19 @@ export async function aggregateReviewData(
 
     const { data: kpiMetrics } = await supabase
       .from('kpi_metrics')
-      .select('id, key, name, goal, weight, show_on_scorecard')
+      .select('id, key, name, goal, weight, direction, show_on_scorecard')
       .eq('is_active', true);
 
-    const metricsMap = Object.fromEntries((kpiMetrics || []).map(m => [m.id, m]));
+    const metricsMap = Object.fromEntries((kpiMetrics || []).map((m: any) => [m.id, m]));
 
     // Group by week and compute weekly scores
     const weekMap: Record<string, { total: number; weightSum: number; kpis: any[] }> = {};
-    (kpiValues || []).forEach(v => {
+    (kpiValues || []).forEach((v: any) => {
       const w = v.period_start;
       if (!weekMap[w]) weekMap[w] = { total: 0, weightSum: 0, kpis: [] };
       const metric = metricsMap[v.kpi_id];
       if (metric && metric.show_on_scorecard && metric.goal > 0) {
-        const pct = Math.min((v.value / metric.goal) * 100, 150);
+        const pct = calcPct(v.value, metric.goal, (metric as any).direction || 'higher');
         const weight = metric.weight || 1;
         weekMap[w].total += pct * weight;
         weekMap[w].weightSum += weight;
@@ -66,9 +67,9 @@ export async function aggregateReviewData(
       .gte('period_start', periodStart)
       .lte('period_start', periodEnd);
 
-    const metricMap = Object.fromEntries((kpiMetrics || []).map(m => [m.id, m]));
+    const metricMap = Object.fromEntries((kpiMetrics || []).map((m: any) => [m.id, m]));
     const accum: Record<string, { sum: number; count: number; metric: any }> = {};
-    (kpiValues || []).forEach(v => {
+    (kpiValues || []).forEach((v: any) => {
       const m = metricMap[v.kpi_id];
       if (!m) return;
       if (!accum[m.key]) accum[m.key] = { sum: 0, count: 0, metric: m };
@@ -91,28 +92,54 @@ export async function aggregateReviewData(
 
   // 3-7: Fetch skillsets, achievements, badges, coaching plans, and IDPs in parallel
   const endDateStr = periodEnd.slice(0, 10) + 'T23:59:59';
-  const [skillsetRes, achievementsRes, badgesRes, coachingRes, idpRes] = await Promise.all([
-    supabase.from('profile_skillsets').select('skillset_key, current_xp, level, mastery_label').eq('profile_id', profileId).then(r => r).catch(() => ({ data: null })),
-    supabase.from('profile_achievements').select('achievement_id, completed_at, achievements(name, description, category, tier)').eq('profile_id', profileId).gte('completed_at', periodStart).lte('completed_at', endDateStr).then(r => r).catch(() => ({ data: null })),
-    supabase.from('profile_badges').select('badge_id, earned_at, badges(name, description, category, tier)').eq('profile_id', profileId).gte('earned_at', periodStart).lte('earned_at', endDateStr).then(r => r).catch(() => ({ data: null })),
-    supabase.from('coaching_plan_assignments').select('status, assigned_at, completed_at, coaching_plans(name, focus_kpis)').eq('profile_id', profileId).gte('assigned_at', periodStart).then(r => r).catch(() => ({ data: null })),
-    supabase.from('individual_development_plans').select('name, plan_type, status, period_start, period_end, milestones, career_goals').eq('profile_id', profileId).or(`period_start.lte.${periodEnd},period_end.gte.${periodStart}`).then(r => r).catch(() => ({ data: null })),
+  const [skillsetRes, achievementsRes, badgesRes, coachingRes, idpRes] = await Promise.allSettled([
+    supabase.from('profile_skillsets').select('skillset_id, progress, achievements_completed, total_points_earned, milestone_25_reached, milestone_50_reached, milestone_75_reached, milestone_100_reached, skillsets(name)').eq('profile_id', profileId),
+    supabase.from('profile_achievements').select('achievement_id, completed_at, achievements(name, description, category, tier)').eq('profile_id', profileId).gte('completed_at', periodStart).lte('completed_at', endDateStr),
+    supabase.from('profile_badges').select('id, badge_name, badge_type, earned_at').eq('profile_id', profileId).gte('earned_at', periodStart).lte('earned_at', endDateStr),
+    supabase.from('coaching_plan_assignments').select('status, assigned_at, completed_at, coaching_plans(name, focus_kpis)').eq('profile_id', profileId).gte('assigned_at', periodStart),
+    supabase.from('individual_development_plans').select('name, plan_type, status, period_start, period_end, milestones, career_goals').eq('profile_id', profileId).or(`period_start.lte.${periodEnd},period_end.gte.${periodStart}`),
   ]);
 
-  results.skillset_progress = skillsetRes.data || [];
-  results.achievements_earned = (achievementsRes.data || []).map((a: any) => ({
+  // Extract data from settled promises, logging any failures
+  const extract = (result: PromiseSettledResult<any>, label: string) => {
+    if (result.status === 'rejected') {
+      console.error(`Review aggregation — ${label} failed:`, result.reason);
+      return { data: null };
+    }
+    if (result.value?.error) {
+      console.error(`Review aggregation — ${label} query error:`, result.value.error);
+    }
+    return result.value;
+  };
+  const skillsetData = extract(skillsetRes, 'skillsets');
+  const achievementsData = extract(achievementsRes, 'achievements');
+  const badgesData = extract(badgesRes, 'badges');
+  const coachingData = extract(coachingRes, 'coaching plans');
+  const idpData = extract(idpRes, 'IDPs');
+
+  results.skillset_progress = (skillsetData.data || []).map((s: any) => ({
+    skillset_name: s.skillsets?.name || 'Unknown',
+    progress: s.progress || 0,
+    achievements_completed: s.achievements_completed || 0,
+    total_points_earned: s.total_points_earned || 0,
+    milestone_25: s.milestone_25_reached || false,
+    milestone_50: s.milestone_50_reached || false,
+    milestone_75: s.milestone_75_reached || false,
+    milestone_100: s.milestone_100_reached || false,
+  }));
+  results.achievements_earned = (achievementsData.data || []).map((a: any) => ({
     name: a.achievements?.name, description: a.achievements?.description,
     category: a.achievements?.category, tier: a.achievements?.tier, completed_at: a.completed_at,
   }));
-  results.badges_earned = (badgesRes.data || []).map((b: any) => ({
-    name: b.badges?.name, description: b.badges?.description,
-    category: b.badges?.category, tier: b.badges?.tier, earned_at: b.earned_at,
+  results.badges_earned = (badgesData.data || []).map((b: any) => ({
+    name: b.badge_name, description: b.badge_type,
+    category: b.badge_type, tier: null, earned_at: b.earned_at,
   }));
-  results.coaching_plans_summary = (coachingRes.data || []).map((a: any) => ({
+  results.coaching_plans_summary = (coachingData.data || []).map((a: any) => ({
     name: a.coaching_plans?.name, focus_kpis: a.coaching_plans?.focus_kpis,
     status: a.status, assigned_at: a.assigned_at, completed_at: a.completed_at,
   }));
-  results.idps_summary = (idpRes.data || []).map((i: any) => ({
+  results.idps_summary = (idpData.data || []).map((i: any) => ({
     name: i.name, plan_type: i.plan_type, status: i.status,
     milestones_completed: (i.milestones || []).filter((m: any) => m.status === 'completed').length,
     milestones_total: (i.milestones || []).length,

@@ -12,11 +12,13 @@ const SEVERITY_STYLES = {
   critical: { bg: 'bg-red-50', border: 'border-red-200', text: 'text-red-700', badge: 'bg-red-100 text-red-700', icon: AlertTriangle, iconColor: 'text-red-500' },
   warning: { bg: 'bg-amber-50', border: 'border-amber-200', text: 'text-amber-700', badge: 'bg-amber-100 text-amber-700', icon: AlertTriangle, iconColor: 'text-amber-500' },
   info: { bg: 'bg-blue-50', border: 'border-blue-200', text: 'text-blue-700', badge: 'bg-blue-100 text-blue-700', icon: Activity, iconColor: 'text-blue-500' },
+  positive: { bg: 'bg-emerald-50', border: 'border-emerald-200', text: 'text-emerald-700', badge: 'bg-emerald-100 text-emerald-700', icon: TrendingUp, iconColor: 'text-emerald-500' },
 };
 
 const ANOMALY_TYPE_LABELS = {
   drop: { label: 'Performance Drop', icon: TrendingDown, color: 'text-red-600' },
   spike: { label: 'Performance Spike', icon: TrendingUp, color: 'text-emerald-600' },
+  improvement: { label: 'Improvement', icon: TrendingUp, color: 'text-emerald-600' },
   stagnation: { label: 'Stagnation', icon: Activity, color: 'text-amber-600' },
   streak_break: { label: 'Streak Break', icon: Zap, color: 'text-purple-600' },
 };
@@ -62,10 +64,10 @@ function WatchdogSummary({ summary }) {
       color: summary.warningCount > 0 ? 'text-amber-600 bg-amber-50' : 'text-gray-500 bg-gray-50',
     },
     {
-      label: 'Affected Reps',
-      value: summary.affectedReps,
-      icon: Users,
-      color: 'text-purple-600 bg-purple-50',
+      label: 'Positive',
+      value: summary.positiveCount || 0,
+      icon: TrendingUp,
+      color: (summary.positiveCount || 0) > 0 ? 'text-emerald-600 bg-emerald-50' : 'text-gray-500 bg-gray-50',
     },
   ];
 
@@ -334,11 +336,12 @@ export default function KpiWatchdog({ organizationId, userId, filterProfileIds }
     filteredAnomalies.forEach((a) => {
       const key = a.profile_id || 'unknown';
       if (!map[key]) {
-        map[key] = { profileId: key, name: a.profile_name || 'Unknown Rep', anomalies: [], criticalCount: 0, warningCount: 0, infoCount: 0 };
+        map[key] = { profileId: key, name: a.profile_name || 'Unknown Rep', anomalies: [], criticalCount: 0, warningCount: 0, infoCount: 0, positiveCount: 0 };
       }
       map[key].anomalies.push(a);
       if (a.severity === 'critical') map[key].criticalCount++;
       else if (a.severity === 'warning') map[key].warningCount++;
+      else if (a.severity === 'positive') map[key].positiveCount++;
       else map[key].infoCount++;
     });
     // Sort anomalies within each rep: critical first, then by deviation
@@ -405,6 +408,7 @@ export default function KpiWatchdog({ organizationId, userId, filterProfileIds }
               <option value="critical">Critical</option>
               <option value="warning">Warning</option>
               <option value="info">Info</option>
+              <option value="positive">Positive</option>
             </select>
             <select
               value={filterStatus}
@@ -465,6 +469,11 @@ export default function KpiWatchdog({ organizationId, userId, filterProfileIds }
                           {group.warningCount > 0 && (
                             <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700">
                               {group.warningCount} warning
+                            </span>
+                          )}
+                          {group.positiveCount > 0 && (
+                            <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-emerald-100 text-emerald-700">
+                              {group.positiveCount} positive
                             </span>
                           )}
                           {group.infoCount > 0 && (

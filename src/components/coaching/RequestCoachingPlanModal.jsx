@@ -4,15 +4,10 @@ import { supabase } from '../../supabaseClient';
 import { useAuth } from '../../AuthContext';
 import { useToast } from '../../contexts/ToastContext';
 import { buildLabel } from '../../constants/kpiGuidance';
+import { getMonday } from '../../utils/dateUtils';
+import { calcPct } from '../../utils/kpiCalc';
 
-function getMonday(d) {
-  const day = d.getDay();
-  const diff = d.getDate() - day + (day === 0 ? -6 : 1);
-  const mon = new Date(d);
-  mon.setDate(diff);
-  mon.setHours(0, 0, 0, 0);
-  return mon;
-}
+// getMonday + calcPct imported from shared utils (X1/X3 fix)
 const fmt = d => d.toISOString().split('T')[0];
 
 export default function RequestCoachingPlanModal({ isOpen, onClose }) {
@@ -35,23 +30,43 @@ export default function RequestCoachingPlanModal({ isOpen, onClose }) {
       setLoading(true);
       try {
         // 1. Find manager for this user's team
-        const { data: mgrs } = await supabase
+        let mgrQ = supabase
           .from('profiles')
           .select('id, first_name, last_name')
           .eq('team_id', profile.team_id)
           .eq('role', 'manager')
           .limit(1);
+        if (profile.organization_id) mgrQ = mgrQ.eq('organization_id', profile.organization_id);
+        const { data: mgrs } = await mgrQ;
         if (cancelled) return;
         if (mgrs?.length > 0) {
           setManagerId(mgrs[0].id);
         }
 
-        // 2. Fetch KPI metrics
-        const { data: metrics } = await supabase
-          .from('kpi_metrics')
-          .select('id, key, goal, weight, direction')
-          .eq('is_active', true)
-          .eq('show_on_scorecard', true);
+        // 2. Fetch KPI metrics — org-specific when available
+        let metrics = [];
+        if (profile.organization_id) {
+          const { data } = await supabase
+            .from('kpi_org_configs')
+            .select('kpi_id, goal, weight, show_on_scorecard, kpi_metrics!inner(id, key, direction)')
+            .eq('organization_id', profile.organization_id)
+            .eq('is_active', true)
+            .eq('show_on_scorecard', true);
+          metrics = (data || []).map(c => ({
+            id: c.kpi_metrics.id, key: c.kpi_metrics.key,
+            direction: c.kpi_metrics.direction,
+            goal: c.goal, weight: c.weight,
+          }));
+        }
+        // Fallback to global kpi_metrics
+        if (metrics.length === 0) {
+          const { data } = await supabase
+            .from('kpi_metrics')
+            .select('id, key, goal, weight, direction')
+            .eq('is_active', true)
+            .eq('show_on_scorecard', true);
+          metrics = data || [];
+        }
 
         if (!metrics?.length || cancelled) { if (!cancelled) setLoading(false); return; }
 
@@ -96,9 +111,7 @@ export default function RequestCoachingPlanModal({ isOpen, onClose }) {
           metrics.forEach(m => {
             const dir = m.direction || 'higher';
             const val = sums[m.id] || 0;
-            const pct = m.goal > 0
-              ? Math.round(dir === 'lower' ? (val > 0 ? Math.min((m.goal / val) * 100, 200) : 200) : (val / m.goal) * 100)
-              : 0;
+            const pct = Math.round(calcPct(val, m.goal, dir));
             totalWPct += pct * (m.weight || 0);
             totalW += m.weight || 0;
             kpiWeeklyPcts[m.key].push(pct);

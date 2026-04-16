@@ -1,4 +1,5 @@
 import React from 'react';
+import { LEADERSHIP_ROLES } from '../../constants/roles';
 
 export default function ReviewBuilderForm({
   editingReview,
@@ -10,7 +11,7 @@ export default function ReviewBuilderForm({
   onCancel,
 }) {
   const updateField = (field, value) => setForm(prev => ({ ...prev, [field]: value }));
-  const repMembers = (teamMembers || []).filter(m => !['admin', 'manager', 'coach'].includes(m.role));
+  const repMembers = (teamMembers || []).filter(m => !LEADERSHIP_ROLES.includes(m.role));
 
   // Auto-set dates based on review type
   const handleTypeChange = (type) => {

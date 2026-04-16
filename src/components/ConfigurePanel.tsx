@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import RightFilterPanel from './RightFilterPanel';
 import { supabase } from '../supabaseClient';
 import { useToast } from '../contexts/ToastContext';
+import { useAuth } from '../AuthContext';
 
 interface ConfigurePanelProps {
   isOpen: boolean;
@@ -29,6 +30,8 @@ export default function ConfigurePanel({
   onSave,
 }: ConfigurePanelProps) {
   const toast = useToast();
+  const { profile } = useAuth();
+  const orgId = (profile as any)?.organization_id;
   const [kpiConfigs, setKpiConfigs] = useState<KPIConfig[]>([]);
   const [slots, setSlots] = useState<(string | null)[]>([]);
   const [addingSlotIndex, setAddingSlotIndex] = useState<number | null>(null);
@@ -46,15 +49,42 @@ export default function ConfigurePanel({
   async function fetchScorecardConfigs() {
     setLoading(true);
     try {
-      const { data, error } = await supabase
-        .from('kpi_metrics')
-        .select('id, key, name, description, goal, weight, unit, category, show_on_scorecard, scorecard_position')
-        .eq('is_active', true)
-        .order('scorecard_position', { ascending: true })
-        .order('name', { ascending: true });
-
-      if (error) throw error;
-      const configs = data || [];
+      let configs: any[] = [];
+      if (orgId) {
+        const { data, error } = await supabase
+          .from('kpi_org_configs')
+          .select('id, kpi_id, goal, weight, is_active, show_on_scorecard, scorecard_position, kpi_metrics!inner(id, key, name, description, unit, category)')
+          .eq('organization_id', orgId)
+          .eq('is_active', true)
+          .order('scorecard_position', { ascending: true });
+        if (error) throw error;
+        configs = (data || []).map((c: any) => ({
+          id: (c.kpi_metrics as any).id,
+          key: (c.kpi_metrics as any).key,
+          name: (c.kpi_metrics as any).name,
+          description: (c.kpi_metrics as any).description,
+          goal: c.goal,
+          weight: c.weight,
+          unit: (c.kpi_metrics as any).unit,
+          category: (c.kpi_metrics as any).category,
+          show_on_scorecard: c.show_on_scorecard,
+          scorecard_position: c.scorecard_position,
+        }));
+        configs.sort((a: any, b: any) => {
+          const pa = a.scorecard_position ?? 999;
+          const pb = b.scorecard_position ?? 999;
+          return pa !== pb ? pa - pb : (a.name || '').localeCompare(b.name || '');
+        });
+      } else {
+        const { data, error } = await supabase
+          .from('kpi_metrics')
+          .select('id, key, name, description, goal, weight, unit, category, show_on_scorecard, scorecard_position')
+          .eq('is_active', true)
+          .order('scorecard_position', { ascending: true })
+          .order('name', { ascending: true });
+        if (error) throw error;
+        configs = data || [];
+      }
       setKpiConfigs(configs);
 
       const selected = configs.filter((k: any) => k.show_on_scorecard);
@@ -90,6 +120,15 @@ export default function ConfigurePanel({
   }
 
   async function handleSave() {
+    if (totalWeight !== 100) {
+      toast.error(`KPI weights must sum to 100% (currently ${totalWeight}%)`);
+      return;
+    }
+    const invalidGoal = kpiConfigs.find(k => slots.includes(k.key) && k.goal <= 0);
+    if (invalidGoal) {
+      toast.error(`"${invalidGoal.name}" goal must be greater than 0`);
+      return;
+    }
     setSaving(true);
     setMessage('');
     const loadingToast = toast.loading('Saving quick settings...');
@@ -98,15 +137,20 @@ export default function ConfigurePanel({
       for (const key of selectedKeys) {
         const config = kpiConfigs.find((k) => k.key === key);
         if (!config) continue;
-        const { error } = await supabase
-          .from('kpi_metrics')
-          .update({
-            goal: config.goal,
-            weight: config.weight,
-          })
-          .eq('key', config.key);
-
-        if (error) throw error;
+        if (orgId) {
+          const { error } = await supabase
+            .from('kpi_org_configs')
+            .update({ goal: config.goal, weight: config.weight, updated_at: new Date().toISOString() })
+            .eq('organization_id', orgId)
+            .eq('kpi_id', config.id);
+          if (error) throw error;
+        } else {
+          const { error } = await supabase
+            .from('kpi_metrics')
+            .update({ goal: config.goal, weight: config.weight })
+            .eq('key', config.key);
+          if (error) throw error;
+        }
       }
 
       toast.dismiss(loadingToast);
@@ -139,13 +183,25 @@ export default function ConfigurePanel({
   async function handleRemove(slotIndex: number) {
     const key = slots[slotIndex];
     if (!key) return;
-    const { error } = await supabase
-      .from('kpi_metrics')
-      .update({ show_on_scorecard: false, scorecard_position: null })
-      .eq('key', key);
+    const config = kpiConfigs.find(k => k.key === key);
+    let removeError: any = null;
+    if (orgId && config) {
+      const { error } = await supabase
+        .from('kpi_org_configs')
+        .update({ show_on_scorecard: false, scorecard_position: null, updated_at: new Date().toISOString() })
+        .eq('organization_id', orgId)
+        .eq('kpi_id', config.id);
+      removeError = error;
+    } else {
+      const { error } = await supabase
+        .from('kpi_metrics')
+        .update({ show_on_scorecard: false, scorecard_position: null })
+        .eq('key', key);
+      removeError = error;
+    }
 
-    if (error) {
-      toast.error('Error removing KPI: ' + error.message);
+    if (removeError) {
+      toast.error('Error removing KPI: ' + removeError.message);
       return;
     }
 
@@ -158,13 +214,25 @@ export default function ConfigurePanel({
 
   async function handleAdd(slotIndex: number) {
     if (!selectedAddKey) return;
-    const { error } = await supabase
-      .from('kpi_metrics')
-      .update({ show_on_scorecard: true, scorecard_position: slotIndex + 1 })
-      .eq('key', selectedAddKey);
+    const config = kpiConfigs.find(k => k.key === selectedAddKey);
+    let addError: any = null;
+    if (orgId && config) {
+      const { error } = await supabase
+        .from('kpi_org_configs')
+        .update({ show_on_scorecard: true, scorecard_position: slotIndex + 1, updated_at: new Date().toISOString() })
+        .eq('organization_id', orgId)
+        .eq('kpi_id', config.id);
+      addError = error;
+    } else {
+      const { error } = await supabase
+        .from('kpi_metrics')
+        .update({ show_on_scorecard: true, scorecard_position: slotIndex + 1 })
+        .eq('key', selectedAddKey);
+      addError = error;
+    }
 
-    if (error) {
-      toast.error('Error adding KPI: ' + error.message);
+    if (addError) {
+      toast.error('Error adding KPI: ' + addError.message);
       return;
     }
 

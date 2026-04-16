@@ -13,7 +13,7 @@ const INITIAL_FORM = {
   active: true
 };
 
-export default function ScheduleReportModal({ isOpen, onClose, onSuccess, editReport }) {
+export default function ScheduleReportModal({ isOpen, onClose, onSuccess, editReport = null }) {
   const [formData, setFormData] = useState(INITIAL_FORM);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');

@@ -170,7 +170,7 @@ export function usePipelineOperator(
 
         deals = deals.map(d => ({
           ...d,
-          currentCepDealStage: dealStageMap.get(d.id) || null,
+          currentCepDealStage: (dealStageMap.get(d.id) as CepDealStageData | undefined) || null,
         }));
       }
 

@@ -183,9 +183,9 @@ export async function updateContestLeaderboard(contestId: string): Promise<Leade
     }
 
     // Sort by score descending and assign ranks (standard competition ranking — ties share rank)
-    scores.sort((a, b) => b.score - a.score);
+    scores.sort((a: any, b: any) => b.score - a.score);
     let currentRank = 1;
-    const rankedScores = scores.map((entry, index, arr) => {
+    const rankedScores = scores.map((entry: any, index: number, arr: any[]) => {
       if (index > 0 && entry.score < arr[index - 1].score) {
         currentRank = index + 1;
       }
@@ -203,7 +203,7 @@ export async function updateContestLeaderboard(contestId: string): Promise<Leade
     });
 
     // Batch upsert all leaderboard entries at once
-    const upsertData = rankedScores.map(entry => ({
+    const upsertData = rankedScores.map((entry: any) => ({
       contest_id: contestId,
       profile_id: entry.profile_id,
       team_id: entry.team_id,
@@ -269,7 +269,7 @@ export async function completeContest(contestId: string): Promise<{ success: boo
     // Get contest details for badge description
     const { data: contest } = await supabase
       .from('active_contests')
-      .select('name, reward_value')
+      .select('name, reward_value, organization_id')
       .eq('id', contestId)
       .single();
 
@@ -289,6 +289,7 @@ export async function completeContest(contestId: string): Promise<{ success: boo
         color: finisher.rank === 1 ? '#FFD700' : finisher.rank === 2 ? '#C0C0C0' : '#CD7F32',
         contest_id: contestId,
         is_featured: finisher.rank === 1, // Feature 1st place
+        organization_id: contest?.organization_id,
       }));
 
       const { error: badgesError } = await supabase
@@ -329,7 +330,8 @@ export async function awardAchievementBadge(
   profileId: string,
   achievementId: string,
   achievementName: string,
-  skillsetName: string
+  skillsetName: string,
+  organizationId?: string
 ): Promise<{ success: boolean; error?: string }> {
   try {
     const { error } = await supabase.from('profile_badges').insert({
@@ -341,6 +343,7 @@ export async function awardAchievementBadge(
       color: '#3B82F6',
       achievement_id: achievementId,
       is_featured: false,
+      ...(organizationId && { organization_id: organizationId }),
     });
 
     if (error) throw error;
@@ -362,7 +365,8 @@ export async function awardMilestoneBadge(
   milestoneName: string,
   description: string,
   icon: string = '🎖️',
-  color: string = '#8B5CF6'
+  color: string = '#8B5CF6',
+  organizationId?: string
 ): Promise<{ success: boolean; error?: string }> {
   try {
     const { error } = await supabase.from('profile_badges').insert({
@@ -373,6 +377,7 @@ export async function awardMilestoneBadge(
       icon,
       color,
       is_featured: false,
+      ...(organizationId && { organization_id: organizationId }),
     });
 
     if (error) throw error;

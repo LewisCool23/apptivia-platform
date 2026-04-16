@@ -6,8 +6,8 @@ const FUNNEL_STAGES = [
   { key: 'meetings',      label: 'Meetings',       color: '#8b5cf6', shortLabel: 'Meetings' },
   { key: 'sourced_opps',  label: 'Sourced Opps',   color: '#a855f7', shortLabel: 'S. Opps' },
   { key: 'stage2_opps',   label: 'SQLs (Stage 2)', color: '#d946ef', shortLabel: 'SQLs' },
-  { key: 'qualified_leads', label: 'Qualified Leads', color: '#ec4899', shortLabel: 'Qualified' },
-  { key: 'closed_won_deals', label: 'Closed Won',  color: '#f43f5e', shortLabel: 'Won' },
+  { key: 'stage3_opps',  label: 'Stage 3 Opps',    color: '#ec4899', shortLabel: 'Stage 3' },
+  { key: 'closed_won',   label: 'Closed Won',      color: '#f43f5e', shortLabel: 'Won' },
 ];
 
 function conversionRate(from, to) {
@@ -73,7 +73,7 @@ export default function SalesFunnel({ kpiValues = {}, benchmarks = {}, goals = {
         <div className="flex items-center gap-3">
           {/* Benchmark type selector */}
           <div className="flex items-center gap-1 bg-gray-50 rounded-lg p-0.5">
-            {['industry', 'top_quartile', 'goal'].map(type => (
+            {['industry', 'team_p75', 'goal'].map(type => (
               <button
                 key={type}
                 onClick={() => setBenchmarkType(type)}
@@ -83,7 +83,7 @@ export default function SalesFunnel({ kpiValues = {}, benchmarks = {}, goals = {
                     : 'text-gray-500 hover:text-gray-700'
                 }`}
               >
-                {type === 'industry' ? 'Industry' : type === 'top_quartile' ? 'Top 25%' : 'Goal'}
+                {type === 'industry' ? 'Industry' : type === 'team_p75' ? 'Team Top 25%' : 'Goal'}
               </button>
             ))}
           </div>
@@ -165,7 +165,7 @@ export default function SalesFunnel({ kpiValues = {}, benchmarks = {}, goals = {
                         <BenchmarkDot
                           actual={value}
                           benchmark={benchmark}
-                          label={benchmarkType === 'industry' ? 'Ind.' : benchmarkType === 'top_quartile' ? 'Top 25%' : 'Goal'}
+                          label={benchmarkType === 'industry' ? 'Ind.' : benchmarkType === 'team_p75' ? 'Team Top 25%' : 'Goal'}
                         />
                       )}
                       <span className="text-base font-bold text-gray-900" style={{ minWidth: '2.5rem', textAlign: 'right' }}>

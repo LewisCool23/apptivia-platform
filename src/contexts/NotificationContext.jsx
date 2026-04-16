@@ -1,12 +1,14 @@
 import React, { createContext, useContext, useEffect, useMemo, useState, useCallback, useRef } from 'react';
 import { useAuth } from '../AuthContext';
 import { supabase } from '../supabaseClient';
+import { ROLES } from '../constants/roles';
 
 const NotificationContext = createContext(null);
 
 export function NotificationProvider({ children }) {
   const { user, profile, role } = useAuth();
   const profileId = profile?.id || null;
+  const organizationId = profile?.organization_id || null;
   const [notifications, setNotifications] = useState([]);
   const [panelOpen, setPanelOpen] = useState(false);
   const [dbReady, setDbReady] = useState(false);
@@ -83,6 +85,7 @@ export function NotificationProvider({ children }) {
 
     const row = {
       profile_id: notification.ownerId || profileId,
+      organization_id: notification.organizationId || organizationId,
       type: mapTypeToEnum(notification.type),
       title: notification.title || 'Notification',
       message: notification.message || '',
@@ -142,14 +145,14 @@ export function NotificationProvider({ children }) {
   // DB rows use profile_id; legacy localStorage used ownerId. Support both.
   const visibleNotifications = useMemo(() => {
     if (!profileId) return [];
-    if (role === 'admin') return notifications;
+    if (role === ROLES.ADMIN) return notifications;
     return notifications.filter((n) => {
       const nOwner = n.profile_id || n.ownerId;
       if (n.audience === 'self') {
         return String(nOwner) === String(profileId);
       }
       if (n.audience === 'team') {
-        return role === 'manager' || role === 'coach';
+        return role === ROLES.MANAGER || role === ROLES.COACH;
       }
       return true; // DB rows for this profileId are already scoped
     });

@@ -9,6 +9,7 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { supabase } from '../supabaseClient';
 import { STANDARD_B2B_TEMPLATE, DEFAULT_TITLES } from '../constants/cepDefaults';
+import { getQualificationExitCriteria } from '../constants/salesDna';
 
 // ── Types ──────────────────────────────────────────────────
 
@@ -179,23 +180,33 @@ export function useCepConfig(organizationId: string) {
 
   // ── Seed default stages from template ────────────────────
 
-  const seedDefaultStages = useCallback(async () => {
+  const seedDefaultStages = useCallback(async (qualificationFrameworkKey?: string) => {
     try {
-      // Insert stages
-      const stageRows = STANDARD_B2B_TEMPLATE.map(t => ({
-        organization_id: organizationId,
-        cep_type: 'new_business' as const,
-        stage_key: t.stage_key,
-        stage_name: t.stage_name,
-        stage_order: t.stage_order,
-        color: t.color,
-        win_probability: t.win_probability,
-        expected_days: t.expected_days,
-        is_terminal: t.is_terminal,
-        checklist_items: t.checklist_items,
-        exit_criteria: t.exit_criteria,
-        role_responsibilities: t.role_responsibilities,
-      }));
+      // Build qualification exit criteria from the org's chosen framework
+      const qualExitCriteria = getQualificationExitCriteria(qualificationFrameworkKey || null);
+
+      // Insert stages — enhance qualification stage with framework-specific exit criteria
+      const stageRows = STANDARD_B2B_TEMPLATE.map(t => {
+        const row: any = {
+          organization_id: organizationId,
+          cep_type: 'new_business' as const,
+          stage_key: t.stage_key,
+          stage_name: t.stage_name,
+          stage_order: t.stage_order,
+          color: t.color,
+          win_probability: t.win_probability,
+          expected_days: t.expected_days,
+          is_terminal: t.is_terminal,
+          checklist_items: t.checklist_items,
+          exit_criteria: t.exit_criteria,
+          role_responsibilities: t.role_responsibilities,
+        };
+        // If this is the qualification stage and we have framework criteria, merge them
+        if (t.stage_key === 'qualification' && qualExitCriteria.length > 0) {
+          row.exit_criteria = [...qualExitCriteria, ...t.exit_criteria];
+        }
+        return row;
+      });
 
       const { error: stageErr } = await supabase.from('cep_stages').insert(stageRows);
       if (stageErr) throw stageErr;

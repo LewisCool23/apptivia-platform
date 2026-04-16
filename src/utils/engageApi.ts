@@ -15,25 +15,33 @@ async function invokeEdge<T = any>(
   body?: Record<string, any>,
   queryParams?: Record<string, string>
 ): Promise<T> {
-  const qs = queryParams ? '?' + new URLSearchParams(queryParams).toString() : '';
+  const EDGE_TO_BACKEND: Record<string, string> = {
+    'engage-research':  '/api/engage/search/companies',
+    'engage-accounts':  '/api/engage/accounts/analyze',
+    'engage-playbooks': '/api/engage/playbooks/generate',
+  };
 
+  const backendPath = EDGE_TO_BACKEND[functionName];
+  if (backendPath) {
+    const qs = queryParams ? '?' + new URLSearchParams(queryParams).toString() : '';
+    return backendFetch<T>(`${backendPath}${qs}`, body, 'POST');
+  }
+
+  // Fallback: unmapped functions still go to edge (should not happen post-migration)
+  const qs = queryParams ? '?' + new URLSearchParams(queryParams).toString() : '';
   const { data, error } = await supabase.functions.invoke(`${functionName}${qs}`, {
     body: body ?? {},
   });
-
   if (error) {
-    // Supabase FunctionsHttpError may contain the actual response body
     let detail = error.message || 'Edge function call failed';
     try {
       if (error.context && typeof error.context.json === 'function') {
         const ctx = await error.context.json();
         if (ctx?.error) detail = ctx.error;
       }
-    } catch { /* ignore */ }
-    console.error(`[invokeEdge] ${functionName}${qs} error:`, detail);
+    } catch (_) {}
     throw new Error(detail);
   }
-  if (data?.error) throw new Error(data.error);
   return data as T;
 }
 
@@ -499,7 +507,7 @@ export const engageDb = {
   },
 
   async deleteSequence(id: string) {
-    return supabase.from('engage_sequences').delete().eq('id', id);
+    return backendFetch(`/api/engage/sequences/${id}`, undefined, 'DELETE');
   },
 
   async getSequenceSteps(sequenceId: string) {

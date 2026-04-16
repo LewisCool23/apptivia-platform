@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '../AuthContext';
+import { ROLES } from '../constants/roles';
 
 /**
  * Custom hook for managing page filters with role-based defaults
@@ -10,10 +11,10 @@ export function usePageFilters() {
   const userId = user?.id ? String(user.id) : null;
   const teamId = profile?.team_id ? String(profile.team_id) : user?.team_id ? String(user.team_id) : null;
   
-  const isAdmin = role === 'admin';
-  const isManager = role === 'manager';
-  const isCoach = role === 'coach';
-  const isPowerUser = role === 'power_user';
+  const isAdmin = role === ROLES.ADMIN;
+  const isManager = role === ROLES.MANAGER;
+  const isCoach = role === ROLES.COACH;
+  const isPowerUser = role === ROLES.POWER_USER;
 
   const defaultFilters = useMemo(() => {
     if (isAdmin) {

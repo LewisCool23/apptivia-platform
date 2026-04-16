@@ -8,6 +8,12 @@ import PageActionBar from './components/PageActionBar';
 import { useScorecardData } from './hooks/useScorecardData';
 import { useCoachData } from './hooks/useCoachData';
 import { exportScorecardToCSV } from './utils/exportUtils';
+import { getMonday, getMonthRange, getQuarterRange, formatPresetDateRange } from './utils/dateUtils';
+import { calcPct } from './utils/kpiCalc';
+import { ROLES } from './constants/roles';
+import { exportScorecardToPDF } from './utils/exportPdf';
+import ExportReportModal from './components/ExportReportModal';
+import ScheduleReportModal from './components/ScheduleReportModal';
 import ConfigureModal from './components/ConfigureModal';
 import ConfigurePanel from './components/ConfigurePanel';
 import { StatCardSkeleton, TableRowSkeleton } from './components/Skeleton';
@@ -57,10 +63,10 @@ const ApptiviaScorecard: React.FC = () => {
   const profileTeamId = (profile as any)?.team_id;
   const userTeamId = (user as any)?.team_id;
   const teamId = profileTeamId ? String(profileTeamId) : userTeamId ? String(userTeamId) : null;
-  const isAdmin = role === 'admin';
-  const isManager = role === 'manager';
-  const isCoach = role === 'coach';
-  const isPowerUser = role === 'power_user';
+  const isAdmin = role === ROLES.ADMIN;
+  const isManager = role === ROLES.MANAGER;
+  const isCoach = role === ROLES.COACH;
+  const isPowerUser = role === ROLES.POWER_USER;
   const canConfigureScorecard = (hasPermission as any)('configure_scorecard');
   const canExport = (hasPermission as any)('export_data');
   const canViewCoach = (hasPermission as any)('view_coach');
@@ -163,15 +169,33 @@ const ApptiviaScorecard: React.FC = () => {
   async function fetchKpiMetrics() {
     setLoadingKpis(true);
     try {
-      const { data, error } = await supabase
-        .from('kpi_metrics')
-        .select('id, key, name, description, goal, weight, unit, category, direction')
-        .eq('is_active', true)
-        .eq('show_on_scorecard', true)
-        .order('scorecard_position');
-
-      if (error) throw error;
-      setKpiMetrics(data || []);
+      let metrics: any[] = [];
+      if (orgId) {
+        const { data, error } = await supabase
+          .from('kpi_org_configs')
+          .select('kpi_id, goal, weight, show_on_scorecard, scorecard_position, kpi_metrics!inner(id, key, name, description, unit, category, direction)')
+          .eq('organization_id', orgId)
+          .eq('is_active', true)
+          .eq('show_on_scorecard', true)
+          .order('scorecard_position');
+        if (error) throw error;
+        metrics = (data || []).map((c: any) => ({
+          id: (c.kpi_metrics as any).id, key: (c.kpi_metrics as any).key,
+          name: (c.kpi_metrics as any).name, description: (c.kpi_metrics as any).description,
+          goal: c.goal, weight: c.weight, unit: (c.kpi_metrics as any).unit,
+          category: (c.kpi_metrics as any).category, direction: (c.kpi_metrics as any).direction,
+        }));
+      } else {
+        const { data, error } = await supabase
+          .from('kpi_metrics')
+          .select('id, key, name, description, goal, weight, unit, category, direction')
+          .eq('is_active', true)
+          .eq('show_on_scorecard', true)
+          .order('scorecard_position');
+        if (error) throw error;
+        metrics = data || [];
+      }
+      setKpiMetrics(metrics);
     } catch (err) {
       console.error('Error fetching KPI metrics:', err);
     } finally {
@@ -184,6 +208,12 @@ const ApptiviaScorecard: React.FC = () => {
   const kpiLabels: {[key: string]: string} = useMemo(() => {
     return kpiMetrics.reduce((acc, k) => {
       acc[k.key] = k.name;
+      return acc;
+    }, {} as {[key: string]: string});
+  }, [kpiMetrics]);
+  const kpiUnits: {[key: string]: string} = useMemo(() => {
+    return kpiMetrics.reduce((acc, k) => {
+      acc[k.key] = k.unit || 'count';
       return acc;
     }, {} as {[key: string]: string});
   }, [kpiMetrics]);
@@ -218,46 +248,42 @@ const ApptiviaScorecard: React.FC = () => {
         return { start: start.toISOString(), end: new Date().toISOString() };
       }
       case 'This Week': {
-        const dayOfWeek = today.getDay();
-        const monday = new Date(today.getTime() - (dayOfWeek === 0 ? 6 : dayOfWeek - 1) * 24 * 60 * 60 * 1000);
-        const sunday = new Date(monday.getTime() + 7 * 24 * 60 * 60 * 1000);
-        return { start: monday.toISOString(), end: sunday.toISOString() };
+        const monday = getMonday(today);
+        const nextMonday = new Date(monday.getTime() + 7 * 24 * 60 * 60 * 1000);
+        return { start: monday.toISOString(), end: nextMonday.toISOString() };
       }
       case 'Last Week': {
-        const dayOfWeek = today.getDay();
-        const lastMonday = new Date(today.getTime() - (dayOfWeek === 0 ? 13 : dayOfWeek + 6) * 24 * 60 * 60 * 1000);
-        const lastSunday = new Date(lastMonday.getTime() + 7 * 24 * 60 * 60 * 1000);
-        return { start: lastMonday.toISOString(), end: lastSunday.toISOString() };
+        const monday = getMonday(today);
+        const lastMonday = new Date(monday.getTime() - 7 * 24 * 60 * 60 * 1000);
+        return { start: lastMonday.toISOString(), end: monday.toISOString() };
       }
       case 'This Month': {
-        const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
-        const lastDay = new Date(today.getFullYear(), today.getMonth() + 1, 0);
-        return { start: firstDay.toISOString(), end: lastDay.toISOString() };
+        // H1 fix: use Monday-aligned ranges to avoid off-by-one on final day
+        const range = getMonthRange(today.getFullYear(), today.getMonth());
+        return { start: range.start.toISOString(), end: range.end.toISOString() };
       }
       case 'Last Month': {
-        const firstDay = new Date(today.getFullYear(), today.getMonth() - 1, 1);
-        const lastDay = new Date(today.getFullYear(), today.getMonth(), 0);
-        return { start: firstDay.toISOString(), end: lastDay.toISOString() };
+        const lastMonth = today.getMonth() === 0 ? 11 : today.getMonth() - 1;
+        const lastMonthYear = today.getMonth() === 0 ? today.getFullYear() - 1 : today.getFullYear();
+        const range = getMonthRange(lastMonthYear, lastMonth);
+        return { start: range.start.toISOString(), end: range.end.toISOString() };
       }
       case 'This Quarter': {
-        const q = Math.floor(today.getMonth() / 3);
-        const firstDay = new Date(today.getFullYear(), q * 3, 1);
-        const lastDay = new Date(today.getFullYear(), q * 3 + 3, 0);
-        return { start: firstDay.toISOString(), end: lastDay.toISOString() };
+        const q = Math.floor(today.getMonth() / 3) + 1;  // 1-based quarter
+        const range = getQuarterRange(today.getFullYear(), q);
+        return { start: range.start.toISOString(), end: range.end.toISOString() };
       }
       case 'Last Quarter': {
-        const q = Math.floor(today.getMonth() / 3);
-        const prevQ = q === 0 ? 3 : q - 1;
-        const yr = q === 0 ? today.getFullYear() - 1 : today.getFullYear();
-        const firstDay = new Date(yr, prevQ * 3, 1);
-        const lastDay = new Date(yr, prevQ * 3 + 3, 0);
-        return { start: firstDay.toISOString(), end: lastDay.toISOString() };
+        let q = Math.floor(today.getMonth() / 3);  // current quarter 0-based
+        let yr = today.getFullYear();
+        if (q === 0) { q = 4; yr -= 1; }  // Q0 current → Q4 previous year
+        const range = getQuarterRange(yr, q);
+        return { start: range.start.toISOString(), end: range.end.toISOString() };
       }
       default: {
-        const dayOfWeek = today.getDay();
-        const monday = new Date(today.getTime() - (dayOfWeek === 0 ? 6 : dayOfWeek - 1) * 24 * 60 * 60 * 1000);
-        const sunday = new Date(monday.getTime() + 7 * 24 * 60 * 60 * 1000);
-        return { start: monday.toISOString(), end: sunday.toISOString() };
+        const monday = getMonday(today);
+        const nextMonday = new Date(monday.getTime() + 7 * 24 * 60 * 60 * 1000);
+        return { start: monday.toISOString(), end: nextMonday.toISOString() };
       }
     }
   }, [filters.dateRange]);
@@ -275,31 +301,40 @@ const ApptiviaScorecard: React.FC = () => {
   const scorecardNumWeeks = useMemo(() => {
     const label = filters.dateRange || 'This Week';
     const today = new Date();
+    const WEEK_MS = 7 * 24 * 60 * 60 * 1000;
     if (label === 'This Month') {
-      const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
-      return Math.max(1 / 7, (today.getTime() - firstDay.getTime()) / (7 * 24 * 60 * 60 * 1000));
+      // H1 fix: Monday-aligned range for consistent week count
+      const range = getMonthRange(today.getFullYear(), today.getMonth());
+      return Math.max(1 / 7, (today.getTime() - range.start.getTime()) / WEEK_MS);
     }
     if (label === 'Last Month') {
-      const firstDay = new Date(today.getFullYear(), today.getMonth() - 1, 1);
-      const lastDay = new Date(today.getFullYear(), today.getMonth(), 0);
-      return Math.max(1, (lastDay.getTime() - firstDay.getTime()) / (7 * 24 * 60 * 60 * 1000));
+      const lastMonth = today.getMonth() === 0 ? 11 : today.getMonth() - 1;
+      const lastMonthYear = today.getMonth() === 0 ? today.getFullYear() - 1 : today.getFullYear();
+      const range = getMonthRange(lastMonthYear, lastMonth);
+      return Math.max(1, (range.end.getTime() - range.start.getTime()) / WEEK_MS);
     }
     if (label === 'This Quarter') {
-      const q = Math.floor(today.getMonth() / 3);
-      const firstDay = new Date(today.getFullYear(), q * 3, 1);
-      return Math.max(1 / 7, (today.getTime() - firstDay.getTime()) / (7 * 24 * 60 * 60 * 1000));
+      const q = Math.floor(today.getMonth() / 3) + 1;
+      const range = getQuarterRange(today.getFullYear(), q);
+      return Math.max(1 / 7, (today.getTime() - range.start.getTime()) / WEEK_MS);
     }
     if (label === 'Last Quarter') {
-      const q = Math.floor(today.getMonth() / 3);
-      const prevQ = q === 0 ? 3 : q - 1;
-      const yr = q === 0 ? today.getFullYear() - 1 : today.getFullYear();
-      const firstDay = new Date(yr, prevQ * 3, 1);
-      const lastDay = new Date(yr, prevQ * 3 + 3, 0);
-      return Math.max(1, (lastDay.getTime() - firstDay.getTime()) / (7 * 24 * 60 * 60 * 1000));
+      let q = Math.floor(today.getMonth() / 3);
+      let yr = today.getFullYear();
+      if (q === 0) { q = 4; yr -= 1; }
+      const range = getQuarterRange(yr, q);
+      return Math.max(1, (range.end.getTime() - range.start.getTime()) / WEEK_MS);
     }
     if (label === 'All Time') return 0; // hook computes from min(period_start)
     return 1;
   }, [filters.dateRange]);
+
+  // Listen for post-onboarding refresh signal
+  useEffect(() => {
+    const handler = () => setRefreshTrigger(t => t + 1);
+    window.addEventListener('apptivia:onboarding-complete', handler);
+    return () => window.removeEventListener('apptivia:onboarding-complete', handler);
+  }, []);
 
   // Fetch data when dependencies change
   useEffect(() => {
@@ -324,12 +359,21 @@ const ApptiviaScorecard: React.FC = () => {
         const coachingEnd = new Date().toISOString().split('T')[0];
         const numWeeks = 30 / 7;
 
-        const [{ data: kpiDefs }, { data: values }] = await Promise.all([
-          supabase
-            .from('kpi_metrics')
-            .select('key, goal, direction')
-            .eq('is_active', true)
-            .eq('show_on_scorecard', true),
+        const kpiDefsQuery = orgId
+          ? supabase
+              .from('kpi_org_configs')
+              .select('goal, kpi_metrics!inner(key, direction)')
+              .eq('organization_id', orgId)
+              .eq('is_active', true)
+              .eq('show_on_scorecard', true)
+          : supabase
+              .from('kpi_metrics')
+              .select('key, goal, direction')
+              .eq('is_active', true)
+              .eq('show_on_scorecard', true);
+
+        const [kpiDefsResult, { data: values }] = await Promise.all([
+          kpiDefsQuery,
           supabase
             .from('kpi_values')
             .select('value, kpi_metrics!inner(key)')
@@ -339,7 +383,16 @@ const ApptiviaScorecard: React.FC = () => {
             .limit(10000),
         ]);
 
-        if (cancelled || !kpiDefs || !values) return;
+        // Map org-scoped result to flat shape
+        const kpiDefs = orgId
+          ? (kpiDefsResult.data || []).map((c: any) => ({
+              key: (c.kpi_metrics as any).key,
+              goal: c.goal,
+              direction: (c.kpi_metrics as any).direction,
+            }))
+          : (kpiDefsResult.data || []);
+
+        if (cancelled || !kpiDefs.length || !values) return;
 
         const sums: Record<string, number> = {};
         values.forEach((v: any) => {
@@ -367,7 +420,10 @@ const ApptiviaScorecard: React.FC = () => {
     return () => { cancelled = true; };
   }, [isPowerUser, userId, refreshTrigger]);
 
+  const orgId = (profile as any)?.organization_id || null;
+
   const { data, loading, error } = useScorecardData(
+    orgId,
     filters.departments,
     filters.teams,
     filters.members,
@@ -379,6 +435,7 @@ const ApptiviaScorecard: React.FC = () => {
   );
 
   const { data: historicalScores, repNames: historicalRepNames } = useHistoricalScores(
+    orgId,
     filters.departments,
     filters.teams,
     filters.members,
@@ -398,7 +455,7 @@ const ApptiviaScorecard: React.FC = () => {
     coachDepartments,
     coachTeams,
     coachMembers,
-    { enabled: shouldLoadCoach, mode: 'summary' }
+    { enabled: shouldLoadCoach, mode: 'summary', organizationId: (profile as any)?.organization_id }
   );
 
   const applyScopedFilters = (nextFilters: typeof filters) => {
@@ -437,39 +494,55 @@ const ApptiviaScorecard: React.FC = () => {
     if (!isPowerUser || !userId || !userRow) return;
     const fetchTeamRank = async () => {
       // Get all reps in the same team
-      const profileTeamId = profile?.team_id;
+      const profileTeamId = (profile as any)?.team_id;
       if (!profileTeamId) { setTeamRank(null); return; }
-      const { data: teamProfiles } = await supabase
+      let teamProfilesQ = supabase
         .from('profiles')
         .select('id')
         .eq('team_id', profileTeamId)
         .not('role', 'in', '("admin","manager","coach")');
+      if (orgId) teamProfilesQ = teamProfilesQ.eq('organization_id', orgId);
+      const { data: teamProfiles } = await teamProfilesQ;
       if (!teamProfiles?.length) { setTeamRank(null); return; }
       const teamIds = teamProfiles.map((p: any) => p.id);
-      // Get their current scores from kpi_values for the same date range
+      // Get their scores from kpi_values for the same date range
       const kpiIds = kpiMetrics.map(k => k.id);
       if (kpiIds.length === 0) { setTeamRank(null); return; }
-      const { data: kpiValues } = await supabase
-        .from('kpi_values')
-        .select('value, kpi_id, profile_id')
-        .in('kpi_id', kpiIds)
-        .in('profile_id', teamIds)
-        .lte('period_start', dateRange.end)
-        .gte('period_end', dateRange.start);
+      // M2 fix: fetch historical goals so team rank uses the same goals as the scorecard
+      const [kpiValuesRes, historyRes] = await Promise.all([
+        supabase.from('kpi_values')
+          .select('value, kpi_id, profile_id')
+          .in('kpi_id', kpiIds)
+          .in('profile_id', teamIds)
+          .lte('period_start', dateRange.end)
+          .gte('period_end', dateRange.start),
+        supabase.from('kpi_metric_history')
+          .select('kpi_id, goal, weight, direction, valid_from, valid_to')
+          .in('kpi_id', kpiIds)
+          .lte('valid_from', dateRange.end)
+          .or(`valid_to.is.null,valid_to.gte.${dateRange.start}`),
+      ]);
+      const kpiValues = kpiValuesRes.data;
+      const histRows = historyRes.data || [];
       if (!kpiValues?.length) { setTeamRank(null); return; }
-      // Compute weighted score per rep (same as useScorecardData)
-      const totalWeight = kpiMetrics.reduce((s: number, m) => s + (m.weight || 0), 0);
+      // Build historical goal/weight/direction lookup (M2 fix)
+      const histMap: Record<string, { goal: number; weight: number; direction: string }> = {};
+      for (const h of histRows) {
+        histMap[h.kpi_id] = { goal: h.goal, weight: h.weight, direction: h.direction || 'higher' };
+      }
+      const histGoal = (m: any) => histMap[m.id]?.goal ?? m.goal;
+      const histWeight = (m: any) => histMap[m.id]?.weight ?? m.weight;
+      const histDir = (m: any) => histMap[m.id]?.direction ?? m.direction ?? 'higher';
+      // Compute weighted score per rep using historical goals + calcPct (M1 residual fix: 200% cap)
+      const totalWeight = kpiMetrics.reduce((s: number, m) => s + (histWeight(m) || 0), 0);
       const repScores: Record<string, number> = {};
       teamIds.forEach((id: string) => { repScores[id] = 0; });
       const metricById = new Map(kpiMetrics.map(m => [m.id, m]));
       kpiValues.forEach((kv: any) => {
         const metric = metricById.get(kv.kpi_id);
-        if (!metric || !metric.goal) return;
-        const dir = metric.direction || 'higher';
-        const pct = dir === 'lower'
-          ? (kv.value > 0 ? (metric.goal / kv.value) * 100 : 200)
-          : (kv.value / metric.goal) * 100;
-        repScores[kv.profile_id] = (repScores[kv.profile_id] || 0) + pct * (metric.weight || 0);
+        if (!metric || !histGoal(metric)) return;
+        const pct = calcPct(kv.value, histGoal(metric), histDir(metric));
+        repScores[kv.profile_id] = (repScores[kv.profile_id] || 0) + pct * (histWeight(metric) || 0);
       });
       const ranked = Object.entries(repScores)
         .map(([id, total]) => ({ id, score: totalWeight > 0 ? Math.round(total / totalWeight) : 0 }))
@@ -478,7 +551,7 @@ const ApptiviaScorecard: React.FC = () => {
       setTeamRank(myIdx >= 0 ? { rank: myIdx + 1, total: ranked.length } : null);
     };
     fetchTeamRank();
-  }, [isPowerUser, userId, userRow, profile?.team_id, kpiMetrics, dateRange.start, dateRange.end]);
+  }, [isPowerUser, userId, userRow, (profile as any)?.team_id, kpiMetrics, dateRange.start, dateRange.end]);
 
   const userKpiBreakdown = useMemo(() => {
     if (!userRow?.kpis) return { exceeding: 0, onTrack: 0, needsFocus: 0, total: 0 };
@@ -587,10 +660,15 @@ const ApptiviaScorecard: React.FC = () => {
     navigate(buildCoachLink(skillset, achievement, kpiKey));
   };
 
-  const handleExport = () => {
-    if (!canExport) return;
-    if (!loading && !error) {
-      exportScorecardToCSV(data, filters);
+  const [showExportModal, setShowExportModal] = useState(false);
+  const [showScheduleReportModal, setShowScheduleReportModal] = useState(false);
+
+  const handleExportFormat = (format: string) => {
+    if (!canExport || loading || error) return;
+    if (format === 'csv') {
+      exportScorecardToCSV(data, filters, kpiUnits);
+    } else if (format === 'pdf') {
+      exportScorecardToPDF(data, filters);
     }
   };
 
@@ -696,12 +774,28 @@ const ApptiviaScorecard: React.FC = () => {
     const fetchRepTrend = async () => {
       setRepTrendLoading(true);
       try {
-        const { data: scorecardKpis } = await supabase
-          .from('kpi_metrics')
-          .select('id, weight, goal, direction')
-          .eq('is_active', true)
-          .eq('show_on_scorecard', true);
-        if (!scorecardKpis || scorecardKpis.length === 0) { setRepTrendData([]); return; }
+        // Org-scoped scorecard KPIs
+        let scorecardKpis: any[] = [];
+        if (orgId) {
+          const { data } = await supabase
+            .from('kpi_org_configs')
+            .select('kpi_id, goal, weight, kpi_metrics!inner(id, direction)')
+            .eq('organization_id', orgId)
+            .eq('is_active', true)
+            .eq('show_on_scorecard', true);
+          scorecardKpis = (data || []).map((c: any) => ({
+            id: (c.kpi_metrics as any).id, weight: c.weight, goal: c.goal,
+            direction: (c.kpi_metrics as any).direction,
+          }));
+        } else {
+          const { data } = await supabase
+            .from('kpi_metrics')
+            .select('id, weight, goal, direction')
+            .eq('is_active', true)
+            .eq('show_on_scorecard', true);
+          scorecardKpis = data || [];
+        }
+        if (scorecardKpis.length === 0) { setRepTrendData([]); return; }
         const kpiIds = scorecardKpis.map((k: any) => k.id);
 
         // Anchor to the same week the scorecard is viewing
@@ -783,16 +877,7 @@ const ApptiviaScorecard: React.FC = () => {
       ? `${filters.members.length} Member${filters.members.length > 1 ? 's' : ''}`
       : 'All Members';
 
-    // Format Custom Week as "Week Ending M/D" instead of raw encoded label
-    let dateLabel = filters.dateRange || 'This Week';
-    if (dateLabel.startsWith('Custom Week|')) {
-      const mondayStr = dateLabel.split('|')[1];
-      if (mondayStr) {
-        const monday = new Date(mondayStr + 'T00:00:00');
-        const sunday = new Date(monday.getTime() + 6 * 24 * 60 * 60 * 1000);
-        dateLabel = `Week Ending ${sunday.getMonth() + 1}/${sunday.getDate()}`;
-      }
-    }
+    const dateLabel = formatPresetDateRange(filters.dateRange || 'This Week') || (filters.dateRange || 'This Week');
 
     return `Filters: ${dateLabel} • ${deptLabel} • ${teamLabel} • ${memberLabel}`;
   })();
@@ -916,16 +1001,24 @@ const ApptiviaScorecard: React.FC = () => {
     try {
       const searchTerm = query.trim().toLowerCase();
 
-      // Search all categories in parallel
+      // Search all categories in parallel — org-scoped
+      let profilesSearchQ = supabase.from('profiles').select('id, first_name, last_name, email, role')
+        .or(`first_name.ilike.%${searchTerm}%,last_name.ilike.%${searchTerm}%,email.ilike.%${searchTerm}%`).limit(5);
+      if (orgId) profilesSearchQ = profilesSearchQ.eq('organization_id', orgId);
+      let contestsSearchQ = supabase.from('active_contests').select('id, name, description')
+        .ilike('name', `%${searchTerm}%`).limit(5);
+      if (orgId) contestsSearchQ = contestsSearchQ.eq('organization_id', orgId);
+      let achievementsSearchQ = supabase.from('achievements').select('id, name, description')
+        .ilike('name', `%${searchTerm}%`).limit(5);
+      if (orgId) achievementsSearchQ = achievementsSearchQ.eq('organization_id', orgId);
+      let badgesSearchQ = supabase.from('badge_definitions').select('id, badge_name, badge_description')
+        .ilike('badge_name', `%${searchTerm}%`).limit(5);
+      if (orgId) badgesSearchQ = badgesSearchQ.eq('organization_id', orgId);
       const [profilesRes, achievementsRes, badgesRes, contestsRes] = await Promise.all([
-        supabase.from('profiles').select('id, first_name, last_name, email, role')
-          .or(`first_name.ilike.%${searchTerm}%,last_name.ilike.%${searchTerm}%,email.ilike.%${searchTerm}%`).limit(5),
-        supabase.from('achievements').select('id, name, description')
-          .ilike('name', `%${searchTerm}%`).limit(5),
-        supabase.from('badge_definitions').select('id, badge_name, badge_description')
-          .ilike('badge_name', `%${searchTerm}%`).limit(5),
-        supabase.from('active_contests').select('id, name, description')
-          .ilike('name', `%${searchTerm}%`).limit(5),
+        profilesSearchQ,
+        achievementsSearchQ,
+        badgesSearchQ,
+        contestsSearchQ,
       ]);
 
       (profilesRes.data || []).forEach((profile: any) => {
@@ -1109,13 +1202,22 @@ const ApptiviaScorecard: React.FC = () => {
             <PageActionBar
               onFilterClick={() => setFiltersOpen(true)}
               onConfigureClick={() => { if (canConfigureScorecard) setConfigPanelOpen(true); }}
-              onExportClick={handleExport}
+              onExportClick={() => setShowExportModal(true)}
               onNotificationsClick={notifications.openPanel}
-              exportDisabled={loading || !canExport}
               configureDisabled={!canConfigureScorecard}
               notificationBadge={notifications.unreadCount}
               filterBadge={activeFilterCount}
               actions={[
+                {
+                  label: 'Export Report',
+                  onClick: () => setShowExportModal(true),
+                  disabled: loading || !canExport,
+                },
+                {
+                  label: 'Schedule Report',
+                  onClick: () => setShowScheduleReportModal(true),
+                  disabled: !canExport,
+                },
                 ...(canShareSnapshot ? [{
                   label: 'Share Snapshot',
                   onClick: () => setSnapshotOpen(true),
@@ -1858,6 +1960,7 @@ const ApptiviaScorecard: React.FC = () => {
           </button>
         </div>
         <ScorecardFilters
+          organizationId={(profile as any)?.organization_id}
           onFilterChange={handleFiltersChange}
           initialFilters={defaultFilters}
           resetSignal={filtersResetSignal}
@@ -1931,6 +2034,19 @@ const ApptiviaScorecard: React.FC = () => {
           </div>
         </div>
       )}
+      <ExportReportModal
+        isOpen={showExportModal}
+        onClose={() => setShowExportModal(false)}
+        onSelectFormat={handleExportFormat}
+        title="Export Scorecard Report"
+      />
+      <ScheduleReportModal
+        isOpen={showScheduleReportModal}
+        onClose={() => setShowScheduleReportModal(false)}
+        onSuccess={() => {
+          if (notifications.addNotification) notifications.addNotification({ type: 'success', title: 'Report Scheduled', message: 'Your report has been scheduled. Manage it in Settings → Reports.', dedupeKey: 'report-scheduled' });
+        }}
+      />
     </DashboardLayout>
   );
 };

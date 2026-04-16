@@ -8,6 +8,7 @@ import { useNotifications } from '../../contexts/NotificationContext';
 import { idpStatusConfig } from './idpStatusConfig';
 import { buildLabel } from '../../constants/kpiGuidance';
 import { fetchRepTrend } from '../../utils/scorecardFetch';
+import { ROLES, LEADERSHIP_ROLES } from '../../constants/roles';
 import IdpCard from './IdpCard';
 import IdpBuilderForm from './IdpBuilderForm';
 import IdpDetailModal from './IdpDetailModal';
@@ -41,8 +42,8 @@ export default function IdpTab({ teamMembers }) {
   const [completionPrompt, setCompletionPrompt] = useState({ isOpen: false, idp: null });
   const [availableKPIs, setAvailableKPIs] = useState([]);
 
-  const canManage = role === 'admin' || role === 'manager' || role === 'coach';
-  const isPowerUser = role === 'power_user';
+  const canManage = role === ROLES.ADMIN || role === ROLES.MANAGER || role === ROLES.COACH;
+  const isPowerUser = role === ROLES.POWER_USER;
   const [autoGenerating, setAutoGenerating] = useState(false);
 
   // AI auto-generate IDP using 5-week trend analysis
@@ -52,7 +53,7 @@ export default function IdpTab({ teamMembers }) {
     try {
       // Fetch 5-week trend data and skillsets in parallel
       const [trendResult, skillsetResult] = await Promise.all([
-        fetchRepTrend(repId, 5),
+        fetchRepTrend(repId, 5, orgId),
         supabase.from('profile_skillsets').select('skillset_key, current_xp, current_level').eq('profile_id', repId),
       ]);
 
@@ -203,6 +204,7 @@ export default function IdpTab({ teamMembers }) {
   const handleSave = async () => {
     if (!form.name) return toast.error('Plan name is required');
     if (!form.profile_id && !editingIdp) return toast.error('Please select a rep');
+    if (form.period_start && form.period_end && form.period_start > form.period_end) return toast.error('End date must be after start date');
     setSaving(true);
     try {
       const row = {
@@ -234,7 +236,7 @@ export default function IdpTab({ teamMembers }) {
       } else {
         // Capture baseline KPI snapshot at plan creation
         try {
-          const trend = await fetchRepTrend(row.profile_id, 5);
+          const trend = await fetchRepTrend(row.profile_id, 5, orgId);
           row.baseline_kpi_snapshot = {
             capturedAt: new Date().toISOString(),
             currentScore: trend.currentScore,
@@ -444,6 +446,7 @@ export default function IdpTab({ teamMembers }) {
           onStatusChange={handleStatusChange}
           onMilestoneToggle={handleMilestoneToggle}
           canManage={canManage}
+          teamMembers={teamMembers}
         />
       )}
 

@@ -30,6 +30,9 @@ function createTransporter() {
       user: SMTP_USER,
       pass: SMTP_PASS,
     },
+    connectionTimeout: 10000,
+    greetingTimeout: 10000,
+    socketTimeout: 15000,
   });
 }
 
@@ -42,7 +45,7 @@ function createTransporter() {
  * @param {string} options.html - HTML content (optional)
  * @returns {Promise<Object>} Send result
  */
-async function sendEmail({ recipients, subject, text, html }) {
+async function sendEmail({ recipients, subject, text, html, attachments }) {
   const transporter = createTransporter();
   const SMTP_FROM = process.env.SMTP_FROM || 'noreply@apptivia.app';
 
@@ -59,22 +62,37 @@ async function sendEmail({ recipients, subject, text, html }) {
     mailOptions.text = text;
   }
 
+  if (attachments && attachments.length > 0) {
+    mailOptions.attachments = attachments;
+  }
+
   return await transporter.sendMail(mailOptions);
 }
 
 /**
- * Verify SMTP connection
+ * Verify SMTP connection with retry logic for transient errors (e.g. STARTTLS 454)
+ * @param {number} retries - Number of retry attempts (default 3)
  * @returns {Promise<boolean>} True if connection is successful
  */
-async function verifyConnection() {
-  try {
-    const transporter = createTransporter();
-    await transporter.verify();
-    return true;
-  } catch (error) {
-    console.error('Email service verification failed:', error);
-    return false;
+async function verifyConnection(retries = 3) {
+  for (let attempt = 1; attempt <= retries; attempt++) {
+    try {
+      const transporter = createTransporter();
+      await transporter.verify();
+      return true;
+    } catch (error) {
+      const isTransient = error.responseCode >= 400 && error.responseCode < 500;
+      if (isTransient && attempt < retries) {
+        const delay = attempt * 5000; // 5s, 10s, 15s
+        console.log(`SMTP verify attempt ${attempt}/${retries} got ${error.responseCode} — retrying in ${delay / 1000}s`);
+        await new Promise(r => setTimeout(r, delay));
+      } else if (attempt === retries) {
+        console.warn(`SMTP verification failed after ${retries} attempts: ${error.code || error.responseCode || ''} ${error.response || error.message}`);
+        return false;
+      }
+    }
   }
+  return false;
 }
 
 module.exports = {

@@ -13,6 +13,7 @@ import { supabase } from '../supabaseClient';
 import { useIntegrations } from '../hooks/useIntegrations';
 import { useTeamManagement } from '../hooks/useTeamManagement';
 import { SUPPORTED_INTEGRATIONS, API_KEY_PROVIDERS } from '../constants/integrations';
+import { ROLES } from '../constants/roles';
 import SyncHistoryModal from '../components/shared/SyncHistoryModal';
 import DisconnectConfirmModal from '../components/shared/DisconnectConfirmModal';
 import CredentialsModal from '../components/shared/CredentialsModal';
@@ -38,8 +39,8 @@ export default function Systems() {
   const [searching, setSearching] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
 
-  const isAdmin = role === 'admin';
-  const isManager = role === 'manager';
+  const isAdmin = role === ROLES.ADMIN;
+  const isManager = role === ROLES.MANAGER;
   const canManagePermissions = hasPermission('manage_permissions');
   const canManageTeams = hasPermission('manage_teams');
   const canManageTeamMembers = hasPermission('manage_team_members');
@@ -121,10 +122,12 @@ export default function Systems() {
   // ── Permissions ───────────────────────────────────────────────
   const loadUsers = async () => {
     try {
-      const { data, error } = await supabase
+      let query = supabase
         .from('profiles')
         .select('id, first_name, last_name, role, email, team_id, department, title')
         .order('first_name');
+      if (profile?.organization_id) query = query.eq('organization_id', profile.organization_id);
+      const { data, error } = await query;
       if (!error) setUsersList(data || []);
     } catch (e) {
       console.error('Error loading users:', e);
@@ -210,7 +213,9 @@ export default function Systems() {
     const results = [];
     try {
       const searchTerm = query.trim().toLowerCase();
-      const { data: profiles } = await supabase.from('profiles').select('id, first_name, last_name, email, role').or(`first_name.ilike.%${searchTerm}%,last_name.ilike.%${searchTerm}%, email.ilike.%${searchTerm}%`).limit(5);
+      let profilesSearchQ = supabase.from('profiles').select('id, first_name, last_name, email, role').or(`first_name.ilike.%${searchTerm}%,last_name.ilike.%${searchTerm}%, email.ilike.%${searchTerm}%`).limit(5);
+      if (profile?.organization_id) profilesSearchQ = profilesSearchQ.eq('organization_id', profile.organization_id);
+      const { data: profiles } = await profilesSearchQ;
       if (profiles) {
         profiles.forEach((p) => {
           results.push({ type: 'User', title: `${p.first_name || ''} ${p.last_name || ''}`.trim() || p.email, subtitle: p.role, link: `/profile?user=${p.id}`, icon: '👤' });
@@ -428,6 +433,7 @@ export default function Systems() {
             onClose={() => setSyncHistoryModal(null)}
             loading={syncHistoryLoading}
             history={syncHistory}
+            integration={liveIntegrations.find(i => i.id === syncHistoryModal)}
           />
 
           <CredentialsModal

@@ -4,10 +4,10 @@ import { supabase } from '../../supabaseClient';
 import { backendFetch } from '../../utils/backendFetch';
 import { useAuth } from '../../AuthContext';
 import { useToast } from '../../contexts/ToastContext';
-import { useNotifications } from '../../contexts/NotificationContext';
 import { reviewStatusConfig } from './reviewStatusConfig';
 import { aggregateReviewData } from '../../utils/reviewDataAggregator';
 import { fetchRepTrend } from '../../utils/scorecardFetch';
+import { ROLES } from '../../constants/roles';
 import ReviewCard from './ReviewCard';
 import ReviewBuilderForm from './ReviewBuilderForm';
 import ReviewDetailModal from './ReviewDetailModal';
@@ -20,7 +20,6 @@ const emptyForm = () => ({
 export default function ReviewTab({ teamMembers, startForRepId }) {
   const { user, profile, role } = useAuth();
   const toast = useToast();
-  const { addNotification } = useNotifications();
   const orgId = profile?.organization_id;
 
   const [reviews, setReviews] = useState([]);
@@ -35,9 +34,9 @@ export default function ReviewTab({ teamMembers, startForRepId }) {
   const [typeFilter, setTypeFilter] = useState('all');
   const [deleteConfirm, setDeleteConfirm] = useState({ isOpen: false, review: null });
 
-  const isAdmin = role === 'admin';
-  const isManager = role === 'admin' || role === 'manager';
-  const isPowerUser = role === 'power_user';
+  const isAdmin = role === ROLES.ADMIN;
+  const isManager = role === ROLES.ADMIN || role === ROLES.MANAGER;
+  const isPowerUser = role === ROLES.POWER_USER;
   const [aiGenerating, setAiGenerating] = useState(false);
 
   // Generate AI draft for manager assessment with 5-week trend analysis
@@ -49,7 +48,7 @@ export default function ReviewTab({ teamMembers, startForRepId }) {
       const repName = rep ? (rep.full_name || rep.email) : 'Rep';
 
       // Fetch 5-week trend data for richer AI context
-      const trendResult = await fetchRepTrend(selectedReview.profile_id, 5);
+      const trendResult = await fetchRepTrend(selectedReview.profile_id, 5, orgId);
       const weeklyScores = trendResult.weeks.filter(w => w.hasData).map(w => ({ week: w.week, score: w.score }));
 
       // Build self-assessment data if available
@@ -176,58 +175,20 @@ export default function ReviewTab({ teamMembers, startForRepId }) {
     }
   };
 
-  // Transition handler
+  // Transition handler — routes through backend state machine for validation,
+  // notifications, and Aaron memory updates
   const handleTransition = async (newStatus, extraData = {}) => {
     if (!selectedReview) return;
     setSaving(true);
     try {
-      const updates = { status: newStatus, updated_at: new Date().toISOString(), ...extraData };
-
-      // Add workflow timestamps
-      if (newStatus === 'pending_self_assessment') updates.sent_for_assessment_at = new Date().toISOString();
-      if (newStatus === 'self_assessment_submitted') updates.self_assessment_submitted_at = new Date().toISOString();
-      if (newStatus === 'manager_review') updates.manager_review_started_at = new Date().toISOString();
-      if (newStatus === 'finalized') updates.finalized_at = new Date().toISOString();
-      if (newStatus === 'reopened') updates.reopened_at = new Date().toISOString();
-      if (newStatus === 'acknowledged') {
-        updates.acknowledged_at = new Date().toISOString();
-        if (extraData.acknowledgment_comment !== undefined) {
-          // Already in extraData
-        }
-      }
-
-      const { error } = await supabase.from('performance_reviews').update(updates).eq('id', selectedReview.id);
-      if (error) throw error;
-
-      // Send notifications
-      if (newStatus === 'pending_self_assessment') {
-        addNotification({
-          type: 'coaching', title: 'Self-Assessment Requested',
-          message: `Please complete your self-assessment for "${selectedReview.title}"`,
-          ownerId: selectedReview.profile_id, link: '/coaching-plans#reviews',
-        });
-      } else if (newStatus === 'self_assessment_submitted') {
-        addNotification({
-          type: 'info', title: 'Self-Assessment Submitted',
-          message: `Self-assessment submitted for "${selectedReview.title}"`,
-          ownerId: selectedReview.manager_id, link: '/coaching-plans#reviews',
-        });
-      } else if (newStatus === 'finalized') {
-        addNotification({
-          type: 'coaching', title: 'Review Finalized',
-          message: `Your performance review "${selectedReview.title}" has been finalized. Please review and acknowledge.`,
-          ownerId: selectedReview.profile_id, link: '/coaching-plans#reviews',
-        });
-      } else if (newStatus === 'acknowledged') {
-        addNotification({
-          type: 'info', title: 'Review Acknowledged',
-          message: `Performance review "${selectedReview.title}" has been acknowledged.`,
-          ownerId: selectedReview.manager_id, link: '/coaching-plans#reviews',
-        });
-      }
+      const result = await backendFetch(`/api/reviews/${selectedReview.id}/transition`, {
+        newStatus,
+        extraData,
+      });
+      if (result?.error) throw new Error(result.error);
 
       toast.success(`Review status updated to ${newStatus.replace(/_/g, ' ')}`);
-      setSelectedReview(prev => prev ? { ...prev, ...updates } : null);
+      setSelectedReview(prev => prev ? { ...prev, status: newStatus, ...extraData } : null);
       fetchReviews();
     } catch (err) {
       toast.error('Transition failed: ' + err.message);
@@ -390,7 +351,7 @@ export default function ReviewTab({ teamMembers, startForRepId }) {
           onTransition={handleTransition}
           onManagerSave={handleManagerSave}
           onAcknowledge={handleAcknowledge}
-          isManager={isManager || (selectedReview.manager_id === profile?.id && (role === 'manager' || role === 'admin'))}
+          isManager={isManager || (selectedReview.manager_id === profile?.id && (role === ROLES.MANAGER || role === ROLES.ADMIN))}
           isRep={selectedReview.profile_id === profile?.id}
           teamMembers={teamMembers}
           saving={saving}

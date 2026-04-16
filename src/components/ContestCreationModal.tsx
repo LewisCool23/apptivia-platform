@@ -10,6 +10,7 @@ interface ContestCreationModalProps {
   isOpen: boolean;
   onClose: () => void;
   currentUserId?: string;
+  organizationId?: string;
   contestToEdit?: any;
 }
 
@@ -62,7 +63,7 @@ const CONTEST_TEMPLATES = [
   },
 ];
 
-export default function ContestCreationModal({ isOpen, onClose, currentUserId, contestToEdit }: ContestCreationModalProps) {
+export default function ContestCreationModal({ isOpen, onClose, currentUserId, organizationId, contestToEdit }: ContestCreationModalProps) {
   const toast = useToast();
   const { addNotification } = useNotificationsTyped();
   const [loading, setLoading] = useState(false);
@@ -152,6 +153,11 @@ export default function ContestCreationModal({ isOpen, onClose, currentUserId, c
       return;
     }
 
+    if (formData.reward_type && formData.reward_type !== 'none' && !formData.reward_value) {
+      toast.error('Please enter a reward value');
+      return;
+    }
+
     try {
       setSaving(true);
       setMessage('');
@@ -192,7 +198,7 @@ export default function ContestCreationModal({ isOpen, onClose, currentUserId, c
         toast.dismiss(loadingToast);
         toast.success('Contest updated successfully!');
       } else {
-        // Create new contest
+        // Create new contest (org-scoped)
         const { data: contest, error: contestError } = await supabase
           .from('active_contests')
           .insert({
@@ -208,17 +214,20 @@ export default function ContestCreationModal({ isOpen, onClose, currentUserId, c
             reward_description: formData.reward_description,
             participant_type: formData.participant_type,
             created_by: currentUserId,
+            organization_id: organizationId,
           })
           .select()
           .single();
 
         if (contestError) throw contestError;
 
-        // Auto-enroll all non-admin/manager/coach profiles (reps only)
-        const { data: profiles, error: profilesError } = await supabase
+        // Auto-enroll all non-admin/manager/coach profiles in this org (reps only)
+        let enrollQuery = supabase
           .from('profiles')
           .select('id, team_id, role')
           .not('role', 'in', '("admin","manager","coach")');
+        if (organizationId) enrollQuery = enrollQuery.eq('organization_id', organizationId);
+        const { data: profiles, error: profilesError } = await enrollQuery;
 
         if (profilesError) throw profilesError;
 

@@ -1,10 +1,12 @@
 import React, { useEffect, useState } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate, Link } from 'react-router-dom';
 import { useAuth } from './AuthContext';
 import { supabase } from './supabaseClient';
-import { Home, Trophy, Gamepad2, BarChart3, Settings, User, Menu, LogOut, X, Zap, Building2, ChevronDown, ChevronRight, Search, Radar, Monitor } from 'lucide-react';
+import { Home, Trophy, Gamepad2, BarChart3, Settings, User, Menu, LogOut, X, Zap, Building2, ChevronDown, ChevronRight, Search, Radar, Monitor, Sparkles, Clock, FlaskConical } from 'lucide-react';
 import NotificationPanel from './components/NotificationPanel';
 import AaronChatbot from './AaronChatbot';
+import SetupChecklist from './components/onboarding/SetupChecklist';
+import { useBilling } from './hooks/useBilling';
 
 const navigation = [
   { id: 'dashboard', name: 'Apptivia Scorecard', icon: Home, route: '/dashboard', description: 'Performance dashboard' },
@@ -25,13 +27,68 @@ const navigation = [
       { id: 'permissions-teams', name: 'Permissions', icon: Settings, route: '/permissions-teams', description: 'Manage access' }
     ]
   },
+  { id: 'pilot', name: 'Pilot Dashboard', icon: FlaskConical, route: '/admin/pilot', description: 'Pilot validation', adminOnly: true },
   { id: 'profile', name: 'Profile', icon: User, route: '/profile', description: 'Personal settings' }
 ];
+
+function TrialBanner({ billing }) {
+  const navigate = useNavigate();
+  const { status, trialEndsAt, plan, startCheckout, loading } = billing;
+  if (loading) return null;
+
+  // Active trial
+  if (status === 'trialing' && trialEndsAt) {
+    const daysLeft = Math.max(0, Math.ceil((new Date(trialEndsAt) - Date.now()) / 86400000));
+    return (
+      <div className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-4 py-2 text-sm flex items-center justify-center gap-3">
+        <Clock size={14} />
+        <span><strong>{daysLeft} day{daysLeft !== 1 ? 's' : ''}</strong> left in your Pro trial</span>
+        <button
+          onClick={() => navigate('/organization-settings')}
+          className="bg-white/20 hover:bg-white/30 px-3 py-0.5 rounded text-xs font-semibold transition-colors"
+        >
+          Upgrade Now
+        </button>
+      </div>
+    );
+  }
+
+  // Expired trial
+  if (status === 'expired' || (plan === 'Basic' && status !== 'active')) {
+    const handleContinueStarter = async () => {
+      try {
+        await supabase.from('organizations').update({ subscription_status: 'active' })
+          .eq('id', (await supabase.from('profiles').select('organization_id').eq('id', (await supabase.auth.getUser()).data.user?.id).single()).data?.organization_id);
+        window.location.reload();
+      } catch (e) { console.error(e); }
+    };
+    return (
+      <div className="bg-amber-50 border-b border-amber-200 text-amber-900 px-4 py-2.5 text-sm flex items-center justify-center gap-3">
+        <span>Your Pro trial has ended. Upgrade to unlock Engage, Contests, Coaching Plans, and more.</span>
+        <button
+          onClick={() => navigate('/organization-settings')}
+          className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-xs font-semibold transition-colors"
+        >
+          Upgrade to Pro
+        </button>
+        <button
+          onClick={handleContinueStarter}
+          className="text-amber-700 hover:text-amber-900 underline text-xs"
+        >
+          Continue with Starter
+        </button>
+      </div>
+    );
+  }
+
+  return null;
+}
 
 function DashboardLayout({ children }) {
   const location = useLocation();
   const navigate = useNavigate();
   const { user, logout, hasPermission } = useAuth();
+  const billing = useBilling();
   const [sidebarOpen, setSidebarOpen] = useState(() => {
     try {
       if (typeof window !== 'undefined') {
@@ -69,7 +126,7 @@ function DashboardLayout({ children }) {
     } catch (e) {}
   }, [sidebarOpen]);
 
-  // Search functionality
+  // Search functionality (org-scoped)
   const handleSearch = async (query) => {
     if (!query || query.trim().length < 2) {
       setSearchResults([]);
@@ -80,16 +137,19 @@ function DashboardLayout({ children }) {
     setSearching(true);
     setShowSearchResults(true);
     const results = [];
+    const searchOrgId = profile?.organization_id;
 
     try {
       const searchTerm = query.trim().toLowerCase();
 
-      // Search profiles/users
-      const { data: profiles } = await supabase
+      // Search profiles/users (org-scoped)
+      let profilesSearch = supabase
         .from('profiles')
         .select('id, first_name, last_name, email, role')
         .or(`first_name.ilike.%${searchTerm}%,last_name.ilike.%${searchTerm}%,email.ilike.%${searchTerm}%`)
         .limit(5);
+      if (searchOrgId) profilesSearch = profilesSearch.eq('organization_id', searchOrgId);
+      const { data: profiles } = await profilesSearch;
 
       if (profiles) {
         profiles.forEach(profile => {
@@ -103,12 +163,14 @@ function DashboardLayout({ children }) {
         });
       }
 
-      // Search achievements
-      const { data: achievements } = await supabase
+      // Search achievements (org-scoped)
+      let achievementsSearch = supabase
         .from('achievements')
         .select('id, name, description')
         .ilike('name', `%${searchTerm}%`)
         .limit(5);
+      if (searchOrgId) achievementsSearch = achievementsSearch.eq('organization_id', searchOrgId);
+      const { data: achievements } = await achievementsSearch;
 
       if (achievements) {
         achievements.forEach(achievement => {
@@ -122,31 +184,35 @@ function DashboardLayout({ children }) {
         });
       }
 
-      // Search badges
-      const { data: badges } = await supabase
-        .from('badges')
-        .select('id, name, description')
-        .ilike('name', `%${searchTerm}%`)
+      // Search badges (org-scoped)
+      let badgesSearch = supabase
+        .from('badge_definitions')
+        .select('id, badge_name, badge_description')
+        .ilike('badge_name', `%${searchTerm}%`)
         .limit(5);
+      if (searchOrgId) badgesSearch = badgesSearch.eq('organization_id', searchOrgId);
+      const { data: badges } = await badgesSearch;
 
       if (badges) {
         badges.forEach(badge => {
           results.push({
             type: 'Badge',
-            title: badge.name,
-            subtitle: badge.description,
+            title: badge.badge_name,
+            subtitle: badge.badge_description,
             link: '/profile',
             icon: '🎖️'
           });
         });
       }
 
-      // Search contests
-      const { data: contests } = await supabase
+      // Search contests (org-scoped)
+      let contestsQ = supabase
         .from('active_contests')
         .select('id, name, description')
         .ilike('name', `%${searchTerm}%`)
         .limit(5);
+      if (searchOrgId) contestsQ = contestsQ.eq('organization_id', searchOrgId);
+      const { data: contests } = await contestsQ;
 
       if (contests) {
         contests.forEach(contest => {
@@ -281,8 +347,9 @@ function DashboardLayout({ children }) {
   };
 
   const filteredNavigation = navigation.filter((item) => {
-    const hasMainPermission = hasPermission(navPermissions[item.id]);
-    if (!hasMainPermission) return false;
+    if (item.adminOnly && profile?.role !== 'admin') return false;
+    const perm = navPermissions[item.id];
+    if (perm && !hasPermission(perm)) return false;
     return true;
   }).map(item => {
     // Create a shallow copy to avoid mutating the module-level navigation constant
@@ -627,16 +694,27 @@ function DashboardLayout({ children }) {
       <div className={`flex-1 lg:pt-0 pt-16 text-sm min-w-0 overflow-x-hidden layout-root ${
         sidebarOpen ? 'lg:ml-64' : 'lg:ml-16'
       } transition-all duration-300`}>
+        <TrialBanner billing={billing} />
         {children}
       </div>
+      {/* Floating Setup Checklist — next to Aaron */}
+      {profile && (
+        <SetupChecklist
+          organizationId={profile.organization_id}
+          userRole={profile.role}
+        />
+      )}
       {/* AaronChatbot Floating Button and Modal */}
       {!chatbotOpen && (
         <button
           onClick={() => setChatbotOpen(true)}
-          className="fixed bottom-6 right-6 w-12 h-12 sm:w-14 sm:h-14 bg-blue-500 text-white rounded-full shadow-lg hover:bg-blue-600 flex items-center justify-center z-40 transition-all duration-300 hover:scale-110 hover:shadow-xl"
+          className="fixed bottom-6 right-6 w-12 h-12 sm:w-14 sm:h-14 bg-gradient-to-br from-blue-500 via-indigo-500 to-purple-600 text-white rounded-full shadow-lg hover:shadow-xl flex items-center justify-center z-40 transition-all duration-300 hover:scale-110 group"
           aria-label="Open Aaron AI Coach"
         >
-          <span className="text-2xl sm:text-3xl">🤖</span>
+          <div className="relative">
+            <span className="text-lg sm:text-xl font-bold">A</span>
+            <Sparkles size={10} className="absolute -top-1 -right-2.5 text-yellow-300 opacity-90 group-hover:opacity-100 transition-opacity" />
+          </div>
         </button>
       )}
       <AaronChatbot isOpen={chatbotOpen} onClose={() => setChatbotOpen(false)} />

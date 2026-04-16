@@ -411,7 +411,7 @@ function TitleRow({ title, onUpdate, onDelete }) {
 
 // ── Main Section ──────────────────────────────────────────────
 
-export default function CepConfigSection({ organizationId }) {
+export default function CepConfigSection({ organizationId, compact = false }) {
   const {
     stages, activeStages, titles, hasCep, loading, error,
     createStage, updateStage, deleteStage, reorderStages,
@@ -479,6 +479,131 @@ export default function CepConfigSection({ organizationId }) {
 
   if (!organizationId) return null;
 
+  const renderCepContent = () => {
+    if (loading) return <p className="text-sm text-gray-400">Loading CEP configuration...</p>;
+    if (error) return <div className="text-sm text-red-500 bg-red-50 rounded-lg p-3">{error}</div>;
+    if (!hasCep) {
+      return (
+        <div className="bg-gray-50 border border-dashed border-gray-300 rounded-xl p-8 text-center">
+          <div className="text-gray-400 mb-3">
+            <Layers size={36} className="mx-auto" />
+          </div>
+          <h4 className="text-sm font-semibold text-gray-700 mb-1">No Sales Process Configured</h4>
+          <p className="text-xs text-gray-500 mb-5 max-w-md mx-auto">
+            Configure your Customer Engagement Process to add checklists, exit criteria, and role responsibilities for pipeline deals.
+          </p>
+          <div className="flex items-center justify-center gap-3">
+            <button onClick={handleSeed} disabled={seeding} className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 disabled:opacity-50">
+              {seeding ? 'Setting up...' : 'Use Standard B2B Template'}
+            </button>
+            <button onClick={() => setEditorStage({})} className="px-4 py-2 bg-white border border-gray-300 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-50">
+              Build from Scratch
+            </button>
+          </div>
+        </div>
+      );
+    }
+    return (
+      <div className="space-y-6">
+        <div>
+          <div className="flex items-center justify-between mb-3">
+            <h4 className="text-sm font-semibold text-gray-700">Stages</h4>
+            <button onClick={() => setEditorStage({})} className="flex items-center gap-1 text-xs text-blue-600 hover:text-blue-800 font-medium">
+              <Plus size={13} /> Add Stage
+            </button>
+          </div>
+          <div className="border rounded-lg overflow-hidden">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="bg-gray-50 text-left text-xs text-gray-500 uppercase tracking-wide">
+                  <th className="px-3 py-2 w-8"></th>
+                  <th className="px-3 py-2">Stage</th>
+                  <th className="px-3 py-2 text-center">Win %</th>
+                  <th className="px-3 py-2 text-center">Checklist</th>
+                  <th className="px-3 py-2 text-center">Days</th>
+                  <th className="px-3 py-2 text-center">Terminal</th>
+                  <th className="px-3 py-2 w-20"></th>
+                </tr>
+              </thead>
+              <tbody>
+                {stages.sort((a, b) => a.stage_order - b.stage_order).map(stage => (
+                  <tr key={stage.id} className="border-t hover:bg-gray-50/50">
+                    <td className="px-3 py-2 text-gray-300"><GripVertical size={14} /></td>
+                    <td className="px-3 py-2">
+                      <div className="flex items-center gap-2">
+                        <div className="w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: stage.color }} />
+                        <span className="font-medium text-gray-800">{stage.stage_name}</span>
+                        <span className="text-[10px] text-gray-400 font-mono">{stage.stage_key}</span>
+                      </div>
+                    </td>
+                    <td className="px-3 py-2 text-center text-gray-600">{stage.win_probability}%</td>
+                    <td className="px-3 py-2 text-center text-gray-600">{(stage.checklist_items || []).length} items</td>
+                    <td className="px-3 py-2 text-center text-gray-600">{stage.expected_days ?? '—'}</td>
+                    <td className="px-3 py-2 text-center">
+                      {stage.is_terminal && <span className="text-[10px] font-medium bg-gray-200 text-gray-600 px-1.5 py-0.5 rounded">Terminal</span>}
+                    </td>
+                    <td className="px-3 py-2 text-right">
+                      <div className="flex items-center justify-end gap-1">
+                        <button onClick={() => setEditorStage(stage)} className="text-gray-400 hover:text-blue-600 p-1" title="Edit stage"><Edit3 size={13} /></button>
+                        <button onClick={() => setConfirmDelete(stage.id)} className="text-gray-400 hover:text-red-500 p-1" title="Delete stage"><Trash2 size={13} /></button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div>
+          <h4 className="text-sm font-semibold text-gray-700 mb-3">Job Titles</h4>
+          <p className="text-xs text-gray-500 mb-3">Titles define job functions (BDR, AE, PS, etc.) used in role responsibilities above.</p>
+          <div className="space-y-1 mb-3">
+            {titles.map(t => <TitleRow key={t.id} title={t} onUpdate={updateTitle} onDelete={deleteTitle} />)}
+          </div>
+          <div className="flex items-center gap-2">
+            <input type="text" value={newTitleName} onChange={e => setNewTitleName(e.target.value)} placeholder="Title (e.g. SDR)" className="border border-gray-300 rounded px-2 py-1.5 text-sm w-24 focus:ring-1 focus:ring-blue-500" onKeyDown={e => { if (e.key === 'Enter') handleAddTitle(); }} />
+            <input type="text" value={newTitleDesc} onChange={e => setNewTitleDesc(e.target.value)} placeholder="Description (optional)" className="flex-1 border border-gray-300 rounded px-2 py-1.5 text-sm focus:ring-1 focus:ring-blue-500" onKeyDown={e => { if (e.key === 'Enter') handleAddTitle(); }} />
+            <button onClick={handleAddTitle} disabled={addingTitle || !newTitleName.trim()} className="px-3 py-1.5 bg-gray-100 rounded hover:bg-gray-200 text-gray-600 disabled:opacity-40"><Plus size={14} /></button>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  const modals = (
+    <>
+      {editorStage !== null && (
+        <CepStageEditorModal
+          stage={editorStage?.id ? editorStage : null}
+          titles={titles}
+          onSave={handleSaveStage}
+          onClose={() => setEditorStage(null)}
+        />
+      )}
+      {confirmDelete && (
+        <ConfirmModal
+          isOpen={true}
+          title="Delete Stage"
+          message="Are you sure? Any deals in this stage will become unassigned."
+          confirmText="Delete"
+          variant="danger"
+          onConfirm={() => handleDeleteStage(confirmDelete)}
+          onClose={() => setConfirmDelete(null)}
+        />
+      )}
+    </>
+  );
+
+  // Compact mode — no outer wrapper, used inside a parent collapsible panel
+  if (compact) {
+    return (
+      <div>
+        {renderCepContent()}
+        {modals}
+      </div>
+    );
+  }
+
   return (
     <div className="border-t pt-6">
       <div className="mb-4">
@@ -498,178 +623,8 @@ export default function CepConfigSection({ organizationId }) {
           Define your Customer Engagement Process — stages, checklists, exit criteria, and role responsibilities for pipeline deals.
         </p>
       </div>
-
-      {!expanded ? null : loading ? (
-        <p className="text-sm text-gray-400 ml-6">Loading CEP configuration...</p>
-      ) : error ? (
-        <div className="text-sm text-red-500 bg-red-50 rounded-lg p-3 ml-6">{error}</div>
-      ) : !hasCep ? (
-        /* ── Empty State ──────────────────────────── */
-        <div className="bg-gray-50 border border-dashed border-gray-300 rounded-xl p-8 text-center ml-6">
-          <div className="text-gray-400 mb-3">
-            <Layers size={36} className="mx-auto" />
-          </div>
-          <h4 className="text-sm font-semibold text-gray-700 mb-1">No Sales Process Configured</h4>
-          <p className="text-xs text-gray-500 mb-5 max-w-md mx-auto">
-            Configure your Customer Engagement Process to add checklists, exit criteria, and role responsibilities to every pipeline deal.
-          </p>
-          <div className="flex items-center justify-center gap-3">
-            <button
-              onClick={handleSeed}
-              disabled={seeding}
-              className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 disabled:opacity-50"
-            >
-              {seeding ? 'Setting up...' : 'Use Standard B2B Template'}
-            </button>
-            <button
-              onClick={() => setEditorStage({})}
-              className="px-4 py-2 bg-white border border-gray-300 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-50"
-            >
-              Build from Scratch
-            </button>
-          </div>
-        </div>
-      ) : (
-        /* ── Configured State ─────────────────────── */
-        <div className="space-y-6 ml-6">
-          {/* Stage List */}
-          <div>
-            <div className="flex items-center justify-between mb-3">
-              <h4 className="text-sm font-semibold text-gray-700">Stages</h4>
-              <button
-                onClick={() => setEditorStage({})}
-                className="flex items-center gap-1 text-xs text-blue-600 hover:text-blue-800 font-medium"
-              >
-                <Plus size={13} /> Add Stage
-              </button>
-            </div>
-            <div className="border rounded-lg overflow-hidden">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="bg-gray-50 text-left text-xs text-gray-500 uppercase tracking-wide">
-                    <th className="px-3 py-2 w-8"></th>
-                    <th className="px-3 py-2">Stage</th>
-                    <th className="px-3 py-2 text-center">Win %</th>
-                    <th className="px-3 py-2 text-center">Checklist</th>
-                    <th className="px-3 py-2 text-center">Days</th>
-                    <th className="px-3 py-2 text-center">Terminal</th>
-                    <th className="px-3 py-2 w-20"></th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {stages.sort((a, b) => a.stage_order - b.stage_order).map(stage => (
-                    <tr key={stage.id} className="border-t hover:bg-gray-50/50">
-                      <td className="px-3 py-2 text-gray-300">
-                        <GripVertical size={14} />
-                      </td>
-                      <td className="px-3 py-2">
-                        <div className="flex items-center gap-2">
-                          <div className="w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: stage.color }} />
-                          <span className="font-medium text-gray-800">{stage.stage_name}</span>
-                          <span className="text-[10px] text-gray-400 font-mono">{stage.stage_key}</span>
-                        </div>
-                      </td>
-                      <td className="px-3 py-2 text-center text-gray-600">{stage.win_probability}%</td>
-                      <td className="px-3 py-2 text-center text-gray-600">
-                        {(stage.checklist_items || []).length} items
-                      </td>
-                      <td className="px-3 py-2 text-center text-gray-600">
-                        {stage.expected_days ?? '—'}
-                      </td>
-                      <td className="px-3 py-2 text-center">
-                        {stage.is_terminal && (
-                          <span className="text-[10px] font-medium bg-gray-200 text-gray-600 px-1.5 py-0.5 rounded">
-                            Terminal
-                          </span>
-                        )}
-                      </td>
-                      <td className="px-3 py-2 text-right">
-                        <div className="flex items-center justify-end gap-1">
-                          <button
-                            onClick={() => setEditorStage(stage)}
-                            className="text-gray-400 hover:text-blue-600 p-1"
-                            title="Edit stage"
-                          >
-                            <Edit3 size={13} />
-                          </button>
-                          <button
-                            onClick={() => setConfirmDelete(stage.id)}
-                            className="text-gray-400 hover:text-red-500 p-1"
-                            title="Delete stage"
-                          >
-                            <Trash2 size={13} />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-
-          {/* Titles Management */}
-          <div>
-            <h4 className="text-sm font-semibold text-gray-700 mb-3">Job Titles</h4>
-            <p className="text-xs text-gray-500 mb-3">
-              Titles define job functions (BDR, AE, PS, etc.) used in role responsibilities above.
-            </p>
-            <div className="space-y-1 mb-3">
-              {titles.map(t => (
-                <TitleRow key={t.id} title={t} onUpdate={updateTitle} onDelete={deleteTitle} />
-              ))}
-            </div>
-            <div className="flex items-center gap-2">
-              <input
-                type="text"
-                value={newTitleName}
-                onChange={e => setNewTitleName(e.target.value)}
-                placeholder="Title (e.g. SDR)"
-                className="border border-gray-300 rounded px-2 py-1.5 text-sm w-24 focus:ring-1 focus:ring-blue-500"
-                onKeyDown={e => { if (e.key === 'Enter') handleAddTitle(); }}
-              />
-              <input
-                type="text"
-                value={newTitleDesc}
-                onChange={e => setNewTitleDesc(e.target.value)}
-                placeholder="Description (optional)"
-                className="flex-1 border border-gray-300 rounded px-2 py-1.5 text-sm focus:ring-1 focus:ring-blue-500"
-                onKeyDown={e => { if (e.key === 'Enter') handleAddTitle(); }}
-              />
-              <button
-                onClick={handleAddTitle}
-                disabled={addingTitle || !newTitleName.trim()}
-                className="px-3 py-1.5 bg-gray-100 rounded hover:bg-gray-200 text-gray-600 disabled:opacity-40"
-              >
-                <Plus size={14} />
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Stage Editor Modal */}
-      {editorStage !== null && (
-        <CepStageEditorModal
-          stage={editorStage?.id ? editorStage : null}
-          titles={titles}
-          onSave={handleSaveStage}
-          onClose={() => setEditorStage(null)}
-        />
-      )}
-
-      {/* Delete Confirmation */}
-      {confirmDelete && (
-        <ConfirmModal
-          isOpen={true}
-          title="Delete Stage"
-          message="Are you sure? Any deals in this stage will become unassigned."
-          confirmText="Delete"
-          variant="danger"
-          onConfirm={() => handleDeleteStage(confirmDelete)}
-          onClose={() => setConfirmDelete(null)}
-        />
-      )}
+      {expanded && renderCepContent()}
+      {modals}
     </div>
   );
 }

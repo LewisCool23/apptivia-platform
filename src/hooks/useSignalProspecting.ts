@@ -10,8 +10,9 @@ import { supabase } from '../supabaseClient';
 import { engageApi } from '../utils/engageApi';
 import { backendFetch } from '../utils/backendFetch';
 
-// ── Constants ──────────────────────────────────────────────
-export const SIGNAL_HIGH_INTENT_THRESHOLD = 70;
+// M8 fix: import from shared constants (single source of truth)
+import { SIGNAL_HIGH_INTENT_THRESHOLD } from '../constants/signalThresholds';
+export { SIGNAL_HIGH_INTENT_THRESHOLD };
 
 // ── Types ──────────────────────────────────────────────────
 
@@ -379,26 +380,23 @@ export function useSignalProspecting(organizationId: string, userId?: string) {
   const runSignalScan = useCallback(async (config?: Partial<SignalScanConfig>) => {
     const scanConfig = { ...state.scanConfig, ...config };
 
-    // Clear previous results immediately — each scan is a fresh slate
+    // Mark scan start timestamp BEFORE calling the Edge Function
+    // Used to safely distinguish old signals from new ones
+    const scanStartedAt = new Date().toISOString();
+
+    // Clear UI state but do NOT delete DB signals yet (safety net for C1/C3)
     patch({
       isScanning: true,
       error: null,
       scanProgress: [],
       lastScanSignalIds: [],
       scanConfig,
-      signals: [],
-      summary: emptySummary,
     });
 
     try {
-      // Clear existing signals from DB before saving new ones
-      await supabase
-        .from('engage_intent_signals')
-        .delete()
-        .eq('organization_id', organizationId);
-
       patch({ scanProgress: [{ step: 'Scanning', detail: 'Searching for intent signals across the web...' }] });
 
+      // Step 1: Call Edge Function FIRST — it inserts new signals into DB
       const { data: json, error: fnError } = await supabase.functions.invoke('engage-signals', {
         body: {
           organization_id: organizationId,
@@ -408,6 +406,14 @@ export function useSignalProspecting(organizationId: string, userId?: string) {
       });
       if (fnError) throw new Error(fnError.message || 'Signal scan failed');
       if (json?.error) throw new Error(json.error);
+
+      // Step 2: Edge Function succeeded — NOW safe to remove old signals
+      // Delete only signals created BEFORE this scan started
+      await supabase
+        .from('engage_intent_signals')
+        .delete()
+        .eq('organization_id', organizationId)
+        .lt('created_at', scanStartedAt);
 
       const returnedSignals: IntentSignal[] = json.signals || [];
 
@@ -420,7 +426,7 @@ export function useSignalProspecting(organizationId: string, userId?: string) {
         isScanning: false,
       });
 
-      // Refresh signals from DB — all are new since we cleared first
+      // Refresh signals from DB — old signals removed, new ones present
       await fetchSignals();
 
       // Fallback: if DB fetch returned nothing but scan found signals, use them directly
@@ -437,6 +443,7 @@ export function useSignalProspecting(organizationId: string, userId?: string) {
         return { ...prev, lastScanSignalIds: prev.signals.map((s) => s.id) };
       });
     } catch (err: any) {
+      // On failure, old signals are PRESERVED — no data loss
       patch({ error: err.message, isScanning: false });
     }
   }, [state.scanConfig, organizationId, userId, patch, fetchSignals]);

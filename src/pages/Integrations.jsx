@@ -249,6 +249,7 @@ export default function Integrations() {
           onClose={() => setSyncHistoryModal(null)}
           loading={syncHistoryLoading}
           history={syncHistory}
+          integration={liveIntegrations.find(i => i.id === syncHistoryModal)}
         />
 
         <CredentialsModal

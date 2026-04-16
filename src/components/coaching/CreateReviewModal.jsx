@@ -43,6 +43,9 @@ export default function CreateReviewModal({ isOpen, onClose, repId, repName, tea
     if (!form.title || !form.profile_id || !form.review_type) {
       return toast.error('Please fill all required fields');
     }
+    if (form.period_start && form.period_end && form.period_start > form.period_end) {
+      return toast.error('End date must be after start date');
+    }
     setSaving(true);
     try {
       let snapshots = {};

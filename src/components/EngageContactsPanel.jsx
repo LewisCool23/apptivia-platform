@@ -3,7 +3,7 @@ import { Phone, Mail, ExternalLink, Search, X, UserPlus } from 'lucide-react';
 import { supabase } from '../supabaseClient';
 import Tooltip from './shared/Tooltip';
 
-export default function EngageContactsPanel({ organizationId, onCallContact, onClose }) {
+export default function EngageContactsPanel({ organizationId, onCallContact, onClose, refreshKey }) {
   const [contacts, setContacts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -17,11 +17,16 @@ export default function EngageContactsPanel({ organizationId, onCallContact, onC
       .eq('organization_id', organizationId)
       .order('created_at', { ascending: false })
       .limit(300)
-      .then(({ data }) => {
+      .then(({ data, error }) => {
+        if (error) console.error('Error loading contacts:', error);
         setContacts(data || []);
         setLoading(false);
+      })
+      .catch((err) => {
+        console.error('Error loading contacts:', err);
+        setLoading(false);
       });
-  }, [organizationId]);
+  }, [organizationId, refreshKey]);
 
   const filtered = contacts.filter(c => {
     if (!search) return true;
@@ -110,7 +115,7 @@ export default function EngageContactsPanel({ organizationId, onCallContact, onC
                           </Tooltip>
                         )}
                         {contact.email && (
-                          <Tooltip text={`Copy: ${contact.email}`}>
+                          <Tooltip text={contact.email} position="right">
                             <button
                               onClick={() => navigator.clipboard.writeText(contact.email)}
                               className="text-blue-500 hover:text-blue-700 transition-colors"

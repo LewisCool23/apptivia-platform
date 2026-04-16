@@ -8,6 +8,7 @@ interface SkillsetDetailsModalProps {
   skillsetId: string;
   skillsetName: string;
   skillsetColor: string;
+  organizationId?: string;
   selectedMembers?: string[];
   selectedTeams?: string[];
   selectedDepartments?: string[];
@@ -35,12 +36,13 @@ interface ProfileProgress {
 
 // SKILLSET_KPI_MAP, difficultyRank, and getSkillsetLevel imported from '../constants/skillsets'
 
-export default function SkillsetDetailsModal({ 
-  isOpen, 
-  onClose, 
-  skillsetId, 
-  skillsetName, 
+export default function SkillsetDetailsModal({
+  isOpen,
+  onClose,
+  skillsetId,
+  skillsetName,
   skillsetColor,
+  organizationId,
   selectedMembers = [],
   selectedTeams = [],
   selectedDepartments = [],
@@ -78,6 +80,10 @@ export default function SkillsetDetailsModal({
         .select('id, first_name, last_name')
         .not('role', 'in', '("admin","manager","coach")');
 
+      // Org-scope: always filter by organization
+      if (organizationId) {
+        profileQuery = profileQuery.eq('organization_id', organizationId);
+      }
       if (selectedMembers.length > 0) {
         profileQuery = profileQuery.in('id', selectedMembers);
       }
@@ -88,12 +94,15 @@ export default function SkillsetDetailsModal({
         profileQuery = profileQuery.in('department', selectedDepartments);
       }
 
+      let achievementsQuery = supabase
+        .from('achievements')
+        .select('*')
+        .eq('skillset_id', skillsetId)
+        .order('points', { ascending: true });
+      if (organizationId) achievementsQuery = achievementsQuery.eq('organization_id', organizationId);
+
       const [achievementsRes, metricsRes, profilesRes] = await Promise.all([
-        supabase
-          .from('achievements')
-          .select('*')
-          .eq('skillset_id', skillsetId)
-          .order('points', { ascending: true }),
+        achievementsQuery,
         supabase
           .from('kpi_metrics')
           .select('id, key, goal, weight, show_on_scorecard')
@@ -154,7 +163,7 @@ export default function SkillsetDetailsModal({
 
       const valuesData = valuesRes.data || [];
 
-      const latestPeriodEnd = valuesData.reduce<string | null>((acc, curr: any) => {
+      const latestPeriodEnd = valuesData.reduce((acc: string | null, curr: any) => {
         if (!curr?.period_end) return acc;
         if (!acc || curr.period_end > acc) return curr.period_end;
         return acc;
@@ -205,10 +214,10 @@ export default function SkillsetDetailsModal({
 
       // Compute progress from actual earned achievements (source of truth)
       // instead of relying on potentially stale profile_skillsets
-      const skillsetAchievementIds = new Set(sortedAchievements.map(a => a.id));
-      const totalSkillsetPoints = sortedAchievements.reduce((sum, a) => sum + (a.points || 0), 0);
+      const skillsetAchievementIds = new Set(sortedAchievements.map((a: any) => a.id));
+      const totalSkillsetPoints = sortedAchievements.reduce((sum: number, a: any) => sum + (a.points || 0), 0);
 
-      const progress: ProfileProgress[] = (profilesData || []).map((profile: any) => {
+      const progress: ProfileProgress[] = (profilesRes.data || []).map((profile: any) => {
         const allEarned = earnedByProfile.get(profile.id) || new Set();
         // Filter to only achievements in this skillset
         const earnedInSkillset = new Set<string>();
@@ -217,8 +226,8 @@ export default function SkillsetDetailsModal({
         });
 
         const earnedPoints = sortedAchievements
-          .filter(a => earnedInSkillset.has(a.id))
-          .reduce((sum, a) => sum + (a.points || 0), 0);
+          .filter((a: any) => earnedInSkillset.has(a.id))
+          .reduce((sum: number, a: any) => sum + (a.points || 0), 0);
 
         const progressValue = totalSkillsetPoints > 0
           ? Math.min(100, Math.round((earnedPoints / totalSkillsetPoints) * 100))

@@ -7,6 +7,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../supabaseClient';
+import { backendFetch } from '../utils/backendFetch';
 
 // ── Types ──────────────────────────────────────────────────
 
@@ -279,11 +280,12 @@ export function useAccountIntelligence(organizationId: string, userId?: string) 
   // ── Delete an account ──────────────────────────────────
 
   const deleteAccount = useCallback(async (id: string) => {
-    const { error } = await supabase.from('engage_accounts').delete().eq('id', id);
+    if (!organizationId) throw new Error('Organization ID required');
+    const { error } = await supabase.from('engage_accounts').delete().eq('id', id).eq('organization_id', organizationId);
     if (error) throw error;
     if (state.activeAccount?.id === id) patch({ activeAccount: null });
     await fetchAccounts();
-  }, [state.activeAccount, fetchAccounts, patch]);
+  }, [organizationId, state.activeAccount, fetchAccounts, patch]);
 
   // ── Update buying committee ────────────────────────────
 
@@ -575,36 +577,49 @@ export function useAccountIntelligence(organizationId: string, userId?: string) 
   // ── Infer buying stage from signals ────────────────────
 
   const inferBuyingStage = useCallback(async (accountId: string): Promise<string> => {
-    // Fetch recent signals for this account
-    const { data: signals } = await supabase
+    // Look up the account to get company_name for signal matching
+    // (C2 fix: accountId is engage_accounts.id, NOT engage_companies.id — can't join directly)
+    const account = state.accounts.find(a => a.id === accountId);
+    if (!account) return 'unaware';
+
+    // Build query: match by company_name, or by company_id if the account has one
+    let q = supabase
       .from('engage_intent_signals')
       .select('signal_type, signal_score')
       .eq('organization_id', organizationId)
-      .or(`company_id.eq.${accountId}`)
       .order('detected_at', { ascending: false })
       .limit(20);
-    
+
+    if (account.company_id) {
+      // Match signals by the actual engage_companies.id
+      q = q.or(`company_id.eq.${account.company_id},company_name.eq.${account.account_name}`);
+    } else {
+      q = q.eq('company_name', account.account_name);
+    }
+
+    const { data: signals } = await q;
+
     if (!signals || signals.length === 0) return 'unaware';
-    
+
     const signalTypes = signals.map((s: { signal_type: string; signal_score: number }) => s.signal_type);
     const avgScore = signals.reduce((sum: number, s: { signal_type: string; signal_score: number }) => sum + s.signal_score, 0) / signals.length;
-    
-    // Decision signals
-    const decisionSignals = signalTypes.filter((t: string) => 
-      ['contract_win', 'leadership_change', 'expansion'].includes(t)
+
+    // Decision signals (M6 fix: use current signal_key names, not legacy)
+    const decisionSignals = signalTypes.filter((t: string) =>
+      ['contract_win', 'leadership_change', 'company_expansion', 'rfp_issuance', 'ma_activity'].includes(t)
     ).length;
-    
-    // Consideration signals
-    const considerationSignals = signalTypes.filter((t: string) => 
-      ['competitor_engagement', 'product_launch', 'review_sentiment', 'tech_adoption'].includes(t)
+
+    // Consideration signals (M6 fix: use current signal_key names)
+    const considerationSignals = signalTypes.filter((t: string) =>
+      ['competitor_engagement', 'competitor_comparison', 'product_launch', 'review_site_activity', 'g2_review', 'capterra_review', 'tech_adoption', 'pricing_page_research'].includes(t)
     ).length;
-    
+
     if (decisionSignals >= 2 && avgScore >= 70) return 'decision';
     if (considerationSignals >= 2 && avgScore >= 50) return 'consideration';
     if (signals.length >= 1) return 'awareness';
-    
+
     return 'unaware';
-  }, [organizationId]);
+  }, [organizationId, state.accounts]);
 
   // ── Update buying stage for an account ─────────────────
 
@@ -634,45 +649,20 @@ export function useAccountIntelligence(organizationId: string, userId?: string) 
 
   // ── Record signal outcome (for learning) ───────────────
 
+  // M7 fix: single outcome path via backend endpoint (handles both signal
+  // update AND engage_signal_outcomes insert for learning analytics)
   const recordOutcome = useCallback(async (
     signalId: string,
     outcome: 'won' | 'lost',
     dealId?: string,
     dealValue?: number
   ) => {
-    const signal = await supabase
-      .from('engage_intent_signals')
-      .select('*')
-      .eq('id', signalId)
-      .single();
-    
-    if (!signal.data) return;
-    
-    // Update the signal
-    await supabase
-      .from('engage_intent_signals')
-      .update({
-        outcome,
-        outcome_at: new Date().toISOString(),
-        contributed_to_deal_id: dealId,
-      })
-      .eq('id', signalId);
-    
-    // Record in outcomes table for learning
-    await supabase
-      .from('engage_signal_outcomes')
-      .insert({
-        organization_id: organizationId,
-        signal_id: signalId,
-        account_id: signal.data.company_id,
-        deal_id: dealId,
-        deal_value: dealValue,
-        deal_outcome: outcome,
-        signal_type: signal.data.signal_type,
-        signal_detected_at: signal.data.detected_at,
-        deal_closed_at: new Date().toISOString(),
-      });
-  }, [organizationId]);
+    await backendFetch(`/api/engage/signals/${signalId}/outcome`, {
+      outcome,
+      deal_id: dealId,
+      deal_value: dealValue,
+    });
+  }, []);
 
   // ── Init ───────────────────────────────────────────────
 

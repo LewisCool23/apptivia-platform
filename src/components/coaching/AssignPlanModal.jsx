@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { X, UserPlus, AlertTriangle } from 'lucide-react';
+import { LEADERSHIP_ROLES } from '../../constants/roles';
 
 export default function AssignPlanModal({
   plan,
@@ -61,7 +62,7 @@ export default function AssignPlanModal({
             Select team members to assign <strong>{plan.name}</strong>
           </p>
           <div className="max-h-64 overflow-y-auto space-y-2">
-            {teamMembers.filter(m => !['admin', 'manager', 'coach'].includes(m.role)).map(member => (
+            {teamMembers.filter(m => !LEADERSHIP_ROLES.includes(m.role)).map(member => (
               <label key={member.id} className="flex items-center gap-2 p-2 hover:bg-gray-50 rounded cursor-pointer">
                 <input
                   type="checkbox"

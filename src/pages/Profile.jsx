@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useAuth } from '../AuthContext';
-import { Edit, Camera, Award, TrendingUp, Search, X, Gift } from 'lucide-react';
+import { Edit, Camera, Award, TrendingUp, Search, X, Gift, CheckCircle, AlertCircle, Loader2, Clock, Key, RefreshCw } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import DashboardLayout from '../DashboardLayout';
 import RightFilterPanel from '../components/RightFilterPanel';
@@ -13,11 +13,20 @@ import BadgeCreationModal from '../components/BadgeCreationModal';
 import ShareSnapshotModal from '../components/ShareSnapshotModal';
 import EditProfileModal from '../components/EditProfileModal';
 import ChangePasswordModal from '../components/ChangePasswordModal';
+import { ROLES } from '../constants/roles';
 import { normalizeRole } from '../permissions';
+import { useTitles } from '../hooks/useTitles';
+import { exportBadgesToCSV } from '../utils/exportUtils';
+import { exportBadgesToPDF } from '../utils/exportPdf';
+import ExportReportModal from '../components/ExportReportModal';
 import { supabase } from '../supabaseClient';
 import { useNotifications } from '../contexts/NotificationContext';
 import { useToast } from '../contexts/ToastContext';
 import Tooltip from '../components/shared/Tooltip';
+import { useIntegrations } from '../hooks/useIntegrations';
+import { SUPPORTED_INTEGRATIONS, API_KEY_PROVIDERS } from '../constants/integrations';
+import CredentialsModal from '../components/shared/CredentialsModal';
+import DisconnectConfirmModal from '../components/shared/DisconnectConfirmModal';
 
 export default function Profile() {
   const navigate = useNavigate();
@@ -28,6 +37,7 @@ export default function Profile() {
   const [viewAllBadgesModal, setViewAllBadgesModal] = useState(false);
   const [showBadgeCreationModal, setShowBadgeCreationModal] = useState(false);
   const [badgeRefreshKey, setBadgeRefreshKey] = useState(0);
+  const [showExportModal, setShowExportModal] = useState(false);
   const [shareSnapshotModal, setShareSnapshotModal] = useState(false);
   const [achievements, setAchievements] = useState([]);
   const [loadingBadges, setLoadingBadges] = useState(true);
@@ -51,7 +61,9 @@ export default function Profile() {
     title: '',
     department: '',
     role: '',
-    team_id: ''
+    secondary_role: '',
+    team_id: '',
+    segment: ''
   });
   const [profileSaving, setProfileSaving] = useState(false);
   const [profileError, setProfileError] = useState('');
@@ -73,8 +85,8 @@ export default function Profile() {
   const [awardingBadge, setAwardingBadge] = useState(false);
   const [availableBadgeDefs, setAvailableBadgeDefs] = useState([]);
 
-  const isAdmin = role === 'admin';
-  const isManager = role === 'manager';
+  const isAdmin = role === ROLES.ADMIN;
+  const isManager = role === ROLES.MANAGER;
   const teamId = profile?.team_id ? String(profile.team_id) : user?.team_id ? String(user.team_id) : null;
   const canConfigureScorecard = hasPermission('configure_scorecard');
   const canManageTeams = hasPermission('manage_teams');
@@ -82,7 +94,21 @@ export default function Profile() {
   const canExport = hasPermission('export_data');
   const canEditAnyProfile = isAdmin;
   const canEditTeamProfiles = isManager && canManageTeamMembers;
-  const canManageBadges = isAdmin || role === 'manager';
+  const canManageBadges = isAdmin || role === ROLES.MANAGER;
+  const canConnectIntegrations = hasPermission('connect_own_integrations');
+
+  // Personal integrations
+  const {
+    integrations: personalIntegrations,
+    loading: integrationsLoading,
+    error: integrationError,
+    connectOAuth,
+    connectCredentials,
+    disconnect: disconnectIntegration,
+    refresh: refreshIntegrations,
+  } = useIntegrations({ personal: true });
+  const [credentialsModal, setCredentialsModal] = useState(null);
+  const [confirmDisconnect, setConfirmDisconnect] = useState(null);
 
   const repName = useMemo(() => {
     const first = profile?.first_name || '';
@@ -91,11 +117,43 @@ export default function Profile() {
     return full || profile?.name || user?.name || user?.email || 'Unknown';
   }, [profile, user]);
 
-  const tabs = useMemo(() => ([
-    { id: 'profile-details', label: 'Profile Details' },
-    { id: 'skillset-progress', label: 'Skillset Progress' },
-    { id: 'badges', label: 'Badges' },
-  ]), []);
+  const tabs = useMemo(() => {
+    const base = [
+      { id: 'profile-details', label: 'Profile Details' },
+      { id: 'skillset-progress', label: 'Skillset Progress' },
+      { id: 'badges', label: 'Badges' },
+      { id: 'notifications', label: 'Notifications' },
+    ];
+    if (canConnectIntegrations) base.push({ id: 'integrations', label: 'Integrations' });
+    return base;
+  }, [canConnectIntegrations]);
+
+  // [FEATURE 2] Nudge notification preferences
+  const [nudgeChannel, setNudgeChannel] = useState(profile?.nudge_channel || 'in_app');
+  const [slackWebhookUrl, setSlackWebhookUrl] = useState(profile?.slack_webhook_url || '');
+  const [savingNudgePrefs, setSavingNudgePrefs] = useState(false);
+
+  useEffect(() => {
+    if (profile?.nudge_channel) setNudgeChannel(profile.nudge_channel);
+    if (profile?.slack_webhook_url) setSlackWebhookUrl(profile.slack_webhook_url);
+  }, [profile?.nudge_channel, profile?.slack_webhook_url]);
+
+  const handleSaveNudgePrefs = async () => {
+    setSavingNudgePrefs(true);
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({ nudge_channel: nudgeChannel, slack_webhook_url: slackWebhookUrl || null })
+        .eq('id', user?.id);
+      if (error) throw error;
+      toast?.({ type: 'success', message: 'Notification preferences saved' });
+      refreshProfile?.();
+    } catch (err) {
+      toast?.({ type: 'error', message: err.message || 'Failed to save preferences' });
+    } finally {
+      setSavingNudgePrefs(false);
+    }
+  };
 
   useEffect(() => {
     if (user?.id) {
@@ -110,6 +168,9 @@ export default function Profile() {
     }
   }, [profile?.team_id, selectedTeamId]);
 
+  const orgId = profile?.organization_id;
+  const titles = useTitles(orgId);
+
   const loadEditableProfiles = useCallback(async () => {
     if (!user?.id) return;
     if (!canEditAnyProfile && !canEditTeamProfiles) {
@@ -123,8 +184,10 @@ export default function Profile() {
     try {
       let query = supabase
         .from('profiles')
-        .select('id, first_name, last_name, email, role, team_id, department, title')
+        .select('id, first_name, last_name, email, role, secondary_role, team_id, department, title, segment, title_id')
         .order('first_name');
+      if (orgId) query = query.eq('organization_id', orgId);
+      else return;
       if (canEditTeamProfiles && !canEditAnyProfile && teamId) {
         query = query.eq('team_id', teamId);
       }
@@ -133,7 +196,7 @@ export default function Profile() {
     } catch (e) {
       console.error('Error loading editable profiles:', e);
     }
-  }, [user?.id, canEditAnyProfile, canEditTeamProfiles, teamId, profile]);
+  }, [user?.id, canEditAnyProfile, canEditTeamProfiles, teamId, profile, orgId]);
 
   useEffect(() => {
     loadEditableProfiles();
@@ -141,7 +204,10 @@ export default function Profile() {
 
   const loadTeams = async () => {
     try {
-      const { data, error } = await supabase.from('teams').select('*').order('name');
+      let teamsQ = supabase.from('teams').select('*').order('name');
+      if (orgId) teamsQ = teamsQ.eq('organization_id', orgId);
+      else return;
+      const { data, error } = await teamsQ;
       if (!error) {
         setTeams(data || []);
         if (!selectedTeamId && data?.length) {
@@ -154,10 +220,10 @@ export default function Profile() {
   };
 
   useEffect(() => {
-    if (isAdmin || canEditTeamProfiles) {
+    if (orgId) {
       loadTeams();
     }
-  }, [isAdmin, canEditTeamProfiles]);
+  }, [orgId]);
 
 
   const loadTeamMembers = async (teamIdValue) => {
@@ -166,11 +232,13 @@ export default function Profile() {
       return;
     }
     try {
-      const { data, error } = await supabase
+      let membersQ = supabase
         .from('profiles')
         .select('id, first_name, last_name, email, role, team_id')
         .eq('team_id', teamIdValue)
         .order('first_name');
+      if (orgId) membersQ = membersQ.eq('organization_id', orgId);
+      const { data, error } = await membersQ;
       if (!error) setTeamMembers(data || []);
     } catch (e) {
       console.error('Error loading team members:', e);
@@ -213,7 +281,9 @@ export default function Profile() {
       title: activeProfile.title || '',
       department: activeProfile.department || '',
       role: normalizeRole(activeProfile.role),
-      team_id: activeProfile.team_id ? String(activeProfile.team_id) : ''
+      secondary_role: activeProfile.secondary_role || '',
+      team_id: activeProfile.team_id ? String(activeProfile.team_id) : '',
+      segment: activeProfile.segment || ''
     });
     setProfileError('');
     setProfileSuccess('');
@@ -232,7 +302,9 @@ export default function Profile() {
       title: activeProfile.title || '',
       department: activeProfile.department || '',
       role: normalizeRole(activeProfile.role),
-      team_id: activeProfile.team_id ? String(activeProfile.team_id) : ''
+      secondary_role: activeProfile.secondary_role || '',
+      team_id: activeProfile.team_id ? String(activeProfile.team_id) : '',
+      segment: activeProfile.segment || ''
     });
     setProfileError('');
     setProfileSuccess('');
@@ -246,12 +318,28 @@ export default function Profile() {
     const payload = {
       first_name: profileForm.first_name?.trim() || null,
       last_name: profileForm.last_name?.trim() || null,
-      title: profileForm.title?.trim() || null,
-      department: profileForm.department?.trim() || null
     };
+    // Only admins can edit title, department, role, team, secondary_role, segment
     if (canEditAnyProfile) {
+      payload.title = profileForm.title?.trim() || null;
+      payload.department = profileForm.department?.trim() || null;
       payload.role = profileForm.role || 'power_user';
+      payload.secondary_role = profileForm.secondary_role || null;
       payload.team_id = profileForm.team_id || null;
+      payload.segment = profileForm.segment || null;
+      // Resolve title_id from selected title label
+      const matchedTitle = titles.find(t => t.label === profileForm.title);
+      if (matchedTitle) {
+        payload.title_id = matchedTitle.key;
+      }
+      // Auto-resolve department from team's department_id
+      if (profileForm.team_id) {
+        const team = teams.find(t => String(t.id) === String(profileForm.team_id));
+        if (team?.department_id) {
+          const { data: dept } = await supabase.from('departments').select('name').eq('id', team.department_id).maybeSingle();
+          if (dept?.name) payload.department = dept.name;
+        }
+      }
     }
     try {
       const { error } = await supabase
@@ -326,7 +414,7 @@ export default function Profile() {
       setLoadingAchievements(true);
 
       // Managers/admins/coaches see team-aggregated skillset progress
-      const showTeam = isManager || isAdmin || role === 'coach';
+      const showTeam = isManager || isAdmin || role === ROLES.COACH;
       let targetProfileIds = [user.id];
 
       if (showTeam) {
@@ -334,6 +422,7 @@ export default function Profile() {
           .from('profiles')
           .select('id')
           .not('role', 'in', '("admin","manager","coach")');
+        if (orgId) membersQuery = membersQuery.eq('organization_id', orgId);
         if (isManager && teamId) {
           membersQuery = membersQuery.eq('team_id', teamId);
         }
@@ -349,13 +438,12 @@ export default function Profile() {
           .from('profile_skillsets')
           .select(`*, skillset:skillsets(id, name, description, color, icon)`)
           .in('profile_id', targetProfileIds),
-        supabase
-          .from('skillsets')
-          .select('id, name, description, color, icon')
-          .order('name'),
-        supabase
-          .from('achievements')
-          .select('id, skillset_id, points'),
+        orgId
+          ? supabase.from('skillsets').select('id, name, description, color, icon').eq('organization_id', orgId).order('name')
+          : supabase.from('skillsets').select('id, name, description, color, icon').order('name'),
+        orgId
+          ? supabase.from('achievements').select('id, skillset_id, points').eq('organization_id', orgId)
+          : supabase.from('achievements').select('id, skillset_id, points'),
         supabase
           .from('profile_achievements')
           .select('achievement_id, profile_id')
@@ -566,6 +654,7 @@ export default function Profile() {
         badge_type: badgeDef?.badge_type || 'special',
         points: badgeDef?.points || 0,
         earned_at: new Date().toISOString(),
+        organization_id: orgId,
       }]);
       if (error) throw error;
       const member = editableProfiles.find(p => String(p.id) === String(awardBadgeForm.profile_id));
@@ -583,14 +672,16 @@ export default function Profile() {
 
   const loadBadgeDefinitions = async () => {
     try {
-      const { data } = await supabase.from('badge_definitions').select('badge_name, badge_description, icon, color, badge_type, points').order('badge_name');
+      let bdQuery = supabase.from('badge_definitions').select('badge_name, badge_description, icon, color, badge_type, points').order('badge_name');
+      if (orgId) bdQuery = bdQuery.eq('organization_id', orgId);
+      const { data } = await bdQuery;
       setAvailableBadgeDefs(data || []);
     } catch (e) {
       console.error('Error loading badge definitions:', e);
     }
   };
 
-  // Search functionality
+  // Search functionality (org-scoped)
   const handleSearch = async (query) => {
     if (!query || query.trim().length < 2) {
       setSearchResults([]);
@@ -602,11 +693,14 @@ export default function Profile() {
     const results = [];
     try {
       const searchTerm = query.trim().toLowerCase();
-      const { data: profiles } = await supabase
+      let profilesSearch = supabase
         .from('profiles')
         .select('id, first_name, last_name, email, role')
         .or(`first_name.ilike.%${searchTerm}%,last_name.ilike.%${searchTerm}%,email.ilike.%${searchTerm}%`)
         .limit(5);
+      if (orgId) profilesSearch = profilesSearch.eq('organization_id', orgId);
+      else { setSearching(false); return; }
+      const { data: profiles } = await profilesSearch;
       if (profiles) {
         profiles.forEach((profile) => {
           results.push({
@@ -745,21 +839,22 @@ export default function Profile() {
             <PageActionBar
               onFilterClick={() => setFiltersOpen(true)}
               onConfigureClick={() => { if (canConfigureScorecard) setConfigPanelOpen(true); }}
-              onExportClick={() => {}}
               onNotificationsClick={openPanel}
-              exportDisabled={!canExport}
               configureDisabled={!canConfigureScorecard}
               notificationBadge={unreadCount}
               actions={[
                 {
+                  label: 'Export Report',
+                  onClick: () => setShowExportModal(true),
+                  disabled: !canExport,
+                },
+                {
                   label: 'Edit Profile',
                   onClick: () => setShowEditProfileModal(true),
-                  disabled: false,
                 },
                 {
                   label: 'Change Password',
                   onClick: () => setShowChangePasswordModal(true),
-                  disabled: false,
                 },
               ]}
             />
@@ -875,21 +970,34 @@ export default function Profile() {
                 </div>
                 <div>
                   <label className="block text-xs text-gray-500 mb-1">Title</label>
-                  <input
+                  <select
                     value={profileForm.title}
                     onChange={(e) => handleProfileFieldChange('title', e.target.value)}
-                    className="w-full border rounded px-3 py-2 text-sm"
-                    disabled={profileSaving}
-                  />
+                    className={`w-full border rounded px-3 py-2 text-sm ${!canEditAnyProfile ? 'bg-gray-50 text-gray-500' : ''}`}
+                    disabled={profileSaving || !canEditAnyProfile}
+                  >
+                    <option value="">Select title...</option>
+                    {titles.map((t) => (
+                      <option key={t.key} value={t.label}>{t.label}</option>
+                    ))}
+                  </select>
                 </div>
                 <div>
                   <label className="block text-xs text-gray-500 mb-1">Department</label>
-                  <input
+                  <select
                     value={profileForm.department}
                     onChange={(e) => handleProfileFieldChange('department', e.target.value)}
-                    className="w-full border rounded px-3 py-2 text-sm"
-                    disabled={profileSaving}
-                  />
+                    className={`w-full border rounded px-3 py-2 text-sm ${!canEditAnyProfile ? 'bg-gray-50 text-gray-500' : ''}`}
+                    disabled={profileSaving || !canEditAnyProfile}
+                  >
+                    <option value="">Select department...</option>
+                    <option value="Sales">Sales</option>
+                    <option value="Marketing">Marketing</option>
+                    <option value="Customer Success">Customer Success</option>
+                    <option value="Product">Product</option>
+                    <option value="Engineering">Engineering</option>
+                    <option value="Business Development">Business Development</option>
+                  </select>
                 </div>
                 {canEditAnyProfile ? (
                   <>
@@ -907,6 +1015,22 @@ export default function Profile() {
                       </select>
                     </div>
                     <div>
+                      <label className="block text-xs text-gray-500 mb-1">Secondary Role</label>
+                      <select
+                        value={profileForm.secondary_role}
+                        onChange={(e) => handleProfileFieldChange('secondary_role', e.target.value)}
+                        className="w-full border rounded px-3 py-2 text-sm"
+                        disabled={profileSaving}
+                      >
+                        <option value="">None</option>
+                        {roleOptions
+                          .filter(opt => opt.value !== profileForm.role)
+                          .map((opt) => (
+                            <option key={opt.value} value={opt.value}>{opt.label}</option>
+                          ))}
+                      </select>
+                    </div>
+                    <div>
                       <label className="block text-xs text-gray-500 mb-1">Team</label>
                       <select
                         value={profileForm.team_id}
@@ -918,6 +1042,20 @@ export default function Profile() {
                         {teams.map((t) => (
                           <option key={t.id} value={t.id}>{t.name}</option>
                         ))}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-xs text-gray-500 mb-1">Segment</label>
+                      <select
+                        value={profileForm.segment}
+                        onChange={(e) => handleProfileFieldChange('segment', e.target.value)}
+                        className="w-full border rounded px-3 py-2 text-sm"
+                        disabled={profileSaving}
+                      >
+                        <option value="">Select segment...</option>
+                        <option value="Territory">Territory</option>
+                        <option value="Mid-Market">Mid-Market</option>
+                        <option value="Enterprise">Enterprise</option>
                       </select>
                     </div>
                   </>
@@ -1167,6 +1305,170 @@ export default function Profile() {
             </div>
           </div>
         )}
+          {/* [FEATURE 2] Notification Preferences Tab */}
+          {activeTab === 'notifications' && (
+          <div className="bg-white rounded-lg shadow-sm p-5">
+            <h2 className="text-lg font-semibold text-gray-900 mb-1">Notification Preferences</h2>
+            <p className="text-xs text-gray-500 mb-4">Choose how you receive coaching nudges from Aaron.</p>
+
+            <div className="space-y-3 max-w-md">
+              <div>
+                <label className="block text-xs font-medium text-gray-700 mb-1.5">Nudge Delivery Channel</label>
+                <div className="space-y-2">
+                  {[
+                    { value: 'in_app', label: 'In-App Only', desc: 'Notifications appear in the bell icon' },
+                    { value: 'email', label: 'Email', desc: 'In-app + email delivery' },
+                    { value: 'slack', label: 'Slack', desc: 'In-app + Slack message' },
+                    { value: 'email_and_slack', label: 'Email + Slack', desc: 'All channels' },
+                  ].map(opt => (
+                    <label key={opt.value} className="flex items-start gap-2 cursor-pointer">
+                      <input
+                        type="radio"
+                        name="nudge_channel"
+                        value={opt.value}
+                        checked={nudgeChannel === opt.value}
+                        onChange={() => setNudgeChannel(opt.value)}
+                        className="mt-0.5"
+                      />
+                      <div>
+                        <span className="text-sm font-medium text-gray-800">{opt.label}</span>
+                        <p className="text-[10px] text-gray-500">{opt.desc}</p>
+                      </div>
+                    </label>
+                  ))}
+                </div>
+              </div>
+
+              {(nudgeChannel === 'slack' || nudgeChannel === 'email_and_slack') && (
+                <div>
+                  <label className="block text-xs font-medium text-gray-700 mb-1">Slack Incoming Webhook URL</label>
+                  <input
+                    type="url"
+                    value={slackWebhookUrl}
+                    onChange={e => setSlackWebhookUrl(e.target.value)}
+                    placeholder="https://hooks.slack.com/services/..."
+                    className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  />
+                  <p className="text-[10px] text-gray-400 mt-1">
+                    <a href="https://api.slack.com/messaging/webhooks" target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">How to create an incoming webhook</a>
+                  </p>
+                </div>
+              )}
+
+              <button
+                onClick={handleSaveNudgePrefs}
+                disabled={savingNudgePrefs}
+                className="px-4 py-2 bg-blue-600 text-white text-sm font-semibold rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors"
+              >
+                {savingNudgePrefs ? 'Saving...' : 'Save Preferences'}
+              </button>
+            </div>
+          </div>
+          )}
+
+          {/* Personal Integrations Tab */}
+          {activeTab === 'integrations' && canConnectIntegrations && (
+          <div className="bg-white rounded-lg shadow-sm p-5">
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h2 className="text-lg font-semibold text-gray-900">My Integrations</h2>
+                <p className="text-xs text-gray-500">Connect your personal accounts to sync data</p>
+              </div>
+              <button onClick={refreshIntegrations} className="p-2 rounded-lg text-gray-500 hover:bg-gray-100 transition-colors" title="Refresh">
+                <RefreshCw size={16} />
+              </button>
+            </div>
+
+            {integrationError && (
+              <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700 flex items-center gap-2">
+                <AlertCircle size={16} />
+                {integrationError}
+              </div>
+            )}
+
+            {integrationsLoading ? (
+              <div className="flex items-center justify-center py-12 text-gray-400">
+                <Loader2 size={20} className="animate-spin mr-2" />
+                Loading integrations...
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                {SUPPORTED_INTEGRATIONS.map((template) => {
+                  const integration = personalIntegrations.find(i => i.integration_type === template.integration_type);
+                  const isConnected = integration?.status === 'connected';
+                  const isError = integration?.status === 'error';
+
+                  return (
+                    <div key={template.integration_type} className="bg-white rounded-xl p-5 shadow-sm border border-gray-100 flex flex-col hover:shadow-md transition-shadow">
+                      <div className="flex items-center gap-3 mb-3">
+                        <div className={`w-11 h-11 bg-gradient-to-br ${template.color} rounded-lg flex items-center justify-center text-xs font-bold text-white shadow-sm`}>
+                          {template.icon}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="font-semibold text-gray-900 text-sm">{template.display_name}</div>
+                          <div className="text-xs text-gray-500 truncate">{template.description}</div>
+                        </div>
+                        {isConnected && <div className="w-2.5 h-2.5 rounded-full bg-green-500 shrink-0" title="Connected" />}
+                        {isError && <div className="w-2.5 h-2.5 rounded-full bg-red-500 shrink-0" title="Error" />}
+                      </div>
+
+                      <div className="mb-3">
+                        {isConnected && (
+                          <span className="inline-flex items-center gap-1 text-xs bg-green-50 text-green-700 px-2.5 py-1 rounded-full font-medium">
+                            <CheckCircle size={12} /> Connected
+                          </span>
+                        )}
+                        {isError && (
+                          <span className="inline-flex items-center gap-1 text-xs bg-red-50 text-red-700 px-2.5 py-1 rounded-full font-medium">
+                            <AlertCircle size={12} /> Error
+                          </span>
+                        )}
+                        {!integration && (
+                          <span className="inline-flex items-center gap-1 text-xs bg-gray-50 text-gray-500 px-2.5 py-1 rounded-full font-medium">
+                            Available
+                          </span>
+                        )}
+                      </div>
+
+                      {isConnected && integration?.last_sync_at && (
+                        <div className="text-xs text-gray-400 mb-3 flex items-center gap-1">
+                          <Clock size={11} />
+                          Last synced: {new Date(integration.last_sync_at).toLocaleString()}
+                        </div>
+                      )}
+
+                      <div className="mt-auto">
+                        {isConnected ? (
+                          <button
+                            onClick={() => setConfirmDisconnect(integration.id)}
+                            className="w-full py-1.5 text-xs text-red-500 hover:text-red-700 hover:bg-red-50 rounded-md transition-colors"
+                          >
+                            Disconnect
+                          </button>
+                        ) : API_KEY_PROVIDERS[template.integration_type] ? (
+                          <button
+                            onClick={() => setCredentialsModal(template.integration_type)}
+                            className="w-full flex items-center justify-center gap-1.5 bg-blue-600 text-white py-2 rounded-md text-sm font-medium hover:bg-blue-700 transition-colors"
+                          >
+                            <Key size={14} /> Connect with API Key
+                          </button>
+                        ) : (
+                          <button
+                            onClick={() => connectOAuth(template.integration_type)}
+                            className="w-full bg-blue-600 text-white py-2 rounded-md text-sm font-medium hover:bg-blue-700 transition-colors"
+                          >
+                            Connect
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+          )}
+
       </div> {/* Close space-y-6 */}
       </div> {/* Close p-6 */}
 
@@ -1456,6 +1758,36 @@ export default function Profile() {
             </div>
           </div>
         </div>
+      )}
+      <ExportReportModal
+        isOpen={showExportModal}
+        onClose={() => setShowExportModal(false)}
+        onSelectFormat={(format) => {
+          if (format === 'csv') exportBadgesToCSV(badges, profile);
+          else if (format === 'pdf') exportBadgesToPDF(badges, profile);
+        }}
+        title="Export Badge Collection"
+      />
+      {canConnectIntegrations && (
+        <>
+          <CredentialsModal
+            providerType={credentialsModal}
+            onClose={() => setCredentialsModal(null)}
+            onConnect={async (providerType, credentials) => {
+              await connectCredentials(providerType, credentials);
+              setCredentialsModal(null);
+            }}
+            error={integrationError}
+          />
+          <DisconnectConfirmModal
+            isOpen={!!confirmDisconnect}
+            onClose={() => setConfirmDisconnect(null)}
+            onConfirm={async () => {
+              await disconnectIntegration(confirmDisconnect);
+              setConfirmDisconnect(null);
+            }}
+          />
+        </>
       )}
     </DashboardLayout>
   );

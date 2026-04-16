@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
@@ -6,16 +5,21 @@ import { supabase } from '../supabaseClient';
 export default function UpdatePassword() {
   const navigate = useNavigate();
   const [session, setSession] = useState(null);
-  const [currentPassword, setCurrentPassword] = useState('');
+  const [isRecovery, setIsRecovery] = useState(false);
   const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [status, setStatus] = useState(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
+    supabase.auth.getSession().then(({ data: { session: s } }) => {
+      setSession(s);
     });
-    const { data: listener } = supabase.auth.onAuthStateChange((_event, sessionData) => {
+    const { data: listener } = supabase.auth.onAuthStateChange((event, sessionData) => {
       setSession(sessionData ?? null);
+      if (event === 'PASSWORD_RECOVERY') {
+        setIsRecovery(true);
+      }
     });
     return () => {
       listener?.subscription?.unsubscribe?.();
@@ -24,36 +28,33 @@ export default function UpdatePassword() {
 
   const handleUpdate = async (e) => {
     e.preventDefault();
-    setStatus('Verifying current password...');
     if (!session) {
-      setStatus('No authenticated session found. Click the reset link again or use the forgot-password flow.');
+      setStatus({ type: 'error', text: 'No authenticated session. Please click the reset link from your email again, or use the forgot password flow.' });
       return;
     }
     if (newPassword.length < 8) {
-      setStatus('Password must be at least 8 characters.');
+      setStatus({ type: 'error', text: 'Password must be at least 8 characters.' });
       return;
     }
-    // Re-authenticate user with current password
-    const { error: signInError } = await supabase.auth.signInWithPassword({
-      email: session.user.email,
-      password: currentPassword,
-    });
-    if (signInError) {
-      setStatus('Current password is incorrect.');
+    if (newPassword !== confirmPassword) {
+      setStatus({ type: 'error', text: 'Passwords do not match.' });
       return;
     }
-    setStatus('Updating password...');
+
+    setIsSubmitting(true);
+    setStatus({ type: 'info', text: 'Updating password...' });
+
     const { error } = await supabase.auth.updateUser({ password: newPassword });
     if (error) {
-      setStatus(`Error: ${error.message}`);
+      setStatus({ type: 'error', text: error.message });
+      setIsSubmitting(false);
       return;
     }
-    setStatus('Password updated successfully. You are now signed in. Redirecting to login...');
+
+    setStatus({ type: 'success', text: 'Password updated successfully! Redirecting to login...' });
     setNewPassword('');
-    setCurrentPassword('');
-    setTimeout(() => {
-      navigate('/login');
-    }, 2000);
+    setConfirmPassword('');
+    setTimeout(() => navigate('/login'), 2000);
   };
 
   return (
@@ -66,46 +67,58 @@ export default function UpdatePassword() {
           <span className="text-white font-bold text-3xl">A</span>
         </div>
         <h1 className="text-2xl font-bold text-blue-700 mb-2 text-center">Set a new password</h1>
-        <p className="text-gray-500 mb-4 text-center text-sm">Enter your new password below to update your account.</p>
+        <p className="text-gray-500 mb-4 text-center text-sm">
+          {isRecovery
+            ? 'Enter your new password below to reset your account.'
+            : 'Enter your new password below to update your account.'}
+        </p>
         {!session ? (
-          <p className="mb-6 text-red-500 text-center">
-            If you clicked the reset link but are not authenticated, you may need to open the link directly in the browser or try the forgot-password flow again. Some email clients may prefetch links; if that happens try copying the link into a private browser window.
-          </p>
+          <div className="mb-4 w-full p-3 bg-amber-50 border border-amber-200 rounded-md text-amber-700 text-sm text-center">
+            Waiting for session... If you clicked the reset link from your email, please wait a moment. If this persists, try copying the full link directly into your browser.
+          </div>
         ) : (
-          <p className="mb-6 text-center text-gray-700">Signed in as {session.user.email}</p>
+          <p className="mb-4 text-center text-gray-600 text-sm">Signed in as <span className="font-medium">{session.user.email}</span></p>
         )}
         <div className="mb-4 w-full">
-          <label className="block mb-1 font-medium">Current Password</label>
+          <label className="block mb-1 font-medium text-sm text-gray-700">New Password</label>
           <input
             type="password"
-            className="w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
-            required
-            value={currentPassword}
-            onChange={(e) => setCurrentPassword(e.target.value)}
-            placeholder="Enter current password"
-          />
-        </div>
-        <div className="mb-4 w-full">
-          <label className="block mb-1 font-medium">New Password</label>
-          <input
-            type="password"
-            className="w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
+            className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200"
             required
             minLength={8}
             value={newPassword}
             onChange={(e) => setNewPassword(e.target.value)}
-            placeholder="Enter new password"
+            placeholder="Min. 8 characters"
+          />
+        </div>
+        <div className="mb-6 w-full">
+          <label className="block mb-1 font-medium text-sm text-gray-700">Confirm Password</label>
+          <input
+            type="password"
+            className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200"
+            required
+            minLength={8}
+            value={confirmPassword}
+            onChange={(e) => setConfirmPassword(e.target.value)}
+            placeholder="Re-enter password"
           />
         </div>
         <button
           type="submit"
-          className="w-full bg-gradient-to-r from-blue-500 to-purple-500 text-white py-2.5 rounded-lg font-semibold hover:from-blue-600 hover:to-purple-600 transition text-sm mb-4"
+          disabled={isSubmitting || !session}
+          className="w-full bg-gradient-to-r from-blue-500 to-purple-500 text-white py-2.5 rounded-lg font-semibold hover:from-blue-600 hover:to-purple-600 transition-all duration-300 text-sm mb-4 hover:shadow-lg hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
         >
-          Update password
+          {isSubmitting ? 'Updating...' : 'Update Password'}
         </button>
-        {status && <p className={`mt-2 text-center w-full ${status.startsWith('Error') ? 'text-red-500' : status.startsWith('Password') ? 'text-red-500' : 'text-green-600'}`}>{status}</p>}
+        {status && (
+          <p className={`mt-2 text-center w-full text-sm ${
+            status.type === 'error' ? 'text-red-500' :
+            status.type === 'success' ? 'text-green-600' :
+            'text-blue-600'
+          }`}>{status.text}</p>
+        )}
         <div className="text-center text-gray-500 text-sm mt-6">
-          <a href="/login" className="text-blue-600 hover:underline">Back to login</a>
+          <a href="/login" className="text-blue-600 hover:underline transition-all duration-200 hover:text-blue-700">Back to login</a>
         </div>
       </form>
     </div>

@@ -7,6 +7,9 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../supabaseClient';
+import { backendFetch } from '../utils/backendFetch';
+import { getMonday } from '../utils/dateUtils';
+import { LEADERSHIP_ROLE_FILTER } from '../constants/roles';
 
 // ── Types ──────────────────────────────────────────────────
 
@@ -16,8 +19,8 @@ export interface KpiAnomaly {
   profile_id?: string;
   kpi_key: string;
   kpi_name: string;
-  anomaly_type: 'drop' | 'spike' | 'stagnation' | 'streak_break';
-  severity: 'info' | 'warning' | 'critical';
+  anomaly_type: 'drop' | 'spike' | 'stagnation' | 'streak_break' | 'improvement';
+  severity: 'info' | 'warning' | 'critical' | 'positive';
   current_value: number;
   previous_value: number;
   rolling_avg: number;
@@ -44,6 +47,7 @@ export interface WatchdogSummary {
   criticalCount: number;
   warningCount: number;
   infoCount: number;
+  positiveCount: number;  // 4A: positive insights
   affectedReps: number;
   topKpiAffected: string;
   byKpi: Record<string, number>;
@@ -63,10 +67,11 @@ const ANOMALY_DROP_THRESHOLD = -15;      // Min % drop to flag; drops between -1
 const ANOMALY_WARNING_THRESHOLD = -30;   // Warning severity
 const ANOMALY_CRITICAL_THRESHOLD = -50;  // Critical severity
 const ANOMALY_SPIKE_THRESHOLD = 50;      // Positive spike threshold
+const POSITIVE_INSIGHT_THRESHOLD = 15;   // 4A: ≥15% improvement = positive insight
 
 const emptySummary: WatchdogSummary = {
   totalAnomalies: 0, activeAnomalies: 0, criticalCount: 0,
-  warningCount: 0, infoCount: 0, affectedReps: 0,
+  warningCount: 0, infoCount: 0, positiveCount: 0, affectedReps: 0,
   topKpiAffected: '-', byKpi: {},
 };
 
@@ -117,7 +122,7 @@ export function useKpiWatchdog(organizationId: string, userId?: string) {
       // Summary
       const byKpi: Record<string, number> = {};
       const profileSet = new Set<string>();
-      let criticalCount = 0, warningCount = 0, infoCount = 0, activeCount = 0;
+      let criticalCount = 0, warningCount = 0, infoCount = 0, positiveCount = 0, activeCount = 0;
 
       anomalies.forEach((a) => {
         byKpi[a.kpi_key] = (byKpi[a.kpi_key] || 0) + 1;
@@ -125,6 +130,7 @@ export function useKpiWatchdog(organizationId: string, userId?: string) {
         if (a.status === 'active') activeCount++;
         if (a.severity === 'critical') criticalCount++;
         else if (a.severity === 'warning') warningCount++;
+        else if (a.severity === 'positive') positiveCount++;
         else infoCount++;
       });
 
@@ -138,6 +144,7 @@ export function useKpiWatchdog(organizationId: string, userId?: string) {
           criticalCount,
           warningCount,
           infoCount,
+          positiveCount,
           affectedReps: profileSet.size,
           topKpiAffected: topKpi ? topKpi[0] : '-',
           byKpi,
@@ -155,13 +162,27 @@ export function useKpiWatchdog(organizationId: string, userId?: string) {
     patch({ isAnalyzing: true, error: null, analysisProgress: ['Fetching KPI metrics and values...'] });
 
     try {
-      // Step 1: Fetch KPI metrics
-      const { data: metrics } = await supabase
-        .from('kpi_metrics')
-        .select('*')
-        .eq('is_active', true);
+      // Step 1: Fetch KPI metrics — org-specific when available
+      let metrics: any[] = [];
+      if (organizationId) {
+        const { data } = await supabase
+          .from('kpi_org_configs')
+          .select('kpi_id, goal, weight, is_active, show_on_scorecard, kpi_metrics!inner(id, key, name, goal, weight, direction)')
+          .eq('organization_id', organizationId)
+          .eq('is_active', true);
+        metrics = (data || []).map((c: any) => ({
+          id: c.kpi_metrics.id, key: c.kpi_metrics.key, name: c.kpi_metrics.name,
+          direction: c.kpi_metrics.direction,
+          goal: c.goal, weight: c.weight, show_on_scorecard: c.show_on_scorecard ?? true,
+        }));
+      }
+      // Fallback to global kpi_metrics
+      if (metrics.length === 0) {
+        const { data } = await supabase.from('kpi_metrics').select('*').eq('is_active', true);
+        metrics = data || [];
+      }
 
-      if (!metrics || metrics.length === 0) {
+      if (metrics.length === 0) {
         patch({ isAnalyzing: false, analysisProgress: ['No active KPI metrics found.'] });
         return;
       }
@@ -175,9 +196,7 @@ export function useKpiWatchdog(organizationId: string, userId?: string) {
       // Step 2: Align to calendar Mon–Sun weeks so we never include the
       // current incomplete week in anomaly detection.
       const now = new Date();
-      const dayOfWk = now.getDay();
-      const currentMon = new Date(now.getTime() - (dayOfWk === 0 ? 6 : dayOfWk - 1) * 24 * 60 * 60 * 1000);
-      currentMon.setHours(0, 0, 0, 0);
+      const currentMon = getMonday(now);
       const lastMonday = new Date(currentMon.getTime() - 7 * 24 * 60 * 60 * 1000);
       const lastSunday = new Date(lastMonday.getTime() + 6 * 24 * 60 * 60 * 1000);
       const twoWeeksAgoMon = new Date(lastMonday.getTime() - 7 * 24 * 60 * 60 * 1000);
@@ -189,7 +208,7 @@ export function useKpiWatchdog(organizationId: string, userId?: string) {
         .from('profiles')
         .select('id, first_name, last_name, organization_id')
         .eq('organization_id', organizationId)
-        .not('role', 'in', '("admin","manager","coach")');
+        .not('role', 'in', LEADERSHIP_ROLE_FILTER);
 
       if (!profiles || profiles.length === 0) {
         patch({ isAnalyzing: false, analysisProgress: ['No profiles to analyze.'] });
@@ -226,17 +245,29 @@ export function useKpiWatchdog(organizationId: string, userId?: string) {
       const previousValues = previousRes.data;
       const rollingValues = rollingRes.data;
 
-      // Build O(1) lookup maps: "profileId::metricKey" -> value(s)
-      const currentMap = new Map<string, any>();
+      // Build O(1) lookup maps: "profileId::metricKey" -> summed value
+      // H2 fix: accumulate (sum) values instead of overwriting — a rep may
+      // have multiple kpi_values rows for the same KPI in a single week.
+      const currentMap = new Map<string, { value: number; meta: any }>();
       (currentValues || []).forEach((v: any) => {
         const key = `${v.profile_id}::${(v.kpi_metrics as any)?.key}`;
-        currentMap.set(key, v);
+        const existing = currentMap.get(key);
+        if (existing) {
+          existing.value += v.value ?? 0;
+        } else {
+          currentMap.set(key, { value: v.value ?? 0, meta: v.kpi_metrics });
+        }
       });
 
-      const previousMap = new Map<string, any>();
+      const previousMap = new Map<string, { value: number }>();
       (previousValues || []).forEach((v: any) => {
         const key = `${v.profile_id}::${(v.kpi_metrics as any)?.key}`;
-        previousMap.set(key, v);
+        const existing = previousMap.get(key);
+        if (existing) {
+          existing.value += v.value ?? 0;
+        } else {
+          previousMap.set(key, { value: v.value ?? 0 });
+        }
       });
 
       const rollingMap = new Map<string, number[]>();
@@ -262,20 +293,22 @@ export function useKpiWatchdog(organizationId: string, userId?: string) {
           const lookupKey = `${profile.id}::${metric.key}`;
           const direction = metric.direction || 'higher';
 
-          const currentVal = currentMap.get(lookupKey);
-          const prevVal = previousMap.get(lookupKey);
+          const currentEntry = currentMap.get(lookupKey);
+          const prevEntry = previousMap.get(lookupKey);
           const rollingVals = rollingMap.get(lookupKey) || [];
 
           // Skip if no data row exists for the analyzed week — "no row" means
           // data hasn't been recorded yet, NOT that the rep scored zero.
-          if (!currentVal) return;
+          if (!currentEntry) return;
 
           const rollingAvg = rollingVals.length > 0
             ? rollingVals.reduce((s: number, v: number) => s + v, 0) / rollingVals.length
             : 0;
 
-          const current = currentVal.value ?? 0;
-          const previous = prevVal?.value || rollingAvg;
+          const current = currentEntry.value;
+          // M3 fix: use ?? instead of || so a genuine zero value isn't
+          // silently replaced by rollingAvg
+          const previous = prevEntry?.value ?? rollingAvg;
 
           if (rollingAvg === 0 && previous === 0) return; // No historical data
 
@@ -330,6 +363,32 @@ export function useKpiWatchdog(organizationId: string, userId?: string) {
               status: 'active',
             });
           }
+
+          // 4A: Detect positive improvements (≥15% but below the 50% spike threshold)
+          if (deviationPct >= POSITIVE_INSIGHT_THRESHOLD && deviationPct < ANOMALY_SPIKE_THRESHOLD) {
+            const roundedDev = Math.round(deviationPct);
+            anomalies.push({
+              organization_id: organizationId,
+              profile_id: profile.id,
+              kpi_key: metric.key,
+              kpi_name: metric.name,
+              anomaly_type: 'improvement',
+              severity: 'positive',
+              current_value: Math.round(current * 10) / 10,
+              previous_value: Math.round(previous * 10) / 10,
+              rolling_avg: Math.round(rollingAvg * 10) / 10,
+              deviation_pct: roundedDev,
+              period_start: lastMonday.toISOString().split('T')[0],
+              period_end: lastSunday.toISOString().split('T')[0],
+              detected_at: now.toISOString(),
+              status: 'active',
+              // Template-based message
+              ai_analysis: `Great momentum on ${metric.name}! Up ${roundedDev}% vs. your 4-week rolling average.`,
+              ai_recommendation: current > (metric.goal || 0)
+                ? `You're exceeding your ${metric.name} goal — keep up the strong performance!`
+                : `Keep pushing — you're trending in the right direction on ${metric.name}.`,
+            });
+          }
         });
       });
 
@@ -368,11 +427,10 @@ export function useKpiWatchdog(organizationId: string, userId?: string) {
         });
 
         try {
-          const { data: json, error: fnError } = await supabase.functions.invoke('engage-watchdog', {
-            body: {
-              anomalies: serious.map((a: any) => {
-                const prof = profileMap.get(a.profile_id);
-                return {
+          const json = await backendFetch('/api/engage/watchdog/analyze', {
+            anomalies: serious.map((a: any) => {
+              const prof = profileMap.get(a.profile_id);
+              return {
                 kpi_name: a.kpi_name,
                 profile_name: prof
                   ? `${prof.first_name} ${prof.last_name}`
@@ -382,20 +440,19 @@ export function useKpiWatchdog(organizationId: string, userId?: string) {
                 current_value: a.current_value,
                 rolling_avg: a.rolling_avg,
                 deviation_pct: a.deviation_pct,
-              }; }),
-            },
+              };
+            }),
           });
-          if (fnError) console.warn('Watchdog AI analysis failed:', fnError.message);
           const analyses = json?.analyses;
           if (analyses) {
             // Update anomalies with AI analysis
-            for (let i = 0; i < Math.min(serious.length, json.analyses.length); i++) {
-              if (json.analyses[i]) {
+            for (let i = 0; i < Math.min(serious.length, analyses.length); i++) {
+              if (analyses[i]) {
                 await supabase
                   .from('engage_kpi_anomalies')
                   .update({
-                    ai_analysis: json.analyses[i].analysis,
-                    ai_recommendation: json.analyses[i].recommendation,
+                    ai_analysis: analyses[i].analysis,
+                    ai_recommendation: analyses[i].recommendation,
                   })
                   .eq('organization_id', organizationId)
                   .eq('profile_id', serious[i].profile_id)

@@ -1,6 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
 import { supabase } from '../supabaseClient';
 import { SKILLSET_KPI_MAP, LEVELS, getLevelInfo, getEffectiveLevel, difficultyRank, getSkillsetColor } from '../constants/skillsets';
+import { calcPct } from '../utils/kpiCalc';
+import { LEADERSHIP_ROLE_FILTER } from '../constants/roles';
 
 interface ProfileCoachData {
   id: string;
@@ -46,7 +48,7 @@ export function useCoachData(
   selectedDepartments: string[],
   selectedTeams: string[],
   selectedMembers: string[],
-  options?: { enabled?: boolean; mode?: 'summary' | 'full'; refreshTrigger?: number }
+  options?: { enabled?: boolean; mode?: 'summary' | 'full'; refreshTrigger?: number; organizationId?: string }
 ) {
   const cacheRef = useRef<Map<string, CoachData>>(new Map());
   const inFlightRef = useRef<Set<string>>(new Set());
@@ -105,11 +107,18 @@ export function useCoachData(
         setError(null);
 
         // ── Stage 1: Independent queries (parallel) ──────────────────────
+        const orgId = options?.organizationId;
         let profilesQuery = supabase
           .from('profiles')
           .select('id, first_name, last_name, apptivia_level, current_score, day_streak, total_points, department, team_id')
-          .not('role', 'in', '("admin","manager","coach")');
+          .not('role', 'in', LEADERSHIP_ROLE_FILTER);
 
+        if (orgId) {
+          profilesQuery = profilesQuery.eq('organization_id', orgId);
+        } else {
+          // Org filter is mandatory — prevent cross-org data leakage
+          return;
+        }
         if (selectedDepartments.length > 0) {
           profilesQuery = profilesQuery.in('department', selectedDepartments);
         }
@@ -120,10 +129,21 @@ export function useCoachData(
           profilesQuery = profilesQuery.in('id', selectedMembers);
         }
 
+        // Metrics query: use kpi_org_configs (org-specific goals/weights) when orgId available
+        const metricsPromise = orgId
+          ? supabase
+              .from('kpi_org_configs')
+              .select('kpi_id, goal, weight, is_active, show_on_scorecard, kpi_metrics!inner(id, key, direction)')
+              .eq('organization_id', orgId)
+              .eq('is_active', true)
+          : supabase.from('kpi_metrics').select('id, key, goal, weight, show_on_scorecard, direction').eq('is_active', true);
+
         const [profilesResult, skillsetsResult, metricsResult] = await Promise.all([
           profilesQuery,
-          supabase.from('skillsets').select('id, name, description, color').order('name'),
-          supabase.from('kpi_metrics').select('id, key, goal, weight, show_on_scorecard, direction').eq('is_active', true),
+          orgId
+            ? supabase.from('skillsets').select('id, name, description, color').eq('organization_id', orgId).order('name')
+            : supabase.from('skillsets').select('id, name, description, color').order('name'),
+          metricsPromise,
         ]);
 
         if (profilesResult.error) throw profilesResult.error;
@@ -134,10 +154,21 @@ export function useCoachData(
         const allSkillsetsData = skillsetsResult.data;
         const totalMembers = profiles.length;
 
-        const metrics = (metricsResult.data || []).map((m: any) => ({
-          ...m,
-          show_on_scorecard: m?.show_on_scorecard ?? true,
-        }));
+        // Normalize metrics shape (kpi_org_configs join vs kpi_metrics flat)
+        const rawMetrics = metricsResult.data || [];
+        const metrics = orgId
+          ? rawMetrics.map((c: any) => ({
+              id: (c.kpi_metrics as any).id,
+              key: (c.kpi_metrics as any).key,
+              direction: (c.kpi_metrics as any).direction,
+              goal: c.goal,
+              weight: c.weight,
+              show_on_scorecard: c.show_on_scorecard ?? true,
+            }))
+          : rawMetrics.map((m: any) => ({
+              ...m,
+              show_on_scorecard: m?.show_on_scorecard ?? true,
+            }));
 
         const metricsById = new Map<string, any>();
         const metricsByKey = new Map<string, any>();
@@ -164,7 +195,7 @@ export function useCoachData(
               .in('profile_id', profileIds)
               .order('period_end', { ascending: false })
               .limit(1)
-              .then(({ data: latestRows, error: latestErr }) => {
+              .then(({ data: latestRows, error: latestErr }: any) => {
                 if (latestErr) return { data: null, error: latestErr };
                 const latestEnd = latestRows?.[0]?.period_end || null;
                 if (!latestEnd) return { data: [], error: null };
@@ -188,12 +219,16 @@ export function useCoachData(
         }
 
         // Build all Stage 2 promises
+        // M12 fix: include kpi_metric_history so Coach uses the same historical
+        // goals as the Scorecard instead of only current goals.
+        const scorecardMetricIds = scorecardMetrics.map((m: any) => m.id);
         const stage2Promises: [
           Promise<{ data: any[] | null; error: any }>,                    // kpi_values
           Promise<{ data: any[] | null; error: any }>,                    // achievements
           Promise<{ data: any[] | null; error: any }>,                    // profile_skillsets
           Promise<{ data: any[] | null; error: any }>,                    // profile_achievements
           Promise<{ data: any[] | null; error: any }>,                    // profile_badges
+          Promise<{ data: any[] | null; error: any }>,                    // kpi_metric_history
         ] = [
           valuesPromise,
           mode === 'full' && skillsetIds.length > 0
@@ -208,14 +243,38 @@ export function useCoachData(
           mode === 'full' && profileIds.length > 0
             ? supabase.from('profile_badges').select('id, profile_id').in('profile_id', profileIds)
             : Promise.resolve({ data: [], error: null }),
+          scorecardMetricIds.length > 0
+            ? supabase.from('kpi_metric_history')
+                .select('kpi_id, goal, weight, direction, valid_from, valid_to')
+                .in('kpi_id', scorecardMetricIds)
+                .lte('valid_from', new Date().toISOString())
+                .or(`valid_to.is.null,valid_to.gt.${new Date().toISOString()}`)
+            : Promise.resolve({ data: [], error: null }),
         ];
 
-        const [valuesResult, achievementsResult, profileSkillsetsResult, earnedResult, badgesResult] = await Promise.all(stage2Promises);
+        const [valuesResult, achievementsResult, profileSkillsetsResult, earnedResult, badgesResult, histResult] = await Promise.all(stage2Promises);
 
         if (valuesResult.error) throw valuesResult.error;
         if (achievementsResult.error) throw achievementsResult.error;
 
         const valuesData: any[] = valuesResult.data || [];
+
+        // H8 fix: warn if 50k limit was hit (data may be incomplete)
+        if (valuesData.length >= 50000) {
+          console.warn('[useCoachData] kpi_values query hit 50k row limit — coach data may be incomplete');
+        }
+
+        // M12 fix: build historical goal lookup (same pattern as useScorecardData)
+        const histGoalMap: Record<string, { goal: number; weight: number; direction?: string; valid_from?: string }> = {};
+        (histResult.data || []).forEach((h: any) => {
+          const existing = histGoalMap[h.kpi_id];
+          if (!existing || new Date(h.valid_from) > new Date(existing.valid_from || '')) {
+            histGoalMap[h.kpi_id] = { goal: h.goal, weight: h.weight, direction: h.direction, valid_from: h.valid_from };
+          }
+        });
+        const histGoal = (metric: any): number => histGoalMap[metric.id]?.goal ?? metric.goal;
+        const histWeight = (metric: any): number => histGoalMap[metric.id]?.weight ?? metric.weight;
+        const histDir = (metric: any): string => histGoalMap[metric.id]?.direction ?? metric.direction ?? 'higher';
 
         // Latest period determination
         const latestPeriodEnd = valuesData.reduce<string | null>((acc, curr: any) => {
@@ -234,19 +293,20 @@ export function useCoachData(
           latestValueMap.set(key, (latestValueMap.get(key) || 0) + Number(v.value || 0));
         });
 
-        // Scorecard scores for latest period
+        // Scorecard scores for latest period (M12 fix: use historical goals)
         const profileScores = new Map<string, number>();
         profiles.forEach((profile: any) => {
           let totalScore = 0;
+          let totalWeight = 0;
           scorecardMetrics.forEach((metric: any) => {
             const value = latestValueMap.get(`${profile.id}|${metric.id}`) || 0;
-            const dir = metric.direction || 'higher';
-            const percentage = metric.goal > 0
-              ? (dir === 'lower' ? (value > 0 ? Math.min((metric.goal / value) * 100, 200) : 200) : (value / metric.goal) * 100)
-              : 0;
-            totalScore += percentage * (metric.weight || 0);
+            const dir = histDir(metric);
+            const w = histWeight(metric);
+            const percentage = calcPct(value, histGoal(metric), dir);
+            totalScore += percentage * w;
+            totalWeight += w;
           });
-          profileScores.set(profile.id, Math.round(totalScore));
+          profileScores.set(profile.id, totalWeight > 0 ? Math.round(totalScore / totalWeight) : 0);
         });
 
         const avgScore = totalMembers > 0
@@ -274,21 +334,30 @@ export function useCoachData(
           profiles.forEach((profile: any) => {
             const periodEnds = Array.from(periodsByProfile.get(profile.id) || []).sort((a, b) => (a > b ? -1 : 1));
             let streak = 0;
+            let prevEnd: string | null = null;
             for (const periodEnd of periodEnds) {
+              // M4 fix: break streak if there's a gap > 7 days between consecutive periods
+              if (prevEnd) {
+                const gap = new Date(prevEnd).getTime() - new Date(periodEnd).getTime();
+                if (gap > 8 * 24 * 60 * 60 * 1000) break; // >8 days = skipped week
+              }
               let periodScore = 0;
+              let periodTotalWeight = 0;
               scorecardMetrics.forEach((metric: any) => {
                 const value = valueByProfilePeriodMetric.get(`${profile.id}|${periodEnd}|${metric.id}`) || 0;
-                const dir = metric.direction || 'higher';
-                const percentage = metric.goal > 0
-                  ? (dir === 'lower' ? (value > 0 ? Math.min((metric.goal / value) * 100, 200) : 200) : (value / metric.goal) * 100)
-                  : 0;
-                periodScore += percentage * (metric.weight || 0);
+                const dir = histDir(metric);
+                const w = histWeight(metric);
+                const percentage = calcPct(value, histGoal(metric), dir);
+                periodScore += percentage * w;
+                periodTotalWeight += w;
               });
-              if (Math.round(periodScore) >= 100) {
+              const normalizedScore = periodTotalWeight > 0 ? Math.round(periodScore / periodTotalWeight) : 0;
+              if (normalizedScore >= 100) {
                 streak += 1;
               } else {
                 break;
               }
+              prevEnd = periodEnd;
             }
             totalStreak += streak;
             profileStreaks.set(profile.id, streak);
@@ -506,7 +575,7 @@ export function useCoachData(
     }
 
     fetchData();
-  }, [selectedDepartments, selectedTeams, selectedMembers, options?.enabled, options?.mode, realtimeKey, options?.refreshTrigger]);
+  }, [selectedDepartments, selectedTeams, selectedMembers, options?.enabled, options?.mode, realtimeKey, options?.refreshTrigger, options?.organizationId]);
 
   // ── Real-time subscription ─────────────────────────────────────────────────
   // When kpi_values change in the DB (e.g. a manager logs activity), invalidate

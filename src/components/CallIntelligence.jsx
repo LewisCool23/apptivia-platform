@@ -70,12 +70,9 @@ function LogCallModal({ organizationId, userId, deals, onClose, onSaved }) {
     setAnalyzing(true);
     try {
       const data = await backendFetch('/api/engage/calls/analyze', {
-        method: 'POST',
-        body: JSON.stringify({
-          notes: form.notes,
-          contact_name: form.contact_name || undefined,
-          deal_name: selectedDeal?.deal_name || undefined,
-        }),
+        notes: form.notes,
+        contact_name: form.contact_name || undefined,
+        deal_name: selectedDeal?.deal_name || undefined,
       });
       setAnalysis(data.analysis);
     } catch (err) {

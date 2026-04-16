@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import { useAuth } from '../AuthContext';
+import { ROLES } from '../constants/roles';
 
 export interface RoleFlags {
   isAdmin: boolean;
@@ -21,10 +22,10 @@ export function useRoleFlags(): RoleFlags {
   const { role } = useAuth();
 
   return useMemo(() => {
-    const isAdmin = role === 'admin';
-    const isManager = role === 'manager';
-    const isCoach = role === 'coach';
-    const isPowerUser = role === 'power_user';
+    const isAdmin = role === ROLES.ADMIN;
+    const isManager = role === ROLES.MANAGER;
+    const isCoach = role === ROLES.COACH;
+    const isPowerUser = role === ROLES.POWER_USER;
 
     return {
       isAdmin,

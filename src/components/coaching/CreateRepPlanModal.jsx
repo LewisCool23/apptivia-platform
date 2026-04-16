@@ -9,6 +9,7 @@ import { estimateSkillsetXp } from '../../constants/skillsets';
 import { buildEnrichedContent } from '../../utils/emailTemplates';
 import PlanBuilderForm from './PlanBuilderForm';
 import CoachingPlanTemplatesModal from '../CoachingPlanTemplatesModal';
+import { LEADERSHIP_ROLES } from '../../constants/roles';
 
 const DEFAULT_KPIS = [
   'pipeline_created', 'sourced_opps', 'call_connects', 'meetings',
@@ -277,6 +278,7 @@ export default function CreateRepPlanModal({ isOpen, onClose, repId, repName, te
         plan_type: planForm.plan_type,
         template_id: planForm.template_id || null,
         created_by: user.id,
+        organization_id: profile?.organization_id || null,
         content,
         goals: planForm.goals.filter(g => g.trim()),
         focus_kpis: planForm.focus_kpis.filter(k => k.trim()),
@@ -299,6 +301,7 @@ export default function CreateRepPlanModal({ isOpen, onClose, repId, repName, te
           plan_id: savedPlan.id,
           assigned_to: planFor.memberId,
           assigned_by: user.id,
+          organization_id: profile?.organization_id || null,
           status: 'active',
         }]);
         if (assignError) console.warn('Plan created but assignment failed:', assignError.message);
@@ -343,7 +346,7 @@ export default function CreateRepPlanModal({ isOpen, onClose, repId, repName, te
             updateArrayField={updateArrayField}
             removeArrayField={removeArrayField}
             onCancel={onClose}
-            teamMembers={(teamMembers || []).filter(m => !['admin', 'manager', 'coach'].includes(m.role))}
+            teamMembers={(teamMembers || []).filter(m => !LEADERSHIP_ROLES.includes(m.role))}
             managers={[]}
             planFor={planFor}
             setPlanFor={setPlanFor}

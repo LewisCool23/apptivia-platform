@@ -27,9 +27,10 @@ const FRONTEND_URL = process.env.FRONTEND_URL || 'https://apptivia.app';
 function buildEmailWrapper(title, subtitle, bodyHtml, options = {}) {
   const { ctaUrl, ctaLabel, headerMeta, notesHtml, footerLabel } = options;
   const date = new Date().toLocaleDateString();
+  const year = new Date().getFullYear();
   const ctaBlock = ctaUrl && ctaLabel
     ? `<div style="text-align: center; margin: 30px 0;">
-        <a href="${ctaUrl}" style="display: inline-block; background: ${GRADIENT}; color: white; padding: 12px 30px; text-decoration: none; border-radius: 8px; font-weight: bold;">${ctaLabel}</a>
+        <a href="${ctaUrl}" style="display: inline-block; background: ${GRADIENT}; color: white; padding: 12px 30px; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 14px;">${ctaLabel}</a>
       </div>` : '';
   const notesBlock = notesHtml
     ? `<div style="background: #e0f2fe; padding: 15px; border-radius: 8px; margin: 20px 0;">
@@ -39,30 +40,46 @@ function buildEmailWrapper(title, subtitle, bodyHtml, options = {}) {
   return `<!DOCTYPE html>
 <html>
 <head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
-    body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0; }
+    body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0; background-color: #f9fafb; }
     .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-    .header { background: ${GRADIENT}; color: white; padding: 30px; border-radius: 10px; text-align: center; }
+    .email-card { background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 12px rgba(0,0,0,0.06); }
+    .header { background: ${GRADIENT}; color: white; padding: 32px 30px; text-align: center; }
     .stat-box { background: ${COLORS.lightGray}; padding: 20px; border-radius: 8px; text-align: center; }
     .section { margin: 20px 0; }
     .section-title { font-size: 16px; font-weight: bold; margin: 0 0 10px 0; color: #111827; }
-    .footer { text-align: center; color: ${COLORS.gray}; font-size: 12px; margin-top: 30px; border-top: 1px solid #e5e7eb; padding-top: 20px; }
+    .footer { text-align: center; color: ${COLORS.gray}; font-size: 11px; padding: 24px 30px; background: #f9fafb; border-top: 1px solid #e5e7eb; }
   </style>
 </head>
 <body>
   <div class="container">
-    <div class="header">
-      <h1 style="margin: 0 0 5px 0;">${title}</h1>
-      <p style="margin: 0; opacity: 0.9;">${subtitle}</p>
-      ${headerMeta || ''}
-    </div>
-    ${bodyHtml}
-    ${notesBlock}
-    ${ctaBlock}
-    <div class="footer">
-      <p style="margin: 0 0 5px 0;">Generated on ${date}</p>
-      <p style="margin: 0;">${footerLabel || 'Apptivia Platform'}</p>
-      <p style="margin: 5px 0 0 0;"><a href="${FRONTEND_URL}" style="color: ${COLORS.blue};">Open Apptivia</a> | <a href="${FRONTEND_URL}/settings" style="color: ${COLORS.blue};">Manage Reports</a></p>
+    <div class="email-card">
+      <div class="header">
+        <div style="font-size: 26px; font-weight: 800; letter-spacing: -0.5px; margin-bottom: 2px;">Apptivia</div>
+        <div style="font-size: 10px; opacity: 0.8; letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 16px;">Sales Performance Intelligence</div>
+        <h1 style="margin: 0 0 5px 0; font-size: 20px;">${title}</h1>
+        <p style="margin: 0; opacity: 0.9; font-size: 13px;">${subtitle}</p>
+        ${headerMeta || ''}
+      </div>
+      <div style="padding: 24px 28px;">
+        ${bodyHtml}
+        ${notesBlock}
+        ${ctaBlock}
+      </div>
+      <div class="footer">
+        <div style="font-size: 16px; font-weight: 800; letter-spacing: -0.3px; margin-bottom: 6px;">
+          <span style="color: ${COLORS.blue};">App</span><span style="color: ${COLORS.purple};">ti</span><span style="color: ${COLORS.pink};">via</span>
+        </div>
+        <p style="margin: 0 0 8px 0;">Generated on ${date} &nbsp;&bull;&nbsp; ${footerLabel || 'Powered by Apptivia'}</p>
+        <p style="margin: 0;">
+          <a href="${FRONTEND_URL}" style="color: ${COLORS.blue}; text-decoration: none;">Open Dashboard</a>
+          &nbsp;&bull;&nbsp;
+          <a href="${FRONTEND_URL}/settings" style="color: ${COLORS.blue}; text-decoration: none;">Manage Reports</a>
+        </p>
+        <p style="margin: 8px 0 0 0; color: #9ca3af; font-size: 10px;">&copy; ${year} Apptivia. All rights reserved.</p>
+      </div>
     </div>
   </div>
 </body>
@@ -172,6 +189,15 @@ function computeNextScheduledAt(report) {
     next.setMonth(now.getMonth() + 1);
     next.setDate(1);
   }
+  // Apply the report's scheduled time (HH:MM) if set
+  if (report.time) {
+    const [hours, minutes] = report.time.split(':').map(Number);
+    if (!isNaN(hours) && !isNaN(minutes)) {
+      next.setHours(hours, minutes, 0, 0);
+    }
+  } else {
+    next.setHours(9, 0, 0, 0); // Default to 9:00 AM
+  }
   return next.toISOString();
 }
 
@@ -195,7 +221,7 @@ function computeScore(profileId, sums, metrics, getConfigAt, weekDate) {
     const dir  = cfg.direction || 'higher';
     const pct  = dir === 'lower'
       ? (val > 0 ? Math.min((goal / val) * 100, 200) : 200)
-      : (val / goal) * 100;
+      : Math.min((val / goal) * 100, 200);
     score += pct * cfg.weight;
   }
   return Math.round(score);
@@ -214,11 +240,30 @@ async function fetchScorecardData(sb, orgId) {
   const priorEnd  = currStart;
   const priorStart = new Date(now.getTime() - 14 * 86400000).toISOString().split('T')[0];
 
-  const { data: metrics } = await sb
-    .from('kpi_metrics')
-    .select('id, key, name, goal, weight, direction')
-    .eq('is_active', true)
-    .eq('show_on_scorecard', true);
+  // Use org-specific KPI configs when orgId is available (matches scorecard logic)
+  let metrics = [];
+  if (orgId) {
+    const { data } = await sb
+      .from('kpi_org_configs')
+      .select('kpi_id, goal, weight, is_active, show_on_scorecard, kpi_metrics!inner(id, key, name, direction)')
+      .eq('organization_id', orgId)
+      .eq('is_active', true)
+      .eq('show_on_scorecard', true);
+    metrics = (data || []).map(c => ({
+      id: c.kpi_metrics.id, key: c.kpi_metrics.key,
+      name: c.kpi_metrics.name, direction: c.kpi_metrics.direction,
+      goal: c.goal, weight: c.weight,
+    }));
+  }
+  // Fallback to global kpi_metrics if no org configs found
+  if (metrics.length === 0) {
+    const { data } = await sb
+      .from('kpi_metrics')
+      .select('id, key, name, goal, weight, direction')
+      .eq('is_active', true)
+      .eq('show_on_scorecard', true);
+    metrics = data || [];
+  }
 
   if (!metrics || metrics.length === 0) return null;
 
@@ -345,10 +390,28 @@ async function generateScorecardReport(sb, orgId, opts) {
 // ── Analytics Report ────────────────────────────────────────────────
 
 async function generateAnalyticsReport(sb, orgId, opts) {
-  const { data: metrics } = await sb
-    .from('kpi_metrics')
-    .select('id, key, name, goal, weight, direction')
-    .eq('is_active', true);
+  // Use org-specific KPI configs when orgId is available
+  let metrics = [];
+  if (orgId) {
+    const { data } = await sb
+      .from('kpi_org_configs')
+      .select('kpi_id, goal, weight, is_active, kpi_metrics!inner(id, key, name, direction)')
+      .eq('organization_id', orgId)
+      .eq('is_active', true);
+    metrics = (data || []).map(c => ({
+      id: c.kpi_metrics.id, key: c.kpi_metrics.key,
+      name: c.kpi_metrics.name, direction: c.kpi_metrics.direction,
+      goal: c.goal, weight: c.weight,
+    }));
+  }
+  // Fallback to global kpi_metrics
+  if (metrics.length === 0) {
+    const { data } = await sb
+      .from('kpi_metrics')
+      .select('id, key, name, goal, weight, direction')
+      .eq('is_active', true);
+    metrics = data || [];
+  }
 
   if (!metrics || metrics.length === 0) {
     return noDataReport('Analytics Report', 'No KPI metrics configured.');

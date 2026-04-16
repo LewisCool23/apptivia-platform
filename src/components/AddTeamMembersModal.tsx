@@ -3,6 +3,7 @@ import { X, Search, UserPlus, Users, Check } from 'lucide-react';
 import { supabase } from '../supabaseClient';
 import { useToast } from '../contexts/ToastContext';
 import { useAuth } from '../AuthContext';
+import { ROLES } from '../constants/roles';
 
 interface Profile {
   id: string;
@@ -38,7 +39,7 @@ export default function AddTeamMembersModal({
   const [saving, setSaving] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-  const [showMyTeamOnly, setShowMyTeamOnly] = useState(role === 'manager');
+  const [showMyTeamOnly, setShowMyTeamOnly] = useState(role === ROLES.MANAGER);
 
   useEffect(() => {
     if (isOpen) {

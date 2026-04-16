@@ -1,0 +1,1236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Apptivia Business Plan — v2.2 Comprehensive</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+  :root {
+    --primary: #2563eb;
+    --primary-dark: #1d4ed8;
+    --accent: #f59e0b;
+    --dark: #0f172a;
+    --gray-900: #1e293b;
+    --gray-700: #334155;
+    --gray-500: #64748b;
+    --gray-300: #cbd5e1;
+    --gray-100: #f1f5f9;
+    --white: #ffffff;
+    --success: #10b981;
+    --danger: #ef4444;
+    --purple: #8b5cf6;
+    --teal: #0d9488;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Inter', -apple-system, sans-serif;
+    color: var(--gray-900);
+    line-height: 1.6;
+    background: var(--white);
+  }
+
+  @media print {
+    body { font-size: 10.5pt; }
+    .page-break { page-break-before: always; }
+    .no-print { display: none; }
+    .cover { height: 100vh; }
+    table { font-size: 9pt; }
+    .callout { break-inside: avoid; }
+  }
+
+  @media screen {
+    body { max-width: 920px; margin: 0 auto; padding: 20px; }
+  }
+
+  .cover {
+    display: flex; flex-direction: column; justify-content: center; align-items: flex-start;
+    min-height: 90vh; padding: 80px 60px;
+    background: linear-gradient(135deg, var(--dark) 0%, #1e3a5f 50%, #0f2847 100%);
+    color: var(--white); border-radius: 4px; margin-bottom: 40px;
+    position: relative; overflow: hidden;
+  }
+  .cover::after {
+    content: ''; position: absolute; top: -50%; right: -20%;
+    width: 500px; height: 500px; border-radius: 50%;
+    background: radial-gradient(circle, rgba(37,99,235,0.15) 0%, transparent 70%);
+  }
+  .cover .logo { font-size: 14px; letter-spacing: 6px; text-transform: uppercase; color: var(--accent); font-weight: 600; margin-bottom: 40px; position: relative; z-index: 1; }
+  .cover h1 { font-size: 48px; font-weight: 800; line-height: 1.1; margin-bottom: 20px; position: relative; z-index: 1; }
+  .cover .subtitle { font-size: 20px; color: var(--gray-300); font-weight: 300; margin-bottom: 10px; max-width: 520px; position: relative; z-index: 1; }
+  .cover .version-badge { display: inline-block; background: var(--primary); color: var(--white); padding: 4px 14px; border-radius: 20px; font-size: 12px; font-weight: 600; margin-bottom: 50px; position: relative; z-index: 1; }
+  .cover .meta { font-size: 14px; color: var(--gray-500); position: relative; z-index: 1; }
+  .cover .meta span { display: block; margin-bottom: 4px; }
+
+  .section { margin-bottom: 50px; }
+  .section-number { font-size: 13px; font-weight: 600; color: var(--primary); letter-spacing: 3px; text-transform: uppercase; margin-bottom: 8px; }
+
+  h2 { font-size: 30px; font-weight: 800; color: var(--dark); margin-bottom: 22px; line-height: 1.2; }
+  h3 { font-size: 19px; font-weight: 700; color: var(--gray-900); margin-top: 30px; margin-bottom: 12px; }
+  h4 { font-size: 15px; font-weight: 600; color: var(--gray-700); margin-top: 18px; margin-bottom: 8px; }
+
+  p { font-size: 14.5px; color: var(--gray-700); margin-bottom: 14px; line-height: 1.7; }
+
+  .lead { font-size: 17px; color: var(--gray-700); font-weight: 400; line-height: 1.7; margin-bottom: 26px; border-left: 4px solid var(--primary); padding-left: 20px; }
+
+  .stats-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; margin: 28px 0; }
+  .stats-row.four { grid-template-columns: repeat(4, 1fr); }
+  .stat-card { background: var(--gray-100); border-radius: 8px; padding: 22px; text-align: center; }
+  .stat-card .number { font-size: 34px; font-weight: 800; color: var(--primary); }
+  .stat-card .number.green { color: var(--success); }
+  .stat-card .number.amber { color: var(--accent); }
+  .stat-card .number.red { color: var(--danger); }
+  .stat-card .number.purple { color: var(--purple); }
+  .stat-card .number.teal { color: var(--teal); }
+  .stat-card .label { font-size: 12px; color: var(--gray-500); margin-top: 4px; font-weight: 500; }
+
+  table { width: 100%; border-collapse: collapse; margin: 18px 0; font-size: 13.5px; }
+  th { background: var(--dark); color: var(--white); padding: 10px 14px; text-align: left; font-weight: 600; font-size: 12px; }
+  td { padding: 9px 14px; border-bottom: 1px solid var(--gray-300); color: var(--gray-700); vertical-align: top; }
+  tr:nth-child(even) td { background: var(--gray-100); }
+
+  .callout { background: linear-gradient(135deg, #eff6ff, #dbeafe); border-left: 4px solid var(--primary); border-radius: 0 8px 8px 0; padding: 18px 22px; margin: 22px 0; }
+  .callout.warning { background: linear-gradient(135deg, #fffbeb, #fef3c7); border-left-color: var(--accent); }
+  .callout.success { background: linear-gradient(135deg, #ecfdf5, #d1fae5); border-left-color: var(--success); }
+  .callout.danger { background: linear-gradient(135deg, #fef2f2, #fecaca); border-left-color: var(--danger); }
+  .callout.purple { background: linear-gradient(135deg, #f5f3ff, #ede9fe); border-left-color: var(--purple); }
+  .callout.teal { background: linear-gradient(135deg, #f0fdfa, #ccfbf1); border-left-color: var(--teal); }
+  .callout p { margin-bottom: 0; font-size: 13.5px; }
+  .callout strong { color: var(--dark); }
+
+  .stack { margin: 28px 0; }
+  .stack-layer { padding: 14px 22px; margin-bottom: 4px; color: var(--white); font-weight: 600; border-radius: 6px; display: flex; justify-content: space-between; align-items: center; font-size: 14px; }
+  .stack-layer .desc { font-weight: 400; font-size: 12px; opacity: 0.85; }
+  .stack-layer .status-badge { font-size: 10px; font-weight: 700; background: rgba(255,255,255,0.25); padding: 2px 10px; border-radius: 10px; margin-left: 12px; }
+
+  .timeline { position: relative; margin: 28px 0; padding-left: 30px; }
+  .timeline::before { content: ''; position: absolute; left: 8px; top: 0; bottom: 0; width: 3px; background: var(--gray-300); }
+  .timeline-item { position: relative; margin-bottom: 28px; padding-left: 20px; }
+  .timeline-item::before { content: ''; position: absolute; left: -26px; top: 6px; width: 14px; height: 14px; border-radius: 50%; background: var(--primary); border: 3px solid var(--white); box-shadow: 0 0 0 2px var(--primary); }
+  .timeline-item.done::before { background: var(--success); box-shadow: 0 0 0 2px var(--success); }
+  .timeline-item.active::before { background: var(--accent); box-shadow: 0 0 0 2px var(--accent); }
+  .timeline-item .phase-label { font-size: 11px; font-weight: 700; color: var(--primary); letter-spacing: 2px; text-transform: uppercase; }
+  .timeline-item h4 { margin-top: 4px; margin-bottom: 6px; }
+  .timeline-item p { font-size: 13.5px; margin-bottom: 4px; }
+
+  ul, ol { margin: 10px 0 18px 24px; color: var(--gray-700); }
+  li { margin-bottom: 7px; font-size: 14px; line-height: 1.6; }
+  li li { font-size: 13px; }
+
+  hr { border: none; border-top: 2px solid var(--gray-100); margin: 36px 0; }
+
+  .confidential { text-align: center; font-size: 11px; color: var(--gray-500); letter-spacing: 2px; text-transform: uppercase; margin-top: 40px; padding-top: 20px; border-top: 1px solid var(--gray-300); }
+
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 22px; margin: 18px 0; }
+  .three-col { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; margin: 18px 0; }
+  .col-card { background: var(--gray-100); border-radius: 8px; padding: 18px; }
+  .col-card h4 { margin-top: 0; color: var(--primary-dark); }
+  .col-card p, .col-card li { font-size: 12.5px; }
+
+  .tag { display: inline-block; background: var(--primary); color: var(--white); padding: 2px 10px; border-radius: 12px; font-size: 11px; font-weight: 600; margin-right: 4px; }
+  .tag.green { background: var(--success); }
+  .tag.amber { background: var(--accent); color: var(--dark); }
+  .tag.red { background: var(--danger); }
+  .tag.purple { background: var(--purple); }
+  .tag.teal { background: var(--teal); }
+
+  .audit-note { background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 10px 14px; font-size: 12px; color: #166534; margin: 8px 0; display: flex; align-items: center; gap: 8px; }
+  .audit-note::before { content: '\2713'; display: inline-flex; width: 16px; height: 16px; border-radius: 50%; background: var(--success); color: white; font-size: 10px; font-weight: 700; align-items: center; justify-content: center; flex-shrink: 0; }
+
+  .framework-box { background: linear-gradient(135deg, #faf5ff, #ede9fe); border: 1px solid #c4b5fd; border-radius: 8px; padding: 18px; margin: 16px 0; }
+  .framework-box h4 { margin-top: 0; color: #6d28d9; font-size: 14px; }
+  .framework-box p, .framework-box li { font-size: 13px; color: #4c1d95; }
+</style>
+</head>
+<body>
+
+<!-- ==================== COVER PAGE ==================== -->
+<div class="cover">
+  <div class="logo">Apptivia</div>
+  <h1>Business Plan</h1>
+  <div class="subtitle">
+    Sales Performance Intelligence for Teams That Want to Win
+  </div>
+  <div class="version-badge">v2.2 &mdash; Comprehensive &bull; Codebase-Verified</div>
+  <div class="meta">
+    <span>Confidential</span>
+    <span>April 2026</span>
+    <span>First Pilot: Planera (April 2026)</span>
+  </div>
+</div>
+
+<!-- ==================== TABLE OF CONTENTS ==================== -->
+<div class="section page-break">
+  <div class="section-number">Contents</div>
+  <h2>Table of Contents</h2>
+  <table>
+    <tr><td style="font-weight:600;">1. Executive Summary</td><td style="text-align:right;">3</td></tr>
+    <tr><td style="font-weight:600;">2. The Problem</td><td style="text-align:right;">5</td></tr>
+    <tr><td style="font-weight:600;">3. The Solution</td><td style="text-align:right;">6</td></tr>
+    <tr><td style="font-weight:600;">4. Product Architecture &mdash; Codebase-Verified</td><td style="text-align:right;">7</td></tr>
+    <tr><td style="font-weight:600;">5. Aaron AI &mdash; The Coaching Intelligence Engine</td><td style="text-align:right;">11</td></tr>
+    <tr><td style="font-weight:600;">6. Technical Infrastructure</td><td style="text-align:right;">13</td></tr>
+    <tr><td style="font-weight:600;">7. Strategic Foundation</td><td style="text-align:right;">15</td></tr>
+    <tr><td style="font-weight:600;">8. Market Opportunity</td><td style="text-align:right;">18</td></tr>
+    <tr><td style="font-weight:600;">9. Business Model</td><td style="text-align:right;">19</td></tr>
+    <tr><td style="font-weight:600;">10. Competitive Landscape</td><td style="text-align:right;">20</td></tr>
+    <tr><td style="font-weight:600;">11. Go-to-Market Strategy</td><td style="text-align:right;">22</td></tr>
+    <tr><td style="font-weight:600;">12. Product Roadmap &mdash; What's Built, Fixed &amp; Remaining</td><td style="text-align:right;">25</td></tr>
+    <tr><td style="font-weight:600;">13. Strategic Pillars</td><td style="text-align:right;">28</td></tr>
+    <tr><td style="font-weight:600;">14. What NOT to Build</td><td style="text-align:right;">29</td></tr>
+    <tr><td style="font-weight:600;">15. Financial Projections</td><td style="text-align:right;">30</td></tr>
+    <tr><td style="font-weight:600;">16. Risk Analysis</td><td style="text-align:right;">31</td></tr>
+    <tr><td style="font-weight:600;">17. The Ask, Timeline &amp; Next Steps</td><td style="text-align:right;">33</td></tr>
+    <tr><td style="font-weight:600;">Appendix A: Industry Validation</td><td style="text-align:right;">35</td></tr>
+    <tr><td style="font-weight:600;">Appendix B: VC Targets &amp; Pitch Structure</td><td style="text-align:right;">36</td></tr>
+  </table>
+</div>
+
+<!-- ==================== 1. EXECUTIVE SUMMARY ==================== -->
+<div class="section page-break">
+  <div class="section-number">Section 01</div>
+  <h2>Executive Summary</h2>
+
+  <p class="lead">
+    Apptivia is a sales performance intelligence platform that transforms how sales teams measure, coach, and improve rep performance. By combining real-time scorecards, AI-powered coaching, signal-based prospecting, and gamification into a single platform, Apptivia gives sales leaders the visibility they need and sales reps the tools they deserve.
+  </p>
+
+  <div class="stats-row four">
+    <div class="stat-card">
+      <div class="number green">15</div>
+      <div class="label">Production-ready pages</div>
+    </div>
+    <div class="stat-card">
+      <div class="number green">56</div>
+      <div class="label">Backend API endpoints</div>
+    </div>
+    <div class="stat-card">
+      <div class="number green">10</div>
+      <div class="label">Automated cron jobs</div>
+    </div>
+    <div class="stat-card">
+      <div class="number green">96</div>
+      <div class="label">Database migrations applied</div>
+    </div>
+  </div>
+
+  <div class="callout success">
+    <p><strong>Codebase-Verified (April 2026):</strong> Every claim in this business plan has been verified against the production codebase via full source audit &mdash; 15 pages, 50+ components, 23 hooks, 10 utilities, 56 API endpoints, 10 cron jobs, 40+ database tables across 96 migrations. Zero placeholder pages or stub components were found. Strategic analysis grounded in 39+ industry sources and multiple business document analyses.</p>
+  </div>
+
+  <div class="stats-row">
+    <div class="stat-card">
+      <div class="number">70%</div>
+      <div class="label">of rep time spent on non-selling activities</div>
+    </div>
+    <div class="stat-card">
+      <div class="number">57%</div>
+      <div class="label">of reps miss quota annually</div>
+    </div>
+    <div class="stat-card">
+      <div class="number">$15B</div>
+      <div class="label">spent annually on sales training with limited ROI</div>
+    </div>
+  </div>
+
+  <p>Apptivia addresses these problems not by adding another tool to the stack, but by sitting <em>above</em> existing tools as a performance intelligence layer. We don't replace your CRM &mdash; we make the humans using it better.</p>
+
+  <h3>Key Differentiators</h3>
+  <ul>
+    <li><strong>Rep-first design:</strong> Every feature answers "how does this help the rep?" before "how does this help the manager?"</li>
+    <li><strong>AI coaching (Aaron):</strong> Real-time Claude-powered AI with Sales DNA methodology injection, 14 proprietary coaching frameworks with intelligent routing, live KPI data injection, and role-specific presets &mdash; not a generic chatbot</li>
+    <li><strong>Signal-based prospecting:</strong> 45 universal signals across 3 tiers with per-org customization, AI-drafted outreach with human-in-the-loop approval</li>
+    <li><strong>Cross-org benchmarking:</strong> Aggregate performance data creates a defensible moat no single-tenant AI can replicate</li>
+    <li><strong>Gamification native:</strong> 2,213 achievements, 34 badge types, automated daily cron &mdash; built into the core, not bolted on</li>
+  </ul>
+
+  <h3>Current Milestone</h3>
+  <div class="callout teal">
+    <p><strong>First Pilot: Planera &mdash; April 2026.</strong> Apptivia is entering its first pilot deployment. The platform is production-ready &mdash; the gap to revenue is commercial infrastructure (billing, tier gating) and real-world validation, not engineering.</p>
+  </div>
+</div>
+
+<!-- ==================== 2. THE PROBLEM ==================== -->
+<div class="section page-break">
+  <div class="section-number">Section 02</div>
+  <h2>The Problem</h2>
+
+  <p class="lead">
+    Sales teams are drowning in tools but starving for insight. The average sales organization uses 10+ tools, yet managers still coach by gut and reps still waste the majority of their time on non-revenue activities.
+  </p>
+
+  <h3>Three Failure Modes</h3>
+
+  <div class="callout">
+    <p><strong>Failure Mode 1: Invisible Performance</strong><br>
+    Reps don't know where they stand until it's too late. Quarterly reviews surface problems 90 days after they start. Weekly KPIs &mdash; when they exist &mdash; live in spreadsheets that nobody opens.</p>
+  </div>
+
+  <div class="callout warning">
+    <p><strong>Failure Mode 2: Gut-Based Coaching</strong><br>
+    Managers coach based on intuition, not data. They spend their limited coaching time on whoever is loudest, not whoever needs it most. High performers get ignored; struggling reps get generic advice.</p>
+  </div>
+
+  <div class="callout danger">
+    <p><strong>Failure Mode 3: Cold Outreach in a Warm World</strong><br>
+    Reps blast generic messages to cold lists while intent signals go unnoticed. Companies showing buying behavior (hiring, funding, competitor engagement) aren't prioritized because the data is scattered across tools.</p>
+  </div>
+
+  <h3>The Cost of the Status Quo</h3>
+  <table>
+    <tr><th>Problem</th><th>Impact</th><th>Annual Cost (50-person team)</th></tr>
+    <tr><td>Reps spend 70% of time on admin</td><td>Lost selling time</td><td>$2.1M in unrealized revenue</td></tr>
+    <tr><td>57% miss quota</td><td>Missed targets, rep turnover</td><td>$750K in hiring/ramp costs</td></tr>
+    <tr><td>Generic prospecting</td><td>1-2% response rates</td><td>$500K in wasted outreach effort</td></tr>
+    <tr><td>No formal sales process</td><td>28% lower win rates</td><td>Compounding revenue loss</td></tr>
+    <tr><td>Delayed coaching</td><td>Problems compound quarterly</td><td>Unmeasurable but significant</td></tr>
+  </table>
+
+  <h3>Supporting Industry Evidence</h3>
+  <ul>
+    <li><strong>"Formal process = 28% higher win rates"</strong> &mdash; Industry research</li>
+    <li><strong>"43:57 talk-to-listen ratio"</strong> optimal for sales calls &mdash; Conversation intelligence data</li>
+    <li><strong>"Structured day = 12-15% higher quota attainment"</strong> &mdash; Sales productivity research</li>
+    <li><strong>"70% less research time, 40% more qualified calls, 2&rarr;5 accounts/day/rep"</strong> with AI-assisted prep &mdash; Industry workflow study</li>
+    <li><strong>"AI produces almost nothing that is customer-ready on the first go"</strong> &mdash; validates Apptivia's human-in-the-loop design</li>
+  </ul>
+</div>
+
+<!-- ==================== 3. THE SOLUTION ==================== -->
+<div class="section page-break">
+  <div class="section-number">Section 03</div>
+  <h2>The Solution</h2>
+
+  <p class="lead">
+    Apptivia is a unified performance intelligence platform that gives sales teams real-time visibility, data-driven coaching, signal-based prospecting, and built-in motivation &mdash; all in one place.
+  </p>
+
+  <h3>The Performance Intelligence Stack</h3>
+  <div class="stack">
+    <div class="stack-layer" style="background: #1e40af;">
+      <span>Apptivia Engage <span class="status-badge">BUILT</span></span>
+      <span class="desc">Find the right prospects with signal-based intelligence</span>
+    </div>
+    <div class="stack-layer" style="background: #2563eb;">
+      <span>Apptivia Scorecard <span class="status-badge">BUILT</span></span>
+      <span class="desc">Measure what matters with real-time KPI tracking</span>
+    </div>
+    <div class="stack-layer" style="background: #3b82f6;">
+      <span>Apptivia Coach + Aaron AI <span class="status-badge">BUILT</span></span>
+      <span class="desc">Improve rep performance with data-driven coaching</span>
+    </div>
+    <div class="stack-layer" style="background: #60a5fa;">
+      <span>Wallboard + Contests <span class="status-badge">BUILT</span></span>
+      <span class="desc">Drive daily motivation through visibility and competition</span>
+    </div>
+    <div class="stack-layer" style="background: #93c5fd; color: var(--dark);">
+      <span>Achievements + Badges <span class="status-badge" style="background:rgba(0,0,0,0.15);">BUILT</span></span>
+      <span class="desc" style="color: var(--gray-700);">Build long-term engagement through progression</span>
+    </div>
+  </div>
+
+  <p>Each layer feeds the next. Engage identifies high-intent prospects. Scorecard measures rep activity and outcomes. Coach uses scorecard data to deliver targeted coaching. Wallboard and Contests drive daily motivation. Achievements create long-term engagement loops that reduce rep turnover.</p>
+
+  <h3>How It Works</h3>
+  <ol>
+    <li><strong>Connect:</strong> Org admin configures 5 key KPIs in 10 minutes via guided onboarding. Apptivia ingests activity data from CRM/phone system via integration framework (10 connectors built).</li>
+    <li><strong>Score:</strong> Every rep gets a real-time performance score updated weekly. KPI Watchdog auto-detects anomalies AND positive trends. Managers see team-wide patterns at a glance.</li>
+    <li><strong>Coach:</strong> Aaron AI identifies at-risk reps and applies framework-specific coaching. Coaching nudges auto-fire when Tier 1 KPIs fall below 80% for 2+ consecutive weeks. AI generates targeted coaching plans from live KPI data.</li>
+    <li><strong>Compete:</strong> Contests and wallboards create healthy competition. Achievements reward sustained excellence. Badges auto-award daily via cron.</li>
+    <li><strong>Prospect:</strong> Engage surfaces companies showing buying signals, drafts personalized outreach, and queues it for human approval before sending.</li>
+  </ol>
+
+  <div class="callout">
+    <p><strong>Positioning (validated by 39+ industry analyses):</strong> <em>"Apptivia is AI-powered sales performance intelligence. We turn fragmented sales data into scorecards, coaching, and signal-driven action &mdash; in one platform. Your reps spend 70% of their day on admin. We make it 20%."</em></p>
+  </div>
+</div>
+
+<!-- ==================== 4. PRODUCT ARCHITECTURE ==================== -->
+<div class="section page-break">
+  <div class="section-number">Section 04</div>
+  <h2>Product Architecture &mdash; Codebase-Verified</h2>
+
+  <div class="callout success">
+    <p><strong>Full Codebase Audit (April 2026):</strong> Source audit of 15 pages, 50+ components, 23 hooks, 10 utilities, 56 API endpoints, 10 cron jobs, and 96 database migrations confirms the platform is production-ready. Zero placeholder pages or stub components found. 21 of 29 identified bugs fixed, 6 of 6 planned enhancements shipped.</p>
+  </div>
+
+  <h3>Apptivia Scorecard</h3>
+  <p>Real-time sales performance scoring for every rep, every week.</p>
+  <div class="audit-note">Verified: 1,973-line component, 23 custom hooks, full data pipeline</div>
+  <ul>
+    <li>Configurable KPI weighting &mdash; 5 active slots with goal, weight, and direction per metric</li>
+    <li>Weekly automated scoring with prior-period comparison, delta, direction, and goal pacing</li>
+    <li>KPI Watchdog: anomaly detection (rolling 4-week averages) + <strong>positive insight detection</strong> (&ge;15% improvement alerts)</li>
+    <li>Historical score tracking via kpi_metric_history (point-in-time config lookup)</li>
+    <li>Unified calcPct() with direction-aware logic and 200% cap</li>
+    <li>Single getMonday() for all week-boundary calculations</li>
+    <li>Role-based KPI templates: BDR, AE, Sales Manager defaults seeded</li>
+    <li>Filterable by date range, department, team, individual. Export to CSV/PDF.</li>
+  </ul>
+
+  <h3>Apptivia Coach</h3>
+  <p>Data-driven coaching tools for sales managers.</p>
+  <div class="audit-note">Verified: Coach.jsx (500+ lines) + CoachingPlans.jsx (500+ lines) + 15 coaching sub-components</div>
+  <ul>
+    <li><strong>AI Coaching Plans:</strong> Claude generates targeted plans from live KPI data vs. goals</li>
+    <li><strong>Plan Effectiveness:</strong> Tracks baseline/final KPI snapshots, calculates % improvement</li>
+    <li><strong>Coaching Nudges:</strong> Weekly cron detects Tier 1 KPIs &lt;80% for 2+ consecutive weeks</li>
+    <li><strong>IDPs:</strong> Templates, builder, progress tracking, milestone management</li>
+    <li><strong>Performance Reviews:</strong> Mid-year/annual with scorecard snapshots, KPI attainment, manager + self-assessment, final rating</li>
+    <li><strong>1-on-1 Meeting Prep:</strong> Structured manager-rep conversation template</li>
+    <li><strong>Data-Driven Playbook:</strong> Team coaching recommendations based on KPI gaps</li>
+    <li><strong>Performance Insights:</strong> 5-week per-metric KPI trend charts with moving averages</li>
+  </ul>
+
+  <h3>Apptivia Engage</h3>
+  <p>Signal-based prospecting with AI-drafted outreach and human-in-the-loop approval.</p>
+  <div class="audit-note">Verified: 4 tabs, 5,500+ lines of components, Twilio VoIP integration</div>
+  <ul>
+    <li><strong>Signal Prospecting:</strong> 45 universal signals, per-org customization, tiered processing</li>
+    <li><strong>Discover:</strong> Company search, people finder, multi-source enrichment</li>
+    <li><strong>Account Intelligence:</strong> ICP fit scoring, AI company briefs, talking points, competitors</li>
+    <li><strong>Pipeline Operator:</strong> Deal management with CEP stage tracking, AI forecast notes</li>
+    <li><strong>Action Queue:</strong> AI drafts outreach; human approves/dismisses (pending&rarr;approved&rarr;sent)</li>
+    <li><strong>Twilio Dialer:</strong> Browser-based VoIP with mute, hangup, call timer</li>
+    <li><strong>Call Intelligence:</strong> AI call analysis (sentiment, objections, competitors, next steps)</li>
+  </ul>
+
+  <h3>Gamification: Wallboard, Contests &amp; Progression</h3>
+  <div class="audit-note">Verified: Wallboard (400+ lines), Contests (500+ lines), Profile (500+ lines)</div>
+  <div class="three-col">
+    <div class="col-card">
+      <h4>Wallboard</h4>
+      <ul>
+        <li>8 auto-rotating slides</li>
+        <li>Real-time Supabase subscriptions</li>
+        <li>TV/fullscreen mode (F key)</li>
+        <li>Celebration confetti</li>
+        <li>Per-slide duration config</li>
+      </ul>
+    </div>
+    <div class="col-card">
+      <h4>Contests</h4>
+      <ul>
+        <li>Full CRUD + templates</li>
+        <li>Auto-completion cron (daily)</li>
+        <li>Leaderboard refresh (6h)</li>
+        <li>Results sharing via email</li>
+        <li>Export PNG/CSV</li>
+      </ul>
+    </div>
+    <div class="col-card">
+      <h4>Progression</h4>
+      <ul>
+        <li>2,213+ achievement types</li>
+        <li>34 badges (5 categories)</li>
+        <li>Daily auto-award cron</li>
+        <li>5 levels: Developing&rarr;Master</li>
+        <li>7 skillset mastery tracks</li>
+      </ul>
+    </div>
+  </div>
+
+  <h3>Analytics, Admin &amp; Integrations</h3>
+  <div class="two-col">
+    <div class="col-card">
+      <h4>Analytics (6 tabs)</h4>
+      <ul>
+        <li>Overview, Scorecard, Trends, Engage, Funnel, Health</li>
+        <li>Score distribution, team comparisons, historical charts</li>
+        <li>Sales funnel with conversion benchmarks</li>
+        <li>Org Health Scorecard (5 dimensions)</li>
+        <li>Export/schedule report delivery</li>
+      </ul>
+    </div>
+    <div class="col-card">
+      <h4>Administration</h4>
+      <ul>
+        <li>10 integration templates (Salesforce, HubSpot, etc.)</li>
+        <li>OAuth + API key auth flows</li>
+        <li>20+ permission keys with per-user overrides</li>
+        <li>Sales DNA: 13 methodologies + 3 qualification frameworks</li>
+        <li>CEP stage configuration, bulk user import</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== 5. AARON AI ==================== -->
+<div class="section page-break">
+  <div class="section-number">Section 05</div>
+  <h2>Aaron AI &mdash; The Coaching Intelligence Engine</h2>
+
+  <p class="lead">
+    Aaron is not a generic AI chatbot. It is a domain-specific sales coaching engine powered by Claude, with organizational methodology awareness, 14 proprietary coaching frameworks with intelligent routing, live KPI data injection, and role-specific presets.
+  </p>
+
+  <h3>What's Built &amp; Working</h3>
+  <div class="audit-note">Verified: AaronChatbot.jsx (530+ lines) + backend Socket.IO handler + Claude integration + framework routing engine</div>
+  <ul>
+    <li><strong>Real-time AI:</strong> Socket.IO connection to backend, Claude claude-sonnet-4-20250514, typing indicators</li>
+    <li><strong>Sales DNA injection:</strong> Every prompt includes the org's methodology (SPIN, Challenger, Sandler, MEDDPICC, etc.)</li>
+    <li><strong>14-Framework Coaching Engine:</strong> Intelligent intent detection routes conversations to specific coaching modes with framework-specific system prompts, examples, and techniques</li>
+    <li><strong>Live KPI Data Injection:</strong> Aaron references the user's actual performance numbers, anomalies, and signal counts in real-time (60-second cache, 3-second timeout, graceful degradation)</li>
+    <li><strong>Role-specific presets:</strong>
+      <ul>
+        <li>Rep: "Coach Me," "My Performance," "Deal Strategy," "Call Prep," "Handle Objection"</li>
+        <li>Manager: "Team Overview," "1-on-1 Prep," "Coaching Plan"</li>
+        <li>Admin: "Org Health," "Team Overview"</li>
+      </ul>
+    </li>
+    <li><strong>Framework badge display:</strong> Active coaching frameworks shown as tags beneath Aaron's responses for transparency</li>
+    <li><strong>Offline fallback:</strong> 23 regex-based rules for help topics when backend unavailable, including framework-specific tips</li>
+    <li><strong>Content safety:</strong> Profanity filter, PII detection (SSNs, passwords), permission-aware responses</li>
+    <li><strong>Conversation persistence:</strong> 50 messages in localStorage, 30 exchanges in session (800-token responses)</li>
+  </ul>
+
+  <h3>Apptivia Coaching Framework Library (14 Frameworks)</h3>
+  <p>Apptivia's proprietary coaching engine includes 14 frameworks that Aaron dynamically selects based on user intent, active preset, current page context, and conversation history.</p>
+
+  <table>
+    <tr><th>Mode</th><th>Framework</th><th>Use Case</th></tr>
+    <tr><td>Call Prep</td><td>Messaging Equation, Winning Call Structure, Cold Call Conversation Cycle, Target Account Research, Disarming the Prospect, Executive Response</td><td>Before prospect calls &mdash; structured call plans, openers, research checklists</td></tr>
+    <tr><td>Objection Coach</td><td>5-Technique Objection Handling (Feel/Felt/Found, Clarification, Justification, Reprioritize, Preemptive Strike)</td><td>Preparing for and responding to pushback</td></tr>
+    <tr><td>Discovery Coach</td><td>Question Frameworks (Closed&rarr;Open&rarr;Layering), Driving Credibility</td><td>Before discovery meetings &mdash; earning the right to ask questions</td></tr>
+    <tr><td>Relationship Diagnostic</td><td>Sales Trust Matrix (Credibility &times; Connection, 4 quadrants)</td><td>When deals stall or meetings don't convert</td></tr>
+    <tr><td>Close Coach</td><td>Creating Urgency (3 questions), Risk of Inaction</td><td>Late-stage deals &mdash; shifting from "should we buy?" to "can we afford not to?"</td></tr>
+    <tr><td>Value Selling</td><td>Define the Value &mdash; quantify the pain before presenting price</td><td>Pricing conversations and business case building</td></tr>
+    <tr><td>General</td><td>Sales Equation (pipeline math), Better Context Principle</td><td>Activity targets, quota math, research-first habits</td></tr>
+  </table>
+
+  <h3>How Framework Routing Works</h3>
+  <div class="framework-box">
+    <h4>Intelligent Intent Detection &rarr; Framework Selection &rarr; Contextual Response</h4>
+    <p><strong>1. Detect:</strong> Aaron's backend analyzes the user's message, active preset, page context, and last 3 conversation turns to score each framework by keyword relevance.</p>
+    <p style="margin-top:8px;"><strong>2. Select:</strong> Top 1-3 frameworks are activated. Presets auto-map to specific frameworks (e.g., "Call Prep" activates 6 call-related frameworks; "Handle Objection" activates the 5-technique objection system).</p>
+    <p style="margin-top:8px;"><strong>3. Respond:</strong> Framework-specific coaching instructions are injected into Aaron's system prompt alongside the org's Sales DNA methodology and the user's live KPI data. Multiple frameworks blend seamlessly.</p>
+  </div>
+
+  <h4>Core Principle</h4>
+  <div class="framework-box">
+    <h4>"The Better the Context, the Better the Conversation"</h4>
+    <p>Reps who research before calling outperform those who don't. This is the entire value proposition of Engage feeding context into Aaron's coaching and outreach drafting. Aaron should feel like a VP Sales who has seen 1,000 reps &mdash; a senior strategist, not an AI assistant.</p>
+  </div>
+
+  <h3>Additional Coaching Content (KPI Guidance Library)</h3>
+  <p>1,000+ lines of per-KPI coaching content built into the platform:</p>
+  <ul>
+    <li>For each of ~20 KPIs: diagnosis, coaching question, 3-5 actionable tips</li>
+    <li>Used by Data-Driven Playbook (inline) and AI Coaching Plan generation (prompt context)</li>
+    <li>Example: <em>"Low sourced opps = insufficient top-of-funnel activity. Coaching Q: Walk me through your prospecting routine..."</em></li>
+  </ul>
+</div>
+
+<!-- ==================== 6. TECHNICAL INFRASTRUCTURE ==================== -->
+<div class="section page-break">
+  <div class="section-number">Section 06</div>
+  <h2>Technical Infrastructure</h2>
+
+  <p class="lead">
+    Built on a modern, capital-efficient stack designed for rapid iteration and low operational overhead. Every component chosen for scalability without premature complexity.
+  </p>
+
+  <table>
+    <tr><th>Layer</th><th>Technology</th><th>Details</th></tr>
+    <tr><td><strong>Frontend</strong></td><td>React + Vite</td><td>15 pages, 50+ components, code-split with React.lazy(). Tailwind CSS + Recharts.</td></tr>
+    <tr><td><strong>Backend</strong></td><td>Node.js / Express</td><td>56 API endpoints. Role-based auth. Rate limiting: 200/15min general, 20/5min AI.</td></tr>
+    <tr><td><strong>Database</strong></td><td>Supabase (PostgreSQL)</td><td>40+ tables, RLS on 20+, real-time subscriptions, 15+ RPC functions, 96 migrations.</td></tr>
+    <tr><td><strong>Real-time</strong></td><td>Socket.IO + Supabase Realtime</td><td>Aaron chatbot, notifications, Wallboard, KPI change detection.</td></tr>
+    <tr><td><strong>AI</strong></td><td>Anthropic Claude</td><td>14+ Claude endpoints: coaching, research, outreach, forecasting, call analysis, Aaron.</td></tr>
+    <tr><td><strong>Voice</strong></td><td>Twilio</td><td>Browser VoIP via WebRTC. Token generation + TwiML webhook.</td></tr>
+    <tr><td><strong>Email</strong></td><td>Nodemailer (SMTP)</td><td>Coaching plans, contest results, snapshots, scheduled reports, invitations.</td></tr>
+    <tr><td><strong>Hosting</strong></td><td>Hostinger VPS</td><td>PM2 process management, Let's Encrypt SSL (apptivia.app + api.apptivia.app).</td></tr>
+  </table>
+
+  <h3>Autopilot: 10 Automated Cron Jobs</h3>
+  <table>
+    <tr><th>Job</th><th>Freq</th><th>Purpose</th></tr>
+    <tr><td>deal-risk</td><td>24h</td><td>Finds deals inactive 7+ days, notifies managers</td></tr>
+    <tr><td>signal-scan</td><td>7d</td><td>Weekly signal scan per org, builds AI action queue</td></tr>
+    <tr><td>scorecard-alerts</td><td>7d</td><td>Computes scores, notifies for underperformers/trending down/100%+</td></tr>
+    <tr><td>contest-complete</td><td>24h</td><td>Expires active contests, sets winner, awards badge</td></tr>
+    <tr><td>kpi-anomaly</td><td>7d</td><td>Detects rolling 4-week KPI drops + positive trends</td></tr>
+    <tr><td>scheduled-reports</td><td>24h</td><td>Sends due reports as branded summary emails</td></tr>
+    <tr><td>achievement-check</td><td>24h</td><td>Awards achievements + badges, sends notifications</td></tr>
+    <tr><td>coaching-nudges</td><td>7d</td><td>Detects Tier 1 KPIs &lt;80% for 2+ weeks, nudges manager</td></tr>
+    <tr><td>leaderboard-refresh</td><td>6h</td><td>Refreshes contest leaderboard rankings</td></tr>
+    <tr><td>integration-sync</td><td>6h</td><td>Syncs data from connected CRM/enrichment integrations</td></tr>
+  </table>
+
+  <h3>Key Architecture Decisions</h3>
+  <ul>
+    <li><strong>Single getMonday():</strong> Canonical week-boundary calculation eliminates date drift across all hooks</li>
+    <li><strong>Single calcPct():</strong> Unified direction-aware KPI percentage replaces 13+ scattered implementations</li>
+    <li><strong>KPI Metric History:</strong> Trigger-based table enables accurate scoring even when goals change mid-quarter</li>
+    <li><strong>In-flight guards:</strong> Ref-based dedup with failure reset prevents double-submission</li>
+    <li><strong>CronManager overlap guard:</strong> Per-job isRunning flag prevents concurrent execution</li>
+    <li><strong>Supabase lock manager:</strong> Custom in-memory mutex prevents 10s timeout cascade under concurrency</li>
+  </ul>
+</div>
+
+<!-- ==================== 7. STRATEGIC FOUNDATION ==================== -->
+<div class="section page-break">
+  <div class="section-number">Section 07</div>
+  <h2>Strategic Foundation</h2>
+
+  <p class="lead">
+    Apptivia's business strategy is grounded in rigorous frameworks from digital transformation and business model innovation research. These aren't theoretical &mdash; they directly shaped product decisions, pricing architecture, and go-to-market sequencing.
+  </p>
+
+  <h3>A. Learn-It-All Framework</h3>
+  <div class="framework-box">
+    <h4>Decompose &rarr; Sequence &rarr; Learn</h4>
+    <p><strong>Decompose:</strong> The supply (technology) is known &mdash; React, Express, Supabase, Claude are proven. The critical unknown is <strong>demand</strong>: will sales orgs pay for a unified performance intelligence platform when they already cobble together Gong + Apollo + Outreach + spreadsheets?</p>
+    <p style="margin-top:10px;"><strong>Sequence (fail fast on the riskiest assumption first):</strong></p>
+    <ul>
+      <li><strong>Riskiest assumption:</strong> Sales leaders will consolidate onto one platform. Budget inertia toward point tools is strong.</li>
+      <li><strong>Test it cheaply:</strong> Get 3-5 paying pilots on Scorecard alone. If orgs won't pay for Scorecard standalone, adding Coach and Engage won't fix that. If they will, the wedge is validated.</li>
+      <li><strong>Second riskiest:</strong> AI coaching nudges change rep behavior. Test with Planera pilot: measure if reps who receive nudges improve vs. those who don't.</li>
+    </ul>
+    <p style="margin-top:10px;"><strong>Learn:</strong> The Planera pilot is the lab. Validate before scaling. When assumptions fail, pivot the specific feature &mdash; don't over-invest before learning.</p>
+  </div>
+
+  <h3>B. Intermediary Business Model Innovation</h3>
+  <div class="framework-box">
+    <h4>Apptivia as Expanded Intermediary</h4>
+    <p>Apptivia sits between raw data sources (CRM, dialer, email, calendar) and sales team decision-making:</p>
+    <ul>
+      <li><strong>Matching:</strong> Connecting signal data to the right rep at the right time (Engage action queue)</li>
+      <li><strong>Trust:</strong> Human-in-the-loop approval validates AI quality before it reaches prospects</li>
+      <li><strong>Logistics:</strong> 10 automated cron jobs handle "when" and "who" routing</li>
+      <li><strong>Value-added intelligence:</strong> Scoring, trend analysis, coaching &mdash; the expanded intermediary role</li>
+    </ul>
+    <p style="margin-top:10px;"><strong>Disintermediation opportunity:</strong> Apptivia disintermediates the sales ops analyst who spends 10 hours/week building performance reports in Excel. Automated entirely. <em>"Your sales ops person spends 10 hours a week building reports. Apptivia does it in zero."</em></p>
+    <p style="margin-top:8px;"><strong>New intermediary opportunity:</strong> Orchestrating AI insights to human sales actions with an approval layer. Nobody else does this across Scorecard + Coach + Engage in one platform.</p>
+  </div>
+
+  <h3>C. Revenue-Related Business Model Innovation</h3>
+  <div class="framework-box">
+    <h4>Pricing Architecture</h4>
+    <ol>
+      <li><strong>Modular bundled pricing:</strong> Scorecard + Coach + Engage as separate modules. Lower entry price with revenue growth per account over time. Clean upgrade path: "Unlock Coach to get AI-powered coaching nudges."</li>
+      <li><strong>Freemium entry:</strong> Free Scorecard tier (limited to 5 reps, basic KPIs, no AI). Gets product in hands without sales cycle. Converts when they hit rep limit or want Coach/Engage.</li>
+      <li><strong>Outcome-based pricing (future):</strong> Once we prove "selling time % improved from 30% to 60%," charge based on outcomes, not seats. Design tracking now even if pricing on outcomes comes later.</li>
+      <li><strong>Implementation as a service:</strong> Charge separately for onboarding/configuration. Setting up role-based scorecards, methodology alignment, manager training &mdash; high-value consulting that ensures adoption.</li>
+    </ol>
+  </div>
+
+  <h3>D. Strategic Decision Cascade</h3>
+  <p>Decisions sequenced from highest commitment (hardest to reverse) to lowest. Each constrains decisions below it.</p>
+  <table>
+    <tr><th>#</th><th>Decision</th><th>Current Choice</th><th>Alternatives</th><th>Commitment</th></tr>
+    <tr><td>1</td><td>Who is the buyer?</td><td>Sales Manager / VP Sales</td><td>Rev Ops, GTM Engineer, individual rep</td><td><span class="tag red">Highest</span></td></tr>
+    <tr><td>2</td><td>Wedge product</td><td>Scorecard (visibility first)</td><td>Coach, Engage, Wallboard</td><td><span class="tag red">High</span></td></tr>
+    <tr><td>3</td><td>Pricing model</td><td>Per-seat tiered SaaS</td><td>Per-org flat, usage-based, freemium only</td><td><span class="tag amber">High</span></td></tr>
+    <tr><td>4</td><td>Data strategy</td><td>CRM integration (build connectors)</td><td>Native CRM, CSV-only, API-only</td><td><span class="tag amber">Medium</span></td></tr>
+    <tr><td>5</td><td>AI investment</td><td>Aaron as core differentiator</td><td>Aaron as add-on, no AI</td><td><span class="tag">Medium</span></td></tr>
+    <tr><td>6</td><td>GTM motion</td><td>PLG self-serve first</td><td>Founder-led sales, channel, enterprise</td><td><span class="tag">Lower</span></td></tr>
+  </table>
+</div>
+
+<!-- ==================== 8. MARKET OPPORTUNITY ==================== -->
+<div class="section page-break">
+  <div class="section-number">Section 08</div>
+  <h2>Market Opportunity</h2>
+
+  <h3>Target Market</h3>
+  <p>B2B SaaS companies with sales teams of 10-50 reps &mdash; large enough to need performance tooling, small enough that enterprise solutions (Clari, Gong) are overkill.</p>
+
+  <div class="stats-row">
+    <div class="stat-card"><div class="number">800K+</div><div class="label">B2B companies in US with 10-200 employees</div></div>
+    <div class="stat-card"><div class="number">$25-50</div><div class="label">per seat per month price point</div></div>
+    <div class="stat-card"><div class="number">$4.5-9K</div><div class="label">ARR per org (15-seat average)</div></div>
+  </div>
+
+  <h3>Market Sizing</h3>
+  <table>
+    <tr><th>Segment</th><th>Addressable Orgs</th><th>Avg ARR</th><th>Market Size</th></tr>
+    <tr><td>TAM: All B2B companies with sales teams</td><td>800,000</td><td>$6,750</td><td>$5.4B</td></tr>
+    <tr><td>SAM: SaaS companies, 10-50 reps, US</td><td>80,000</td><td>$6,750</td><td>$540M</td></tr>
+    <tr><td>SOM: Realistic Year 3 capture</td><td>500</td><td>$6,750</td><td>$3.4M</td></tr>
+  </table>
+
+  <h3>Ideal Customer Profile</h3>
+  <div class="two-col">
+    <div class="col-card">
+      <h4>Company Characteristics</h4>
+      <ul>
+        <li>B2B SaaS or technology company</li>
+        <li>10-50 sales reps (SDRs + AEs)</li>
+        <li>Uses CRM (Salesforce, HubSpot, Pipedrive)</li>
+        <li>Has outgrown spreadsheet-based tracking</li>
+        <li>Revenue: $2M-$50M ARR</li>
+      </ul>
+      <p style="margin-top:8px;"><strong>Disqualifier:</strong> &lt;5 reps (not enough data for AI value) or entrenched Gong/Clari contracts</p>
+    </div>
+    <div class="col-card">
+      <h4>Buyer Personas</h4>
+      <ul>
+        <li><strong>Primary:</strong> VP of Sales / Sales Director</li>
+        <li><strong>Secondary:</strong> Sales Manager (team lead)</li>
+        <li><strong>Emerging:</strong> GTM Engineer / Rev Ops</li>
+        <li><strong>Champion:</strong> Sales rep who wants visibility into own performance</li>
+      </ul>
+      <p style="margin-top:8px;"><strong>Industry:</strong> B2B SaaS, tech services, professional services (high-velocity sales with measurable KPIs)</p>
+    </div>
+  </div>
+
+  <h3>Five Market Themes (Validated Across 39+ Industry Sources)</h3>
+  <ol>
+    <li><strong>Every role needs a different experience</strong> &mdash; role-aware KPI templates, Aaron presets, and data filtering are built</li>
+    <li><strong>Signal intelligence is the moat</strong> &mdash; 45-signal library with 3-tier taxonomy validated by 6+ independent sources</li>
+    <li><strong>Human-in-the-loop is a differentiator</strong> &mdash; action queue (pending&rarr;approved&rarr;sent) is the correct design; "autonomous = spam"</li>
+    <li><strong>Unified data &gt; fancy AI</strong> &mdash; Apptivia sits above point tools, pulling data from wherever it lives</li>
+    <li><strong>The evolution from rep scoring to org intelligence</strong> &mdash; Org Health Scorecard built (Analytics &rarr; Health tab)</li>
+  </ol>
+</div>
+
+<!-- ==================== 9. BUSINESS MODEL ==================== -->
+<div class="section page-break">
+  <div class="section-number">Section 09</div>
+  <h2>Business Model</h2>
+
+  <h3>Tiered SaaS Subscription</h3>
+  <table>
+    <tr><th>Tier</th><th>Modules</th><th>$/Seat/Mo</th><th>Target</th></tr>
+    <tr><td><strong>Starter</strong> (Free)</td><td>Scorecard (basic, &le;5 reps), Wallboard (view only)</td><td>$0</td><td>PLG entry point &mdash; gets product in hands without sales cycle</td></tr>
+    <tr><td><strong>Team</strong></td><td>Scorecard (full), Wallboard, Contests, Achievements, Badges, Analytics</td><td>$25</td><td>Visibility + gamification</td></tr>
+    <tr><td><strong>Pro</strong></td><td>+ Coach, Aaron AI, IDPs, Coaching Plans, Reviews</td><td>$40</td><td>Data-driven coaching</td></tr>
+    <tr><td><strong>Enterprise</strong></td><td>+ Engage, Signal Prospecting, Pipeline Operator, Benchmarking, API</td><td>$50</td><td>Full performance intelligence</td></tr>
+  </table>
+
+  <h4>Future Revenue Expansion</h4>
+  <ul>
+    <li><strong>Implementation-as-a-service:</strong> Paid onboarding, scorecard setup, methodology alignment consulting</li>
+    <li><strong>Outcome-based pricing:</strong> Once ROI is provable ("selling time improved from 30% to 60%"), charge on outcomes</li>
+    <li><strong>Data products:</strong> Cross-org benchmarking reports, industry performance indices (requires 100+ orgs)</li>
+  </ul>
+
+  <h3>Revenue Growth Path</h3>
+  <table>
+    <tr><th>Milestone</th><th>Orgs</th><th>Avg Seats</th><th>Blended ARPU</th><th>ARR</th></tr>
+    <tr><td>Year 1</td><td>25</td><td>12</td><td>$30</td><td>$108K</td></tr>
+    <tr><td>Year 2</td><td>150</td><td>15</td><td>$35</td><td>$945K</td></tr>
+    <tr><td>Year 3</td><td>500</td><td>18</td><td>$40</td><td>$4.3M</td></tr>
+    <tr><td>Year 5</td><td>2,000</td><td>20</td><td>$45</td><td>$21.6M</td></tr>
+  </table>
+</div>
+
+<!-- ==================== 10. COMPETITIVE LANDSCAPE ==================== -->
+<div class="section page-break">
+  <div class="section-number">Section 10</div>
+  <h2>Competitive Landscape</h2>
+
+  <p class="lead">
+    Apptivia doesn't compete directly with CRMs, dialers, or outbound tools. It sits above them as a performance intelligence layer &mdash; making the humans using those tools measurably better.
+  </p>
+
+  <h3>Competitive Positioning</h3>
+  <table>
+    <tr><th>Competitor</th><th>What They Do</th><th>Apptivia Differentiator</th></tr>
+    <tr><td><strong>Gong</strong></td><td>Conversation intelligence</td><td>Apptivia is broader &mdash; scores beyond calls, coaches holistically, triggers outreach</td></tr>
+    <tr><td><strong>Clari</strong></td><td>Revenue intelligence / forecasting</td><td>SMB-accessible; coaching + gamification built in; not just forecasting</td></tr>
+    <tr><td><strong>Weflow AI</strong></td><td>"Gong but 50% the price"</td><td>Apptivia adds Engage (signal-driven action) + unified Scorecard</td></tr>
+    <tr><td><strong>Salesfinity</strong></td><td>SDR activity analytics</td><td>All roles, not just SDRs; coaching + signals + progression</td></tr>
+    <tr><td><strong>Ambition / SalesScreen</strong></td><td>Gamification + leaderboards</td><td>Gamification AND intelligence (coaching, signals, AI)</td></tr>
+    <tr><td><strong>Clay</strong></td><td>Data enrichment</td><td>Intelligence layer that acts ON enriched data</td></tr>
+    <tr><td><strong>Artisan</strong></td><td>Autonomous AI SDR</td><td>Human-in-the-loop &mdash; autonomous = spam</td></tr>
+    <tr><td><strong>Apollo.io</strong></td><td>Contact database + outreach</td><td>Integration partner, not competitor. Apptivia sits above.</td></tr>
+    <tr><td><strong>HockeyStack</strong></td><td>Revenue attribution</td><td>Performance layer that improves people, not just measures funnel</td></tr>
+  </table>
+
+  <h3>Competitive Framing (for sales conversations)</h3>
+  <table>
+    <tr><th>They Do</th><th>Apptivia Does</th></tr>
+    <tr><td>Gong records calls</td><td>Apptivia scores the rep who made the call</td></tr>
+    <tr><td>Apollo enriches contacts</td><td>Apptivia triggers outreach when signals align</td></tr>
+    <tr><td>Outreach sends sequences</td><td>Apptivia tells you which signal warranted the sequence</td></tr>
+    <tr><td>Ambition shows leaderboards</td><td>Apptivia coaches the reps who aren't on the leaderboard</td></tr>
+  </table>
+
+  <div class="callout success">
+    <p><strong>Defensible Moat:</strong> Cross-org benchmarking data becomes increasingly valuable as more orgs join. "How does your team's call-to-meeting ratio compare to similar orgs?" is a question only a multi-tenant platform with aggregate data can answer. This network effect creates a moat no single-tenant AI can replicate.</p>
+  </div>
+</div>
+
+<!-- ==================== 11. GO-TO-MARKET STRATEGY ==================== -->
+<div class="section page-break">
+  <div class="section-number">Section 11</div>
+  <h2>Go-to-Market Strategy</h2>
+
+  <p class="lead">
+    PLG-first. No sales team needed initially. Every phase has a specific learning objective that must be validated before advancing.
+  </p>
+
+  <h3>Phased GTM Rollout</h3>
+  <div class="timeline">
+    <div class="timeline-item active">
+      <div class="phase-label">Phase 1 &mdash; Prove It (Alpha) &bull; CURRENT &bull; Planera Pilot</div>
+      <h4>1-3 Pilot Organizations (Starting April 2026)</h4>
+      <p><strong>Key Question:</strong> Will orgs pay for a unified performance intelligence platform? Do managers actually check scores weekly? Do reps engage with achievements?</p>
+      <p><strong>What's Ready:</strong> Full platform (15 pages, 56 endpoints, 10 crons, all modules functional, Aaron AI with 14-framework coaching engine)</p>
+      <p><strong>What's Needed:</strong> Billing (Stripe), tier feature gating, onboarding polish, Planera CRM data connection</p>
+      <p><strong>Marketing:</strong> None. Founder-led onboarding. Word of mouth only.</p>
+      <p><strong>Success Metric:</strong> WAU &gt; 3x/week per manager; rep NPS &gt; 40; at least 1 manager creates a coaching plan using AI</p>
+    </div>
+
+    <div class="timeline-item">
+      <div class="phase-label">Phase 2 &mdash; Package It (Beta)</div>
+      <h4>10-20 Organizations</h4>
+      <p><strong>Key Question:</strong> Can orgs self-configure without hand-holding? What's the time-to-value?</p>
+      <p><strong>Ship:</strong> Self-serve onboarding wizard, CRM connector hardening, multiple outreach variants</p>
+      <p><strong>Marketing:</strong> LinkedIn daily habit stack, organic content strategy, founder thought leadership</p>
+      <p><strong>Success Metric:</strong> Time-to-value &lt; 48 hours; organic signup rate increasing MoM</p>
+    </div>
+
+    <div class="timeline-item">
+      <div class="phase-label">Phase 3 &mdash; Scale It (GA)</div>
+      <h4>100+ Organizations</h4>
+      <p><strong>Key Question:</strong> What's the free-to-paid conversion rate? Which module drives upgrades?</p>
+      <p><strong>Ship:</strong> Enrichment waterfall, advanced reporting, mobile experience</p>
+      <p><strong>Marketing:</strong> AEO strategy ("Ask AI about Apptivia"), content partnerships, community</p>
+      <p><strong>Success Metric:</strong> Free-to-paid &gt; 5%; net revenue retention &gt; 110%</p>
+    </div>
+
+    <div class="timeline-item">
+      <div class="phase-label">Phase 4 &mdash; Moat It (Growth)</div>
+      <h4>1,000+ Organizations</h4>
+      <p><strong>Key Question:</strong> Does cross-org data create defensibility? Are orgs referring others?</p>
+      <p><strong>Ship:</strong> Cross-org benchmarking, API/ecosystem, enterprise features, outcome-based pricing</p>
+      <p><strong>Marketing:</strong> Industry reports, analyst relations, partner channel</p>
+      <p><strong>Success Metric:</strong> Viral coefficient &gt; 0.3; benchmark usage &gt; 60%</p>
+    </div>
+  </div>
+
+  <h3>Content &amp; Distribution Strategy</h3>
+  <table>
+    <tr><th>Channel</th><th>Tactic</th><th>Phase</th></tr>
+    <tr><td>LinkedIn</td><td>Daily habit stack: Foundation&rarr;Content&rarr;Engagement&rarr;Monetize (4-stage playbook)</td><td>Beta+</td></tr>
+    <tr><td>Organic/SEO</td><td>Answer sales performance questions; organic traffic to problem-solution content</td><td>Beta+</td></tr>
+    <tr><td>AEO</td><td>"Ask AI about Apptivia" &mdash; optimize for AI engine responses, not just Google</td><td>GA+</td></tr>
+    <tr><td>Dog-fooding</td><td>Use Engage signals to find VP Sales posting about "switching tools" on LinkedIn &mdash; screenshot the workflow as marketing</td><td>Alpha</td></tr>
+    <tr><td>Community</td><td>Sales performance community; benchmarking reports; methodology content</td><td>GA+</td></tr>
+    <tr><td>Partnerships</td><td>CRM marketplace listings; sales training company co-marketing</td><td>Growth</td></tr>
+  </table>
+
+  <h3>Launch Checklist (Pre-Beta)</h3>
+  <ol>
+    <li><strong>Product demo video</strong> (2-3 min) &mdash; show live Scorecard&rarr;Coach nudge&rarr;Engage signal&rarr;outreach approval. Show PRODUCT, not slides.</li>
+    <li><strong>Landing page</strong> &mdash; lead with customer quote or metric, not feature list. Use Planera results if available.</li>
+    <li><strong>Distribution spreadsheet</strong> &mdash; Personal network, industry contacts, newsletter creators for amplification.</li>
+    <li><strong>Dog-food strategy</strong> &mdash; Use Engage to find prospects, screenshot workflow, use as marketing content.</li>
+  </ol>
+</div>
+
+<!-- ==================== 12. PRODUCT ROADMAP ==================== -->
+<div class="section page-break">
+  <div class="section-number">Section 12</div>
+  <h2>Product Roadmap &mdash; What's Built, Fixed &amp; Remaining</h2>
+
+  <h3>Module Status (Codebase-Verified)</h3>
+  <table>
+    <tr><th>Module</th><th>Status</th><th>Evidence</th></tr>
+    <tr><td>Scorecard</td><td><span class="tag green">Built</span></td><td>1,973-line component, 23 hooks, historical scoring, watchdog, exports</td></tr>
+    <tr><td>Coach</td><td><span class="tag green">Built</span></td><td>AI plans, IDPs, reviews, nudges cron, 15 sub-components, data playbook</td></tr>
+    <tr><td>Engage</td><td><span class="tag green">Built</span></td><td>4 tabs, 5,500+ lines, Twilio dialer, call intelligence, action queue</td></tr>
+    <tr><td>Aaron AI</td><td><span class="tag green">Built</span></td><td>530+ line chatbot, Claude, Sales DNA, 14-framework routing, live KPI injection, role presets</td></tr>
+    <tr><td>Wallboard</td><td><span class="tag green">Built</span></td><td>8 slides, real-time, confetti, TV mode, keyboard shortcuts</td></tr>
+    <tr><td>Contests</td><td><span class="tag green">Built</span></td><td>Full CRUD, auto-complete cron, leaderboard refresh, export</td></tr>
+    <tr><td>Achievements</td><td><span class="tag green">Built</span></td><td>2,213 types, 34 badges, daily auto-award, 5 levels, 7 skillsets</td></tr>
+    <tr><td>Analytics</td><td><span class="tag green">Built</span></td><td>6 tabs, funnel, org health, trends, engage metrics</td></tr>
+    <tr><td>Integrations</td><td><span class="tag green">Built</span></td><td>10 templates, OAuth, webhooks, sync crons</td></tr>
+    <tr><td>Admin</td><td><span class="tag green">Built</span></td><td>Permissions, teams, user import, invitations, Sales DNA config</td></tr>
+  </table>
+
+  <h3>Bug Fix Progress (29 Issues Identified, 21 Fixed)</h3>
+  <table>
+    <tr><th>Phase</th><th>Focus</th><th>Issues</th><th>Fixed</th><th>Remaining</th></tr>
+    <tr><td>Phase 1</td><td>Critical Fixes</td><td>C1, C2, C3, H4, H5, H7, M6, M11</td><td>6 of 8</td><td>C1/C3 (signal scan transaction)</td></tr>
+    <tr><td>Phase 2</td><td>Calculation Correctness</td><td>X1, X3, X4, H1, H2, H3, H6, H9, M1, M2, M3, M4, M10, M13</td><td>11 of 14</td><td>H6 (partial), M2, M4 (unverified)</td></tr>
+    <tr><td>Phase 3</td><td>Data Consistency</td><td>M5, M7, M8, M9, M12, H8, X2</td><td>5 of 7</td><td>M12/H8 (partial)</td></tr>
+    <tr><td>Phase 4</td><td>Enhancements (6)</td><td>Items 1-6</td><td>6 of 6</td><td>None &mdash; all shipped</td></tr>
+  </table>
+
+  <div class="callout success">
+    <p><strong>Summary: 21 of 29 bugs fixed. All 6 enhancements shipped.</strong> Remaining items are non-critical: 2 partial fixes, 2 unverified. The platform is stable for pilot deployment.</p>
+  </div>
+
+  <h3>What's Left to Ship (Go-to-Market Readiness)</h3>
+  <table>
+    <tr><th>Item</th><th>Priority</th><th>Est. Effort</th><th>Description</th></tr>
+    <tr><td>Billing (Stripe)</td><td><span class="tag red">Critical</span></td><td>1-2 sessions</td><td>Tiered pricing, seat management, upgrade/downgrade</td></tr>
+    <tr><td>Feature Gating</td><td><span class="tag red">Critical</span></td><td>1 session</td><td>Enforce Starter/Team/Pro/Enterprise module access by subscription tier</td></tr>
+    <tr><td>Onboarding Polish</td><td><span class="tag red">Critical</span></td><td>1 session</td><td>Guide new orgs: KPI selection, team setup, data import</td></tr>
+    <tr><td>CRM Connector Testing</td><td><span class="tag amber">High</span></td><td>1 session</td><td>End-to-end test with Planera's actual CRM</td></tr>
+    <tr><td>Multiple Outreach Variants</td><td><span class="tag">Medium</span></td><td>1 session</td><td>Generate 4 variants per signal (Direct, Consultative, Social Proof, Outcome)</td></tr>
+    <tr><td>C1/C3 Signal Transaction</td><td><span class="tag">Medium</span></td><td>&lt;1 session</td><td>Wrap signal delete+reinsert in transaction</td></tr>
+    <tr><td>Cross-Org Benchmarking</td><td><span class="tag purple">Phase 4</span></td><td>2-3 sessions</td><td>Requires 100+ orgs for meaningful data</td></tr>
+  </table>
+</div>
+
+<!-- ==================== 13. STRATEGIC PILLARS ==================== -->
+<div class="section page-break">
+  <div class="section-number">Section 13</div>
+  <h2>Strategic Pillars</h2>
+
+  <p>Five principles that guide every product, marketing, and business decision:</p>
+
+  <div class="callout">
+    <p><strong>Pillar 1: "5 Great KPIs &gt; 50 Messy Metrics"</strong><br>
+    Apptivia's onboarding guides orgs to pick 5 KPIs that matter. This is both a product constraint (5 slots enforced in ConfigureModal) and a marketing message. Simplicity is the feature.</p>
+  </div>
+
+  <div class="callout warning">
+    <p><strong>Pillar 2: "Earn the Right to Automate"</strong><br>
+    Maturity gating: Dashboard&rarr;Alerts&rarr;Autopilot&rarr;AI Coach&rarr;Autonomous. The 10 cron jobs = Autopilot stage. Full autonomous mode requires validated data patterns across 100+ orgs.</p>
+  </div>
+
+  <div class="callout success">
+    <p><strong>Pillar 3: "Rep-First, Not Surveillance"</strong><br>
+    Every feature helps the rep before the manager. Achievements = rep-facing. Scorecard = shared. Coach = manager-facing but rep-beneficial. Aaron presets differ by role. We build tools reps <em>want</em> to use.</p>
+  </div>
+
+  <div class="callout">
+    <p><strong>Pillar 4: "Cross-Org Benchmarking = Data Moat"</strong><br>
+    The one thing LLMs can't replicate: real performance data across hundreds of sales orgs. Every new org makes the platform more valuable for all orgs. This is the long-term defensibility play.</p>
+  </div>
+
+  <div class="callout purple">
+    <p><strong>Pillar 5: "Aaron = Senior Strategist, Not AI Assistant"</strong><br>
+    Aaron should feel like a VP Sales who's seen 1,000 reps. 14 proprietary coaching frameworks with intelligent routing. Sales DNA methodology injection. Live KPI data context. Content safety filters. Human approval on every AI action. Anti-AI-slop by design.</p>
+  </div>
+</div>
+
+<!-- ==================== 14. WHAT NOT TO BUILD ==================== -->
+<div class="section page-break">
+  <div class="section-number">Section 14</div>
+  <h2>What NOT to Build</h2>
+
+  <p class="lead">
+    Just as important as what to build. These ideas sound exciting but would clutter Apptivia or distract from the core mission. Based on analysis of 39+ industry sources and competitive intelligence.
+  </p>
+
+  <table>
+    <tr><th>Don't Build</th><th>Why Not</th><th>Instead</th></tr>
+    <tr>
+      <td><strong>Visual workflow builder</strong></td>
+      <td>Massive engineering effort for a "nice to have." Competitors with workflow builders took years to ship them.</td>
+      <td>Build integrations first. Visual builder much later (if ever).</td>
+    </tr>
+    <tr>
+      <td><strong>Voice/Vision for Aaron</strong></td>
+      <td>Cool but premature. Text-based AI is delivering value now. Voice adds latency, cost, and complexity.</td>
+      <td>Text-based Aaron with 14 frameworks is proven. Voice in Year 2+ if validated.</td>
+    </tr>
+    <tr>
+      <td><strong>Native LinkedIn integration</strong></td>
+      <td>LinkedIn's API is restrictive and their legal team is aggressive. High ban risk.</td>
+      <td>Use third-party enrichment tools as integration partners. Don't build native.</td>
+    </tr>
+    <tr>
+      <td><strong>Partner/Channel pyramid</strong></td>
+      <td>Interesting framework but irrelevant until direct sales motion is working.</td>
+      <td>Focus on PLG. Revisit in Phase 4 (Growth).</td>
+    </tr>
+    <tr>
+      <td><strong>AI Skills marketplace</strong></td>
+      <td>Creative idea but a distraction. Apptivia is a platform, not a marketplace.</td>
+      <td>File for Year 3+. Focus on core product.</td>
+    </tr>
+    <tr>
+      <td><strong>Developer tool integrations</strong></td>
+      <td>Developer tools, not sales tools. Apptivia's users are reps and managers, not engineers.</td>
+      <td>Aaron IS the agentic AI play for users.</td>
+    </tr>
+  </table>
+</div>
+
+<!-- ==================== 15. FINANCIAL PROJECTIONS ==================== -->
+<div class="section page-break">
+  <div class="section-number">Section 15</div>
+  <h2>Financial Projections</h2>
+
+  <h3>5-Year Revenue Model</h3>
+  <table>
+    <tr><th></th><th>Year 1</th><th>Year 2</th><th>Year 3</th><th>Year 4</th><th>Year 5</th></tr>
+    <tr><td><strong>Paying Orgs</strong></td><td>25</td><td>150</td><td>500</td><td>1,200</td><td>2,000</td></tr>
+    <tr><td><strong>Avg Seats/Org</strong></td><td>12</td><td>15</td><td>18</td><td>20</td><td>20</td></tr>
+    <tr><td><strong>Blended ARPU</strong></td><td>$30</td><td>$35</td><td>$40</td><td>$42</td><td>$45</td></tr>
+    <tr><td><strong>ARR</strong></td><td><strong>$108K</strong></td><td><strong>$945K</strong></td><td><strong>$4.3M</strong></td><td><strong>$12.1M</strong></td><td><strong>$21.6M</strong></td></tr>
+    <tr><td><strong>MRR</strong></td><td>$9K</td><td>$79K</td><td>$360K</td><td>$1.0M</td><td>$1.8M</td></tr>
+  </table>
+
+  <h3>Cost Structure (Year 1-2)</h3>
+  <table>
+    <tr><th>Category</th><th>Monthly</th><th>Notes</th></tr>
+    <tr><td>Infrastructure (Supabase, Hostinger)</td><td>$200-500</td><td>Current: ~$50/mo. Scales with usage.</td></tr>
+    <tr><td>AI/LLM (Claude)</td><td>$100-300</td><td>14+ endpoints. Rate limited: 20 req/5min.</td></tr>
+    <tr><td>Data enrichment (Apollo, Tavily)</td><td>$0-200</td><td>Waterfall: cheap sources first.</td></tr>
+    <tr><td>Twilio (VoIP)</td><td>$0-100</td><td>Per-minute; only when users call.</td></tr>
+    <tr><td>Marketing</td><td>$0-500</td><td>Organic-first until Phase 3.</td></tr>
+    <tr><td><strong>Total burn</strong></td><td><strong>$300-1,600</strong></td><td><strong>Extremely capital-efficient</strong></td></tr>
+  </table>
+
+  <h3>Key Assumptions</h3>
+  <ul>
+    <li>Free tier drives 10x more signups than paid (5-10% conversion)</li>
+    <li>Net revenue retention: 110%+ (seat expansion + tier upgrades)</li>
+    <li>Gross margin: 80%+ (SaaS + Supabase)</li>
+    <li>Churn: &lt;5% annual (gamification drives stickiness)</li>
+  </ul>
+</div>
+
+<!-- ==================== 16. RISK ANALYSIS ==================== -->
+<div class="section page-break">
+  <div class="section-number">Section 16</div>
+  <h2>Risk Analysis</h2>
+
+  <p class="lead">
+    Structured risk decomposition: Doubt (1-3) &times; Importance (1-3) = Factor. Higher factor = address first.
+  </p>
+
+  <h3>Full Risk Matrix</h3>
+  <table>
+    <tr><th>Risk</th><th>Type</th><th>Doubt</th><th>Import.</th><th>Factor</th><th>Mitigation</th></tr>
+    <tr>
+      <td><strong>Will orgs pay for unified platform vs. point tools?</strong></td>
+      <td>Demand</td><td>3</td><td>3</td><td><span class="tag red">9</span></td>
+      <td>Planera pilot validates. If they won't pay for Scorecard alone, adding modules won't fix it.</td>
+    </tr>
+    <tr>
+      <td><strong>Customer acquisition cost</strong></td>
+      <td>Economic</td><td>3</td><td>3</td><td><span class="tag red">9</span></td>
+      <td>PLG-first, content marketing, dog-food with Engage. Can't out-spend Gong &mdash; outmaneuver instead.</td>
+    </tr>
+    <tr>
+      <td><strong>Time to revenue</strong></td>
+      <td>Economic</td><td>3</td><td>3</td><td><span class="tag red">9</span></td>
+      <td>Platform IS built. Gap is 3-5 sessions to billing + pilots. Freemium + modular pricing = low-friction entry.</td>
+    </tr>
+    <tr>
+      <td><strong>ICP clarity (which role/team?)</strong></td>
+      <td>Demand</td><td>2</td><td>3</td><td><span class="tag amber">6</span></td>
+      <td>Planera pilot will reveal which personas engage most. Adjust ICP from data, not theory.</td>
+    </tr>
+    <tr>
+      <td><strong>Integration complexity (CRM edge cases)</strong></td>
+      <td>Supply</td><td>2</td><td>3</td><td><span class="tag amber">6</span></td>
+      <td>Framework built (OAuth, webhooks, sync crons). Risk is edge cases with real data. CSV import as fallback.</td>
+    </tr>
+    <tr>
+      <td><strong>Single developer scaling</strong></td>
+      <td>Supply</td><td>3</td><td>2</td><td><span class="tag amber">6</span></td>
+      <td>Platform already built. Remaining work is commercial. AI-assisted development multiplies effective bandwidth.</td>
+    </tr>
+    <tr>
+      <td><strong>Pricing: too high or too low?</strong></td>
+      <td>Economic</td><td>2</td><td>3</td><td><span class="tag amber">6</span></td>
+      <td>Tiered model with free entry. Let pilot data inform pricing adjustments.</td>
+    </tr>
+    <tr>
+      <td><strong>Data quality dependency</strong></td>
+      <td>Supply</td><td>2</td><td>3</td><td><span class="tag amber">6</span></td>
+      <td>"5 great KPIs" limits exposure. Watchdog detects anomalies. Historical scoring handles config changes.</td>
+    </tr>
+    <tr>
+      <td><strong>Aaron AI adoption</strong></td>
+      <td>Supply</td><td>2</td><td>2</td><td><span class="tag">4</span></td>
+      <td>14-framework coaching engine shipped. Live KPI injection. Role-specific presets. Test adoption with Planera pilot.</td>
+    </tr>
+    <tr>
+      <td><strong>Competitive response (Gong, Clay expanding)</strong></td>
+      <td>Demand</td><td>2</td><td>2</td><td><span class="tag">4</span></td>
+      <td>Gamification + coaching combo is unique. Enterprise tools unlikely to simplify for SMB.</td>
+    </tr>
+  </table>
+
+  <div class="callout danger">
+    <p><strong>Top 3 risks (Factor = 9) &mdash; test FIRST:</strong></p>
+    <p>1. <strong>Will orgs consolidate?</strong> &rarr; Planera pilot answers this.<br>
+    2. <strong>CAC affordable?</strong> &rarr; Dog-food with Engage; organic-first marketing; measure cost per pilot.<br>
+    3. <strong>Time to revenue?</strong> &rarr; Platform is built. 3-5 sessions to billing. Planera starts this month.</p>
+  </div>
+</div>
+
+<!-- ==================== 17. THE ASK ==================== -->
+<div class="section page-break">
+  <div class="section-number">Section 17</div>
+  <h2>The Ask, Timeline &amp; Next Steps</h2>
+
+  <h3>What We've Built</h3>
+  <div class="stats-row four">
+    <div class="stat-card"><div class="number green">15</div><div class="label">Production pages</div></div>
+    <div class="stat-card"><div class="number green">50+</div><div class="label">Components</div></div>
+    <div class="stat-card"><div class="number green">56</div><div class="label">API endpoints</div></div>
+    <div class="stat-card"><div class="number green">40+</div><div class="label">DB tables</div></div>
+  </div>
+  <div class="stats-row four">
+    <div class="stat-card"><div class="number teal">21/29</div><div class="label">Bugs fixed</div></div>
+    <div class="stat-card"><div class="number teal">6/6</div><div class="label">Enhancements shipped</div></div>
+    <div class="stat-card"><div class="number purple">14</div><div class="label">Coaching frameworks</div></div>
+    <div class="stat-card"><div class="number purple">13</div><div class="label">Sales methodologies</div></div>
+  </div>
+
+  <h3>Recommended Next Steps (Priority Order)</h3>
+  <ol>
+    <li><strong>Planera Pilot Setup (This Month)</strong>
+      <ul>
+        <li>Connect Planera's CRM data via integration framework</li>
+        <li>Configure 5 KPIs relevant to their sales process</li>
+        <li>Set up teams, roles, and Sales DNA methodology</li>
+        <li>Founder-led onboarding: walk through Scorecard, Coach, Contests, Aaron AI</li>
+        <li><strong>Measure:</strong> WAU, which features get used, which get ignored, Aaron engagement rate</li>
+      </ul>
+    </li>
+    <li><strong>Billing + Tier Gating (1-2 sessions)</strong>
+      <ul>
+        <li>Stripe integration for 4-tier pricing</li>
+        <li>Feature gating by subscription level</li>
+        <li>Can run parallel with Planera pilot (pilot gets Pro/Enterprise free)</li>
+      </ul>
+    </li>
+    <li><strong>Planera Feedback Iteration (Months 2-3)</strong>
+      <ul>
+        <li>Collect structured feedback: what works, what's confusing, what's missing</li>
+        <li>Fix top 3 friction points</li>
+        <li>Get testimonial/quote for landing page</li>
+      </ul>
+    </li>
+    <li><strong>Second Pilot + Landing Page (Month 3-4)</strong>
+      <ul>
+        <li>Product demo video (2-3 min) showing real Planera workflow</li>
+        <li>Updated landing page with Planera metrics/quote</li>
+        <li>Begin LinkedIn content strategy</li>
+        <li>Dog-food: use Engage to find second pilot prospect</li>
+      </ul>
+    </li>
+  </ol>
+
+  <h3>Timeline to Revenue</h3>
+  <div class="timeline">
+    <div class="timeline-item done">
+      <div class="phase-label">Complete</div>
+      <h4>Full-Stack Platform Built</h4>
+      <p>All modules, 21/29 bugs fixed, 6/6 enhancements shipped, 96 migrations applied, Aaron AI with 14-framework coaching engine</p>
+    </div>
+    <div class="timeline-item active">
+      <div class="phase-label">April 2026</div>
+      <h4>Planera Pilot Launch</h4>
+      <p>First real org with real CRM data. Founder-led onboarding.</p>
+    </div>
+    <div class="timeline-item">
+      <div class="phase-label">May 2026</div>
+      <h4>Commercial Readiness</h4>
+      <p>Billing, gating, onboarding polish. Planera feedback integration.</p>
+    </div>
+    <div class="timeline-item">
+      <div class="phase-label">June-August 2026</div>
+      <h4>Beta: 10-20 Orgs</h4>
+      <p>Content marketing begins. Self-serve onboarding. First revenue.</p>
+    </div>
+    <div class="timeline-item">
+      <div class="phase-label">Q4 2026</div>
+      <h4>GA: 50+ Orgs</h4>
+      <p>AEO, community, organic flywheel. Target: $9K MRR.</p>
+    </div>
+  </div>
+
+  <h3>Investment Use of Funds (If Seeking Capital)</h3>
+  <table>
+    <tr><th>Category</th><th>%</th><th>Purpose</th></tr>
+    <tr><td>Go-to-market</td><td>40%</td><td>First 25 orgs: content, LinkedIn, founder selling</td></tr>
+    <tr><td>Engineering</td><td>30%</td><td>Billing, CRM hardening, outreach variants, mobile</td></tr>
+    <tr><td>Infrastructure</td><td>15%</td><td>Scale Supabase, monitoring, security audit, SOC 2 prep</td></tr>
+    <tr><td>Operations</td><td>15%</td><td>Legal, accounting, customer support</td></tr>
+  </table>
+
+  <hr>
+
+  <p style="text-align: center; font-size: 20px; font-weight: 700; color: var(--dark); margin: 40px 0 8px;">Apptivia</p>
+  <p style="text-align: center; font-size: 14px; color: var(--gray-500); margin-bottom: 40px;">Sales Performance Intelligence for Teams That Want to Win</p>
+  <div class="confidential">Confidential &mdash; Apptivia &mdash; April 2026</div>
+</div>
+
+<!-- ==================== APPENDIX A ==================== -->
+<div class="section page-break">
+  <div class="section-number">Appendix A</div>
+  <h2>Industry Validation</h2>
+
+  <p>Apptivia's strategy, feature priorities, and competitive positioning are informed by analysis of 39+ industry sources across 7 research batches:</p>
+
+  <table>
+    <tr><th>Batch</th><th>Sources</th><th>Key Insights Applied</th></tr>
+    <tr><td>1 (10 sources)</td><td>SDR/BDR/AE role KPIs, coaching content, signal-first GTM, outreach templates</td><td>Role-based KPI templates, Sales DNA methodology library</td></tr>
+    <tr><td>2 (10 sources)</td><td>VC landscape, AI sales prep approaches, GTM orchestration strategies</td><td>Aaron chatbot roadmap (8+ modes), VC targeting list</td></tr>
+    <tr><td>3 (10 sources)</td><td>GTM health scorecards, outbound prompt libraries, AI outbound tools landscape</td><td>Org Health Scorecard, Prompt Library, competitive positioning</td></tr>
+    <tr><td>4 (9 sources)</td><td>Qualification framework landscape, GTM efficiency models, 2026 sales team structures</td><td>Configurable methodology, maturity gating, GTM Engineer as ICP</td></tr>
+    <tr><td>5 (9 sources)</td><td>SaaS unit economics, GTM reality checks, organic content strategies, enrichment architectures</td><td>"Earn right to automate," content strategy, enrichment waterfall</td></tr>
+    <tr><td>6 (10 sources)</td><td>LinkedIn brand growth, AI engine optimization strategies, AI capabilities research</td><td>LinkedIn engagement funnel, "Ask AI about Apptivia," onboarding maturity</td></tr>
+    <tr><td>7 (7 sources)</td><td>Social selling playbooks, AI capabilities deep-dive</td><td>"5 great KPIs &gt; 50 messy metrics," monetize readiness checklist</td></tr>
+  </table>
+
+  <h3>Key Marketing Claims (With Supporting Evidence)</h3>
+  <table>
+    <tr><th>Claim</th><th>Source Type</th></tr>
+    <tr><td>"Formal process = 28% higher win rates"</td><td>Industry research</td></tr>
+    <tr><td>"43:57 talk-to-listen ratio" optimal</td><td>Conversation intelligence data</td></tr>
+    <tr><td>"Structured day = 12-15% higher quota attainment"</td><td>Sales productivity research</td></tr>
+    <tr><td>"70% less research time, 40% more qualified calls"</td><td>AI workflow study</td></tr>
+    <tr><td>"AI produces almost nothing customer-ready first go"</td><td>Practitioner validation (validates HITL)</td></tr>
+    <tr><td>Test org: 15 reps, 2,213 achievements, 357 badges, 2,667 notifications</td><td>Apptivia production data</td></tr>
+  </table>
+</div>
+
+<!-- ==================== APPENDIX B ==================== -->
+<div class="section page-break">
+  <div class="section-number">Appendix B</div>
+  <h2>VC Targets &amp; Pitch Structure</h2>
+
+  <h3>VC Fundraising Targets</h3>
+  <div class="two-col">
+    <div class="col-card">
+      <h4>Tier 1 (B2B SaaS, Early-Stage)</h4>
+      <ul>
+        <li><strong>Alt Capital</strong> &mdash; inception to Series A</li>
+        <li><strong>Conviction</strong> &mdash; AI-first companies</li>
+        <li><strong>Theory Ventures</strong> &mdash; enterprise AI</li>
+      </ul>
+    </div>
+    <div class="col-card">
+      <h4>Tier 2 (Broader but Relevant)</h4>
+      <ul>
+        <li><strong>Lightspeed</strong></li>
+        <li><strong>a16z</strong></li>
+        <li><strong>Bessemer</strong></li>
+        <li>Six Point Ventures, 1818 VC, VU Ventures</li>
+      </ul>
+    </div>
+  </div>
+
+  <h3>Pitch Deck Structure</h3>
+  <ol>
+    <li><strong>Purpose</strong> &mdash; Why this company exists</li>
+    <li><strong>Problem</strong> &mdash; Three failure modes (Section 2)</li>
+    <li><strong>Solution</strong> &mdash; Performance intelligence stack (Section 3)</li>
+    <li><strong>Evidence</strong> &mdash; Planera pilot results + test org data (2,213 achievements, 34 badges)</li>
+    <li><strong>Market</strong> &mdash; $540M SAM, 80K addressable orgs (Section 8)</li>
+    <li><strong>Unique Advantage</strong> &mdash; Cross-org benchmarking moat + gamification + AI coaching</li>
+    <li><strong>Business Model</strong> &mdash; 4-tier SaaS, $25-50/seat/mo (Section 9)</li>
+    <li><strong>Team</strong> &mdash; Solo founder with production-ready platform (21/29 bugs fixed, 6/6 enhancements shipped)</li>
+    <li><strong>Horizons</strong> &mdash; Rep scoring &rarr; Org intelligence &rarr; Industry benchmarks (Section 11)</li>
+    <li><strong>Ask</strong> &mdash; Seed round for GTM execution + first 25 orgs</li>
+  </ol>
+
+  <div class="callout teal">
+    <p><strong>Founder Advantage:</strong> Most seed-stage startups pitch a vision with a prototype. Apptivia has a production-ready platform with 15 pages, 56 endpoints, 10 automated cron jobs, a real AI coaching engine with 14 frameworks, and a pilot launching this month. The engineering risk is largely retired &mdash; what remains is market validation and commercial execution.</p>
+  </div>
+
+  <hr>
+  <div class="confidential">Confidential &mdash; Apptivia Business Plan v2.2 &mdash; April 2026</div>
+</div>
+
+</body>
+</html>

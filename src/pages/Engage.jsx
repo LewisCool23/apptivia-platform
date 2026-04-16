@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { Search, Building2, Radar, DollarSign, Phone, Activity, UserPlus, X } from 'lucide-react';
+import { Search, Building2, Radar, DollarSign, Phone, Activity, UserPlus, X, ListOrdered } from 'lucide-react';
 import DashboardLayout from '../DashboardLayout';
 import { useAuth } from '../AuthContext';
 import PipelineOperator from '../components/PipelineOperator';
@@ -12,12 +12,14 @@ import { useTwilioDialer } from '../hooks/useTwilioDialer';
 import TwilioDialerWidget from '../components/TwilioDialerWidget';
 import EngageContactsPanel from '../components/EngageContactsPanel';
 import EngageDialpadPanel from '../components/EngageDialpadPanel';
+import SequenceBuilder from '../components/SequenceBuilder';
 
 const TABS = [
   { id: 'signals',  label: 'Signal Prospecting', icon: Radar,     description: 'Detect high-intent buying signals' },
   { id: 'discover', label: 'Discover',            icon: Search,    description: 'AI-powered prospect & company research' },
   { id: 'accounts', label: 'Accounts',            icon: Building2, description: 'Account-based intelligence & scoring' },
-  { id: 'pipeline', label: 'Pipeline Operator',   icon: DollarSign, description: 'Monitor deals, flag risks, AI forecasts' },
+  { id: 'pipeline',   label: 'Pipeline Operator',   icon: DollarSign,  description: 'Monitor deals, flag risks, AI forecasts' },
+  { id: 'sequences',  label: 'Sequences',           icon: ListOrdered, description: 'Multi-step outreach cadences' },
 ];
 
 const PANELS = [
@@ -37,6 +39,7 @@ export default function Engage() {
     tabFromUrl && validTabs.includes(tabFromUrl) ? tabFromUrl : 'signals'
   );
   const [activePanel, setActivePanel] = useState(null);
+  const [contactsRefreshKey, setContactsRefreshKey] = useState(0);
 
   // Cross-tab context
   const [discoverContext, setDiscoverContext] = useState(null);
@@ -129,6 +132,7 @@ export default function Engage() {
               initialSearch={discoverContext}
               onInitialSearchConsumed={() => setDiscoverContext(null)}
               onCallContact={dialer.startCall}
+              onContactSaved={() => setContactsRefreshKey(k => k + 1)}
             />
           )}
           {activeTab === 'accounts' && (
@@ -141,6 +145,9 @@ export default function Engage() {
           )}
           {activeTab === 'pipeline' && (
             <PipelineOperator organizationId={organizationId} userId={user?.id} />
+          )}
+          {activeTab === 'sequences' && (
+            <SequenceBuilder organizationId={organizationId} userId={user?.id} />
           )}
         </div>
       </div>
@@ -165,6 +172,7 @@ export default function Engage() {
                 organizationId={organizationId}
                 onCallContact={dialer.startCall}
                 onClose={() => setActivePanel(null)}
+                refreshKey={contactsRefreshKey}
               />
             )}
             {activePanel === 'activity' && (

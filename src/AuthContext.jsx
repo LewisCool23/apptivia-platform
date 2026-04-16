@@ -1,6 +1,7 @@
 
-import React, { createContext, useContext, useState, useEffect, useMemo, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { supabase } from './supabaseClient';
+import { backendFetch } from './utils/backendFetch';
 import {
   normalizeRole,
   getPermissionOverrides,
@@ -93,6 +94,18 @@ export const AuthProvider = ({ children }) => {
     refreshProfile();
   }, [refreshProfile]);
 
+  // Auto-create profile for new OAuth users (Google, etc.) who bypass /api/auth/signup
+  const ensuredProfileRef = useRef(false);
+  useEffect(() => {
+    if (user?.id && profileLoaded && !profile && !ensuredProfileRef.current) {
+      ensuredProfileRef.current = true;
+      backendFetch('/api/auth/ensure-profile', undefined, 'POST')
+        .then(() => refreshProfile())
+        .catch((err) => console.error('[AuthContext] Failed to ensure profile for OAuth user:', err));
+    }
+    if (!user?.id) ensuredProfileRef.current = false;
+  }, [user?.id, profileLoaded, profile, refreshProfile]);
+
   // Load permission overrides from DB whenever the logged-in user changes.
   // localStorage is used for an instant first-render, then replaced by the DB value.
   useEffect(() => {
@@ -108,7 +121,18 @@ export const AuthProvider = ({ children }) => {
     });
   }, [user?.id]);
 
-  const role = useMemo(() => normalizeRole(profile?.role || user?.role), [profile?.role, user?.role]);
+  const ROLE_LEVEL_MAP = { admin: 4, manager: 3, coach: 2, power_user: 1 };
+  const primaryRole = useMemo(() => normalizeRole(profile?.role || user?.role), [profile?.role, user?.role]);
+  const secondaryRole = useMemo(
+    () => profile?.secondary_role ? normalizeRole(profile.secondary_role) : null,
+    [profile?.secondary_role]
+  );
+  // Effective role = highest privilege between primary and secondary
+  const role = useMemo(() => {
+    if (!secondaryRole) return primaryRole;
+    return (ROLE_LEVEL_MAP[secondaryRole] || 0) > (ROLE_LEVEL_MAP[primaryRole] || 0)
+      ? secondaryRole : primaryRole;
+  }, [primaryRole, secondaryRole]);
   const permissionOverrides = useMemo(
     () => dbOverrides !== null ? dbOverrides : getPermissionOverrides(user?.id),
     [dbOverrides, user?.id, permissionsVersion]
@@ -116,10 +140,11 @@ export const AuthProvider = ({ children }) => {
   const effectivePermissions = useMemo(
     () => getEffectivePermissions({
       role,
+      secondaryRole,
       permissionOverrides,
       explicitPermissions: Array.isArray(profile?.permissions) ? profile.permissions : []
     }),
-    [role, permissionOverrides, profile?.permissions]
+    [role, secondaryRole, permissionOverrides, profile?.permissions]
   );
 
   const hasPermission = useCallback(

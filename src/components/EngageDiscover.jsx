@@ -5,7 +5,7 @@ import {
   AlertTriangle, TrendingUp, Target, Briefcase, DollarSign,
   Star, Clock, Send, MessageSquare, BookOpen, Trash2, History, Eye,
   Phone, UserPlus, Cpu, ArrowRight, ChevronRight, Bookmark, BookmarkCheck,
-  MapPin, Twitter, PhoneCall, ClipboardList
+  MapPin, Twitter, PhoneCall, ClipboardList, X, FileText
 } from 'lucide-react';
 import { engageApi, engageDb } from '../utils/engageApi';
 import PromptTemplateSelector from './PromptTemplateSelector';
@@ -296,7 +296,7 @@ function CompanyBriefPanel({ company, brief: rawBrief, dataSources, tokensUsed, 
 
 // ── Prospect Brief Panel ─────────────────────────────────────
 
-function ProspectBriefPanel({ prospect, brief: rawBrief, dataSources, tokensUsed, errors, onCallContact, onSaveContact, isSaved }) {
+function ProspectBriefPanel({ prospect, brief: rawBrief, dataSources, tokensUsed, errors, onCallContact, onSaveContact, isSaved, savingContact, onGenerateDraft }) {
   const [copied, setCopied] = React.useState(null); // tracks which field was copied
   // If brief arrived as a JSON string (e.g. Claude wrapped in markdown fences), try to parse it
   const brief = React.useMemo(() => {
@@ -438,15 +438,17 @@ function ProspectBriefPanel({ prospect, brief: rawBrief, dataSources, tokensUsed
                 )}
                 {onSaveContact && (
                   <button
-                    onClick={() => onSaveContact(prospect)}
-                    disabled={isSaved}
+                    onClick={() => { console.log('Save Contact clicked', prospect?.email, prospect?.first_name); onSaveContact(prospect); }}
+                    disabled={isSaved || savingContact}
                     className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg transition-colors shadow-sm ${
                       isSaved
                         ? 'bg-gray-100 text-gray-400 cursor-default'
-                        : 'bg-purple-500 hover:bg-purple-600 text-white'
+                        : savingContact
+                          ? 'bg-purple-300 text-white cursor-wait'
+                          : 'bg-purple-500 hover:bg-purple-600 text-white'
                     }`}
                   >
-                    {isSaved ? <><BookmarkCheck size={11} /> Saved</> : <><UserPlus size={11} /> Save Contact</>}
+                    {isSaved ? <><BookmarkCheck size={11} /> Saved</> : savingContact ? <><UserPlus size={11} /> Saving...</> : <><UserPlus size={11} /> Save Contact</>}
                   </button>
                 )}
                 <button
@@ -456,6 +458,15 @@ function ProspectBriefPanel({ prospect, brief: rawBrief, dataSources, tokensUsed
                 >
                   {copied === 'all' ? <><Check size={11} className="text-emerald-500" /> Copied!</> : <><ClipboardList size={11} /> Copy All</>}
                 </button>
+                {onGenerateDraft && (
+                  <button
+                    onClick={onGenerateDraft}
+                    className="flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-emerald-500 to-teal-500 hover:opacity-90 text-white text-xs font-medium rounded-lg transition-opacity shadow-sm"
+                    title="Generate AI outreach draft"
+                  >
+                    <FileText size={11} /> Generate Draft
+                  </button>
+                )}
               </div>
             </div>
           </div>
@@ -581,6 +592,68 @@ function ProspectBriefPanel({ prospect, brief: rawBrief, dataSources, tokensUsed
 
 function OutreachDraftPanel({ draft, tokensUsed }) {
   if (!draft) return null;
+
+  const angleColors = [
+    { bg: 'bg-red-50', border: 'border-red-200', badge: 'bg-red-100 text-red-700', accent: 'text-red-500' },
+    { bg: 'bg-amber-50', border: 'border-amber-200', badge: 'bg-amber-100 text-amber-700', accent: 'text-amber-500' },
+    { bg: 'bg-blue-50', border: 'border-blue-200', badge: 'bg-blue-100 text-blue-700', accent: 'text-blue-500' },
+    { bg: 'bg-purple-50', border: 'border-purple-200', badge: 'bg-purple-100 text-purple-700', accent: 'text-purple-500' },
+  ];
+
+  // Multi-message format (from multi-angle template)
+  if (draft.messages?.length > 0) {
+    return (
+      <div className="bg-white rounded-xl border border-gray-100 overflow-hidden">
+        <div className="bg-gradient-to-r from-emerald-500 to-teal-500 px-5 py-3 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Send size={14} className="text-white" />
+            <span className="text-sm font-semibold text-white">AI Outreach Drafts</span>
+            <span className="text-[10px] text-emerald-100 bg-emerald-600/30 px-2 py-0.5 rounded-full">{draft.messages.length} variants</span>
+          </div>
+          <TokensUsed tokens={tokensUsed} />
+        </div>
+        <div className="p-4">
+          <p className="text-[10px] text-gray-400 mb-3 flex items-center gap-1">
+            <Target size={10} /> Each card is a separate, ready-to-send message. Pick the angle that fits best.
+          </p>
+          <div className="space-y-3">
+            {draft.messages.map((msg, i) => {
+              const colors = angleColors[i % angleColors.length];
+              const fullText = [msg.subject && `Subject: ${msg.subject}`, msg.body].filter(Boolean).join('\n\n');
+              return (
+                <div key={i} className={`${colors.bg} ${colors.border} border rounded-xl p-4`}>
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-2">
+                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${colors.badge}`}>
+                        Option {i + 1}
+                      </span>
+                      {msg.angle && <span className="text-[10px] font-medium text-gray-500">{msg.angle}</span>}
+                    </div>
+                    <CopyButton text={fullText} />
+                  </div>
+                  {msg.subject && (
+                    <p className="text-xs font-semibold text-gray-900 mb-1.5">Subject: {msg.subject}</p>
+                  )}
+                  <div className="bg-white/70 rounded-lg p-3">
+                    <p className="text-xs text-gray-800 leading-relaxed whitespace-pre-wrap">{msg.body}</p>
+                  </div>
+                  {msg.personalization_points?.length > 0 && (
+                    <div className="flex flex-wrap gap-1 mt-2">
+                      {msg.personalization_points.map((p, j) => (
+                        <span key={j} className="px-1.5 py-0.5 bg-white/60 text-gray-500 text-[9px] font-medium rounded-full">{p}</span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Standard single-message format
   return (
     <div className="bg-white rounded-xl border border-gray-100 overflow-hidden">
       <div className="bg-gradient-to-r from-emerald-500 to-teal-500 px-5 py-3 flex items-center justify-between">
@@ -624,6 +697,142 @@ function OutreachDraftPanel({ draft, tokensUsed }) {
   );
 }
 
+// ── Outreach Modal ──────────────────────────────────────────
+
+function OutreachModal({
+  open, onClose, prospect, brief,
+  channel, setChannel, tone, setTone,
+  selectedTemplate, setSelectedTemplate,
+  onGenerate, loading, draft, draftTokens,
+}) {
+  // Track whether a draft has been generated so tone/channel changes auto-regenerate
+  const hasGenerated = useRef(false);
+  if (draft && !hasGenerated.current) hasGenerated.current = true;
+
+  // Reset when modal closes
+  useEffect(() => {
+    if (!open) hasGenerated.current = false;
+  }, [open]);
+
+  if (!open) return null;
+
+  const outreachAngles = brief?.outreach_angles?.length || 0;
+  const fitScore = brief?.fit_score;
+
+  return (
+    <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4" onClick={onClose}>
+      <div className={`bg-white rounded-2xl shadow-2xl w-full max-w-lg ${draft ? 'max-h-[85vh] overflow-y-auto' : 'overflow-visible'}`} onClick={e => e.stopPropagation()}>
+        {/* Header */}
+        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 bg-gradient-to-br from-emerald-500 to-teal-500 rounded-lg flex items-center justify-center">
+              <Send size={14} className="text-white" />
+            </div>
+            <div>
+              <h3 className="text-sm font-bold text-gray-900">Generate AI Outreach</h3>
+              {prospect && (
+                <p className="text-[10px] text-gray-400">
+                  For {prospect.name || prospect.full_name || `${prospect.first_name || ''} ${prospect.last_name || ''}`.trim()}
+                  {(prospect.organization?.name || prospect.company_name) ? ` at ${prospect.organization?.name || prospect.company_name}` : ''}
+                </p>
+              )}
+            </div>
+          </div>
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 transition-colors">
+            <X size={18} />
+          </button>
+        </div>
+
+        {/* Context line */}
+        {(outreachAngles > 0 || fitScore != null) && (
+          <div className="px-5 py-2 bg-purple-50/50 border-b border-purple-100/50">
+            <p className="text-[10px] text-purple-600 flex items-center gap-2">
+              <Sparkles size={10} />
+              Using: {outreachAngles > 0 && `${outreachAngles} outreach angle${outreachAngles > 1 ? 's' : ''}`}
+              {outreachAngles > 0 && fitScore != null && ' · '}
+              {fitScore != null && `Prospect fit ${fitScore}/100`}
+              {brief?.talking_points?.length > 0 && ` · ${brief.talking_points.length} talking points`}
+            </p>
+          </div>
+        )}
+
+        {/* Form */}
+        <div className="px-5 py-4 space-y-3">
+          {/* Prompt Template */}
+          <div>
+            <label className="text-[10px] text-gray-400 uppercase font-medium block mb-1">Prompt Template</label>
+            <PromptTemplateSelector
+              category="outreach"
+              value={selectedTemplate?.id}
+              onChange={(template) => setSelectedTemplate(template)}
+              placeholder="Use library prompt or default..."
+            />
+            {selectedTemplate && (
+              <p className="text-[10px] text-violet-500 mt-1 flex items-center gap-1">
+                <BookOpen size={10} /> Using: {selectedTemplate.name}
+              </p>
+            )}
+          </div>
+
+          {/* Channel + Tone row */}
+          <div className="flex items-end gap-3">
+            <div className="flex-1">
+              <label className="text-[10px] text-gray-400 uppercase font-medium block mb-1">Channel</label>
+              <select
+                value={channel}
+                onChange={(e) => setChannel(e.target.value)}
+                className="w-full text-xs border border-gray-200 rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-emerald-200"
+              >
+                <option value="email">Email</option>
+                <option value="linkedin">LinkedIn</option>
+              </select>
+            </div>
+            <div className="flex-1">
+              <label className="text-[10px] text-gray-400 uppercase font-medium block mb-1">Tone</label>
+              <select
+                value={tone}
+                onChange={(e) => {
+                  const newTone = e.target.value;
+                  setTone(newTone);
+                  if (hasGenerated.current && !loading) {
+                    onGenerate({ tone: newTone });
+                  }
+                }}
+                className="w-full text-xs border border-gray-200 rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-emerald-200"
+              >
+                <option value="professional">Professional</option>
+                <option value="casual">Casual</option>
+                <option value="direct">Direct</option>
+                <option value="consultative">Consultative</option>
+              </select>
+            </div>
+          </div>
+
+          {/* Generate button */}
+          <button
+            onClick={onGenerate}
+            disabled={loading}
+            className="w-full px-4 py-2.5 bg-gradient-to-r from-emerald-500 to-teal-500 text-white rounded-lg text-xs font-semibold hover:opacity-90 transition-opacity disabled:opacity-50 flex items-center justify-center gap-2"
+          >
+            {loading ? (
+              <><RefreshCw size={12} className="animate-spin" /> Generating...</>
+            ) : (
+              <><Sparkles size={12} /> Generate Draft</>
+            )}
+          </button>
+        </div>
+
+        {/* Draft result inside modal */}
+        {draft && (
+          <div className="px-5 pb-5">
+            <OutreachDraftPanel draft={draft} tokensUsed={draftTokens} />
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 // ── Collapsible Section ─────────────────────────────────────
 
 function CollapsibleSection({ title, icon: Icon, expanded, onToggle, children }) {
@@ -643,7 +852,7 @@ function CollapsibleSection({ title, icon: Icon, expanded, onToggle, children })
 
 // ── Main Discover Component ─────────────────────────────────
 
-export default function EngageDiscover({ organizationId, userId, initialSearch, onInitialSearchConsumed, onCallContact }) {
+export default function EngageDiscover({ organizationId, userId, initialSearch, onInitialSearchConsumed, onCallContact, onContactSaved }) {
   const [mode, setMode] = useState('company'); // 'company' | 'prospect' | 'people_search'
   const [searchInput, setSearchInput] = useState('');
   const [loading, setLoading] = useState(false);
@@ -659,6 +868,23 @@ export default function EngageDiscover({ organizationId, userId, initialSearch, 
   const [peopleSearchResults, setPeopleSearchResults] = useState(null);
   const [peopleSearchFilters, setPeopleSearchFilters] = useState(null);
   const [savedContactIds, setSavedContactIds] = useState(new Set());
+  const [savingContact, setSavingContact] = useState(false);
+
+  // Pre-load saved contact IDs from DB so "Saved" state persists across page refreshes
+  useEffect(() => {
+    if (!organizationId) return;
+    supabase
+      .from('engage_prospects')
+      .select('email, first_name, last_name')
+      .eq('organization_id', organizationId)
+      .then(({ data, error }) => {
+        if (error) { console.warn('Pre-load saved contacts failed:', error.message); return; }
+        if (data?.length) {
+          const ids = new Set(data.map(p => p.email || `${p.first_name || ''}${p.last_name || ''}`));
+          setSavedContactIds(ids);
+        }
+      });
+  }, [organizationId]);
 
   // Company disambiguation
   const [disambiguationResults, setDisambiguationResults] = useState(null);
@@ -678,9 +904,13 @@ export default function EngageDiscover({ organizationId, userId, initialSearch, 
   const [outreachChannel, setOutreachChannel] = useState('email');
   const [outreachTone, setOutreachTone] = useState('professional');
   const [selectedTemplate, setSelectedTemplate] = useState(null);
+  const [outreachModalOpen, setOutreachModalOpen] = useState(false);
 
   // Track whether we've consumed the initial search to avoid re-triggering
   const [initialSearchApplied, setInitialSearchApplied] = useState(false);
+
+  // Auto-research flag: when set to true, fires handleResearch after mode/input state settles
+  const [autoResearchPending, setAutoResearchPending] = useState(false);
 
   // ── Search History ──────────────────────────────────────
 
@@ -719,6 +949,19 @@ export default function EngageDiscover({ organizationId, userId, initialSearch, 
       return () => clearTimeout(timer);
     }
   }, [initialSearchApplied, searchInput, loading, companyResult, prospectResult, peopleSearchResults]);
+
+  // Auto-trigger research when the Eye icon sets the pending flag
+  // NOTE: Do NOT call setAutoResearchPending(false) here — it causes a re-render
+  // that runs cleanup (clearTimeout) before the timer fires. The flag is cleared
+  // inside handleResearch instead.
+  useEffect(() => {
+    if (autoResearchPending && mode === 'prospect' && searchInput.trim() && !loading) {
+      const timer = setTimeout(() => {
+        handleResearchRef.current?.();
+      }, 150);
+      return () => clearTimeout(timer);
+    }
+  }, [autoResearchPending, mode, searchInput, loading]);
 
   const fetchSearchHistory = useCallback(async () => {
     if (!organizationId) return;
@@ -792,11 +1035,17 @@ export default function EngageDiscover({ organizationId, userId, initialSearch, 
     }
   }, [organizationId, userId, fetchSearchHistory]);
 
+  // Consistent key for saved-contact dedup (email preferred, fallback to name)
+  const getSavedKey = useCallback((person) => {
+    return person.email || `${person.first_name || ''}${person.last_name || ''}`;
+  }, []);
+
   const saveContact = useCallback(async (person) => {
-    const key = person.id || person.email || `${person.first_name}${person.last_name}`;
+    const key = getSavedKey(person);
     if (savedContactIds.has(key)) return;
+    setSavingContact(true);
     try {
-      await supabase.from('engage_prospects').insert({
+      const row = {
         organization_id: organizationId,
         first_name: person.first_name || null,
         last_name: person.last_name || null,
@@ -806,19 +1055,30 @@ export default function EngageDiscover({ organizationId, userId, initialSearch, 
         title: person.title || person.headline || null,
         company_name: person.organization?.name || person.organization_name || null,
         source: 'discover',
-      });
+      };
+      const { error } = await supabase.from('engage_prospects').insert(row);
+      if (error) {
+        console.error('Save contact error:', error.message, error);
+        setSavingContact(false);
+        return;
+      }
       setSavedContactIds(prev => new Set([...prev, key]));
-    } catch { /* non-blocking */ }
-  }, [organizationId, savedContactIds]);
+      onContactSaved?.();
+    } catch (err) {
+      console.error('Save contact exception:', err);
+    }
+    setSavingContact(false);
+  }, [organizationId, savedContactIds, onContactSaved, getSavedKey]);
 
   const deleteFromHistory = useCallback(async (id) => {
+    if (!organizationId) return;
     try {
-      await (await import('../supabaseClient')).supabase.from('engage_research_reports').delete().eq('id', id);
+      await supabase.from('engage_research_reports').delete().eq('id', id).eq('organization_id', organizationId);
       setSearchHistory(prev => prev.filter(h => h.id !== id));
     } catch {
       // non-blocking
     }
-  }, []);
+  }, [organizationId]);
 
   const loadFromHistory = useCallback((report) => {
     const content = report.content || {};
@@ -868,6 +1128,7 @@ export default function EngageDiscover({ organizationId, userId, initialSearch, 
 
   const handleResearch = async () => {
     if (!searchInput.trim()) return;
+    setAutoResearchPending(false); // Clear auto-research flag (set by Eye icon click)
     setLoading(true);
     setError(null);
     setCompanyResult(null);
@@ -1027,7 +1288,7 @@ export default function EngageDiscover({ organizationId, userId, initialSearch, 
   // Keep ref in sync so the auto-trigger effect can call handleResearch
   handleResearchRef.current = handleResearch;
 
-  const handleGenerateOutreach = async () => {
+  const handleGenerateOutreach = async (overrides = {}) => {
     const prospect = prospectResult?.prospect || companyResult?.company;
     const brief = prospectResult?.brief || companyResult?.brief;
     if (!prospect || !brief) return;
@@ -1035,8 +1296,8 @@ export default function EngageDiscover({ organizationId, userId, initialSearch, 
     setOutreachLoading(true);
     try {
       const result = await engageApi.generateOutreach(prospect, brief, {
-        channel: outreachChannel,
-        tone: outreachTone,
+        channel: overrides.channel || outreachChannel,
+        tone: overrides.tone || outreachTone,
         template_id: selectedTemplate?.id || undefined,
         template_system_prompt: selectedTemplate?.system_prompt || undefined,
         template_user_prompt: selectedTemplate?.user_prompt || undefined,
@@ -1444,8 +1705,7 @@ export default function EngageDiscover({ organizationId, userId, initialSearch, 
                         </a>
                       )}
                       {(() => {
-                        const key = person.id || person.email || `${person.first_name}${person.last_name}`;
-                        const saved = savedContactIds.has(key);
+                        const saved = savedContactIds.has(getSavedKey(person));
                         return (
                           <button
                             onClick={() => saveContact(person)}
@@ -1465,8 +1725,9 @@ export default function EngageDiscover({ organizationId, userId, initialSearch, 
                           setCompanyResult(null);
                           setSuggestedContacts(null);
                           setPeopleSearchResults(null);
+                          setAutoResearchPending(true);
                         }}
-                        className="text-purple-400 hover:text-purple-600 opacity-0 group-hover:opacity-100 transition-opacity"
+                        className="text-purple-400 hover:text-purple-600 transition-colors"
                         title="Research this prospect"
                       >
                         <Eye size={12} />
@@ -1493,7 +1754,9 @@ export default function EngageDiscover({ organizationId, userId, initialSearch, 
           errors={prospectResult.errors}
           onCallContact={onCallContact}
           onSaveContact={saveContact}
-          isSaved={savedContactIds.has(prospectResult.prospect?.id || prospectResult.prospect?.email || `${prospectResult.prospect?.first_name}${prospectResult.prospect?.last_name}`)}
+          savingContact={savingContact}
+          isSaved={savedContactIds.has(getSavedKey(prospectResult.prospect || {}))}
+          onGenerateDraft={() => setOutreachModalOpen(true)}
         />
       )}
 
@@ -1596,8 +1859,7 @@ export default function EngageDiscover({ organizationId, userId, initialSearch, 
                       <td className="px-4 py-3">
                         <div className="flex items-center justify-center gap-2">
                           {(() => {
-                            const key = person.id || email || `${person.first_name}${person.last_name}`;
-                            const saved = savedContactIds.has(key);
+                            const saved = savedContactIds.has(getSavedKey(person));
                             return (
                               <button
                                 onClick={() => saveContact(person)}
@@ -1617,13 +1879,13 @@ export default function EngageDiscover({ organizationId, userId, initialSearch, 
                           <button
                             onClick={() => {
                               const fullName = name || '';
-                              const nameParts = fullName.split(' ');
                               setMode('prospect');
                               setSearchInput(org ? `${fullName} at ${org}` : fullName);
                               setPeopleSearchResults(null);
                               setPeopleSearchFilters(null);
+                              setAutoResearchPending(true);
                             }}
-                            className="text-purple-500 hover:text-purple-700 transition-colors opacity-0 group-hover:opacity-100"
+                            className="text-purple-500 hover:text-purple-700 transition-colors"
                             title="Research this prospect"
                           >
                             <Eye size={13} />
@@ -1657,8 +1919,8 @@ export default function EngageDiscover({ organizationId, userId, initialSearch, 
         </div>
       )}
 
-      {/* Outreach Generator */}
-      {canGenerateOutreach && (
+      {/* Outreach Generator — inline only for company-only research (prospect uses modal) */}
+      {canGenerateOutreach && !prospectResult && (
         <div className="bg-white rounded-xl border border-gray-100 p-5">
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
@@ -1724,10 +1986,28 @@ export default function EngageDiscover({ organizationId, userId, initialSearch, 
         </div>
       )}
 
-      {/* Outreach Draft */}
-      {outreachDraft && (
+      {/* Outreach Draft — inline only for company research */}
+      {outreachDraft && !prospectResult && (
         <OutreachDraftPanel draft={outreachDraft} tokensUsed={outreachTokens} />
       )}
+
+      {/* Outreach Modal — for prospect research */}
+      <OutreachModal
+        open={outreachModalOpen}
+        onClose={() => setOutreachModalOpen(false)}
+        prospect={prospectResult?.prospect}
+        brief={prospectResult?.brief ? (typeof prospectResult.brief === 'object' ? prospectResult.brief : (() => { try { return JSON.parse(String(prospectResult.brief).replace(/^```(?:json)?\s*\n?/i, '').replace(/\n?```\s*$/i, '').trim()); } catch { return { summary: String(prospectResult.brief) }; } })()) : null}
+        channel={outreachChannel}
+        setChannel={setOutreachChannel}
+        tone={outreachTone}
+        setTone={setOutreachTone}
+        selectedTemplate={selectedTemplate}
+        setSelectedTemplate={setSelectedTemplate}
+        onGenerate={handleGenerateOutreach}
+        loading={outreachLoading}
+        draft={outreachDraft}
+        draftTokens={outreachTokens}
+      />
 
       {/* Empty State */}
       {!loading && !hasResults && !error && (

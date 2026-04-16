@@ -33,10 +33,12 @@ export default function PermissionsTeams() {
   // ── Load users for permissions grid ─────────────────────────
   const loadUsers = async () => {
     try {
-      const { data, error } = await supabase
+      let query = supabase
         .from('profiles')
         .select('id, first_name, last_name, role, email, team_id, department, title')
         .order('first_name');
+      if (profile?.organization_id) query = query.eq('organization_id', profile.organization_id);
+      const { data, error } = await query;
       if (!error) setUsersList(data || []);
     } catch (e) {
       console.error('Error loading users:', e);
@@ -115,11 +117,13 @@ export default function PermissionsTeams() {
     const results = [];
     try {
       const searchTerm = query.trim().toLowerCase();
-      const { data: profiles } = await supabase
+      let searchQ = supabase
         .from('profiles')
         .select('id, first_name, last_name, email, role')
         .or(`first_name.ilike.%${searchTerm}%,last_name.ilike.%${searchTerm}%,email.ilike.%${searchTerm}%`)
         .limit(5);
+      if (profile?.organization_id) searchQ = searchQ.eq('organization_id', profile.organization_id);
+      const { data: profiles } = await searchQ;
       if (profiles) {
         profiles.forEach((p) => {
           results.push({

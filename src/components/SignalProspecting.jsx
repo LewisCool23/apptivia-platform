@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import { supabase } from '../supabaseClient';
 import { useSignalProspecting } from '../hooks/useSignalProspecting';
+import { getSignalTier, getSignalCategory } from '../constants/signalThresholds';
 import { useIcpProspector } from '../hooks/useIcpProspector';
 import ConfirmModal from './ConfirmModal';
 import Tooltip from './shared/Tooltip';
@@ -464,10 +465,10 @@ const BUYING_STAGE_BADGE = {
   decision:      { bg: 'bg-emerald-50', text: 'text-emerald-700' },
 };
 
-const AccountCard = React.memo(function AccountCard({ group, onAction, onDismiss, onResearchCompany, onFindCustomers, onFindContactsAtCompany, contacts, isEnriching, onEnrichCompany, onDraftMessage, companyContacts, enrichingCompanies, onPromoteToAccount, promotedAccountInfo, isPromoting, onCallContact }) {
+const AccountCard = React.memo(function AccountCard({ group, onAction, onDismiss, onResearchCompany, onFindCustomers, onFindContactsAtCompany, contacts, isEnriching, onEnrichCompany, onDraftMessage, companyContacts, enrichingCompanies, onPromoteToAccount, promotedAccountInfo, isPromoting, onCallContact, onClaimAccount }) {
   const [expanded, setExpanded] = useState(false);
   const topSignal = group.signals[0];
-  const hasHighIntent = group.signals.some((s) => s.signal_score >= 70);
+  const hasHighIntent = group.signals.some((s) => getSignalTier(s.signal_score, getSignalCategory(s.signal_type)).label === 'T1');
   const domain = group.signals.find((s) => s.raw_data?.domain)?.raw_data?.domain || '';
 
   return (
@@ -554,13 +555,24 @@ const AccountCard = React.memo(function AccountCard({ group, onAction, onDismiss
           </button>
         )}
         {promotedAccountInfo ? (
-          <button
-            onClick={() => onPromoteToAccount?.(group, true)}
-            className="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-1 rounded-md bg-emerald-50 text-emerald-700 hover:bg-emerald-100 transition-colors"
-            title="View in Accounts tab"
-          >
-            <CheckCircle size={9} /> In Accounts <ArrowRight size={9} />
-          </button>
+          <>
+            <button
+              onClick={() => onPromoteToAccount?.(group, true)}
+              className="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-1 rounded-md bg-emerald-50 text-emerald-700 hover:bg-emerald-100 transition-colors"
+              title="View in Accounts tab"
+            >
+              <CheckCircle size={9} /> In Accounts <ArrowRight size={9} />
+            </button>
+            {!promotedAccountInfo.assigned_to && onClaimAccount && (
+              <button
+                onClick={() => onClaimAccount(promotedAccountInfo.id, group.name)}
+                className="inline-flex items-center gap-1 text-[10px] font-medium px-2 py-1 rounded-md bg-amber-50 text-amber-700 hover:bg-amber-100 transition-colors"
+                title="Claim this account"
+              >
+                <UserPlus size={9} /> Claim
+              </button>
+            )}
+          </>
         ) : onPromoteToAccount && (
           <button
             onClick={() => onPromoteToAccount(group, false)}
@@ -630,7 +642,7 @@ const SignalCard = React.memo(function SignalCard({ signal, onAction, onDismiss,
   const stageStyle = signal.buying_stage_indicator ? buyingStageStyles[signal.buying_stage_indicator] : null;
 
   return (
-    <div className={`bg-white rounded-xl border ${signal.signal_score >= 70 ? 'border-amber-200' : 'border-gray-100'} p-4 hover:shadow-sm transition-shadow ${age?.stale ? 'opacity-75' : ''}`}>
+    <div className={`bg-white rounded-xl border ${getSignalTier(signal.signal_score, getSignalCategory(signal.signal_type)).label === 'T1' ? 'border-amber-200' : 'border-gray-100'} p-4 hover:shadow-sm transition-shadow ${age?.stale ? 'opacity-75' : ''}`}>
       <div className="flex items-start gap-3">
         {/* Icon */}
         <div className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${iconConfig.color}`}>
@@ -659,6 +671,15 @@ const SignalCard = React.memo(function SignalCard({ signal, onAction, onDismiss,
                 {signal.raw_data.signal_subtype.replace(/_/g, ' ')}
               </span>
             )}
+            {/* 4D: Tier badge based on category-specific thresholds */}
+            {(() => {
+              const tier = getSignalTier(signal.signal_score, getSignalCategory(signal.signal_type));
+              return tier.label ? (
+                <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${tier.bg} ${tier.color}`}>
+                  {tier.label}
+                </span>
+              ) : null;
+            })()}
           </div>
 
           <div className="flex items-center gap-3 mb-2">
@@ -1634,20 +1655,22 @@ export default function SignalProspecting({ organizationId, userId, onCallContac
   const [promotedAccounts, setPromotedAccounts] = useState({});
   const [promotingCompany, setPromotingCompany] = useState(null); // name of company being promoted
 
-  // Load promoted accounts from DB on mount
+  const [ownershipFilter, setOwnershipFilter] = useState('all'); // 'all' | 'mine' | 'unclaimed'
+
+  // Load promoted accounts from DB on mount (includes assigned_to for ownership filter)
   useEffect(() => {
     if (!organizationId) return;
     supabase
       .from('engage_accounts')
-      .select('id, account_name, domain')
+      .select('id, account_name, domain, assigned_to')
       .eq('organization_id', organizationId)
       .eq('source', 'signal_prospecting')
       .then(({ data }) => {
         if (!data) return;
         const map = {};
         data.forEach((a) => {
-          map[a.account_name] = { id: a.id, name: a.account_name };
-          if (a.domain) map[a.domain] = { id: a.id, name: a.account_name };
+          map[a.account_name] = { id: a.id, name: a.account_name, assigned_to: a.assigned_to };
+          if (a.domain) map[a.domain] = { id: a.id, name: a.account_name, assigned_to: a.assigned_to };
         });
         setPromotedAccounts(map);
       });
@@ -1684,10 +1707,21 @@ export default function SignalProspecting({ organizationId, userId, onCallContac
       if (s.buying_stage_indicator) map[key].stages.add(s.buying_stage_indicator);
       map[key].types.add(s.signal_type);
     });
-    return Object.values(map)
+    let groups = Object.values(map)
       .map((g) => ({ ...g, avgScore: Math.round(g.totalScore / g.signals.length), stages: Array.from(g.stages), types: Array.from(g.types) }))
       .sort((a, b) => b.avgScore - a.avgScore);
-  }, [filteredSignals]);
+
+    // Ownership filter (only applies when accounts view is active)
+    if (ownershipFilter !== 'all') {
+      groups = groups.filter((g) => {
+        const promo = promotedAccounts[g.name];
+        if (ownershipFilter === 'mine') return promo?.assigned_to === userId;
+        if (ownershipFilter === 'unclaimed') return !promo?.assigned_to;
+        return true;
+      });
+    }
+    return groups;
+  }, [filteredSignals, ownershipFilter, promotedAccounts, userId]);
 
   // Company names for autocomplete — built from all signals in memory
   const autocompleteOptions = useMemo(() => {
@@ -1820,6 +1854,24 @@ export default function SignalProspecting({ organizationId, userId, onCallContac
       setPromotingCompany(null);
     }
   }, [organizationId, promotedAccounts, signals.companyContacts, onNavigateAccounts]);
+
+  const handleClaimAccount = useCallback(async (accountId, companyName) => {
+    if (!userId || !accountId) return;
+    try {
+      const { error } = await supabase
+        .from('engage_accounts')
+        .update({ assigned_to: userId, updated_at: new Date().toISOString() })
+        .eq('id', accountId);
+      if (error) throw error;
+      // Update local state so UI reflects immediately
+      setPromotedAccounts(prev => ({
+        ...prev,
+        [companyName]: { ...prev[companyName], assigned_to: userId },
+      }));
+    } catch (err) {
+      console.error('Claim account failed:', err);
+    }
+  }, [userId]);
 
   const [showDismissConfirm, setShowDismissConfirm] = useState(false);
   const [isDismissing, setIsDismissing] = useState(false);
@@ -2024,6 +2076,29 @@ export default function SignalProspecting({ organizationId, userId, onCallContac
             </button>
           </div>
 
+          {/* Ownership filter (accounts view only) */}
+          {viewMode === 'accounts' && (
+            <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-0.5 self-start">
+              {[
+                { key: 'all', label: 'All' },
+                { key: 'mine', label: 'My Accounts' },
+                { key: 'unclaimed', label: 'Unclaimed' },
+              ].map((opt) => (
+                <button
+                  key={opt.key}
+                  onClick={() => setOwnershipFilter(opt.key)}
+                  className={`px-2.5 py-1 text-xs font-medium rounded-md transition-all ${
+                    ownershipFilter === opt.key
+                      ? 'bg-white shadow-sm text-gray-800'
+                      : 'text-gray-500 hover:text-gray-700'
+                  }`}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+          )}
+
           {/* Filters */}
           <div className="flex items-center gap-2 flex-wrap">
             {/* Company search with autocomplete */}
@@ -2145,6 +2220,7 @@ export default function SignalProspecting({ organizationId, userId, onCallContac
                   promotedAccountInfo={promotedAccounts[group.name] || null}
                   isPromoting={promotingCompany === group.name}
                   onCallContact={onCallContact}
+                  onClaimAccount={handleClaimAccount}
                 />
               ))}
             </div>

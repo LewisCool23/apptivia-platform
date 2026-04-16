@@ -26,6 +26,8 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../AuthContext';
 import { supabase } from '../supabaseClient';
 import { Maximize2, Minimize2, Trophy, TrendingUp, Zap, Users, Star, Flame, Award, ArrowLeft, Target } from 'lucide-react';
+import { getMonday } from '../utils/dateUtils';
+import { LEADERSHIP_ROLE_FILTER } from '../constants/roles';
 
 // ── Constants ────────────────────────────────────────────────────────────────
 
@@ -81,14 +83,7 @@ const CELEBRATION_CONFETTI = Array.from({ length: 90 }, (_, i) => ({
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
-function getMonday(d) {
-  const result = new Date(d);
-  result.setHours(0, 0, 0, 0);
-  const day = result.getDay();
-  const diff = day === 0 ? -6 : 1 - day;
-  result.setDate(result.getDate() + diff);
-  return result;
-}
+// getMonday imported from ../utils/dateUtils (X1 fix)
 
 function formatKpiValue(val, unit) {
   if (unit === 'currency' || unit === 'dollars') return '$' + Math.round(val).toLocaleString();
@@ -124,31 +119,43 @@ function useWallboardData(orgId, selectedTeamId) {
       const priorMondayStr = priorMonday.toISOString().split('T')[0];
       const priorSundayStr = priorSunday.toISOString().split('T')[0];
 
-      // Build profiles query with optional team filter
+      // Build profiles query with optional team filter (org-scoped)
       let profilesQuery = supabase
         .from('profiles')
         .select('id, first_name, last_name, apptivia_level, current_score, total_points, day_streak, role, team_id')
-        .not('role', 'in', '("admin","manager","coach")');
+        .not('role', 'in', LEADERSHIP_ROLE_FILTER);
+      if (orgId) profilesQuery = profilesQuery.eq('organization_id', orgId);
       if (selectedTeamId) profilesQuery = profilesQuery.eq('team_id', selectedTeamId);
+
+      // Build org-scoped contest query
+      let contestsQuery = supabase
+        .from('active_contests')
+        .select(`id, name, participant_type, start_date, end_date,
+          contest_leaderboards(profile_id, rank, score,
+            profile:profiles(first_name, last_name))`)
+        .eq('status', 'active')
+        .order('start_date', { ascending: false })
+        .limit(3);
+      if (orgId) contestsQuery = contestsQuery.eq('organization_id', orgId);
+
+      // Build org-scoped teams query
+      let teamsQuery = supabase.from('teams').select('id, name').order('name');
+      if (orgId) teamsQuery = teamsQuery.eq('organization_id', orgId);
 
       // Stage 1: parallel queries
       const [profilesRes, contestsRes, badgesRes, teamsRes, configRes] = await Promise.all([
         profilesQuery.order('total_points', { ascending: false }).limit(20),
-        supabase
-          .from('active_contests')
-          .select(`id, name, participant_type, start_date, end_date,
-            contest_leaderboards(profile_id, rank, score,
-              profile:profiles(first_name, last_name))`)
-          .eq('status', 'active')
-          .order('start_date', { ascending: false })
-          .limit(3),
-        supabase
-          .from('profile_badges')
-          .select('id, badge_name, icon, color, rarity, earned_at, profile:profiles(first_name, last_name)')
-          .gte('earned_at', since7d)
-          .order('earned_at', { ascending: false })
-          .limit(15),
-        supabase.from('teams').select('id, name').order('name'),
+        contestsQuery,
+        orgId
+          ? supabase
+              .from('profile_badges')
+              .select('id, badge_name, icon, color, rarity, earned_at, profile:profiles!inner(first_name, last_name, organization_id)')
+              .eq('profile.organization_id', orgId)
+              .gte('earned_at', since7d)
+              .order('earned_at', { ascending: false })
+              .limit(15)
+          : Promise.resolve({ data: [] }),
+        teamsQuery,
         orgId
           ? supabase.from('organizations').select('settings').eq('id', orgId).single()
           : Promise.resolve({ data: null }),
@@ -261,7 +268,7 @@ function LeaderboardSlide({ profiles }) {
         <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
       </div>
 
-      <div className="grid grid-cols-2 gap-4 flex-1">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 flex-1">
         {top10.map((rep, i) => {
           const level = rep.apptivia_level || 'Developing';
           const colors = LEVEL_COLORS[level] || LEVEL_COLORS.Developing;
@@ -349,7 +356,7 @@ function SpotlightSlide({ profiles }) {
         </div>
       </div>
 
-      <div className="grid grid-cols-3 gap-8 text-center">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-8 text-center">
         <div className="bg-white/10 rounded-2xl p-6">
           <div className="text-5xl font-black text-amber-400 tabular-nums">
             {(top.total_points || 0).toLocaleString()}
@@ -494,7 +501,7 @@ function TeamStatsSlide({ profiles }) {
         <h2 className="text-5xl font-black text-white tracking-tight">Team Performance</h2>
       </div>
 
-      <div className="grid grid-cols-2 gap-6 mb-8">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-8">
         {stats.map(({ label, value, icon: Icon, color }) => (
           <div key={label} className="bg-white/5 border border-white/10 rounded-2xl p-8 flex items-center gap-6">
             <Icon size={48} className={color} />
@@ -546,7 +553,7 @@ function BadgesSlide({ recentBadges }) {
         <span className="ml-auto text-white/40 text-lg">Last 7 days</span>
       </div>
 
-      <div className="grid grid-cols-3 gap-4 flex-1 content-start">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 flex-1 content-start">
         {recentBadges.map((b) => {
           const rarity = b.rarity?.toLowerCase() || 'common';
           const rc = RARITY_COLORS[rarity] || RARITY_COLORS.common;
@@ -602,7 +609,7 @@ function ActivitySlide({ weeklyKpis, priorWeekKpis }) {
         <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
       </div>
 
-      <div className="grid grid-cols-4 gap-4 flex-1 content-start">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 flex-1 content-start">
         {top8.map((kpi) => {
           const prior = priorMap[kpi.kpi_key] || 0;
           const delta = prior > 0 ? ((kpi.value - prior) / prior * 100) : 0;
@@ -652,7 +659,7 @@ function AchievementsSlide({ recentAchievements }) {
         <span className="ml-auto text-white/40 text-lg">Last 7 days</span>
       </div>
 
-      <div className="grid grid-cols-2 gap-4 flex-1 content-start">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 flex-1 content-start">
         {recentAchievements.map((a) => {
           const name = `${a.profile?.first_name || ''} ${a.profile?.last_name || ''}`.trim() || 'Rep';
           const diff = a.achievement?.difficulty || 'medium';
@@ -760,6 +767,7 @@ function WallboardCelebration({ orgId, enabled }) {
         event: 'INSERT',
         schema: 'public',
         table: 'notifications',
+        ...(orgId ? { filter: `organization_id=eq.${orgId}` } : {}),
       }, (payload) => {
         const n = payload.new;
         if (seenIds.current.has(n.id)) return;

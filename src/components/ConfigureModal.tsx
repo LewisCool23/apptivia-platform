@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../supabaseClient';
 import { useToast } from '../contexts/ToastContext';
+import { useAuth } from '../AuthContext';
 import ConfirmModal from './ConfirmModal';
 
 interface ConfigureModalProps {
@@ -27,6 +28,8 @@ interface KPIConfig {
 
 export default function ConfigureModal({ isOpen, onClose, onSave, currentUserId }: ConfigureModalProps) {
   const toast = useToast();
+  const { profile } = useAuth();
+  const orgId = (profile as any)?.organization_id;
   const [kpiConfigs, setKpiConfigs] = useState<KPIConfig[]>([]);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -58,14 +61,24 @@ export default function ConfigureModal({ isOpen, onClose, onSave, currentUserId 
 
   async function fetchScorecardKpis() {
     try {
-      const { data, error } = await supabase
-        .from('kpi_metrics')
-        .select('key')
-        .eq('show_on_scorecard', true)
-        .order('scorecard_position');
-      
-      if (error) throw error;
-      setScorecardKpis(data?.map((k: any) => k.key) || []);
+      if (orgId) {
+        const { data, error } = await supabase
+          .from('kpi_org_configs')
+          .select('kpi_metrics!inner(key)')
+          .eq('organization_id', orgId)
+          .eq('show_on_scorecard', true)
+          .order('scorecard_position');
+        if (error) throw error;
+        setScorecardKpis((data || []).map((c: any) => (c.kpi_metrics as any).key) || []);
+      } else {
+        const { data, error } = await supabase
+          .from('kpi_metrics')
+          .select('key')
+          .eq('show_on_scorecard', true)
+          .order('scorecard_position');
+        if (error) throw error;
+        setScorecardKpis(data?.map((k: any) => k.key) || []);
+      }
     } catch (err: any) {
       console.error('Error fetching scorecard KPIs:', err);
     }
@@ -74,15 +87,54 @@ export default function ConfigureModal({ isOpen, onClose, onSave, currentUserId 
   async function fetchCurrentConfigs() {
     setLoading(true);
     try {
-      const { data, error } = await supabase
-        .from('kpi_metrics')
-        .select('id, key, name, description, goal, weight, unit, category, is_custom, is_active, show_on_scorecard, scorecard_position')
-        .eq('is_active', true)
-        .order('category', { ascending: true })
-        .order('name', { ascending: true });
+      if (orgId) {
+        // Load org-specific configs
+        const { data: orgData, error } = await supabase
+          .from('kpi_org_configs')
+          .select('id, kpi_id, goal, weight, is_active, show_on_scorecard, scorecard_position, kpi_metrics!inner(id, key, name, description, unit, category, is_custom)')
+          .eq('organization_id', orgId)
+          .eq('is_active', true);
+        if (error) throw error;
+        const configs = (orgData || []).map((c: any) => ({
+          id: (c.kpi_metrics as any).id,
+          key: (c.kpi_metrics as any).key,
+          name: (c.kpi_metrics as any).name,
+          description: (c.kpi_metrics as any).description,
+          goal: c.goal,
+          weight: c.weight,
+          unit: (c.kpi_metrics as any).unit,
+          category: (c.kpi_metrics as any).category,
+          is_custom: (c.kpi_metrics as any).is_custom,
+          is_active: c.is_active,
+          show_on_scorecard: c.show_on_scorecard,
+          scorecard_position: c.scorecard_position,
+        }));
 
-      if (error) throw error;
-      setKpiConfigs(data || []);
+        // Also load global catalog KPIs not yet in org configs
+        const orgKeys = new Set(configs.map((c: any) => c.key));
+        const { data: globalData } = await supabase
+          .from('kpi_metrics')
+          .select('id, key, name, description, goal, weight, unit, category, is_custom')
+          .eq('is_active', true);
+        const additional = (globalData || [])
+          .filter((m: any) => !orgKeys.has(m.key))
+          .map((m: any) => ({
+            ...m, is_active: true, show_on_scorecard: false, scorecard_position: null,
+          }));
+
+        const all = [...configs, ...additional];
+        all.sort((a: any, b: any) => (a.category || '').localeCompare(b.category || '') || (a.name || '').localeCompare(b.name || ''));
+        setKpiConfigs(all);
+      } else {
+        const { data, error } = await supabase
+          .from('kpi_metrics')
+          .select('id, key, name, description, goal, weight, unit, category, is_custom, is_active, show_on_scorecard, scorecard_position')
+          .eq('is_active', true)
+          .order('category', { ascending: true })
+          .order('name', { ascending: true });
+        if (error) throw error;
+        setKpiConfigs(data || []);
+      }
     } catch (err: any) {
       toast.error('Error loading configurations: ' + err.message);
       setMessage('Error loading configurations: ' + err.message);
@@ -96,26 +148,34 @@ export default function ConfigureModal({ isOpen, onClose, onSave, currentUserId 
     setMessage('');
     const loadingToast = toast.loading('Saving configuration...');
     try {
-      // Update each KPI metric
       for (const config of kpiConfigs) {
-        const { error } = await supabase
+        // Catalog fields → kpi_metrics (global)
+        const { error: catErr } = await supabase
           .from('kpi_metrics')
-          .update({ 
-            name: config.name,
-            description: config.description,
-            goal: config.goal, 
-            weight: config.weight,
-            unit: config.unit,
-            category: config.category
-          })
+          .update({ name: config.name, description: config.description, unit: config.unit, category: config.category })
           .eq('key', config.key);
+        if (catErr) throw catErr;
 
-        if (error) throw error;
+        // Config fields → kpi_org_configs (per-org)
+        if (orgId) {
+          const { error: cfgErr } = await supabase
+            .from('kpi_org_configs')
+            .update({ goal: config.goal, weight: config.weight, updated_at: new Date().toISOString() })
+            .eq('organization_id', orgId)
+            .eq('kpi_id', config.id);
+          if (cfgErr) throw cfgErr;
+        } else {
+          const { error } = await supabase
+            .from('kpi_metrics')
+            .update({ goal: config.goal, weight: config.weight })
+            .eq('key', config.key);
+          if (error) throw error;
+        }
       }
 
       toast.dismiss(loadingToast);
       toast.success('Configuration saved successfully!');
-      if (onSave) onSave(); // Trigger scorecard refresh
+      if (onSave) onSave();
       setMessage('Configuration saved! You can continue editing or close the modal.');
     } catch (err: any) {
       toast.dismiss(loadingToast);
@@ -131,10 +191,18 @@ export default function ConfigureModal({ isOpen, onClose, onSave, currentUserId 
       toast.error('Please fill in Key and Name fields');
       return;
     }
+    if (newKpi.goal !== undefined && newKpi.goal <= 0) {
+      toast.error('Goal must be greater than 0');
+      return;
+    }
+    if (newKpi.weight !== undefined && (newKpi.weight < 0 || newKpi.weight > 1)) {
+      toast.error('Weight must be between 0 and 1');
+      return;
+    }
 
     const loadingToast = toast.loading('Creating KPI...');
     try {
-      const { error } = await supabase
+      const { data: inserted, error } = await supabase
         .from('kpi_metrics')
         .insert({
           key: newKpi.key.toLowerCase().replace(/\s+/g, '_'),
@@ -146,9 +214,24 @@ export default function ConfigureModal({ isOpen, onClose, onSave, currentUserId 
           category: newKpi.category,
           is_custom: true,
           is_active: true,
-        });
+        })
+        .select('id')
+        .single();
 
       if (error) throw error;
+
+      // Also create org-scoped config entry so it shows up in org queries
+      if (orgId && inserted?.id) {
+        await supabase.from('kpi_org_configs').upsert({
+          organization_id: orgId,
+          kpi_id: inserted.id,
+          goal: newKpi.goal,
+          weight: newKpi.weight,
+          is_active: true,
+          show_on_scorecard: false,
+          updated_at: new Date().toISOString(),
+        }, { onConflict: 'organization_id,kpi_id' });
+      }
 
       toast.dismiss(loadingToast);
       toast.success(`KPI "${newKpi.name}" created successfully!`);
@@ -194,8 +277,15 @@ export default function ConfigureModal({ isOpen, onClose, onSave, currentUserId 
         .from('kpi_metrics')
         .update({ is_active: false })
         .eq('key', kpi.key);
-
       if (error) throw error;
+
+      // Also deactivate in org config
+      if (orgId && kpi.id) {
+        await supabase.from('kpi_org_configs')
+          .update({ is_active: false, updated_at: new Date().toISOString() })
+          .eq('organization_id', orgId)
+          .eq('kpi_id', kpi.id);
+      }
 
       toast.dismiss(loadingToast);
       toast.success(`KPI "${kpi.name}" deleted successfully`);
@@ -209,22 +299,30 @@ export default function ConfigureModal({ isOpen, onClose, onSave, currentUserId 
   }
 
   async function handleToggleScorecardKpi(key: string) {
+    const config = kpiConfigs.find(k => k.key === key);
     if (scorecardKpis.includes(key)) {
       // Remove from scorecard
       const newList = scorecardKpis.filter(k => k !== key);
       setScorecardKpis(newList);
-      
-      // Update database
-      const { error } = await supabase
-        .from('kpi_metrics')
-        .update({ show_on_scorecard: false, scorecard_position: null })
-        .eq('key', key);
-      
+
+      let error: any = null;
+      if (orgId && config) {
+        ({ error } = await supabase
+          .from('kpi_org_configs')
+          .update({ show_on_scorecard: false, scorecard_position: null, updated_at: new Date().toISOString() })
+          .eq('organization_id', orgId)
+          .eq('kpi_id', config.id));
+      } else {
+        ({ error } = await supabase
+          .from('kpi_metrics')
+          .update({ show_on_scorecard: false, scorecard_position: null })
+          .eq('key', key));
+      }
+
       if (error) {
         toast.error('Error updating scorecard');
         console.error(error);
       } else {
-        // Refresh configs and trigger parent refresh
         await fetchCurrentConfigs();
         if (onSave) onSave();
       }
@@ -234,24 +332,28 @@ export default function ConfigureModal({ isOpen, onClose, onSave, currentUserId 
         toast.error('You can only select 5 KPIs for the scorecard');
         return;
       }
-      
+
       const newList = [...scorecardKpis, key];
       setScorecardKpis(newList);
-      
-      // Update database
-      const { error } = await supabase
-        .from('kpi_metrics')
-        .update({ 
-          show_on_scorecard: true, 
-          scorecard_position: newList.length 
-        })
-        .eq('key', key);
-      
+
+      let error: any = null;
+      if (orgId && config) {
+        ({ error } = await supabase
+          .from('kpi_org_configs')
+          .update({ show_on_scorecard: true, scorecard_position: newList.length, updated_at: new Date().toISOString() })
+          .eq('organization_id', orgId)
+          .eq('kpi_id', config.id));
+      } else {
+        ({ error } = await supabase
+          .from('kpi_metrics')
+          .update({ show_on_scorecard: true, scorecard_position: newList.length })
+          .eq('key', key));
+      }
+
       if (error) {
         toast.error('Error updating scorecard');
         console.error(error);
       } else {
-        // Refresh configs and trigger parent refresh
         await fetchCurrentConfigs();
         if (onSave) onSave();
       }
@@ -271,10 +373,19 @@ export default function ConfigureModal({ isOpen, onClose, onSave, currentUserId 
     
     // Update positions in database
     for (let i = 0; i < newList.length; i++) {
-      await supabase
-        .from('kpi_metrics')
-        .update({ scorecard_position: i + 1 })
-        .eq('key', newList[i]);
+      const config = kpiConfigs.find(k => k.key === newList[i]);
+      if (orgId && config) {
+        await supabase
+          .from('kpi_org_configs')
+          .update({ scorecard_position: i + 1, updated_at: new Date().toISOString() })
+          .eq('organization_id', orgId)
+          .eq('kpi_id', config.id);
+      } else {
+        await supabase
+          .from('kpi_metrics')
+          .update({ scorecard_position: i + 1 })
+          .eq('key', newList[i]);
+      }
     }
   }
 

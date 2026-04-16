@@ -1,6 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { supabase } from '../supabaseClient';
 import { updateContestLeaderboard } from '../utils/contestUtils';
+import { ROLES } from '../constants/roles';
 
 export interface ContestLeaderboardEntry {
   rank: number;
@@ -64,7 +65,7 @@ export interface Badge {
   contest_name: string | null;
 }
 
-export function useContests(currentUserId?: string) {
+export function useContests(currentUserId?: string, organizationId?: string) {
   const [data, setData] = useState<ContestsData>({
     active: [],
     upcoming: [],
@@ -75,18 +76,20 @@ export function useContests(currentUserId?: string) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [kpiNameByKey, setKpiNameByKey] = useState<Record<string, string>>({});
+  // M9 fix: in-flight guard for enrollment/withdrawal operations
+  const enrollingRef = useRef(new Set<string>());
 
   useEffect(() => {
-    fetchContests();
-  }, [currentUserId]);
+    if (organizationId) fetchContests();
+  }, [currentUserId, organizationId]);
 
   const fetchContests = async () => {
     try {
       setLoading(true);
       setError(null);
 
-      // Fetch all contests with participant counts
-      const { data: contests, error: contestsError } = await supabase
+      // Fetch all contests with participant counts (org-scoped)
+      let contestsQuery = supabase
         .from('active_contests')
         .select(`
           *,
@@ -95,6 +98,9 @@ export function useContests(currentUserId?: string) {
         `)
         .order('start_date', { ascending: false })
         .limit(200);
+      if (organizationId) contestsQuery = contestsQuery.eq('organization_id', organizationId);
+      else { setLoading(false); return; }
+      const { data: contests, error: contestsError } = await contestsQuery;
 
       if (contestsError) throw contestsError;
 
@@ -134,11 +140,14 @@ export function useContests(currentUserId?: string) {
         return name || profile?.email || 'Unknown';
       };
 
-      // Fetch participant counts with profile/team data for fallback display
-      const { data: participantRows, error: participantError } = await supabase
-        .from('contest_participants')
-        .select('contest_id, profile_id, is_active, profile:profiles(first_name, last_name, email), team:teams(name)')
-        .eq('is_active', true);
+      // Fetch participant counts with profile/team data for fallback display — scoped to org contests
+      const { data: participantRows, error: participantError } = contestIds.length > 0
+        ? await supabase
+            .from('contest_participants')
+            .select('contest_id, profile_id, is_active, profile:profiles(first_name, last_name, email), team:teams(name)')
+            .eq('is_active', true)
+            .in('contest_id', contestIds)
+        : { data: [] as any[], error: null };
 
       if (participantError) throw participantError;
 
@@ -300,6 +309,10 @@ export function useContests(currentUserId?: string) {
   };
 
   const enrollInContest = async (contestId: string, profileId: string) => {
+    // M9 fix: prevent double-enrollment from rapid clicks
+    const key = `enroll:${contestId}:${profileId}`;
+    if (enrollingRef.current.has(key)) return { success: false, error: 'Already processing' };
+    enrollingRef.current.add(key);
     try {
       // Guard: only allow enrollment in active contests
       const { data: contestData } = await supabase
@@ -367,10 +380,16 @@ export function useContests(currentUserId?: string) {
     } catch (err) {
       console.error('Error enrolling in contest:', err);
       return { success: false, error: err instanceof Error ? err.message : 'Failed to enroll' };
+    } finally {
+      enrollingRef.current.delete(key);
     }
   };
 
   const withdrawFromContest = async (contestId: string, profileId: string) => {
+    // M9 fix: prevent double-withdrawal from rapid clicks
+    const wKey = `withdraw:${contestId}:${profileId}`;
+    if (enrollingRef.current.has(wKey)) return { success: false, error: 'Already processing' };
+    enrollingRef.current.add(wKey);
     try {
       const { error } = await supabase
         .from('contest_participants')
@@ -406,6 +425,8 @@ export function useContests(currentUserId?: string) {
     } catch (err) {
       console.error('Error withdrawing from contest:', err);
       return { success: false, error: err instanceof Error ? err.message : 'Failed to withdraw' };
+    } finally {
+      enrollingRef.current.delete(wKey);
     }
   };
 
@@ -430,7 +451,7 @@ export function useContests(currentUserId?: string) {
       if (profileError) throw profileError;
 
       // Check permissions
-      const isAdmin = profile?.role === 'admin';
+      const isAdmin = profile?.role === ROLES.ADMIN;
       const isCreator = contest?.created_by === userId;
 
       if (!isAdmin && !isCreator) {

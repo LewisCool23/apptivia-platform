@@ -1,16 +1,23 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Building2, Users, CreditCard, Bell, Shield, Save, Search, X, UserPlus, Check, Plus, ChevronDown, ChevronRight, Maximize2, CalendarClock, FileText, Play, Pause, Trash2, Pencil, Send, Calendar, Clock, Mail } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { Building2, Users, CreditCard, Bell, Shield, Save, Search, X, UserPlus, Check, Plus, ChevronDown, ChevronRight, Maximize2, CalendarClock, FileText, Play, Pause, Trash2, Pencil, Send, Calendar, Clock, Mail, Layers, Database, Upload } from 'lucide-react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import DashboardLayout from '../DashboardLayout';
 import { useAuth } from '../AuthContext';
 import { supabase } from '../supabaseClient';
 import PageActionBar from '../components/PageActionBar';
-import OnboardingWizard from '../components/OnboardingWizard';
+import OnboardingWizard from '../components/onboarding/OnboardingWizard';
 import { useNotifications } from '../contexts/NotificationContext';
 import { backendFetch } from '../utils/backendFetch';
 import { useTeamManagement } from '../hooks/useTeamManagement';
 import CepConfigSection from '../components/CepConfigSection';
+import SalesDnaConfigSection from '../components/SalesDnaConfigSection';
 import ScheduleReportModal from '../components/ScheduleReportModal';
+import { useKpiTemplates } from '../hooks/useKpiTemplates';
+import KpiImportModal from '../components/KpiImportModal';
+import { useTitles } from '../hooks/useTitles';
+import ConfirmModal from '../components/ConfirmModal';
+import { ROLES } from '../constants/roles';
+import { INDUSTRY_OPTIONS } from '../components/onboarding/onboardingConstants';
 
 function SignalTagField({ label, hint, items, value, onChange, onAdd, onRemove, placeholder, tagClass }) {
   return (
@@ -42,11 +49,164 @@ function SignalTagField({ label, hint, items, value, onChange, onAdd, onRemove, 
   );
 }
 
+const TIER_DISPLAY = { Basic: 'Starter', Pro: 'Pro', Enterprise: 'Enterprise' };
+const TIER_SEAT_PRICES = { Basic: 19, Pro: 49, Enterprise: null };
+const TIER_SUPPORT = { Basic: 'Email', Pro: 'Priority', Enterprise: 'Dedicated' };
+const TIER_ORDER = ['Basic', 'Pro', 'Enterprise'];
+
+function SubscriptionTab({ organization, members, teams, setMessage }) {
+  const [billingData, setBillingData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [actionLoading, setActionLoading] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    backendFetch('/api/billing/subscription', undefined, 'GET')
+      .then(data => { if (!cancelled) { setBillingData(data); setLoading(false); } })
+      .catch(() => { if (!cancelled) setLoading(false); });
+    return () => { cancelled = true; };
+  }, []);
+
+  const currentTier = billingData?.plan || organization?.subscription_plan || 'Pro';
+  const status = billingData?.status || 'active';
+  const userCount = billingData?.usage?.users || members.length;
+  const seats = billingData?.seats || userCount;
+  const pricePerSeat = billingData?.pricePerSeat ?? TIER_SEAT_PRICES[currentTier] ?? null;
+  const monthlyTotal = pricePerSeat ? pricePerSeat * seats : null;
+  const periodEnd = billingData?.periodEnd;
+  const hasStripe = billingData?.hasStripe;
+
+  const handleCheckout = async (plan) => {
+    setActionLoading(true);
+    try {
+      const data = await backendFetch('/api/billing/checkout', { plan });
+      if (data.url) { window.location.href = data.url; return; }
+      if (data.error) setMessage({ type: 'error', text: data.error });
+    } catch (err) { setMessage({ type: 'error', text: err.message || 'Failed to start checkout' }); }
+    setActionLoading(false);
+  };
+
+  const handlePortal = async () => {
+    setActionLoading(true);
+    try {
+      const data = await backendFetch('/api/billing/portal', {});
+      if (data.url) { window.location.href = data.url; return; }
+      if (data.error) setMessage({ type: 'error', text: data.error });
+    } catch (err) { setMessage({ type: 'error', text: err.message || 'Failed to open billing portal' }); }
+    setActionLoading(false);
+  };
+
+  const statusColor = status === 'active' ? 'bg-green-100 text-green-700' : status === 'trialing' ? 'bg-blue-100 text-blue-700' : status === 'past_due' ? 'bg-red-100 text-red-700' : 'bg-gray-100 text-gray-600';
+
+  if (loading) return <div className="bg-white rounded-lg shadow-sm p-6"><div className="animate-pulse h-40 bg-gray-100 rounded-lg" /></div>;
+
+  return (
+    <div className="space-y-6">
+      {/* Current Plan */}
+      <div className="bg-white rounded-lg shadow-sm p-6">
+        <h3 className="text-lg font-semibold mb-4">Current Plan</h3>
+        <div className="border rounded-lg p-6 mb-6">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <div className="flex items-center gap-3">
+                <span className="text-2xl font-bold">{TIER_DISPLAY[currentTier] || currentTier} Plan</span>
+                <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${statusColor}`}>
+                  {status === 'active' ? 'Active' : status === 'trialing' ? 'Trial' : status === 'past_due' ? 'Past Due' : status === 'canceled' ? 'Canceled' : status}
+                </span>
+              </div>
+              {periodEnd && <div className="text-sm text-gray-500 mt-1">Renews {new Date(periodEnd).toLocaleDateString()}</div>}
+            </div>
+            <div className="text-right">
+              {pricePerSeat ? (
+                <>
+                  <div className="text-2xl font-bold">${pricePerSeat}<span className="text-sm font-normal text-gray-500">/seat/mo</span></div>
+                  {monthlyTotal && <div className="text-sm text-gray-500">${monthlyTotal}/mo total ({seats} {seats === 1 ? 'seat' : 'seats'})</div>}
+                </>
+              ) : (
+                <div className="text-2xl font-bold">Custom</div>
+              )}
+            </div>
+          </div>
+          <div className="border-t pt-4 space-y-2 text-sm">
+            <div className="flex justify-between"><span className="text-gray-600">Active Users</span><span className="font-medium">{userCount}</span></div>
+            <div className="flex justify-between"><span className="text-gray-600">Seats</span><span className="font-medium">{seats}</span></div>
+            <div className="flex justify-between"><span className="text-gray-600">Teams</span><span className="font-medium">{teams.length}</span></div>
+            <div className="flex justify-between"><span className="text-gray-600">Support</span><span className="font-medium">{TIER_SUPPORT[currentTier] || 'Email'}</span></div>
+          </div>
+          {status === 'past_due' && (
+            <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
+              Your payment failed. Please update your payment method to avoid service interruption.
+            </div>
+          )}
+        </div>
+        <div className="flex gap-3">
+          {hasStripe ? (
+            <button onClick={handlePortal} disabled={actionLoading} className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50">
+              {actionLoading ? 'Loading...' : 'Manage Billing'}
+            </button>
+          ) : (
+            <button onClick={() => handleCheckout(currentTier)} disabled={actionLoading} className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50">
+              {actionLoading ? 'Loading...' : 'Set Up Billing'}
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* Plan Comparison */}
+      <div className="bg-white rounded-lg shadow-sm p-6">
+        <h3 className="text-lg font-semibold mb-4">Available Plans</h3>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {TIER_ORDER.map(tier => {
+            const isCurrent = tier === currentTier;
+            const isUpgrade = (({ Basic: 1, Pro: 2, Enterprise: 3 })[tier] || 0) > (({ Basic: 1, Pro: 2, Enterprise: 3 })[currentTier] || 0);
+            const features = {
+              Basic: ['Scorecard & Wallboard', 'Aaron AI Chatbot', 'CRM Integrations', 'CSV Upload', 'Email support'],
+              Pro: ['Everything in Starter', 'Coach & Coaching Plans', 'Contests & Engage', 'Signal Prospecting', 'Advanced Analytics', 'Priority support'],
+              Enterprise: ['Everything in Pro', 'Custom integrations', 'SSO & audit log', 'API access', 'Dedicated support', 'SLA guarantee'],
+            };
+            return (
+              <div key={tier} className={`border rounded-lg p-5 ${isCurrent ? 'border-blue-500 bg-blue-50/30 ring-1 ring-blue-200' : 'border-gray-200'} ${tier === 'Pro' && !isCurrent ? 'border-purple-300' : ''}`}>
+                <div className="flex items-center justify-between mb-2">
+                  <h4 className="font-semibold text-lg">{TIER_DISPLAY[tier]}</h4>
+                  {isCurrent && <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">Current</span>}
+                  {tier === 'Pro' && !isCurrent && <span className="text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full">Popular</span>}
+                </div>
+                <div className="text-2xl font-bold mb-3">{TIER_SEAT_PRICES[tier] ? `$${TIER_SEAT_PRICES[tier]}` : 'Custom'}{TIER_SEAT_PRICES[tier] && <span className="text-sm font-normal text-gray-500">/seat/mo</span>}</div>
+                <ul className="space-y-1.5 text-sm text-gray-600 mb-4">
+                  {(features[tier] || []).map((f, i) => <li key={i} className="flex items-start gap-1.5"><Check size={14} className="text-green-500 mt-0.5 flex-shrink-0" />{f}</li>)}
+                </ul>
+                {!isCurrent && isUpgrade && tier !== 'Enterprise' && (
+                  <button onClick={() => handleCheckout(tier)} disabled={actionLoading} className="w-full py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm disabled:opacity-50">
+                    {actionLoading ? 'Loading...' : `Upgrade to ${TIER_DISPLAY[tier]}`}
+                  </button>
+                )}
+                {tier === 'Enterprise' && !isCurrent && (
+                  <a href="mailto:support@apptivia.app?subject=Enterprise Plan Inquiry" className="block w-full py-2 text-center border border-gray-300 rounded-lg hover:bg-gray-50 text-sm">Contact Sales</a>
+                )}
+                {isCurrent && <div className="text-center text-sm text-gray-400 py-2">Your current plan</div>}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function OrganizationSettings() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { user, profile, role } = useAuth();
   const { openPanel, unreadCount } = useNotifications();
-  const [activeTab, setActiveTab] = useState('general');
+  const titles = useTitles(profile?.organization_id);
+  const [activeTab, setActiveTab] = useState(() => searchParams.get('tab') || 'general');
+
+  // Sync tab when navigating to this page with a ?tab= param
+  useEffect(() => {
+    const tab = searchParams.get('tab');
+    if (tab) setActiveTab(tab);
+  }, [searchParams]);
+
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState({ type: '', text: '' });
@@ -74,6 +234,8 @@ export default function OrganizationSettings() {
   const [showInviteModal, setShowInviteModal] = useState(false);
   const [inviteEmails, setInviteEmails] = useState('');
   const [inviteRole, setInviteRole] = useState('power_user');
+  const [inviteTitle, setInviteTitle] = useState('');
+  const [inviteTitleKey, setInviteTitleKey] = useState('');
   const [inviteTeamId, setInviteTeamId] = useState('');
   const [inviteSending, setInviteSending] = useState(false);
 
@@ -82,8 +244,16 @@ export default function OrganizationSettings() {
   // Edit Member modal state
   const [editingMember, setEditingMember] = useState(null);
   const [editRole, setEditRole] = useState('');
+  const [editSecondaryRole, setEditSecondaryRole] = useState('');
   const [editTeamId, setEditTeamId] = useState('');
+  const [editTitle, setEditTitle] = useState('');
+  const [editSegment, setEditSegment] = useState('');
   const [savingMember, setSavingMember] = useState(false);
+
+  // Delete Team / Remove Member state
+  const [deleteTeamTarget, setDeleteTeamTarget] = useState(null);
+  const [removeMemberTarget, setRemoveMemberTarget] = useState(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
 
   // Scheduled Reports state
   const [scheduledReports, setScheduledReports] = useState([]);
@@ -91,10 +261,22 @@ export default function OrganizationSettings() {
   const [showScheduleModal, setShowScheduleModal] = useState(false);
   const [editingReport, setEditingReport] = useState(null);
 
-  const isAdmin = role === 'admin';
-  const isManagerOrAbove = ['admin', 'manager'].includes(role);
+  const isAdmin = role === ROLES.ADMIN;
+  const isManagerOrAbove = [ROLES.ADMIN, ROLES.MANAGER].includes(role);
+
+  // 4C: KPI Role Templates
+  const kpiTemplates = useKpiTemplates(profile?.organization_id || null);
+  const [applyingTemplate, setApplyingTemplate] = useState(null);
+
+  // Data Import state
+  const [showKpiImport, setShowKpiImport] = useState(false);
+  const [importHistory, setImportHistory] = useState([]);
+  const [loadingImportHistory, setLoadingImportHistory] = useState(false);
 
   useEffect(() => {
+    // Skip reloading while onboarding wizard is open — refreshProfile() during
+    // step 1 changes organization_id which would re-trigger loadData mid-wizard
+    if (showOnboarding) return;
     loadData();
   }, [profile?.organization_id]);
 
@@ -132,7 +314,7 @@ export default function OrganizationSettings() {
     setLoadingReports(true);
     try {
       const data = await backendFetch('/api/scheduled-reports', undefined, 'GET');
-      setScheduledReports(Array.isArray(data) ? data : []);
+      setScheduledReports(Array.isArray(data?.reports) ? data.reports : Array.isArray(data) ? data : []);
     } catch (err) {
       console.error('Failed to load scheduled reports:', err);
     } finally {
@@ -143,6 +325,29 @@ export default function OrganizationSettings() {
   useEffect(() => {
     if (activeTab === 'reports' && organization?.id) loadScheduledReports();
   }, [activeTab, organization?.id, loadScheduledReports]);
+
+  // Load import history when Data Import tab is active
+  const loadImportHistory = useCallback(async () => {
+    if (!organization?.id) return;
+    setLoadingImportHistory(true);
+    try {
+      const { data, error } = await supabase
+        .from('kpi_import_jobs')
+        .select('*')
+        .eq('organization_id', organization.id)
+        .order('created_at', { ascending: false })
+        .limit(20);
+      if (!error) setImportHistory(data || []);
+    } catch (err) {
+      console.error('Failed to load import history:', err);
+    } finally {
+      setLoadingImportHistory(false);
+    }
+  }, [organization?.id]);
+
+  useEffect(() => {
+    if (activeTab === 'data' && organization?.id) loadImportHistory();
+  }, [activeTab, organization?.id, loadImportHistory]);
 
   const handleToggleReport = async (report) => {
     try {
@@ -255,6 +460,8 @@ export default function OrganizationSettings() {
     customSignals: true,
     universalCompany: false,
     universalInterest: false,
+    salesMethodology: false,
+    salesProcess: false,
   });
   const toggleSection = (key) => setExpandedSections(prev => ({ ...prev, [key]: !prev[key] }));
   const [newCustomSignal, setNewCustomSignal] = useState({
@@ -536,12 +743,16 @@ export default function OrganizationSettings() {
       const result = await backendFetch('/api/users/invite', {
         emails,
         role: inviteRole,
+        ...(inviteTitle ? { title: inviteTitle } : {}),
+        ...(inviteTitleKey ? { title_key: inviteTitleKey } : {}),
         ...(inviteTeamId ? { team_id: inviteTeamId } : {}),
       });
       const { invited = 0, skipped = 0, errors: inviteErrors = [] } = result;
       setShowInviteModal(false);
       setInviteEmails('');
       setInviteRole('power_user');
+      setInviteTitle('');
+      setInviteTitleKey('');
       setInviteTeamId('');
       const parts = [`${invited} invitation(s) sent`];
       if (skipped > 0) parts.push(`${skipped} skipped (already in org)`);
@@ -571,16 +782,33 @@ export default function OrganizationSettings() {
   const openEditMember = (member) => {
     setEditingMember(member);
     setEditRole(member.role || 'power_user');
+    setEditSecondaryRole(member.secondary_role || '');
     setEditTeamId(member.team_id || '');
+    setEditTitle(member.title || '');
+    setEditSegment(member.segment || '');
   };
 
   const handleSaveMember = async () => {
     if (!editingMember) return;
     setSavingMember(true);
     try {
+      // Auto-resolve department from the selected team
+      let department = null;
+      if (editTeamId) {
+        const team = teamHook.teams.find(t => t.id === editTeamId);
+        if (team?.department_id) {
+          const { data: dept } = await supabase.from('departments').select('name').eq('id', team.department_id).maybeSingle();
+          department = dept?.name || null;
+        }
+      }
+
       const { error } = await supabase.from('profiles').update({
         role: editRole,
+        secondary_role: editSecondaryRole || null,
         team_id: editTeamId || null,
+        title: editTitle || null,
+        segment: editSegment || null,
+        department: department,
       }).eq('id', editingMember.id);
       if (error) throw error;
       setEditingMember(null);
@@ -591,6 +819,48 @@ export default function OrganizationSettings() {
       setMessage({ type: 'error', text: 'Failed to update member: ' + err.message });
     } finally {
       setSavingMember(false);
+    }
+  };
+
+  // ── Delete Team handler ───────────────────────────────
+  const handleDeleteTeam = async () => {
+    if (!deleteTeamTarget) return;
+    setDeleteLoading(true);
+    try {
+      const result = await teamHook.handleDeleteTeam(deleteTeamTarget.id);
+      if (!result.success) throw new Error(result.error);
+      setDeleteTeamTarget(null);
+      setMessage({ type: 'success', text: `Team "${deleteTeamTarget.name}" deleted. Members have been unassigned.` });
+      await loadData();
+    } catch (err) {
+      setMessage({ type: 'error', text: 'Failed to delete team: ' + err.message });
+    } finally {
+      setDeleteLoading(false);
+    }
+  };
+
+  // ── Remove Member handler ──────────────────────────────
+  const handleRemoveMember = async () => {
+    if (!removeMemberTarget) return;
+    setDeleteLoading(true);
+    try {
+      const { error } = await supabase.from('profiles').update({
+        organization_id: null,
+        team_id: null,
+      }).eq('id', removeMemberTarget.id);
+      if (error) throw error;
+      // Clean up pending invitations
+      await supabase.from('invitations')
+        .delete()
+        .eq('email', removeMemberTarget.email)
+        .eq('status', 'pending');
+      setRemoveMemberTarget(null);
+      setMessage({ type: 'success', text: `${removeMemberTarget.first_name ? removeMemberTarget.first_name + ' ' + removeMemberTarget.last_name : removeMemberTarget.email} removed from organization` });
+      await loadData();
+    } catch (err) {
+      setMessage({ type: 'error', text: 'Failed to remove member: ' + err.message });
+    } finally {
+      setDeleteLoading(false);
     }
   };
 
@@ -741,6 +1011,8 @@ export default function OrganizationSettings() {
               { id: 'teams', label: 'Teams & Members', icon: Users },
               { id: 'subscription', label: 'Subscription', icon: CreditCard },
               { id: 'reports', label: 'Reports', icon: CalendarClock },
+              ...(isManagerOrAbove ? [{ id: 'kpi_templates', label: 'KPI Templates', icon: Layers }] : []),
+              ...(isAdmin ? [{ id: 'data', label: 'Data Import', icon: Database }] : []),
               { id: 'notifications', label: 'Notifications', icon: Bell },
             ].map((tab) => (
               <button
@@ -802,12 +1074,9 @@ export default function OrganizationSettings() {
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
                     >
                       <option value="">Select industry</option>
-                      <option value="Technology">Technology</option>
-                      <option value="Finance">Finance</option>
-                      <option value="Healthcare">Healthcare</option>
-                      <option value="Retail">Retail</option>
-                      <option value="Manufacturing">Manufacturing</option>
-                      <option value="Other">Other</option>
+                      {INDUSTRY_OPTIONS.map((ind) => (
+                        <option key={ind} value={ind}>{ind}</option>
+                      ))}
                     </select>
                   </div>
 
@@ -1267,8 +1536,50 @@ export default function OrganizationSettings() {
                 )}
               </div>
 
-              {/* Sales Process (CEP) */}
-              <CepConfigSection organizationId={organization?.id} />
+              {/* Sales DNA — Methodology, Qualification & Sales Process */}
+              <div className="border-t pt-6">
+                <div className="mb-4">
+                  <h3 className="text-lg font-semibold">Sales DNA</h3>
+                  <p className="text-xs text-gray-500 mt-0.5">
+                    Define how your team sells, qualifies deals, and manages the sales process. This drives all AI coaching recommendations.
+                  </p>
+                </div>
+                <div className="space-y-3">
+                  {/* Methodology & Qualification — collapsible */}
+                  <div className="rounded-lg border border-blue-200/60 overflow-hidden">
+                    <button
+                      type="button"
+                      onClick={() => toggleSection('salesMethodology')}
+                      className="w-full flex items-center justify-between px-4 py-2.5 bg-blue-50/80 hover:bg-blue-100/60 transition-colors"
+                    >
+                      <h4 className="text-xs font-bold text-blue-800 uppercase tracking-wide">Methodology & Qualification</h4>
+                      {expandedSections.salesMethodology ? <ChevronDown size={14} className="text-blue-500" /> : <ChevronRight size={14} className="text-blue-500" />}
+                    </button>
+                    {expandedSections.salesMethodology && (
+                      <div className="px-4 py-4 bg-white/50">
+                        <SalesDnaConfigSection organizationId={organization?.id} compact showSave />
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Sales Process (CEP) — collapsible */}
+                  <div className="rounded-lg border border-indigo-200/60 overflow-hidden">
+                    <button
+                      type="button"
+                      onClick={() => toggleSection('salesProcess')}
+                      className="w-full flex items-center justify-between px-4 py-2.5 bg-indigo-50/80 hover:bg-indigo-100/60 transition-colors"
+                    >
+                      <h4 className="text-xs font-bold text-indigo-800 uppercase tracking-wide">Sales Process (CEP)</h4>
+                      {expandedSections.salesProcess ? <ChevronDown size={14} className="text-indigo-500" /> : <ChevronRight size={14} className="text-indigo-500" />}
+                    </button>
+                    {expandedSections.salesProcess && (
+                      <div className="px-4 py-4 bg-white/50">
+                        <CepConfigSection organizationId={organization?.id} compact />
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
 
               {/* Feedback Insights (admin only) */}
               <div className="border-t pt-6">
@@ -1354,16 +1665,16 @@ export default function OrganizationSettings() {
                     const slideDuration = wallboardSettings.slides[key]?.duration || 15;
                     return (
                       <div key={key} className="flex items-center justify-between py-2 px-3 bg-gray-50 rounded-lg">
-                        <div className="flex items-center gap-3">
+                        <div className="flex items-center gap-4">
                           <button
                             type="button"
                             onClick={() => setWallboardSettings(ws => ({
                               ...ws,
                               slides: { ...ws.slides, [key]: { ...ws.slides[key], enabled: !slideEnabled } }
                             }))}
-                            className={`w-9 h-5 rounded-full transition-colors ${slideEnabled ? 'bg-blue-600' : 'bg-gray-300'} relative`}
+                            className={`w-10 h-5 rounded-full transition-colors ${slideEnabled ? 'bg-blue-600' : 'bg-gray-300'} relative flex-shrink-0`}
                           >
-                            <span className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform ${slideEnabled ? 'translate-x-4' : 'translate-x-0.5'}`} />
+                            <span className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform ${slideEnabled ? 'translate-x-5' : 'translate-x-0.5'}`} />
                           </button>
                           <span className="text-sm font-medium text-gray-700">{label}</span>
                         </div>
@@ -1386,13 +1697,13 @@ export default function OrganizationSettings() {
                   })}
                 </div>
 
-                <div className="flex items-center gap-3 mt-4 py-2 px-3 bg-gray-50 rounded-lg">
+                <div className="flex items-center gap-4 mt-4 py-2 px-3 bg-gray-50 rounded-lg">
                   <button
                     type="button"
                     onClick={() => setWallboardSettings(ws => ({ ...ws, celebrations: !ws.celebrations }))}
-                    className={`w-9 h-5 rounded-full transition-colors ${wallboardSettings.celebrations ? 'bg-blue-600' : 'bg-gray-300'} relative`}
+                    className={`w-10 h-5 rounded-full transition-colors ${wallboardSettings.celebrations ? 'bg-blue-600' : 'bg-gray-300'} relative flex-shrink-0`}
                   >
-                    <span className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform ${wallboardSettings.celebrations ? 'translate-x-4' : 'translate-x-0.5'}`} />
+                    <span className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform ${wallboardSettings.celebrations ? 'translate-x-5' : 'translate-x-0.5'}`} />
                   </button>
                   <span className="text-sm font-medium text-gray-700">Celebration Overlays</span>
                   <span className="text-xs text-gray-400 ml-1">(confetti for level-ups, rare badges, contest wins)</span>
@@ -1447,7 +1758,18 @@ export default function OrganizationSettings() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {teamHook.teams.map((team) => (
                   <div key={team.id} className="border rounded-lg p-4">
-                    <div className="font-semibold">{team.name}</div>
+                    <div className="flex items-start justify-between">
+                      <div className="font-semibold">{team.name}</div>
+                      {isAdmin && (
+                        <button
+                          onClick={() => setDeleteTeamTarget(team)}
+                          className="p-1 text-gray-400 hover:text-red-500 transition-colors"
+                          title="Delete team"
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      )}
+                    </div>
                     {team.description && (
                       <div className="text-sm text-gray-600 mt-1">{team.description}</div>
                     )}
@@ -1483,33 +1805,74 @@ export default function OrganizationSettings() {
                     <tr className="text-left">
                       <th className="pb-2 font-semibold">Name</th>
                       <th className="pb-2 font-semibold">Email</th>
+                      <th className="pb-2 font-semibold">Title</th>
                       <th className="pb-2 font-semibold">Role</th>
                       <th className="pb-2 font-semibold">Team</th>
+                      <th className="pb-2 font-semibold">Segment</th>
                       <th className="pb-2 font-semibold">Actions</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {members.map((member) => (
-                      <tr key={member.id} className="border-b">
-                        <td className="py-3">
-                          {member.first_name} {member.last_name}
-                        </td>
-                        <td className="py-3 text-gray-600">{member.email}</td>
-                        <td className="py-3">
-                          <span className="px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs">
-                            {member.role}
-                          </span>
-                        </td>
-                        <td className="py-3 text-gray-600">
-                          {teamHook.teams.find(t => t.id === member.team_id)?.name || '-'}
-                        </td>
-                        <td className="py-3">
-                          <button onClick={() => openEditMember(member)} className="text-blue-600 hover:text-blue-700 text-sm">
-                            Edit
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
+                    {members.map((member) => {
+                      const isPending = !member.first_name;
+                      return (
+                        <tr key={member.id} className="border-b">
+                          <td className="py-3">
+                            {isPending ? (
+                              <span className="text-gray-400 italic">Pending setup</span>
+                            ) : (
+                              <>{member.first_name} {member.last_name}</>
+                            )}
+                          </td>
+                          <td className="py-3 text-gray-600">{member.email}</td>
+                          <td className="py-3 text-gray-600 text-xs">{member.title || '-'}</td>
+                          <td className="py-3">
+                            <span className="px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs">
+                              {member.role}
+                            </span>
+                            {isPending && (
+                              <span className="ml-1.5 px-2 py-0.5 bg-amber-100 text-amber-700 rounded text-xs">
+                                invited
+                              </span>
+                            )}
+                          </td>
+                          <td className="py-3 text-gray-600">
+                            {teamHook.teams.find(t => t.id === member.team_id)?.name || '-'}
+                          </td>
+                          <td className="py-3 text-gray-600 text-xs">{member.segment || '-'}</td>
+                          <td className="py-3 flex items-center gap-2">
+                            <button onClick={() => openEditMember(member)} className="text-blue-600 hover:text-blue-700 text-sm">
+                              Edit
+                            </button>
+                            {isPending && isAdmin && (
+                              <button
+                                onClick={async () => {
+                                  try {
+                                    await backendFetch('/api/users/resend-invite', { email: member.email });
+                                    setMessage({ type: 'success', text: `Invite resent to ${member.email}` });
+                                  } catch (err) {
+                                    setMessage({ type: 'error', text: err.message || 'Failed to resend invite' });
+                                  }
+                                }}
+                                className="text-amber-600 hover:text-amber-700 text-sm flex items-center gap-1"
+                              >
+                                <Send size={12} />
+                                Resend
+                              </button>
+                            )}
+                            {isAdmin && member.id !== profile?.id && (
+                              <button
+                                onClick={() => setRemoveMemberTarget(member)}
+                                className="text-red-500 hover:text-red-700 text-sm flex items-center gap-1"
+                              >
+                                <Trash2 size={12} />
+                                Remove
+                              </button>
+                            )}
+                          </td>
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>
@@ -1519,50 +1882,7 @@ export default function OrganizationSettings() {
 
         {/* Subscription Tab */}
         {activeTab === 'subscription' && (
-          <div className="bg-white rounded-lg shadow-sm p-6">
-            <h3 className="text-lg font-semibold mb-4">Subscription Details</h3>
-            
-            <div className="border rounded-lg p-6 mb-6">
-              <div className="flex items-center justify-between mb-4">
-                <div>
-                  <div className="text-2xl font-bold">{organization?.subscription_plan || 'Pro'} Plan</div>
-                  <div className="text-sm text-gray-600">Active subscription</div>
-                </div>
-                <div className="text-right">
-                  <div className="text-2xl font-bold">$99/mo</div>
-                  <div className="text-sm text-gray-600">Billed monthly</div>
-                </div>
-              </div>
-
-              <div className="border-t pt-4 space-y-2 text-sm">
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Users</span>
-                  <span className="font-medium">{members.length} / Unlimited</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Teams</span>
-                  <span className="font-medium">{teamHook.teams.length} / Unlimited</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Integrations</span>
-                  <span className="font-medium">All included</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Support</span>
-                  <span className="font-medium">Priority</span>
-                </div>
-              </div>
-            </div>
-
-            <div className="flex gap-3">
-              <button onClick={() => setMessage({ type: 'info', text: 'Plan upgrades coming soon. Contact support@apptivia.app for changes.' })} className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
-                Upgrade Plan
-              </button>
-              <button onClick={() => setMessage({ type: 'info', text: 'Billing management coming soon. Contact support@apptivia.app.' })} className="px-6 py-2 border border-gray-300 rounded-lg hover:bg-gray-50">
-                Manage Billing
-              </button>
-            </div>
-          </div>
+          <SubscriptionTab organization={organization} members={members} teams={teamHook.teams} setMessage={setMessage} />
         )}
 
         {/* Reports Tab */}
@@ -1691,6 +2011,155 @@ export default function OrganizationSettings() {
           </div>
         )}
 
+        {/* 4C: KPI Templates Tab */}
+        {activeTab === 'kpi_templates' && isManagerOrAbove && (
+          <div className="bg-white rounded-lg shadow-sm p-6">
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h3 className="text-lg font-semibold">KPI Role Templates</h3>
+                <p className="text-sm text-gray-500 mt-1">Pre-configured KPI goals and weights by job title. Apply a template to instantly update your scorecard configuration.</p>
+              </div>
+            </div>
+
+            {kpiTemplates.loading ? (
+              <div className="text-center py-8 text-gray-400">Loading templates...</div>
+            ) : kpiTemplates.error ? (
+              <div className="text-center py-8 text-red-500">{kpiTemplates.error}</div>
+            ) : kpiTemplates.templates.length === 0 ? (
+              <div className="text-center py-8 text-gray-400">No templates available. Run migration 097 to seed defaults.</div>
+            ) : (
+              <div className="space-y-4">
+                {kpiTemplates.templates.map((template) => (
+                  <div key={template.id} className="border rounded-lg p-4">
+                    <div className="flex items-center justify-between mb-3">
+                      <div>
+                        <span className="font-medium text-gray-900">{template.template_name}</span>
+                        <span className="ml-2 text-xs px-2 py-0.5 rounded-full bg-gray-100 text-gray-600">
+                          {template.title_key}
+                        </span>
+                        {template.is_default && !template.organization_id && (
+                          <span className="ml-2 text-xs px-2 py-0.5 rounded-full bg-blue-50 text-blue-600">Global Default</span>
+                        )}
+                      </div>
+                      <button
+                        onClick={async () => {
+                          setApplyingTemplate(template.id);
+                          try {
+                            await kpiTemplates.applyTemplate(template);
+                            setMessage({ type: 'success', text: `Applied "${template.template_name}" — scorecard KPIs updated. Refresh your dashboard to see changes.` });
+                          } catch (err) {
+                            setMessage({ type: 'error', text: `Failed to apply template: ${err.message}` });
+                          } finally {
+                            setApplyingTemplate(null);
+                          }
+                        }}
+                        disabled={applyingTemplate === template.id}
+                        className="px-3 py-1.5 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 disabled:opacity-50"
+                      >
+                        {applyingTemplate === template.id ? 'Applying...' : 'Apply to Scorecard'}
+                      </button>
+                    </div>
+
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2">
+                      {(template.kpi_configs || []).map((cfg, i) => (
+                        <div key={i} className="bg-gray-50 rounded px-3 py-2 text-center">
+                          <div className="text-xs font-medium text-gray-700 truncate">{cfg.kpi_key.replace(/_/g, ' ')}</div>
+                          <div className="text-sm font-semibold text-gray-900 mt-0.5">{cfg.goal}</div>
+                          <div className="text-[10px] text-gray-500">Weight: {Math.round(cfg.weight * 100)}%</div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Data Import Tab */}
+        {activeTab === 'data' && isAdmin && (
+          <div className="bg-white rounded-lg shadow-sm p-6">
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <h3 className="text-lg font-semibold">Import KPI Data</h3>
+                <p className="text-sm text-gray-500 mt-1">Upload historical KPI data via CSV to populate your scorecard</p>
+              </div>
+              <button
+                onClick={() => setShowKpiImport(true)}
+                className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors"
+              >
+                <Upload size={16} />
+                Import CSV
+              </button>
+            </div>
+
+            {/* Import History */}
+            <div>
+              <h4 className="text-sm font-semibold text-gray-700 mb-3">Import History</h4>
+              {loadingImportHistory ? (
+                <div className="animate-pulse space-y-2">
+                  {[1, 2, 3].map(i => <div key={i} className="h-12 bg-gray-100 rounded-lg" />)}
+                </div>
+              ) : importHistory.length === 0 ? (
+                <div className="text-center py-10 border border-dashed border-gray-200 rounded-lg">
+                  <Database size={32} className="mx-auto text-gray-300 mb-2" />
+                  <p className="text-sm text-gray-500">No imports yet</p>
+                  <p className="text-xs text-gray-400 mt-1">Upload a CSV to get started</p>
+                </div>
+              ) : (
+                <div className="border rounded-lg overflow-hidden">
+                  <table className="w-full text-sm">
+                    <thead className="bg-gray-50 text-gray-600">
+                      <tr>
+                        <th className="text-left px-4 py-2.5 font-medium">Date</th>
+                        <th className="text-left px-4 py-2.5 font-medium">File</th>
+                        <th className="text-left px-4 py-2.5 font-medium">Status</th>
+                        <th className="text-right px-4 py-2.5 font-medium">Imported</th>
+                        <th className="text-right px-4 py-2.5 font-medium">Failed</th>
+                        <th className="text-left px-4 py-2.5 font-medium">Week Range</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-100">
+                      {importHistory.map(job => {
+                        const statusColors = {
+                          completed: 'bg-green-100 text-green-700',
+                          partial: 'bg-yellow-100 text-yellow-700',
+                          failed: 'bg-red-100 text-red-700',
+                          processing: 'bg-blue-100 text-blue-700',
+                        };
+                        return (
+                          <tr key={job.id} className="hover:bg-gray-50">
+                            <td className="px-4 py-2.5 text-gray-600">
+                              {new Date(job.created_at).toLocaleDateString()}
+                            </td>
+                            <td className="px-4 py-2.5 text-gray-900 font-medium truncate max-w-[200px]">
+                              {job.filename || '—'}
+                            </td>
+                            <td className="px-4 py-2.5">
+                              <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${statusColors[job.status] || 'bg-gray-100 text-gray-600'}`}>
+                                {job.status}
+                              </span>
+                            </td>
+                            <td className="px-4 py-2.5 text-right text-green-600 font-medium">
+                              {job.rows_imported}
+                            </td>
+                            <td className="px-4 py-2.5 text-right text-red-600 font-medium">
+                              {job.rows_failed || 0}
+                            </td>
+                            <td className="px-4 py-2.5 text-gray-500 text-xs">
+                              {job.week_range || '—'}
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
         {/* Notifications Tab */}
         {activeTab === 'notifications' && (
           <div className="bg-white rounded-lg shadow-sm p-6">
@@ -1738,7 +2207,7 @@ export default function OrganizationSettings() {
               className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 mb-3"
             />
 
-            <div className="grid grid-cols-2 gap-3 mb-4">
+            <div className="grid grid-cols-3 gap-3 mb-4">
               <div>
                 <label className="block text-xs font-medium text-gray-600 mb-1">Role</label>
                 <select
@@ -1750,6 +2219,21 @@ export default function OrganizationSettings() {
                   <option value="coach">Coach</option>
                   <option value="manager">Manager</option>
                   <option value="admin">Admin</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1">Title</label>
+                <select
+                  value={inviteTitle}
+                  onChange={(e) => {
+                    setInviteTitle(e.target.value);
+                    const selected = titles.find(t => t.label === e.target.value);
+                    setInviteTitleKey(selected?.key || '');
+                  }}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
+                >
+                  <option value="">Select title</option>
+                  {titles.map(t => <option key={t.key} value={t.label}>{t.label}</option>)}
                 </select>
               </div>
               <div>
@@ -1809,6 +2293,23 @@ export default function OrganizationSettings() {
                   className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 />
               </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1">Manager (optional)</label>
+                <select
+                  value={teamHook.newTeamManagerId}
+                  onChange={(e) => teamHook.setNewTeamManagerId(e.target.value)}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                >
+                  <option value="">No manager assigned</option>
+                  {teamHook.allProfiles
+                    .filter(p => p.role === ROLES.MANAGER || p.role === ROLES.ADMIN)
+                    .map(p => (
+                      <option key={p.id} value={p.id}>
+                        {p.first_name} {p.last_name}{p.role === ROLES.ADMIN ? ' (Admin)' : ''}
+                      </option>
+                    ))}
+                </select>
+              </div>
             </div>
 
             <div className="flex justify-end gap-2">
@@ -1837,6 +2338,17 @@ export default function OrganizationSettings() {
 
             <div className="space-y-3 mb-4">
               <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1">Title</label>
+                <select
+                  value={editTitle}
+                  onChange={(e) => setEditTitle(e.target.value)}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
+                >
+                  <option value="">No title</option>
+                  {titles.map(t => <option key={t.key} value={t.label}>{t.label}</option>)}
+                </select>
+              </div>
+              <div>
                 <label className="block text-xs font-medium text-gray-600 mb-1">Role</label>
                 <select
                   value={editRole}
@@ -1850,6 +2362,19 @@ export default function OrganizationSettings() {
                 </select>
               </div>
               <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1">Secondary Role</label>
+                <select
+                  value={editSecondaryRole}
+                  onChange={(e) => setEditSecondaryRole(e.target.value)}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
+                >
+                  <option value="">None</option>
+                  {[ROLES.POWER_USER, ROLES.COACH, ROLES.MANAGER, ROLES.ADMIN]
+                    .filter(r => r !== editRole)
+                    .map(r => <option key={r} value={r}>{r === ROLES.POWER_USER ? 'Power User' : r.charAt(0).toUpperCase() + r.slice(1)}</option>)}
+                </select>
+              </div>
+              <div>
                 <label className="block text-xs font-medium text-gray-600 mb-1">Team</label>
                 <select
                   value={editTeamId}
@@ -1858,6 +2383,19 @@ export default function OrganizationSettings() {
                 >
                   <option value="">No team</option>
                   {teamHook.teams.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1">Segment</label>
+                <select
+                  value={editSegment}
+                  onChange={(e) => setEditSegment(e.target.value)}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
+                >
+                  <option value="">No segment</option>
+                  <option value="Territory">Territory</option>
+                  <option value="Mid-Market">Mid-Market</option>
+                  <option value="Enterprise">Enterprise</option>
                 </select>
               </div>
             </div>
@@ -1875,6 +2413,30 @@ export default function OrganizationSettings() {
           </div>
         </div>
       )}
+
+      {/* Delete Team Confirmation */}
+      <ConfirmModal
+        isOpen={!!deleteTeamTarget}
+        onClose={() => setDeleteTeamTarget(null)}
+        onConfirm={handleDeleteTeam}
+        title="Delete Team"
+        message={deleteTeamTarget ? `Are you sure you want to delete "${deleteTeamTarget.name}"? ${members.filter(m => m.team_id === deleteTeamTarget.id).length} member(s) will be unassigned from this team.` : ''}
+        confirmText="Delete Team"
+        variant="danger"
+        isLoading={deleteLoading}
+      />
+
+      {/* Remove Member Confirmation */}
+      <ConfirmModal
+        isOpen={!!removeMemberTarget}
+        onClose={() => setRemoveMemberTarget(null)}
+        onConfirm={handleRemoveMember}
+        title="Remove Member"
+        message={removeMemberTarget ? `Remove ${removeMemberTarget.first_name ? removeMemberTarget.first_name + ' ' + removeMemberTarget.last_name : removeMemberTarget.email} from the organization? They will lose access to all org data.` : ''}
+        confirmText="Remove"
+        variant="danger"
+        isLoading={deleteLoading}
+      />
 
       {/* Add Existing Users Modal */}
       {showAddUsersModal && (
@@ -2006,6 +2568,13 @@ export default function OrganizationSettings() {
         </div>
       )}
 
+      <KpiImportModal
+        isOpen={showKpiImport}
+        onClose={() => setShowKpiImport(false)}
+        onImportComplete={() => { setShowKpiImport(false); loadImportHistory(); }}
+        organizationId={organization?.id}
+      />
+
       <ScheduleReportModal
         isOpen={showScheduleModal}
         onClose={() => { setShowScheduleModal(false); setEditingReport(null); }}
@@ -2022,6 +2591,11 @@ export default function OrganizationSettings() {
           setShowOnboarding(false);
           setNoOrgDetected(false);
           loadData();
+        }}
+        onComplete={() => {
+          setShowOnboarding(false);
+          setNoOrgDetected(false);
+          navigate('/dashboard');
         }}
         organizationId={organization?.id}
       />

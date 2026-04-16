@@ -1,6 +1,7 @@
 import React from 'react';
 import { Sparkles, Loader2 } from 'lucide-react';
 import { buildLabel } from '../../constants/kpiGuidance';
+import { LEADERSHIP_ROLES } from '../../constants/roles';
 
 export default function PlanBuilderForm({
   editingPlan,
@@ -26,7 +27,7 @@ export default function PlanBuilderForm({
 }) {
   const isPlaybook = activeTab === 'playbooks';
   const repMembers = (teamMembers || []).filter(m =>
-    !['admin', 'manager', 'coach'].includes(m.role)
+    !LEADERSHIP_ROLES.includes(m.role)
   );
 
   const inputDisabled = fieldsDisabled || autoGenerating;
@@ -191,7 +192,7 @@ export default function PlanBuilderForm({
           </div>
           <div className="space-y-2">
             {planForm.goals.map((goal, index) => (
-              <div key={index} className="flex gap-2">
+              <div key={`goal-${index}-${planForm.goals.length}`} className="flex gap-2">
                 <input
                   type="text"
                   value={goal}
@@ -222,7 +223,7 @@ export default function PlanBuilderForm({
           </div>
           <div className="space-y-2">
             {planForm.focus_kpis.map((kpi, index) => (
-              <div key={index} className="flex gap-2">
+              <div key={`kpi-${index}-${planForm.focus_kpis.length}`} className="flex gap-2">
                 <select
                   value={kpi}
                   onChange={(e) => handleFocusKpiChange(index, e.target.value)}
@@ -280,7 +281,7 @@ export default function PlanBuilderForm({
           </div>
           <div className="space-y-2">
             {planForm.action_items.map((action, index) => (
-              <div key={index} className="flex gap-2">
+              <div key={`action-${index}-${planForm.action_items.length}`} className="flex gap-2">
                 <input
                   type="text"
                   value={action}
@@ -311,7 +312,7 @@ export default function PlanBuilderForm({
           </div>
           <div className="space-y-2">
             {planForm.success_metrics.map((metric, index) => (
-              <div key={index} className="flex gap-2">
+              <div key={`metric-${index}-${planForm.success_metrics.length}`} className="flex gap-2">
                 <input
                   type="text"
                   value={metric}
