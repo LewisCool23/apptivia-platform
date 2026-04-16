@@ -153,7 +153,7 @@ async function resolveOwnerEmail(creds, ownerId) {
 
 // ── Sync: Activities (Calls) ─────────────────────────────────
 
-async function syncActivities(integration, cursor) {
+async function syncActivities(integration, cursor, sb) {
   const creds = integration.decryptedCreds;
   const properties = 'hs_call_status,hs_call_duration,hs_timestamp,hubspot_owner_id,hs_call_direction';
 
@@ -175,16 +175,19 @@ async function syncActivities(integration, cursor) {
     const email = await resolveOwnerEmail(creds, ownerId);
     if (!email) continue;
 
-    const profileId = await resolveProfileByEmail(null, integration.organization_id, email);
+    const profileId = await resolveProfileByEmail(sb, integration.organization_id, email);
     if (!profileId) continue;
 
     // Call connects
     if (props.hs_call_status === 'COMPLETED') {
+      const weekStart = getWeekStart(props.hs_timestamp || record.createdAt);
       kpiMappings.push({
         profileId,
         kpiKey: 'call_connects',
         increment: 1,
+        source: 'hubspot',
         externalEventId: `hubspot:call:${record.id}:call_connects`,
+        weekStart,
       });
 
       // Talk time
@@ -193,7 +196,9 @@ async function syncActivities(integration, cursor) {
           profileId,
           kpiKey: 'talk_time_minutes',
           increment: Math.round(parseInt(props.hs_call_duration) / 60),
+          source: 'hubspot',
           externalEventId: `hubspot:call:${record.id}:talk_time`,
+          weekStart,
         });
       }
     }
@@ -205,7 +210,7 @@ async function syncActivities(integration, cursor) {
 
 // ── Sync: Meetings ───────────────────────────────────────────
 
-async function syncMeetings(integration, cursor) {
+async function syncMeetings(integration, cursor, sb) {
   const creds = integration.decryptedCreds;
   const properties = 'hs_meeting_title,hs_meeting_start_time,hs_meeting_end_time,hs_meeting_location,hs_meeting_body,hubspot_owner_id';
 
@@ -224,7 +229,7 @@ async function syncMeetings(integration, cursor) {
     const email = await resolveOwnerEmail(creds, ownerId);
 
     const profileId = email
-      ? await resolveProfileByEmail(null, integration.organization_id, email)
+      ? await resolveProfileByEmail(sb, integration.organization_id, email)
       : null;
 
     if (profileId) {
@@ -232,7 +237,9 @@ async function syncMeetings(integration, cursor) {
         profileId,
         kpiKey: 'meetings',
         increment: 1,
+        source: 'hubspot',
         externalEventId: `hubspot:meeting:${record.id}:meetings`,
+        weekStart: getWeekStart(props.hs_meeting_start_time || record.createdAt),
       });
     }
 
@@ -256,7 +263,7 @@ async function syncMeetings(integration, cursor) {
 
 // ── Sync: Deals ──────────────────────────────────────────────
 
-async function syncDeals(integration, cursor) {
+async function syncDeals(integration, cursor, sb) {
   const creds = integration.decryptedCreds;
   const properties = 'dealname,dealstage,amount,createdate,closedate,pipeline,hubspot_owner_id';
 
@@ -278,24 +285,31 @@ async function syncDeals(integration, cursor) {
     const email = await resolveOwnerEmail(creds, ownerId);
     if (!email) continue;
 
-    const profileId = await resolveProfileByEmail(null, integration.organization_id, email);
+    const profileId = await resolveProfileByEmail(sb, integration.organization_id, email);
     if (!profileId) continue;
+
+    const weekStart = getWeekStart(props.createdate || record.createdAt);
 
     // Sourced opp
     kpiMappings.push({
       profileId,
       kpiKey: 'sourced_opps',
       increment: 1,
+      source: 'hubspot',
       externalEventId: `hubspot:deal:${record.id}:sourced`,
+      weekStart,
     });
 
     // Closed Won — HubSpot default stage
     if (props.dealstage === 'closedwon') {
+      const closedWeek = getWeekStart(props.closedate || record.createdAt);
       kpiMappings.push({
         profileId,
         kpiKey: 'closed_won',
         increment: 1,
+        source: 'hubspot',
         externalEventId: `hubspot:deal:${record.id}:closed_won`,
+        weekStart: closedWeek,
       });
       const amount = parseFloat(props.amount);
       if (amount > 0) {
@@ -303,7 +317,9 @@ async function syncDeals(integration, cursor) {
           profileId,
           kpiKey: 'revenue_generated',
           increment: amount,
+          source: 'hubspot',
           externalEventId: `hubspot:deal:${record.id}:revenue`,
+          weekStart: closedWeek,
         });
       }
     }
@@ -385,6 +401,18 @@ function verifyWebhook(req) {
   } catch {
     return false;
   }
+}
+
+// ── Helpers ───────────────────────────────────────────────────
+
+function getWeekStart(fromDate) {
+  const d = fromDate ? new Date(fromDate) : new Date();
+  const day = d.getDay();
+  const diff = d.getDate() - day + (day === 0 ? -6 : 1);
+  const monday = new Date(d);
+  monday.setDate(diff);
+  monday.setHours(0, 0, 0, 0);
+  return monday.toISOString().split('T')[0];
 }
 
 // ── Export ────────────────────────────────────────────────────

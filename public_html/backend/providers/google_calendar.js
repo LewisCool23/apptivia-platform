@@ -1,0 +1,125 @@
+'use strict';
+
+const GOOGLE_BASE = 'https://www.googleapis.com';
+
+module.exports = {
+  type: 'google_calendar',
+
+  getAuthUrl(integration, state, redirectUri) {
+    const params = new URLSearchParams({
+      client_id: process.env.GOOGLE_CLIENT_ID,
+      redirect_uri: redirectUri,
+      response_type: 'code',
+      scope: 'https://www.googleapis.com/auth/calendar.readonly',
+      access_type: 'offline',
+      prompt: 'consent',
+      state,
+    });
+    return `https://accounts.google.com/o/oauth2/v2/auth?${params}`;
+  },
+
+  async exchangeCode(code, redirectUri) {
+    const res = await fetch(`${GOOGLE_BASE}/oauth2/v4/token`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({
+        grant_type: 'authorization_code',
+        client_id: process.env.GOOGLE_CLIENT_ID,
+        client_secret: process.env.GOOGLE_CLIENT_SECRET,
+        redirect_uri: redirectUri,
+        code,
+      }),
+    });
+    if (!res.ok) throw new Error(`Google token exchange failed: ${res.status}`);
+    const data = await res.json();
+    return {
+      access_token: data.access_token,
+      refresh_token: data.refresh_token,
+      expires_in: data.expires_in,
+      token_type: 'Bearer',
+    };
+  },
+
+  async refreshToken(creds) {
+    const res = await fetch(`${GOOGLE_BASE}/oauth2/v4/token`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({
+        grant_type: 'refresh_token',
+        client_id: process.env.GOOGLE_CLIENT_ID,
+        client_secret: process.env.GOOGLE_CLIENT_SECRET,
+        refresh_token: creds.refresh_token,
+      }),
+    });
+    if (!res.ok) throw new Error(`Google token refresh failed: ${res.status}`);
+    const data = await res.json();
+    return { access_token: data.access_token, expires_in: data.expires_in };
+  },
+
+  sync: {
+    meetings: async (freshIntegration, cursor, sb) => {
+      const token = freshIntegration.decryptedCreds.access_token;
+      const since = cursor || new Date(Date.now() - 7 * 86400000).toISOString();
+
+      // Google Calendar is a personal integration
+      const profileId = freshIntegration.profile_id;
+      if (!profileId) return { records: [], nextCursor: new Date().toISOString(), kpiMappings: [] };
+
+      // Check role
+      const { data: profile } = await sb.from('profiles')
+        .select('role, email')
+        .eq('id', profileId)
+        .maybeSingle();
+      if (!profile || ['admin', 'manager', 'coach'].includes(profile.role)) {
+        return { records: [], nextCursor: new Date().toISOString(), kpiMappings: [] };
+      }
+
+      const params = new URLSearchParams({
+        timeMin: since,
+        timeMax: new Date().toISOString(),
+        singleEvents: 'true',
+        orderBy: 'startTime',
+        maxResults: '250',
+      });
+
+      const res = await fetch(`${GOOGLE_BASE}/calendar/v3/calendars/primary/events?${params}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) throw new Error(`Google Calendar fetch failed: ${res.status}`);
+      const data = await res.json();
+      const events = data.items || [];
+
+      const kpiMappings = [];
+      for (const evt of events) {
+        const isOrganizer = evt.organizer?.email?.toLowerCase() === profile.email.toLowerCase();
+        const attendees = evt.attendees || [];
+        const acceptedOthers = attendees.filter(a =>
+          a.email?.toLowerCase() !== profile.email.toLowerCase() && a.responseStatus === 'accepted'
+        );
+        if (!isOrganizer || acceptedOthers.length === 0) continue;
+
+        const weekStart = getWeekStart(evt.start?.dateTime || evt.start?.date);
+        kpiMappings.push({
+          profileId,
+          kpiKey: 'meetings',
+          increment: 1,
+          source: 'google_calendar',
+          externalEventId: `google_calendar:event:${evt.id}:meetings`,
+          weekStart,
+        });
+      }
+
+      return { records: events, nextCursor: new Date().toISOString(), kpiMappings };
+    },
+  },
+};
+
+function getWeekStart(fromDate) {
+  const d = fromDate ? new Date(fromDate) : new Date();
+  const day = d.getDay();
+  const diff = d.getDate() - day + (day === 0 ? -6 : 1);
+  const monday = new Date(d);
+  monday.setDate(diff);
+  monday.setHours(0, 0, 0, 0);
+  return monday.toISOString().split('T')[0];
+}

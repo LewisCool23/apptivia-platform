@@ -19,6 +19,23 @@ const crypto = require('crypto');
 
 // ── Helpers ──────────────────────────────────────────────────
 
+const MAX_RETRY_ATTEMPTS = 3;
+const RETRY_BASE_DELAY_MS = 2000; // exponential: 2s, 4s, 8s
+
+async function withRetry(fn, label, maxAttempts = MAX_RETRY_ATTEMPTS) {
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    try {
+      return await fn();
+    } catch (err) {
+      const isRetryable = err.status === 429 || err.status >= 500 || err.code === 'ECONNRESET' || err.code === 'ETIMEDOUT';
+      if (attempt >= maxAttempts || !isRetryable) throw err;
+      const delay = RETRY_BASE_DELAY_MS * Math.pow(2, attempt - 1);
+      console.warn(`[sync:retry] ${label} attempt ${attempt}/${maxAttempts} failed: ${err.message}. Retrying in ${delay}ms...`);
+      await new Promise(r => setTimeout(r, delay));
+    }
+  }
+}
+
 function env(key) {
   return process.env[key] || '';
 }
@@ -318,9 +335,9 @@ async function runIntegrationSync(sb, integrationId, entityTypes) {
         .eq('entity_type', entityType)
         .maybeSingle();
 
-      const syncResult = await provider.sync[entityType](
-        freshIntegration,
-        cursor?.last_sync_cursor
+      const syncResult = await withRetry(
+        () => provider.sync[entityType](freshIntegration, cursor?.last_sync_cursor, sb),
+        `${integration.integration_type}:${entityType}`
       );
 
       const records = syncResult.records || [];
@@ -385,6 +402,11 @@ async function runIntegrationSync(sb, integrationId, entityTypes) {
     last_sync_error: results.errors.length ? results.errors.join('; ') : null,
     updated_at: new Date().toISOString(),
   }).eq('id', integrationId);
+
+  // Notify admins on sync failure
+  if (finalStatus === 'failed' || finalStatus === 'partial') {
+    notifySyncFailure(sb, integration, results.errors).catch(() => {});
+  }
 
   return results;
 }
@@ -761,6 +783,276 @@ async function getCalendarEvents(sb, integrationId, organizationId, startDate, e
   return data || [];
 }
 
+// ── Historical Backfill ──────────────────────────────────────
+
+/**
+ * Run a historical backfill for a newly connected integration.
+ * Pulls data from 90 days ago up to now by resetting sync cursors
+ * to the backfill start date.
+ */
+async function runHistoricalBackfill(sb, integrationId, daysBack = 90) {
+  const { data: integration } = await sb.from('integrations')
+    .select('*')
+    .eq('id', integrationId)
+    .single();
+
+  if (!integration) throw new Error('Integration not found');
+
+  const provider = getProvider(integration.integration_type);
+  if (!provider || !provider.sync) throw new Error(`No sync handler for ${integration.integration_type}`);
+
+  const backfillDate = new Date(Date.now() - daysBack * 86400000).toISOString();
+
+  // Reset or create cursors with the backfill start date
+  const entityTypes = Object.keys(provider.sync);
+  for (const entityType of entityTypes) {
+    await sb.from('integration_sync_cursors').upsert({
+      integration_id: integrationId,
+      entity_type: entityType,
+      last_sync_cursor: backfillDate,
+      last_synced_at: null,
+      records_synced: 0,
+    }, { onConflict: 'integration_id,entity_type' });
+  }
+
+  // Run the full sync — the provider will pull from the backfill cursor forward
+  const result = await runIntegrationSync(sb, integrationId);
+
+  console.log(`[backfill] Integration ${integrationId}: processed ${result.total || 0} records from last ${daysBack} days`);
+  return { ...result, daysBack, backfillDate };
+}
+
+// ── Sync Failure Notifications ──────────────────────────────
+
+/**
+ * Send a notification to org admins when a sync fails.
+ * Called after runIntegrationSync detects failures.
+ */
+async function notifySyncFailure(sb, integration, errors) {
+  if (!sb || !integration?.organization_id) return;
+  try {
+    // Find admins for this org
+    const { data: admins } = await sb.from('profiles')
+      .select('id')
+      .eq('organization_id', integration.organization_id)
+      .in('role', ['admin', 'administrator']);
+
+    if (!admins?.length) return;
+
+    const errorSummary = errors.slice(0, 3).join('; ');
+    const notifications = admins.map(admin => ({
+      user_id: admin.id,
+      type: 'integration_sync_failed',
+      title: `${integration.display_name || integration.integration_type} sync failed`,
+      body: `Sync encountered errors: ${errorSummary}. Check Settings > Integrations for details.`,
+      data: { integration_id: integration.id, integration_type: integration.integration_type },
+      created_at: new Date().toISOString(),
+    }));
+
+    await sb.from('notifications').insert(notifications);
+  } catch (err) {
+    console.error('[sync:notify] Failed to send sync failure notification:', err.message);
+  }
+}
+
+// ── CRM Push Queue Engine ────────────────────────────────────
+
+/**
+ * Enqueue an outbound push action (e.g., log activity, create meeting).
+ * Called by event triggers in server.js.
+ */
+async function enqueuePush(sb, { organizationId, integrationId, entityType, entityId, action, payload, triggeredBy, sourceEvent, scheduledAt }) {
+  const { error } = await sb.from('integration_push_queue').insert({
+    organization_id: organizationId,
+    integration_id:  integrationId,
+    entity_type:     entityType,
+    entity_id:       entityId || null,
+    action:          action || 'log_activity',
+    payload:         payload || {},
+    triggered_by:    triggeredBy || 'event',
+    source_event:    sourceEvent || null,
+    scheduled_at:    scheduledAt || new Date().toISOString(),
+  });
+  if (error) console.error('[push:enqueue] Error:', error.message);
+  return { error };
+}
+
+/**
+ * Process pending items in the push queue.
+ * Called by the integration-push cron (every 15 min).
+ * - Fetches pending + retryable failed items
+ * - Routes to provider push methods
+ * - Logs results + updates entity map
+ * - Exponential backoff: 10min, 20min, 40min
+ */
+async function processPushQueue(sb) {
+  const BACKOFF_MINUTES = [10, 20, 40];
+
+  // Fetch items: pending OR (failed + retry eligible + enough time elapsed)
+  const { data: items, error: fetchErr } = await sb
+    .from('integration_push_queue')
+    .select('*, integrations:integration_id(id, integration_type, credentials, organization_id, status)')
+    .or('status.eq.pending,status.eq.failed')
+    .lt('retry_count', 3)
+    .lte('scheduled_at', new Date().toISOString())
+    .order('scheduled_at')
+    .limit(50);
+
+  if (fetchErr || !items?.length) return { processed: 0, sent: 0, failed: 0, skipped: 0 };
+
+  let sent = 0, failed = 0, skipped = 0;
+
+  for (const item of items) {
+    const integration = item.integrations;
+    if (!integration || integration.status !== 'connected') {
+      await markPushItem(sb, item, 'skipped', 'Integration not connected');
+      skipped++;
+      continue;
+    }
+
+    const provider = getProvider(integration.integration_type);
+    if (!provider) {
+      await markPushItem(sb, item, 'skipped', `Unknown provider: ${integration.integration_type}`);
+      skipped++;
+      continue;
+    }
+
+    // Determine which push method to call
+    const pushMethod = resolvePushMethod(provider, item.action, item.entity_type);
+    if (!pushMethod) {
+      await markPushItem(sb, item, 'skipped', `Provider does not support ${item.action}/${item.entity_type}`);
+      skipped++;
+      continue;
+    }
+
+    // Mark processing
+    await sb.from('integration_push_queue')
+      .update({ status: 'processing' })
+      .eq('id', item.id);
+
+    const startMs = Date.now();
+    try {
+      // Ensure token is fresh
+      const freshIntegration = await ensureFreshToken(sb, integration);
+
+      // Execute push
+      const result = await pushMethod(freshIntegration, item.payload);
+      const durationMs = Date.now() - startMs;
+      const externalId = result?.id || result?.external_id || item.external_id;
+
+      // Log success
+      await sb.from('integration_push_log').insert({
+        organization_id: item.organization_id,
+        integration_id:  item.integration_id,
+        queue_item_id:   item.id,
+        entity_type:     item.entity_type,
+        action:          item.action,
+        status:          'sent',
+        external_id:     externalId || null,
+        request_payload: item.payload,
+        response_payload: result || null,
+        duration_ms:     durationMs,
+      });
+
+      // Update entity map if we got an external ID
+      if (externalId && item.entity_id) {
+        await sb.from('integration_entity_map').upsert({
+          organization_id: item.organization_id,
+          integration_id:  item.integration_id,
+          apptivia_entity: item.entity_type,
+          apptivia_id:     item.entity_id,
+          external_entity: mapExternalEntity(integration.integration_type, item.entity_type),
+          external_id:     externalId,
+          last_synced_at:  new Date().toISOString(),
+        }, { onConflict: 'integration_id,apptivia_entity,apptivia_id' });
+      }
+
+      // Mark sent
+      await sb.from('integration_push_queue').update({
+        status:       'sent',
+        external_id:  externalId || null,
+        processed_at: new Date().toISOString(),
+      }).eq('id', item.id);
+
+      sent++;
+    } catch (err) {
+      const durationMs = Date.now() - startMs;
+      const newRetry = (item.retry_count || 0) + 1;
+      const isFinal = newRetry >= item.max_retries;
+
+      // Log failure
+      await sb.from('integration_push_log').insert({
+        organization_id: item.organization_id,
+        integration_id:  item.integration_id,
+        queue_item_id:   item.id,
+        entity_type:     item.entity_type,
+        action:          item.action,
+        status:          'failed',
+        error_message:   err.message?.slice(0, 500),
+        request_payload: item.payload,
+        duration_ms:     durationMs,
+      });
+
+      // Update queue item with retry info + backoff schedule
+      const nextSchedule = isFinal ? null : new Date(Date.now() + BACKOFF_MINUTES[newRetry - 1] * 60000).toISOString();
+      await sb.from('integration_push_queue').update({
+        status:        isFinal ? 'failed' : 'failed',
+        retry_count:   newRetry,
+        error_message: err.message?.slice(0, 500),
+        processed_at:  new Date().toISOString(),
+        ...(nextSchedule && { scheduled_at: nextSchedule }),
+      }).eq('id', item.id);
+
+      failed++;
+      console.error(`[push:process] ${item.action}/${item.entity_type} failed (retry ${newRetry}/${item.max_retries}):`, err.message);
+    }
+  }
+
+  console.log(`[push:process] Done — sent: ${sent}, failed: ${failed}, skipped: ${skipped}`);
+  return { processed: items.length, sent, failed, skipped };
+}
+
+/** Resolve the push method from provider based on action + entity type */
+function resolvePushMethod(provider, action, entityType) {
+  if (!provider.push) return null;
+  // Direct action mapping
+  const methodMap = {
+    'log_activity':   provider.push.logActivity,
+    'create_meeting': provider.push.createMeeting,
+    'update_deal':    provider.push.updateDeal,
+    'create_contact': provider.push.createContact,
+  };
+  return methodMap[action] || null;
+}
+
+/** Map Apptivia entity types to CRM external entity types */
+function mapExternalEntity(providerType, apptiviaEntity) {
+  const maps = {
+    salesforce: { profile: 'Contact', deal: 'Opportunity', meeting: 'Event', activity: 'Task' },
+    hubspot:    { profile: 'Contact', deal: 'Deal', meeting: 'Meeting', activity: 'Engagement' },
+  };
+  return maps[providerType]?.[apptiviaEntity] || apptiviaEntity;
+}
+
+/** Helper to mark a push item with a terminal status */
+async function markPushItem(sb, item, status, errorMessage) {
+  await sb.from('integration_push_queue').update({
+    status,
+    error_message: errorMessage,
+    processed_at:  new Date().toISOString(),
+  }).eq('id', item.id);
+
+  await sb.from('integration_push_log').insert({
+    organization_id: item.organization_id,
+    integration_id:  item.integration_id,
+    queue_item_id:   item.id,
+    entity_type:     item.entity_type,
+    action:          item.action,
+    status,
+    error_message:   errorMessage,
+  });
+}
+
 // ── Exports ──────────────────────────────────────────────────
 
 module.exports = {
@@ -783,6 +1075,8 @@ module.exports = {
   // Sync engine
   runIntegrationSync,
   runScheduledSyncs,
+  runHistoricalBackfill,
+  notifySyncFailure,
 
   // KPI / Calendar helpers
   upsertKpiValue,
@@ -801,6 +1095,10 @@ module.exports = {
   // Calendar
   createCalendarEvent,
   getCalendarEvents,
+
+  // Push engine
+  enqueuePush,
+  processPushQueue,
 
   // Utilities
   fetchJson,

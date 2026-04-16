@@ -162,7 +162,7 @@ async function resolveUserEmail(creds, sfUserId) {
 
 // ── Sync: Activities (Tasks/Calls) ───────────────────────────
 
-async function syncActivities(integration, cursor) {
+async function syncActivities(integration, cursor, sb) {
   const creds = integration.decryptedCreds;
   const sinceFilter = cursor
     ? `AND SystemModstamp > ${cursor}`
@@ -187,23 +187,29 @@ async function syncActivities(integration, cursor) {
     const email = await resolveUserEmail(creds, record.OwnerId);
     if (!email) continue;
     const profileId = await resolveProfileByEmail(
-      integration._sb || null, integration.organization_id, email
+      sb, integration.organization_id, email
     );
     if (!profileId) continue;
+
+    const weekStart = getWeekStart(record.ActivityDate || record.SystemModstamp);
 
     if (record.Type === 'Call') {
       kpiMappings.push({
         profileId,
         kpiKey: 'call_connects',
         increment: 1,
+        source: 'salesforce',
         externalEventId: `salesforce:task:${record.Id}:call_connects`,
+        weekStart,
       });
       if (record.CallDurationInSeconds > 0) {
         kpiMappings.push({
           profileId,
           kpiKey: 'talk_time_minutes',
           increment: Math.round(record.CallDurationInSeconds / 60),
+          source: 'salesforce',
           externalEventId: `salesforce:task:${record.Id}:talk_time`,
+          weekStart,
         });
       }
     } else if (record.Type === 'Email') {
@@ -211,7 +217,9 @@ async function syncActivities(integration, cursor) {
         profileId,
         kpiKey: 'emails_sent',
         increment: 1,
+        source: 'salesforce',
         externalEventId: `salesforce:task:${record.Id}:emails_sent`,
+        weekStart,
       });
     }
   }
@@ -226,7 +234,7 @@ async function syncActivities(integration, cursor) {
 
 // ── Sync: Meetings (Events) ─────────────────────────────────
 
-async function syncMeetings(integration, cursor) {
+async function syncMeetings(integration, cursor, sb) {
   const creds = integration.decryptedCreds;
   const sinceFilter = cursor
     ? `AND SystemModstamp > ${cursor}`
@@ -250,7 +258,7 @@ async function syncMeetings(integration, cursor) {
     const email = await resolveUserEmail(creds, record.OwnerId);
     if (!email) continue;
     const profileId = await resolveProfileByEmail(
-      null, integration.organization_id, email
+      sb, integration.organization_id, email
     );
 
     if (profileId) {
@@ -258,7 +266,9 @@ async function syncMeetings(integration, cursor) {
         profileId,
         kpiKey: 'meetings',
         increment: 1,
+        source: 'salesforce',
         externalEventId: `salesforce:event:${record.Id}:meetings`,
+        weekStart: getWeekStart(record.StartDateTime || record.SystemModstamp),
       });
     }
 
@@ -287,7 +297,7 @@ async function syncMeetings(integration, cursor) {
 
 // ── Sync: Deals (Opportunities) ──────────────────────────────
 
-async function syncDeals(integration, cursor) {
+async function syncDeals(integration, cursor, sb) {
   const creds = integration.decryptedCreds;
   const sinceFilter = cursor
     ? `AND SystemModstamp > ${cursor}`
@@ -311,16 +321,20 @@ async function syncDeals(integration, cursor) {
     const email = await resolveUserEmail(creds, record.OwnerId);
     if (!email) continue;
     const profileId = await resolveProfileByEmail(
-      null, integration.organization_id, email
+      sb, integration.organization_id, email
     );
     if (!profileId) continue;
+
+    const weekStart = getWeekStart(record.CreatedDate || record.SystemModstamp);
 
     // New opportunity created
     kpiMappings.push({
       profileId,
       kpiKey: 'sourced_opps',
       increment: 1,
+      source: 'salesforce',
       externalEventId: `salesforce:opp:${record.Id}:sourced`,
+      weekStart,
     });
 
     // Stage 2+ (qualified)
@@ -329,24 +343,31 @@ async function syncDeals(integration, cursor) {
         profileId,
         kpiKey: 'stage2_opps',
         increment: 1,
+        source: 'salesforce',
         externalEventId: `salesforce:opp:${record.Id}:stage2`,
+        weekStart,
       });
     }
 
     // Closed Won
     if (record.StageName === 'Closed Won') {
+      const closedWeek = getWeekStart(record.CloseDate || record.SystemModstamp);
       kpiMappings.push({
         profileId,
         kpiKey: 'closed_won',
         increment: 1,
+        source: 'salesforce',
         externalEventId: `salesforce:opp:${record.Id}:closed_won`,
+        weekStart: closedWeek,
       });
       if (record.Amount > 0) {
         kpiMappings.push({
           profileId,
           kpiKey: 'revenue_generated',
           increment: record.Amount,
+          source: 'salesforce',
           externalEventId: `salesforce:opp:${record.Id}:revenue`,
+          weekStart: closedWeek,
         });
       }
     }
@@ -362,7 +383,7 @@ async function syncDeals(integration, cursor) {
 
 // ── Sync: Contacts ───────────────────────────────────────────
 
-async function syncContacts(integration, cursor) {
+async function syncContacts(integration, cursor, sb) {
   const creds = integration.decryptedCreds;
   const sinceFilter = cursor
     ? `AND SystemModstamp > ${cursor}`
@@ -451,6 +472,16 @@ function getISODateDaysAgo(days) {
   const d = new Date();
   d.setDate(d.getDate() - days);
   return d.toISOString();
+}
+
+function getWeekStart(fromDate) {
+  const d = fromDate ? new Date(fromDate) : new Date();
+  const day = d.getDay();
+  const diff = d.getDate() - day + (day === 0 ? -6 : 1);
+  const monday = new Date(d);
+  monday.setDate(diff);
+  monday.setHours(0, 0, 0, 0);
+  return monday.toISOString().split('T')[0];
 }
 
 // ── Export ────────────────────────────────────────────────────

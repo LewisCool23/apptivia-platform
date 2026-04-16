@@ -168,7 +168,7 @@ async function resolveUserEmail(integration, userId) {
 
 // ── Sync: Activities (Calls) ─────────────────────────────────
 
-async function syncActivities(integration, cursor) {
+async function syncActivities(integration, cursor, sb) {
   const now = new Date();
   const lookback = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000); // 90 days
 
@@ -190,15 +190,19 @@ async function syncActivities(integration, cursor) {
     const email = await resolveUserEmail(integration, userId);
     if (!email) continue;
 
-    const profileId = await resolveProfileByEmail(null, integration.organization_id, email);
+    const profileId = await resolveProfileByEmail(sb, integration.organization_id, email);
     if (!profileId) continue;
+
+    const weekStart = getWeekStart(call.metaData?.started);
 
     // Call connects
     kpiMappings.push({
       profileId,
       kpiKey: 'call_connects',
       increment: 1,
+      source: 'gong',
       externalEventId: `gong:call:${call.metaData?.id || call.id}:call_connects`,
+      weekStart,
     });
 
     // Talk time (duration is in seconds)
@@ -208,7 +212,9 @@ async function syncActivities(integration, cursor) {
         profileId,
         kpiKey: 'talk_time_minutes',
         increment: Math.round(durationSec / 60),
+        source: 'gong',
         externalEventId: `gong:call:${call.metaData?.id || call.id}:talk_time`,
+        weekStart,
       });
     }
   }
@@ -219,7 +225,7 @@ async function syncActivities(integration, cursor) {
 
 // ── Sync: Meetings ───────────────────────────────────────────
 
-async function syncMeetings(integration, cursor) {
+async function syncMeetings(integration, cursor, sb) {
   const now = new Date();
   const lookback = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000);
 
@@ -253,7 +259,7 @@ async function syncMeetings(integration, cursor) {
     const email = await resolveUserEmail(integration, userId);
 
     const profileId = email
-      ? await resolveProfileByEmail(null, integration.organization_id, email)
+      ? await resolveProfileByEmail(sb, integration.organization_id, email)
       : null;
 
     if (profileId) {
@@ -261,7 +267,9 @@ async function syncMeetings(integration, cursor) {
         profileId,
         kpiKey: 'meetings',
         increment: 1,
+        source: 'gong',
         externalEventId: `gong:meeting:${call.metaData?.id || call.id}:meetings`,
+        weekStart: getWeekStart(call.metaData?.started),
       });
     }
 
@@ -295,7 +303,7 @@ async function syncMeetings(integration, cursor) {
 // next steps, interactivity. These are per-call metrics that
 // get averaged per rep per week using SET mode (not increment).
 
-async function syncCallIntelligence(integration, cursor) {
+async function syncCallIntelligence(integration, cursor, sb) {
   const now = new Date();
   const lookback = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000);
 
@@ -333,7 +341,7 @@ async function syncCallIntelligence(integration, cursor) {
     const email = await resolveUserEmail(integration, userId);
     if (!email) continue;
 
-    const profileId = await resolveProfileByEmail(null, integration.organization_id, email);
+    const profileId = await resolveProfileByEmail(sb, integration.organization_id, email);
     if (!profileId) continue;
 
     if (!repStats[profileId]) {
@@ -387,6 +395,7 @@ async function syncCallIntelligence(integration, cursor) {
         profileId,
         kpiKey: 'talk_to_listen_ratio',
         value: avg,
+        source: 'gong',
         externalEventId: `gong:intel:${profileId}:talk_ratio`,
       });
     }
@@ -397,6 +406,7 @@ async function syncCallIntelligence(integration, cursor) {
         profileId,
         kpiKey: 'longest_monologue_sec',
         value: avg,
+        source: 'gong',
         externalEventId: `gong:intel:${profileId}:monologue`,
       });
     }
@@ -406,6 +416,7 @@ async function syncCallIntelligence(integration, cursor) {
         profileId,
         kpiKey: 'questions_asked',
         increment: s.questions,
+        source: 'gong',
         externalEventId: `gong:intel:${profileId}:questions`,
       });
     }
@@ -415,6 +426,7 @@ async function syncCallIntelligence(integration, cursor) {
         profileId,
         kpiKey: 'next_steps_mentioned',
         increment: s.nextSteps,
+        source: 'gong',
         externalEventId: `gong:intel:${profileId}:next_steps`,
       });
     }
@@ -425,6 +437,7 @@ async function syncCallIntelligence(integration, cursor) {
         profileId,
         kpiKey: 'interactivity_score',
         value: avg,
+        source: 'gong',
         externalEventId: `gong:intel:${profileId}:interactivity`,
       });
     }
@@ -432,6 +445,18 @@ async function syncCallIntelligence(integration, cursor) {
 
   const nextCursor = result.records?.cursor || null;
   return { records: calls, nextCursor, kpiMappings };
+}
+
+// ── Helpers ───────────────────────────────────────────────────
+
+function getWeekStart(fromDate) {
+  const d = fromDate ? new Date(fromDate) : new Date();
+  const day = d.getDay();
+  const diff = d.getDate() - day + (day === 0 ? -6 : 1);
+  const monday = new Date(d);
+  monday.setDate(diff);
+  monday.setHours(0, 0, 0, 0);
+  return monday.toISOString().split('T')[0];
 }
 
 // ── Webhook Support ──────────────────────────────────────────

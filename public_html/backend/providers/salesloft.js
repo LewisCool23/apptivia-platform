@@ -104,7 +104,7 @@ async function slGet(creds, path, params = {}) {
 
 // ── Sync: Activities (Calls) ─────────────────────────────────
 
-async function syncActivities(integration, cursor) {
+async function syncActivities(integration, cursor, sb) {
   const creds = integration.decryptedCreds;
   const params = { per_page: 100, sort_by: 'updated_at', sort_direction: 'asc' };
   if (cursor) params['updated_at[gte]'] = cursor;
@@ -118,15 +118,18 @@ async function syncActivities(integration, cursor) {
     const userEmail = record.user?.email || null;
     if (!userEmail) continue;
 
-    const profileId = await resolveProfileByEmail(null, integration.organization_id, userEmail);
+    const profileId = await resolveProfileByEmail(sb, integration.organization_id, userEmail);
     if (!profileId) continue;
 
     if (record.disposition === 'connected' || record.status === 'completed') {
+      const weekStart = getWeekStart(record.created_at || record.updated_at);
       kpiMappings.push({
         profileId,
         kpiKey: 'call_connects',
         increment: 1,
+        source: 'salesloft',
         externalEventId: `salesloft:call:${record.id}:call_connects`,
+        weekStart,
       });
 
       if (record.duration > 0) {
@@ -134,7 +137,9 @@ async function syncActivities(integration, cursor) {
           profileId,
           kpiKey: 'talk_time_minutes',
           increment: Math.round(record.duration / 60) || 1,
+          source: 'salesloft',
           externalEventId: `salesloft:call:${record.id}:talk_time`,
+          weekStart,
         });
       }
     }
@@ -150,7 +155,7 @@ async function syncActivities(integration, cursor) {
 
 // ── Sync: Meetings ───────────────────────────────────────────
 
-async function syncMeetings(integration, cursor) {
+async function syncMeetings(integration, cursor, sb) {
   const creds = integration.decryptedCreds;
   const params = { per_page: 100, sort_by: 'updated_at', sort_direction: 'asc' };
   if (cursor) params['updated_at[gte]'] = cursor;
@@ -165,7 +170,7 @@ async function syncMeetings(integration, cursor) {
     const userEmail = record.owner?.email || record.booked_by?.email || null;
 
     const profileId = userEmail
-      ? await resolveProfileByEmail(null, integration.organization_id, userEmail)
+      ? await resolveProfileByEmail(sb, integration.organization_id, userEmail)
       : null;
 
     if (profileId) {
@@ -173,7 +178,9 @@ async function syncMeetings(integration, cursor) {
         profileId,
         kpiKey: 'meetings',
         increment: 1,
+        source: 'salesloft',
         externalEventId: `salesloft:meeting:${record.id}:meetings`,
+        weekStart: getWeekStart(record.start_time || record.created_at),
       });
     }
 
@@ -202,7 +209,7 @@ async function syncMeetings(integration, cursor) {
 
 // ── Sync: Emails ─────────────────────────────────────────────
 
-async function syncEmails(integration, cursor) {
+async function syncEmails(integration, cursor, sb) {
   const creds = integration.decryptedCreds;
   const params = { per_page: 100, sort_by: 'updated_at', sort_direction: 'asc' };
   if (cursor) params['updated_at[gte]'] = cursor;
@@ -216,8 +223,10 @@ async function syncEmails(integration, cursor) {
     const userEmail = record.user?.email || null;
     if (!userEmail) continue;
 
-    const profileId = await resolveProfileByEmail(null, integration.organization_id, userEmail);
+    const profileId = await resolveProfileByEmail(sb, integration.organization_id, userEmail);
     if (!profileId) continue;
+
+    const weekStart = getWeekStart(record.created_at || record.updated_at);
 
     // Count email replies
     if (record.status === 'replied') {
@@ -225,7 +234,9 @@ async function syncEmails(integration, cursor) {
         profileId,
         kpiKey: 'sequence_replies',
         increment: 1,
+        source: 'salesloft',
         externalEventId: `salesloft:email:${record.id}:sequence_replies`,
+        weekStart,
       });
     }
 
@@ -235,13 +246,27 @@ async function syncEmails(integration, cursor) {
         profileId,
         kpiKey: 'emails_sent',
         increment: 1,
+        source: 'salesloft',
         externalEventId: `salesloft:email:${record.id}:emails_sent`,
+        weekStart,
       });
     }
   }
 
   const lastRecord = records[records.length - 1];
   return { records, nextCursor: lastRecord?.updated_at || cursor, kpiMappings };
+}
+
+// ── Helpers ───────────────────────────────────────────────────
+
+function getWeekStart(fromDate) {
+  const d = fromDate ? new Date(fromDate) : new Date();
+  const day = d.getDay();
+  const diff = d.getDate() - day + (day === 0 ? -6 : 1);
+  const monday = new Date(d);
+  monday.setDate(diff);
+  monday.setHours(0, 0, 0, 0);
+  return monday.toISOString().split('T')[0];
 }
 
 // ── Webhook Support ──────────────────────────────────────────

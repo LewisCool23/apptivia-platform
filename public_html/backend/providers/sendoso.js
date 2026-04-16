@@ -104,7 +104,7 @@ async function sendosoGet(creds, path) {
 
 // ── Sync: Gifts (Sent) ──────────────────────────────────────
 
-async function syncGifts(integration, cursor) {
+async function syncGifts(integration, cursor, sb) {
   const creds = integration.decryptedCreds;
   const page = cursor?.page || 1;
 
@@ -129,15 +129,19 @@ async function syncGifts(integration, cursor) {
     const senderEmail = send.sender_email || send.sender?.email || send.user_email;
     if (!senderEmail) continue;
 
-    const profileId = await resolveProfileByEmail(null, integration.organization_id, senderEmail);
+    const profileId = await resolveProfileByEmail(sb, integration.organization_id, senderEmail);
     if (!profileId) continue;
 
-    // Gift sent
+    const weekStart = getWeekStart(send.created_at || send.sent_at);
+
+    // Sends sent (also mapped as gifts_sent for backward compat)
     kpiMappings.push({
       profileId,
-      kpiKey: 'gifts_sent',
+      kpiKey: 'sends_sent',
       increment: 1,
-      externalEventId: `sendoso:send:${send.id}:gifts_sent`,
+      source: 'sendoso',
+      externalEventId: `sendoso:send:${send.id}:sends_sent`,
+      weekStart,
     });
 
     // Gift accepted/claimed
@@ -147,7 +151,9 @@ async function syncGifts(integration, cursor) {
         profileId,
         kpiKey: 'gifts_accepted',
         increment: 1,
+        source: 'sendoso',
         externalEventId: `sendoso:send:${send.id}:gifts_accepted`,
+        weekStart,
       });
     }
 
@@ -157,7 +163,9 @@ async function syncGifts(integration, cursor) {
         profileId,
         kpiKey: 'gift_influenced_meetings',
         increment: 1,
+        source: 'sendoso',
         externalEventId: `sendoso:send:${send.id}:gift_influenced_meetings`,
+        weekStart,
       });
     }
   }
@@ -169,10 +177,22 @@ async function syncGifts(integration, cursor) {
   return { records, nextCursor, kpiMappings };
 }
 
+// ── Helpers ───────────────────────────────────────────────────
+
+function getWeekStart(fromDate) {
+  const d = fromDate ? new Date(fromDate) : new Date();
+  const day = d.getDay();
+  const diff = d.getDate() - day + (day === 0 ? -6 : 1);
+  const monday = new Date(d);
+  monday.setDate(diff);
+  monday.setHours(0, 0, 0, 0);
+  return monday.toISOString().split('T')[0];
+}
+
 // ── Webhook Support ──────────────────────────────────────────
 
 const kpiMap = {
-  'gift.sent':            [{ key: 'gifts_sent',                increment: 1 }],
+  'gift.sent':            [{ key: 'sends_sent',                increment: 1 }],
   'gift.accepted':        [{ key: 'gifts_accepted',            increment: 1 }],
   'gift.claimed':         [{ key: 'gifts_accepted',            increment: 1 }],
   'gift.meeting_booked':  [{ key: 'gift_influenced_meetings',  increment: 1 }],
