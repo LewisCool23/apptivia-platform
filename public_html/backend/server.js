@@ -6839,6 +6839,7 @@ async function checkUpgradeTriggers() {
 }
 
 // ── Cron interval constants ───────────────────────────────────────────────
+const ONE_HOUR  = 60 * 60 * 1000;
 const SIX_HOURS = 6 * 60 * 60 * 1000;
 const ONE_DAY   = 24 * 60 * 60 * 1000;
 const ONE_WEEK  = 7 * 24 * 60 * 60 * 1000;
