@@ -434,10 +434,10 @@ app.post('/api/aaron/coaching-action', loadProfile, async (req, res) => {
     let crm_push_status = 'skipped';
     try {
       const { data: crmConn } = await sb
-        .from('integration_connections')
-        .select('id, provider')
+        .from('integrations')
+        .select('id, integration_type')
         .eq('organization_id', orgId)
-        .in('provider', ['salesforce', 'hubspot'])
+        .in('integration_type', ['salesforce', 'hubspot'])
         .eq('status', 'connected')
         .limit(1)
         .single();

@@ -1230,7 +1230,7 @@ async function processPushQueue(sb) {
       // Update queue item with retry info + backoff schedule
       const nextSchedule = isFinal ? null : new Date(Date.now() + BACKOFF_MINUTES[newRetry - 1] * 60000).toISOString();
       await sb.from('integration_push_queue').update({
-        status:        isFinal ? 'failed' : 'failed',
+        status:        isFinal ? 'failed' : 'retry',
         retry_count:   newRetry,
         error_message: err.message?.slice(0, 500),
         processed_at:  new Date().toISOString(),
