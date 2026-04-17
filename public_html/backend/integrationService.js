@@ -432,31 +432,18 @@ async function upsertKpiValue(sb, mapping, integration) {
   const src = mapping.source || integration.integration_type;
 
   if (aggregation === 'sum' && mapping.increment) {
-    // Sum mode — add to existing value
-    const { data: existing } = await sb.from('kpi_values')
-      .select('id, value')
-      .eq('profile_id', mapping.profileId)
-      .eq('kpi_id', metric.id)
-      .eq('period_start', weekStart)
-      .maybeSingle();
-
-    if (existing) {
-      await sb.from('kpi_values').update({
-        value: existing.value + mapping.increment,
-        source: src,
-      }).eq('id', existing.id);
-    } else {
-      await sb.from('kpi_values').insert({
-        profile_id: mapping.profileId,
-        kpi_id: metric.id,
-        period_start: weekStart,
-        period_end: getWeekEnd(weekStart),
-        value: mapping.increment,
-        source: src,
-        external_event_id: mapping.externalEventId || null,
-        sample_count: 1,
-      });
-    }
+    // Sum mode — atomic increment via RPC (eliminates read-then-write race)
+    // external_event_id is NULL on aggregated rows; event-level dedup
+    // is handled upstream by webhook_events table in processWebhook().
+    await sb.rpc('upsert_kpi_sum', {
+      p_profile_id:        mapping.profileId,
+      p_kpi_id:            metric.id,
+      p_period_start:      weekStart,
+      p_period_end:        getWeekEnd(weekStart),
+      p_increment:         mapping.increment,
+      p_source:            src,
+      p_external_event_id: null,
+    });
   } else if (aggregation === 'max') {
     // Max mode — keep the highest value for the week (e.g. longest_monologue_sec)
     const { data: existing } = await sb.from('kpi_values')
@@ -526,7 +513,7 @@ async function upsertKpiValue(sb, mapping, integration) {
       source: src,
       external_event_id: mapping.externalEventId || null,
       sample_count: 1,
-    }, { onConflict: 'external_event_id' });
+    }, { onConflict: 'profile_id,kpi_id,period_start' });
   }
 }
 
