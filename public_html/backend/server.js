@@ -7028,38 +7028,33 @@ io.on('connection', (socket) => {
         }
       }
 
-      // Daily message limit for Starter (10/day) — tracked per userId, not per socket
+      // Daily message limit for Starter (10/day) — DB-backed, survives PM2 restart
+      // Pattern: check BEFORE Anthropic call, increment AFTER success (fire-and-forget)
       const verifiedUserId = socket.authUser?.id || userId;
       if (isStarterAaron && verifiedUserId) {
-        const todayKey = new Date().toISOString().slice(0, 10);
-        const entry = _aaronDailyLimits[verifiedUserId] || { date: '', count: 0 };
-        if (entry.date !== todayKey) {
-          entry.date = todayKey;
-          entry.count = 0;
-        }
-        entry.count++;
-        _aaronDailyLimits[verifiedUserId] = entry;
-        if (entry.count > 10) {
-          // Log limit hit to DB for upgrade trigger analysis (async, non-blocking)
-          if (verifiedUserId) {
-            const sbLimit = getSupabaseAdmin();
-            if (sbLimit) {
-              sbLimit.from('profiles').select('aaron_limit_hit_dates').eq('id', verifiedUserId).single()
-                .then(({ data }) => {
-                  const dates = (data?.aaron_limit_hit_dates || []);
-                  const todayISO = new Date().toISOString().slice(0, 10);
-                  if (!dates.includes(todayISO)) {
-                    const updated = [...dates, todayISO].slice(-30);
-                    return sbLimit.from('profiles').update({ aaron_limit_hit_dates: updated }).eq('id', verifiedUserId);
-                  }
-                }).catch(() => {});
-            }
-          }
-          socket.emit('aaron_message', {
-            message: "You've reached your daily message limit on the Starter plan. Upgrade to Pro for unlimited Aaron access.",
-            limitReached: true,
+        const sbLimit = getSupabaseAdmin();
+        if (sbLimit) {
+          const { data: countResult } = await sbLimit.rpc('check_aaron_daily_limit', {
+            p_user_id: verifiedUserId,
           });
-          return;
+          const currentCount = countResult ?? 0;
+          if (currentCount >= 10) {
+            // Log limit hit for upgrade trigger analysis (async, non-blocking)
+            sbLimit.from('profiles').select('aaron_limit_hit_dates').eq('id', verifiedUserId).single()
+              .then(({ data }) => {
+                const dates = (data?.aaron_limit_hit_dates || []);
+                const todayISO = new Date().toISOString().slice(0, 10);
+                if (!dates.includes(todayISO)) {
+                  const updated = [...dates, todayISO].slice(-30);
+                  return sbLimit.from('profiles').update({ aaron_limit_hit_dates: updated }).eq('id', verifiedUserId);
+                }
+              }).catch(() => {});
+            socket.emit('aaron_message', {
+              message: "You've reached your daily message limit on the Starter plan. Upgrade to Pro for unlimited Aaron access.",
+              limitReached: true,
+            });
+            return;
+          }
         }
       }
 
@@ -7121,6 +7116,14 @@ io.on('connection', (socket) => {
         message: responseText,
         ...(activeFrameworkNames.length > 0 ? { frameworks: activeFrameworkNames } : {}),
       });
+
+      // Increment daily message count AFTER successful response (fire-and-forget)
+      if (isStarterAaron && verifiedUserId) {
+        const sbInc = getSupabaseAdmin();
+        if (sbInc) {
+          sbInc.rpc('increment_aaron_daily_count', { p_user_id: verifiedUserId }).catch(() => {});
+        }
+      }
 
       // [FEATURE 1] Thread persistence — save every 3 messages or auto-name on first message
       if (socket.activeThreadId && !isStarterAaron) {
