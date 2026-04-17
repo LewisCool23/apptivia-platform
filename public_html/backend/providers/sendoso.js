@@ -13,7 +13,7 @@
 'use strict';
 
 const crypto = require('crypto');
-const { fetchJson } = require('../integrationService');
+const { buildKpiMapping, getWeekStart } = require('./kpiCanonical');
 
 const SENDOSO_API = 'https://app.sendoso.com/api/v3';
 
@@ -97,6 +97,7 @@ function sendosoHeaders(creds) {
 }
 
 async function sendosoGet(creds, path) {
+  const { fetchJson } = require('../integrationService');
   return fetchJson(`${SENDOSO_API}${path}`, {
     headers: sendosoHeaders(creds),
   });
@@ -134,39 +135,30 @@ async function syncGifts(integration, cursor, sb) {
 
     const weekStart = getWeekStart(send.created_at || send.sent_at);
 
-    // Sends sent (also mapped as gifts_sent for backward compat)
-    kpiMappings.push({
-      profileId,
-      kpiKey: 'sends_sent',
-      increment: 1,
-      source: 'sendoso',
-      externalEventId: `sendoso:send:${send.id}:sends_sent`,
-      weekStart,
+    // Sends sent
+    const sentMapping = buildKpiMapping({
+      profileId, kpiKey: 'sends_sent', rawValue: 1, fromUnit: 'Count',
+      source: 'sendoso', externalEventId: `sendoso:send:${send.id}:sends_sent`, weekStart,
     });
+    if (sentMapping) kpiMappings.push(sentMapping);
 
     // Gift accepted/claimed
     const status = (send.status || '').toLowerCase();
     if (status === 'accepted' || status === 'claimed' || status === 'redeemed') {
-      kpiMappings.push({
-        profileId,
-        kpiKey: 'gifts_accepted',
-        increment: 1,
-        source: 'sendoso',
-        externalEventId: `sendoso:send:${send.id}:gifts_accepted`,
-        weekStart,
+      const acceptedMapping = buildKpiMapping({
+        profileId, kpiKey: 'gifts_accepted', rawValue: 1, fromUnit: 'Count',
+        source: 'sendoso', externalEventId: `sendoso:send:${send.id}:gifts_accepted`, weekStart,
       });
+      if (acceptedMapping) kpiMappings.push(acceptedMapping);
     }
 
-    // Gift-influenced meeting — Sendoso tracks if a meeting was booked after gift
+    // Gift-influenced meeting
     if (send.meeting_booked || send.influenced_meeting) {
-      kpiMappings.push({
-        profileId,
-        kpiKey: 'gift_influenced_meetings',
-        increment: 1,
-        source: 'sendoso',
-        externalEventId: `sendoso:send:${send.id}:gift_influenced_meetings`,
-        weekStart,
+      const meetingMapping = buildKpiMapping({
+        profileId, kpiKey: 'gift_influenced_meetings', rawValue: 1, fromUnit: 'Count',
+        source: 'sendoso', externalEventId: `sendoso:send:${send.id}:gift_influenced_meetings`, weekStart,
       });
+      if (meetingMapping) kpiMappings.push(meetingMapping);
     }
   }
 
@@ -175,18 +167,6 @@ async function syncGifts(integration, cursor, sb) {
     : null;
 
   return { records, nextCursor, kpiMappings };
-}
-
-// ── Helpers ───────────────────────────────────────────────────
-
-function getWeekStart(fromDate) {
-  const d = fromDate ? new Date(fromDate) : new Date();
-  const day = d.getDay();
-  const diff = d.getDate() - day + (day === 0 ? -6 : 1);
-  const monday = new Date(d);
-  monday.setDate(diff);
-  monday.setHours(0, 0, 0, 0);
-  return monday.toISOString().split('T')[0];
 }
 
 // ── Webhook Support ──────────────────────────────────────────
@@ -209,8 +189,8 @@ function mapWebhookEvent(payload) {
   return { eventName, eventId: eventId ? String(eventId) : null, userEmail };
 }
 
-function verifyWebhook(req) {
-  const secret = env('SENDOSO_CLIENT_SECRET');
+function verifyWebhook(req, explicitSecret = null) {
+  const secret = explicitSecret || env('SENDOSO_CLIENT_SECRET');
   if (!secret) return true;
 
   const signature = req.headers['x-sendoso-signature'] || '';

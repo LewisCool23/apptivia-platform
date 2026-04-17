@@ -6839,9 +6839,10 @@ async function checkUpgradeTriggers() {
 }
 
 // ── Cron interval constants ───────────────────────────────────────────────
-const ONE_HOUR  = 60 * 60 * 1000;
-const SIX_HOURS = 6 * 60 * 60 * 1000;
-const ONE_DAY   = 24 * 60 * 60 * 1000;
+const THIRTY_MIN = 30 * 60 * 1000;
+const ONE_HOUR   = 60 * 60 * 1000;
+const SIX_HOURS  = 6 * 60 * 60 * 1000;
+const ONE_DAY    = 24 * 60 * 60 * 1000;
 const ONE_WEEK  = 7 * 24 * 60 * 60 * 1000;
 
 // ── Register and start all cron jobs ──────────────────────────────────────
@@ -6857,7 +6858,7 @@ CronManager.register('coaching-nudges',    runCoachingNudges,      ONE_WEEK, 200
 // [ENHANCEMENT 9.1] Follow-up nudge agent — daily, runs after coaching-nudges
 CronManager.register('follow-up-nudges',   runFollowUpNudges,      ONE_DAY,  230_000);
 CronManager.register('leaderboard-refresh', runLeaderboardRefresh, SIX_HOURS, 250_000);
-CronManager.register('integration-sync',  async () => { const sb = getSupabaseAdmin(); return integrations.runScheduledSyncs(sb); }, ONE_HOUR, 300_000);
+CronManager.register('integration-sync',  async () => { const sb = getSupabaseAdmin(); return integrations.runScheduledSyncs(sb); }, THIRTY_MIN, 300_000);
 // [ENHANCEMENT 10.1] Competitive intelligence agent — weekly, after all other crons
 CronManager.register('competitive-intel',  runCompetitiveIntelligence, ONE_WEEK, 400_000);
 CronManager.register('integration-push',  async () => { const sb = getSupabaseAdmin(); return integrations.processPushQueue(sb); }, 15 * 60_000, 330_000);
@@ -6917,182 +6918,16 @@ ${salesDnaCtxCall ? salesDnaCtxCall + '\nAnalyze calls through the lens of the o
   }
 });
 
-// ── Outreach.io Webhook Ingest ─────────────────────────────────────────────
+// ── Legacy Outreach Webhook Handler REMOVED (Fix #1, 2026-04-17) ──────────
+// The dedicated /api/webhooks/outreach handler was deleted because it:
+//   1. Used raw .insert() without sum aggregation (one row per event vs. canonical upsert)
+//   2. Lacked org-scoping on profile lookup (cross-org data leak risk)
+//   3. Shadowed the generic /api/webhooks/:provider route (line ~8321)
 //
-// Configure in Outreach: Settings → Webhooks → POST to https://yourhost/api/webhooks/outreach
-// Set OUTREACH_WEBHOOK_SECRET in env to enable HMAC-SHA256 signature verification.
+// All provider webhooks now route through the generic handler, which calls
+// integrationService.processWebhook() with integration-first org resolution.
+// See: integrationService.js::processWebhook() for the canonical path.
 //
-// Supported events → KPI mapping:
-//   prospects.called         → call_connects (+1)
-//   calls.completed          → call_connects (+1) + talk_time_minutes (+duration)
-//   meetings.booked          → meetings (+1)
-//   opportunities.created    → sourced_opps (+1)
-//   opportunities.stageChange→ stage2_opps (+1, when new stage is "2" or "Stage 2")
-//   email.replied            → sequence_replies (+1)
-
-const OUTREACH_KPI_MAP = {
-  'prospects.called':          [{ key: 'call_connects',     increment: 1 }],
-  'calls.completed':           [{ key: 'call_connects',     increment: 1 }, { key: 'talk_time_minutes', fromAttr: 'duration' }],
-  'meetings.booked':           [{ key: 'meetings',          increment: 1 }],
-  'meetings.created':          [{ key: 'meetings',          increment: 1 }],
-  'opportunities.created':     [{ key: 'sourced_opps',      increment: 1 }],
-  'opportunities.stageChange': [{ key: 'stage2_opps',       increment: 1, condition: 'stage2' }],
-  'email.replied':             [{ key: 'sequence_replies',  increment: 1 }],
-  'prospects.emailReplied':    [{ key: 'sequence_replies',  increment: 1 }],
-};
-
-app.post('/api/webhooks/outreach', async (req, res) => {
-  // Always respond 200 quickly so Outreach doesn't retry
-  res.status(200).json({ received: true });
-
-  try {
-    const sb = getSupabaseAdmin();
-    if (!sb) return;
-
-    // ── 1. Signature verification ─────────────────────────────────────────
-    const secret = process.env.OUTREACH_WEBHOOK_SECRET;
-    if (secret) {
-      const sig = req.headers['x-outreach-webhook-signature'] || '';
-      const expected = 'sha256=' + crypto
-        .createHmac('sha256', secret)
-        .update(req.rawBody || JSON.stringify(req.body))
-        .digest('hex');
-      const sigBuf = Buffer.from(sig.padEnd(expected.length));
-      const expBuf = Buffer.from(expected);
-      if (sigBuf.length !== expBuf.length || !crypto.timingSafeEqual(sigBuf, expBuf)) {
-        console.warn('[webhook/outreach] Invalid signature — ignoring event');
-        return;
-      }
-    }
-
-    // ── 2. Parse event ────────────────────────────────────────────────────
-    const payload = req.body;
-    const eventName = payload?.meta?.eventName || payload?.event || '';
-    const eventId   = payload?.meta?.requestId || payload?.id || null;
-    const attrs     = payload?.data?.attributes || {};
-    const rels      = payload?.data?.relationships || {};
-
-    if (!eventName) return;
-
-    // ── 3. Map event → KPI updates ────────────────────────────────────────
-    const kpiUpdates = OUTREACH_KPI_MAP[eventName];
-    if (!kpiUpdates || kpiUpdates.length === 0) return;
-
-    // ── 4. Identify the Outreach user → Apptivia profile ─────────────────
-    const outreachUserEmail = rels?.owner?.data?.attributes?.email
-      || attrs?.userEmail
-      || payload?.userEmail
-      || null;
-
-    if (!outreachUserEmail) {
-      console.warn('[webhook/outreach] No user email in payload for event:', eventName);
-      return;
-    }
-
-    const { data: profile, error: profileLookupErr } = await sb
-      .from('profiles')
-      .select('id, organization_id, role')
-      .ilike('email', outreachUserEmail)
-      .limit(1)
-      .maybeSingle();
-
-    if (profileLookupErr) {
-      console.warn('[webhook/outreach] Profile lookup error for', outreachUserEmail, ':', profileLookupErr.message);
-      return;
-    }
-    if (!profile) {
-      console.warn('[webhook/outreach] No profile found for email:', outreachUserEmail);
-      return;
-    }
-
-    // Skip KPI insertion for leadership roles
-    if (['admin', 'manager', 'coach'].includes(profile.role)) {
-      console.log(`[webhook/outreach] Skipping KPI insert for ${profile.role}: ${outreachUserEmail}`);
-      return;
-    }
-
-    // ── 5. Compute current week period (Mon → Sun) ────────────────────────
-    const now = new Date();
-    const dayOfWeek = now.getUTCDay(); // 0 = Sun
-    const daysToMon = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
-    const monday = new Date(now);
-    monday.setUTCDate(now.getUTCDate() + daysToMon);
-    const periodStart = monday.toISOString().slice(0, 10);
-    const sunday = new Date(monday);
-    sunday.setUTCDate(monday.getUTCDate() + 6);
-    const periodEnd = sunday.toISOString().slice(0, 10);
-
-    // ── 6. Fetch KPI metric IDs ───────────────────────────────────────────
-    const kpiKeys = [...new Set(kpiUpdates.map(u => u.key))];
-    const { data: metrics } = await sb
-      .from('kpi_metrics')
-      .select('id, key')
-      .in('key', kpiKeys);
-
-    const metricMap = Object.fromEntries((metrics || []).map(m => [m.key, m.id]));
-
-    // ── 7. Check for stage 2 condition ────────────────────────────────────
-    const newStage = attrs?.stageName || attrs?.stage || '';
-    const isStage2 = /stage\s*2|s2/i.test(newStage) || newStage === '2';
-
-    // ── 8. Insert kpi_values rows (one per KPI, dedup by external_event_id) ──
-    const kpisUpdated = [];
-    for (const update of kpiUpdates) {
-      if (update.condition === 'stage2' && !isStage2) continue;
-
-      const metricId = metricMap[update.key];
-      if (!metricId) continue;
-
-      let increment = update.increment || 1;
-      if (update.fromAttr === 'duration') {
-        // Outreach stores call duration in seconds
-        const durationSec = parseInt(attrs?.duration || attrs?.talkTimeSecs || 0, 10);
-        if (!durationSec) continue;
-        increment = Math.round(durationSec / 60) || 1;
-      }
-
-      const externalId = eventId ? `outreach:${eventId}:${update.key}` : null;
-
-      const { error: insertErr } = await sb.from('kpi_values').insert({
-        kpi_id:            metricId,
-        profile_id:        profile.id,
-        value:             increment,
-        period_start:      periodStart,
-        period_end:        periodEnd,
-        source:            'outreach',
-        external_event_id: externalId,
-      });
-
-      if (insertErr && insertErr.code === '23505') {
-        // Unique violation = already processed this event, skip silently
-        continue;
-      }
-      if (insertErr) {
-        console.error('[webhook/outreach] Insert error:', insertErr.message);
-        continue;
-      }
-      kpisUpdated.push(update.key);
-    }
-
-    // ── 9. Write audit log ────────────────────────────────────────────────
-    await sb.from('webhook_events').insert({
-      source:          'outreach',
-      event_type:      eventName,
-      external_id:     eventId,
-      organization_id: profile.organization_id,
-      profile_id:      profile.id,
-      payload:         payload,
-      processed:       true,
-      kpis_updated:    kpisUpdated,
-    });
-
-    if (kpisUpdated.length > 0) {
-      console.log(`[webhook/outreach] ${eventName} → KPIs updated: ${kpisUpdated.join(', ')} for ${outreachUserEmail}`);
-    }
-  } catch (err) {
-    console.error('[webhook/outreach] Unhandled error:', err.message);
-  }
-});
 
 // Socket.io connection and Aaron AI chatbot handling
 io.on('connection', (socket) => {
@@ -8316,20 +8151,37 @@ app.post('/api/integrations/:id/backfill', loadProfile, requireMinRole('admin'),
   }
 });
 
-// Generic webhook ingest (provider-specific routing)
+// ── Generic Provider Webhook Endpoint ─────────────────────────────────────
+// Routes all provider webhooks through integrationService.processWebhook()
+// which identifies the INTEGRATION first (via signature match against stored
+// per-integration webhook secrets) and uses that integration's organization_id
+// for correct org attribution. Falls back to env-var global secret during
+// the transition window (pre-Planera, no per-integration secrets set yet).
 app.post('/api/webhooks/:provider', async (req, res) => {
-  // Respond 200 immediately (fire-and-forget pattern)
+  // Respond 200 immediately — providers retry on non-2xx
   res.status(200).json({ received: true });
+
   try {
     const sb = getSupabaseAdmin();
     if (!sb) return;
-    const result = await integrations.processWebhook(sb, req.params.provider, req);
+
+    const providerType = req.params.provider;
+    const result = await integrations.processWebhook(sb, providerType, req);
+
+    if (result.error) {
+      console.warn(`[webhook/${providerType}] ${result.error}`);
+    } else if (result.processed) {
+      console.log(`[webhook/${providerType}] org=${result.organizationId} profile=${result.profileId} KPIs updated: ${result.kpisUpdated?.join(', ') || '(none)'}${result.fallbackUsed ? ' (env-var fallback)' : ''}`);
+    } else {
+      console.log(`[webhook/${providerType}] not processed: ${result.reason}`);
+    }
+
     // Check for reply events — trigger sequence reply detection
     if (result?.event === 'email_reply' && result?.email) {
       await checkSequenceReply(sb, result.email);
     }
   } catch (err) {
-    console.error(`[webhook] ${req.params.provider} error:`, err.message);
+    console.error(`[webhook/${req.params.provider}] Unhandled error:`, err.message);
   }
 });
 

@@ -14,7 +14,7 @@
 'use strict';
 
 const crypto = require('crypto');
-const { fetchJson } = require('../integrationService');
+const { buildKpiMapping, getWeekStart } = require('./kpiCanonical');
 
 const HS_API_BASE = 'https://api.hubapi.com';
 
@@ -105,6 +105,7 @@ function hsHeaders(creds) {
 }
 
 async function hsGet(creds, path, params = {}) {
+  const { fetchJson } = require('../integrationService');
   const url = new URL(`${HS_API_BASE}${path}`);
   for (const [k, v] of Object.entries(params)) {
     if (v !== undefined && v !== null) url.searchParams.set(k, String(v));
@@ -113,6 +114,7 @@ async function hsGet(creds, path, params = {}) {
 }
 
 async function hsPost(creds, path, body) {
+  const { fetchJson } = require('../integrationService');
   return fetchJson(`${HS_API_BASE}${path}`, {
     method: 'POST',
     headers: hsHeaders(creds),
@@ -181,25 +183,20 @@ async function syncActivities(integration, cursor, sb) {
     // Call connects
     if (props.hs_call_status === 'COMPLETED') {
       const weekStart = getWeekStart(props.hs_timestamp || record.createdAt);
-      kpiMappings.push({
-        profileId,
-        kpiKey: 'call_connects',
-        increment: 1,
-        source: 'hubspot',
-        externalEventId: `hubspot:call:${record.id}:call_connects`,
-        weekStart,
-      });
 
-      // Talk time
+      const connectMapping = buildKpiMapping({
+        profileId, kpiKey: 'call_connects', rawValue: 1, fromUnit: 'Count',
+        source: 'hubspot', externalEventId: `hubspot:call:${record.id}:call_connects`, weekStart,
+      });
+      if (connectMapping) kpiMappings.push(connectMapping);
+
+      // Talk time (hs_call_duration is in milliseconds)
       if (props.hs_call_duration && parseInt(props.hs_call_duration) > 0) {
-        kpiMappings.push({
-          profileId,
-          kpiKey: 'talk_time_minutes',
-          increment: Math.round(parseInt(props.hs_call_duration) / 60),
-          source: 'hubspot',
-          externalEventId: `hubspot:call:${record.id}:talk_time`,
-          weekStart,
+        const talkTimeMapping = buildKpiMapping({
+          profileId, kpiKey: 'talk_time_minutes', rawValue: parseInt(props.hs_call_duration), fromUnit: 'Milliseconds',
+          source: 'hubspot', externalEventId: `hubspot:call:${record.id}:talk_time`, weekStart,
         });
+        if (talkTimeMapping) kpiMappings.push(talkTimeMapping);
       }
     }
   }
@@ -233,14 +230,12 @@ async function syncMeetings(integration, cursor, sb) {
       : null;
 
     if (profileId) {
-      kpiMappings.push({
-        profileId,
-        kpiKey: 'meetings',
-        increment: 1,
-        source: 'hubspot',
-        externalEventId: `hubspot:meeting:${record.id}:meetings`,
+      const meetingMapping = buildKpiMapping({
+        profileId, kpiKey: 'meetings', rawValue: 1, fromUnit: 'Count',
+        source: 'hubspot', externalEventId: `hubspot:meeting:${record.id}:meetings`,
         weekStart: getWeekStart(props.hs_meeting_start_time || record.createdAt),
       });
+      if (meetingMapping) kpiMappings.push(meetingMapping);
     }
 
     calendarEvents.push({
@@ -291,36 +286,28 @@ async function syncDeals(integration, cursor, sb) {
     const weekStart = getWeekStart(props.createdate || record.createdAt);
 
     // Sourced opp
-    kpiMappings.push({
-      profileId,
-      kpiKey: 'sourced_opps',
-      increment: 1,
-      source: 'hubspot',
-      externalEventId: `hubspot:deal:${record.id}:sourced`,
-      weekStart,
+    const sourcedMapping = buildKpiMapping({
+      profileId, kpiKey: 'sourced_opps', rawValue: 1, fromUnit: 'Count',
+      source: 'hubspot', externalEventId: `hubspot:deal:${record.id}:sourced`, weekStart,
     });
+    if (sourcedMapping) kpiMappings.push(sourcedMapping);
 
     // Closed Won — HubSpot default stage
     if (props.dealstage === 'closedwon') {
       const closedWeek = getWeekStart(props.closedate || record.createdAt);
-      kpiMappings.push({
-        profileId,
-        kpiKey: 'closed_won',
-        increment: 1,
-        source: 'hubspot',
-        externalEventId: `hubspot:deal:${record.id}:closed_won`,
-        weekStart: closedWeek,
+      const wonMapping = buildKpiMapping({
+        profileId, kpiKey: 'closed_won', rawValue: 1, fromUnit: 'Count',
+        source: 'hubspot', externalEventId: `hubspot:deal:${record.id}:closed_won`, weekStart: closedWeek,
       });
+      if (wonMapping) kpiMappings.push(wonMapping);
+
       const amount = parseFloat(props.amount);
       if (amount > 0) {
-        kpiMappings.push({
-          profileId,
-          kpiKey: 'revenue_generated',
-          increment: amount,
-          source: 'hubspot',
-          externalEventId: `hubspot:deal:${record.id}:revenue`,
-          weekStart: closedWeek,
+        const revenueMapping = buildKpiMapping({
+          profileId, kpiKey: 'revenue_generated', rawValue: amount, fromUnit: 'Dollars',
+          source: 'hubspot', externalEventId: `hubspot:deal:${record.id}:revenue`, weekStart: closedWeek,
         });
+        if (revenueMapping) kpiMappings.push(revenueMapping);
       }
     }
   }
@@ -385,8 +372,8 @@ function mapWebhookEvent(payload) {
   return { eventName, eventId, userEmail };
 }
 
-function verifyWebhook(req) {
-  const secret = env('HUBSPOT_CLIENT_SECRET');
+function verifyWebhook(req, explicitSecret = null) {
+  const secret = explicitSecret || env('HUBSPOT_CLIENT_SECRET');
   if (!secret) return true; // No verification if no secret configured
 
   const signature = req.headers['x-hubspot-signature-v3'] || '';
@@ -401,18 +388,6 @@ function verifyWebhook(req) {
   } catch {
     return false;
   }
-}
-
-// ── Helpers ───────────────────────────────────────────────────
-
-function getWeekStart(fromDate) {
-  const d = fromDate ? new Date(fromDate) : new Date();
-  const day = d.getDay();
-  const diff = d.getDate() - day + (day === 0 ? -6 : 1);
-  const monday = new Date(d);
-  monday.setDate(diff);
-  monday.setHours(0, 0, 0, 0);
-  return monday.toISOString().split('T')[0];
 }
 
 // ── Export ────────────────────────────────────────────────────

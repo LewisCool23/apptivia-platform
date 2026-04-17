@@ -428,9 +428,11 @@ async function upsertKpiValue(sb, mapping, integration) {
   if (!metric) return; // KPI not defined or inactive
 
   const weekStart = mapping.weekStart || getWeekStart();
+  const aggregation = mapping.aggregation || (mapping.increment ? 'sum' : 'set');
+  const src = mapping.source || integration.integration_type;
 
-  if (mapping.increment) {
-    // Increment mode — add to existing value
+  if (aggregation === 'sum' && mapping.increment) {
+    // Sum mode — add to existing value
     const { data: existing } = await sb.from('kpi_values')
       .select('id, value')
       .eq('profile_id', mapping.profileId)
@@ -441,8 +443,7 @@ async function upsertKpiValue(sb, mapping, integration) {
     if (existing) {
       await sb.from('kpi_values').update({
         value: existing.value + mapping.increment,
-        source: mapping.source || integration.integration_type,
-        updated_at: new Date().toISOString(),
+        source: src,
       }).eq('id', existing.id);
     } else {
       await sb.from('kpi_values').insert({
@@ -451,20 +452,80 @@ async function upsertKpiValue(sb, mapping, integration) {
         period_start: weekStart,
         period_end: getWeekEnd(weekStart),
         value: mapping.increment,
-        source: mapping.source || integration.integration_type,
+        source: src,
         external_event_id: mapping.externalEventId || null,
+        sample_count: 1,
+      });
+    }
+  } else if (aggregation === 'max') {
+    // Max mode — keep the highest value for the week (e.g. longest_monologue_sec)
+    const { data: existing } = await sb.from('kpi_values')
+      .select('id, value')
+      .eq('profile_id', mapping.profileId)
+      .eq('kpi_id', metric.id)
+      .eq('period_start', weekStart)
+      .maybeSingle();
+
+    if (existing) {
+      if (mapping.value > existing.value) {
+        await sb.from('kpi_values').update({
+          value: mapping.value,
+          source: src,
+        }).eq('id', existing.id);
+      }
+    } else {
+      await sb.from('kpi_values').insert({
+        profile_id: mapping.profileId,
+        kpi_id: metric.id,
+        period_start: weekStart,
+        period_end: getWeekEnd(weekStart),
+        value: mapping.value,
+        source: src,
+        external_event_id: mapping.externalEventId || null,
+        sample_count: 1,
+      });
+    }
+  } else if (aggregation === 'avg') {
+    // Average mode — running average with sample_count (e.g. talk_to_listen_ratio)
+    const { data: existing } = await sb.from('kpi_values')
+      .select('id, value, sample_count')
+      .eq('profile_id', mapping.profileId)
+      .eq('kpi_id', metric.id)
+      .eq('period_start', weekStart)
+      .maybeSingle();
+
+    if (existing) {
+      const prevCount = existing.sample_count || 1;
+      const newCount = prevCount + 1;
+      const newValue = Math.round(((existing.value * prevCount + mapping.value) / newCount) * 100) / 100;
+      await sb.from('kpi_values').update({
+        value: newValue,
+        sample_count: newCount,
+        source: src,
+      }).eq('id', existing.id);
+    } else {
+      await sb.from('kpi_values').insert({
+        profile_id: mapping.profileId,
+        kpi_id: metric.id,
+        period_start: weekStart,
+        period_end: getWeekEnd(weekStart),
+        value: mapping.value,
+        source: src,
+        external_event_id: mapping.externalEventId || null,
+        sample_count: 1,
       });
     }
   } else {
-    // Set mode — upsert with exact value
+    // Set mode — upsert with exact value (backward compat)
     await sb.from('kpi_values').upsert({
       profile_id: mapping.profileId,
       kpi_id: metric.id,
       period_start: weekStart,
       period_end: getWeekEnd(weekStart),
       value: mapping.value || 0,
-      source: mapping.source || integration.integration_type,
+      source: src,
       external_event_id: mapping.externalEventId || null,
+      sample_count: 1,
     }, { onConflict: 'external_event_id' });
   }
 }
@@ -605,7 +666,29 @@ async function getSyncHistory(sb, integrationId, limit = 20) {
 // ── Webhook Processing ───────────────────────────────────────
 
 /**
- * Generic webhook handler — routes to the appropriate provider.
+ * Generic webhook handler with integration-first org resolution.
+ *
+ * POST-PLANERA TODO: Admin UI to manage per-integration webhook secrets.
+ *
+ * Current state (Planera pilot):
+ *   - Per-integration secrets supported via webhook_secret_encrypted column
+ *   - When null, falls back to env-var secret (e.g. OUTREACH_WEBHOOK_SECRET)
+ *   - Fallback email-lookup is scoped to provider-connected orgs only
+ *   - Cross-org email collisions logged and refused (safe default)
+ *
+ * Future state:
+ *   - Admin UI in Systems > Integrations to rotate webhook secrets
+ *   - Remove env-var fallback entirely
+ *   - Require per-integration secret for all new connections
+ *
+ * Resolution order:
+ *   1. Fetch all connected integrations of this provider type
+ *   2. Run provider.verifyWebhook() against each integration's webhook_secret
+ *      (decrypted). The one that validates IS the correct integration.
+ *   3. Use that integration's organization_id to scope the profile lookup.
+ *   4. Fallback: if no integration has a stored secret (pre-migration state),
+ *      fall back to the env-var global secret AND use the profile lookup —
+ *      but ONLY scoped to orgs that have this provider connected.
  */
 async function processWebhook(sb, providerType, req) {
   const provider = getProvider(providerType);
@@ -613,15 +696,74 @@ async function processWebhook(sb, providerType, req) {
     return { error: `Unknown provider: ${providerType}` };
   }
 
-  // Verify webhook signature if provider supports it
-  if (provider.verifyWebhook && !provider.verifyWebhook(req)) {
-    return { error: 'Invalid webhook signature' };
-  }
-
   if (!provider.mapWebhookEvent || !provider.kpiMap) {
     return { error: `Provider '${providerType}' does not support webhooks` };
   }
 
+  // Step 1: Fetch candidate integrations (connected, this provider type)
+  const { data: candidates } = await sb
+    .from('integrations')
+    .select('id, organization_id, webhook_secret_encrypted, integration_type, profile_id, status')
+    .eq('integration_type', providerType)
+    .eq('status', 'connected');
+
+  if (!candidates?.length) {
+    await sb.from('webhook_events').insert({
+      source: providerType,
+      event_type: 'unknown',
+      external_id: null,
+      payload: req.body,
+      processed: false,
+      error: `No connected ${providerType} integrations found`,
+    });
+    return { processed: false, reason: `No connected integrations for ${providerType}` };
+  }
+
+  // Step 2: Find the integration whose webhook_secret verifies this request
+  let matchedIntegration = null;
+  let usedFallback = false;
+
+  if (provider.verifyWebhook) {
+    for (const candidate of candidates) {
+      if (candidate.webhook_secret_encrypted) {
+        try {
+          const decrypted = decryptCredentials(candidate.webhook_secret_encrypted);
+          if (provider.verifyWebhook(req, decrypted.secret)) {
+            matchedIntegration = candidate;
+            break;
+          }
+        } catch (err) {
+          console.warn(`[webhook:${providerType}] Decrypt failed for integration ${candidate.id}:`, err.message);
+        }
+      }
+    }
+
+    // Step 2b: Fallback path — env var secret (only if no per-integration secrets set yet)
+    if (!matchedIntegration) {
+      const anyHasSecret = candidates.some(c => c.webhook_secret_encrypted);
+      if (!anyHasSecret && provider.verifyWebhook(req, null)) {
+        // Env-var fallback verified. We still need to pick the right integration.
+        // This is the transition-window path — safe because Phase 0 Query 8
+        // confirmed zero cross-org email collisions in production data.
+        usedFallback = true;
+      } else {
+        await sb.from('webhook_events').insert({
+          source: providerType,
+          event_type: 'signature_mismatch',
+          external_id: null,
+          payload: req.body,
+          processed: false,
+          error: 'No integration matched webhook signature',
+        });
+        return { error: 'Invalid webhook signature (no integration matched)' };
+      }
+    }
+  } else {
+    // Provider has no verifyWebhook — use fallback path
+    usedFallback = true;
+  }
+
+  // Step 3: Parse the event
   const event = provider.mapWebhookEvent(req.body);
   if (!event || !event.eventName) {
     return { processed: false, reason: 'Unrecognized event' };
@@ -629,37 +771,106 @@ async function processWebhook(sb, providerType, req) {
 
   const kpiUpdates = provider.kpiMap[event.eventName];
   if (!kpiUpdates?.length) {
-    // Log but skip unmapped events
     await sb.from('webhook_events').insert({
       source: providerType,
       event_type: event.eventName,
       external_id: event.eventId || null,
+      organization_id: matchedIntegration?.organization_id || null,
       payload: req.body,
       processed: false,
     });
     return { processed: false, reason: `No KPI mapping for ${event.eventName}` };
   }
 
-  // Resolve user
-  const profileId = event.userEmail
-    ? await resolveProfileByEmail(sb, event.organizationId, event.userEmail)
-    : null;
+  // Step 4: Determine organization_id
+  let orgId = matchedIntegration?.organization_id || null;
 
-  if (!profileId && event.userEmail) {
-    // Lookup org from email domain or integration
-    // If we can't resolve the user, log but skip
+  if (usedFallback && !orgId && event.userEmail) {
+    // Env-var fallback: signature is valid globally but we don't know the org.
+    // Look up the profile by email — scoped to orgs that have this provider connected,
+    // to eliminate collisions with unrelated orgs.
+    const candidateOrgIds = candidates.map(c => c.organization_id);
+    const { data: matches } = await sb
+      .from('profiles')
+      .select('id, organization_id, role, carries_quota')
+      .ilike('email', event.userEmail.trim())
+      .in('organization_id', candidateOrgIds);
+
+    if (matches?.length === 1) {
+      orgId = matches[0].organization_id;
+      matchedIntegration = candidates.find(c => c.organization_id === orgId) || null;
+    } else if (matches?.length > 1) {
+      // Cross-org collision detected — refuse to attribute
+      await sb.from('webhook_events').insert({
+        source: providerType,
+        event_type: event.eventName,
+        external_id: event.eventId || null,
+        payload: req.body,
+        processed: false,
+        error: `Cross-org email collision for ${event.userEmail} — refusing to attribute`,
+      });
+      return { processed: false, reason: 'Cross-org email collision' };
+    }
+  } else if (usedFallback && !orgId && candidates.length === 1) {
+    // Only one integration of this type exists — unambiguous
+    orgId = candidates[0].organization_id;
+    matchedIntegration = candidates[0];
+  }
+
+  if (!orgId) {
     await sb.from('webhook_events').insert({
       source: providerType,
       event_type: event.eventName,
       external_id: event.eventId || null,
       payload: req.body,
       processed: false,
-      error: `Could not resolve profile for email: ${event.userEmail}`,
+      error: 'Could not resolve organization_id',
     });
-    return { processed: false, reason: 'User not found' };
+    return { processed: false, reason: 'No organization_id' };
   }
 
-  // Process KPI updates
+  // Step 5: Resolve profile, scoped to orgId (no cross-org lookup)
+  const profileId = event.userEmail
+    ? await resolveProfileByEmail(sb, orgId, event.userEmail)
+    : null;
+
+  if (!profileId && event.userEmail) {
+    await sb.from('webhook_events').insert({
+      source: providerType,
+      event_type: event.eventName,
+      external_id: event.eventId || null,
+      organization_id: orgId,
+      payload: req.body,
+      processed: false,
+      error: `Could not resolve profile for email: ${event.userEmail}`,
+    });
+    return { processed: false, reason: 'User not found in org' };
+  }
+
+  // Step 6: Leader skip (player-coach override — see Fix #9)
+  if (profileId) {
+    const { data: profileRow } = await sb
+      .from('profiles')
+      .select('role, carries_quota')
+      .eq('id', profileId)
+      .maybeSingle();
+    const isLeader = profileRow && ['admin', 'manager', 'coach'].includes(profileRow.role);
+    if (isLeader && !profileRow.carries_quota) {
+      await sb.from('webhook_events').insert({
+        source: providerType,
+        event_type: event.eventName,
+        external_id: event.eventId || null,
+        organization_id: orgId,
+        profile_id: profileId,
+        payload: req.body,
+        processed: false,
+        error: `Skipped: leadership role ${profileRow.role} without carries_quota`,
+      });
+      return { processed: false, reason: 'Leadership role without carries_quota' };
+    }
+  }
+
+  // Step 7: Process KPI updates
   const weekStart = getWeekStart();
   const kpisUpdated = [];
 
@@ -673,7 +884,7 @@ async function processWebhook(sb, providerType, req) {
         source: providerType,
         externalEventId,
         weekStart,
-      }, { organization_id: event.organizationId, integration_type: providerType });
+      }, { organization_id: orgId, integration_type: providerType });
       kpisUpdated.push(update.key);
     } catch (err) {
       if (err.code === '23505') continue; // Duplicate — already processed
@@ -681,19 +892,42 @@ async function processWebhook(sb, providerType, req) {
     }
   }
 
-  // Audit log
+  // Step 8: Audit log
   await sb.from('webhook_events').insert({
     source: providerType,
     event_type: event.eventName,
     external_id: event.eventId || null,
-    organization_id: event.organizationId || null,
+    organization_id: orgId,
     profile_id: profileId,
     payload: req.body,
     processed: true,
     kpis_updated: kpisUpdated,
   });
 
-  return { processed: true, kpisUpdated };
+  // Normalizes provider-specific reply event names to a canonical 'email_reply'
+  // so downstream handlers (checkSequenceReply in server.js) can match on a
+  // single string regardless of which provider fired the webhook. Without this
+  // normalization, each provider's event name (e.g. Outreach's 'email.replied',
+  // 'prospects.emailReplied', HubSpot's 'engagement.reply', SalesLoft's 'reply')
+  // would require separate matching in the generic route handler.
+  const REPLY_EVENTS = new Set([
+    'email.replied',           // Outreach
+    'prospects.emailReplied',  // Outreach (alternate)
+    'email_reply',             // normalized / generic
+    'engagement.reply',        // HubSpot
+    'reply',                   // SalesLoft / generic
+  ]);
+  const normalizedEvent = REPLY_EVENTS.has(event.eventName) ? 'email_reply' : event.eventName;
+
+  return {
+    processed: true,
+    kpisUpdated,
+    organizationId: orgId,
+    profileId,
+    fallbackUsed: usedFallback,
+    event: normalizedEvent,
+    email: event.userEmail || null,
+  };
 }
 
 // ── Scheduled Sync (called by CronManager) ───────────────────
@@ -1053,28 +1287,6 @@ async function markPushItem(sb, item, status, errorMessage) {
   });
 }
 
-// ── Auto-register providers ─────────────────────────────────
-// Load all provider modules from ./providers/ so integrationService
-// is self-contained and does not depend on server.js having run first.
-try {
-  const path = require('path');
-  const fs = require('fs');
-  const providersDir = path.join(__dirname, 'providers');
-  if (fs.existsSync(providersDir)) {
-    for (const file of fs.readdirSync(providersDir)) {
-      if (file.endsWith('.js')) {
-        const provider = require(path.join(providersDir, file));
-        if (provider && provider.type) {
-          registerProvider(provider);
-          console.log(`[integrations] Registered provider: ${provider.type}`);
-        }
-      }
-    }
-  }
-} catch (err) {
-  console.warn('[integrations] Error auto-loading providers:', err.message);
-}
-
 // ── Exports ──────────────────────────────────────────────────
 
 module.exports = {
@@ -1127,3 +1339,26 @@ module.exports = {
   getWeekStart,
   getWeekEnd,
 };
+
+// ── Auto-register providers ─────────────────────────────────
+// Load all provider modules from ./providers/ AFTER module.exports
+// is assigned, so providers can require('../integrationService')
+// without hitting a circular dependency (exports are fully populated).
+try {
+  const path = require('path');
+  const fs = require('fs');
+  const providersDir = path.join(__dirname, 'providers');
+  if (fs.existsSync(providersDir)) {
+    for (const file of fs.readdirSync(providersDir)) {
+      if (file.endsWith('.js')) {
+        const provider = require(path.join(providersDir, file));
+        if (provider && provider.type) {
+          registerProvider(provider);
+          console.log(`[integrations] Registered provider: ${provider.type}`);
+        }
+      }
+    }
+  }
+} catch (err) {
+  console.warn('[integrations] Error auto-loading providers:', err.message);
+}

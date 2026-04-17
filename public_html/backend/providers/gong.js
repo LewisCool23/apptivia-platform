@@ -2,7 +2,7 @@
  * Gong Provider — Apptivia Integration Framework
  * ------------------------------------------------
  * OAuth 2.0, Gong API v2, cursor-based pagination.
- * Syncs: Calls (activities), Meetings.
+ * Syncs: Calls (activities), Meetings, Call Intelligence.
  * Webhooks: call.completed.
  *
  * NOTE: Gong's API base URL is customer-specific and returned
@@ -17,7 +17,7 @@
 'use strict';
 
 const crypto = require('crypto');
-const { fetchJson } = require('../integrationService');
+const { buildKpiMapping, getWeekStart } = require('./kpiCanonical');
 
 function env(key) { return process.env[key] || ''; }
 
@@ -43,7 +43,6 @@ function getAuthUrl(integration, state, redirectUri) {
 }
 
 async function exchangeCode(code, redirectUri) {
-  // Gong uses Basic Auth (client_id:client_secret) for token exchange
   const basicAuth = Buffer.from(
     `${env('GONG_CLIENT_ID')}:${env('GONG_CLIENT_SECRET')}`
   ).toString('base64');
@@ -69,15 +68,11 @@ async function exchangeCode(code, redirectUri) {
   }
 
   const data = await res.json();
-
-  // Gong returns api_base_url_for_customer — the customer-specific API base URL.
-  // We pass it through so integrationService stores it as instance_url.
   return {
     access_token: data.access_token,
     refresh_token: data.refresh_token,
     token_type: 'Bearer',
-    expires_in: data.expires_in || 86400, // Gong tokens expire in ~24h
-    // Custom field: the integration service stores this as instance_url
+    expires_in: data.expires_in || 86400,
     instance_url: data.api_base_url_for_customer || 'https://api.gong.io',
   };
 }
@@ -111,7 +106,6 @@ async function refreshToken(creds) {
     access_token: data.access_token,
     refresh_token: data.refresh_token,
     expires_in: data.expires_in || 86400,
-    // Preserve the customer-specific base URL on refresh
     instance_url: data.api_base_url_for_customer || creds.instance_url,
   };
 }
@@ -119,7 +113,6 @@ async function refreshToken(creds) {
 // ── API Helpers ──────────────────────────────────────────────
 
 function getBaseUrl(integration) {
-  // Customer-specific base URL stored during OAuth exchange
   return integration.instance_url || 'https://api.gong.io';
 }
 
@@ -128,6 +121,7 @@ function gongHeaders(creds) {
 }
 
 async function gongGet(integration, path, params = {}) {
+  const { fetchJson } = require('../integrationService');
   const url = new URL(`${getBaseUrl(integration)}${path}`);
   for (const [k, v] of Object.entries(params)) {
     if (v !== undefined && v !== null) url.searchParams.set(k, String(v));
@@ -136,6 +130,7 @@ async function gongGet(integration, path, params = {}) {
 }
 
 async function gongPost(integration, path, body = {}) {
+  const { fetchJson } = require('../integrationService');
   return fetchJson(`${getBaseUrl(integration)}${path}`, {
     method: 'POST',
     headers: gongHeaders(integration.decryptedCreds),
@@ -153,7 +148,6 @@ async function resolveUserEmail(integration, userId) {
   if (_userCache[cacheKey]) return _userCache[cacheKey];
 
   try {
-    // Fetch all users and cache them (Gong doesn't have a single-user endpoint)
     const result = await gongGet(integration, '/v2/users');
     const users = result.users || [];
     for (const user of users) {
@@ -170,13 +164,10 @@ async function resolveUserEmail(integration, userId) {
 
 async function syncActivities(integration, cursor, sb) {
   const now = new Date();
-  const lookback = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000); // 90 days
+  const lookback = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000);
 
   const requestBody = {
-    filter: {
-      fromDateTime: lookback.toISOString(),
-      toDateTime: now.toISOString(),
-    },
+    filter: { fromDateTime: lookback.toISOString(), toDateTime: now.toISOString() },
   };
   if (cursor) requestBody.cursor = cursor;
 
@@ -195,27 +186,19 @@ async function syncActivities(integration, cursor, sb) {
 
     const weekStart = getWeekStart(call.metaData?.started);
 
-    // Call connects
-    kpiMappings.push({
-      profileId,
-      kpiKey: 'call_connects',
-      increment: 1,
-      source: 'gong',
-      externalEventId: `gong:call:${call.metaData?.id || call.id}:call_connects`,
-      weekStart,
+    const connectMapping = buildKpiMapping({
+      profileId, kpiKey: 'call_connects', rawValue: 1, fromUnit: 'Count',
+      source: 'gong', externalEventId: `gong:call:${call.metaData?.id || call.id}:call_connects`, weekStart,
     });
+    if (connectMapping) kpiMappings.push(connectMapping);
 
-    // Talk time (duration is in seconds)
     const durationSec = call.metaData?.duration || 0;
     if (durationSec > 0) {
-      kpiMappings.push({
-        profileId,
-        kpiKey: 'talk_time_minutes',
-        increment: Math.round(durationSec / 60),
-        source: 'gong',
-        externalEventId: `gong:call:${call.metaData?.id || call.id}:talk_time`,
-        weekStart,
+      const talkTimeMapping = buildKpiMapping({
+        profileId, kpiKey: 'talk_time_minutes', rawValue: durationSec, fromUnit: 'Seconds',
+        source: 'gong', externalEventId: `gong:call:${call.metaData?.id || call.id}:talk_time`, weekStart,
       });
+      if (talkTimeMapping) kpiMappings.push(talkTimeMapping);
     }
   }
 
@@ -229,12 +212,8 @@ async function syncMeetings(integration, cursor, sb) {
   const now = new Date();
   const lookback = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000);
 
-  // Gong treats video/web-conference calls as meetings
   const requestBody = {
-    filter: {
-      fromDateTime: lookback.toISOString(),
-      toDateTime: now.toISOString(),
-    },
+    filter: { fromDateTime: lookback.toISOString(), toDateTime: now.toISOString() },
   };
   if (cursor) requestBody.cursor = cursor;
 
@@ -245,7 +224,6 @@ async function syncMeetings(integration, cursor, sb) {
   const { resolveProfileByEmail } = require('../integrationService');
 
   for (const call of calls) {
-    // Only count web-conference / video calls as meetings
     const isWebConference = call.metaData?.system === 'Zoom'
       || call.metaData?.system === 'Microsoft Teams'
       || call.metaData?.system === 'Google Meet'
@@ -263,14 +241,12 @@ async function syncMeetings(integration, cursor, sb) {
       : null;
 
     if (profileId) {
-      kpiMappings.push({
-        profileId,
-        kpiKey: 'meetings',
-        increment: 1,
-        source: 'gong',
-        externalEventId: `gong:meeting:${call.metaData?.id || call.id}:meetings`,
+      const meetingMapping = buildKpiMapping({
+        profileId, kpiKey: 'meetings', rawValue: 1, fromUnit: 'Count',
+        source: 'gong', externalEventId: `gong:meeting:${call.metaData?.id || call.id}:meetings`,
         weekStart: getWeekStart(call.metaData?.started),
       });
+      if (meetingMapping) kpiMappings.push(meetingMapping);
     }
 
     const started = call.metaData?.started;
@@ -298,30 +274,17 @@ async function syncMeetings(integration, cursor, sb) {
 }
 
 // ── Sync: Call Intelligence (Extensive) ──────────────────────
-// Fetches detailed call analytics from /v2/calls/extensive:
-// talk-to-listen ratio, longest monologue, questions asked,
-// next steps, interactivity. These are per-call metrics that
-// get averaged per rep per week using SET mode (not increment).
 
 async function syncCallIntelligence(integration, cursor, sb) {
   const now = new Date();
   const lookback = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000);
 
   const requestBody = {
-    filter: {
-      fromDateTime: lookback.toISOString(),
-      toDateTime: now.toISOString(),
-    },
+    filter: { fromDateTime: lookback.toISOString(), toDateTime: now.toISOString() },
     contentSelector: {
       exposedFields: {
-        content: {
-          highlights: false,
-          callOutcome: false,
-          keyPoints: false,
-        },
-        collaboration: {
-          publicComments: false,
-        },
+        content: { highlights: false, callOutcome: false, keyPoints: false },
+        collaboration: { publicComments: false },
         media: false,
       },
     },
@@ -333,9 +296,6 @@ async function syncCallIntelligence(integration, cursor, sb) {
   const kpiMappings = [];
   const { resolveProfileByEmail } = require('../integrationService');
 
-  // Accumulate per-rep stats then average
-  const repStats = {}; // { profileId: { talkRatio: [], monologue: [], questions: 0, nextSteps: 0, interactivity: [] } }
-
   for (const call of calls) {
     const userId = call.metaData?.primaryUserId;
     const email = await resolveUserEmail(integration, userId);
@@ -344,102 +304,60 @@ async function syncCallIntelligence(integration, cursor, sb) {
     const profileId = await resolveProfileByEmail(sb, integration.organization_id, email);
     if (!profileId) continue;
 
-    if (!repStats[profileId]) {
-      repStats[profileId] = { talkRatio: [], monologue: [], questions: 0, nextSteps: 0, interactivity: [] };
-    }
-
-    const stats = repStats[profileId];
+    const weekStart = getWeekStart(call.metaData?.started);
     const interaction = call.interaction || {};
     const parties = call.parties || [];
 
-    // Talk-to-listen ratio — Gong provides per-speaker talk time
-    // Find the internal speaker's talk percentage
+    // Talk-to-listen ratio
     const internalParty = parties.find(p => p.affiliation === 'Internal' || p.speakerId === call.metaData?.primaryUserId);
     if (internalParty?.talkTime != null && call.metaData?.duration > 0) {
       const ratio = (internalParty.talkTime / call.metaData.duration) * 100;
-      stats.talkRatio.push(ratio);
+      const ratioMapping = buildKpiMapping({
+        profileId, kpiKey: 'talk_to_listen_ratio', rawValue: ratio, fromUnit: 'Percent',
+        source: 'gong', externalEventId: `gong:intel:${call.metaData?.id}:${profileId}:talk_ratio`, weekStart,
+      });
+      if (ratioMapping) kpiMappings.push(ratioMapping);
     }
 
-    // Longest monologue (seconds)
+    // Longest monologue
     if (interaction.longestMonologue?.duration != null) {
-      stats.monologue.push(interaction.longestMonologue.duration);
+      const monoMapping = buildKpiMapping({
+        profileId, kpiKey: 'longest_monologue_sec', rawValue: interaction.longestMonologue.duration, fromUnit: 'Seconds',
+        source: 'gong', externalEventId: `gong:intel:${call.metaData?.id}:${profileId}:monologue`, weekStart,
+      });
+      if (monoMapping) kpiMappings.push(monoMapping);
     }
 
     // Questions asked
-    if (interaction.questions != null) {
-      stats.questions += interaction.questions;
-    } else if (interaction.questionsAsked != null) {
-      stats.questions += interaction.questionsAsked;
+    const questions = interaction.questions ?? interaction.questionsAsked ?? 0;
+    if (questions > 0) {
+      const questionsMapping = buildKpiMapping({
+        profileId, kpiKey: 'questions_asked', rawValue: questions, fromUnit: 'Count',
+        source: 'gong', externalEventId: `gong:intel:${call.metaData?.id}:${profileId}:questions`, weekStart,
+      });
+      if (questionsMapping) kpiMappings.push(questionsMapping);
     }
 
     // Next steps mentioned
-    if (interaction.nextSteps != null) {
-      stats.nextSteps += interaction.nextSteps;
-    } else if (call.content?.nextSteps?.length > 0) {
-      stats.nextSteps += call.content.nextSteps.length;
+    let nextStepsCount = interaction.nextSteps ?? 0;
+    if (nextStepsCount === 0 && call.content?.nextSteps?.length > 0) {
+      nextStepsCount = call.content.nextSteps.length;
+    }
+    if (nextStepsCount > 0) {
+      const nextStepsMapping = buildKpiMapping({
+        profileId, kpiKey: 'next_steps_mentioned', rawValue: nextStepsCount, fromUnit: 'Count',
+        source: 'gong', externalEventId: `gong:intel:${call.metaData?.id}:${profileId}:next_steps`, weekStart,
+      });
+      if (nextStepsMapping) kpiMappings.push(nextStepsMapping);
     }
 
     // Interactivity score
     if (interaction.interactivity != null) {
-      stats.interactivity.push(interaction.interactivity);
-    }
-  }
-
-  // Convert accumulated stats to KPI mappings (SET mode — weekly averages)
-  for (const [profileId, stats] of Object.entries(repStats)) {
-    const s = stats;
-
-    if (s.talkRatio.length > 0) {
-      const avg = Math.round(s.talkRatio.reduce((a, b) => a + b, 0) / s.talkRatio.length);
-      kpiMappings.push({
-        profileId,
-        kpiKey: 'talk_to_listen_ratio',
-        value: avg,
-        source: 'gong',
-        externalEventId: `gong:intel:${profileId}:talk_ratio`,
+      const interactivityMapping = buildKpiMapping({
+        profileId, kpiKey: 'interactivity_score', rawValue: interaction.interactivity, fromUnit: 'Score',
+        source: 'gong', externalEventId: `gong:intel:${call.metaData?.id}:${profileId}:interactivity`, weekStart,
       });
-    }
-
-    if (s.monologue.length > 0) {
-      const avg = Math.round(s.monologue.reduce((a, b) => a + b, 0) / s.monologue.length);
-      kpiMappings.push({
-        profileId,
-        kpiKey: 'longest_monologue_sec',
-        value: avg,
-        source: 'gong',
-        externalEventId: `gong:intel:${profileId}:monologue`,
-      });
-    }
-
-    if (s.questions > 0) {
-      kpiMappings.push({
-        profileId,
-        kpiKey: 'questions_asked',
-        increment: s.questions,
-        source: 'gong',
-        externalEventId: `gong:intel:${profileId}:questions`,
-      });
-    }
-
-    if (s.nextSteps > 0) {
-      kpiMappings.push({
-        profileId,
-        kpiKey: 'next_steps_mentioned',
-        increment: s.nextSteps,
-        source: 'gong',
-        externalEventId: `gong:intel:${profileId}:next_steps`,
-      });
-    }
-
-    if (s.interactivity.length > 0) {
-      const avg = Math.round(s.interactivity.reduce((a, b) => a + b, 0) / s.interactivity.length);
-      kpiMappings.push({
-        profileId,
-        kpiKey: 'interactivity_score',
-        value: avg,
-        source: 'gong',
-        externalEventId: `gong:intel:${profileId}:interactivity`,
-      });
+      if (interactivityMapping) kpiMappings.push(interactivityMapping);
     }
   }
 
@@ -447,59 +365,32 @@ async function syncCallIntelligence(integration, cursor, sb) {
   return { records: calls, nextCursor, kpiMappings };
 }
 
-// ── Helpers ───────────────────────────────────────────────────
-
-function getWeekStart(fromDate) {
-  const d = fromDate ? new Date(fromDate) : new Date();
-  const day = d.getDay();
-  const diff = d.getDate() - day + (day === 0 ? -6 : 1);
-  const monday = new Date(d);
-  monday.setDate(diff);
-  monday.setHours(0, 0, 0, 0);
-  return monday.toISOString().split('T')[0];
-}
-
 // ── Webhook Support ──────────────────────────────────────────
 
 const kpiMap = {
-  'call.completed': [
-    { key: 'call_connects', increment: 1 },
-  ],
-  'meeting.completed': [
-    { key: 'meetings', increment: 1 },
-  ],
+  'call.completed': [{ key: 'call_connects', increment: 1 }],
+  'meeting.completed': [{ key: 'meetings', increment: 1 }],
 };
 
 function mapWebhookEvent(payload) {
   const eventName = payload.event || '';
   const callId = payload.data?.metaData?.id || payload.data?.callId || null;
   const userEmail = payload.data?.metaData?.primaryUserEmail || null;
-
-  return {
-    eventName,
-    eventId: callId ? String(callId) : null,
-    userEmail,
-  };
+  return { eventName, eventId: callId ? String(callId) : null, userEmail };
 }
 
-function verifyWebhook(req) {
-  const secret = env('GONG_CLIENT_SECRET');
+function verifyWebhook(req, explicitSecret = null) {
+  const secret = explicitSecret || env('GONG_CLIENT_SECRET');
   if (!secret) return true;
 
   const signature = req.headers['x-gong-signature'] || '';
-  if (!signature) return true; // No signature header = legacy, allow through
+  if (!signature) return true;
 
   const rawBody = req.rawBody || JSON.stringify(req.body);
-  const expected = crypto
-    .createHmac('sha256', secret)
-    .update(rawBody)
-    .digest('hex');
+  const expected = crypto.createHmac('sha256', secret).update(rawBody).digest('hex');
 
   try {
-    return crypto.timingSafeEqual(
-      Buffer.from(signature, 'hex'),
-      Buffer.from(expected, 'hex')
-    );
+    return crypto.timingSafeEqual(Buffer.from(signature, 'hex'), Buffer.from(expected, 'hex'));
   } catch {
     return false;
   }

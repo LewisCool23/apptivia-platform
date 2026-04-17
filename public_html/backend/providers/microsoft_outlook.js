@@ -2,6 +2,7 @@
 
 const GRAPH_BASE = 'https://graph.microsoft.com/v1.0';
 const MS_TOKEN_URL = 'https://login.microsoftonline.com/common/oauth2/v2.0/token';
+const { buildKpiMapping, getWeekStart } = require('./kpiCanonical');
 
 module.exports = {
   type: 'microsoft_outlook',
@@ -96,14 +97,11 @@ module.exports = {
         if (!isOrganizer || acceptedOthers.length === 0) continue;
 
         const weekStart = getWeekStart(evt.start?.dateTime);
-        kpiMappings.push({
-          profileId,
-          kpiKey: 'meetings',
-          increment: 1,
-          source: 'microsoft_outlook',
-          externalEventId: `microsoft_outlook:event:${evt.id}:meetings`,
-          weekStart,
+        const meetingMapping = buildKpiMapping({
+          profileId, kpiKey: 'meetings', rawValue: 1, fromUnit: 'Count',
+          source: 'microsoft_outlook', externalEventId: `microsoft_outlook:event:${evt.id}:meetings`, weekStart,
         });
+        if (meetingMapping) kpiMappings.push(meetingMapping);
       }
 
       return { records: events, nextCursor: new Date().toISOString(), kpiMappings };
@@ -139,26 +137,17 @@ module.exports = {
       const data = await res.json();
       const emails = data.value || [];
 
-      const kpiMappings = emails.map(email => ({
-        profileId,
-        kpiKey: 'emails_sent',
-        increment: 1,
-        source: 'microsoft_outlook',
-        externalEventId: `microsoft_outlook:email:${email.id}:emails_sent`,
-        weekStart: getWeekStart(email.sentDateTime),
-      }));
+      const kpiMappings = [];
+      for (const email of emails) {
+        const sentMapping = buildKpiMapping({
+          profileId, kpiKey: 'emails_sent', rawValue: 1, fromUnit: 'Count',
+          source: 'microsoft_outlook', externalEventId: `microsoft_outlook:email:${email.id}:emails_sent`,
+          weekStart: getWeekStart(email.sentDateTime),
+        });
+        if (sentMapping) kpiMappings.push(sentMapping);
+      }
 
       return { records: emails, nextCursor: new Date().toISOString(), kpiMappings };
     },
   },
 };
-
-function getWeekStart(fromDate) {
-  const d = fromDate ? new Date(fromDate) : new Date();
-  const day = d.getDay();
-  const diff = d.getDate() - day + (day === 0 ? -6 : 1);
-  const monday = new Date(d);
-  monday.setDate(diff);
-  monday.setHours(0, 0, 0, 0);
-  return monday.toISOString().split('T')[0];
-}

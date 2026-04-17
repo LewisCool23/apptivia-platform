@@ -1,6 +1,7 @@
 'use strict';
 
 const GOOGLE_BASE = 'https://www.googleapis.com';
+const { buildKpiMapping, getWeekStart } = require('./kpiCanonical');
 
 module.exports = {
   type: 'google_calendar',
@@ -61,11 +62,9 @@ module.exports = {
       const token = freshIntegration.decryptedCreds.access_token;
       const since = cursor || new Date(Date.now() - 7 * 86400000).toISOString();
 
-      // Google Calendar is a personal integration
       const profileId = freshIntegration.profile_id;
       if (!profileId) return { records: [], nextCursor: new Date().toISOString(), kpiMappings: [] };
 
-      // Check role
       const { data: profile } = await sb.from('profiles')
         .select('role, email')
         .eq('id', profileId)
@@ -99,27 +98,14 @@ module.exports = {
         if (!isOrganizer || acceptedOthers.length === 0) continue;
 
         const weekStart = getWeekStart(evt.start?.dateTime || evt.start?.date);
-        kpiMappings.push({
-          profileId,
-          kpiKey: 'meetings',
-          increment: 1,
-          source: 'google_calendar',
-          externalEventId: `google_calendar:event:${evt.id}:meetings`,
-          weekStart,
+        const meetingMapping = buildKpiMapping({
+          profileId, kpiKey: 'meetings', rawValue: 1, fromUnit: 'Count',
+          source: 'google_calendar', externalEventId: `google_calendar:event:${evt.id}:meetings`, weekStart,
         });
+        if (meetingMapping) kpiMappings.push(meetingMapping);
       }
 
       return { records: events, nextCursor: new Date().toISOString(), kpiMappings };
     },
   },
 };
-
-function getWeekStart(fromDate) {
-  const d = fromDate ? new Date(fromDate) : new Date();
-  const day = d.getDay();
-  const diff = d.getDate() - day + (day === 0 ? -6 : 1);
-  const monday = new Date(d);
-  monday.setDate(diff);
-  monday.setHours(0, 0, 0, 0);
-  return monday.toISOString().split('T')[0];
-}

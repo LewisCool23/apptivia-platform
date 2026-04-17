@@ -14,7 +14,7 @@
 'use strict';
 
 const crypto = require('crypto');
-const { fetchJson } = require('../integrationService');
+const { buildKpiMapping, getWeekStart } = require('./kpiCanonical');
 
 const OUTREACH_API = 'https://api.outreach.io/api/v2';
 
@@ -100,6 +100,7 @@ function outreachHeaders(creds) {
 }
 
 async function outreachGet(creds, path) {
+  const { fetchJson } = require('../integrationService');
   return fetchJson(`${OUTREACH_API}${path}`, {
     headers: outreachHeaders(creds),
   });
@@ -125,48 +126,43 @@ async function syncActivities(integration, cursor) {
     const profileId = await resolveProfileByEmail(null, integration.organization_id, ownerEmail);
     if (!profileId) continue;
 
+    const weekStart = getWeekStart(attrs.updatedAt || attrs.createdAt);
+
     if (attrs.activityType === 'call' && attrs.disposition === 'Answered') {
-      kpiMappings.push({
-        profileId,
-        kpiKey: 'call_connects',
-        increment: 1,
-        externalEventId: `outreach:activity:${record.id}:call_connects`,
+      const connectMapping = buildKpiMapping({
+        profileId, kpiKey: 'call_connects', rawValue: 1, fromUnit: 'Count',
+        source: 'outreach', externalEventId: `outreach:activity:${record.id}:call_connects`, weekStart,
       });
+      if (connectMapping) kpiMappings.push(connectMapping);
 
       if (attrs.duration > 0) {
-        kpiMappings.push({
-          profileId,
-          kpiKey: 'talk_time_minutes',
-          increment: Math.round(attrs.duration / 60) || 1,
-          externalEventId: `outreach:activity:${record.id}:talk_time`,
+        const talkTimeMapping = buildKpiMapping({
+          profileId, kpiKey: 'talk_time_minutes', rawValue: attrs.duration, fromUnit: 'Seconds',
+          source: 'outreach', externalEventId: `outreach:activity:${record.id}:talk_time`, weekStart,
         });
+        if (talkTimeMapping) kpiMappings.push(talkTimeMapping);
       }
     }
 
     if (attrs.activityType === 'email' && attrs.direction === 'reply') {
-      kpiMappings.push({
-        profileId,
-        kpiKey: 'sequence_replies',
-        increment: 1,
-        externalEventId: `outreach:activity:${record.id}:sequence_replies`,
+      const replyMapping = buildKpiMapping({
+        profileId, kpiKey: 'sequence_replies', rawValue: 1, fromUnit: 'Count',
+        source: 'outreach', externalEventId: `outreach:activity:${record.id}:sequence_replies`, weekStart,
       });
+      if (replyMapping) kpiMappings.push(replyMapping);
     }
 
-    // Sequence enrollment events
     if (attrs.activityType === 'sequence' || attrs.action === 'sequence_start') {
-      kpiMappings.push({
-        profileId,
-        kpiKey: 'sequences_started',
-        increment: 1,
-        externalEventId: `outreach:activity:${record.id}:sequences_started`,
+      const seqMapping = buildKpiMapping({
+        profileId, kpiKey: 'sequences_started', rawValue: 1, fromUnit: 'Count',
+        source: 'outreach', externalEventId: `outreach:activity:${record.id}:sequences_started`, weekStart,
       });
+      if (seqMapping) kpiMappings.push(seqMapping);
     }
   }
 
   const lastRecord = records[records.length - 1];
-  const nextCursor = lastRecord?.attributes?.updatedAt || cursor;
-
-  return { records, nextCursor, kpiMappings };
+  return { records, nextCursor: lastRecord?.attributes?.updatedAt || cursor, kpiMappings };
 }
 
 // ── Sync: Meetings ───────────────────────────────────────────
@@ -191,12 +187,12 @@ async function syncMeetings(integration, cursor) {
       : null;
 
     if (profileId) {
-      kpiMappings.push({
-        profileId,
-        kpiKey: 'meetings',
-        increment: 1,
-        externalEventId: `outreach:meeting:${record.id}:meetings`,
+      const meetingMapping = buildKpiMapping({
+        profileId, kpiKey: 'meetings', rawValue: 1, fromUnit: 'Count',
+        source: 'outreach', externalEventId: `outreach:meeting:${record.id}:meetings`,
+        weekStart: getWeekStart(attrs.startAt || attrs.updatedAt),
       });
+      if (meetingMapping) kpiMappings.push(meetingMapping);
     }
 
     calendarEvents.push({
@@ -214,12 +210,7 @@ async function syncMeetings(integration, cursor) {
   }
 
   const lastRecord = records[records.length - 1];
-  return {
-    records,
-    nextCursor: lastRecord?.attributes?.updatedAt || cursor,
-    kpiMappings,
-    calendarEvents,
-  };
+  return { records, nextCursor: lastRecord?.attributes?.updatedAt || cursor, kpiMappings, calendarEvents };
 }
 
 // ── Sync: Deals ──────────────────────────────────────────────
@@ -242,12 +233,12 @@ async function syncDeals(integration, cursor) {
     const profileId = await resolveProfileByEmail(null, integration.organization_id, ownerEmail);
     if (!profileId) continue;
 
-    kpiMappings.push({
-      profileId,
-      kpiKey: 'sourced_opps',
-      increment: 1,
-      externalEventId: `outreach:opp:${record.id}:sourced`,
+    const sourcedMapping = buildKpiMapping({
+      profileId, kpiKey: 'sourced_opps', rawValue: 1, fromUnit: 'Count',
+      source: 'outreach', externalEventId: `outreach:opp:${record.id}:sourced`,
+      weekStart: getWeekStart(attrs.createdAt || attrs.updatedAt),
     });
+    if (sourcedMapping) kpiMappings.push(sourcedMapping);
   }
 
   const lastRecord = records[records.length - 1];
@@ -274,23 +265,18 @@ async function syncEmails(integration, cursor) {
     const profileId = await resolveProfileByEmail(null, integration.organization_id, ownerEmail);
     if (!profileId) continue;
 
-    // Count opened emails (openCount > 0 means the recipient opened it)
     if (attrs.openCount > 0 || attrs.openedAt) {
-      kpiMappings.push({
-        profileId,
-        kpiKey: 'emails_opened',
-        increment: 1,
-        externalEventId: `outreach:mailing:${record.id}:emails_opened`,
+      const openedMapping = buildKpiMapping({
+        profileId, kpiKey: 'emails_opened', rawValue: 1, fromUnit: 'Count',
+        source: 'outreach', externalEventId: `outreach:mailing:${record.id}:emails_opened`,
+        weekStart: getWeekStart(attrs.openedAt || attrs.updatedAt),
       });
+      if (openedMapping) kpiMappings.push(openedMapping);
     }
   }
 
   const lastRecord = records[records.length - 1];
-  return {
-    records,
-    nextCursor: lastRecord?.attributes?.updatedAt || cursor,
-    kpiMappings,
-  };
+  return { records, nextCursor: lastRecord?.attributes?.updatedAt || cursor, kpiMappings };
 }
 
 // ── Sync: Tasks (Completed) ─────────────────────────────────
@@ -313,20 +299,16 @@ async function syncTasks(integration, cursor) {
     const profileId = await resolveProfileByEmail(null, integration.organization_id, ownerEmail);
     if (!profileId) continue;
 
-    kpiMappings.push({
-      profileId,
-      kpiKey: 'tasks_completed',
-      increment: 1,
-      externalEventId: `outreach:task:${record.id}:tasks_completed`,
+    const taskMapping = buildKpiMapping({
+      profileId, kpiKey: 'tasks_completed', rawValue: 1, fromUnit: 'Count',
+      source: 'outreach', externalEventId: `outreach:task:${record.id}:tasks_completed`,
+      weekStart: getWeekStart(attrs.completedAt || attrs.updatedAt),
     });
+    if (taskMapping) kpiMappings.push(taskMapping);
   }
 
   const lastRecord = records[records.length - 1];
-  return {
-    records,
-    nextCursor: lastRecord?.attributes?.updatedAt || cursor,
-    kpiMappings,
-  };
+  return { records, nextCursor: lastRecord?.attributes?.updatedAt || cursor, kpiMappings };
 }
 
 // ── Push: Create Task ────────────────────────────────────────
@@ -360,7 +342,7 @@ async function createTask(integration, data) {
   return { externalId: result.data?.id };
 }
 
-// ── Webhook Support (migrated from server.js) ────────────────
+// ── Webhook Support ────────────────────────────────────────
 
 const kpiMap = {
   'prospects.called':          [{ key: 'call_connects',     increment: 1 }],
@@ -385,13 +367,12 @@ function mapWebhookEvent(payload) {
     || attrs?.userEmail
     || payload?.userEmail
     || null;
-
   return { eventName, eventId, attrs, userEmail };
 }
 
-function verifyWebhook(req) {
-  const secret = env('OUTREACH_WEBHOOK_SECRET');
-  if (!secret) return true;
+function verifyWebhook(req, explicitSecret = null) {
+  const secret = explicitSecret || env('OUTREACH_WEBHOOK_SECRET');
+  if (!secret) return true; // No secret configured — skip validation (dev only)
 
   const sig = req.headers['x-outreach-webhook-signature'] || '';
   const expected = 'sha256=' + crypto
@@ -424,9 +405,7 @@ module.exports = {
     emails: syncEmails,
     tasks: syncTasks,
   },
-  push: {
-    createTask,
-  },
+  push: { createTask },
   kpiMap,
   mapWebhookEvent,
   verifyWebhook,

@@ -16,7 +16,7 @@
 
 'use strict';
 
-const { fetchJson } = require('../integrationService');
+// fetchJson imported lazily inside helpers to avoid circular dependency
 
 function env(key) { return process.env[key] || ''; }
 
@@ -71,6 +71,7 @@ function marketoHeaders(creds) {
 }
 
 async function marketoGet(creds, path) {
+  const { fetchJson } = require('../integrationService');
   const baseUrl = getBaseUrl(creds.munchkin_id);
   return fetchJson(`${baseUrl}${path}`, {
     headers: marketoHeaders(creds),
@@ -78,6 +79,7 @@ async function marketoGet(creds, path) {
 }
 
 async function marketoPost(creds, path, body) {
+  const { fetchJson } = require('../integrationService');
   const baseUrl = getBaseUrl(creds.munchkin_id);
   return fetchJson(`${baseUrl}${path}`, {
     method: 'POST',

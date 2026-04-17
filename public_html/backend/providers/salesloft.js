@@ -13,7 +13,7 @@
 'use strict';
 
 const crypto = require('crypto');
-const { fetchJson } = require('../integrationService');
+const { buildKpiMapping, getWeekStart } = require('./kpiCanonical');
 
 const SL_API = 'https://api.salesloft.com/v2';
 
@@ -95,6 +95,7 @@ function slHeaders(creds) {
 }
 
 async function slGet(creds, path, params = {}) {
+  const { fetchJson } = require('../integrationService');
   const url = new URL(`${SL_API}${path}`);
   for (const [k, v] of Object.entries(params)) {
     if (v !== undefined && v !== null) url.searchParams.set(k, String(v));
@@ -123,24 +124,19 @@ async function syncActivities(integration, cursor, sb) {
 
     if (record.disposition === 'connected' || record.status === 'completed') {
       const weekStart = getWeekStart(record.created_at || record.updated_at);
-      kpiMappings.push({
-        profileId,
-        kpiKey: 'call_connects',
-        increment: 1,
-        source: 'salesloft',
-        externalEventId: `salesloft:call:${record.id}:call_connects`,
-        weekStart,
+
+      const connectMapping = buildKpiMapping({
+        profileId, kpiKey: 'call_connects', rawValue: 1, fromUnit: 'Count',
+        source: 'salesloft', externalEventId: `salesloft:call:${record.id}:call_connects`, weekStart,
       });
+      if (connectMapping) kpiMappings.push(connectMapping);
 
       if (record.duration > 0) {
-        kpiMappings.push({
-          profileId,
-          kpiKey: 'talk_time_minutes',
-          increment: Math.round(record.duration / 60) || 1,
-          source: 'salesloft',
-          externalEventId: `salesloft:call:${record.id}:talk_time`,
-          weekStart,
+        const talkTimeMapping = buildKpiMapping({
+          profileId, kpiKey: 'talk_time_minutes', rawValue: record.duration, fromUnit: 'Seconds',
+          source: 'salesloft', externalEventId: `salesloft:call:${record.id}:talk_time`, weekStart,
         });
+        if (talkTimeMapping) kpiMappings.push(talkTimeMapping);
       }
     }
   }
@@ -174,14 +170,12 @@ async function syncMeetings(integration, cursor, sb) {
       : null;
 
     if (profileId) {
-      kpiMappings.push({
-        profileId,
-        kpiKey: 'meetings',
-        increment: 1,
-        source: 'salesloft',
-        externalEventId: `salesloft:meeting:${record.id}:meetings`,
+      const meetingMapping = buildKpiMapping({
+        profileId, kpiKey: 'meetings', rawValue: 1, fromUnit: 'Count',
+        source: 'salesloft', externalEventId: `salesloft:meeting:${record.id}:meetings`,
         weekStart: getWeekStart(record.start_time || record.created_at),
       });
+      if (meetingMapping) kpiMappings.push(meetingMapping);
     }
 
     calendarEvents.push({
@@ -230,43 +224,25 @@ async function syncEmails(integration, cursor, sb) {
 
     // Count email replies
     if (record.status === 'replied') {
-      kpiMappings.push({
-        profileId,
-        kpiKey: 'sequence_replies',
-        increment: 1,
-        source: 'salesloft',
-        externalEventId: `salesloft:email:${record.id}:sequence_replies`,
-        weekStart,
+      const replyMapping = buildKpiMapping({
+        profileId, kpiKey: 'sequence_replies', rawValue: 1, fromUnit: 'Count',
+        source: 'salesloft', externalEventId: `salesloft:email:${record.id}:sequence_replies`, weekStart,
       });
+      if (replyMapping) kpiMappings.push(replyMapping);
     }
 
     // Count emails sent
     if (record.status === 'sent') {
-      kpiMappings.push({
-        profileId,
-        kpiKey: 'emails_sent',
-        increment: 1,
-        source: 'salesloft',
-        externalEventId: `salesloft:email:${record.id}:emails_sent`,
-        weekStart,
+      const sentMapping = buildKpiMapping({
+        profileId, kpiKey: 'emails_sent', rawValue: 1, fromUnit: 'Count',
+        source: 'salesloft', externalEventId: `salesloft:email:${record.id}:emails_sent`, weekStart,
       });
+      if (sentMapping) kpiMappings.push(sentMapping);
     }
   }
 
   const lastRecord = records[records.length - 1];
   return { records, nextCursor: lastRecord?.updated_at || cursor, kpiMappings };
-}
-
-// ── Helpers ───────────────────────────────────────────────────
-
-function getWeekStart(fromDate) {
-  const d = fromDate ? new Date(fromDate) : new Date();
-  const day = d.getDay();
-  const diff = d.getDate() - day + (day === 0 ? -6 : 1);
-  const monday = new Date(d);
-  monday.setDate(diff);
-  monday.setHours(0, 0, 0, 0);
-  return monday.toISOString().split('T')[0];
 }
 
 // ── Webhook Support ──────────────────────────────────────────
@@ -286,8 +262,8 @@ function mapWebhookEvent(payload) {
   return { eventName, eventId, userEmail };
 }
 
-function verifyWebhook(req) {
-  const secret = env('SALESLOFT_WEBHOOK_SECRET');
+function verifyWebhook(req, explicitSecret = null) {
+  const secret = explicitSecret || env('SALESLOFT_WEBHOOK_SECRET');
   if (!secret) return true;
 
   const sig = req.headers['x-salesloft-signature'] || '';

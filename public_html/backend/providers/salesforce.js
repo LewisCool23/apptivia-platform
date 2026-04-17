@@ -12,7 +12,7 @@
 
 'use strict';
 
-const { fetchJson } = require('../integrationService');
+const { buildKpiMapping, getWeekStart } = require('./kpiCanonical');
 
 const SF_API_VERSION = process.env.SALESFORCE_API_VERSION || 'v59.0';
 const LOGIN_URL = 'https://login.salesforce.com';
@@ -98,6 +98,7 @@ async function refreshToken(creds) {
 // ── SOQL Helpers ─────────────────────────────────────────────
 
 async function soqlQuery(creds, query) {
+  const { fetchJson } = require('../integrationService');
   const url = `${creds.instance_url}/services/data/${SF_API_VERSION}/query?q=${encodeURIComponent(query)}`;
   return fetchJson(url, {
     headers: { Authorization: `Bearer ${creds.access_token}` },
@@ -105,6 +106,7 @@ async function soqlQuery(creds, query) {
 }
 
 async function soqlQueryAll(creds, query, maxRecords = 1000) {
+  const { fetchJson } = require('../integrationService');
   const records = [];
   let result = await soqlQuery(creds, query);
   records.push(...(result.records || []));
@@ -194,33 +196,25 @@ async function syncActivities(integration, cursor, sb) {
     const weekStart = getWeekStart(record.ActivityDate || record.SystemModstamp);
 
     if (record.Type === 'Call') {
-      kpiMappings.push({
-        profileId,
-        kpiKey: 'call_connects',
-        increment: 1,
-        source: 'salesforce',
-        externalEventId: `salesforce:task:${record.Id}:call_connects`,
-        weekStart,
+      const connectMapping = buildKpiMapping({
+        profileId, kpiKey: 'call_connects', rawValue: 1, fromUnit: 'Count',
+        source: 'salesforce', externalEventId: `salesforce:task:${record.Id}:call_connects`, weekStart,
       });
+      if (connectMapping) kpiMappings.push(connectMapping);
+
       if (record.CallDurationInSeconds > 0) {
-        kpiMappings.push({
-          profileId,
-          kpiKey: 'talk_time_minutes',
-          increment: Math.round(record.CallDurationInSeconds / 60),
-          source: 'salesforce',
-          externalEventId: `salesforce:task:${record.Id}:talk_time`,
-          weekStart,
+        const talkTimeMapping = buildKpiMapping({
+          profileId, kpiKey: 'talk_time_minutes', rawValue: record.CallDurationInSeconds, fromUnit: 'Seconds',
+          source: 'salesforce', externalEventId: `salesforce:task:${record.Id}:talk_time`, weekStart,
         });
+        if (talkTimeMapping) kpiMappings.push(talkTimeMapping);
       }
     } else if (record.Type === 'Email') {
-      kpiMappings.push({
-        profileId,
-        kpiKey: 'emails_sent',
-        increment: 1,
-        source: 'salesforce',
-        externalEventId: `salesforce:task:${record.Id}:emails_sent`,
-        weekStart,
+      const emailMapping = buildKpiMapping({
+        profileId, kpiKey: 'emails_sent', rawValue: 1, fromUnit: 'Count',
+        source: 'salesforce', externalEventId: `salesforce:task:${record.Id}:emails_sent`, weekStart,
       });
+      if (emailMapping) kpiMappings.push(emailMapping);
     }
   }
 
@@ -262,14 +256,12 @@ async function syncMeetings(integration, cursor, sb) {
     );
 
     if (profileId) {
-      kpiMappings.push({
-        profileId,
-        kpiKey: 'meetings',
-        increment: 1,
-        source: 'salesforce',
-        externalEventId: `salesforce:event:${record.Id}:meetings`,
+      const meetingMapping = buildKpiMapping({
+        profileId, kpiKey: 'meetings', rawValue: 1, fromUnit: 'Count',
+        source: 'salesforce', externalEventId: `salesforce:event:${record.Id}:meetings`,
         weekStart: getWeekStart(record.StartDateTime || record.SystemModstamp),
       });
+      if (meetingMapping) kpiMappings.push(meetingMapping);
     }
 
     calendarEvents.push({
@@ -328,47 +320,36 @@ async function syncDeals(integration, cursor, sb) {
     const weekStart = getWeekStart(record.CreatedDate || record.SystemModstamp);
 
     // New opportunity created
-    kpiMappings.push({
-      profileId,
-      kpiKey: 'sourced_opps',
-      increment: 1,
-      source: 'salesforce',
-      externalEventId: `salesforce:opp:${record.Id}:sourced`,
-      weekStart,
+    const sourcedMapping = buildKpiMapping({
+      profileId, kpiKey: 'sourced_opps', rawValue: 1, fromUnit: 'Count',
+      source: 'salesforce', externalEventId: `salesforce:opp:${record.Id}:sourced`, weekStart,
     });
+    if (sourcedMapping) kpiMappings.push(sourcedMapping);
 
     // Stage 2+ (qualified)
     if (record.Probability && record.Probability >= 20) {
-      kpiMappings.push({
-        profileId,
-        kpiKey: 'stage2_opps',
-        increment: 1,
-        source: 'salesforce',
-        externalEventId: `salesforce:opp:${record.Id}:stage2`,
-        weekStart,
+      const stage2Mapping = buildKpiMapping({
+        profileId, kpiKey: 'stage2_opps', rawValue: 1, fromUnit: 'Count',
+        source: 'salesforce', externalEventId: `salesforce:opp:${record.Id}:stage2`, weekStart,
       });
+      if (stage2Mapping) kpiMappings.push(stage2Mapping);
     }
 
     // Closed Won
     if (record.StageName === 'Closed Won') {
       const closedWeek = getWeekStart(record.CloseDate || record.SystemModstamp);
-      kpiMappings.push({
-        profileId,
-        kpiKey: 'closed_won',
-        increment: 1,
-        source: 'salesforce',
-        externalEventId: `salesforce:opp:${record.Id}:closed_won`,
-        weekStart: closedWeek,
+      const wonMapping = buildKpiMapping({
+        profileId, kpiKey: 'closed_won', rawValue: 1, fromUnit: 'Count',
+        source: 'salesforce', externalEventId: `salesforce:opp:${record.Id}:closed_won`, weekStart: closedWeek,
       });
+      if (wonMapping) kpiMappings.push(wonMapping);
+
       if (record.Amount > 0) {
-        kpiMappings.push({
-          profileId,
-          kpiKey: 'revenue_generated',
-          increment: record.Amount,
-          source: 'salesforce',
-          externalEventId: `salesforce:opp:${record.Id}:revenue`,
-          weekStart: closedWeek,
+        const revenueMapping = buildKpiMapping({
+          profileId, kpiKey: 'revenue_generated', rawValue: record.Amount, fromUnit: 'Dollars',
+          source: 'salesforce', externalEventId: `salesforce:opp:${record.Id}:revenue`, weekStart: closedWeek,
         });
+        if (revenueMapping) kpiMappings.push(revenueMapping);
       }
     }
   }
@@ -472,16 +453,6 @@ function getISODateDaysAgo(days) {
   const d = new Date();
   d.setDate(d.getDate() - days);
   return d.toISOString();
-}
-
-function getWeekStart(fromDate) {
-  const d = fromDate ? new Date(fromDate) : new Date();
-  const day = d.getDay();
-  const diff = d.getDate() - day + (day === 0 ? -6 : 1);
-  const monday = new Date(d);
-  monday.setDate(diff);
-  monday.setHours(0, 0, 0, 0);
-  return monday.toISOString().split('T')[0];
 }
 
 // ── Export ────────────────────────────────────────────────────
