@@ -24,6 +24,16 @@ async function guardRep(freshIntegration, sb) {
   return profileId;
 }
 
+// Shared cursor helper — advances to the latest record's timestamp
+// instead of new Date().toISOString() which skips records created during sync
+function latestTimestamp(records, field, fallback) {
+  if (!records.length) return fallback;
+  return records.reduce((max, r) => {
+    const ts = r[field];
+    return ts && ts > max ? ts : max;
+  }, records[0][field] || fallback) || fallback;
+}
+
 // Shared Apollo API helper — uses X-Api-Key header (verified)
 async function apolloGet(apiKey, path) {
   const res = await fetch(`https://api.apollo.io/api/v1${path}`, {
@@ -43,10 +53,10 @@ module.exports = {
     // === CALLS (verified field names: duration, status, logged, start_time) ===
     calls: async (freshIntegration, cursor, sb) => {
       const profileId = await guardRep(freshIntegration, sb);
-      if (!profileId) return { records: [], nextCursor: new Date().toISOString(), kpiMappings: [] };
+      const since = cursor || new Date(Date.now() - 7 * 86400000).toISOString();
+      if (!profileId) return { records: [], nextCursor: since, kpiMappings: [] };
 
       const { api_key } = freshIntegration.decryptedCreds;
-      const since = cursor || new Date(Date.now() - 7 * 86400000).toISOString();
 
       const { res } = await apolloGet(api_key, '/phone_calls/search?per_page=100&sort_by_field=start_time&sort_ascending=false');
       if (!res.ok) throw new Error(`Apollo calls API error: ${res.status} ${res.statusText}`);
@@ -105,10 +115,10 @@ module.exports = {
     // === EMAILS ===
     emails: async (freshIntegration, cursor, sb) => {
       const profileId = await guardRep(freshIntegration, sb);
-      if (!profileId) return { records: [], nextCursor: new Date().toISOString(), kpiMappings: [] };
+      const since = cursor || new Date(Date.now() - 7 * 86400000).toISOString();
+      if (!profileId) return { records: [], nextCursor: since, kpiMappings: [] };
 
       const { api_key } = freshIntegration.decryptedCreds;
-      const since = cursor || new Date(Date.now() - 7 * 86400000).toISOString();
 
       let res;
       try {
@@ -120,7 +130,7 @@ module.exports = {
       if (!res.ok) {
         if (res.status === 403 || res.status === 404) {
           console.log('[apollo:emails] API not available on current plan, skipping');
-          return { records: [], nextCursor: new Date().toISOString(), kpiMappings: [] };
+          return { records: [], nextCursor: since, kpiMappings: [] };
         }
         throw new Error(`Apollo emails API error: ${res.status} ${res.statusText}`);
       }
@@ -158,16 +168,16 @@ module.exports = {
       }
 
       console.log(`[apollo:emails] Processed ${emails.length} emails, ${kpiMappings.length} KPI mappings`);
-      return { records: emails, nextCursor: new Date().toISOString(), kpiMappings };
+      return { records: emails, nextCursor: latestTimestamp(emails, 'created_at', since), kpiMappings };
     },
 
     // === OPPORTUNITIES (Pipeline) ===
     opportunities: async (freshIntegration, cursor, sb) => {
       const profileId = await guardRep(freshIntegration, sb);
-      if (!profileId) return { records: [], nextCursor: new Date().toISOString(), kpiMappings: [] };
+      const since = cursor || new Date(Date.now() - 7 * 86400000).toISOString();
+      if (!profileId) return { records: [], nextCursor: since, kpiMappings: [] };
 
       const { api_key } = freshIntegration.decryptedCreds;
-      const since = cursor || new Date(Date.now() - 7 * 86400000).toISOString();
 
       let res;
       try {
@@ -179,7 +189,7 @@ module.exports = {
       if (!res.ok) {
         if (res.status === 403) {
           console.log('[apollo:opportunities] API not available on current plan, skipping');
-          return { records: [], nextCursor: new Date().toISOString(), kpiMappings: [] };
+          return { records: [], nextCursor: since, kpiMappings: [] };
         }
         throw new Error(`Apollo opportunities API error: ${res.status} ${res.statusText}`);
       }
@@ -236,16 +246,16 @@ module.exports = {
       }
 
       console.log(`[apollo:opportunities] Processed ${opps.length} opportunities, ${kpiMappings.length} KPI mappings`);
-      return { records: opps, nextCursor: new Date().toISOString(), kpiMappings };
+      return { records: opps, nextCursor: latestTimestamp(opps, 'created_at', since), kpiMappings };
     },
 
     // === CONVERSATIONS (Call Intelligence — plan-dependent, 403 = skip) ===
     conversations: async (freshIntegration, cursor, sb) => {
       const profileId = await guardRep(freshIntegration, sb);
-      if (!profileId) return { records: [], nextCursor: new Date().toISOString(), kpiMappings: [] };
+      const since = cursor || new Date(Date.now() - 7 * 86400000).toISOString();
+      if (!profileId) return { records: [], nextCursor: since, kpiMappings: [] };
 
       const { api_key } = freshIntegration.decryptedCreds;
-      const since = cursor || new Date(Date.now() - 7 * 86400000).toISOString();
 
       let listRes;
       try {
@@ -257,7 +267,7 @@ module.exports = {
       if (!listRes.ok) {
         if (listRes.status === 403 || listRes.status === 404) {
           console.log('[apollo:conversations] Not available on current plan, skipping');
-          return { records: [], nextCursor: new Date().toISOString(), kpiMappings: [] };
+          return { records: [], nextCursor: since, kpiMappings: [] };
         }
         throw new Error(`Apollo conversations API error: ${listRes.status} ${listRes.statusText}`);
       }
@@ -339,16 +349,16 @@ module.exports = {
       }
 
       console.log(`[apollo:conversations] Processed ${conversations.length} conversations, ${kpiMappings.length} intelligence KPI mappings`);
-      return { records: conversations, nextCursor: new Date().toISOString(), kpiMappings };
+      return { records: conversations, nextCursor: latestTimestamp(conversations, 'created_at', since), kpiMappings };
     },
 
     // === SEQUENCES (emailer campaign steps) ===
     sequences: async (freshIntegration, cursor, sb) => {
       const profileId = await guardRep(freshIntegration, sb);
-      if (!profileId) return { records: [], nextCursor: new Date().toISOString(), kpiMappings: [] };
+      const since = cursor || new Date(Date.now() - 7 * 86400000).toISOString();
+      if (!profileId) return { records: [], nextCursor: since, kpiMappings: [] };
 
       const { api_key } = freshIntegration.decryptedCreds;
-      const since = cursor || new Date(Date.now() - 7 * 86400000).toISOString();
 
       let res;
       try {
@@ -360,7 +370,7 @@ module.exports = {
       if (!res.ok) {
         if (res.status === 403 || res.status === 404) {
           console.log('[apollo:sequences] Not available, skipping');
-          return { records: [], nextCursor: new Date().toISOString(), kpiMappings: [] };
+          return { records: [], nextCursor: since, kpiMappings: [] };
         }
         throw new Error(`Apollo sequences API error: ${res.status} ${res.statusText}`);
       }
@@ -397,16 +407,16 @@ module.exports = {
       }
 
       console.log(`[apollo:sequences] Processed ${steps.length} steps, ${kpiMappings.length} KPI mappings`);
-      return { records: steps, nextCursor: new Date().toISOString(), kpiMappings };
+      return { records: steps, nextCursor: latestTimestamp(steps, 'created_at', since), kpiMappings };
     },
 
     // === TASKS (general activities — maps to appropriate KPIs by type) ===
     tasks: async (freshIntegration, cursor, sb) => {
       const profileId = await guardRep(freshIntegration, sb);
-      if (!profileId) return { records: [], nextCursor: new Date().toISOString(), kpiMappings: [] };
+      const since = cursor || new Date(Date.now() - 7 * 86400000).toISOString();
+      if (!profileId) return { records: [], nextCursor: since, kpiMappings: [] };
 
       const { api_key } = freshIntegration.decryptedCreds;
-      const since = cursor || new Date(Date.now() - 7 * 86400000).toISOString();
 
       let res;
       try {
@@ -418,7 +428,7 @@ module.exports = {
       if (!res.ok) {
         if (res.status === 403 || res.status === 404) {
           console.log('[apollo:tasks] Not available, skipping');
-          return { records: [], nextCursor: new Date().toISOString(), kpiMappings: [] };
+          return { records: [], nextCursor: since, kpiMappings: [] };
         }
         throw new Error(`Apollo tasks API error: ${res.status} ${res.statusText}`);
       }
@@ -457,7 +467,7 @@ module.exports = {
       }
 
       console.log(`[apollo:tasks] Processed ${activities.length} activities, ${kpiMappings.length} KPI mappings`);
-      return { records: activities, nextCursor: new Date().toISOString(), kpiMappings };
+      return { records: activities, nextCursor: latestTimestamp(activities, 'created_at', since), kpiMappings };
     },
   },
 };

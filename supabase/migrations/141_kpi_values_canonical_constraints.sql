@@ -46,6 +46,9 @@ BEGIN
   DO UPDATE SET
     value        = kpi_values.value + p_increment,
     source       = p_source,
+    -- For sum rows, sample_count = number of increment events aggregated into this row.
+    -- For avg rows, sample_count = number of data points averaged (used by JS avg-mode).
+    -- Incrementing here for sum rows is harmless metadata, not consumed by any query.
     sample_count = COALESCE(kpi_values.sample_count, 1) + 1;
 END;
 $$ LANGUAGE plpgsql;
