@@ -3258,7 +3258,7 @@ app.get('/api/pilot/adoption-signals', loadProfile, requireMinRole('admin'), asy
     const { count: approvedDrafts } = await sb
       .from('engage_signal_actions')
       .select('id', { count: 'exact', head: true })
-      .eq('org_id', orgId)
+      .eq('organization_id', orgId)
       .eq('status', 'approved')
       .gte('updated_at', since);
 
@@ -4190,7 +4190,7 @@ ${signal.signal_tier === 'tier1' ? 'URGENCY NOTE: This is a Tier 1 high-intent s
 
         await sb.from('engage_signal_actions').insert({
           signal_id:              signal.id,
-          org_id:                 orgId,
+          organization_id:        orgId,
           draft_email_subject:    draft.email_subject || null,
           draft_email_body:       draft.email_body || null,
           draft_linkedin_message: draft.linkedin_message || null,
@@ -6140,7 +6140,7 @@ async function runFollowUpNudges() {
     // Find signal actions that are stale (approved or sent, not updated in 7+ days)
     const { data: staleActions } = await sb
       .from('engage_signal_actions')
-      .select('id, signal_id, org_id, draft_email_subject, draft_email_body, outreach_angle, status, updated_at')
+      .select('id, signal_id, organization_id, draft_email_subject, draft_email_body, outreach_angle, status, updated_at')
       .in('status', ['approved', 'sent'])
       .lt('updated_at', sevenDaysAgo)
       .limit(50);
@@ -6150,8 +6150,8 @@ async function runFollowUpNudges() {
     // Group by org
     const byOrg = {};
     for (const action of staleActions) {
-      if (!byOrg[action.org_id]) byOrg[action.org_id] = [];
-      byOrg[action.org_id].push(action);
+      if (!byOrg[action.organization_id]) byOrg[action.organization_id] = [];
+      byOrg[action.organization_id].push(action);
     }
 
     let flagged = 0;
@@ -6196,7 +6196,7 @@ Return ONLY valid JSON with keys:
           // Insert as a new pending action linked to the original
           const { error: insertErr } = await sb.from('engage_signal_actions').insert({
             signal_id:           action.signal_id,
-            org_id:              orgId,
+            organization_id:     orgId,
             draft_email_subject: followUpDraft.subject || null,
             draft_email_body:    followUpDraft.body || null,
             outreach_angle:      followUpDraft.rationale || 'Follow-up — context-aware',
@@ -7477,7 +7477,7 @@ app.get('/api/engage/action-queue', loadProfile, async (req, res) => {
           ai_recommended_action, ai_outreach_angle, status
         )
       `)
-      .eq('org_id', orgId)
+      .eq('organization_id', orgId)
       .eq('status', 'pending')
       .order('created_at', { ascending: false })
       .limit(50);
@@ -7503,7 +7503,7 @@ app.post('/api/engage/action-queue/:id/approve', loadProfile, requireMinRole('ma
       .from('engage_signal_actions')
       .update({ status: 'approved', actioned_at: new Date().toISOString(), actioned_by: req.user.id })
       .eq('id', id)
-      .eq('org_id', orgId);
+      .eq('organization_id', orgId);
 
     if (error) return res.status(500).json({ error: error.message });
     return res.json({ ok: true });
@@ -7526,7 +7526,7 @@ app.post('/api/engage/action-queue/:id/dismiss', loadProfile, requireMinRole('ma
       .from('engage_signal_actions')
       .update({ status: 'dismissed', actioned_at: new Date().toISOString(), actioned_by: req.user.id })
       .eq('id', id)
-      .eq('org_id', orgId);
+      .eq('organization_id', orgId);
 
     if (error) return res.status(500).json({ error: error.message });
     return res.json({ ok: true });
