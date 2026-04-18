@@ -433,8 +433,7 @@ async function upsertKpiValue(sb, mapping, integration) {
 
   if (aggregation === 'sum' && mapping.increment) {
     // Sum mode — atomic increment via RPC (eliminates read-then-write race)
-    // external_event_id is NULL on aggregated rows; event-level dedup
-    // is handled upstream by webhook_events table in processWebhook().
+    // external_event_id enables dedup across both webhook and cron sync paths.
     await sb.rpc('upsert_kpi_sum', {
       p_profile_id:        mapping.profileId,
       p_kpi_id:            metric.id,
@@ -442,7 +441,7 @@ async function upsertKpiValue(sb, mapping, integration) {
       p_period_end:        getWeekEnd(weekStart),
       p_increment:         mapping.increment,
       p_source:            src,
-      p_external_event_id: null,
+      p_external_event_id: mapping.externalEventId || null,
     });
   } else if (aggregation === 'max') {
     // Max mode — keep the highest value for the week (e.g. longest_monologue_sec)
