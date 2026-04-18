@@ -117,6 +117,19 @@ The graceful degradation conditions were incomplete:
 
 ---
 
+## Deviation #6 — Fix #8 migration 144 FK already exists
+
+**Commit:** `13150fa` (P1-8: Fix #8)
+**Severity:** Low (no functional impact)
+
+**What happened:** Migration 144's `ADD CONSTRAINT aaron_rep_memory_user_id_fkey` errored on deploy because the FK already existed from an earlier uncatalogued migration.
+
+**Corrective action:** Updated 144_aaron_rep_memory_fk.sql to use idempotent `DO $$ IF NOT EXISTS` pattern. The corrected version checks `pg_constraint` before attempting to add the FK. Re-run in Supabase SQL Editor to record version 144 in schema_migrations.
+
+**Impact:** None — the constraint was already correct. Migration now works on both fresh databases and databases with pre-existing FK.
+
+---
+
 ## Policy: Deviation Handling (established after Deviation #5)
 
 1. **Before deploying:** If implementation differs from spec in ANY way — column names, function signatures, missing features, architectural choices — STOP and flag the deviation to the user.
