@@ -7034,11 +7034,14 @@ io.on('connection', (socket) => {
       if (isStarterAaron && verifiedUserId) {
         const sbLimit = getSupabaseAdmin();
         if (sbLimit) {
-          const { data: countResult } = await sbLimit.rpc('check_aaron_daily_limit', {
+          const todayDate = new Date().toISOString().slice(0, 10);
+          const { data: withinLimit } = await sbLimit.rpc('check_aaron_daily_limit', {
             p_user_id: verifiedUserId,
+            p_date: todayDate,
+            p_limit: 10,
           });
-          const currentCount = countResult ?? 0;
-          if (currentCount >= 10) {
+          // RPC returns BOOLEAN: true = within limit, false = limit reached
+          if (withinLimit === false) {
             // Log limit hit for upgrade trigger analysis (async, non-blocking)
             sbLimit.from('profiles').select('aaron_limit_hit_dates').eq('id', verifiedUserId).single()
               .then(({ data }) => {
@@ -7118,10 +7121,15 @@ io.on('connection', (socket) => {
       });
 
       // Increment daily message count AFTER successful response (fire-and-forget)
-      if (isStarterAaron && verifiedUserId) {
+      if (isStarterAaron && verifiedUserId && orgId) {
         const sbInc = getSupabaseAdmin();
         if (sbInc) {
-          sbInc.rpc('increment_aaron_daily_count', { p_user_id: verifiedUserId }).catch(() => {});
+          const todayInc = new Date().toISOString().slice(0, 10);
+          sbInc.rpc('increment_aaron_daily_count', {
+            p_user_id: verifiedUserId,
+            p_organization_id: orgId,
+            p_date: todayInc,
+          }).catch(err => console.error('[aaron-limit] Increment failed:', err.message));
         }
       }
 

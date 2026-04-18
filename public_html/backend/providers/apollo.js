@@ -128,8 +128,8 @@ module.exports = {
       }
 
       if (!res.ok) {
-        if (res.status === 403 || res.status === 404) {
-          console.log('[apollo:emails] API not available on current plan, skipping');
+        if (res.status === 403 || res.status === 404 || res.status === 422) {
+          console.log(`[apollo:emails] API returned ${res.status}, skipping`);
           return { records: [], nextCursor: since, kpiMappings: [] };
         }
         throw new Error(`Apollo emails API error: ${res.status} ${res.statusText}`);
@@ -187,8 +187,8 @@ module.exports = {
       }
 
       if (!res.ok) {
-        if (res.status === 403) {
-          console.log('[apollo:opportunities] API not available on current plan, skipping');
+        if (res.status === 403 || res.status === 404 || res.status === 422) {
+          console.log(`[apollo:opportunities] API returned ${res.status}, skipping`);
           return { records: [], nextCursor: since, kpiMappings: [] };
         }
         throw new Error(`Apollo opportunities API error: ${res.status} ${res.statusText}`);
@@ -426,8 +426,8 @@ module.exports = {
       }
 
       if (!res.ok) {
-        if (res.status === 403 || res.status === 404) {
-          console.log('[apollo:tasks] Not available, skipping');
+        if (res.status === 403 || res.status === 404 || res.status === 422) {
+          console.log(`[apollo:tasks] API returned ${res.status}, skipping`);
           return { records: [], nextCursor: since, kpiMappings: [] };
         }
         throw new Error(`Apollo tasks API error: ${res.status} ${res.statusText}`);
