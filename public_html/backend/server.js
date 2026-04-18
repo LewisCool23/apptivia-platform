@@ -7934,6 +7934,20 @@ app.post('/api/integrations/my', loadProfile, async (req, res) => {
     const { integration_type, display_name, credentials } = req.body;
     if (!integration_type) return res.status(400).json({ error: 'integration_type is required' });
 
+    // Permission check: connect_own_integrations
+    const userRole = req.userProfile?.role;
+    const { data: override } = await sb
+      .from('user_permission_overrides')
+      .select('granted')
+      .eq('user_id', req.userProfile.id)
+      .eq('permission_key', 'connect_own_integrations')
+      .maybeSingle();
+    const hasPermissionByDefault = ['admin', 'manager', 'coach', 'power_user'].includes(userRole);
+    const hasPermission = override ? override.granted : hasPermissionByDefault;
+    if (!hasPermission) {
+      return res.status(403).json({ error: 'You do not have permission to connect personal integrations.' });
+    }
+
     const encrypted = credentials ? integrations.encryptCredentials(credentials) : {};
     const { data, error } = await sb.from('integrations').insert({
       organization_id: req.userProfile.organization_id,
@@ -8232,6 +8246,21 @@ app.get('/api/integrations/oauth/:provider/init-personal', loadProfile, async (r
   try {
     const sb = getSupabaseAdmin();
     if (!sb) return res.status(503).json({ error: 'Service unavailable' });
+
+    // Permission check: connect_own_integrations
+    const userRole = req.userProfile?.role;
+    const { data: override } = await sb
+      .from('user_permission_overrides')
+      .select('granted')
+      .eq('user_id', req.userProfile.id)
+      .eq('permission_key', 'connect_own_integrations')
+      .maybeSingle();
+    const hasPermissionByDefault = ['admin', 'manager', 'coach', 'power_user'].includes(userRole);
+    const hasPermission = override ? override.granted : hasPermissionByDefault;
+    if (!hasPermission) {
+      return res.status(403).json({ error: 'You do not have permission to connect personal integrations.' });
+    }
+
     const { authUrl } = await integrations.initOAuth(
       sb,
       req.userProfile.organization_id,
