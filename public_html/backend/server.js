@@ -1236,8 +1236,8 @@ app.post('/api/kpi/import',
       const kpiKeyToId = Object.fromEntries((allMetrics || []).map(m => [m.key, m.id]));
 
       const { data: orgProfiles } = await sb.from('profiles')
-        .select('id, email, team_id, role').eq('organization_id', orgId)
-        .not('role', 'in', '("admin","manager","coach")');
+        .select('id, email, team_id, role, carries_quota').eq('organization_id', orgId)
+        .or('role.eq.power_user,carries_quota.eq.true');
       const emailToProfile = {};
       (orgProfiles || []).forEach(p => {
         if (p.email) emailToProfile[p.email.toLowerCase()] = p;
@@ -3529,12 +3529,12 @@ app.get('/api/analytics/coaching-cohorts', loadProfile, requireMinRole('manager'
 
     const coachedIds = [...new Set((coachedNotifs || []).map(n => n.profile_id))];
 
-    // Get all non-leadership profiles
+    // Get all non-leadership profiles (+ player-coaches with carries_quota)
     const { data: profiles } = await sb
       .from('profiles')
       .select('id')
       .eq('organization_id', orgId)
-      .not('role', 'in', '("admin","manager","coach")');
+      .or('role.eq.power_user,carries_quota.eq.true');
 
     const allIds = (profiles || []).map(p => p.id);
     if (allIds.length === 0) return res.json({ coached: { count: 0, avg_attainment: null }, uncoached: { count: 0, avg_attainment: null }, period_weeks: weeks });
@@ -4341,11 +4341,11 @@ async function runScorecardAlerts() {
     // Fetch historical config covering both weeks
     const { getConfigAt } = await fetchHistoricalConfig(sb, metricIds, priorStart, currEnd);
 
-    // Get all rep profiles (exclude admin/manager)
+    // Get all rep profiles (+ player-coaches with carries_quota)
     const { data: reps } = await sb
       .from('profiles')
       .select('id, first_name, last_name, team_id, organization_id')
-      .not('role', 'in', '("admin","manager","coach")');
+      .or('role.eq.power_user,carries_quota.eq.true');
 
     if (!reps || reps.length === 0) return { orgs: 0, notified: 0 };
 
@@ -4629,11 +4629,11 @@ async function runKpiAnomalyAlerts() {
       (allOrgKpiConfigs).map(c => [c.kpi_metrics.id, c.kpi_metrics])
     );
 
-    // Get rep profiles
+    // Get rep profiles (+ player-coaches with carries_quota)
     const { data: reps } = await sb
       .from('profiles')
       .select('id, first_name, last_name, team_id, organization_id')
-      .not('role', 'in', '("admin","manager","coach")');
+      .or('role.eq.power_user,carries_quota.eq.true');
 
     if (!reps || reps.length === 0) return { alerts: 0 };
 
@@ -4815,11 +4815,11 @@ async function runBadgeAutoAward() {
       .select('badge_name, badge_type, badge_description, icon, color, rarity, points');
     const badgeDefMap = Object.fromEntries((badgeDefs || []).map(b => [b.badge_name, b]));
 
-    // All rep profiles
+    // All rep profiles (+ player-coaches with carries_quota)
     const { data: reps } = await sb
       .from('profiles')
       .select('id, first_name, last_name, total_points, created_at, organization_id')
-      .not('role', 'in', '("admin","manager","coach")');
+      .or('role.eq.power_user,carries_quota.eq.true');
     if (!reps || reps.length === 0) return { awarded: 0, notified: 0 };
     const repIds = reps.map(r => r.id);
 
@@ -5234,10 +5234,10 @@ async function syncEngageKpiValues() {
     if (!engageMetrics || engageMetrics.length === 0) return;
     const keyToId = Object.fromEntries(engageMetrics.map(m => [m.key, m.id]));
 
-    // 2. Fetch all rep profiles (same filter as achievement check)
+    // 2. Fetch all rep profiles (+ player-coaches with carries_quota)
     const { data: reps } = await sb
       .from('profiles').select('id, organization_id')
-      .not('role', 'in', '("admin","manager","coach")');
+      .or('role.eq.power_user,carries_quota.eq.true');
     if (!reps || reps.length === 0) return;
     const repIds = reps.map(r => r.id);
     const repOrgMap = Object.fromEntries(reps.map(r => [r.id, r.organization_id]));
@@ -5473,11 +5473,11 @@ async function runAchievementCheck() {
     const today   = now.toISOString().split('T')[0];
     const weekAgo = new Date(now.getTime() - 7 * 86400000).toISOString().split('T')[0];
 
-    // 1. Rep profiles (exclude admin/manager/coach)
+    // 1. Rep profiles (+ player-coaches with carries_quota)
     const { data: reps } = await sb
       .from('profiles')
-      .select('id, first_name, last_name, team_id, apptivia_level, organization_id')
-      .not('role', 'in', '("admin","manager","coach")');
+      .select('id, first_name, last_name, team_id, apptivia_level, organization_id, role, carries_quota')
+      .or('role.eq.power_user,carries_quota.eq.true');
     if (!reps || reps.length === 0) return { reps: 0, achieved: 0, notified: 0 };
     const repIds = reps.map(r => r.id);
 
@@ -5932,11 +5932,13 @@ async function runCoachingNudges() {
     }
     const allMetricIds = [...new Set(allOrgConfigs.map(c => c.kpi_id))];
 
-    // Get all reps (exclude admin/manager/coach)
+    // Get all reps (+ player-coaches with carries_quota)
+    // TODO (post-Planera frontend spec): Admin toggle in Systems > People to set
+    // carries_quota per user. Until that ships, set manually via SQL.
     const { data: reps } = await sb
       .from('profiles')
       .select('id, first_name, last_name, team_id, organization_id')
-      .not('role', 'in', '("admin","manager","coach")');
+      .or('role.eq.power_user,carries_quota.eq.true');
 
     if (!reps || reps.length === 0) return { reps: 0, nudges: 0 };
 

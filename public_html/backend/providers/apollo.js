@@ -17,10 +17,12 @@ async function guardRep(freshIntegration, sb) {
   const profileId = freshIntegration.profile_id;
   if (!profileId) return null;
   const { data: profile } = await sb.from('profiles')
-    .select('role')
+    .select('role, carries_quota')
     .eq('id', profileId)
     .maybeSingle();
-  if (!profile || ['admin', 'manager', 'coach'].includes(profile.role)) return null;
+  if (!profile) return null;
+  const isLeader = ['admin', 'manager', 'coach'].includes(profile.role);
+  if (isLeader && !profile.carries_quota) return null;
   return profileId;
 }
 
