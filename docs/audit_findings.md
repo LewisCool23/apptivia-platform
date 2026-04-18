@@ -130,6 +130,23 @@ The graceful degradation conditions were incomplete:
 
 ---
 
+## Deviation #7 — Fix #7 engage_signal_actions duplicate RLS policies
+
+**Commit:** `68b44ac` (P1-7: Fix #7)
+**Severity:** Low (functionally safe, mild perf overhead)
+
+**What happened:** Migration 143 dropped 3 policies (`engage_signal_actions_org_read`, `_org_write`, `_service_role`) and created 3 replacements using `auth_user_org_id()`. However, 4 pre-existing human-readable policies were not dropped because migration 143 didn't know about them:
+- "Org members can insert action queue" (INSERT)
+- "Org members can update action queue" (UPDATE)
+- "Org members can view action queue" (SELECT)
+- "Service role has full access to action queue" (ALL)
+
+**Impact:** Both sets enforce org isolation through different qual patterns. RLS evaluates additively — both are correct. Mild performance overhead from evaluating 7 policies instead of 3.
+
+**Corrective action (post-Planera):** Drop the 4 legacy policies after verifying no code path depends on their specific WHERE clauses. Do NOT drop now — pre-pilot risk is not worth it.
+
+---
+
 ## Policy: Deviation Handling (established after Deviation #5)
 
 1. **Before deploying:** If implementation differs from spec in ANY way — column names, function signatures, missing features, architectural choices — STOP and flag the deviation to the user.
