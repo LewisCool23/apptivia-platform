@@ -28,7 +28,10 @@ function getAuthUrl(integration, state, redirectUri) {
     'crm.objects.contacts.write',
     'crm.objects.deals.read',
     'crm.objects.deals.write',
-    'crm.objects.companies.read',
+    'crm.objects.calls.read',
+    'crm.objects.meetings.read',
+    'crm.objects.meetings.write',
+    'crm.objects.owners.read',
     'timeline',
   ].join(' ');
 
