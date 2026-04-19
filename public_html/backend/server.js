@@ -7131,7 +7131,12 @@ io.on('connection', (socket) => {
             p_user_id: verifiedUserId,
             p_organization_id: orgId,
             p_date: todayInc,
-          }).catch(err => console.error('[aaron-limit] Increment failed:', err.message));
+          }).then(
+            ({ error }) => {
+              if (error) console.error('[aaron-limit] Increment failed:', error.message);
+            },
+            err => console.error('[aaron-limit] Increment threw:', err.message)
+          );
         }
       }
 
