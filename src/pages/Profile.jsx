@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useAuth } from '../AuthContext';
-import { Edit, Camera, Award, TrendingUp, Search, X, Gift, CheckCircle, AlertCircle, Loader2, Clock, Key, RefreshCw } from 'lucide-react';
+import { Edit, Camera, Award, TrendingUp, Search, X, Gift, CheckCircle, AlertCircle, Loader2, Clock, Key, RefreshCw, Building2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import DashboardLayout from '../DashboardLayout';
 import RightFilterPanel from '../components/RightFilterPanel';
@@ -107,6 +107,11 @@ export default function Profile() {
     disconnect: disconnectIntegration,
     refresh: refreshIntegrations,
   } = useIntegrations({ personal: true });
+  const { integrations: orgIntegrations } = useIntegrations({ personal: false });
+  const connectedOrgIntegrations = useMemo(
+    () => (orgIntegrations || []).filter(i => i.status === 'connected'),
+    [orgIntegrations]
+  );
   const [credentialsModal, setCredentialsModal] = useState(null);
   const [confirmDisconnect, setConfirmDisconnect] = useState(null);
 
@@ -1366,8 +1371,54 @@ export default function Profile() {
           </div>
           )}
 
-          {/* Personal Integrations Tab */}
-          {activeTab === 'integrations' && canConnectIntegrations && (
+          {/* Integrations Tab */}
+          {activeTab === 'integrations' && canConnectIntegrations && (<>
+
+          {/* Org-level integrations (read-only) */}
+          {connectedOrgIntegrations.length > 0 && (
+          <div className="bg-white rounded-lg shadow-sm p-5 mb-5">
+            <div className="mb-4">
+              <div className="flex items-center gap-2">
+                <Building2 size={18} className="text-blue-600" />
+                <h2 className="text-lg font-semibold text-gray-900">Org Integrations</h2>
+              </div>
+              <p className="text-xs text-gray-500 mt-0.5 ml-7">Connected by your admin — data syncs automatically for all team members</p>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+              {connectedOrgIntegrations.map((integration) => {
+                const template = SUPPORTED_INTEGRATIONS.find(t => t.integration_type === integration.integration_type);
+                if (!template) return null;
+                return (
+                  <div key={integration.id} className="bg-gray-50 rounded-xl p-5 border border-gray-100 flex flex-col">
+                    <div className="flex items-center gap-3 mb-3">
+                      <div className={`w-11 h-11 bg-gradient-to-br ${template.color} rounded-lg flex items-center justify-center text-xs font-bold text-white shadow-sm`}>
+                        {template.icon}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="font-semibold text-gray-900 text-sm">{template.display_name}</div>
+                        <div className="text-xs text-gray-500 truncate">{template.description}</div>
+                      </div>
+                      <div className="w-2.5 h-2.5 rounded-full bg-green-500 shrink-0" title="Connected" />
+                    </div>
+                    <div className="mb-3">
+                      <span className="inline-flex items-center gap-1 text-xs bg-blue-50 text-blue-700 px-2.5 py-1 rounded-full font-medium">
+                        <Building2 size={11} /> Org-wide
+                      </span>
+                    </div>
+                    {integration.last_sync_at && (
+                      <div className="text-xs text-gray-400 flex items-center gap-1">
+                        <Clock size={11} />
+                        Last synced: {new Date(integration.last_sync_at).toLocaleString()}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+          )}
+
+          {/* Personal integrations */}
           <div className="bg-white rounded-lg shadow-sm p-5">
             <div className="flex items-center justify-between mb-4">
               <div>
@@ -1467,7 +1518,7 @@ export default function Profile() {
               </div>
             )}
           </div>
-          )}
+          </>)}
 
       </div> {/* Close space-y-6 */}
       </div> {/* Close p-6 */}
