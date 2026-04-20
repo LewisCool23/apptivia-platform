@@ -54,24 +54,11 @@ export default function Integrations() {
     });
   }, [templates]);
 
-  const orgConnectedCount = liveIntegrations.filter(i => i.status === 'connected').length;
-  const personalConnectedCount = personalIntegrations.filter(i => i.status === 'connected').length;
-  const connectedCount = orgConnectedCount + personalConnectedCount;
   const allIntegrations = [...liveIntegrations, ...personalIntegrations];
+  const connectedCount = allIntegrations.filter(i => i.status === 'connected').length;
   const lastSync = allIntegrations
     .filter(i => i.last_sync_at)
     .sort((a, b) => new Date(b.last_sync_at) - new Date(a.last_sync_at))[0]?.last_sync_at;
-
-  // Types already connected at org level — exclude from personal section
-  const orgConnectedTypes = useMemo(
-    () => new Set(liveIntegrations.filter(i => i.status === 'connected').map(i => i.integration_type)),
-    [liveIntegrations]
-  );
-  // Templates for personal section: exclude org-connected types
-  const personalTemplates = useMemo(
-    () => mergedTemplates.filter(t => !orgConnectedTypes.has(t.integration_type)),
-    [mergedTemplates, orgConnectedTypes]
-  );
 
   const handleRefresh = async () => {
     setIsRefreshing(true);
@@ -136,228 +123,157 @@ export default function Integrations() {
           </div>
         )}
 
-        {/* Integration Cards */}
+        {/* Integration Cards — single unified grid with dual-status badges */}
         {(loading || personalLoading) ? (
           <div className="flex items-center justify-center py-16 text-gray-400">
             <Loader2 size={24} className="animate-spin mr-2" />
             Loading integrations...
           </div>
-        ) : (<>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+            {mergedTemplates.map((template) => {
+              const orgIntegration = liveIntegrations.find(i => i.integration_type === template.integration_type);
+              const personalIntegration = personalIntegrations.find(i => i.integration_type === template.integration_type);
+              const orgConnected = orgIntegration?.status === 'connected';
+              const personalConnected = personalIntegration?.status === 'connected';
+              const isSyncing = orgIntegration?.status === 'syncing' || syncing === orgIntegration?.id;
+              const isError = orgIntegration?.status === 'error' || personalIntegration?.status === 'error';
+              const anyConnected = orgConnected || personalConnected;
 
-          {/* Org Integrations Section */}
-          <div className="bg-white rounded-lg shadow-sm p-5 mb-5">
-            <div className="mb-4">
-              <div className="flex items-center gap-2">
-                <Building2 size={18} className="text-blue-600" />
-                <h2 className="text-lg font-semibold text-gray-900">Org Integrations</h2>
-              </div>
-              <p className="text-xs text-gray-500 mt-0.5 ml-7">Organization-wide integrations — data syncs for all team members</p>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-              {mergedTemplates.map((template) => {
-                const integration = liveIntegrations.find(i => i.integration_type === template.integration_type);
-                const isConnected = integration?.status === 'connected';
-                const isSyncing = integration?.status === 'syncing' || syncing === integration?.id;
-                const isError = integration?.status === 'error';
-
-                return (
-                  <div key={template.integration_type} className="bg-white rounded-xl p-5 shadow-sm border border-gray-100 flex flex-col hover:shadow-md transition-shadow">
-                    <div className="flex items-center gap-3 mb-4">
-                      <div className={`w-11 h-11 bg-gradient-to-br ${template.color} rounded-lg flex items-center justify-center text-xs font-bold text-white shadow-sm`}>
-                        {template.icon}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="font-semibold text-gray-900">{template.display_name}</div>
-                        <div className="text-xs text-gray-500 truncate">{template.description}</div>
-                      </div>
-                      {isConnected && <div className="w-2.5 h-2.5 rounded-full bg-green-500 shrink-0" title="Connected" />}
-                      {isError && <div className="w-2.5 h-2.5 rounded-full bg-red-500 shrink-0" title="Error" />}
+              return (
+                <div key={template.integration_type} className="bg-white rounded-xl p-5 shadow-sm border border-gray-100 flex flex-col hover:shadow-md transition-shadow">
+                  {/* Header */}
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className={`w-11 h-11 bg-gradient-to-br ${template.color} rounded-lg flex items-center justify-center text-xs font-bold text-white shadow-sm`}>
+                      {template.icon}
                     </div>
-
-                    <div className="mb-3">
-                      {isConnected && !isSyncing && (
-                        <span className="inline-flex items-center gap-1 text-xs bg-green-50 text-green-700 px-2.5 py-1 rounded-full font-medium">
-                          <CheckCircle size={12} /> Connected
-                        </span>
-                      )}
-                      {isSyncing && (
-                        <span className="inline-flex items-center gap-1 text-xs bg-blue-50 text-blue-700 px-2.5 py-1 rounded-full font-medium">
-                          <Loader2 size={12} className="animate-spin" /> Syncing...
-                        </span>
-                      )}
-                      {isError && (
-                        <span className="inline-flex items-center gap-1 text-xs bg-red-50 text-red-700 px-2.5 py-1 rounded-full font-medium">
-                          <AlertCircle size={12} /> Error
-                        </span>
-                      )}
-                      {!integration && (
-                        <span className="inline-flex items-center gap-1 text-xs bg-gray-50 text-gray-500 px-2.5 py-1 rounded-full font-medium">
-                          Available
-                        </span>
-                      )}
-                      {integration && integration.status === 'disconnected' && (
-                        <span className="inline-flex items-center gap-1 text-xs bg-gray-50 text-gray-500 px-2.5 py-1 rounded-full font-medium">
-                          Disconnected
-                        </span>
-                      )}
+                    <div className="flex-1 min-w-0">
+                      <div className="font-semibold text-gray-900">{template.display_name}</div>
+                      <div className="text-xs text-gray-500 truncate">{template.description}</div>
                     </div>
-
-                    {isConnected && integration && (
-                      <div className="text-xs text-gray-400 mb-3 space-y-1">
-                        {integration.last_sync_at && (
-                          <div className="flex items-center gap-1">
-                            <Clock size={11} />
-                            Last synced: {new Date(integration.last_sync_at).toLocaleString()}
-                          </div>
-                        )}
-                        {integration.last_sync_error && (
-                          <div className="text-red-500 truncate" title={integration.last_sync_error}>
-                            {integration.last_sync_error}
-                          </div>
-                        )}
-                      </div>
-                    )}
-
-                    <div className="mt-auto flex flex-col gap-2">
-                      {isConnected ? (
-                        <>
-                          <div className="flex gap-2">
-                            <button
-                              onClick={() => triggerSync(integration.id)}
-                              disabled={isSyncing}
-                              className="flex-1 flex items-center justify-center gap-1.5 bg-blue-600 text-white py-2 rounded-md text-sm font-medium hover:bg-blue-700 disabled:opacity-50 transition-colors"
-                            >
-                              {isSyncing ? <Loader2 size={14} className="animate-spin" /> : <RefreshCw size={14} />}
-                              {isSyncing ? 'Syncing...' : 'Sync Now'}
-                            </button>
-                            <button
-                              onClick={async () => {
-                                setSyncHistoryModal(integration.id);
-                                setSyncHistoryLoading(true);
-                                const history = await getSyncHistory(integration.id);
-                                setSyncHistory(history);
-                                setSyncHistoryLoading(false);
-                              }}
-                              className="px-3 py-2 bg-gray-100 text-gray-600 rounded-md hover:bg-gray-200 transition-colors"
-                              title="Sync History"
-                            >
-                              <History size={14} />
-                            </button>
-                          </div>
-                          <button
-                            onClick={() => setConfirmDisconnect(integration.id)}
-                            className="w-full py-1.5 text-xs text-red-500 hover:text-red-700 hover:bg-red-50 rounded-md transition-colors"
-                          >
-                            Disconnect
-                          </button>
-                        </>
-                      ) : (
-                        <button
-                          onClick={() => connectOAuth(template.integration_type)}
-                          className="w-full bg-blue-600 text-white py-2 rounded-md text-sm font-medium hover:bg-blue-700 transition-colors"
-                        >
-                          Connect
-                        </button>
-                      )}
-                    </div>
+                    {anyConnected && <div className="w-2.5 h-2.5 rounded-full bg-green-500 shrink-0" title="Connected" />}
+                    {isError && !anyConnected && <div className="w-2.5 h-2.5 rounded-full bg-red-500 shrink-0" title="Error" />}
                   </div>
-                );
-              })}
-            </div>
-          </div>
 
-          {/* Personal Integrations Section */}
-          <div className="bg-white rounded-lg shadow-sm p-5">
-            <div className="mb-4">
-              <div className="flex items-center gap-2">
-                <User size={18} className="text-gray-600" />
-                <h2 className="text-lg font-semibold text-gray-900">Personal Integrations</h2>
-              </div>
-              <p className="text-xs text-gray-500 mt-0.5 ml-7">Your personal account connections — syncs data for you only</p>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-              {personalTemplates.map((template) => {
-                const integration = personalIntegrations.find(i => i.integration_type === template.integration_type);
-                const isConnected = integration?.status === 'connected';
-                const isError = integration?.status === 'error';
+                  {/* Status Badges */}
+                  <div className="mb-3 flex flex-wrap gap-1.5">
+                    {orgConnected && !isSyncing && (
+                      <span className="inline-flex items-center gap-1 text-xs bg-blue-50 text-blue-700 px-2.5 py-1 rounded-full font-medium">
+                        <Building2 size={11} /> Org-wide
+                      </span>
+                    )}
+                    {isSyncing && (
+                      <span className="inline-flex items-center gap-1 text-xs bg-blue-50 text-blue-700 px-2.5 py-1 rounded-full font-medium">
+                        <Loader2 size={12} className="animate-spin" /> Syncing...
+                      </span>
+                    )}
+                    {personalConnected && (
+                      <span className="inline-flex items-center gap-1 text-xs bg-green-50 text-green-700 px-2.5 py-1 rounded-full font-medium">
+                        <User size={11} /> Personal
+                      </span>
+                    )}
+                    {isError && (
+                      <span className="inline-flex items-center gap-1 text-xs bg-red-50 text-red-700 px-2.5 py-1 rounded-full font-medium">
+                        <AlertCircle size={12} /> Error
+                      </span>
+                    )}
+                    {!anyConnected && !isError && (
+                      <span className="inline-flex items-center gap-1 text-xs bg-gray-50 text-gray-500 px-2.5 py-1 rounded-full font-medium">
+                        Available
+                      </span>
+                    )}
+                  </div>
 
-                return (
-                  <div key={template.integration_type} className="bg-white rounded-xl p-5 shadow-sm border border-gray-100 flex flex-col hover:shadow-md transition-shadow">
-                    <div className="flex items-center gap-3 mb-4">
-                      <div className={`w-11 h-11 bg-gradient-to-br ${template.color} rounded-lg flex items-center justify-center text-xs font-bold text-white shadow-sm`}>
-                        {template.icon}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="font-semibold text-gray-900">{template.display_name}</div>
-                        <div className="text-xs text-gray-500 truncate">{template.description}</div>
-                      </div>
-                      {isConnected && <div className="w-2.5 h-2.5 rounded-full bg-green-500 shrink-0" title="Connected" />}
-                      {isError && <div className="w-2.5 h-2.5 rounded-full bg-red-500 shrink-0" title="Error" />}
-                    </div>
-
-                    <div className="mb-3">
-                      {isConnected && (
-                        <span className="inline-flex items-center gap-1 text-xs bg-green-50 text-green-700 px-2.5 py-1 rounded-full font-medium">
-                          <CheckCircle size={12} /> Connected
-                        </span>
-                      )}
-                      {isError && (
-                        <span className="inline-flex items-center gap-1 text-xs bg-red-50 text-red-700 px-2.5 py-1 rounded-full font-medium">
-                          <AlertCircle size={12} /> Error
-                        </span>
-                      )}
-                      {!integration && (
-                        <span className="inline-flex items-center gap-1 text-xs bg-gray-50 text-gray-500 px-2.5 py-1 rounded-full font-medium">
-                          Available
-                        </span>
-                      )}
-                    </div>
-
-                    {isConnected && integration?.last_sync_at && (
-                      <div className="text-xs text-gray-400 mb-3 flex items-center gap-1">
+                  {/* Sync Info */}
+                  <div className="text-xs text-gray-400 mb-3 space-y-1">
+                    {orgConnected && orgIntegration?.last_sync_at && (
+                      <div className="flex items-center gap-1">
                         <Clock size={11} />
-                        Last synced: {new Date(integration.last_sync_at).toLocaleString()}
+                        Org synced: {new Date(orgIntegration.last_sync_at).toLocaleString()}
                       </div>
                     )}
+                    {personalConnected && personalIntegration?.last_sync_at && (
+                      <div className="flex items-center gap-1">
+                        <Clock size={11} />
+                        Personal synced: {new Date(personalIntegration.last_sync_at).toLocaleString()}
+                      </div>
+                    )}
+                    {orgIntegration?.last_sync_error && (
+                      <div className="text-red-500 truncate" title={orgIntegration.last_sync_error}>
+                        {orgIntegration.last_sync_error}
+                      </div>
+                    )}
+                  </div>
 
-                    <div className="mt-auto">
-                      {isConnected ? (
+                  {/* Actions */}
+                  <div className="mt-auto flex flex-col gap-2">
+                    {orgConnected ? (
+                      <>
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => triggerSync(orgIntegration.id)}
+                            disabled={isSyncing}
+                            className="flex-1 flex items-center justify-center gap-1.5 bg-blue-600 text-white py-2 rounded-md text-sm font-medium hover:bg-blue-700 disabled:opacity-50 transition-colors"
+                          >
+                            {isSyncing ? <Loader2 size={14} className="animate-spin" /> : <RefreshCw size={14} />}
+                            {isSyncing ? 'Syncing...' : 'Sync Now'}
+                          </button>
+                          <button
+                            onClick={async () => {
+                              setSyncHistoryModal(orgIntegration.id);
+                              setSyncHistoryLoading(true);
+                              const history = await getSyncHistory(orgIntegration.id);
+                              setSyncHistory(history);
+                              setSyncHistoryLoading(false);
+                            }}
+                            className="px-3 py-2 bg-gray-100 text-gray-600 rounded-md hover:bg-gray-200 transition-colors"
+                            title="Sync History"
+                          >
+                            <History size={14} />
+                          </button>
+                        </div>
                         <button
-                          onClick={() => setConfirmDisconnect(integration.id)}
+                          onClick={() => setConfirmDisconnect(orgIntegration.id)}
                           className="w-full py-1.5 text-xs text-red-500 hover:text-red-700 hover:bg-red-50 rounded-md transition-colors"
                         >
                           Disconnect
                         </button>
-                      ) : API_KEY_PROVIDERS[template.integration_type] ? (
-                        <button
-                          onClick={() => setCredentialsModal(template.integration_type)}
-                          className="w-full flex items-center justify-center gap-1.5 bg-blue-600 text-white py-2 rounded-md text-sm font-medium hover:bg-blue-700 transition-colors"
-                        >
-                          <Key size={14} /> Connect with API Key
-                        </button>
-                      ) : (
-                        <button
-                          onClick={() => connectPersonalOAuth(template.integration_type)}
-                          className="w-full bg-blue-600 text-white py-2 rounded-md text-sm font-medium hover:bg-blue-700 transition-colors"
-                        >
-                          Connect
-                        </button>
-                      )}
-                    </div>
+                      </>
+                    ) : personalConnected ? (
+                      <button
+                        onClick={() => setConfirmDisconnect(personalIntegration.id)}
+                        className="w-full py-1.5 text-xs text-red-500 hover:text-red-700 hover:bg-red-50 rounded-md transition-colors"
+                      >
+                        Disconnect
+                      </button>
+                    ) : API_KEY_PROVIDERS[template.integration_type] ? (
+                      <button
+                        onClick={() => setCredentialsModal(template.integration_type)}
+                        className="w-full flex items-center justify-center gap-1.5 bg-blue-600 text-white py-2 rounded-md text-sm font-medium hover:bg-blue-700 transition-colors"
+                      >
+                        <Key size={14} /> Connect with API Key
+                      </button>
+                    ) : (
+                      <button
+                        onClick={() => connectOAuth(template.integration_type)}
+                        className="w-full bg-blue-600 text-white py-2 rounded-md text-sm font-medium hover:bg-blue-700 transition-colors"
+                      >
+                        Connect
+                      </button>
+                    )}
                   </div>
-                );
-              })}
-            </div>
+                </div>
+              );
+            })}
           </div>
-
-        </>)}
+        )}
 
         <SyncHistoryModal
           isOpen={!!syncHistoryModal}
           onClose={() => setSyncHistoryModal(null)}
           loading={syncHistoryLoading}
           history={syncHistory}
-          integration={liveIntegrations.find(i => i.id === syncHistoryModal)}
+          integration={allIntegrations.find(i => i.id === syncHistoryModal)}
         />
 
         <CredentialsModal
