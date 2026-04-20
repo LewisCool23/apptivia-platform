@@ -112,6 +112,14 @@ export default function Profile() {
     () => (orgIntegrations || []).filter(i => i.status === 'connected'),
     [orgIntegrations]
   );
+  const orgConnectedTypes = useMemo(
+    () => new Set(connectedOrgIntegrations.map(i => i.integration_type)),
+    [connectedOrgIntegrations]
+  );
+  const personalTemplates = useMemo(
+    () => SUPPORTED_INTEGRATIONS.filter(t => !orgConnectedTypes.has(t.integration_type)),
+    [orgConnectedTypes]
+  );
   const [credentialsModal, setCredentialsModal] = useState(null);
   const [confirmDisconnect, setConfirmDisconnect] = useState(null);
 
@@ -1422,7 +1430,7 @@ export default function Profile() {
           <div className="bg-white rounded-lg shadow-sm p-5">
             <div className="flex items-center justify-between mb-4">
               <div>
-                <h2 className="text-lg font-semibold text-gray-900">My Integrations</h2>
+                <h2 className="text-lg font-semibold text-gray-900">Personal Integrations</h2>
                 <p className="text-xs text-gray-500">Connect your personal accounts to sync data</p>
               </div>
               <button onClick={refreshIntegrations} className="p-2 rounded-lg text-gray-500 hover:bg-gray-100 transition-colors" title="Refresh">
@@ -1444,7 +1452,7 @@ export default function Profile() {
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-                {SUPPORTED_INTEGRATIONS.map((template) => {
+                {personalTemplates.map((template) => {
                   const integration = personalIntegrations.find(i => i.integration_type === template.integration_type);
                   const isConnected = integration?.status === 'connected';
                   const isError = integration?.status === 'error';
