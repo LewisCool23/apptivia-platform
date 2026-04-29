@@ -843,7 +843,7 @@ function WallboardCelebration({ orgId, enabled }) {
           style={{
             position: 'absolute', top: '50%', left: '50%',
             animation: 'wbCardIn 0.5s cubic-bezier(0.34,1.56,0.64,1) forwards',
-            background: 'linear-gradient(145deg, #0f172a 0%, #1e1b4b 50%, #0f172a 100%)',
+            background: 'linear-gradient(145deg, #0A0A0B 0%, #27272A 50%, #0A0A0B 100%)',
             border: '2px solid rgba(245,158,11,0.5)', borderRadius: 28,
             padding: '52px 72px 44px', textAlign: 'center', minWidth: 460, maxWidth: '88vw', cursor: 'default',
             boxShadow: '0 0 0 1px rgba(245,158,11,0.15), 0 0 80px rgba(245,158,11,0.25), 0 40px 80px rgba(0,0,0,0.6)',
@@ -853,7 +853,7 @@ function WallboardCelebration({ orgId, enabled }) {
           <div style={{ fontSize: 11, fontWeight: 800, letterSpacing: '0.2em', color: '#fcd34d', textTransform: 'uppercase', marginBottom: 16 }}>
             {typeLabel}
           </div>
-          <div style={{ fontSize: 26, fontWeight: 800, color: '#f8fafc', marginBottom: 10, lineHeight: 1.25 }}>{active.title}</div>
+          <div style={{ fontSize: 26, fontWeight: 800, color: '#F7F5F2', marginBottom: 10, lineHeight: 1.25 }}>{active.title}</div>
           {active.message && <div style={{ fontSize: 16, color: 'rgba(255,255,255,0.6)', maxWidth: 380, margin: '0 auto' }}>{active.message}</div>}
           {queue.length > 0 && (
             <div style={{ marginTop: 20, color: 'rgba(255,255,255,0.3)', fontSize: 12 }}>
