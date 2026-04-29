@@ -2,12 +2,12 @@ import React, { useState } from 'react';
 import { TrendingUp, TrendingDown, Minus, ChevronDown, ChevronUp, Info } from 'lucide-react';
 
 const FUNNEL_STAGES = [
-  { key: 'call_connects', label: 'Calls',         color: '#6366f1', shortLabel: 'Calls' },
-  { key: 'meetings',      label: 'Meetings',       color: '#8b5cf6', shortLabel: 'Meetings' },
-  { key: 'sourced_opps',  label: 'Sourced Opps',   color: '#a855f7', shortLabel: 'S. Opps' },
-  { key: 'stage2_opps',   label: 'SQLs (Stage 2)', color: '#d946ef', shortLabel: 'SQLs' },
-  { key: 'stage3_opps',  label: 'Stage 3 Opps',    color: '#ec4899', shortLabel: 'Stage 3' },
-  { key: 'closed_won',   label: 'Closed Won',      color: '#f43f5e', shortLabel: 'Won' },
+  { key: 'call_connects', label: 'Calls',         color: '#3F3F46', shortLabel: 'Calls' },
+  { key: 'meetings',      label: 'Meetings',       color: '#52525B', shortLabel: 'Meetings' },
+  { key: 'sourced_opps',  label: 'Sourced Opps',   color: '#71717A', shortLabel: 'S. Opps' },
+  { key: 'stage2_opps',   label: 'SQLs (Stage 2)', color: '#FF8A6B', shortLabel: 'SQLs' },
+  { key: 'stage3_opps',  label: 'Stage 3 Opps',    color: '#FF4D2E', shortLabel: 'Stage 3' },
+  { key: 'closed_won',   label: 'Closed Won',      color: '#C8341B', shortLabel: 'Won' },
 ];
 
 function conversionRate(from, to) {
