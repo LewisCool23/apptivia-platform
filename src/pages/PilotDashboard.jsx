@@ -68,12 +68,12 @@ function getSignalStatus(value, threshold) {
 
 function StatusPip({ status }) {
   const map = {
-    confirmed: { color: "#00ff88", label: "CONFIRMED", pulse: true },
-    warming:   { color: "#f5c842", label: "IN PROGRESS", pulse: false },
-    cold:      { color: "#4a4f5e", label: "NO DATA", pulse: false },
-    pending:   { color: "#f5c842", label: "TRIAL ACTIVE", pulse: true },
-    converted: { color: "#00ff88", label: "CONVERTED", pulse: true },
-    expired:   { color: "#ff4444", label: "EXPIRED", pulse: false },
+    confirmed: { color: "#FF4D2E", label: "CONFIRMED", pulse: true },
+    warming:   { color: "#F59E0B", label: "IN PROGRESS", pulse: false },
+    cold:      { color: "#52525B", label: "NO DATA", pulse: false },
+    pending:   { color: "#F59E0B", label: "TRIAL ACTIVE", pulse: true },
+    converted: { color: "#FF4D2E", label: "CONVERTED", pulse: true },
+    expired:   { color: "#C8341B", label: "EXPIRED", pulse: false },
   };
   const cfg = map[status] || map.cold;
   return (
@@ -86,7 +86,7 @@ function StatusPip({ status }) {
         animation: cfg.pulse ? "pip-pulse 2s infinite" : "none",
       }} />
       <span style={{
-        fontFamily: "'JetBrains Mono', 'Fira Code', monospace",
+        fontFamily: "'Geist Mono', monospace",
         fontSize: 10,
         letterSpacing: "0.12em",
         color: cfg.color,
@@ -102,19 +102,19 @@ function MetricCounter({ value, label, sublabel }) {
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
       <span style={{
-        fontFamily: "'JetBrains Mono', 'Fira Code', monospace",
+        fontFamily: "'Geist Mono', monospace",
         fontSize: 36,
         fontWeight: 700,
-        color: "#e8eaf0",
+        color: "#F7F5F2",
         lineHeight: 1,
         letterSpacing: "-0.02em",
       }}>
         {value ?? "—"}
       </span>
       <span style={{
-        fontFamily: "'JetBrains Mono', 'Fira Code', monospace",
+        fontFamily: "'Geist Mono', monospace",
         fontSize: 10,
-        color: "#5a6070",
+        color: "rgba(247,245,242,0.55)",
         letterSpacing: "0.1em",
         textTransform: "uppercase",
       }}>
@@ -122,9 +122,9 @@ function MetricCounter({ value, label, sublabel }) {
       </span>
       {sublabel && (
         <span style={{
-          fontFamily: "'JetBrains Mono', 'Fira Code', monospace",
+          fontFamily: "'Geist Mono', monospace",
           fontSize: 9,
-          color: "#3a3f4e",
+          color: "rgba(247,245,242,0.4)",
           letterSpacing: "0.08em",
         }}>
           {sublabel}
@@ -160,17 +160,17 @@ function AssumptionCard({ meta, signals, subscription }) {
   }
 
   const borderColor = {
-    confirmed: "#00ff88",
-    converted: "#00ff88",
-    warming:   "#f5c842",
-    pending:   "#f5c842",
-    cold:      "#22262f",
-    expired:   "#ff4444",
-  }[statusKey] || "#22262f";
+    confirmed: "#FF4D2E",
+    converted: "#FF4D2E",
+    warming:   "#F59E0B",
+    pending:   "#F59E0B",
+    cold:      "#27272A",
+    expired:   "#C8341B",
+  }[statusKey] || "#27272A";
 
   return (
     <div style={{
-      background: "#13161e",
+      background: "#18181B",
       border: `1px solid ${borderColor}22`,
       borderLeft: `3px solid ${borderColor}`,
       borderRadius: 6,
@@ -189,7 +189,7 @@ function AssumptionCard({ meta, signals, subscription }) {
         <div style={{
           position: "absolute", top: 0, right: 0,
           width: 120, height: 120,
-          background: "radial-gradient(circle at top right, #00ff8811 0%, transparent 70%)",
+          background: "radial-gradient(circle at top right, rgba(255, 77, 46, 0.07) 0%, transparent 70%)",
           pointerEvents: "none",
         }} />
       )}
@@ -198,9 +198,9 @@ function AssumptionCard({ meta, signals, subscription }) {
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
         <div>
           <div style={{
-            fontFamily: "'JetBrains Mono', 'Fira Code', monospace",
+            fontFamily: "'Geist Mono', monospace",
             fontSize: 9,
-            color: "#3a4050",
+            color: "rgba(247,245,242,0.5)",
             letterSpacing: "0.15em",
             textTransform: "uppercase",
             marginBottom: 4,
@@ -208,10 +208,10 @@ function AssumptionCard({ meta, signals, subscription }) {
             {meta.assumption}
           </div>
           <div style={{
-            fontFamily: "'DM Sans', sans-serif",
+            fontFamily: "'Geist', sans-serif",
             fontSize: 15,
             fontWeight: 600,
-            color: "#c8ccd8",
+            color: "rgba(247,245,242,0.85)",
             letterSpacing: "-0.01em",
           }}>
             {meta.label}
@@ -222,11 +222,11 @@ function AssumptionCard({ meta, signals, subscription }) {
 
       {/* Description */}
       <div style={{
-        fontFamily: "'DM Sans', sans-serif",
+        fontFamily: "'Geist', sans-serif",
         fontSize: 12,
-        color: "#4a5060",
+        color: "rgba(247,245,242,0.5)",
         lineHeight: 1.5,
-        borderTop: "1px solid #1e222c",
+        borderTop: "1px solid #27272A",
         paddingTop: 12,
         flex: 1,
       }}>
@@ -245,7 +245,7 @@ function AssumptionCard({ meta, signals, subscription }) {
           <div style={{ flex: 1, marginLeft: 20 }}>
             <div style={{
               height: 3,
-              background: "#1e222c",
+              background: "#27272A",
               borderRadius: 2,
               overflow: "hidden",
             }}>
@@ -258,9 +258,9 @@ function AssumptionCard({ meta, signals, subscription }) {
               }} />
             </div>
             <div style={{
-              fontFamily: "'JetBrains Mono', 'Fira Code', monospace",
+              fontFamily: "'Geist Mono', monospace",
               fontSize: 9,
-              color: "#3a4050",
+              color: "rgba(247,245,242,0.5)",
               marginTop: 4,
               textAlign: "right",
             }}>
@@ -273,24 +273,24 @@ function AssumptionCard({ meta, signals, subscription }) {
   );
 }
 
-function StatBar({ label, value, max, color = "#00ff88" }) {
+function StatBar({ label, value, max, color = "#FF4D2E" }) {
   const pct = max > 0 ? Math.min(100, Math.round((value / max) * 100)) : 0;
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
       <div style={{ display: "flex", justifyContent: "space-between" }}>
         <span style={{
-          fontFamily: "'DM Sans', sans-serif",
+          fontFamily: "'Geist', sans-serif",
           fontSize: 12,
-          color: "#6a7080",
+          color: "rgba(247,245,242,0.55)",
         }}>{label}</span>
         <span style={{
-          fontFamily: "'JetBrains Mono', 'Fira Code', monospace",
+          fontFamily: "'Geist Mono', monospace",
           fontSize: 12,
-          color: "#c8ccd8",
+          color: "rgba(247,245,242,0.85)",
           fontWeight: 600,
         }}>{value}</span>
       </div>
-      <div style={{ height: 2, background: "#1e222c", borderRadius: 1 }}>
+      <div style={{ height: 2, background: "#27272A", borderRadius: 1 }}>
         <div style={{
           height: "100%", width: `${pct}%`,
           background: color, borderRadius: 1,
@@ -358,13 +358,12 @@ export default function PilotDashboard() {
     return score;
   })();
 
-  const healthColor = healthScore >= 66 ? "#00ff88" : healthScore >= 33 ? "#f5c842" : "#ff6644";
+  const healthColor = healthScore >= 66 ? "#FF4D2E" : healthScore >= 33 ? "#F59E0B" : "#C8341B";
 
   return (
     <>
       {/* Inject Google Fonts + keyframes */}
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600;700&display=swap');
         @keyframes pip-pulse {
           0%   { box-shadow: 0 0 0 0 currentColor44; }
           70%  { box-shadow: 0 0 0 6px transparent; }
@@ -378,16 +377,16 @@ export default function PilotDashboard() {
         .pilot-card:nth-child(2) { animation-delay: 0.05s; }
         .pilot-card:nth-child(3) { animation-delay: 0.10s; }
         .window-btn { cursor: pointer; transition: all 0.15s; }
-        .window-btn:hover { background: #1e222c !important; }
+        .window-btn:hover { background: #27272A !important; }
         .refresh-btn { cursor: pointer; transition: all 0.15s; }
-        .refresh-btn:hover { background: #1e2830 !important; color: #00ff88 !important; }
+        .refresh-btn:hover { background: #27272A !important; color: #FF4D2E !important; }
       `}</style>
 
       <div style={{
         minHeight: "100vh",
-        background: "#0d0f15",
-        color: "#e8eaf0",
-        fontFamily: "'DM Sans', sans-serif",
+        background: "#0A0A0B",
+        color: "#F7F5F2",
+        fontFamily: "'Geist', sans-serif",
         padding: "32px 24px",
         maxWidth: 900,
         margin: "0 auto",
@@ -401,9 +400,9 @@ export default function PilotDashboard() {
           }}>
             <div>
               <div style={{
-                fontFamily: "'JetBrains Mono', monospace",
+                fontFamily: "'Geist Mono', monospace",
                 fontSize: 10,
-                color: "#3a4050",
+                color: "rgba(247,245,242,0.5)",
                 letterSpacing: "0.2em",
                 textTransform: "uppercase",
                 marginBottom: 6,
@@ -414,7 +413,7 @@ export default function PilotDashboard() {
                 margin: 0,
                 fontSize: 24,
                 fontWeight: 700,
-                color: "#e8eaf0",
+                color: "#F7F5F2",
                 letterSpacing: "-0.03em",
                 lineHeight: 1.1,
               }}>
@@ -423,7 +422,7 @@ export default function PilotDashboard() {
               <p style={{
                 margin: "6px 0 0",
                 fontSize: 13,
-                color: "#4a5060",
+                color: "rgba(247,245,242,0.5)",
                 lineHeight: 1.4,
               }}>
                 Demand validation · May – July 2026
@@ -435,8 +434,8 @@ export default function PilotDashboard() {
               {/* Window selector */}
               <div style={{
                 display: "flex", gap: 2,
-                background: "#13161e",
-                border: "1px solid #1e222c",
+                background: "#18181B",
+                border: "1px solid #27272A",
                 borderRadius: 5, padding: 2,
               }}>
                 {WINDOW_OPTIONS.map(opt => (
@@ -448,9 +447,9 @@ export default function PilotDashboard() {
                       padding: "5px 12px",
                       borderRadius: 3,
                       border: "none",
-                      background: window === opt.value ? "#1e222c" : "transparent",
-                      color: window === opt.value ? "#00ff88" : "#4a5060",
-                      fontFamily: "'JetBrains Mono', monospace",
+                      background: window === opt.value ? "#27272A" : "transparent",
+                      color: window === opt.value ? "#FF4D2E" : "rgba(247,245,242,0.5)",
+                      fontFamily: "'Geist Mono', monospace",
                       fontSize: 11,
                       fontWeight: 600,
                       letterSpacing: "0.05em",
@@ -469,10 +468,10 @@ export default function PilotDashboard() {
                 style={{
                   padding: "7px 14px",
                   borderRadius: 5,
-                  border: "1px solid #1e222c",
-                  background: "#13161e",
-                  color: "#4a5060",
-                  fontFamily: "'JetBrains Mono', monospace",
+                  border: "1px solid #27272A",
+                  background: "#18181B",
+                  color: "rgba(247,245,242,0.5)",
+                  fontFamily: "'Geist Mono', monospace",
                   fontSize: 11,
                   letterSpacing: "0.05em",
                   display: "flex", alignItems: "center", gap: 6,
@@ -492,9 +491,9 @@ export default function PilotDashboard() {
           {lastRefresh && (
             <div style={{
               marginTop: 12,
-              fontFamily: "'JetBrains Mono', monospace",
+              fontFamily: "'Geist Mono', monospace",
               fontSize: 9,
-              color: "#2a2f3e",
+              color: "rgba(247,245,242,0.3)",
               letterSpacing: "0.1em",
             }}>
               LAST UPDATED {lastRefresh.toLocaleTimeString()}
@@ -506,15 +505,15 @@ export default function PilotDashboard() {
         {/* —— Error state ———————————————————————————————————— */}
         {error && (
           <div style={{
-            background: "#1a0d0d",
-            border: "1px solid #ff444433",
-            borderLeft: "3px solid #ff4444",
+            background: "rgba(200,52,27,0.1)",
+            border: "1px solid rgba(200,52,27,0.2)",
+            borderLeft: "3px solid #C8341B",
             borderRadius: 6,
             padding: "14px 18px",
             marginBottom: 24,
-            fontFamily: "'JetBrains Mono', monospace",
+            fontFamily: "'Geist Mono', monospace",
             fontSize: 12,
-            color: "#ff6666",
+            color: "#C8341B",
           }}>
             ⚠ {error}
           </div>
@@ -522,8 +521,8 @@ export default function PilotDashboard() {
 
         {/* —— Pilot health score ————————————————————————————— */}
         <div style={{
-          background: "#13161e",
-          border: "1px solid #1e222c",
+          background: "#18181B",
+          border: "1px solid #27272A",
           borderRadius: 6,
           padding: "20px 24px",
           marginBottom: 24,
@@ -535,7 +534,7 @@ export default function PilotDashboard() {
           {/* Score ring (CSS-only) */}
           <div style={{ position: "relative", width: 72, height: 72, flexShrink: 0 }}>
             <svg width="72" height="72" viewBox="0 0 72 72" style={{ transform: "rotate(-90deg)" }}>
-              <circle cx="36" cy="36" r="30" fill="none" stroke="#1e222c" strokeWidth="4" />
+              <circle cx="36" cy="36" r="30" fill="none" stroke="#27272A" strokeWidth="4" />
               <circle
                 cx="36" cy="36" r="30"
                 fill="none"
@@ -553,28 +552,28 @@ export default function PilotDashboard() {
               alignItems: "center", justifyContent: "center",
             }}>
               <span style={{
-                fontFamily: "'JetBrains Mono', monospace",
+                fontFamily: "'Geist Mono', monospace",
                 fontSize: 16, fontWeight: 700,
                 color: healthColor, lineHeight: 1,
               }}>{healthScore}</span>
               <span style={{
-                fontFamily: "'JetBrains Mono', monospace",
-                fontSize: 8, color: "#3a4050", letterSpacing: "0.1em",
+                fontFamily: "'Geist Mono', monospace",
+                fontSize: 8, color: "rgba(247,245,242,0.5)", letterSpacing: "0.1em",
               }}>/ 100</span>
             </div>
           </div>
 
           <div style={{ flex: 1, minWidth: 200 }}>
             <div style={{
-              fontFamily: "'DM Sans', sans-serif",
-              fontSize: 15, fontWeight: 600, color: "#c8ccd8",
+              fontFamily: "'Geist', sans-serif",
+              fontSize: 15, fontWeight: 600, color: "rgba(247,245,242,0.85)",
               marginBottom: 4,
             }}>
               Pilot Health Score
             </div>
             <div style={{
-              fontFamily: "'DM Sans', sans-serif",
-              fontSize: 12, color: "#4a5060", lineHeight: 1.5,
+              fontFamily: "'Geist', sans-serif",
+              fontSize: 12, color: "rgba(247,245,242,0.5)", lineHeight: 1.5,
             }}>
               {healthScore >= 66
                 ? "Strong validation signal. All three riskiest assumptions are showing positive indicators."
@@ -588,22 +587,22 @@ export default function PilotDashboard() {
           {/* Subscription badge */}
           {subscription && (
             <div style={{
-              background: "#0d0f15",
-              border: "1px solid #1e222c",
+              background: "#0A0A0B",
+              border: "1px solid #27272A",
               borderRadius: 5,
               padding: "10px 16px",
               textAlign: "center",
               minWidth: 120,
             }}>
               <div style={{
-                fontFamily: "'JetBrains Mono', monospace",
-                fontSize: 9, color: "#3a4050",
+                fontFamily: "'Geist Mono', monospace",
+                fontSize: 9, color: "rgba(247,245,242,0.5)",
                 letterSpacing: "0.15em", textTransform: "uppercase", marginBottom: 4,
               }}>Plan</div>
               <div style={{
-                fontFamily: "'DM Sans', sans-serif",
+                fontFamily: "'Geist', sans-serif",
                 fontSize: 16, fontWeight: 700,
-                color: subscription.converted_to_paid ? "#00ff88" : "#c8ccd8",
+                color: subscription.converted_to_paid ? "#FF4D2E" : "rgba(247,245,242,0.85)",
               }}>
                 {subscription.plan}
               </div>
@@ -616,8 +615,8 @@ export default function PilotDashboard() {
               </div>
               {subscription.trial_ends_at && subscription.trial_active && (
                 <div style={{
-                  fontFamily: "'JetBrains Mono', monospace",
-                  fontSize: 9, color: "#3a4050", marginTop: 6,
+                  fontFamily: "'Geist Mono', monospace",
+                  fontSize: 9, color: "rgba(247,245,242,0.5)", marginTop: 6,
                 }}>
                   {daysRemaining(subscription.trial_ends_at)}d remaining
                 </div>
@@ -647,15 +646,15 @@ export default function PilotDashboard() {
 
         {/* —— Signal breakdown ——————————————————————————————— */}
         <div style={{
-          background: "#13161e",
-          border: "1px solid #1e222c",
+          background: "#18181B",
+          border: "1px solid #27272A",
           borderRadius: 6,
           padding: "20px 24px",
           marginBottom: 16,
         }}>
           <div style={{
-            fontFamily: "'JetBrains Mono', monospace",
-            fontSize: 9, color: "#3a4050",
+            fontFamily: "'Geist Mono', monospace",
+            fontSize: 9, color: "rgba(247,245,242,0.5)",
             letterSpacing: "0.15em", textTransform: "uppercase", marginBottom: 16,
           }}>
             Signal Breakdown · Last {window} Days
@@ -666,19 +665,19 @@ export default function PilotDashboard() {
               label="Coaching Suggestions Sent"
               value={signals?.coaching_suggestions_sent ?? 0}
               max={Math.max(10, signals?.coaching_suggestions_sent ?? 0)}
-              color="#00ff88"
+              color="#FF4D2E"
             />
             <StatBar
               label="Outreach Drafts Approved"
               value={signals?.outreach_drafts_approved ?? 0}
               max={Math.max(10, signals?.outreach_drafts_approved ?? 0)}
-              color="#4a9eff"
+              color="#F7F5F2"
             />
             <StatBar
               label="IDP Drafts Reviewed"
               value={signals?.idp_drafts_reviewed ?? 0}
               max={Math.max(10, signals?.idp_drafts_reviewed ?? 0)}
-              color="#b06aff"
+              color="#71717A"
             />
           </div>
         </div>
@@ -686,9 +685,9 @@ export default function PilotDashboard() {
         {/* —— Footer ——————————————————————————————————————— */}
         <div style={{
           display: "flex", justifyContent: "space-between", flexWrap: "wrap", gap: 8,
-          fontFamily: "'JetBrains Mono', monospace",
-          fontSize: 9, color: "#2a2f3e", letterSpacing: "0.1em",
-          borderTop: "1px solid #1a1d25", paddingTop: 16,
+          fontFamily: "'Geist Mono', monospace",
+          fontSize: 9, color: "rgba(247,245,242,0.3)", letterSpacing: "0.1em",
+          borderTop: "1px solid #18181B", paddingTop: 16,
         }}>
           <span>APPTIVIA · ADMIN ONLY · GET /api/pilot/adoption-signals</span>
           <span>LEARN-IT-ALL FRAMEWORK · CORNELL / GIROTRA · MAY–JULY 2026</span>
