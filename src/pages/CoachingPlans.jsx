@@ -1419,27 +1419,27 @@ export default function CoachingPlans() {
       <div className="p-6">
         <div className="flex items-start justify-between mb-4">
           <div>
-            <h1 className="text-2xl font-bold text-blue-700 mb-1">Coaching Plans</h1>
-            <p className="text-gray-500 text-sm">Create, manage, and assign structured coaching plans</p>
+            <h1 className="text-2xl font-bold text-apptivia-coral mb-1">Coaching Plans</h1>
+            <p className="text-apptivia-carbon-500 text-sm">Create, manage, and assign structured coaching plans</p>
           </div>
           <div className="flex gap-2 items-center">
             <div className="relative">
-              <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+              <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-apptivia-carbon-400" />
               <input type="text" placeholder="Search..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} onFocus={() => searchQuery && setShowSearchResults(true)} className="w-64 pl-9 pr-8 py-2 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" />
-              {searchQuery && <button onClick={() => { setSearchQuery(''); setSearchResults([]); setShowSearchResults(false); }} className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"><X size={14} /></button>}
+              {searchQuery && <button onClick={() => { setSearchQuery(''); setSearchResults([]); setShowSearchResults(false); }} className="absolute right-2 top-1/2 -translate-y-1/2 text-apptivia-carbon-400 hover:text-apptivia-carbon-600"><X size={14} /></button>}
               {showSearchResults && searchResults.length > 0 && (
                 <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-96 overflow-y-auto z-50">
                   {searchResults.map((result,idx) => (
                     <button key={idx} onClick={() => { navigate(result.link); setSearchQuery(''); setSearchResults([]); setShowSearchResults(false); }} className="w-full text-left px-4 py-3 hover:bg-apptivia-paper border-b last:border-b-0 transition-colors">
-                      <div className="flex items-start gap-3"><span className="text-xl">{result.icon}</span><div className="flex-1 min-w-0"><div className="flex items-center gap-2"><span className="text-xs font-semibold text-gray-900">{result.title}</span><span className="text-[10px] px-1.5 py-0.5 rounded bg-apptivia-carbon-100 text-gray-600">{result.type}</span></div>{result.subtitle && <div className="text-[11px] text-gray-500 mt-0.5 truncate">{result.subtitle}</div>}</div></div>
+                      <div className="flex items-start gap-3"><span className="text-xl">{result.icon}</span><div className="flex-1 min-w-0"><div className="flex items-center gap-2"><span className="text-xs font-semibold text-apptivia-ink">{result.title}</span><span className="text-[10px] px-1.5 py-0.5 rounded bg-apptivia-carbon-100 text-apptivia-carbon-600">{result.type}</span></div>{result.subtitle && <div className="text-[11px] text-apptivia-carbon-500 mt-0.5 truncate">{result.subtitle}</div>}</div></div>
                     </button>
                   ))}
                 </div>
               )}
-              {showSearchResults && searchQuery && searchResults.length === 0 && !searching && <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg p-4 z-50"><div className="text-sm text-gray-500 text-center">No results found</div></div>}
-              {searching && <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg p-4 z-50"><div className="text-sm text-gray-500 text-center">Searching...</div></div>}
+              {showSearchResults && searchQuery && searchResults.length === 0 && !searching && <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg p-4 z-50"><div className="text-sm text-apptivia-carbon-500 text-center">No results found</div></div>}
+              {searching && <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg p-4 z-50"><div className="text-sm text-apptivia-carbon-500 text-center">Searching...</div></div>}
             </div>
-            <button onClick={handleRefresh} disabled={isRefreshing} className={`relative p-2 rounded-lg font-semibold text-sm bg-white text-gray-700 border border-gray-200 hover:bg-apptivia-paper group ${isRefreshing ? 'opacity-50 cursor-not-allowed' : 'transition-all duration-200 hover:scale-105 hover:shadow-md'}`} title="Refresh data">
+            <button onClick={handleRefresh} disabled={isRefreshing} className={`relative p-2 rounded-lg font-semibold text-sm bg-white text-apptivia-carbon-700 border border-gray-200 hover:bg-apptivia-paper group ${isRefreshing ? 'opacity-50 cursor-not-allowed' : 'transition-all duration-200 hover:scale-105 hover:shadow-md'}`} title="Refresh data">
               <svg className={`w-[18px] h-[18px] ${isRefreshing ? 'animate-spin' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
               </svg>
@@ -1498,7 +1498,7 @@ export default function CoachingPlans() {
               className={`px-4 py-2 rounded-md text-sm font-semibold transition-all ${
                 activeTab === tab.id
                   ? 'bg-apptivia-coral text-white shadow-sm'
-                  : 'text-gray-600 hover:bg-apptivia-carbon-100'
+                  : 'text-apptivia-carbon-600 hover:bg-apptivia-carbon-100'
               }`}
             >
               {tab.label}
@@ -1521,35 +1521,35 @@ export default function CoachingPlans() {
       {activeTab === 'aaron-actions' && (
         <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-5">
           <div className="flex items-center gap-2 mb-4">
-            <Target size={18} className="text-purple-500" />
-            <h2 className="text-base font-bold text-gray-900">Aaron Coaching Actions</h2>
+            <Target size={18} className="text-apptivia-ink" />
+            <h2 className="text-base font-bold text-apptivia-ink">Aaron Coaching Actions</h2>
           </div>
-          <p className="text-xs text-gray-500 mb-4">Actions logged from Aaron AI coaching conversations.</p>
+          <p className="text-xs text-apptivia-carbon-500 mb-4">Actions logged from Aaron AI coaching conversations.</p>
 
           {/* ROI Summary (managers+) */}
           {actionsSummary && (
             <div className="grid grid-cols-3 gap-3 mb-4">
               <div className="bg-apptivia-carbon-100 rounded-lg p-3 text-center">
-                <div className="text-2xl font-semibold text-indigo-700">{actionsSummary.total_actions}</div>
-                <div className="text-xs text-indigo-500 mt-0.5">Actions logged</div>
+                <div className="text-2xl font-semibold text-apptivia-ink">{actionsSummary.total_actions}</div>
+                <div className="text-xs text-apptivia-ink mt-0.5">Actions logged</div>
               </div>
               <div className="bg-green-50 rounded-lg p-3 text-center">
                 <div className="text-2xl font-semibold text-green-700">{actionsSummary.total_crm_synced}</div>
                 <div className="text-xs text-green-500 mt-0.5">Synced to CRM</div>
               </div>
               <div className="bg-apptivia-paper rounded-lg p-3 text-center">
-                <div className="text-2xl font-semibold text-gray-700 capitalize">
+                <div className="text-2xl font-semibold text-apptivia-carbon-700 capitalize">
                   {actionsSummary.top_frameworks?.[0]?.name?.replace(/_/g, ' ') || '—'}
                 </div>
-                <div className="text-xs text-gray-400 mt-0.5">Top framework</div>
+                <div className="text-xs text-apptivia-carbon-400 mt-0.5">Top framework</div>
               </div>
             </div>
           )}
 
           {actionsLoading ? (
-            <div className="text-sm text-gray-500 text-center py-8">Loading actions...</div>
+            <div className="text-sm text-apptivia-carbon-500 text-center py-8">Loading actions...</div>
           ) : coachingActions.length === 0 ? (
-            <div className="text-sm text-gray-400 text-center py-8">
+            <div className="text-sm text-apptivia-carbon-400 text-center py-8">
               No coaching actions yet. Use the "Log Action" button in Aaron's chat to track your coaching follow-ups.
             </div>
           ) : (
@@ -1557,23 +1557,23 @@ export default function CoachingPlans() {
               <table className="w-full text-sm">
                 <thead className="bg-apptivia-paper">
                   <tr>
-                    <th className="px-4 py-2 text-left text-xs font-semibold text-gray-600">Date</th>
-                    <th className="px-4 py-2 text-left text-xs font-semibold text-gray-600">Type</th>
-                    <th className="px-4 py-2 text-left text-xs font-semibold text-gray-600">Action</th>
-                    <th className="px-4 py-2 text-left text-xs font-semibold text-gray-600">Framework</th>
-                    <th className="px-4 py-2 text-center text-xs font-semibold text-gray-600">CRM Status</th>
+                    <th className="px-4 py-2 text-left text-xs font-semibold text-apptivia-carbon-600">Date</th>
+                    <th className="px-4 py-2 text-left text-xs font-semibold text-apptivia-carbon-600">Type</th>
+                    <th className="px-4 py-2 text-left text-xs font-semibold text-apptivia-carbon-600">Action</th>
+                    <th className="px-4 py-2 text-left text-xs font-semibold text-apptivia-carbon-600">Framework</th>
+                    <th className="px-4 py-2 text-center text-xs font-semibold text-apptivia-carbon-600">CRM Status</th>
                   </tr>
                 </thead>
                 <tbody>
                   {coachingActions.map(action => {
                     const typeLabels = { task_created: 'Task', call_logged: 'Call', meeting_scheduled: 'Meeting', note_added: 'Note', follow_up_set: 'Follow-up' };
-                    const crmColors = { pending: 'bg-apptivia-carbon-100 text-gray-600', pushed: 'bg-green-100 text-green-700', skipped: 'bg-apptivia-coral-tone-50 text-blue-600', failed: 'bg-red-100 text-red-700' };
+                    const crmColors = { pending: 'bg-apptivia-carbon-100 text-apptivia-carbon-600', pushed: 'bg-green-100 text-green-700', skipped: 'bg-apptivia-coral-tone-50 text-apptivia-coral', failed: 'bg-red-100 text-red-700' };
                     return (
                       <tr key={action.id} className="border-t hover:bg-apptivia-paper">
-                        <td className="px-4 py-3 text-gray-500 whitespace-nowrap">{new Date(action.created_at).toLocaleDateString()}</td>
-                        <td className="px-4 py-3 text-gray-700">{typeLabels[action.action_type] || action.action_type}</td>
-                        <td className="px-4 py-3 text-gray-800 font-medium">{action.action_label}</td>
-                        <td className="px-4 py-3 text-gray-500 capitalize">{action.source_framework || '—'}</td>
+                        <td className="px-4 py-3 text-apptivia-carbon-500 whitespace-nowrap">{new Date(action.created_at).toLocaleDateString()}</td>
+                        <td className="px-4 py-3 text-apptivia-carbon-700">{typeLabels[action.action_type] || action.action_type}</td>
+                        <td className="px-4 py-3 text-apptivia-ink font-medium">{action.action_label}</td>
+                        <td className="px-4 py-3 text-apptivia-carbon-500 capitalize">{action.source_framework || '—'}</td>
                         <td className="px-4 py-3 text-center">
                           <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${crmColors[action.crm_push_status] || crmColors.pending}`}>
                             {action.crm_push_status === 'pushed' ? 'Synced' : action.crm_push_status === 'skipped' ? 'No CRM' : action.crm_push_status || 'Pending'}
@@ -1650,15 +1650,15 @@ export default function CoachingPlans() {
                   <div key={req.id} className="flex items-center justify-between bg-white rounded-md border border-amber-100 px-3 py-2">
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
-                        <span className="text-sm font-medium text-gray-900">{reqName}</span>
+                        <span className="text-sm font-medium text-apptivia-ink">{reqName}</span>
                         {req.current_score !== null && (
                           <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-semibold ${req.current_score >= 80 ? 'bg-emerald-100 text-emerald-700' : req.current_score >= 50 ? 'bg-amber-100 text-amber-700' : 'bg-red-100 text-red-700'}`}>
                             {req.current_score}%
                           </span>
                         )}
-                        <span className="text-[10px] text-gray-400">{new Date(req.created_at).toLocaleDateString()}</span>
+                        <span className="text-[10px] text-apptivia-carbon-400">{new Date(req.created_at).toLocaleDateString()}</span>
                       </div>
-                      {req.message && <p className="text-xs text-gray-600 mt-0.5 truncate">{req.message}</p>}
+                      {req.message && <p className="text-xs text-apptivia-carbon-600 mt-0.5 truncate">{req.message}</p>}
                       {req.lagging_kpis?.length > 0 && (
                         <div className="flex flex-wrap gap-1 mt-1">
                           {req.lagging_kpis.slice(0, 3).map((k, i) => (
@@ -1676,7 +1676,7 @@ export default function CoachingPlans() {
                       </button>
                       <button
                         onClick={() => handleDismissRequest(req.id)}
-                        className="px-3 py-1.5 text-xs font-medium text-gray-500 border border-gray-300 rounded-md hover:bg-apptivia-paper"
+                        className="px-3 py-1.5 text-xs font-medium text-apptivia-carbon-500 border border-gray-300 rounded-md hover:bg-apptivia-paper"
                       >
                         Dismiss
                       </button>
@@ -1704,7 +1704,7 @@ export default function CoachingPlans() {
                 className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all ${
                   statusTab === tab.key
                     ? 'bg-apptivia-coral text-white shadow-sm'
-                    : 'bg-white text-gray-600 border border-gray-200 hover:bg-apptivia-paper'
+                    : 'bg-white text-apptivia-carbon-600 border border-gray-200 hover:bg-apptivia-paper'
                 }`}
               >
                 {tab.label}
@@ -1724,10 +1724,10 @@ export default function CoachingPlans() {
         <div id="saved-plans" className="bg-white rounded-lg shadow-sm border border-gray-200">
           <div className="p-5 border-b border-gray-200 flex items-center justify-between">
             <div>
-              <h3 className="text-lg font-semibold text-gray-900">
+              <h3 className="text-lg font-semibold text-apptivia-ink">
                 {isPowerUser ? 'My Plans' : activeTab === 'playbooks' ? 'Saved Manager Playbooks' : 'Saved Rep Plans'}
               </h3>
-              <p className="text-xs text-gray-500">
+              <p className="text-xs text-apptivia-carbon-500">
                 {isPowerUser ? 'Coaching plans assigned to you' : activeTab === 'playbooks' ? 'Manager playbooks — team-wide coaching strategies' : 'Individual rep coaching plans'}
               </p>
             </div>
@@ -1735,11 +1735,11 @@ export default function CoachingPlans() {
 
           <div className="p-5">
             {loading ? (
-              <div className="text-center py-8 text-gray-500">Loading plans...</div>
+              <div className="text-center py-8 text-apptivia-carbon-500">Loading plans...</div>
             ) : coachingPlans.length === 0 ? (
               <div className="text-center py-12">
-                <Target className="mx-auto h-12 w-12 text-gray-400 mb-3" />
-                <p className="text-gray-500 mb-4">
+                <Target className="mx-auto h-12 w-12 text-apptivia-carbon-400 mb-3" />
+                <p className="text-apptivia-carbon-500 mb-4">
                   {isPowerUser ? 'No coaching plans have been assigned to you yet' : activeTab === 'playbooks' ? 'No manager playbooks yet' : 'No rep plans yet'}
                 </p>
                 {canCreatePlans && (
@@ -1753,11 +1753,11 @@ export default function CoachingPlans() {
               </div>
             ) : filteredPlans.length === 0 ? (
               <div className="text-center py-12">
-                <Search className="mx-auto h-12 w-12 text-gray-400 mb-3" />
-                <p className="text-gray-500 mb-2">No plans match the current filters</p>
+                <Search className="mx-auto h-12 w-12 text-apptivia-carbon-400 mb-3" />
+                <p className="text-apptivia-carbon-500 mb-2">No plans match the current filters</p>
                 <button
                   onClick={() => { setStatusTab('all'); setSearchQuery(''); }}
-                  className="text-sm text-blue-600 hover:text-blue-700 font-medium"
+                  className="text-sm text-apptivia-coral hover:text-apptivia-coral font-medium"
                 >
                   Clear filters
                 </button>
@@ -1827,17 +1827,17 @@ export default function CoachingPlans() {
             <div className="relative w-full max-w-lg bg-white rounded-xl shadow-lg p-6 m-4">
               <div className="flex items-start justify-between mb-4">
                 <div>
-                  <h2 className="text-lg font-semibold text-gray-900">Share Coaching Plan</h2>
-                  <p className="text-sm text-gray-500">Send "{planToShare.name}" via email</p>
+                  <h2 className="text-lg font-semibold text-apptivia-ink">Share Coaching Plan</h2>
+                  <p className="text-sm text-apptivia-carbon-500">Send "{planToShare.name}" via email</p>
                 </div>
-                <button onClick={() => setPlanToShare(null)} className="text-gray-500 hover:text-gray-700">
+                <button onClick={() => setPlanToShare(null)} className="text-apptivia-carbon-500 hover:text-apptivia-carbon-700">
                   <X size={20} />
                 </button>
               </div>
 
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Recipients</label>
+                  <label className="block text-sm font-medium text-apptivia-carbon-700 mb-1">Recipients</label>
                   <input
                     type="text"
                     value={shareEmail}
@@ -1845,10 +1845,10 @@ export default function CoachingPlans() {
                     placeholder="email@example.com"
                     className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   />
-                  <p className="text-xs text-gray-400 mt-1">Separate multiple emails with commas</p>
+                  <p className="text-xs text-apptivia-carbon-400 mt-1">Separate multiple emails with commas</p>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Additional Notes (Optional)</label>
+                  <label className="block text-sm font-medium text-apptivia-carbon-700 mb-1">Additional Notes (Optional)</label>
                   <textarea
                     value={shareNotes}
                     onChange={(e) => setShareNotes(e.target.value)}
@@ -1857,7 +1857,7 @@ export default function CoachingPlans() {
                     className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-y"
                   />
                 </div>
-                <p className="text-xs text-blue-600 bg-apptivia-coral-tone-50 rounded p-2">
+                <p className="text-xs text-apptivia-coral bg-apptivia-coral-tone-50 rounded p-2">
                   This will share the complete coaching plan including goals, KPIs, action items, and success metrics.
                 </p>
               </div>
@@ -1865,7 +1865,7 @@ export default function CoachingPlans() {
               <div className="flex justify-end gap-2 mt-6">
                 <button
                   onClick={() => setPlanToShare(null)}
-                  className="px-4 py-2 text-sm font-semibold text-gray-700 border border-gray-300 rounded-md hover:bg-apptivia-paper"
+                  className="px-4 py-2 text-sm font-semibold text-apptivia-carbon-700 border border-gray-300 rounded-md hover:bg-apptivia-paper"
                 >
                   Cancel
                 </button>
@@ -1904,7 +1904,7 @@ export default function CoachingPlans() {
           subtitle="Filter coaching plans"
           showReset
         >
-          <div className="text-xs text-gray-500">Filters coming soon</div>
+          <div className="text-xs text-apptivia-carbon-500">Filters coming soon</div>
         </RightFilterPanel>
       </>)}
       </div>

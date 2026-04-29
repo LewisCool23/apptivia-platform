@@ -217,7 +217,7 @@ const hasPlan = (p) => p && (p.week_1_focus || p.week_2_focus || p.week_4_checkp
 
 const StructuredCoachingPlan = memo(({ data }) => (
   <div className="space-y-3 text-sm">
-    <div className="font-semibold text-gray-900 text-base">{data.rep_name ? `Coaching Plan: ${data.rep_name}` : 'Coaching Plan'}</div>
+    <div className="font-semibold text-apptivia-ink text-base">{data.rep_name ? `Coaching Plan: ${data.rep_name}` : 'Coaching Plan'}</div>
 
     {hasDiagnosis(data.diagnosis) && (
       <div className="bg-red-50 border border-red-200 rounded-lg p-3">
@@ -236,33 +236,33 @@ const StructuredCoachingPlan = memo(({ data }) => (
 
     {hasPlan(data.coaching_plan) && (
       <div className="bg-apptivia-coral-tone-50 border border-blue-200 rounded-lg p-3 space-y-2">
-        <div className="font-semibold text-blue-800 text-xs uppercase tracking-wide">Plan</div>
+        <div className="font-semibold text-apptivia-coral-tone-700 text-xs uppercase tracking-wide">Plan</div>
         {data.coaching_plan.week_1_focus && (
           <div>
-            <div className="font-medium text-blue-700 text-xs">Week 1: {data.coaching_plan.week_1_focus}</div>
-            {data.coaching_plan.week_1_actions?.map((a, i) => <div key={i} className="text-xs text-blue-600 ml-3">- {a}</div>)}
+            <div className="font-medium text-apptivia-coral text-xs">Week 1: {data.coaching_plan.week_1_focus}</div>
+            {data.coaching_plan.week_1_actions?.map((a, i) => <div key={i} className="text-xs text-apptivia-coral ml-3">- {a}</div>)}
           </div>
         )}
         {data.coaching_plan.week_2_focus && (
           <div>
-            <div className="font-medium text-blue-700 text-xs">Week 2: {data.coaching_plan.week_2_focus}</div>
-            {data.coaching_plan.week_2_actions?.map((a, i) => <div key={i} className="text-xs text-blue-600 ml-3">- {a}</div>)}
+            <div className="font-medium text-apptivia-coral text-xs">Week 2: {data.coaching_plan.week_2_focus}</div>
+            {data.coaching_plan.week_2_actions?.map((a, i) => <div key={i} className="text-xs text-apptivia-coral ml-3">- {a}</div>)}
           </div>
         )}
         {data.coaching_plan.week_4_checkpoint && (
-          <div className="text-xs text-blue-600 mt-1">Week 4 checkpoint: {data.coaching_plan.week_4_checkpoint}</div>
+          <div className="text-xs text-apptivia-coral mt-1">Week 4 checkpoint: {data.coaching_plan.week_4_checkpoint}</div>
         )}
       </div>
     )}
 
     {data.framework_used && (
-      <div className="text-[10px] text-gray-400">Framework: {data.framework_used}</div>
+      <div className="text-[10px] text-apptivia-carbon-400">Framework: {data.framework_used}</div>
     )}
 
     {data.manager_talk_track && (
       <div className="bg-apptivia-carbon-100 border border-purple-200 rounded-lg p-3">
-        <div className="font-semibold text-purple-800 text-xs uppercase tracking-wide mb-1">Manager Talk Track</div>
-        <div className="text-xs text-purple-700">{data.manager_talk_track}</div>
+        <div className="font-semibold text-apptivia-ink text-xs uppercase tracking-wide mb-1">Manager Talk Track</div>
+        <div className="text-xs text-apptivia-ink">{data.manager_talk_track}</div>
       </div>
     )}
 
@@ -278,10 +278,10 @@ StructuredCoachingPlan.displayName = 'StructuredCoachingPlan';
 
 const StructuredOneOnOnePrep = memo(({ data }) => (
   <div className="space-y-3 text-sm">
-    <div className="font-semibold text-gray-900 text-base">{data.rep_name ? `1:1 Prep: ${data.rep_name}` : '1:1 Prep'}</div>
+    <div className="font-semibold text-apptivia-ink text-base">{data.rep_name ? `1:1 Prep: ${data.rep_name}` : '1:1 Prep'}</div>
 
     {data.meeting_context && (
-      <div className="bg-apptivia-paper border border-gray-200 rounded-lg p-3 text-xs text-gray-600 space-y-0.5">
+      <div className="bg-apptivia-paper border border-gray-200 rounded-lg p-3 text-xs text-apptivia-carbon-600 space-y-0.5">
         {data.meeting_context.kpi_movement_summary && <div>{data.meeting_context.kpi_movement_summary}</div>}
         {data.meeting_context.open_deals_count != null && <div>Open deals: {data.meeting_context.open_deals_count}</div>}
         {data.meeting_context.deals_at_risk_count != null && <div>Deals at risk: {data.meeting_context.deals_at_risk_count}</div>}
@@ -290,14 +290,14 @@ const StructuredOneOnOnePrep = memo(({ data }) => (
 
     {data.agenda?.length > 0 && (
       <div className="bg-apptivia-coral-tone-50 border border-blue-200 rounded-lg p-3">
-        <div className="font-semibold text-blue-800 text-xs uppercase tracking-wide mb-1.5">Agenda</div>
+        <div className="font-semibold text-apptivia-coral-tone-700 text-xs uppercase tracking-wide mb-1.5">Agenda</div>
         {data.agenda.map((item, i) => (
           <div key={i} className="mb-2 last:mb-0">
             <div className="flex items-center gap-2">
-              <span className="font-medium text-blue-700 text-xs">{item.topic}</span>
-              {item.minutes && <span className="text-[10px] bg-apptivia-coral-tone-50 text-blue-600 px-1.5 py-0.5 rounded">{item.minutes} min</span>}
+              <span className="font-medium text-apptivia-coral text-xs">{item.topic}</span>
+              {item.minutes && <span className="text-[10px] bg-apptivia-coral-tone-50 text-apptivia-coral px-1.5 py-0.5 rounded">{item.minutes} min</span>}
             </div>
-            {item.talking_points?.map((tp, j) => <div key={j} className="text-xs text-blue-600 ml-3">- {tp}</div>)}
+            {item.talking_points?.map((tp, j) => <div key={j} className="text-xs text-apptivia-coral ml-3">- {tp}</div>)}
           </div>
         ))}
       </div>
@@ -326,8 +326,8 @@ const StructuredOneOnOnePrep = memo(({ data }) => (
 
     {data.rep_facing_pre_read && (
       <div className="bg-apptivia-carbon-100 border border-purple-200 rounded-lg p-3">
-        <div className="font-semibold text-purple-800 text-xs uppercase tracking-wide mb-1">Pre-Read for Rep</div>
-        <div className="text-xs text-purple-700">{data.rep_facing_pre_read}</div>
+        <div className="font-semibold text-apptivia-ink text-xs uppercase tracking-wide mb-1">Pre-Read for Rep</div>
+        <div className="text-xs text-apptivia-ink">{data.rep_facing_pre_read}</div>
       </div>
     )}
   </div>
@@ -338,25 +338,25 @@ const healthColor = { green: 'bg-green-500', yellow: 'bg-yellow-500', red: 'bg-r
 
 const StructuredPipelineDiagnosis = memo(({ data }) => (
   <div className="space-y-3 text-sm">
-    <div className="font-semibold text-gray-900 text-base">
+    <div className="font-semibold text-apptivia-ink text-base">
       Pipeline Diagnosis{data.team_or_rep_name ? `: ${data.team_or_rep_name}` : ''}{data.scope ? ` (${data.scope})` : ''}
     </div>
 
     {data.diagnosis_summary && (
-      <div className="text-xs text-gray-700 leading-relaxed">{data.diagnosis_summary}</div>
+      <div className="text-xs text-apptivia-carbon-700 leading-relaxed">{data.diagnosis_summary}</div>
     )}
 
     {data.stage_health?.length > 0 && (
       <div className="bg-apptivia-paper border border-gray-200 rounded-lg p-3">
-        <div className="font-semibold text-gray-800 text-xs uppercase tracking-wide mb-1.5">Stage Health</div>
+        <div className="font-semibold text-apptivia-ink text-xs uppercase tracking-wide mb-1.5">Stage Health</div>
         <div className="space-y-1.5">
           {data.stage_health.map((s, i) => (
             <div key={i} className="flex items-center gap-2 text-xs">
               <span className={`w-2 h-2 rounded-full shrink-0 ${healthColor[s.health] || 'bg-apptivia-carbon-400'}`} />
-              <span className="font-medium text-gray-700 min-w-[80px]">{s.stage}</span>
-              {s.deal_count != null && <span className="text-gray-500">{s.deal_count} deals</span>}
-              {s.value != null && <span className="text-gray-500">${(s.value / 1000).toFixed(0)}K</span>}
-              {s.issue && <span className="text-gray-400 italic truncate">{s.issue}</span>}
+              <span className="font-medium text-apptivia-carbon-700 min-w-[80px]">{s.stage}</span>
+              {s.deal_count != null && <span className="text-apptivia-carbon-500">{s.deal_count} deals</span>}
+              {s.value != null && <span className="text-apptivia-carbon-500">${(s.value / 1000).toFixed(0)}K</span>}
+              {s.issue && <span className="text-apptivia-carbon-400 italic truncate">{s.issue}</span>}
             </div>
           ))}
         </div>
@@ -383,14 +383,14 @@ const StructuredPipelineDiagnosis = memo(({ data }) => (
 
     {data.actions_this_week?.length > 0 && (
       <div className="bg-apptivia-coral-tone-50 border border-blue-200 rounded-lg p-3">
-        <div className="font-semibold text-blue-800 text-xs uppercase tracking-wide mb-1.5">Actions This Week</div>
+        <div className="font-semibold text-apptivia-coral-tone-700 text-xs uppercase tracking-wide mb-1.5">Actions This Week</div>
         {data.actions_this_week.map((a, i) => (
           <div key={i} className="flex items-start gap-2 text-xs mb-1 last:mb-0">
-            <span className="text-blue-600 shrink-0">[ ]</span>
+            <span className="text-apptivia-coral shrink-0">[ ]</span>
             <div>
-              <span className="text-blue-700">{a.action}</span>
-              {a.owner && <span className="text-blue-500 ml-1">({a.owner})</span>}
-              {a.deadline && <span className="text-blue-400 ml-1">by {a.deadline}</span>}
+              <span className="text-apptivia-coral">{a.action}</span>
+              {a.owner && <span className="text-apptivia-coral ml-1">({a.owner})</span>}
+              {a.deadline && <span className="text-apptivia-coral-tone-300 ml-1">by {a.deadline}</span>}
             </div>
           </div>
         ))}
@@ -403,20 +403,20 @@ StructuredPipelineDiagnosis.displayName = 'StructuredPipelineDiagnosis';
 // ── Pre-Call Prep Card (Spec 11 Mode 2) ──────────────────────────────────────
 const StructuredPreCallPrep = memo(({ data }) => (
   <div className="space-y-3 text-sm">
-    <div className="font-semibold text-gray-900 text-base">
+    <div className="font-semibold text-apptivia-ink text-base">
       {data.meeting_title ? `Pre-Call Prep: ${data.meeting_title}` : 'Pre-Call Prep'}
-      {data.meeting_time && <span className="text-xs text-gray-500 ml-2">{data.meeting_time}</span>}
+      {data.meeting_time && <span className="text-xs text-apptivia-carbon-500 ml-2">{data.meeting_time}</span>}
     </div>
 
     {data.who && (
       <div className="bg-apptivia-coral-tone-50 border border-blue-200 rounded-lg p-3">
-        <div className="font-semibold text-blue-800 text-xs uppercase tracking-wide mb-1">Who</div>
-        {data.who.key_person && <div className="font-medium text-blue-700 text-xs mb-0.5">Key: {data.who.key_person}</div>}
+        <div className="font-semibold text-apptivia-coral-tone-700 text-xs uppercase tracking-wide mb-1">Who</div>
+        {data.who.key_person && <div className="font-medium text-apptivia-coral text-xs mb-0.5">Key: {data.who.key_person}</div>}
         {data.who.attendees?.length > 0 && (
-          <div className="text-xs text-blue-600">{data.who.attendees.join(', ')}</div>
+          <div className="text-xs text-apptivia-coral">{data.who.attendees.join(', ')}</div>
         )}
         {data.who.relationship_notes && (
-          <div className="text-xs text-blue-500 italic mt-1">{data.who.relationship_notes}</div>
+          <div className="text-xs text-apptivia-coral italic mt-1">{data.who.relationship_notes}</div>
         )}
       </div>
     )}
@@ -450,8 +450,8 @@ const StructuredPreCallPrep = memo(({ data }) => (
 
     {data.next_step_goal && (
       <div className="bg-apptivia-carbon-100 border border-purple-200 rounded-lg p-3">
-        <div className="font-semibold text-purple-800 text-xs uppercase tracking-wide mb-1">Next Step Goal</div>
-        <div className="text-xs text-purple-700">{data.next_step_goal}</div>
+        <div className="font-semibold text-apptivia-ink text-xs uppercase tracking-wide mb-1">Next Step Goal</div>
+        <div className="text-xs text-apptivia-ink">{data.next_step_goal}</div>
       </div>
     )}
   </div>
@@ -463,18 +463,18 @@ const StructuredDailyBriefing = memo(({ data }) => {
   const isMorning = data.type === 'daily_briefing_morning';
   return (
     <div className="space-y-3 text-sm">
-      <div className="font-semibold text-gray-900 text-base">
+      <div className="font-semibold text-apptivia-ink text-base">
         {isMorning ? 'Morning Briefing' : 'End-of-Day Reflection'}
       </div>
 
       {isMorning && data.greeting && (
-        <div className="text-sm text-gray-700 italic">{data.greeting}</div>
+        <div className="text-sm text-apptivia-carbon-700 italic">{data.greeting}</div>
       )}
 
       {isMorning && data.priorities?.length > 0 && (
         <div className="bg-apptivia-coral-tone-50 border border-blue-200 rounded-lg p-3">
-          <div className="font-semibold text-blue-800 text-xs uppercase tracking-wide mb-1">Today's Priorities</div>
-          {data.priorities.map((p, i) => <div key={i} className="text-xs text-blue-700 ml-2">{i + 1}. {p}</div>)}
+          <div className="font-semibold text-apptivia-coral-tone-700 text-xs uppercase tracking-wide mb-1">Today's Priorities</div>
+          {data.priorities.map((p, i) => <div key={i} className="text-xs text-apptivia-coral ml-2">{i + 1}. {p}</div>)}
         </div>
       )}
 
@@ -486,7 +486,7 @@ const StructuredDailyBriefing = memo(({ data }) => {
               <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium ${
                 k.status === 'ahead' ? 'bg-green-100 text-green-700' :
                 k.status === 'behind' ? 'bg-red-100 text-red-700' :
-                'bg-apptivia-carbon-100 text-gray-600'
+                'bg-apptivia-carbon-100 text-apptivia-carbon-600'
               }`}>{k.status}</span>
               <div className="text-xs text-yellow-700"><span className="font-medium">{k.kpi}</span>: {k.action}</div>
             </div>
@@ -529,20 +529,20 @@ const StructuredDailyBriefing = memo(({ data }) => {
 
       {!isMorning && data.reflection_question && (
         <div className="bg-apptivia-carbon-100 border border-purple-200 rounded-lg p-3">
-          <div className="font-semibold text-purple-800 text-xs uppercase tracking-wide mb-1">Reflection</div>
-          <div className="text-xs text-purple-700 italic">{data.reflection_question}</div>
+          <div className="font-semibold text-apptivia-ink text-xs uppercase tracking-wide mb-1">Reflection</div>
+          <div className="text-xs text-apptivia-ink italic">{data.reflection_question}</div>
         </div>
       )}
 
       {!isMorning && data.tomorrows_commitment && (
         <div className="bg-apptivia-coral-tone-50 border border-blue-200 rounded-lg p-3">
-          <div className="font-semibold text-blue-800 text-xs uppercase tracking-wide mb-1">Tomorrow's Commitment</div>
-          <div className="text-xs text-blue-700">{data.tomorrows_commitment}</div>
+          <div className="font-semibold text-apptivia-coral-tone-700 text-xs uppercase tracking-wide mb-1">Tomorrow's Commitment</div>
+          <div className="text-xs text-apptivia-coral">{data.tomorrows_commitment}</div>
         </div>
       )}
 
       {isMorning && data.yesterdays_commitments && (
-        <div className="text-[10px] text-gray-400 italic">Yesterday: {data.yesterdays_commitments}</div>
+        <div className="text-[10px] text-apptivia-carbon-400 italic">Yesterday: {data.yesterdays_commitments}</div>
       )}
     </div>
   );
@@ -552,16 +552,16 @@ StructuredDailyBriefing.displayName = 'StructuredDailyBriefing';
 // ── Skill Builder Card (Spec 11 Mode 4) ──────────────────────────────────────
 const StructuredSkillBuilder = memo(({ data }) => (
   <div className="space-y-3 text-sm">
-    <div className="font-semibold text-gray-900 text-base">
+    <div className="font-semibold text-apptivia-ink text-base">
       Skill Builder{data.skill_dimension ? `: ${data.skill_dimension.replace(/_/g, ' ')}` : ''}
     </div>
 
     {data.current_state && (
       <div className="bg-apptivia-paper border border-gray-200 rounded-lg p-3">
-        <div className="font-semibold text-gray-800 text-xs uppercase tracking-wide mb-1">Current State</div>
-        {data.current_state.assessment && <div className="text-xs text-gray-700 mb-1">{data.current_state.assessment}</div>}
+        <div className="font-semibold text-apptivia-ink text-xs uppercase tracking-wide mb-1">Current State</div>
+        {data.current_state.assessment && <div className="text-xs text-apptivia-carbon-700 mb-1">{data.current_state.assessment}</div>}
         {data.current_state.evidence?.length > 0 && (
-          <ul className="list-disc ml-4 text-xs text-gray-600 space-y-0.5">
+          <ul className="list-disc ml-4 text-xs text-apptivia-carbon-600 space-y-0.5">
             {data.current_state.evidence.map((e, i) => <li key={i}>{e}</li>)}
           </ul>
         )}
@@ -571,11 +571,11 @@ const StructuredSkillBuilder = memo(({ data }) => (
     {[data.phase_1, data.phase_2, data.phase_3].filter(Boolean).map((phase, i) => (
       <div key={i} className="bg-apptivia-coral-tone-50 border border-blue-200 rounded-lg p-3">
         <div className="flex items-center gap-2 mb-1">
-          <span className="font-semibold text-blue-800 text-xs uppercase tracking-wide">{phase.name || `Phase ${i + 1}`}</span>
-          {phase.duration && <span className="text-[10px] bg-apptivia-coral-tone-50 text-blue-600 px-1.5 py-0.5 rounded">{phase.duration}</span>}
+          <span className="font-semibold text-apptivia-coral-tone-700 text-xs uppercase tracking-wide">{phase.name || `Phase ${i + 1}`}</span>
+          {phase.duration && <span className="text-[10px] bg-apptivia-coral-tone-50 text-apptivia-coral px-1.5 py-0.5 rounded">{phase.duration}</span>}
         </div>
-        {phase.focus && <div className="text-xs text-blue-700 font-medium mb-1">{phase.focus}</div>}
-        {phase.exercises?.map((ex, j) => <div key={j} className="text-xs text-blue-600 ml-2">- {ex}</div>)}
+        {phase.focus && <div className="text-xs text-apptivia-coral font-medium mb-1">{phase.focus}</div>}
+        {phase.exercises?.map((ex, j) => <div key={j} className="text-xs text-apptivia-coral ml-2">- {ex}</div>)}
       </div>
     ))}
 
@@ -588,8 +588,8 @@ const StructuredSkillBuilder = memo(({ data }) => (
 
     {data.managers_role && (
       <div className="bg-apptivia-carbon-100 border border-purple-200 rounded-lg p-3">
-        <div className="font-semibold text-purple-800 text-xs uppercase tracking-wide mb-1">Manager's Role</div>
-        <div className="text-xs text-purple-700">{data.managers_role}</div>
+        <div className="font-semibold text-apptivia-ink text-xs uppercase tracking-wide mb-1">Manager's Role</div>
+        <div className="text-xs text-apptivia-ink">{data.managers_role}</div>
       </div>
     )}
   </div>
@@ -619,7 +619,7 @@ const ChatBubble = memo(({ msg, onOptionSelect, isLastAaron, isTyping, onNavigat
       <div className={`${msg.structuredData ? 'max-w-[90%]' : 'max-w-[75%]'} rounded-lg px-4 py-2 shadow-sm ${
         isUser
           ? 'bg-apptivia-coral text-white'
-          : 'bg-white text-gray-800 border border-gray-200'
+          : 'bg-white text-apptivia-ink border border-gray-200'
       }`}>
         {isUser ? (
           <p className="text-sm whitespace-pre-line">{msg.text}</p>
@@ -631,16 +631,16 @@ const ChatBubble = memo(({ msg, onOptionSelect, isLastAaron, isTyping, onNavigat
           <div className="text-sm aaron-markdown">
             <ReactMarkdown
               components={{
-                h1: ({ children }) => <h3 className="text-sm font-bold text-gray-900 mt-2 mb-1">{children}</h3>,
-                h2: ({ children }) => <h3 className="text-sm font-bold text-gray-900 mt-2 mb-1">{children}</h3>,
-                h3: ({ children }) => <h4 className="text-xs font-bold text-gray-800 mt-1.5 mb-0.5">{children}</h4>,
+                h1: ({ children }) => <h3 className="text-sm font-bold text-apptivia-ink mt-2 mb-1">{children}</h3>,
+                h2: ({ children }) => <h3 className="text-sm font-bold text-apptivia-ink mt-2 mb-1">{children}</h3>,
+                h3: ({ children }) => <h4 className="text-xs font-bold text-apptivia-ink mt-1.5 mb-0.5">{children}</h4>,
                 p: ({ children }) => <p className="text-sm mb-1.5 leading-relaxed">{children}</p>,
                 ul: ({ children }) => <ul className="text-sm ml-3 mb-1.5 space-y-0.5 list-disc">{children}</ul>,
                 ol: ({ children }) => <ol className="text-sm ml-3 mb-1.5 space-y-0.5 list-decimal">{children}</ol>,
                 li: ({ children }) => <li className="text-sm leading-relaxed">{children}</li>,
-                strong: ({ children }) => <strong className="font-semibold text-gray-900">{children}</strong>,
-                em: ({ children }) => <em className="italic text-gray-700">{children}</em>,
-                code: ({ children }) => <code className="text-xs bg-apptivia-carbon-100 text-blue-700 px-1 py-0.5 rounded">{children}</code>,
+                strong: ({ children }) => <strong className="font-semibold text-apptivia-ink">{children}</strong>,
+                em: ({ children }) => <em className="italic text-apptivia-carbon-700">{children}</em>,
+                code: ({ children }) => <code className="text-xs bg-apptivia-carbon-100 text-apptivia-coral px-1 py-0.5 rounded">{children}</code>,
                 a: ({ href, children }) => {
                   const isInternal = href && href.startsWith('/');
                   return (
@@ -650,7 +650,7 @@ const ChatBubble = memo(({ msg, onOptionSelect, isLastAaron, isTyping, onNavigat
                         if (isInternal && onNavigate) onNavigate(href);
                         else if (href) window.open(href, '_blank', 'noopener');
                       }}
-                      className="text-blue-600 hover:text-blue-800 underline underline-offset-2 cursor-pointer font-medium inline"
+                      className="text-apptivia-coral hover:text-apptivia-coral-tone-700 underline underline-offset-2 cursor-pointer font-medium inline"
                     >
                       {children}
                     </button>
@@ -665,7 +665,7 @@ const ChatBubble = memo(({ msg, onOptionSelect, isLastAaron, isTyping, onNavigat
         {!isUser && msg.frameworks?.length > 0 && (
           <div className="flex flex-wrap gap-1 mt-1.5">
             {msg.frameworks.map((fw, i) => (
-              <span key={i} className="inline-block text-[10px] px-1.5 py-0.5 rounded-full bg-apptivia-coral-tone-50 text-blue-600 border border-blue-200">
+              <span key={i} className="inline-block text-[10px] px-1.5 py-0.5 rounded-full bg-apptivia-coral-tone-50 text-apptivia-coral border border-blue-200">
                 {fw}
               </span>
             ))}
@@ -685,7 +685,7 @@ ChatBubble.displayName = 'ChatBubble';
 
 const TypingIndicator = memo(() => (
   <div className="flex justify-start">
-    <div className="bg-white text-gray-800 border border-gray-200 rounded-lg px-4 py-3 shadow-sm">
+    <div className="bg-white text-apptivia-ink border border-gray-200 rounded-lg px-4 py-3 shadow-sm">
       <div className="flex gap-1">
         <div className="w-2 h-2 bg-apptivia-carbon-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
         <div className="w-2 h-2 bg-apptivia-carbon-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
@@ -703,7 +703,7 @@ const OptionChips = memo(({ options, onSelect, disabled }) => (
         key={i}
         onClick={() => onSelect(opt.value)}
         disabled={disabled}
-        className="text-xs px-3 py-1.5 rounded-full border border-purple-200 bg-apptivia-carbon-100 text-purple-700 hover:bg-apptivia-carbon-100 hover:border-purple-400 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+        className="text-xs px-3 py-1.5 rounded-full border border-purple-200 bg-apptivia-carbon-100 text-apptivia-ink hover:bg-apptivia-carbon-100 hover:border-purple-400 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
       >
         {opt.label}
       </button>
@@ -1191,17 +1191,17 @@ const AaronChatbot = ({ isOpen, onClose }) => {
         {showThreadSidebar && !isMinimized && isPro && (
           <div className="w-48 border-r border-gray-200 bg-apptivia-paper flex flex-col shrink-0">
             <div className="p-2 border-b border-gray-200 flex items-center justify-between">
-              <span className="text-xs font-semibold text-gray-600">Threads</span>
+              <span className="text-xs font-semibold text-apptivia-carbon-600">Threads</span>
               <div className="flex items-center gap-1">
-                <button onClick={handleNewThread} title="New chat" className="p-1 hover:bg-apptivia-carbon-200 rounded"><MessageSquarePlus size={14} className="text-gray-600" /></button>
-                <button onClick={() => setShowThreadSidebar(false)} className="p-1 hover:bg-apptivia-carbon-200 rounded"><ChevronLeft size={14} className="text-gray-600" /></button>
+                <button onClick={handleNewThread} title="New chat" className="p-1 hover:bg-apptivia-carbon-200 rounded"><MessageSquarePlus size={14} className="text-apptivia-carbon-600" /></button>
+                <button onClick={() => setShowThreadSidebar(false)} className="p-1 hover:bg-apptivia-carbon-200 rounded"><ChevronLeft size={14} className="text-apptivia-carbon-600" /></button>
               </div>
             </div>
             <div className="flex-1 overflow-y-auto">
               {threads.map(t => (
                 <div
                   key={t.id}
-                  className={`px-2 py-1.5 cursor-pointer flex items-center group text-xs border-b border-gray-100 ${activeThreadId === t.id ? 'bg-apptivia-coral-tone-50 text-blue-700' : 'hover:bg-apptivia-carbon-100 text-gray-700'}`}
+                  className={`px-2 py-1.5 cursor-pointer flex items-center group text-xs border-b border-gray-100 ${activeThreadId === t.id ? 'bg-apptivia-coral-tone-50 text-apptivia-coral' : 'hover:bg-apptivia-carbon-100 text-apptivia-carbon-700'}`}
                   onClick={() => handleLoadThread(t.id)}
                 >
                   {renamingThreadId === t.id ? (
@@ -1225,7 +1225,7 @@ const AaronChatbot = ({ isOpen, onClose }) => {
                   )}
                 </div>
               ))}
-              {threads.length === 0 && <p className="text-[10px] text-gray-400 p-2 text-center">No saved threads</p>}
+              {threads.length === 0 && <p className="text-[10px] text-apptivia-carbon-400 p-2 text-center">No saved threads</p>}
             </div>
           </div>
         )}
@@ -1240,7 +1240,7 @@ const AaronChatbot = ({ isOpen, onClose }) => {
               </div>
               <div className="min-w-0">
                 <div className="font-semibold text-sm whitespace-nowrap">Aaron AI Coach</div>
-                <div className="flex items-center gap-2 text-xs text-blue-100 whitespace-nowrap">
+                <div className="flex items-center gap-2 text-xs text-apptivia-coral-tone-300 whitespace-nowrap">
                   <div className={`w-2 h-2 rounded-full shrink-0 ${isConnected ? 'bg-green-400' : 'bg-yellow-400'}`} />
                   {isConnected ? 'Live' : 'Offline Mode'}
                 </div>
@@ -1375,7 +1375,7 @@ const AaronChatbot = ({ isOpen, onClose }) => {
                                 className="w-full px-2 py-1 border rounded text-xs mb-1.5"
                               />
                               {msg.frameworks?.length > 0 && (
-                                <div className="text-[10px] text-gray-400 mb-1.5">Framework: {msg.frameworks.join(', ')}</div>
+                                <div className="text-[10px] text-apptivia-carbon-400 mb-1.5">Framework: {msg.frameworks.join(', ')}</div>
                               )}
                               <div className="flex gap-1.5">
                                 <button
@@ -1385,13 +1385,13 @@ const AaronChatbot = ({ isOpen, onClose }) => {
                                 >
                                   {actionSaving ? 'Saving...' : 'Log it'}
                                 </button>
-                                <button onClick={() => setActionMsgId(null)} className="px-2 py-1 text-gray-500 hover:text-gray-700 text-xs">Cancel</button>
+                                <button onClick={() => setActionMsgId(null)} className="px-2 py-1 text-apptivia-carbon-500 hover:text-apptivia-carbon-700 text-xs">Cancel</button>
                               </div>
                             </div>
                           ) : (
                             <button
                               onClick={() => setActionMsgId(msg.id)}
-                              className="text-[10px] text-blue-500 hover:text-blue-700 font-medium ml-1 mt-0.5"
+                              className="text-[10px] text-apptivia-coral hover:text-apptivia-coral font-medium ml-1 mt-0.5"
                             >
                               Log Action
                             </button>
@@ -1409,7 +1409,7 @@ const AaronChatbot = ({ isOpen, onClose }) => {
                             <button
                               onClick={() => handleSaveStructuredPlan(msg)}
                               disabled={savingPlanMsgId === msg.id}
-                              className="text-[10px] text-purple-500 hover:text-purple-700 font-medium ml-1 mt-0.5"
+                              className="text-[10px] text-apptivia-ink hover:text-apptivia-ink font-medium ml-1 mt-0.5"
                             >
                               {savingPlanMsgId === msg.id ? 'Saving...' : 'Save to Coach'}
                             </button>
@@ -1428,7 +1428,7 @@ const AaronChatbot = ({ isOpen, onClose }) => {
                 {/* Outcome tagging prompt after 6+ user messages */}
                 {showOutcomePrompt && activeThreadId && (
                   <div className="mx-4 mb-3 p-3 bg-apptivia-carbon-100 rounded-lg border border-indigo-100">
-                    <p className="text-xs text-indigo-700 font-medium mb-2">How did this session go?</p>
+                    <p className="text-xs text-apptivia-ink font-medium mb-2">How did this session go?</p>
                     <div className="flex flex-wrap gap-1.5">
                       {[
                         { tag: 'applied_in_call', label: 'Applied on a call' },
@@ -1439,7 +1439,7 @@ const AaronChatbot = ({ isOpen, onClose }) => {
                         <button
                           key={tag}
                           onClick={() => tagOutcome(activeThreadId, tag)}
-                          className="px-2.5 py-1 text-xs rounded-full border border-indigo-200 hover:bg-apptivia-carbon-100 text-indigo-700 bg-white transition-colors"
+                          className="px-2.5 py-1 text-xs rounded-full border border-indigo-200 hover:bg-apptivia-carbon-100 text-apptivia-ink bg-white transition-colors"
                         >
                           {label}
                         </button>
@@ -1455,7 +1455,7 @@ const AaronChatbot = ({ isOpen, onClose }) => {
               {/* Starter thread upsell tooltip */}
               {!isPro && !isMinimized && messages.length > 4 && (
                 <div className="shrink-0 px-3 py-1.5 bg-apptivia-carbon-100 border-t border-purple-100 text-center">
-                  <span className="text-[10px] text-purple-600">Thread history is a Pro feature — <a href="/organization-settings" className="underline hover:text-purple-800">Upgrade</a></span>
+                  <span className="text-[10px] text-apptivia-ink">Thread history is a Pro feature — <a href="/organization-settings" className="underline hover:text-apptivia-ink">Upgrade</a></span>
                 </div>
               )}
 
@@ -1471,13 +1471,13 @@ const AaronChatbot = ({ isOpen, onClose }) => {
                       <button
                         key={preset.label}
                         onClick={() => handlePresetClick(preset)}
-                        className="text-xs px-3 py-1.5 rounded-full border border-blue-200 bg-white text-blue-700 hover:bg-apptivia-coral-tone-50 hover:border-blue-400 transition-colors"
+                        className="text-xs px-3 py-1.5 rounded-full border border-blue-200 bg-white text-apptivia-coral hover:bg-apptivia-coral-tone-50 hover:border-blue-400 transition-colors"
                       >
                         {preset.label}
                       </button>
                     ))}
                     {isStarterAaron && (
-                      <span className="text-[10px] text-gray-400 self-center ml-1">Upgrade for all presets</span>
+                      <span className="text-[10px] text-apptivia-carbon-400 self-center ml-1">Upgrade for all presets</span>
                     )}
                   </div>
                 ) : null;
@@ -1525,21 +1525,21 @@ const AaronChatbot = ({ isOpen, onClose }) => {
                   </button>
                 </form>
                 <div className="flex items-center justify-between mt-1.5">
-                  <p className="text-[10px] text-gray-500">
+                  <p className="text-[10px] text-apptivia-carbon-500">
                     {useOfflineMode ? (
                       <span className="flex items-center gap-1">
                         <Shield size={10} />
                         Offline • Esc to minimize
                       </span>
                     ) : isStarterAaron ? (
-                      <span className="text-gray-400">
-                        {Math.min(aaronDailyCount, 10)}/10 today · <a href="/organization-settings" className="text-blue-500 hover:underline">Upgrade for unlimited</a>
+                      <span className="text-apptivia-carbon-400">
+                        {Math.min(aaronDailyCount, 10)}/10 today · <a href="/organization-settings" className="text-apptivia-coral hover:underline">Upgrade for unlimited</a>
                       </span>
                     ) : (
                       'Connected to live server'
                     )}
                   </p>
-                  <span className={`text-[10px] ${inputValue.length > MAX_MESSAGE_LENGTH - 50 ? 'text-orange-500 font-medium' : 'text-gray-400'}`}>
+                  <span className={`text-[10px] ${inputValue.length > MAX_MESSAGE_LENGTH - 50 ? 'text-orange-500 font-medium' : 'text-apptivia-carbon-400'}`}>
                     {inputValue.length}/{MAX_MESSAGE_LENGTH}
                   </span>
                 </div>

@@ -40,7 +40,7 @@ export default function TwilioDialerWidget({
             {activeContact?.name ?? 'Unknown'}
           </p>
           {activeContact?.company_name && (
-            <p className="text-xs text-gray-400 truncate">
+            <p className="text-xs text-apptivia-carbon-400 truncate">
               {activeContact.company_name}
             </p>
           )}
@@ -50,7 +50,7 @@ export default function TwilioDialerWidget({
       {/* Status / timer */}
       <div
         className={`text-center text-sm font-mono font-medium ${
-          isLive ? 'text-green-400' : 'text-gray-300'
+          isLive ? 'text-green-400' : 'text-apptivia-carbon-300'
         }`}
       >
         {statusLabel}

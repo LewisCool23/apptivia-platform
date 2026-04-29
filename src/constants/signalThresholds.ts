@@ -51,7 +51,7 @@ export function getSignalTier(score: number, category: string): { label: string;
   const threshold = getCategoryThreshold(category);
   if (score >= threshold + 15) return { label: 'T1', color: 'text-green-700', bg: 'bg-green-100' };
   if (score >= threshold)      return { label: 'T2', color: 'text-yellow-700', bg: 'bg-yellow-100' };
-  if (score >= SIGNAL_DISPLAY_MIN) return { label: 'T3', color: 'text-gray-600', bg: 'bg-apptivia-carbon-100' };
+  if (score >= SIGNAL_DISPLAY_MIN) return { label: 'T3', color: 'text-apptivia-carbon-600', bg: 'bg-apptivia-carbon-100' };
   return { label: '', color: '', bg: '' };
 }
 

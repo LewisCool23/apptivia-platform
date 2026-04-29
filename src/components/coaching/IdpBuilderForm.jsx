@@ -33,7 +33,7 @@ export default function IdpBuilderForm({
     <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6 relative">
       {autoGenerating && (
         <div className="absolute inset-0 bg-white/70 z-10 flex items-center justify-center rounded-lg">
-          <div className="flex items-center gap-2 text-purple-700 bg-apptivia-carbon-100 px-4 py-3 rounded-lg shadow-sm border border-purple-200">
+          <div className="flex items-center gap-2 text-apptivia-ink bg-apptivia-carbon-100 px-4 py-3 rounded-lg shadow-sm border border-purple-200">
             <Sparkles size={16} className="animate-spin" />
             <span className="text-sm font-semibold">Generating AI development plan...</span>
           </div>
@@ -41,12 +41,12 @@ export default function IdpBuilderForm({
       )}
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h3 className="text-lg font-semibold text-gray-900">
+          <h3 className="text-lg font-semibold text-apptivia-ink">
             {editingIdp ? 'Edit Development Plan' : 'Create Development Plan'}
           </h3>
-          <p className="text-xs text-gray-500">Define a long-term growth plan with milestones and success criteria</p>
+          <p className="text-xs text-apptivia-carbon-500">Define a long-term growth plan with milestones and success criteria</p>
         </div>
-        <button onClick={onCancel} className="px-3 py-1.5 text-xs font-semibold text-gray-600 border border-gray-300 rounded-md hover:bg-apptivia-paper">
+        <button onClick={onCancel} className="px-3 py-1.5 text-xs font-semibold text-apptivia-carbon-600 border border-gray-300 rounded-md hover:bg-apptivia-paper">
           Cancel
         </button>
       </div>
@@ -55,7 +55,7 @@ export default function IdpBuilderForm({
         {/* Rep selector */}
         {repMembers.length > 0 && !editingIdp && (
           <div>
-            <label className="block text-xs font-semibold text-gray-700 mb-1">Rep</label>
+            <label className="block text-xs font-semibold text-apptivia-carbon-700 mb-1">Rep</label>
             <div className="flex gap-2">
               <select
                 value={form.profile_id || ''}
@@ -72,7 +72,7 @@ export default function IdpBuilderForm({
                   type="button"
                   onClick={() => onAutoGenerate(form.profile_id)}
                   disabled={autoGenerating}
-                  className="flex items-center gap-1.5 px-3 py-2 text-sm font-semibold text-purple-700 bg-apptivia-carbon-100 border border-purple-200 rounded-md hover:bg-apptivia-carbon-100 disabled:opacity-50 whitespace-nowrap"
+                  className="flex items-center gap-1.5 px-3 py-2 text-sm font-semibold text-apptivia-ink bg-apptivia-carbon-100 border border-purple-200 rounded-md hover:bg-apptivia-carbon-100 disabled:opacity-50 whitespace-nowrap"
                 >
                   <Sparkles size={14} className={autoGenerating ? 'animate-spin' : ''} />
                   {autoGenerating ? 'Generating...' : 'Generate with AI'}
@@ -85,7 +85,7 @@ export default function IdpBuilderForm({
         {/* Name + Plan Type row */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="md:col-span-2">
-            <label className="block text-xs font-semibold text-gray-700 mb-1">Plan Name</label>
+            <label className="block text-xs font-semibold text-apptivia-carbon-700 mb-1">Plan Name</label>
             <input
               type="text"
               value={form.name || ''}
@@ -95,7 +95,7 @@ export default function IdpBuilderForm({
             />
           </div>
           <div>
-            <label className="block text-xs font-semibold text-gray-700 mb-1">Plan Type</label>
+            <label className="block text-xs font-semibold text-apptivia-carbon-700 mb-1">Plan Type</label>
             <select
               value={form.plan_type || 'quarterly'}
               onChange={e => updateField('plan_type', e.target.value)}
@@ -110,7 +110,7 @@ export default function IdpBuilderForm({
 
         {/* Description */}
         <div>
-          <label className="block text-xs font-semibold text-gray-700 mb-1">Description</label>
+          <label className="block text-xs font-semibold text-apptivia-carbon-700 mb-1">Description</label>
           <textarea
             value={form.description || ''}
             onChange={e => updateField('description', e.target.value)}
@@ -123,12 +123,12 @@ export default function IdpBuilderForm({
         {/* Date range */}
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="block text-xs font-semibold text-gray-700 mb-1">Start Date</label>
+            <label className="block text-xs font-semibold text-apptivia-carbon-700 mb-1">Start Date</label>
             <input type="date" value={form.period_start || ''} onChange={e => updateField('period_start', e.target.value)}
               className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm" />
           </div>
           <div>
-            <label className="block text-xs font-semibold text-gray-700 mb-1">End Date</label>
+            <label className="block text-xs font-semibold text-apptivia-carbon-700 mb-1">End Date</label>
             <input type="date" value={form.period_end || ''} onChange={e => updateField('period_end', e.target.value)}
               className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm" />
           </div>
@@ -136,7 +136,7 @@ export default function IdpBuilderForm({
 
         {/* Focus KPIs */}
         <div>
-          <label className="block text-xs font-semibold text-gray-700 mb-1">Focus KPIs</label>
+          <label className="block text-xs font-semibold text-apptivia-carbon-700 mb-1">Focus KPIs</label>
           <div className="flex flex-wrap gap-2">
             {(availableKPIs || []).map(kpi => {
               const key = kpi.key || kpi;
@@ -150,7 +150,7 @@ export default function IdpBuilderForm({
                     else updateField('focus_kpis', [...(form.focus_kpis || []), key]);
                   }}
                   className={`px-2 py-1 rounded text-xs border transition-all ${
-                    selected ? 'bg-apptivia-coral-tone-50 text-blue-700 border-blue-300' : 'bg-white text-gray-600 border-gray-200 hover:bg-apptivia-paper'
+                    selected ? 'bg-apptivia-coral-tone-50 text-apptivia-coral border-blue-300' : 'bg-white text-apptivia-carbon-600 border-gray-200 hover:bg-apptivia-paper'
                   }`}
                 >
                   {buildLabel(key)}
@@ -163,9 +163,9 @@ export default function IdpBuilderForm({
         {/* Career Goals */}
         <div>
           <div className="flex items-center justify-between mb-2">
-            <label className="text-xs font-semibold text-gray-700">Career Goals</label>
+            <label className="text-xs font-semibold text-apptivia-carbon-700">Career Goals</label>
             <button type="button" onClick={() => addArrayItem('career_goals', { goal: '', timeframe: '' })}
-              className="text-xs text-blue-600 hover:text-blue-800 flex items-center gap-1"><Plus size={12} /> Add</button>
+              className="text-xs text-apptivia-coral hover:text-apptivia-coral-tone-700 flex items-center gap-1"><Plus size={12} /> Add</button>
           </div>
           {(form.career_goals || []).map((item, idx) => (
             <div key={item._key || idx} className="flex gap-2 mb-2">
@@ -181,9 +181,9 @@ export default function IdpBuilderForm({
         {/* Development Areas */}
         <div>
           <div className="flex items-center justify-between mb-2">
-            <label className="text-xs font-semibold text-gray-700">Development Areas</label>
+            <label className="text-xs font-semibold text-apptivia-carbon-700">Development Areas</label>
             <button type="button" onClick={() => addArrayItem('development_areas', { area: '', current_level: 'beginner', target_level: 'intermediate' })}
-              className="text-xs text-blue-600 hover:text-blue-800 flex items-center gap-1"><Plus size={12} /> Add</button>
+              className="text-xs text-apptivia-coral hover:text-apptivia-coral-tone-700 flex items-center gap-1"><Plus size={12} /> Add</button>
           </div>
           {(form.development_areas || []).map((item, idx) => (
             <div key={item._key || idx} className="flex gap-2 mb-2 items-center">
@@ -194,7 +194,7 @@ export default function IdpBuilderForm({
                 <option value="none">None</option><option value="beginner">Beginner</option>
                 <option value="intermediate">Intermediate</option><option value="proficient">Proficient</option><option value="advanced">Advanced</option>
               </select>
-              <span className="text-gray-400 text-xs">→</span>
+              <span className="text-apptivia-carbon-400 text-xs">→</span>
               <select value={item.target_level || 'intermediate'} onChange={e => updateArrayItem('development_areas', idx, { target_level: e.target.value })}
                 className="border border-gray-300 rounded-md px-2 py-1.5 text-sm">
                 <option value="beginner">Beginner</option><option value="intermediate">Intermediate</option>
@@ -208,9 +208,9 @@ export default function IdpBuilderForm({
         {/* Milestones */}
         <div>
           <div className="flex items-center justify-between mb-2">
-            <label className="text-xs font-semibold text-gray-700">Milestones</label>
+            <label className="text-xs font-semibold text-apptivia-carbon-700">Milestones</label>
             <button type="button" onClick={() => addArrayItem('milestones', { title: '', target_date: '', status: 'pending', notes: '' })}
-              className="text-xs text-blue-600 hover:text-blue-800 flex items-center gap-1"><Plus size={12} /> Add</button>
+              className="text-xs text-apptivia-coral hover:text-apptivia-coral-tone-700 flex items-center gap-1"><Plus size={12} /> Add</button>
           </div>
           {(form.milestones || []).map((item, idx) => (
             <div key={item._key || idx} className="flex gap-2 mb-2 items-center">
@@ -230,9 +230,9 @@ export default function IdpBuilderForm({
         {/* Action Items */}
         <div>
           <div className="flex items-center justify-between mb-2">
-            <label className="text-xs font-semibold text-gray-700">Action Items</label>
+            <label className="text-xs font-semibold text-apptivia-carbon-700">Action Items</label>
             <button type="button" onClick={() => addArrayItem('action_items', { action: '', category: 'practice' })}
-              className="text-xs text-blue-600 hover:text-blue-800 flex items-center gap-1"><Plus size={12} /> Add</button>
+              className="text-xs text-apptivia-coral hover:text-apptivia-coral-tone-700 flex items-center gap-1"><Plus size={12} /> Add</button>
           </div>
           {(form.action_items || []).map((item, idx) => (
             <div key={item._key || idx} className="flex gap-2 mb-2 items-center">
@@ -251,9 +251,9 @@ export default function IdpBuilderForm({
         {/* Resources */}
         <div>
           <div className="flex items-center justify-between mb-2">
-            <label className="text-xs font-semibold text-gray-700">Resources</label>
+            <label className="text-xs font-semibold text-apptivia-carbon-700">Resources</label>
             <button type="button" onClick={() => addArrayItem('resources', { title: '', type: 'guide', url: '' })}
-              className="text-xs text-blue-600 hover:text-blue-800 flex items-center gap-1"><Plus size={12} /> Add</button>
+              className="text-xs text-apptivia-coral hover:text-apptivia-coral-tone-700 flex items-center gap-1"><Plus size={12} /> Add</button>
           </div>
           {(form.resources || []).map((item, idx) => (
             <div key={item._key || idx} className="flex gap-2 mb-2 items-center">
@@ -272,9 +272,9 @@ export default function IdpBuilderForm({
         {/* Success Criteria */}
         <div>
           <div className="flex items-center justify-between mb-2">
-            <label className="text-xs font-semibold text-gray-700">Success Criteria</label>
+            <label className="text-xs font-semibold text-apptivia-carbon-700">Success Criteria</label>
             <button type="button" onClick={() => addArrayItem('success_criteria', { criterion: '' })}
-              className="text-xs text-blue-600 hover:text-blue-800 flex items-center gap-1"><Plus size={12} /> Add</button>
+              className="text-xs text-apptivia-coral hover:text-apptivia-coral-tone-700 flex items-center gap-1"><Plus size={12} /> Add</button>
           </div>
           {(form.success_criteria || []).map((item, idx) => (
             <div key={item._key || idx} className="flex gap-2 mb-2 items-center">
@@ -287,14 +287,14 @@ export default function IdpBuilderForm({
 
         {/* Notes */}
         <div>
-          <label className="block text-xs font-semibold text-gray-700 mb-1">Notes</label>
+          <label className="block text-xs font-semibold text-apptivia-carbon-700 mb-1">Notes</label>
           <textarea value={form.notes || ''} onChange={e => updateField('notes', e.target.value)}
             className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm" rows={2} placeholder="Additional notes..." />
         </div>
 
         {/* Save */}
         <div className="flex justify-end gap-3 pt-2">
-          <button onClick={onCancel} className="px-4 py-2 text-sm text-gray-600 border border-gray-300 rounded-md hover:bg-apptivia-paper">Cancel</button>
+          <button onClick={onCancel} className="px-4 py-2 text-sm text-apptivia-carbon-600 border border-gray-300 rounded-md hover:bg-apptivia-paper">Cancel</button>
           <button onClick={onSave} disabled={saving || !form.name}
             className="px-4 py-2 text-sm font-semibold text-white bg-apptivia-coral rounded-md hover:bg-apptivia-coral disabled:opacity-50">
             {saving ? 'Saving...' : (editingIdp ? 'Update Plan' : 'Create Plan')}

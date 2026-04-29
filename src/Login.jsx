@@ -43,8 +43,8 @@ const Login = () => {
         <div className="w-16 h-16 rounded-xl bg-gradient-to-r from-blue-500 to-purple-500 flex items-center justify-center mb-6">
           <span className="text-white font-bold text-3xl">A</span>
         </div>
-        <h1 className="text-2xl font-bold text-blue-700 mb-2 text-center">Welcome to Apptivia</h1>
-        <p className="text-gray-500 mb-4 text-center text-sm">Sign in to access your sales productivity platform</p>
+        <h1 className="text-2xl font-bold text-apptivia-coral mb-2 text-center">Welcome to Apptivia</h1>
+        <p className="text-apptivia-carbon-500 mb-4 text-center text-sm">Sign in to access your sales productivity platform</p>
         {error && <div className="mb-4 text-red-500 text-center w-full">{error}</div>}
         <button
           type="button"
@@ -55,7 +55,7 @@ const Login = () => {
             });
             if (oauthErr) setError(oauthErr.message);
           }}
-          className="w-full flex items-center justify-center gap-3 border border-gray-300 rounded-lg py-2.5 font-medium text-gray-700 hover:bg-apptivia-paper transition-all duration-200 text-sm mb-4"
+          className="w-full flex items-center justify-center gap-3 border border-gray-300 rounded-lg py-2.5 font-medium text-apptivia-carbon-700 hover:bg-apptivia-paper transition-all duration-200 text-sm mb-4"
         >
           <svg className="w-5 h-5" viewBox="0 0 24 24">
             <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4"/>
@@ -67,7 +67,7 @@ const Login = () => {
         </button>
         <div className="flex items-center w-full mb-4">
           <div className="flex-1 border-t border-gray-200"></div>
-          <span className="px-3 text-xs text-gray-400 uppercase">or</span>
+          <span className="px-3 text-xs text-apptivia-carbon-400 uppercase">or</span>
           <div className="flex-1 border-t border-gray-200"></div>
         </div>
         <div className="mb-4 w-full">
@@ -94,10 +94,10 @@ const Login = () => {
           />
         </div>
         <div className="flex items-center justify-between w-full mb-6 mt-2">
-          <label className="flex items-center text-gray-600 text-sm cursor-pointer transition-colors duration-200 hover:text-gray-900">
+          <label className="flex items-center text-apptivia-carbon-600 text-sm cursor-pointer transition-colors duration-200 hover:text-apptivia-ink">
             <input type="checkbox" className="mr-2" /> Remember me
           </label>
-          <a href="/forgot-password" className="text-blue-600 hover:underline text-sm transition-all duration-200 hover:text-blue-700">Forgot password?</a>
+          <a href="/forgot-password" className="text-apptivia-coral hover:underline text-sm transition-all duration-200 hover:text-apptivia-coral">Forgot password?</a>
         </div>
         <button
           type="submit"
@@ -106,9 +106,9 @@ const Login = () => {
         >
           {isLoading ? 'Signing in...' : 'Sign In'}
         </button>
-        <div className="text-center text-gray-500 text-sm mt-2">
+        <div className="text-center text-apptivia-carbon-500 text-sm mt-2">
           Don't have an account?{' '}
-          <Link to="/signup" className="text-blue-600 hover:underline transition-all duration-200 hover:text-blue-700">Sign Up</Link>
+          <Link to="/signup" className="text-apptivia-coral hover:underline transition-all duration-200 hover:text-apptivia-coral">Sign Up</Link>
         </div>
       </form>
     </div>

@@ -454,8 +454,8 @@ export default function ConfigureModal({ isOpen, onClose, onSave, currentUserId 
           <p className="text-sm text-whitscorecard')}
             className={`px-6 py-3 font-semibold transition-colors ${
               activeTab === 'scorecard'
-                ? 'text-blue-600 border-b-2 border-blue-600 bg-white'
-                : 'text-gray-600 hover:text-gray-900'
+                ? 'text-apptivia-coral border-b-2 border-blue-600 bg-white'
+                : 'text-apptivia-carbon-600 hover:text-apptivia-ink'
             }`}
           >
             📊 Scorecard Selection ({scorecardKpis.length}/5)
@@ -470,8 +470,8 @@ export default function ConfigureModal({ isOpen, onClose, onSave, currentUserId 
             onClick={() => setActiveTab('manage')}
             className={`px-6 py-3 font-semibold transition-colors ${
               activeTab === 'manage'
-                ? 'text-blue-600 border-b-2 border-blue-600 bg-white'
-                : 'text-gray-600 hover:text-gray-900'
+                ? 'text-apptivia-coral border-b-2 border-blue-600 bg-white'
+                : 'text-apptivia-carbon-600 hover:text-apptivia-ink'
             }`}
           >
             Manage KPIs ({kpiConfigs.length})
@@ -480,8 +480,8 @@ export default function ConfigureModal({ isOpen, onClose, onSave, currentUserId 
             onClick={() => setActiveTab('create')}
             className={`px-6 py-3 font-semibold transition-colors ${
               activeTab === 'create'
-                ? 'text-blue-600 border-b-2 border-blue-600 bg-white'
-                : 'text-gray-600 hover:text-gray-900'
+                ? 'text-apptivia-coral border-b-2 border-blue-600 bg-white'
+                : 'text-apptivia-carbon-600 hover:text-apptivia-ink'
             }`}
           >
             + Create Custom KPI
@@ -492,17 +492,17 @@ export default function ConfigureModal({ isOpen, onClose, onSave, currentUserId 
           {loading ? (
             <div className="text-center py-12">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
-              <p className="text-gray-500">Loading configurations...</p>
+              <p className="text-apptivia-carbon-500">Loading configurations...</p>
             </div>
           ) : activeTab === 'manage' ? (
             <div className="space-y-6">
               {/* Info banner about scorecard KPIs */}
               <div className="bg-apptivia-coral-tone-50 border-l-4 border-blue-500 p-4 rounded-r-lg">
                 <div className="flex items-start gap-3">
-                  <span className="text-blue-600 text-xl">💡</span>
+                  <span className="text-apptivia-coral text-xl">💡</span>
                   <div>
-                    <p className="text-blue-900 font-semibold mb-1">Apptivia Score Calculation</p>
-                    <p className="text-blue-800 text-sm">
+                    <p className="text-apptivia-coral-tone-700 font-semibold mb-1">Apptivia Score Calculation</p>
+                    <p className="text-apptivia-coral-tone-700 text-sm">
                       Only KPIs marked with <span className="inline-flex items-center bg-apptivia-coral text-white px-2 py-0.5 rounded text-xs font-bold mx-1">📊 Scorecard #X</span> contribute to the Apptivia Score. 
                       Select your 5 scorecard KPIs in the <button onClick={() => setActiveTab('scorecard')} className="underline font-semibold">Scorecard Selection</button> tab.
                     </p>
@@ -517,10 +517,10 @@ export default function ConfigureModal({ isOpen, onClose, onSave, currentUserId 
 
                 return (
                   <div key={category} className="space-y-3">
-                    <h3 className="text-lg font-semibold text-gray-900 capitalize flex items-center gap-2">
+                    <h3 className="text-lg font-semibold text-apptivia-ink capitalize flex items-center gap-2">
                       <span className="w-2 h-2 rounded-full bg-apptivia-coral"></span>
                       {category} Metrics
-                      <span className="text-sm font-normal text-gray-500">({categoryKpis.length})</span>
+                      <span className="text-sm font-normal text-apptivia-carbon-500">({categoryKpis.length})</span>
                     </h3>
                     
                     <div className="space-y-2">
@@ -544,10 +544,10 @@ export default function ConfigureModal({ isOpen, onClose, onSave, currentUserId 
                                       const index = kpiConfigs.findIndex(k => k.key === config.key);
                                       updateConfig(index, 'name', e.target.value);
                                     }}
-                                    className="text-lg font-semibold text-gray-900 border-b-2 border-blue-500 focus:outline-none"
+                                    className="text-lg font-semibold text-apptivia-ink border-b-2 border-blue-500 focus:outline-none"
                                   />
                                 ) : (
-                                  <h4 className="text-lg font-semibold text-gray-900">{config.name}</h4>
+                                  <h4 className="text-lg font-semibold text-apptivia-ink">{config.name}</h4>
                                 )}
                                 {config.show_on_scorecard && (
                                   <span className="text-xs bg-apptivia-coral text-white px-2 py-1 rounded font-bold flex items-center gap-1">
@@ -555,7 +555,7 @@ export default function ConfigureModal({ isOpen, onClose, onSave, currentUserId 
                                   </span>
                                 )}
                                 {config.is_custom && (
-                                  <span className="text-xs bg-apptivia-carbon-100 text-purple-700 px-2 py-0.5 rounded">Custom</span>
+                                  <span className="text-xs bg-apptivia-carbon-100 text-apptivia-ink px-2 py-0.5 rounded">Custom</span>
                                 )}
                               </div>
                               {editingKpi === config.key ? (
@@ -567,17 +567,17 @@ export default function ConfigureModal({ isOpen, onClose, onSave, currentUserId 
                                     updateConfig(index, 'description', e.target.value);
                                   }}
                                   placeholder="Description (optional)"
-                                  className="text-sm text-gray-600 w-full border border-gray-300 rounded px-2 py-1"
+                                  className="text-sm text-apptivia-carbon-600 w-full border border-gray-300 rounded px-2 py-1"
                                 />
                               ) : (
-                                <p className="text-sm text-gray-600">{config.description || 'No description'}</p>
+                                <p className="text-sm text-apptivia-carbon-600">{config.description || 'No description'}</p>
                               )}
-                              <p className="text-xs text-gray-400 mt-1">Key: {config.key}</p>
+                              <p className="text-xs text-apptivia-carbon-400 mt-1">Key: {config.key}</p>
                             </div>
 
                             <div className="flex items-center gap-3">
                               <div>
-                                <label className="text-xs text-gray-500 block mb-1">Goal</label>
+                                <label className="text-xs text-apptivia-carbon-500 block mb-1">Goal</label>
                                 <input
                                   type="number"
                                   value={config.goal}
@@ -592,7 +592,7 @@ export default function ConfigureModal({ isOpen, onClose, onSave, currentUserId 
                               </div>
 
                               <div>
-                                <label className="text-xs text-gray-500 block mb-1">Weight</label>
+                                <label className="text-xs text-apptivia-carbon-500 block mb-1">Weight</label>
                                 <div className="flex items-center gap-1">
                                   <input
                                     type="number"
@@ -606,13 +606,13 @@ export default function ConfigureModal({ isOpen, onClose, onSave, currentUserId 
                                     max="100"
                                     step="1"
                                   />
-                                  <span className="text-gray-500 text-sm">%</span>
+                                  <span className="text-apptivia-carbon-500 text-sm">%</span>
                                 </div>
                               </div>
 
                               {editingKpi === config.key ? (
                                 <div>
-                                  <label className="text-xs text-gray-500 block mb-1">Unit</label>
+                                  <label className="text-xs text-apptivia-carbon-500 block mb-1">Unit</label>
                                   <select
                                     value={config.unit}
                                     onChange={(e) => {
@@ -628,15 +628,15 @@ export default function ConfigureModal({ isOpen, onClose, onSave, currentUserId 
                                 </div>
                               ) : (
                                 <div>
-                                  <label className="text-xs text-gray-500 block mb-1">Unit</label>
-                                  <span className="text-sm text-gray-700 font-medium">{config.unit}</span>
+                                  <label className="text-xs text-apptivia-carbon-500 block mb-1">Unit</label>
+                                  <span className="text-sm text-apptivia-carbon-700 font-medium">{config.unit}</span>
                                 </div>
                               )}
 
                               <div className="flex flex-col gap-1">
                                 <button
                                   onClick={() => toggleEdit(config.key)}
-                                  className="p-2 text-blue-600 hover:bg-apptivia-coral-tone-50 rounded transition-colors"
+                                  className="p-2 text-apptivia-coral hover:bg-apptivia-coral-tone-50 rounded transition-colors"
                                   title={editingKpi === config.key ? 'Done editing' : 'Edit KPI'}
                                 >
                                   {editingKpi === config.key ? '✓' : '✏️'}
@@ -662,8 +662,8 @@ export default function ConfigureModal({ isOpen, onClose, onSave, currentUserId 
 
               <div className="mt-6 p-4 bg-apptivia-coral-tone-50 border border-blue-200 rounded-lg">
                 <div className="flex items-start gap-2">
-                  <span className="text-blue-600 text-xl">ℹ️</span>
-                  <div className="text-sm text-blue-800">
+                  <span className="text-apptivia-coral text-xl">ℹ️</span>
+                  <div className="text-sm text-apptivia-coral-tone-700">
                     <strong>Tips:</strong>
                     <ul className="list-disc ml-4 mt-2 space-y-1">
                       <li>Weights should add up to 100% for accurate scoring</li>
@@ -679,8 +679,8 @@ export default function ConfigureModal({ isOpen, onClose, onSave, currentUserId 
             // Scorecard Selection Tab
             <div className="space-y-6">
               <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-6 rounded-lg border border-blue-200">
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">📊 Select Your Top 5 Scorecard Metrics</h3>
-                <p className="text-sm text-gray-600">Choose the 5 most impactful KPIs to display on your main scorecard. These metrics represent the core productivity success indicators for your organization.</p>
+                <h3 className="text-lg font-semibold text-apptivia-ink mb-2">📊 Select Your Top 5 Scorecard Metrics</h3>
+                <p className="text-sm text-apptivia-carbon-600">Choose the 5 most impactful KPIs to display on your main scorecard. These metrics represent the core productivity success indicators for your organization.</p>
               </div>
 
               <div className="bg-yellow-50 border border-yellow-200 p-4 rounded-lg">
@@ -695,7 +695,7 @@ export default function ConfigureModal({ isOpen, onClose, onSave, currentUserId 
               {/* Selected KPIs */}
               {scorecardKpis.length > 0 && (
                 <div className="space-y-3">
-                  <h4 className="font-semibold text-gray-900">Selected Scorecard KPIs (in order):</h4>
+                  <h4 className="font-semibold text-apptivia-ink">Selected Scorecard KPIs (in order):</h4>
                   {scorecardKpis.map((key, index) => {
                     const kpi = kpiConfigs.find(k => k.key === key);
                     if (!kpi) return null;
@@ -706,15 +706,15 @@ export default function ConfigureModal({ isOpen, onClose, onSave, currentUserId 
                             {index + 1}
                           </span>
                           <div>
-                            <h5 className="font-semibold text-gray-900">{kpi.name}</h5>
-                            <p className="text-sm text-gray-600">{kpi.description || 'No description'}</p>
+                            <h5 className="font-semibold text-apptivia-ink">{kpi.name}</h5>
+                            <p className="text-sm text-apptivia-carbon-600">{kpi.description || 'No description'}</p>
                           </div>
                         </div>
                         <div className="flex items-center gap-2">
                           <button
                             onClick={() => handleMoveScorecardKpi(key, 'up')}
                             disabled={index === 0}
-                            className="p-2 text-gray-600 hover:bg-white rounded transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                            className="p-2 text-apptivia-carbon-600 hover:bg-white rounded transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
                             title="Move up"
                           >
                             ↑
@@ -722,7 +722,7 @@ export default function ConfigureModal({ isOpen, onClose, onSave, currentUserId 
                           <button
                             onClick={() => handleMoveScorecardKpi(key, 'down')}
                             disabled={index === scorecardKpis.length - 1}
-                            className="p-2 text-gray-600 hover:bg-white rounded transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                            className="p-2 text-apptivia-carbon-600 hover:bg-white rounded transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
                             title="Move down"
                           >
                             ↓
@@ -743,7 +743,7 @@ export default function ConfigureModal({ isOpen, onClose, onSave, currentUserId 
               {/* Available KPIs */}
               {scorecardKpis.length < 5 && (
                 <div className="space-y-3">
-                  <h4 className="font-semibold text-gray-900">Available KPIs ({kpiConfigs.filter(k => !scorecardKpis.includes(k.key)).length}):</h4>
+                  <h4 className="font-semibold text-apptivia-ink">Available KPIs ({kpiConfigs.filter(k => !scorecardKpis.includes(k.key)).length}):</h4>
                   <div className="grid grid-cols-1 gap-2 max-h-96 overflow-y-auto">
                     {kpiConfigs
                       .filter(k => !scorecardKpis.includes(k.key))
@@ -753,9 +753,9 @@ export default function ConfigureModal({ isOpen, onClose, onSave, currentUserId 
                           className="bg-white border border-gray-200 rounded-lg p-4 flex items-center justify-between hover:shadow-md transition-all duration-200"
                         >
                           <div>
-                            <h5 className="font-semibold text-gray-900">{kpi.name}</h5>
-                            <p className="text-sm text-gray-600">{kpi.description || 'No description'}</p>
-                            <span className="text-xs text-gray-500 capitalize">{kpi.category} • {kpi.unit}</span>
+                            <h5 className="font-semibold text-apptivia-ink">{kpi.name}</h5>
+                            <p className="text-sm text-apptivia-carbon-600">{kpi.description || 'No description'}</p>
+                            <span className="text-xs text-apptivia-carbon-500 capitalize">{kpi.category} • {kpi.unit}</span>
                           </div>
                           <button
                             onClick={() => handleToggleScorecardKpi(kpi.key)}
@@ -784,14 +784,14 @@ export default function ConfigureModal({ isOpen, onClose, onSave, currentUserId 
             // Create New KPI Form
             <div className="max-w-2xl mx-auto space-y-6">
               <div className="bg-gradient-to-r from-purple-50 to-blue-50 p-6 rounded-lg border border-purple-200">
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">Create Custom KPI</h3>
-                <p className="text-sm text-gray-600">Add a new metric to track team performance</p>
+                <h3 className="text-lg font-semibold text-apptivia-ink mb-2">Create Custom KPI</h3>
+                <p className="text-sm text-apptivia-carbon-600">Add a new metric to track team performance</p>
               </div>
 
               <div className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-apptivia-carbon-700 mb-1">
                       KPI Key <span className="text-red-500">*</span>
                     </label>
                     <input
@@ -801,11 +801,11 @@ export default function ConfigureModal({ isOpen, onClose, onSave, currentUserId 
                       placeholder="e.g., custom_metric"
                       className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     />
-                    <p className="text-xs text-gray-500 mt-1">Unique identifier (lowercase, underscores)</p>
+                    <p className="text-xs text-apptivia-carbon-500 mt-1">Unique identifier (lowercase, underscores)</p>
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-apptivia-carbon-700 mb-1">
                       KPI Name <span className="text-red-500">*</span>
                     </label>
                     <input
@@ -815,12 +815,12 @@ export default function ConfigureModal({ isOpen, onClose, onSave, currentUserId 
                       placeholder="e.g., Custom Sales Metric"
                       className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     />
-                    <p className="text-xs text-gray-500 mt-1">Display name for the KPI</p>
+                    <p className="text-xs text-apptivia-carbon-500 mt-1">Display name for the KPI</p>
                   </div>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                  <label className="block text-sm font-medium text-apptivia-carbon-700 mb-1">Description</label>
                   <textarea
                     value={newKpi.description}
                     onChange={(e) => setNewKpi({ ...newKpi, description: e.target.value })}
@@ -832,7 +832,7 @@ export default function ConfigureModal({ isOpen, onClose, onSave, currentUserId 
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
+                    <label className="block text-sm font-medium text-apptivia-carbon-700 mb-1">Category</label>
                     <select
                       value={newKpi.category}
                       onChange={(e) => setNewKpi({ ...newKpi, category: e.target.value })}
@@ -847,7 +847,7 @@ export default function ConfigureModal({ isOpen, onClose, onSave, currentUserId 
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Unit</label>
+                    <label className="block text-sm font-medium text-apptivia-carbon-700 mb-1">Unit</label>
                     <select
                       value={newKpi.unit}
                       onChange={(e) => setNewKpi({ ...newKpi, unit: e.target.value })}
@@ -865,7 +865,7 @@ export default function ConfigureModal({ isOpen, onClose, onSave, currentUserId 
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Goal/Target</label>
+                    <label className="block text-sm font-medium text-apptivia-carbon-700 mb-1">Goal/Target</label>
                     <input
                       type="number"
                       value={newKpi.goal}
@@ -877,7 +877,7 @@ export default function ConfigureModal({ isOpen, onClose, onSave, currentUserId 
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Weight (%)</label>
+                    <label className="block text-sm font-medium text-apptivia-carbon-700 mb-1">Weight (%)</label>
                     <input
                       type="number"
                       value={Math.round(newKpi.weight * 100)}
@@ -910,8 +910,8 @@ export default function ConfigureModal({ isOpen, onClose, onSave, currentUserId 
         </div>
 
         <div className="bg-apptivia-paper px-6 py-4 flex justify-between items-center gap-3 border-t">
-          <div className="text-sm text-gray-600">
-            Total Weight: <span className="font-bold text-gray-900">
+          <div className="text-sm text-apptivia-carbon-600">
+            Total Weight: <span className="font-bold text-apptivia-ink">
               {Math.round(kpiConfigs.reduce((sum, k) => sum + k.weight, 0) * 100)}%
             </span>
           </div>
@@ -919,7 +919,7 @@ export default function ConfigureModal({ isOpen, onClose, onSave, currentUserId 
             <button
               onClick={onClose}
               disabled={saving}
-              className="px-6 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-apptivia-paper disabled:opacity-50 transition-all duration-200"
+              className="px-6 py-2 text-apptivia-carbon-700 bg-white border border-gray-300 rounded-lg hover:bg-apptivia-paper disabled:opacity-50 transition-all duration-200"
             >
               Close
             </button>

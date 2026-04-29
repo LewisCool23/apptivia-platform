@@ -15,17 +15,17 @@ export default function StepOrgInfo({ wizardState, updateState, onError }) {
     <div className="space-y-6">
       <div className="flex items-center gap-3 mb-2">
         <div className="w-10 h-10 bg-apptivia-coral-tone-50 rounded-lg flex items-center justify-center">
-          <Building2 size={20} className="text-blue-600" />
+          <Building2 size={20} className="text-apptivia-coral" />
         </div>
         <div>
-          <h3 className="text-lg font-semibold text-gray-900">Organization Info</h3>
-          <p className="text-sm text-gray-500">Tell us about your company</p>
+          <h3 className="text-lg font-semibold text-apptivia-ink">Organization Info</h3>
+          <p className="text-sm text-apptivia-carbon-500">Tell us about your company</p>
         </div>
       </div>
 
       <div className="grid grid-cols-1 gap-4">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label className="block text-sm font-medium text-apptivia-carbon-700 mb-1">
             Company Name <span className="text-red-500">*</span>
           </label>
           <input
@@ -38,7 +38,7 @@ export default function StepOrgInfo({ wizardState, updateState, onError }) {
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label className="block text-sm font-medium text-apptivia-carbon-700 mb-1">
             Industry <span className="text-red-500">*</span>
           </label>
           <select
@@ -51,12 +51,12 @@ export default function StepOrgInfo({ wizardState, updateState, onError }) {
               <option key={opt} value={opt}>{opt}</option>
             ))}
           </select>
-          <p className="text-xs text-gray-400 mt-1">Used to tailor ICP defaults and AI coaching context</p>
+          <p className="text-xs text-apptivia-carbon-400 mt-1">Used to tailor ICP defaults and AI coaching context</p>
         </div>
 
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-apptivia-carbon-700 mb-1">
               Primary Contact Name <span className="text-red-500">*</span>
             </label>
             <input
@@ -68,7 +68,7 @@ export default function StepOrgInfo({ wizardState, updateState, onError }) {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-apptivia-carbon-700 mb-1">
               Contact Email <span className="text-red-500">*</span>
             </label>
             <input
@@ -82,7 +82,7 @@ export default function StepOrgInfo({ wizardState, updateState, onError }) {
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label className="block text-sm font-medium text-apptivia-carbon-700 mb-1">
             Your Title <span className="text-red-500">*</span>
           </label>
           <select

@@ -33,17 +33,17 @@ export default function IdpTemplatesModal({ onClose, onSelect, organizationId })
       <div className="bg-white rounded-xl shadow-xl w-full max-w-2xl mx-4 mb-10">
         <div className="p-6 border-b flex items-center justify-between">
           <div>
-            <h2 className="text-lg font-bold text-gray-900">IDP Templates</h2>
-            <p className="text-xs text-gray-500">Choose a template to pre-fill your development plan</p>
+            <h2 className="text-lg font-bold text-apptivia-ink">IDP Templates</h2>
+            <p className="text-xs text-apptivia-carbon-500">Choose a template to pre-fill your development plan</p>
           </div>
-          <button onClick={onClose} className="p-2 text-gray-400 hover:text-gray-600 hover:bg-apptivia-carbon-100 rounded-lg"><X size={18} /></button>
+          <button onClick={onClose} className="p-2 text-apptivia-carbon-400 hover:text-apptivia-carbon-600 hover:bg-apptivia-carbon-100 rounded-lg"><X size={18} /></button>
         </div>
 
         <div className="p-6">
           {loading ? (
-            <div className="text-center py-8 text-sm text-gray-500">Loading templates...</div>
+            <div className="text-center py-8 text-sm text-apptivia-carbon-500">Loading templates...</div>
           ) : templates.length === 0 ? (
-            <div className="text-center py-8 text-sm text-gray-500">No templates available</div>
+            <div className="text-center py-8 text-sm text-apptivia-carbon-500">No templates available</div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {templates.map(t => {
@@ -56,17 +56,17 @@ export default function IdpTemplatesModal({ onClose, onSelect, organizationId })
                   >
                     <div className="flex items-start gap-3">
                       <div className="w-10 h-10 rounded-lg bg-apptivia-coral-tone-50 flex items-center justify-center shrink-0">
-                        <IconComp size={20} className="text-blue-600" />
+                        <IconComp size={20} className="text-apptivia-coral" />
                       </div>
                       <div className="flex-1">
                         <div className="flex items-center gap-2 mb-1">
-                          <h4 className="font-semibold text-gray-900 text-sm">{t.name}</h4>
+                          <h4 className="font-semibold text-apptivia-ink text-sm">{t.name}</h4>
                           {t.is_system && (
-                            <span className="px-1.5 py-0.5 text-[9px] rounded bg-apptivia-carbon-100 text-gray-500 font-medium">System</span>
+                            <span className="px-1.5 py-0.5 text-[9px] rounded bg-apptivia-carbon-100 text-apptivia-carbon-500 font-medium">System</span>
                           )}
                         </div>
-                        <p className="text-xs text-gray-500 mb-2">{t.description}</p>
-                        <div className="flex items-center gap-3 text-[10px] text-gray-400">
+                        <p className="text-xs text-apptivia-carbon-500 mb-2">{t.description}</p>
+                        <div className="flex items-center gap-3 text-[10px] text-apptivia-carbon-400">
                           <span className="flex items-center gap-1"><Calendar size={10} /> {idpPlanTypes[t.plan_type]?.label || t.plan_type}</span>
                           <span>{t.default_duration_days} days</span>
                           {t.suggested_milestones?.length > 0 && (

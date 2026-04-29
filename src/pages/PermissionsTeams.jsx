@@ -169,14 +169,14 @@ export default function PermissionsTeams() {
       <div className="p-6">
         <div className="flex items-start justify-between mb-4">
           <div>
-            <h1 className="text-2xl font-bold text-blue-700 mb-1">Permissions</h1>
-            <p className="text-gray-500 text-sm">Manage user permissions</p>
+            <h1 className="text-2xl font-bold text-apptivia-coral mb-1">Permissions</h1>
+            <p className="text-apptivia-carbon-500 text-sm">Manage user permissions</p>
           </div>
           <div className="flex gap-2 items-center">
             <div className="relative">
-              <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+              <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-apptivia-carbon-400" />
               <input type="text" placeholder="Search..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} onFocus={() => searchQuery && setShowSearchResults(true)} className="w-64 pl-9 pr-8 py-2 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" />
-              {searchQuery && <button onClick={() => { setSearchQuery(''); setSearchResults([]); setShowSearchResults(false); }} className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"><X size={14} /></button>}
+              {searchQuery && <button onClick={() => { setSearchQuery(''); setSearchResults([]); setShowSearchResults(false); }} className="absolute right-2 top-1/2 -translate-y-1/2 text-apptivia-carbon-400 hover:text-apptivia-carbon-600"><X size={14} /></button>}
               {showSearchResults && searchResults.length > 0 && (
                 <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-96 overflow-y-auto z-50">
                   {searchResults.map((result, idx) => (
@@ -185,20 +185,20 @@ export default function PermissionsTeams() {
                         <span className="text-xl">{result.icon}</span>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2">
-                            <span className="text-xs font-semibold text-gray-900">{result.title}</span>
-                            <span className="text-[10px] px-1.5 py-0.5 rounded bg-apptivia-carbon-100 text-gray-600">{result.type}</span>
+                            <span className="text-xs font-semibold text-apptivia-ink">{result.title}</span>
+                            <span className="text-[10px] px-1.5 py-0.5 rounded bg-apptivia-carbon-100 text-apptivia-carbon-600">{result.type}</span>
                           </div>
-                          {result.subtitle && <div className="text-[11px] text-gray-500 mt-0.5 truncate">{result.subtitle}</div>}
+                          {result.subtitle && <div className="text-[11px] text-apptivia-carbon-500 mt-0.5 truncate">{result.subtitle}</div>}
                         </div>
                       </div>
                     </button>
                   ))}
                 </div>
               )}
-              {showSearchResults && searchQuery && searchResults.length === 0 && !searching && <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg p-4 z-50"><div className="text-sm text-gray-500 text-center">No results found</div></div>}
-              {searching && <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg p-4 z-50"><div className="text-sm text-gray-500 text-center">Searching...</div></div>}
+              {showSearchResults && searchQuery && searchResults.length === 0 && !searching && <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg p-4 z-50"><div className="text-sm text-apptivia-carbon-500 text-center">No results found</div></div>}
+              {searching && <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg p-4 z-50"><div className="text-sm text-apptivia-carbon-500 text-center">Searching...</div></div>}
             </div>
-            <button onClick={handleRefresh} disabled={isRefreshing} className={`relative p-2 rounded-lg font-semibold text-sm bg-white text-gray-700 border border-gray-200 hover:bg-apptivia-paper group ${isRefreshing ? 'opacity-50 cursor-not-allowed' : 'transition-all duration-200 hover:scale-105 hover:shadow-md'}`} title="Refresh data">
+            <button onClick={handleRefresh} disabled={isRefreshing} className={`relative p-2 rounded-lg font-semibold text-sm bg-white text-apptivia-carbon-700 border border-gray-200 hover:bg-apptivia-paper group ${isRefreshing ? 'opacity-50 cursor-not-allowed' : 'transition-all duration-200 hover:scale-105 hover:shadow-md'}`} title="Refresh data">
               <svg className={`w-[18px] h-[18px] ${isRefreshing ? 'animate-spin' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
               </svg>
@@ -222,7 +222,7 @@ export default function PermissionsTeams() {
         <ConfigurePanel isOpen={configPanelOpen} onClose={() => setConfigPanelOpen(false)} onOpenAdvanced={() => setShowConfigModal(true)} />
         <ConfigureModal isOpen={showConfigModal} onClose={() => setShowConfigModal(false)} />
         <RightFilterPanel isOpen={filtersOpen} onClose={() => setFiltersOpen(false)} title="Permission Filters" subtitle="Filter permissions" showReset>
-          <div className="text-xs text-gray-500">No filters available yet.</div>
+          <div className="text-xs text-apptivia-carbon-500">No filters available yet.</div>
         </RightFilterPanel>
 
         {/* ════════ Permissions Management ════════ */}
@@ -230,25 +230,25 @@ export default function PermissionsTeams() {
           <div className="bg-white rounded-lg shadow-sm p-5 mt-4">
             <div className="flex items-center justify-between mb-4">
               <div>
-                <h3 className="text-lg font-semibold text-gray-900">User Permissions</h3>
-                <p className="text-xs text-gray-500">Enable or disable permissions for individual users</p>
+                <h3 className="text-lg font-semibold text-apptivia-ink">User Permissions</h3>
+                <p className="text-xs text-apptivia-carbon-500">Enable or disable permissions for individual users</p>
               </div>
             </div>
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
               <div className="bg-apptivia-paper rounded-xl p-3 border">
-                <div className="text-xs font-semibold text-gray-600 mb-2">Users</div>
+                <div className="text-xs font-semibold text-apptivia-carbon-600 mb-2">Users</div>
                 <div className="space-y-2 max-h-[420px] overflow-auto">
                   {usersList.length === 0 ? (
-                    <div className="text-xs text-gray-500">No users available.</div>
+                    <div className="text-xs text-apptivia-carbon-500">No users available.</div>
                   ) : (
                     usersList.map((u) => (
                       <button
                         key={u.id}
                         onClick={() => setSelectedUserId(String(u.id))}
-                        className={`w-full text-left px-3 py-2 rounded-lg text-xs font-medium transition-all ${String(u.id) === String(selectedUserId) ? 'bg-apptivia-coral text-white' : 'bg-white text-gray-700 hover:bg-apptivia-carbon-100'}`}
+                        className={`w-full text-left px-3 py-2 rounded-lg text-xs font-medium transition-all ${String(u.id) === String(selectedUserId) ? 'bg-apptivia-coral text-white' : 'bg-white text-apptivia-carbon-700 hover:bg-apptivia-carbon-100'}`}
                       >
                         <div>{`${u.first_name || ''} ${u.last_name || ''}`.trim() || u.email || 'User'}</div>
-                        <div className={`${String(u.id) === String(selectedUserId) ? 'text-blue-100' : 'text-gray-400'} text-[10px]`}>{normalizeRole(u.role)}</div>
+                        <div className={`${String(u.id) === String(selectedUserId) ? 'text-apptivia-coral-tone-300' : 'text-apptivia-carbon-400'} text-[10px]`}>{normalizeRole(u.role)}</div>
                       </button>
                     ))
                   )}
@@ -257,12 +257,12 @@ export default function PermissionsTeams() {
               <div className="lg:col-span-2 bg-white rounded-xl border p-4">
                 <div className="flex items-center justify-between mb-3">
                   <div>
-                    <div className="text-xs text-gray-500">Selected user</div>
-                    <div className="text-sm font-semibold text-gray-900">
+                    <div className="text-xs text-apptivia-carbon-500">Selected user</div>
+                    <div className="text-sm font-semibold text-apptivia-ink">
                       {selectedUser ? `${selectedUser.first_name || ''} ${selectedUser.last_name || ''}`.trim() || selectedUser.email : 'Choose a user'}
                     </div>
                   </div>
-                  <button onClick={resetPermissionOverrides} className="text-xs font-semibold text-blue-600 hover:text-blue-700" disabled={!selectedUserId}>
+                  <button onClick={resetPermissionOverrides} className="text-xs font-semibold text-apptivia-coral hover:text-apptivia-coral" disabled={!selectedUserId}>
                     Reset to role defaults
                   </button>
                 </div>
@@ -274,12 +274,12 @@ export default function PermissionsTeams() {
                       className="flex items-start gap-3 border rounded-lg p-3 text-left hover:shadow-sm transition-all"
                       disabled={!selectedUserId}
                     >
-                      <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${perm.enabled ? 'bg-green-100 text-green-700' : 'bg-apptivia-carbon-200 text-gray-500'}`}>
+                      <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${perm.enabled ? 'bg-green-100 text-green-700' : 'bg-apptivia-carbon-200 text-apptivia-carbon-500'}`}>
                         {perm.enabled ? '✓' : '—'}
                       </div>
                       <div>
-                        <div className="text-xs font-semibold text-gray-900">{perm.label}</div>
-                        <div className="text-[11px] text-gray-500">{perm.description}</div>
+                        <div className="text-xs font-semibold text-apptivia-ink">{perm.label}</div>
+                        <div className="text-[11px] text-apptivia-carbon-500">{perm.description}</div>
                       </div>
                     </button>
                   ))}
@@ -297,7 +297,7 @@ export default function PermissionsTeams() {
           </div>
         ) : (
           <div className="bg-white rounded-lg shadow-sm p-8 mt-4 text-center">
-            <p className="text-gray-500 text-sm">You don't have permission to manage user permissions.</p>
+            <p className="text-apptivia-carbon-500 text-sm">You don't have permission to manage user permissions.</p>
           </div>
         )}
       </div>

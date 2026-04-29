@@ -59,10 +59,10 @@ export default function EditProfileModal({ isOpen, onClose, profile, onSuccess }
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-bold text-gray-900">Edit Profile</h2>
+          <h2 className="text-xl font-bold text-apptivia-ink">Edit Profile</h2>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 transition-colors"
+            className="text-apptivia-carbon-400 hover:text-apptivia-carbon-600 transition-colors"
           >
             <X size={24} />
           </button>
@@ -77,7 +77,7 @@ export default function EditProfileModal({ isOpen, onClose, profile, onSuccess }
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-apptivia-carbon-700 mb-1">
                 First Name
               </label>
               <input
@@ -89,7 +89,7 @@ export default function EditProfileModal({ isOpen, onClose, profile, onSuccess }
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-apptivia-carbon-700 mb-1">
                 Last Name
               </label>
               <input
@@ -103,7 +103,7 @@ export default function EditProfileModal({ isOpen, onClose, profile, onSuccess }
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-apptivia-carbon-700 mb-1">
               Title
             </label>
             <input
@@ -116,7 +116,7 @@ export default function EditProfileModal({ isOpen, onClose, profile, onSuccess }
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-apptivia-carbon-700 mb-1">
               Department
             </label>
             <input
@@ -129,7 +129,7 @@ export default function EditProfileModal({ isOpen, onClose, profile, onSuccess }
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-apptivia-carbon-700 mb-1">
               Phone
             </label>
             <input
@@ -145,7 +145,7 @@ export default function EditProfileModal({ isOpen, onClose, profile, onSuccess }
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 text-gray-700 bg-apptivia-carbon-100 rounded-md hover:bg-apptivia-carbon-200 transition-colors"
+              className="px-4 py-2 text-apptivia-carbon-700 bg-apptivia-carbon-100 rounded-md hover:bg-apptivia-carbon-200 transition-colors"
               disabled={saving}
             >
               Cancel

@@ -212,10 +212,10 @@ Mike,Johnson,mike.johnson@company.com,power_user,Marketing Team,Marketing,Market
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b">
           <div className="flex items-center gap-3">
-            <Users size={24} className="text-blue-600" />
+            <Users size={24} className="text-apptivia-coral" />
             <div>
               <h2 className="text-xl font-bold">Import Users</h2>
-              <p className="text-sm text-gray-500">
+              <p className="text-sm text-apptivia-carbon-500">
                 {step === 1 && 'Upload a CSV file to bulk import users'}
                 {step === 2 && `Review ${parsedData.length} users before importing`}
                 {step === 3 && 'Importing users...'}
@@ -227,7 +227,7 @@ Mike,Johnson,mike.johnson@company.com,power_user,Marketing Team,Marketing,Market
             onClick={handleClose}
             className="p-2 hover:bg-apptivia-carbon-100 rounded-lg transition-colors"
           >
-            <X size={20} className="text-gray-500" />
+            <X size={20} className="text-apptivia-carbon-500" />
           </button>
         </div>
 
@@ -251,9 +251,9 @@ Mike,Johnson,mike.johnson@company.com,power_user,Marketing Team,Marketing,Market
                   onChange={handleFileSelect}
                   className="hidden"
                 />
-                <Upload size={48} className="mx-auto text-gray-400 mb-4" />
+                <Upload size={48} className="mx-auto text-apptivia-carbon-400 mb-4" />
                 <h3 className="text-lg font-semibold mb-2">Upload CSV File</h3>
-                <p className="text-sm text-gray-600 mb-4">
+                <p className="text-sm text-apptivia-carbon-600 mb-4">
                   Click to browse or drag and drop your CSV file here
                 </p>
                 <button
@@ -266,10 +266,10 @@ Mike,Johnson,mike.johnson@company.com,power_user,Marketing Team,Marketing,Market
 
               <div className="bg-apptivia-coral-tone-50 border border-blue-200 rounded-lg p-4">
                 <div className="flex items-start gap-3">
-                  <FileText size={20} className="text-blue-600 flex-shrink-0 mt-0.5" />
+                  <FileText size={20} className="text-apptivia-coral flex-shrink-0 mt-0.5" />
                   <div>
-                    <div className="font-semibold text-blue-900 mb-1">CSV Format Requirements</div>
-                    <ul className="text-sm text-blue-800 space-y-1">
+                    <div className="font-semibold text-apptivia-coral-tone-700 mb-1">CSV Format Requirements</div>
+                    <ul className="text-sm text-apptivia-coral-tone-700 space-y-1">
                       <li>• Required columns: first_name, last_name, email</li>
                       <li>• Optional columns: role, team, department, title</li>
                       <li>• First row must contain column headers</li>
@@ -277,7 +277,7 @@ Mike,Johnson,mike.johnson@company.com,power_user,Marketing Team,Marketing,Market
                     </ul>
                     <button
                       onClick={downloadTemplate}
-                      className="mt-3 flex items-center gap-2 text-sm text-blue-600 hover:text-blue-700 font-medium"
+                      className="mt-3 flex items-center gap-2 text-sm text-apptivia-coral hover:text-apptivia-coral font-medium"
                     >
                       <Download size={16} />
                       Download Template
@@ -294,7 +294,7 @@ Mike,Johnson,mike.johnson@company.com,power_user,Marketing Team,Marketing,Market
               <div className="flex items-center justify-between p-3 bg-apptivia-paper rounded-lg">
                 <div>
                   <div className="font-semibold">Ready to import {parsedData.length} users</div>
-                  <div className="text-sm text-gray-600">Review the data below before proceeding</div>
+                  <div className="text-sm text-apptivia-carbon-600">Review the data below before proceeding</div>
                 </div>
               </div>
 
@@ -313,16 +313,16 @@ Mike,Johnson,mike.johnson@company.com,power_user,Marketing Team,Marketing,Market
                   <tbody>
                     {parsedData.map((row, index) => (
                       <tr key={index} className="border-b hover:bg-apptivia-paper">
-                        <td className="px-3 py-2 text-gray-500">{index + 1}</td>
+                        <td className="px-3 py-2 text-apptivia-carbon-500">{index + 1}</td>
                         <td className="px-3 py-2">{row.first_name}</td>
                         <td className="px-3 py-2">{row.last_name}</td>
                         <td className="px-3 py-2">{row.email}</td>
                         <td className="px-3 py-2">
-                          <span className="px-2 py-1 bg-apptivia-coral-tone-50 text-blue-700 rounded text-xs">
+                          <span className="px-2 py-1 bg-apptivia-coral-tone-50 text-apptivia-coral rounded text-xs">
                             {row.role || 'power_user'}
                           </span>
                         </td>
-                        <td className="px-3 py-2 text-gray-600">{row.team || '-'}</td>
+                        <td className="px-3 py-2 text-apptivia-carbon-600">{row.team || '-'}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -336,7 +336,7 @@ Mike,Johnson,mike.johnson@company.com,power_user,Marketing Team,Marketing,Market
             <div className="text-center py-12">
               <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-600 mx-auto mb-4"></div>
               <div className="text-lg font-semibold mb-2">Importing users...</div>
-              <div className="text-sm text-gray-600">This may take a few moments</div>
+              <div className="text-sm text-apptivia-carbon-600">This may take a few moments</div>
             </div>
           )}
 
@@ -354,8 +354,8 @@ Mike,Johnson,mike.johnson@company.com,power_user,Marketing Team,Marketing,Market
                   <div className="text-sm text-green-700">Users Created</div>
                 </div>
                 <div className="bg-apptivia-coral-tone-50 border border-blue-200 rounded-lg p-4 text-center">
-                  <div className="text-3xl font-bold text-blue-600">{importResults.updated}</div>
-                  <div className="text-sm text-blue-700">Users Updated</div>
+                  <div className="text-3xl font-bold text-apptivia-coral">{importResults.updated}</div>
+                  <div className="text-sm text-apptivia-coral">Users Updated</div>
                 </div>
                 <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-center">
                   <div className="text-3xl font-bold text-red-600">{importResults.failed}</div>
@@ -383,7 +383,7 @@ Mike,Johnson,mike.johnson@company.com,power_user,Marketing Team,Marketing,Market
         <div className="p-6 border-t bg-apptivia-paper flex items-center justify-between">
           <button
             onClick={handleClose}
-            className="px-4 py-2 text-gray-600 hover:text-gray-800"
+            className="px-4 py-2 text-apptivia-carbon-600 hover:text-apptivia-ink"
           >
             {step === 4 ? 'Close' : 'Cancel'}
           </button>

@@ -67,9 +67,9 @@ export const TIER_LABELS: Record<number, string> = {
 
 export const TIER_COLORS: Record<number, string> = {
   1: 'bg-red-100 text-red-700',
-  2: 'bg-apptivia-coral-tone-50 text-blue-700',
+  2: 'bg-apptivia-coral-tone-50 text-apptivia-coral',
   3: 'bg-cyan-100 text-cyan-700',
-  4: 'bg-apptivia-carbon-100 text-gray-600',
+  4: 'bg-apptivia-carbon-100 text-apptivia-carbon-600',
 };
 
 /**
@@ -111,11 +111,11 @@ export function getSkillsetsForKpi(kpiKey: string): string[] {
  * Skillset mastery level based on progress percentage.
  */
 export const SKILLSET_LEVEL_COLORS: Record<string, string> = {
-  Beginner: 'bg-apptivia-carbon-100 text-gray-600',
+  Beginner: 'bg-apptivia-carbon-100 text-apptivia-carbon-600',
   Developing: 'bg-orange-100 text-orange-700',
-  Intermediate: 'bg-apptivia-coral-tone-50 text-blue-700',
+  Intermediate: 'bg-apptivia-coral-tone-50 text-apptivia-coral',
   Advanced: 'bg-emerald-100 text-emerald-700',
-  Master: 'bg-apptivia-carbon-100 text-purple-700',
+  Master: 'bg-apptivia-carbon-100 text-apptivia-ink',
 };
 
 export function getSkillsetLevel(progress: number): string {

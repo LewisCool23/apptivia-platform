@@ -65,25 +65,25 @@ export default function TeamManagementPanel({
         {/* Teams sidebar */}
         <div className="bg-apptivia-paper rounded-xl p-3 border">
           <div className="flex items-center justify-between mb-2">
-            <div className="text-xs font-semibold text-gray-600">Teams</div>
+            <div className="text-xs font-semibold text-apptivia-carbon-600">Teams</div>
             <button
-              className="text-xs text-blue-600 font-semibold disabled:text-gray-300"
+              className="text-xs text-apptivia-coral font-semibold disabled:text-apptivia-carbon-300"
               disabled={!canManageTeams}
               onClick={openAddTeamModal}
             >+ Add Team</button>
           </div>
           <div className="space-y-2 max-h-[420px] overflow-auto">
             {teams.length === 0 ? (
-              <div className="text-xs text-gray-500">No teams found.</div>
+              <div className="text-xs text-apptivia-carbon-500">No teams found.</div>
             ) : (
               teams.map((team) => (
                 <button
                   key={team.id}
                   onClick={() => setSelectedTeamId(String(team.id))}
-                  className={`w-full text-left px-3 py-2 rounded-lg text-xs font-medium transition-all ${String(team.id) === String(selectedTeamId) ? 'bg-apptivia-coral text-white' : 'bg-white text-gray-700 hover:bg-apptivia-carbon-100'}`}
+                  className={`w-full text-left px-3 py-2 rounded-lg text-xs font-medium transition-all ${String(team.id) === String(selectedTeamId) ? 'bg-apptivia-coral text-white' : 'bg-white text-apptivia-carbon-700 hover:bg-apptivia-carbon-100'}`}
                 >
                   <div>{team.name}</div>
-                  <div className={`${String(team.id) === String(selectedTeamId) ? 'text-blue-100' : 'text-gray-400'} text-[10px]`}>{team.department || 'No department'}</div>
+                  <div className={`${String(team.id) === String(selectedTeamId) ? 'text-apptivia-coral-tone-300' : 'text-apptivia-carbon-400'} text-[10px]`}>{team.department || 'No department'}</div>
                 </button>
               ))
             )}
@@ -94,21 +94,21 @@ export default function TeamManagementPanel({
         <div className="lg:col-span-2 bg-white rounded-xl border p-4">
           <div className="flex items-center justify-between mb-3">
             <div>
-              <div className="text-xs text-gray-500">Team members</div>
-              <div className="text-sm font-semibold text-gray-900">
+              <div className="text-xs text-apptivia-carbon-500">Team members</div>
+              <div className="text-sm font-semibold text-apptivia-ink">
                 {teams.find(t => String(t.id) === String(selectedTeamId))?.name || 'Select a team'}
               </div>
             </div>
             <div className="flex gap-2">
               <button
-                className="text-xs font-semibold text-blue-600 disabled:text-gray-300"
+                className="text-xs font-semibold text-apptivia-coral disabled:text-apptivia-carbon-300"
                 onClick={() => setShowAddMemberModal(true)}
                 disabled={!canManageTeamMembers || !selectedTeamId}
               >
                 + Add Member
               </button>
               <button
-                className="text-xs font-semibold text-red-500 disabled:text-gray-300"
+                className="text-xs font-semibold text-red-500 disabled:text-apptivia-carbon-300"
                 onClick={() => setShowRemoveMemberModal(true)}
                 disabled={!canManageTeamMembers || teamMembers.length === 0}
               >
@@ -118,15 +118,15 @@ export default function TeamManagementPanel({
           </div>
           <div className="space-y-2 max-h-[420px] overflow-auto">
             {teamMembers.length === 0 ? (
-              <div className="text-xs text-gray-500">No team members found.</div>
+              <div className="text-xs text-apptivia-carbon-500">No team members found.</div>
             ) : (
               teamMembers.map((member) => (
                 <div key={member.id} className="border rounded-lg p-3 flex items-center justify-between">
                   <div>
                     <div className="text-sm font-semibold">{`${member.first_name || ''} ${member.last_name || ''}`.trim() || member.email}</div>
-                    <div className="text-[11px] text-gray-500">{normalizeRole(member.role)}</div>
+                    <div className="text-[11px] text-apptivia-carbon-500">{normalizeRole(member.role)}</div>
                   </div>
-                  <div className="flex items-center gap-2 text-[11px] text-gray-500">
+                  <div className="flex items-center gap-2 text-[11px] text-apptivia-carbon-500">
                     {connectedIntegrations.length > 0 ? connectedIntegrations.map((int) => {
                       const name = typeof int === 'string' ? int : int.name;
                       const key = typeof int === 'string' ? int : int.type;
@@ -137,7 +137,7 @@ export default function TeamManagementPanel({
                         </div>
                       );
                     }) : (
-                      <span className="text-gray-400">No integrations connected</span>
+                      <span className="text-apptivia-carbon-400">No integrations connected</span>
                     )}
                   </div>
                 </div>
@@ -153,14 +153,14 @@ export default function TeamManagementPanel({
           <div className="bg-white w-[95%] max-w-md rounded-2xl shadow-2xl p-5" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-start justify-between mb-4">
               <div>
-                <h3 className="text-lg font-bold text-gray-900">Add Team Member</h3>
-                <p className="text-xs text-gray-500">Assign a user to the selected team</p>
+                <h3 className="text-lg font-bold text-apptivia-ink">Add Team Member</h3>
+                <p className="text-xs text-apptivia-carbon-500">Assign a user to the selected team</p>
               </div>
-              <button onClick={() => setShowAddMemberModal(false)} className="text-gray-400 hover:text-gray-600 text-sm">Close</button>
+              <button onClick={() => setShowAddMemberModal(false)} className="text-apptivia-carbon-400 hover:text-apptivia-carbon-600 text-sm">Close</button>
             </div>
             <div className="space-y-3">
               <div>
-                <label className="block text-xs text-gray-500 mb-1">Available users</label>
+                <label className="block text-xs text-apptivia-carbon-500 mb-1">Available users</label>
                 <select
                   value={selectedAddMemberId}
                   onChange={(e) => setSelectedAddMemberId(e.target.value)}
@@ -199,14 +199,14 @@ export default function TeamManagementPanel({
           <div className="bg-white w-[95%] max-w-md rounded-2xl shadow-2xl p-5" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-start justify-between mb-4">
               <div>
-                <h3 className="text-lg font-bold text-gray-900">Remove Team Member</h3>
-                <p className="text-xs text-gray-500">Remove a user from the selected team</p>
+                <h3 className="text-lg font-bold text-apptivia-ink">Remove Team Member</h3>
+                <p className="text-xs text-apptivia-carbon-500">Remove a user from the selected team</p>
               </div>
-              <button onClick={() => setShowRemoveMemberModal(false)} className="text-gray-400 hover:text-gray-600 text-sm">Close</button>
+              <button onClick={() => setShowRemoveMemberModal(false)} className="text-apptivia-carbon-400 hover:text-apptivia-carbon-600 text-sm">Close</button>
             </div>
             <div className="space-y-3">
               <div>
-                <label className="block text-xs text-gray-500 mb-1">Current members</label>
+                <label className="block text-xs text-apptivia-carbon-500 mb-1">Current members</label>
                 <select
                   value={selectedRemoveMemberId}
                   onChange={(e) => setSelectedRemoveMemberId(e.target.value)}
@@ -245,14 +245,14 @@ export default function TeamManagementPanel({
           <div className="bg-white w-[95%] max-w-md rounded-2xl shadow-2xl p-5" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-start justify-between mb-4">
               <div>
-                <h3 className="text-lg font-bold text-gray-900">Create New Team</h3>
-                <p className="text-xs text-gray-500">Add a new team to your organization</p>
+                <h3 className="text-lg font-bold text-apptivia-ink">Create New Team</h3>
+                <p className="text-xs text-apptivia-carbon-500">Add a new team to your organization</p>
               </div>
-              <button onClick={() => setShowAddTeamModal(false)} className="text-gray-400 hover:text-gray-600"><X size={18} /></button>
+              <button onClick={() => setShowAddTeamModal(false)} className="text-apptivia-carbon-400 hover:text-apptivia-carbon-600"><X size={18} /></button>
             </div>
             <div className="space-y-3">
               <div>
-                <label className="block text-xs font-medium text-gray-700 mb-1">Team Name *</label>
+                <label className="block text-xs font-medium text-apptivia-carbon-700 mb-1">Team Name *</label>
                 <input
                   type="text"
                   placeholder="e.g. Enterprise Sales"
@@ -262,7 +262,7 @@ export default function TeamManagementPanel({
                 />
               </div>
               <div>
-                <label className="block text-xs font-medium text-gray-700 mb-1">Description</label>
+                <label className="block text-xs font-medium text-apptivia-carbon-700 mb-1">Description</label>
                 <input
                   type="text"
                   placeholder="Optional team description"

@@ -622,8 +622,8 @@ export default function OnboardingWizard({ isOpen, onClose, onComplete, organiza
         {/* Header */}
         <div className="px-6 pt-5 pb-4 border-b flex-shrink-0">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-bold text-gray-900">Set Up Your Workspace</h2>
-            <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
+            <h2 className="text-xl font-bold text-apptivia-ink">Set Up Your Workspace</h2>
+            <button onClick={onClose} className="text-apptivia-carbon-400 hover:text-apptivia-carbon-600">
               <X size={20} />
             </button>
           </div>
@@ -645,10 +645,10 @@ export default function OnboardingWizard({ isOpen, onClose, onComplete, organiza
             ))}
           </div>
           <div className="flex items-center justify-between mt-2">
-            <span className="text-xs text-gray-500">
+            <span className="text-xs text-apptivia-carbon-500">
               Step {currentStep} of {TOTAL_STEPS}: {ONBOARDING_STEPS[currentStep - 1]?.title}
             </span>
-            <span className="text-xs text-gray-400">
+            <span className="text-xs text-apptivia-carbon-400">
               {Math.round(((currentStep - 1) / (TOTAL_STEPS - 1)) * 100)}% complete
             </span>
           </div>
@@ -657,10 +657,10 @@ export default function OnboardingWizard({ isOpen, onClose, onComplete, organiza
         {/* Resume Banner */}
         {showResumeBanner && (
           <div className="px-6 py-2 bg-apptivia-coral-tone-50 border-b border-blue-100 flex items-center justify-between flex-shrink-0">
-            <span className="text-sm text-blue-700">Resumed from your previous session</span>
+            <span className="text-sm text-apptivia-coral">Resumed from your previous session</span>
             <button
               onClick={handleStartOver}
-              className="flex items-center gap-1 text-xs text-blue-600 hover:text-blue-700 font-medium"
+              className="flex items-center gap-1 text-xs text-apptivia-coral hover:text-apptivia-coral font-medium"
             >
               <RotateCcw size={12} /> Start Over
             </button>
@@ -705,7 +705,7 @@ export default function OnboardingWizard({ isOpen, onClose, onComplete, organiza
                 type="button"
                 onClick={handleBack}
                 disabled={loading}
-                className="flex items-center gap-1 px-4 py-2 text-gray-600 hover:text-gray-800 text-sm font-medium disabled:opacity-50"
+                className="flex items-center gap-1 px-4 py-2 text-apptivia-carbon-600 hover:text-apptivia-ink text-sm font-medium disabled:opacity-50"
               >
                 <ArrowLeft size={16} /> Back
               </button>
@@ -717,7 +717,7 @@ export default function OnboardingWizard({ isOpen, onClose, onComplete, organiza
                 type="button"
                 onClick={handleSkip}
                 disabled={loading}
-                className="px-4 py-2 text-gray-500 hover:text-gray-700 text-sm font-medium disabled:opacity-50"
+                className="px-4 py-2 text-apptivia-carbon-500 hover:text-apptivia-carbon-700 text-sm font-medium disabled:opacity-50"
               >
                 Skip for now
               </button>

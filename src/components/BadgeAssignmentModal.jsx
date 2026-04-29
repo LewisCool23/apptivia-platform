@@ -162,15 +162,15 @@ export default function BadgeAssignmentModal({ isOpen, onClose, badge }) {
               {badge.icon}
             </div>
             <div>
-              <h2 className="text-xl font-bold text-gray-900">Assign Badge</h2>
-              <p className="text-sm text-gray-500">{badge.badge_name}</p>
+              <h2 className="text-xl font-bold text-apptivia-ink">Assign Badge</h2>
+              <p className="text-sm text-apptivia-carbon-500">{badge.badge_name}</p>
             </div>
           </div>
           <button
             onClick={onClose}
             className="p-2 hover:bg-apptivia-carbon-100 rounded-lg transition-colors"
           >
-            <X className="w-5 h-5 text-gray-400" />
+            <X className="w-5 h-5 text-apptivia-carbon-400" />
           </button>
         </div>
 
@@ -179,7 +179,7 @@ export default function BadgeAssignmentModal({ isOpen, onClose, badge }) {
           <div className="flex gap-3">
             {/* Search */}
             <div className="flex-1 relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-apptivia-carbon-400" />
               <input
                 type="text"
                 placeholder="Search by name or email..."
@@ -207,11 +207,11 @@ export default function BadgeAssignmentModal({ isOpen, onClose, badge }) {
             <button
               type="button"
               onClick={handleSelectAll}
-              className="text-sm text-indigo-600 hover:text-indigo-700 font-medium"
+              className="text-sm text-apptivia-ink hover:text-apptivia-ink font-medium"
             >
               {selectedProfiles.length === filteredProfiles.length ? 'Deselect All' : 'Select All'}
             </button>
-            <p className="text-sm text-gray-500">
+            <p className="text-sm text-apptivia-carbon-500">
               {selectedProfiles.length} selected · {filteredProfiles.length} available
             </p>
           </div>
@@ -222,12 +222,12 @@ export default function BadgeAssignmentModal({ isOpen, onClose, badge }) {
           {loading ? (
             <div className="text-center py-12">
               <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-gray-200 border-t-indigo-600"></div>
-              <p className="text-sm text-gray-500 mt-2">Loading profiles...</p>
+              <p className="text-sm text-apptivia-carbon-500 mt-2">Loading profiles...</p>
             </div>
           ) : filteredProfiles.length === 0 ? (
             <div className="text-center py-12">
-              <Users className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-              <p className="text-gray-500">
+              <Users className="w-12 h-12 text-apptivia-carbon-300 mx-auto mb-3" />
+              <p className="text-apptivia-carbon-500">
                 {searchQuery || departmentFilter !== 'all' 
                   ? 'No profiles match your filters'
                   : 'All eligible profiles already have this badge'}
@@ -252,11 +252,11 @@ export default function BadgeAssignmentModal({ isOpen, onClose, badge }) {
                       type="checkbox"
                       checked={isSelected}
                       onChange={() => handleToggleProfile(profile.id)}
-                      className="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
+                      className="w-4 h-4 text-apptivia-ink border-gray-300 rounded focus:ring-indigo-500"
                     />
                     <div className="flex-1 min-w-0">
-                      <p className="font-medium text-gray-900 truncate">{displayName}</p>
-                      <div className="flex items-center gap-2 text-xs text-gray-500">
+                      <p className="font-medium text-apptivia-ink truncate">{displayName}</p>
+                      <div className="flex items-center gap-2 text-xs text-apptivia-carbon-500">
                         <span className="truncate">{profile.email}</span>
                         {profile.departments?.name && (
                           <>
@@ -275,9 +275,9 @@ export default function BadgeAssignmentModal({ isOpen, onClose, badge }) {
 
         {/* Footer */}
         <div className="border-t border-gray-200 px-6 py-4 flex items-center justify-between bg-apptivia-paper">
-          <p className="text-sm text-gray-600">
+          <p className="text-sm text-apptivia-carbon-600">
             {selectedProfiles.length > 0 && (
-              <span className="font-medium text-indigo-600">
+              <span className="font-medium text-apptivia-ink">
                 {selectedProfiles.length} {selectedProfiles.length === 1 ? 'person' : 'people'} will receive this badge
               </span>
             )}
@@ -286,7 +286,7 @@ export default function BadgeAssignmentModal({ isOpen, onClose, badge }) {
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 text-gray-700 hover:bg-apptivia-carbon-200 rounded-lg transition-colors"
+              className="px-4 py-2 text-apptivia-carbon-700 hover:bg-apptivia-carbon-200 rounded-lg transition-colors"
               disabled={submitting}
             >
               Cancel

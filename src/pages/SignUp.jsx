@@ -75,8 +75,8 @@ export default function SignUp() {
         <div className="w-16 h-16 rounded-xl bg-gradient-to-r from-blue-500 to-purple-500 flex items-center justify-center mb-6">
           <span className="text-white font-bold text-3xl">A</span>
         </div>
-        <h1 className="text-2xl font-bold text-blue-700 mb-1 text-center">Create Your Account</h1>
-        <p className="text-gray-500 mb-4 text-center text-sm">Start your 14-day free Pro trial — no credit card required</p>
+        <h1 className="text-2xl font-bold text-apptivia-coral mb-1 text-center">Create Your Account</h1>
+        <p className="text-apptivia-carbon-500 mb-4 text-center text-sm">Start your 14-day free Pro trial — no credit card required</p>
 
         {error && <div className="mb-4 text-red-500 text-center w-full text-sm">{error}</div>}
 
@@ -89,7 +89,7 @@ export default function SignUp() {
             });
             if (oauthErr) setError(oauthErr.message);
           }}
-          className="w-full flex items-center justify-center gap-3 border border-gray-300 rounded-lg py-2.5 font-medium text-gray-700 hover:bg-apptivia-paper transition-all duration-200 text-sm mb-4"
+          className="w-full flex items-center justify-center gap-3 border border-gray-300 rounded-lg py-2.5 font-medium text-apptivia-carbon-700 hover:bg-apptivia-paper transition-all duration-200 text-sm mb-4"
         >
           <svg className="w-5 h-5" viewBox="0 0 24 24">
             <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4"/>
@@ -101,7 +101,7 @@ export default function SignUp() {
         </button>
         <div className="flex items-center w-full mb-4">
           <div className="flex-1 border-t border-gray-200"></div>
-          <span className="px-3 text-xs text-gray-400 uppercase">or</span>
+          <span className="px-3 text-xs text-apptivia-carbon-400 uppercase">or</span>
           <div className="flex-1 border-t border-gray-200"></div>
         </div>
 
@@ -132,7 +132,7 @@ export default function SignUp() {
               required
               placeholder="Min. 8 characters"
             />
-            <button type="button" className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 text-sm" onClick={() => setShowPw((v) => !v)} tabIndex={-1}>
+            <button type="button" className="absolute right-3 top-1/2 -translate-y-1/2 text-apptivia-carbon-400 hover:text-apptivia-carbon-600 text-sm" onClick={() => setShowPw((v) => !v)} tabIndex={-1}>
               {showPw ? 'Hide' : 'Show'}
             </button>
           </div>
@@ -151,13 +151,13 @@ export default function SignUp() {
           {isLoading ? 'Creating account...' : 'Start Free Trial'}
         </button>
 
-        <p className="text-xs text-gray-400 text-center mb-3">
+        <p className="text-xs text-apptivia-carbon-400 text-center mb-3">
           By signing up you agree to our Terms of Service and Privacy Policy.
         </p>
 
-        <div className="text-center text-gray-500 text-sm">
+        <div className="text-center text-apptivia-carbon-500 text-sm">
           Already have an account?{' '}
-          <Link to="/login" className="text-blue-600 hover:underline transition-all duration-200 hover:text-blue-700">Sign In</Link>
+          <Link to="/login" className="text-apptivia-coral hover:underline transition-all duration-200 hover:text-apptivia-coral">Sign In</Link>
         </div>
       </form>
     </div>

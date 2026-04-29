@@ -24,8 +24,8 @@ const ProtectedRoute = ({ children, requiredRoles = [], requiredPermissions = []
     return (
       <div className="min-h-screen bg-apptivia-paper flex items-center justify-center">
         <div className="text-center">
-          <Loader className="animate-spin text-blue-600 mx-auto mb-4" size={48} />
-          <p className="text-gray-600">Loading...</p>
+          <Loader className="animate-spin text-apptivia-coral mx-auto mb-4" size={48} />
+          <p className="text-apptivia-carbon-600">Loading...</p>
         </div>
       </div>
     );
@@ -41,8 +41,8 @@ const ProtectedRoute = ({ children, requiredRoles = [], requiredPermissions = []
     return (
       <div className="min-h-screen bg-apptivia-paper flex items-center justify-center">
         <div className="text-center">
-          <Loader className="animate-spin text-blue-600 mx-auto mb-4" size={48} />
-          <p className="text-gray-600">Loading...</p>
+          <Loader className="animate-spin text-apptivia-coral mx-auto mb-4" size={48} />
+          <p className="text-apptivia-carbon-600">Loading...</p>
         </div>
       </div>
     );
@@ -67,8 +67,8 @@ const ProtectedRoute = ({ children, requiredRoles = [], requiredPermissions = []
     return (
       <div className="min-h-screen bg-apptivia-paper flex items-center justify-center p-6">
         <div className="bg-white border rounded-xl shadow-sm p-6 max-w-md text-center">
-          <h1 className="text-lg font-semibold text-gray-900 mb-2">Access denied</h1>
-          <p className="text-sm text-gray-500">You don’t have access to this page.</p>
+          <h1 className="text-lg font-semibold text-apptivia-ink mb-2">Access denied</h1>
+          <p className="text-sm text-apptivia-carbon-500">You don’t have access to this page.</p>
         </div>
       </div>
     );
@@ -85,8 +85,8 @@ const ProtectedRoute = ({ children, requiredRoles = [], requiredPermissions = []
       return (
         <div className="min-h-screen bg-apptivia-paper flex items-center justify-center p-6">
           <div className="bg-white border rounded-xl shadow-sm p-6 max-w-md text-center">
-            <h1 className="text-lg font-semibold text-gray-900 mb-2">Access denied</h1>
-            <p className="text-sm text-gray-500">You don’t have permission to view this page.</p>
+            <h1 className="text-lg font-semibold text-apptivia-ink mb-2">Access denied</h1>
+            <p className="text-sm text-apptivia-carbon-500">You don’t have permission to view this page.</p>
           </div>
         </div>
       );

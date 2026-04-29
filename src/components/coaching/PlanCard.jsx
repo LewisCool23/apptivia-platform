@@ -42,10 +42,10 @@ export default function PlanCard({
       {/* Header */}
       <div className="flex items-start justify-between mb-3">
         <div className="flex-1">
-          <h4 className="font-semibold text-gray-900 mb-1">{plan.name}</h4>
-          <p className="text-xs text-gray-500">{new Date(plan.created_at).toLocaleDateString()}</p>
+          <h4 className="font-semibold text-apptivia-ink mb-1">{plan.name}</h4>
+          <p className="text-xs text-apptivia-carbon-500">{new Date(plan.created_at).toLocaleDateString()}</p>
           {plan.date_range_start && plan.date_range_end && (
-            <p className="text-xs text-gray-500">{plan.date_range_start} → {plan.date_range_end}</p>
+            <p className="text-xs text-apptivia-carbon-500">{plan.date_range_start} → {plan.date_range_end}</p>
           )}
         </div>
         <div className="flex flex-col items-end gap-1">
@@ -55,7 +55,7 @@ export default function PlanCard({
             </span>
           )}
           <span className={`px-2 py-0.5 text-[10px] rounded-full ${
-            plan.plan_type === 'auto' ? 'bg-apptivia-coral-tone-50 text-blue-700' : 'bg-apptivia-carbon-100 text-purple-700'
+            plan.plan_type === 'auto' ? 'bg-apptivia-coral-tone-50 text-apptivia-coral' : 'bg-apptivia-carbon-100 text-apptivia-ink'
           }`}>
             {plan.plan_type === 'auto' ? 'Template' : 'Custom'}
           </span>
@@ -65,15 +65,15 @@ export default function PlanCard({
       {/* Focus KPIs */}
       {plan.focus_kpis?.length > 0 && (
         <div className="mb-3">
-          <div className="text-xs font-medium text-gray-500 mb-1">Focus KPIs:</div>
+          <div className="text-xs font-medium text-apptivia-carbon-500 mb-1">Focus KPIs:</div>
           <div className="flex flex-wrap gap-1">
             {plan.focus_kpis.slice(0, 2).map((kpi, idx) => (
-              <span key={idx} className="px-2 py-0.5 bg-apptivia-carbon-100 text-gray-700 rounded text-xs">
+              <span key={idx} className="px-2 py-0.5 bg-apptivia-carbon-100 text-apptivia-carbon-700 rounded text-xs">
                 {buildLabel(kpi)}
               </span>
             ))}
             {plan.focus_kpis.length > 2 && (
-              <span className="px-2 py-0.5 bg-apptivia-carbon-100 text-gray-700 rounded text-xs">
+              <span className="px-2 py-0.5 bg-apptivia-carbon-100 text-apptivia-carbon-700 rounded text-xs">
                 +{plan.focus_kpis.length - 2}
               </span>
             )}
@@ -101,7 +101,7 @@ export default function PlanCard({
         const ctx = enriched.context;
         const totalXp = ctx.xpEstimate?.reduce((s, e) => s + e.estimatedXp, 0) || 0;
         return (
-          <div className="mb-3 text-xs text-gray-500">
+          <div className="mb-3 text-xs text-apptivia-carbon-500">
             <span className="font-medium">{ctx.currentScore}% score</span>
             {ctx.laggingKpis?.length > 0 && (
               <span> · {ctx.laggingKpis.length} lagging KPI{ctx.laggingKpis.length !== 1 ? 's' : ''}</span>
@@ -148,7 +148,7 @@ export default function PlanCard({
       {/* Power user "assigned to you" badge */}
       {isPowerUser && plan.assigned_to?.includes(user?.id) && (
         <div className="mb-3">
-          <span className="inline-flex items-center gap-1 px-2 py-1 bg-apptivia-carbon-100 text-indigo-700 rounded-full text-xs font-medium">
+          <span className="inline-flex items-center gap-1 px-2 py-1 bg-apptivia-carbon-100 text-apptivia-ink rounded-full text-xs font-medium">
             <UserPlus size={12} />
             Assigned to you
           </span>
@@ -161,7 +161,7 @@ export default function PlanCard({
       <div className="flex gap-2">
         <button
           onClick={() => onView(plan)}
-          className="flex-1 flex items-center justify-center gap-1 px-3 py-1.5 text-xs font-semibold text-blue-600 border border-blue-600 rounded-md hover:bg-apptivia-coral-tone-50"
+          className="flex-1 flex items-center justify-center gap-1 px-3 py-1.5 text-xs font-semibold text-apptivia-coral border border-blue-600 rounded-md hover:bg-apptivia-coral-tone-50"
         >
           <Target size={14} />
           View
@@ -169,7 +169,7 @@ export default function PlanCard({
         {canCreatePlans && (
           <button
             onClick={() => onEdit(plan)}
-            className="flex items-center justify-center gap-1 px-3 py-1.5 text-xs font-semibold text-gray-600 border border-gray-300 rounded-md hover:bg-apptivia-paper"
+            className="flex items-center justify-center gap-1 px-3 py-1.5 text-xs font-semibold text-apptivia-carbon-600 border border-gray-300 rounded-md hover:bg-apptivia-paper"
             title="Edit Plan"
           >
             <Edit size={14} />
@@ -188,14 +188,14 @@ export default function PlanCard({
           <>
             <button
               onClick={() => onSnapshot && onSnapshot(plan)}
-              className="flex items-center justify-center gap-1 px-3 py-1.5 text-xs font-semibold text-indigo-500 border border-indigo-300 rounded-md hover:bg-apptivia-carbon-100"
+              className="flex items-center justify-center gap-1 px-3 py-1.5 text-xs font-semibold text-apptivia-ink border border-indigo-300 rounded-md hover:bg-apptivia-carbon-100"
               title="Share Snapshot"
             >
               <Share2 size={14} />
             </button>
             <button
               onClick={() => onShare(plan)}
-              className="flex items-center justify-center gap-1 px-3 py-1.5 text-xs font-semibold text-blue-500 border border-blue-300 rounded-md hover:bg-apptivia-coral-tone-50"
+              className="flex items-center justify-center gap-1 px-3 py-1.5 text-xs font-semibold text-apptivia-coral border border-blue-300 rounded-md hover:bg-apptivia-coral-tone-50"
               title="Share via Email"
             >
               <Mail size={14} />

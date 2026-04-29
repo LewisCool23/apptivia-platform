@@ -82,9 +82,9 @@ export default function PublicIntegrations() {
       {/* Header */}
       <header className="bg-white border-b border-gray-200">
         <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
-          <Link to="/" className="text-xl font-bold text-blue-600">Apptivia</Link>
+          <Link to="/" className="text-xl font-bold text-apptivia-coral">Apptivia</Link>
           <div className="flex items-center gap-4">
-            <Link to="/login" className="text-sm text-gray-600 hover:text-gray-900">Log In</Link>
+            <Link to="/login" className="text-sm text-apptivia-carbon-600 hover:text-apptivia-ink">Log In</Link>
             <Link to="/signup" className="bg-apptivia-coral text-white text-sm px-4 py-2 rounded-lg hover:bg-apptivia-coral transition-colors">
               Start Free Trial
             </Link>
@@ -95,10 +95,10 @@ export default function PublicIntegrations() {
       {/* Hero */}
       <section className="bg-white py-16 border-b border-gray-100">
         <div className="max-w-4xl mx-auto px-6 text-center">
-          <h1 className="text-4xl font-bold text-gray-900 mb-4">
+          <h1 className="text-4xl font-bold text-apptivia-ink mb-4">
             Connect Your Sales Stack
           </h1>
-          <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+          <p className="text-lg text-apptivia-carbon-600 max-w-2xl mx-auto">
             Apptivia integrates with the tools your team already uses. Connect your CRM, sales engagement platform, and calendar to automatically populate your scorecard with real activity data.
           </p>
         </div>
@@ -108,7 +108,7 @@ export default function PublicIntegrations() {
       <section className="max-w-6xl mx-auto px-6 py-16">
         {CATEGORIES.map(category => (
           <div key={category} className="mb-12">
-            <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-4">{category}</h2>
+            <h2 className="text-sm font-semibold text-apptivia-carbon-500 uppercase tracking-wider mb-4">{category}</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {INTEGRATIONS.filter(i => i.category === category).map(integration => (
                 <div key={integration.name} className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
@@ -116,9 +116,9 @@ export default function PublicIntegrations() {
                     <div className={`w-10 h-10 rounded-lg bg-gradient-to-br ${integration.color} flex items-center justify-center text-white font-bold text-xs`}>
                       {integration.icon}
                     </div>
-                    <h3 className="font-semibold text-gray-900">{integration.name}</h3>
+                    <h3 className="font-semibold text-apptivia-ink">{integration.name}</h3>
                   </div>
-                  <p className="text-sm text-gray-600 leading-relaxed">{integration.description}</p>
+                  <p className="text-sm text-apptivia-carbon-600 leading-relaxed">{integration.description}</p>
                 </div>
               ))}
             </div>
@@ -130,15 +130,15 @@ export default function PublicIntegrations() {
       <section className="bg-apptivia-coral py-16">
         <div className="max-w-4xl mx-auto px-6 text-center">
           <h2 className="text-2xl font-bold text-white mb-4">Ready to connect your tools?</h2>
-          <p className="text-blue-100 mb-8">Start your free trial and connect your first integration in under 5 minutes.</p>
-          <Link to="/signup" className="inline-block bg-white text-blue-600 font-semibold px-8 py-3 rounded-lg hover:bg-apptivia-coral-tone-50 transition-colors">
+          <p className="text-apptivia-coral-tone-300 mb-8">Start your free trial and connect your first integration in under 5 minutes.</p>
+          <Link to="/signup" className="inline-block bg-white text-apptivia-coral font-semibold px-8 py-3 rounded-lg hover:bg-apptivia-coral-tone-50 transition-colors">
             Get Started Free
           </Link>
         </div>
       </section>
 
       {/* Footer */}
-      <footer className="bg-apptivia-ink text-gray-400 py-8">
+      <footer className="bg-apptivia-ink text-apptivia-carbon-400 py-8">
         <div className="max-w-6xl mx-auto px-6 text-center text-sm">
           <p>&copy; 2026 Apptivia. All rights reserved.</p>
           <div className="mt-2 flex justify-center gap-6">

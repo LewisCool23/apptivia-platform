@@ -106,7 +106,7 @@ export default function ShareSnapshotModal({ isOpen, onClose, userData }) {
       >
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-gray-200 flex-shrink-0">
-          <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+          <h2 className="text-xl font-bold text-apptivia-ink flex items-center gap-2">
             <span>📸</span>
             Share Achievement Snapshot
           </h2>
@@ -114,7 +114,7 @@ export default function ShareSnapshotModal({ isOpen, onClose, userData }) {
             onClick={onClose}
             className="p-2 hover:bg-apptivia-carbon-100 rounded-lg transition-colors"
           >
-            <X size={20} className="text-gray-500" />
+            <X size={20} className="text-apptivia-carbon-500" />
           </button>
         </div>
 
@@ -257,14 +257,14 @@ export default function ShareSnapshotModal({ isOpen, onClose, userData }) {
                 </button>
               </div>
 
-              <p className="text-center text-xs text-gray-500 mt-2">
+              <p className="text-center text-xs text-apptivia-carbon-500 mt-2">
                 Share your achievements with your team or on social media!
               </p>
             </>
           ) : (
             <div className="space-y-3">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                <label className="block text-sm font-medium text-apptivia-carbon-700 mb-1.5">
                   Recipients (comma-separated emails)
                 </label>
                 <input
@@ -277,7 +277,7 @@ export default function ShareSnapshotModal({ isOpen, onClose, userData }) {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                <label className="block text-sm font-medium text-apptivia-carbon-700 mb-1.5">
                   Subject (optional)
                 </label>
                 <input
@@ -318,13 +318,13 @@ export default function ShareSnapshotModal({ isOpen, onClose, userData }) {
                     setEmailRecipients('');
                     setEmailSubject('');
                   }}
-                  className="px-4 py-2 bg-apptivia-carbon-200 text-gray-700 rounded-lg text-sm font-medium hover:bg-apptivia-carbon-300 transition-colors"
+                  className="px-4 py-2 bg-apptivia-carbon-200 text-apptivia-carbon-700 rounded-lg text-sm font-medium hover:bg-apptivia-carbon-300 transition-colors"
                 >
                   Cancel
                 </button>
               </div>
 
-              <p className="text-xs text-gray-500 text-center">
+              <p className="text-xs text-apptivia-carbon-500 text-center">
                 An HTML email with achievement stats will be sent to the recipients
               </p>
             </div>

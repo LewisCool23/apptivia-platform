@@ -176,17 +176,17 @@ export default function StepKpiConfig({ wizardState, updateState, organizationId
           <BarChart3 size={20} className="text-amber-600" />
         </div>
         <div>
-          <h3 className="text-lg font-semibold text-gray-900">KPI Configuration</h3>
-          <p className="text-sm text-gray-500">Choose a role-based template or configure your own scorecard</p>
+          <h3 className="text-lg font-semibold text-apptivia-ink">KPI Configuration</h3>
+          <p className="text-sm text-apptivia-carbon-500">Choose a role-based template or configure your own scorecard</p>
         </div>
       </div>
 
       {/* Template Selector */}
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">Quick Start: Role Templates</label>
+        <label className="block text-sm font-medium text-apptivia-carbon-700 mb-2">Quick Start: Role Templates</label>
         <div className="flex gap-2 flex-wrap">
           {templatesLoading ? (
-            <span className="text-xs text-gray-400">Loading templates...</span>
+            <span className="text-xs text-apptivia-carbon-400">Loading templates...</span>
           ) : (
             <>
               {templates.map(t => (
@@ -197,7 +197,7 @@ export default function StepKpiConfig({ wizardState, updateState, organizationId
                   className={`px-4 py-2 rounded-lg border text-sm font-medium transition-all ${
                     selectedTemplate === t.title_key
                       ? 'border-amber-500 bg-amber-50 text-amber-700 ring-1 ring-amber-200'
-                      : 'border-gray-200 text-gray-700 hover:border-gray-300'
+                      : 'border-gray-200 text-apptivia-carbon-700 hover:border-gray-300'
                   }`}
                 >
                   {t.template_name}
@@ -210,7 +210,7 @@ export default function StepKpiConfig({ wizardState, updateState, organizationId
                 className={`px-4 py-2 rounded-lg border text-sm font-medium transition-all flex items-center gap-1 ${
                   selectedTemplate === 'custom'
                     ? 'border-amber-500 bg-amber-50 text-amber-700 ring-1 ring-amber-200'
-                    : 'border-gray-200 text-gray-700 hover:border-gray-300'
+                    : 'border-gray-200 text-apptivia-carbon-700 hover:border-gray-300'
                 }`}
               >
                 <Sliders size={14} /> Custom
@@ -238,9 +238,9 @@ export default function StepKpiConfig({ wizardState, updateState, organizationId
       <div className="space-y-4 max-h-80 overflow-y-auto pr-1">
         {groupedKpis.map(group => (
           <div key={group.category}>
-            <h4 className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-1.5 py-1">
+            <h4 className="text-xs font-bold text-apptivia-carbon-500 uppercase tracking-wide mb-1.5 py-1">
               {CATEGORY_LABELS[group.category] || group.category}
-              <span className="font-normal text-gray-400 ml-1">
+              <span className="font-normal text-apptivia-carbon-400 ml-1">
                 ({group.kpis.filter(k => k.enabled).length}/{group.kpis.length})
               </span>
             </h4>
@@ -266,10 +266,10 @@ export default function StepKpiConfig({ wizardState, updateState, organizationId
                     {kpi.enabled && <Check size={12} />}
                   </button>
                   <div className="flex-1 min-w-0">
-                    <div className="text-sm font-medium text-gray-900">
+                    <div className="text-sm font-medium text-apptivia-ink">
                       {kpi.name}
                       {kpi.enabled && KPI_INTEGRATION_REQ[kpi.key] && (
-                        <span className="ml-1.5 text-[10px] font-normal text-gray-400">
+                        <span className="ml-1.5 text-[10px] font-normal text-apptivia-carbon-400">
                           via {KPI_INTEGRATION_REQ[kpi.key]}
                         </span>
                       )}
@@ -278,7 +278,7 @@ export default function StepKpiConfig({ wizardState, updateState, organizationId
                   {kpi.enabled && (
                     <>
                       <div className="flex items-center gap-1">
-                        <label className="text-xs text-gray-500">Goal:</label>
+                        <label className="text-xs text-apptivia-carbon-500">Goal:</label>
                         <input
                           type="number"
                           value={kpi.goal}
@@ -286,10 +286,10 @@ export default function StepKpiConfig({ wizardState, updateState, organizationId
                           className="w-20 px-2 py-1 border border-gray-300 rounded text-sm text-center"
                           min="1"
                         />
-                        <span className="text-xs text-gray-400">{kpi.unit === 'dollars' ? '$' : ''}</span>
+                        <span className="text-xs text-apptivia-carbon-400">{kpi.unit === 'dollars' ? '$' : ''}</span>
                       </div>
                       <div className="flex items-center gap-1">
-                        <label className="text-xs text-gray-500">Weight:</label>
+                        <label className="text-xs text-apptivia-carbon-500">Weight:</label>
                         <input
                           type="number"
                           value={kpi.weight}
@@ -298,7 +298,7 @@ export default function StepKpiConfig({ wizardState, updateState, organizationId
                           min="0"
                           max="100"
                         />
-                        <span className="text-xs text-gray-400">%</span>
+                        <span className="text-xs text-apptivia-carbon-400">%</span>
                       </div>
                     </>
                   )}

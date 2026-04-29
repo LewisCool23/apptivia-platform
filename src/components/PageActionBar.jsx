@@ -51,7 +51,7 @@ export default function PageActionBar({
       <button
         onClick={onClick}
         disabled={disabled}
-        className={`relative p-2 rounded-lg font-semibold text-sm bg-white text-gray-700 border border-gray-200 hover:bg-apptivia-paper ${
+        className={`relative p-2 rounded-lg font-semibold text-sm bg-white text-apptivia-carbon-700 border border-gray-200 hover:bg-apptivia-paper ${
           disabled ? 'opacity-50 cursor-not-allowed' : 'transition-all duration-200 hover:scale-105 hover:shadow-md'
         }`}
         aria-label={label}
@@ -108,8 +108,8 @@ export default function PageActionBar({
                 disabled={action.disabled}
                 className={`w-full text-left px-4 py-2.5 text-sm transition-colors ${
                   action.disabled
-                    ? 'text-gray-400 cursor-not-allowed'
-                    : 'text-gray-700 hover:bg-apptivia-coral-tone-50 hover:text-blue-600'
+                    ? 'text-apptivia-carbon-400 cursor-not-allowed'
+                    : 'text-apptivia-carbon-700 hover:bg-apptivia-coral-tone-50 hover:text-apptivia-coral'
                 }`}
               >
                 {action.label}

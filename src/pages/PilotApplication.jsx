@@ -57,11 +57,11 @@ export default function PilotApplication() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <Link to="/" className="flex items-center gap-2">
-              <Activity size={32} className="text-blue-600" />
-              <span className="text-2xl font-bold text-gray-900">Apptivia</span>
+              <Activity size={32} className="text-apptivia-coral" />
+              <span className="text-2xl font-bold text-apptivia-ink">Apptivia</span>
             </Link>
             <div className="flex items-center gap-4">
-              <Link to="/login" className="px-4 py-2 text-gray-700 hover:text-gray-900 font-medium text-sm">
+              <Link to="/login" className="px-4 py-2 text-apptivia-carbon-700 hover:text-apptivia-ink font-medium text-sm">
                 Sign In
               </Link>
               <Link
@@ -85,10 +85,10 @@ export default function PilotApplication() {
           <h1 className="text-4xl sm:text-5xl font-bold mb-4 leading-tight">
             Founding Pilot Program
           </h1>
-          <p className="text-xl text-gray-300 mb-2 max-w-2xl mx-auto">
+          <p className="text-xl text-apptivia-carbon-300 mb-2 max-w-2xl mx-auto">
             90 days free. Full platform. Locked pricing for life.
           </p>
-          <p className="text-gray-400 max-w-2xl mx-auto">
+          <p className="text-apptivia-carbon-400 max-w-2xl mx-auto">
             We're selecting a small number of B2B sales teams to be Apptivia's founding customers.
             You get the full platform at no cost for 90 days, and if you stay, your price never goes up.
           </p>
@@ -98,17 +98,17 @@ export default function PilotApplication() {
       {/* Benefits Grid */}
       <section className="py-16 bg-apptivia-paper">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h2 className="text-2xl font-bold text-gray-900 text-center mb-10">What founding pilots get</h2>
+          <h2 className="text-2xl font-bold text-apptivia-ink text-center mb-10">What founding pilots get</h2>
           <div className="grid sm:grid-cols-2 gap-6">
             {PILOT_BENEFITS.map((b) => (
               <div key={b.title} className="bg-white rounded-xl p-6 border border-gray-200 shadow-sm">
                 <div className="flex items-start gap-4">
                   <div className="w-10 h-10 bg-apptivia-coral-tone-50 rounded-lg flex items-center justify-center flex-shrink-0">
-                    <b.icon size={20} className="text-blue-600" />
+                    <b.icon size={20} className="text-apptivia-coral" />
                   </div>
                   <div>
-                    <h3 className="font-semibold text-gray-900 mb-1">{b.title}</h3>
-                    <p className="text-sm text-gray-600 leading-relaxed">{b.description}</p>
+                    <h3 className="font-semibold text-apptivia-ink mb-1">{b.title}</h3>
+                    <p className="text-sm text-apptivia-carbon-600 leading-relaxed">{b.description}</p>
                   </div>
                 </div>
               </div>
@@ -123,8 +123,8 @@ export default function PilotApplication() {
           <div className="grid lg:grid-cols-5 gap-12">
             {/* Form */}
             <div className="lg:col-span-3">
-              <h2 className="text-2xl font-bold text-gray-900 mb-2">Apply for the Founding Pilot</h2>
-              <p className="text-gray-600 text-sm mb-8">
+              <h2 className="text-2xl font-bold text-apptivia-ink mb-2">Apply for the Founding Pilot</h2>
+              <p className="text-apptivia-carbon-600 text-sm mb-8">
                 We review every application personally. If there's a fit, we'll schedule a 30-minute onboarding call within 48 hours.
               </p>
 
@@ -133,8 +133,8 @@ export default function PilotApplication() {
                   <div className="w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-4">
                     <CheckCircle size={32} className="text-emerald-600" />
                   </div>
-                  <h3 className="text-xl font-bold text-gray-900 mb-2">Application received</h3>
-                  <p className="text-gray-600 text-sm">
+                  <h3 className="text-xl font-bold text-apptivia-ink mb-2">Application received</h3>
+                  <p className="text-apptivia-carbon-600 text-sm">
                     We'll review your application and reach out within 48 hours. Keep an eye on your inbox.
                   </p>
                 </div>
@@ -142,7 +142,7 @@ export default function PilotApplication() {
                 <form onSubmit={handleSubmit} className="space-y-5">
                   <div className="grid sm:grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Full Name *</label>
+                      <label className="block text-sm font-medium text-apptivia-carbon-700 mb-1">Full Name *</label>
                       <input
                         type="text"
                         required
@@ -153,7 +153,7 @@ export default function PilotApplication() {
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Work Email *</label>
+                      <label className="block text-sm font-medium text-apptivia-carbon-700 mb-1">Work Email *</label>
                       <input
                         type="email"
                         required
@@ -167,7 +167,7 @@ export default function PilotApplication() {
 
                   <div className="grid sm:grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Company *</label>
+                      <label className="block text-sm font-medium text-apptivia-carbon-700 mb-1">Company *</label>
                       <input
                         type="text"
                         required
@@ -178,12 +178,12 @@ export default function PilotApplication() {
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Sales Team Size *</label>
+                      <label className="block text-sm font-medium text-apptivia-carbon-700 mb-1">Sales Team Size *</label>
                       <select
                         required
                         value={form.teamSize}
                         onChange={(e) => setForm(f => ({ ...f, teamSize: e.target.value }))}
-                        className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm text-gray-700"
+                        className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm text-apptivia-carbon-700"
                       >
                         <option value="">Select size</option>
                         <option value="5-10">5-10 reps</option>
@@ -196,11 +196,11 @@ export default function PilotApplication() {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Current CRM</label>
+                    <label className="block text-sm font-medium text-apptivia-carbon-700 mb-1">Current CRM</label>
                     <select
                       value={form.crm}
                       onChange={(e) => setForm(f => ({ ...f, crm: e.target.value }))}
-                      className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm text-gray-700"
+                      className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm text-apptivia-carbon-700"
                     >
                       <option value="">Select CRM</option>
                       <option value="Salesforce">Salesforce</option>
@@ -211,7 +211,7 @@ export default function PilotApplication() {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-apptivia-carbon-700 mb-1">
                       What's the biggest challenge your sales team faces right now?
                     </label>
                     <textarea
@@ -224,7 +224,7 @@ export default function PilotApplication() {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-apptivia-carbon-700 mb-1">
                       What tools does your team use today? (optional)
                     </label>
                     <input
@@ -250,7 +250,7 @@ export default function PilotApplication() {
                     )}
                   </button>
 
-                  <p className="text-xs text-gray-400 text-center">
+                  <p className="text-xs text-apptivia-carbon-400 text-center">
                     No credit card required. We'll reach out within 48 hours.
                   </p>
                 </form>
@@ -260,10 +260,10 @@ export default function PilotApplication() {
             {/* Sidebar */}
             <div className="lg:col-span-2 space-y-8">
               <div className="bg-apptivia-paper rounded-xl p-6 border border-gray-200">
-                <h3 className="font-semibold text-gray-900 mb-4">Full Pro access includes</h3>
+                <h3 className="font-semibold text-apptivia-ink mb-4">Full Pro access includes</h3>
                 <ul className="space-y-3">
                   {WHAT_YOU_GET.map((item) => (
-                    <li key={item} className="flex items-start gap-2.5 text-sm text-gray-700">
+                    <li key={item} className="flex items-start gap-2.5 text-sm text-apptivia-carbon-700">
                       <CheckCircle size={16} className="text-emerald-500 flex-shrink-0 mt-0.5" />
                       {item}
                     </li>
@@ -272,12 +272,12 @@ export default function PilotApplication() {
               </div>
 
               <div className="bg-apptivia-paper rounded-xl p-6 border border-gray-200">
-                <h3 className="font-semibold text-gray-900 mb-4">Ideal pilot fit</h3>
+                <h3 className="font-semibold text-apptivia-ink mb-4">Ideal pilot fit</h3>
                 <dl className="space-y-3">
                   {IDEAL_FIT.map((item) => (
                     <div key={item.label}>
-                      <dt className="text-xs font-medium text-gray-500 uppercase tracking-wide">{item.label}</dt>
-                      <dd className="text-sm text-gray-800 mt-0.5">{item.value}</dd>
+                      <dt className="text-xs font-medium text-apptivia-carbon-500 uppercase tracking-wide">{item.label}</dt>
+                      <dd className="text-sm text-apptivia-ink mt-0.5">{item.value}</dd>
                     </div>
                   ))}
                 </dl>
@@ -288,10 +288,10 @@ export default function PilotApplication() {
       </section>
 
       {/* Footer */}
-      <footer className="bg-apptivia-ink text-gray-400 py-8">
+      <footer className="bg-apptivia-ink text-apptivia-carbon-400 py-8">
         <div className="max-w-5xl mx-auto px-4 text-center text-sm">
           <div className="flex items-center justify-center gap-2 mb-3">
-            <Activity size={20} className="text-blue-500" />
+            <Activity size={20} className="text-apptivia-coral" />
             <span className="text-white font-semibold">Apptivia</span>
           </div>
           <p className="mb-4">Sales performance intelligence for teams that want to win.</p>
@@ -301,7 +301,7 @@ export default function PilotApplication() {
             <a href="/terms" className="hover:text-white transition-colors">Terms</a>
             <a href="/security" className="hover:text-white transition-colors">Security</a>
           </div>
-          <p className="mt-6 text-xs text-gray-600">&copy; 2026 Apptivia. All rights reserved.</p>
+          <p className="mt-6 text-xs text-apptivia-carbon-600">&copy; 2026 Apptivia. All rights reserved.</p>
         </div>
       </footer>
     </div>

@@ -361,7 +361,7 @@ function DashboardLayout({ children }) {
       <div className="lg:hidden fixed top-0 left-0 right-0 bg-white shadow-md z-40 px-4 py-3 flex items-center justify-between">
         <button
           onClick={() => setMobileMenuOpen(true)}
-          className="p-2 text-gray-600 hover:bg-apptivia-carbon-100 rounded-lg transition-all duration-200 hover:scale-105"
+          className="p-2 text-apptivia-carbon-600 hover:bg-apptivia-carbon-100 rounded-lg transition-all duration-200 hover:scale-105"
           aria-label="Open menu"
         >
           <Menu size={24} />
@@ -370,7 +370,7 @@ function DashboardLayout({ children }) {
           <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
             <span className="text-white font-bold text-sm">A</span>
           </div>
-          <h1 className="font-bold text-lg text-gray-900">Apptivia</h1>
+          <h1 className="font-bold text-lg text-apptivia-ink">Apptivia</h1>
         </div>
         <div className="w-8 h-8 bg-apptivia-coral rounded-full flex items-center justify-center">
           <span className="text-white font-bold text-xs">{getProfileInitials()}</span>
@@ -399,8 +399,8 @@ function DashboardLayout({ children }) {
                   <span className="text-white font-bold text-xs">A</span>
                 </div>
                 <div>
-                  <h1 className="font-semibold text-xs text-gray-900">Apptivia</h1>
-                  <p className="text-[10px] text-gray-500">Sales Productivity Platform</p>
+                  <h1 className="font-semibold text-xs text-apptivia-ink">Apptivia</h1>
+                  <p className="text-[10px] text-apptivia-carbon-500">Sales Productivity Platform</p>
                 </div>
               </div>
             ) : (
@@ -418,7 +418,7 @@ function DashboardLayout({ children }) {
             {sidebarOpen && (
               <button
                 onClick={() => setSidebarOpen(false)}
-                className="absolute right-0 top-1/2 -translate-y-1/2 p-1 text-gray-600 hover:bg-apptivia-carbon-100 rounded transition-all duration-200"
+                className="absolute right-0 top-1/2 -translate-y-1/2 p-1 text-apptivia-carbon-600 hover:bg-apptivia-carbon-100 rounded transition-all duration-200"
                 title="Collapse sidebar"
               >
                 <Menu size={16} />
@@ -432,8 +432,8 @@ function DashboardLayout({ children }) {
             </div>
             {sidebarOpen && (
               <div>
-                <div className="font-semibold text-gray-900 leading-tight text-xs">Welcome, {getProfileFirstName()}</div>
-                <div className="text-[10px] text-gray-500">{profile?.title || 'N/A'}</div>
+                <div className="font-semibold text-apptivia-ink leading-tight text-xs">Welcome, {getProfileFirstName()}</div>
+                <div className="text-[10px] text-apptivia-carbon-500">{profile?.title || 'N/A'}</div>
               </div>
             )}
           </div>
@@ -450,7 +450,7 @@ function DashboardLayout({ children }) {
                       className={`w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-left text-xs transition-all duration-200 hover:scale-[1.02] ${
                         activeRoute === item.route
                           ? 'bg-apptivia-coral text-white shadow-md'
-                          : 'text-gray-700 hover:bg-apptivia-carbon-100'
+                          : 'text-apptivia-carbon-700 hover:bg-apptivia-carbon-100'
                       }`}
                     >
                       <item.icon size={18} />
@@ -473,8 +473,8 @@ function DashboardLayout({ children }) {
                             onClick={() => navigate(subItem.route)}
                             className={`w-full flex items-center gap-2 px-2.5 py-1 rounded-lg text-left text-xs transition-all duration-200 hover:scale-[1.02] ${
                               activeRoute === subItem.route
-                                ? 'bg-apptivia-coral-tone-50 text-blue-700 font-medium'
-                                : 'text-gray-600 hover:bg-apptivia-paper'
+                                ? 'bg-apptivia-coral-tone-50 text-apptivia-coral font-medium'
+                                : 'text-apptivia-carbon-600 hover:bg-apptivia-paper'
                             }`}
                           >
                             <subItem.icon size={14} />
@@ -491,7 +491,7 @@ function DashboardLayout({ children }) {
                     className={`w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-left text-xs transition-all duration-200 hover:scale-[1.02] ${
                       activeRoute === item.route
                         ? 'bg-apptivia-coral text-white shadow-md'
-                        : 'text-gray-700 hover:bg-apptivia-carbon-100'
+                        : 'text-apptivia-carbon-700 hover:bg-apptivia-carbon-100'
                     }`}
                   >
                     <item.icon size={18} />
@@ -532,13 +532,13 @@ function DashboardLayout({ children }) {
                 <span className="text-white font-bold text-sm">A</span>
               </div>
               <div>
-                <h1 className="font-semibold text-sm text-gray-900">Apptivia</h1>
-                <p className="text-[11px] text-gray-500">Sales Productivity</p>
+                <h1 className="font-semibold text-sm text-apptivia-ink">Apptivia</h1>
+                <p className="text-[11px] text-apptivia-carbon-500">Sales Productivity</p>
               </div>
             </div>
             <button
               onClick={() => setMobileMenuOpen(false)}
-              className="p-2 text-gray-600 hover:bg-apptivia-carbon-100 rounded-lg transition-all duration-200 hover:scale-105"
+              className="p-2 text-apptivia-carbon-600 hover:bg-apptivia-carbon-100 rounded-lg transition-all duration-200 hover:scale-105"
               aria-label="Close menu"
             >
               <X size={20} />
@@ -550,15 +550,15 @@ function DashboardLayout({ children }) {
               <span className="text-white font-bold text-sm">{getProfileInitials()}</span>
             </div>
             <div>
-              <div className="font-semibold text-gray-900 leading-tight text-sm">Welcome, {getProfileFirstName()}</div>
-              <div className="text-[11px] text-gray-500">{profile?.title || 'N/A'}</div>
+              <div className="font-semibold text-apptivia-ink leading-tight text-sm">Welcome, {getProfileFirstName()}</div>
+              <div className="text-[11px] text-apptivia-carbon-500">{profile?.title || 'N/A'}</div>
             </div>
           </div>
         </div>
         {/* Search Bar for Mobile */}
         <div className="px-4 pb-3 border-b">
           <div className="relative">
-            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-apptivia-carbon-400" />
             <input
               type="text"
               placeholder="Search app..."
@@ -574,7 +574,7 @@ function DashboardLayout({ children }) {
                   setSearchResults([]);
                   setShowSearchResults(false);
                 }}
-                className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-apptivia-carbon-400 hover:text-apptivia-carbon-600"
               >
                 <X size={14} />
               </button>
@@ -599,11 +599,11 @@ function DashboardLayout({ children }) {
                     <span className="text-xl">{result.icon}</span>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
-                        <span className="text-xs font-semibold text-gray-900">{result.title}</span>
-                        <span className="text-[10px] px-1.5 py-0.5 rounded bg-apptivia-carbon-100 text-gray-600">{result.type}</span>
+                        <span className="text-xs font-semibold text-apptivia-ink">{result.title}</span>
+                        <span className="text-[10px] px-1.5 py-0.5 rounded bg-apptivia-carbon-100 text-apptivia-carbon-600">{result.type}</span>
                       </div>
                       {result.subtitle && (
-                        <div className="text-[11px] text-gray-500 mt-0.5 truncate">{result.subtitle}</div>
+                        <div className="text-[11px] text-apptivia-carbon-500 mt-0.5 truncate">{result.subtitle}</div>
                       )}
                     </div>
                   </div>
@@ -624,7 +624,7 @@ function DashboardLayout({ children }) {
                       className={`w-full flex items-center gap-3 px-3 py-3 rounded-lg text-left text-sm transition-all duration-200 hover:scale-[1.02] ${
                         activeRoute === item.route
                           ? 'bg-apptivia-coral text-white shadow-md'
-                          : 'text-gray-700 hover:bg-apptivia-carbon-100'
+                          : 'text-apptivia-carbon-700 hover:bg-apptivia-carbon-100'
                       }`}
                     >
                       <item.icon size={22} />
@@ -643,8 +643,8 @@ function DashboardLayout({ children }) {
                             onClick={() => navigate(subItem.route)}
                             className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-left text-sm transition-all duration-200 hover:scale-[1.02] ${
                               activeRoute === subItem.route
-                                ? 'bg-apptivia-coral-tone-50 text-blue-700 font-medium'
-                                : 'text-gray-600 hover:bg-apptivia-paper'
+                                ? 'bg-apptivia-coral-tone-50 text-apptivia-coral font-medium'
+                                : 'text-apptivia-carbon-600 hover:bg-apptivia-paper'
                             }`}
                           >
                             <subItem.icon size={16} />
@@ -661,7 +661,7 @@ function DashboardLayout({ children }) {
                     className={`w-full flex items-center gap-3 px-3 py-3 rounded-lg text-left text-sm transition-all duration-200 hover:scale-[1.02] ${
                       activeRoute === item.route
                         ? 'bg-apptivia-coral text-white shadow-md'
-                        : 'text-gray-700 hover:bg-apptivia-carbon-100'
+                        : 'text-apptivia-carbon-700 hover:bg-apptivia-carbon-100'
                     }`}
                   >
                     <item.icon size={22} />

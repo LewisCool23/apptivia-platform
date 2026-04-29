@@ -86,21 +86,21 @@ export default function StepTeamStructure({ wizardState, updateState, profile })
           <Users size={20} className="text-emerald-600" />
         </div>
         <div>
-          <h3 className="text-lg font-semibold text-gray-900">Team Structure</h3>
-          <p className="text-sm text-gray-500">Set up departments, teams, and invite your people</p>
+          <h3 className="text-lg font-semibold text-apptivia-ink">Team Structure</h3>
+          <p className="text-sm text-apptivia-carbon-500">Set up departments, teams, and invite your people</p>
         </div>
       </div>
 
       {/* Departments */}
       <div>
         <div className="flex items-center justify-between mb-2">
-          <label className="text-sm font-medium text-gray-700">
+          <label className="text-sm font-medium text-apptivia-carbon-700">
             Departments <span className="text-red-500">*</span>
           </label>
           <button
             type="button"
             onClick={addDepartment}
-            className="flex items-center gap-1 text-xs text-blue-600 hover:text-blue-700 font-medium"
+            className="flex items-center gap-1 text-xs text-apptivia-coral hover:text-apptivia-coral font-medium"
           >
             <Plus size={12} /> Add Department
           </button>
@@ -119,7 +119,7 @@ export default function StepTeamStructure({ wizardState, updateState, profile })
                 <button
                   type="button"
                   onClick={() => removeDepartment(i)}
-                  className="p-2 text-gray-400 hover:text-red-500"
+                  className="p-2 text-apptivia-carbon-400 hover:text-red-500"
                 >
                   <Trash2 size={14} />
                 </button>
@@ -131,17 +131,17 @@ export default function StepTeamStructure({ wizardState, updateState, profile })
 
       {/* Teams by Department */}
       <div>
-        <label className="text-sm font-medium text-gray-700 mb-2 block">
+        <label className="text-sm font-medium text-apptivia-carbon-700 mb-2 block">
           Teams <span className="text-red-500">*</span>
         </label>
         {departments.filter(d => d.name.trim()).map((dept) => (
           <div key={dept.name} className="mb-4 bg-apptivia-paper rounded-lg p-3">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">{dept.name}</span>
+              <span className="text-xs font-semibold text-apptivia-carbon-500 uppercase tracking-wide">{dept.name}</span>
               <button
                 type="button"
                 onClick={() => addTeam(dept.name)}
-                className="flex items-center gap-1 text-xs text-blue-600 hover:text-blue-700 font-medium"
+                className="flex items-center gap-1 text-xs text-apptivia-coral hover:text-apptivia-coral font-medium"
               >
                 <Plus size={12} /> Add Team
               </button>
@@ -162,7 +162,7 @@ export default function StepTeamStructure({ wizardState, updateState, profile })
                     <select
                       value={team.managerId || ''}
                       onChange={(e) => updateTeam(team._idx, 'managerId', e.target.value || null)}
-                      className={`px-2 py-2 border rounded-lg text-sm w-44 ${team.managerId ? 'border-gray-300 text-gray-600' : 'border-red-300 text-red-500'}`}
+                      className={`px-2 py-2 border rounded-lg text-sm w-44 ${team.managerId ? 'border-gray-300 text-apptivia-carbon-600' : 'border-red-300 text-red-500'}`}
                     >
                       <option value="">Manager *</option>
                       <option value={profile?.id || 'self'}>Me ({profile?.first_name || 'Admin'})</option>
@@ -178,7 +178,7 @@ export default function StepTeamStructure({ wizardState, updateState, profile })
                       <button
                         type="button"
                         onClick={() => removeTeam(team._idx)}
-                        className="p-2 text-gray-400 hover:text-red-500"
+                        className="p-2 text-apptivia-carbon-400 hover:text-red-500"
                       >
                         <Trash2 size={14} />
                       </button>
@@ -186,31 +186,31 @@ export default function StepTeamStructure({ wizardState, updateState, profile })
                   </div>
                 ))}
               {teams.filter(t => t.departmentName === dept.name).length === 0 && (
-                <p className="text-xs text-gray-400 italic">No teams yet — click "Add Team" above</p>
+                <p className="text-xs text-apptivia-carbon-400 italic">No teams yet — click "Add Team" above</p>
               )}
             </div>
           </div>
         ))}
         {departments.filter(d => d.name.trim()).length === 0 && (
-          <p className="text-sm text-gray-400">Add at least one department above to create teams</p>
+          <p className="text-sm text-apptivia-carbon-400">Add at least one department above to create teams</p>
         )}
       </div>
 
       {/* Team Member Invites */}
       <div>
         <div className="flex items-center justify-between mb-2">
-          <label className="text-sm font-medium text-gray-700">
+          <label className="text-sm font-medium text-apptivia-carbon-700">
             Invite Team Members
           </label>
           <button
             type="button"
             onClick={addMember}
-            className="flex items-center gap-1 text-xs text-blue-600 hover:text-blue-700 font-medium"
+            className="flex items-center gap-1 text-xs text-apptivia-coral hover:text-apptivia-coral font-medium"
           >
             <UserPlus size={12} /> Add Member
           </button>
         </div>
-        <p className="text-xs text-gray-400 mb-3">Invitations will be sent via email. Members can be added later too.</p>
+        <p className="text-xs text-apptivia-carbon-400 mb-3">Invitations will be sent via email. Members can be added later too.</p>
         <div className="space-y-3">
           {teamMembers.map((member, i) => (
             <div key={i} className="border border-gray-200 rounded-lg p-3 space-y-2">
@@ -239,7 +239,7 @@ export default function StepTeamStructure({ wizardState, updateState, profile })
                 <button
                   type="button"
                   onClick={() => removeMember(i)}
-                  className="col-span-1 p-2 text-gray-400 hover:text-red-500 justify-self-center"
+                  className="col-span-1 p-2 text-apptivia-carbon-400 hover:text-red-500 justify-self-center"
                 >
                   <Trash2 size={14} />
                 </button>

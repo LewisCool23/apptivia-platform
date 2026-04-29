@@ -95,8 +95,8 @@ export default function ShareCoachingPlanSnapshotModal({ isOpen, onClose, plan, 
       <div className="bg-white rounded-xl shadow-xl w-full max-w-lg mx-4">
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
-          <h3 className="text-base font-semibold text-gray-900">Share Coaching Plan</h3>
-          <button onClick={onClose} className="p-1 text-gray-400 hover:text-gray-600 rounded-md hover:bg-apptivia-carbon-100">
+          <h3 className="text-base font-semibold text-apptivia-ink">Share Coaching Plan</h3>
+          <button onClick={onClose} className="p-1 text-apptivia-carbon-400 hover:text-apptivia-carbon-600 rounded-md hover:bg-apptivia-carbon-100">
             <X size={18} />
           </button>
         </div>
@@ -106,7 +106,7 @@ export default function ShareCoachingPlanSnapshotModal({ isOpen, onClose, plan, 
           <div ref={snapshotRef} className="bg-gradient-to-br from-blue-600 via-indigo-600 to-purple-700 rounded-xl p-6 text-white">
             <div className="flex items-center justify-between mb-4">
               <div>
-                <p className="text-xs font-medium text-blue-200 uppercase tracking-wide">Coaching Plan</p>
+                <p className="text-xs font-medium text-apptivia-coral-tone-300 uppercase tracking-wide">Coaching Plan</p>
                 <h4 className="text-lg font-bold mt-0.5">{plan.name || 'Untitled Plan'}</h4>
               </div>
               <span className={`text-[10px] px-2 py-0.5 rounded-full font-semibold ${statusColor}`}>
@@ -115,11 +115,11 @@ export default function ShareCoachingPlanSnapshotModal({ isOpen, onClose, plan, 
             </div>
 
             {assigneeName && (
-              <p className="text-xs text-blue-200 mb-3">Assigned to: <span className="text-white font-medium">{assigneeName}</span></p>
+              <p className="text-xs text-apptivia-coral-tone-300 mb-3">Assigned to: <span className="text-white font-medium">{assigneeName}</span></p>
             )}
 
             {plan.date_range_start && (
-              <p className="text-[10px] text-blue-200 mb-3">
+              <p className="text-[10px] text-apptivia-coral-tone-300 mb-3">
                 {plan.date_range_start} — {plan.date_range_end || 'Ongoing'}
               </p>
             )}
@@ -127,11 +127,11 @@ export default function ShareCoachingPlanSnapshotModal({ isOpen, onClose, plan, 
             {/* Goals */}
             {plan.goals?.length > 0 && plan.goals[0] && (
               <div className="mb-3">
-                <p className="text-[10px] font-semibold text-blue-200 uppercase mb-1">Goals</p>
+                <p className="text-[10px] font-semibold text-apptivia-coral-tone-300 uppercase mb-1">Goals</p>
                 <ul className="space-y-0.5">
                   {plan.goals.filter(Boolean).map((g, i) => (
-                    <li key={i} className="text-xs text-blue-50 flex gap-1.5">
-                      <span className="text-blue-300 shrink-0">-</span>
+                    <li key={i} className="text-xs text-apptivia-coral-tone-300 flex gap-1.5">
+                      <span className="text-apptivia-coral-tone-300 shrink-0">-</span>
                       <span>{g}</span>
                     </li>
                   ))}
@@ -142,10 +142,10 @@ export default function ShareCoachingPlanSnapshotModal({ isOpen, onClose, plan, 
             {/* Focus KPIs */}
             {plan.focus_kpis?.length > 0 && plan.focus_kpis[0] && (
               <div className="mb-3">
-                <p className="text-[10px] font-semibold text-blue-200 uppercase mb-1">Focus KPIs</p>
+                <p className="text-[10px] font-semibold text-apptivia-coral-tone-300 uppercase mb-1">Focus KPIs</p>
                 <div className="flex flex-wrap gap-1">
                   {plan.focus_kpis.filter(Boolean).map((k, i) => (
-                    <span key={i} className="text-[10px] px-2 py-0.5 rounded-full bg-white/15 text-blue-50 font-medium">
+                    <span key={i} className="text-[10px] px-2 py-0.5 rounded-full bg-white/15 text-apptivia-coral-tone-300 font-medium">
                       {buildLabel(k)}
                     </span>
                   ))}
@@ -156,11 +156,11 @@ export default function ShareCoachingPlanSnapshotModal({ isOpen, onClose, plan, 
             {/* Action Items */}
             {plan.action_items?.length > 0 && plan.action_items[0] && (
               <div className="mb-3">
-                <p className="text-[10px] font-semibold text-blue-200 uppercase mb-1">Action Items</p>
+                <p className="text-[10px] font-semibold text-apptivia-coral-tone-300 uppercase mb-1">Action Items</p>
                 <ul className="space-y-0.5">
                   {plan.action_items.filter(Boolean).slice(0, 5).map((a, i) => (
-                    <li key={i} className="text-xs text-blue-50 flex gap-1.5">
-                      <span className="text-blue-300 shrink-0">-</span>
+                    <li key={i} className="text-xs text-apptivia-coral-tone-300 flex gap-1.5">
+                      <span className="text-apptivia-coral-tone-300 shrink-0">-</span>
                       <span>{a}</span>
                     </li>
                   ))}
@@ -171,11 +171,11 @@ export default function ShareCoachingPlanSnapshotModal({ isOpen, onClose, plan, 
             {/* Success Metrics */}
             {plan.success_metrics?.length > 0 && plan.success_metrics[0] && (
               <div>
-                <p className="text-[10px] font-semibold text-blue-200 uppercase mb-1">Success Metrics</p>
+                <p className="text-[10px] font-semibold text-apptivia-coral-tone-300 uppercase mb-1">Success Metrics</p>
                 <ul className="space-y-0.5">
                   {plan.success_metrics.filter(Boolean).map((m, i) => (
-                    <li key={i} className="text-xs text-blue-50 flex gap-1.5">
-                      <span className="text-blue-300 shrink-0">-</span>
+                    <li key={i} className="text-xs text-apptivia-coral-tone-300 flex gap-1.5">
+                      <span className="text-apptivia-coral-tone-300 shrink-0">-</span>
                       <span>{m}</span>
                     </li>
                   ))}
@@ -184,7 +184,7 @@ export default function ShareCoachingPlanSnapshotModal({ isOpen, onClose, plan, 
             )}
 
             <div className="mt-4 pt-3 border-t border-white/10">
-              <p className="text-[10px] text-blue-300">Powered by Apptivia Coach</p>
+              <p className="text-[10px] text-apptivia-coral-tone-300">Powered by Apptivia Coach</p>
             </div>
           </div>
         </div>
@@ -203,7 +203,7 @@ export default function ShareCoachingPlanSnapshotModal({ isOpen, onClose, plan, 
               </button>
               <button
                 onClick={() => setShowEmailForm(true)}
-                className="flex-1 flex items-center justify-center gap-1.5 px-4 py-2 text-sm font-medium text-gray-700 border border-gray-300 rounded-md hover:bg-apptivia-carbon-100"
+                className="flex-1 flex items-center justify-center gap-1.5 px-4 py-2 text-sm font-medium text-apptivia-carbon-700 border border-gray-300 rounded-md hover:bg-apptivia-carbon-100"
               >
                 <Mail size={14} />
                 Send Email
@@ -236,7 +236,7 @@ export default function ShareCoachingPlanSnapshotModal({ isOpen, onClose, plan, 
               <div className="flex gap-2">
                 <button
                   onClick={() => setShowEmailForm(false)}
-                  className="flex-1 px-4 py-2 text-sm font-medium text-gray-600 border border-gray-300 rounded-md hover:bg-apptivia-carbon-100"
+                  className="flex-1 px-4 py-2 text-sm font-medium text-apptivia-carbon-600 border border-gray-300 rounded-md hover:bg-apptivia-carbon-100"
                 >
                   Cancel
                 </button>

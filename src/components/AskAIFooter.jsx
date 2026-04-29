@@ -27,7 +27,7 @@ export default function AskAIFooter() {
         <h3 className="text-lg font-semibold text-white mb-2">
           Ask your AI about Apptivia
         </h3>
-        <p className="text-sm text-gray-400 mb-6 max-w-2xl mx-auto">
+        <p className="text-sm text-apptivia-carbon-400 mb-6 max-w-2xl mx-auto">
           Click any AI tool below. We hand it everything it needs to answer your questions about Apptivia — pricing, fit, production state, founder.
         </p>
         <div className="flex flex-wrap justify-center gap-3">
@@ -37,15 +37,15 @@ export default function AskAIFooter() {
               href={t.url}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center px-4 py-2 border border-gray-600 rounded-md hover:bg-apptivia-carbon-800 hover:border-gray-500 transition text-sm font-medium text-gray-300 hover:text-white"
+              className="inline-flex items-center px-4 py-2 border border-gray-600 rounded-md hover:bg-apptivia-carbon-800 hover:border-gray-500 transition text-sm font-medium text-apptivia-carbon-300 hover:text-white"
             >
               Ask {t.name}
             </a>
           ))}
         </div>
-        <p className="text-xs text-gray-500 mt-4">
+        <p className="text-xs text-apptivia-carbon-500 mt-4">
           Brief auto-updates from{' '}
-          <a href={BRIEF_URL} target="_blank" rel="noopener noreferrer" className="underline hover:text-gray-400">
+          <a href={BRIEF_URL} target="_blank" rel="noopener noreferrer" className="underline hover:text-apptivia-carbon-400">
             api.apptivia.app/api/public/aeo-brief
           </a>
         </p>

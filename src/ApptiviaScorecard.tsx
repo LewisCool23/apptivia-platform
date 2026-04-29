@@ -916,13 +916,13 @@ const ApptiviaScorecard: React.FC = () => {
       <div className="p-6">
         <div className="flex items-start justify-between mb-3">
           <div>
-            <h1 className="text-2xl font-bold text-blue-700 mb-1">Apptivia Scorecard</h1>
+            <h1 className="text-2xl font-bold text-apptivia-coral mb-1">Apptivia Scorecard</h1>
             <div className="flex items-center gap-3">
-              <p className="text-gray-500 text-sm">
+              <p className="text-apptivia-carbon-500 text-sm">
                 {isPowerUser ? 'Your personalized productivity scorecard and progress' : 'Real-time productivity scoring for your sales team'}
               </p>
               {(isManager || isAdmin) && (
-                <span className="text-[10px] text-gray-400 bg-apptivia-paper border border-gray-200 rounded-full px-2 py-0.5">
+                <span className="text-[10px] text-apptivia-carbon-400 bg-apptivia-paper border border-gray-200 rounded-full px-2 py-0.5">
                   Scoring alerts: Mon 8am
                 </span>
               )}
@@ -931,7 +931,7 @@ const ApptiviaScorecard: React.FC = () => {
           <div className="flex gap-2 items-center">
             {/* Search Bar */}
             <div className="relative">
-              <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+              <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-apptivia-carbon-400" />
               <input
                 type="text"
                 placeholder="Search..."
@@ -947,7 +947,7 @@ const ApptiviaScorecard: React.FC = () => {
                     setSearchResults([]);
                     setShowSearchResults(false);
                   }}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-apptivia-carbon-400 hover:text-apptivia-carbon-600"
                 >
                   <X size={14} />
                 </button>
@@ -970,11 +970,11 @@ const ApptiviaScorecard: React.FC = () => {
                         <span className="text-xl">{result.icon}</span>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2">
-                            <span className="text-xs font-semibold text-gray-900">{result.title}</span>
-                            <span className="text-[10px] px-1.5 py-0.5 rounded bg-apptivia-carbon-100 text-gray-600">{result.type}</span>
+                            <span className="text-xs font-semibold text-apptivia-ink">{result.title}</span>
+                            <span className="text-[10px] px-1.5 py-0.5 rounded bg-apptivia-carbon-100 text-apptivia-carbon-600">{result.type}</span>
                           </div>
                           {result.subtitle && (
-                            <div className="text-[11px] text-gray-500 mt-0.5 truncate">{result.subtitle}</div>
+                            <div className="text-[11px] text-apptivia-carbon-500 mt-0.5 truncate">{result.subtitle}</div>
                           )}
                         </div>
                       </div>
@@ -984,12 +984,12 @@ const ApptiviaScorecard: React.FC = () => {
               )}
               {showSearchResults && searchQuery && searchResults.length === 0 && !searching && (
                 <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg p-4 z-50">
-                  <div className="text-sm text-gray-500 text-center">No results found</div>
+                  <div className="text-sm text-apptivia-carbon-500 text-center">No results found</div>
                 </div>
               )}
               {searching && (
                 <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg p-4 z-50">
-                  <div className="text-sm text-gray-500 text-center">Searching...</div>
+                  <div className="text-sm text-apptivia-carbon-500 text-center">Searching...</div>
                 </div>
               )}
             </div>
@@ -997,7 +997,7 @@ const ApptiviaScorecard: React.FC = () => {
             <button
               onClick={handleRefreshAchievements}
               disabled={isRefreshing}
-              className={`relative p-2 rounded-lg font-semibold text-sm bg-white text-gray-700 border border-gray-200 hover:bg-apptivia-paper group ${
+              className={`relative p-2 rounded-lg font-semibold text-sm bg-white text-apptivia-carbon-700 border border-gray-200 hover:bg-apptivia-paper group ${
                 isRefreshing ? 'opacity-50 cursor-not-allowed' : 'transition-all duration-200 hover:scale-105 hover:shadow-md'
               }`}
               title="Refresh dashboard data and check for new achievements"
@@ -1088,7 +1088,7 @@ const ApptiviaScorecard: React.FC = () => {
                 if (canConfigureScorecard) setShowConfigModal(true);
               }}
               disabled={!canConfigureScorecard}
-              className={`px-6 py-2 rounded-lg font-semibold transition-all duration-200 ${canConfigureScorecard ? 'bg-yellow-500 text-white hover:bg-yellow-600' : 'bg-apptivia-carbon-200 text-gray-500 cursor-not-allowed'}`}
+              className={`px-6 py-2 rounded-lg font-semibold transition-all duration-200 ${canConfigureScorecard ? 'bg-yellow-500 text-white hover:bg-yellow-600' : 'bg-apptivia-carbon-200 text-apptivia-carbon-500 cursor-not-allowed'}`}
             >
               Select Scorecard KPIs
             </button>
@@ -1097,16 +1097,16 @@ const ApptiviaScorecard: React.FC = () => {
 
         {!loading && !error && !loadingKpis && kpiKeys.length > 0 && kpiKeys.length < 5 && (
           <div className="bg-apptivia-coral-tone-50 border border-blue-300 rounded-xl p-4 mb-4 flex items-start gap-3">
-            <span className="text-blue-600 text-xl">ℹ️</span>
+            <span className="text-apptivia-coral text-xl">ℹ️</span>
             <div>
-              <p className="text-blue-800 font-semibold">Scorecard Incomplete</p>
-              <p className="text-blue-700 text-sm">
+              <p className="text-apptivia-coral-tone-700 font-semibold">Scorecard Incomplete</p>
+              <p className="text-apptivia-coral text-sm">
                 You have selected {kpiKeys.length} of 5 recommended KPIs.{' '}
                 <button
                   onClick={() => {
                     if (canConfigureScorecard) setShowConfigModal(true);
                   }}
-                  className={`underline font-medium ${canConfigureScorecard ? 'text-blue-700' : 'text-gray-400 cursor-not-allowed'}`}
+                  className={`underline font-medium ${canConfigureScorecard ? 'text-apptivia-coral' : 'text-apptivia-carbon-400 cursor-not-allowed'}`}
                   disabled={!canConfigureScorecard}
                 >
                   Configure scorecard
@@ -1140,24 +1140,24 @@ const ApptiviaScorecard: React.FC = () => {
                       </text>
                     </svg>
                     <div className="flex flex-col">
-                      <div className="text-xs text-gray-500">My Score</div>
+                      <div className="text-xs text-apptivia-carbon-500">My Score</div>
                       <div className={`font-bold text-sm ${scoreTextColor(userRow?.apptivityScore ?? 0)}`}>
                         {showPacing && trendMap[userId] ? `~${trendMap[userId].goalPacing}% pace` : 'Target: 100%'}
                       </div>
-                      <div className="text-gray-400 text-[10px]">
+                      <div className="text-apptivia-carbon-400 text-[10px]">
                         {(userRow?.apptivityScore ?? 0) >= 100 ? 'On target' : `${100 - (userRow?.apptivityScore ?? 0)} pts to goal`}
                       </div>
                     </div>
                   </div>
                   <div className="bg-white rounded-lg border border-gray-100 shadow-sm p-3 flex flex-col items-start justify-center transition-all duration-300 hover:shadow-lg hover:-translate-y-1">
-                    <div className="text-xs text-gray-500 mb-1">My Rank</div>
+                    <div className="text-xs text-apptivia-carbon-500 mb-1">My Rank</div>
                     <div className="text-green-600 font-bold text-base">{teamRank ? `#${teamRank.rank}` : 'N/A'}</div>
-                    <div className="text-gray-400 text-xs">{teamRank ? `of ${teamRank.total} on your team` : 'Within your team'}</div>
+                    <div className="text-apptivia-carbon-400 text-xs">{teamRank ? `of ${teamRank.total} on your team` : 'Within your team'}</div>
                   </div>
                   <div className="bg-white rounded-lg border border-gray-100 shadow-sm p-3 flex flex-col items-start justify-center transition-all duration-300 hover:shadow-lg hover:-translate-y-1">
-                    <div className="text-xs text-gray-500 mb-1">KPI On Track</div>
-                    <div className="text-blue-700 font-bold text-base">{userKpiBreakdown.onTrack + userKpiBreakdown.exceeding}</div>
-                    <div className="text-gray-400 text-xs">of {userKpiBreakdown.total} KPIs</div>
+                    <div className="text-xs text-apptivia-carbon-500 mb-1">KPI On Track</div>
+                    <div className="text-apptivia-coral font-bold text-base">{userKpiBreakdown.onTrack + userKpiBreakdown.exceeding}</div>
+                    <div className="text-apptivia-carbon-400 text-xs">of {userKpiBreakdown.total} KPIs</div>
                   </div>
                   <div
                     className="bg-white rounded-lg border border-gray-100 shadow-sm p-3 flex flex-col items-start justify-center transition-all duration-300 hover:shadow-lg hover:-translate-y-1 cursor-pointer"
@@ -1165,9 +1165,9 @@ const ApptiviaScorecard: React.FC = () => {
                       document.getElementById('coaching-opportunities')?.scrollIntoView({ behavior: 'smooth' });
                     }}
                   >
-                    <div className="text-xs text-gray-500 mb-1">Needs Focus</div>
+                    <div className="text-xs text-apptivia-carbon-500 mb-1">Needs Focus</div>
                     <div className="text-orange-600 font-bold text-base">{userKpiBreakdown.needsFocus}</div>
-                    <div className="text-gray-400 text-xs">Coaching opportunities</div>
+                    <div className="text-apptivia-carbon-400 text-xs">Coaching opportunities</div>
                   </div>
                 </>
               ) : (
@@ -1175,23 +1175,23 @@ const ApptiviaScorecard: React.FC = () => {
                   <div className="bg-white rounded-lg border border-gray-100 shadow-sm p-3 flex flex-col items-start justify-center transition-all duration-300 hover:shadow-lg hover:-translate-y-1">
                     {filters.dateRange === 'All Time' ? (
                       <>
-                        <div className="text-xs text-gray-500 mb-1">Top Performer</div>
+                        <div className="text-xs text-apptivia-carbon-500 mb-1">Top Performer</div>
                         <div className="font-bold text-base text-green-600">
                           {sortedRows[0]?.name || 'N/A'}
                         </div>
-                        <div className="text-gray-400 text-xs">
+                        <div className="text-apptivia-carbon-400 text-xs">
                           {sortedRows[0] ? `${sortedRows[0].apptivityScore}% score` : 'No data'}
                         </div>
                       </>
                     ) : (
                       <>
-                        <div className="text-xs text-gray-500 mb-1">
+                        <div className="text-xs text-apptivia-carbon-500 mb-1">
                           {data.mostImproved && data.mostImproved.delta > 0 ? 'Most Improved' : 'Least Declined'}
                         </div>
                         <div className={`font-bold text-base ${data.mostImproved && data.mostImproved.delta > 0 ? 'text-green-600' : 'text-amber-600'}`}>
                           {data.mostImproved?.name || 'N/A'}
                         </div>
-                        <div className="text-gray-400 text-xs">
+                        <div className="text-apptivia-carbon-400 text-xs">
                           {data.mostImproved
                             ? `${data.mostImproved.delta > 0 ? '+' : ''}${data.mostImproved.delta} pts`
                             : 'No trend data'}
@@ -1200,21 +1200,21 @@ const ApptiviaScorecard: React.FC = () => {
                     )}
                   </div>
                   <div className="bg-white rounded-lg border border-gray-100 shadow-sm p-3 flex flex-col items-start justify-center transition-all duration-300 hover:shadow-lg hover:-translate-y-1">
-                    <div className="text-xs text-gray-500 mb-1">Active Reps</div>
-                    <div className="text-blue-700 font-bold text-base">{data.rows.length}</div>
-                    <div className="text-gray-400 text-xs">In selected filters</div>
+                    <div className="text-xs text-apptivia-carbon-500 mb-1">Active Reps</div>
+                    <div className="text-apptivia-coral font-bold text-base">{data.rows.length}</div>
+                    <div className="text-apptivia-carbon-400 text-xs">In selected filters</div>
                   </div>
                   <div className="bg-white rounded-lg border border-gray-100 shadow-sm p-3 flex flex-col items-start justify-center transition-all duration-300 hover:shadow-lg hover:-translate-y-1">
-                    <div className="text-xs text-gray-500 mb-1">Score Spread</div>
-                    <div className="text-purple-600 font-bold text-base">{teamScoreStats.spread}%</div>
-                    <div className="text-gray-400 text-xs">Highest vs lowest</div>
+                    <div className="text-xs text-apptivia-carbon-500 mb-1">Score Spread</div>
+                    <div className="text-apptivia-ink font-bold text-base">{teamScoreStats.spread}%</div>
+                    <div className="text-apptivia-carbon-400 text-xs">Highest vs lowest</div>
                   </div>
                   <div className="bg-white rounded-lg border border-gray-100 shadow-sm p-3 flex flex-col items-start justify-center transition-all duration-300 hover:shadow-lg hover:-translate-y-1">
-                    <div className="text-xs text-gray-500 mb-1">Team Score</div>
+                    <div className="text-xs text-apptivia-carbon-500 mb-1">Team Score</div>
                     <div className={`font-bold text-base ${scoreTextColor(data.teamAverage)}`}>
                       {data.teamAverage}%
                     </div>
-                    <div className="text-gray-400 text-xs">Avg across all reps</div>
+                    <div className="text-apptivia-carbon-400 text-xs">Avg across all reps</div>
                   </div>
                 </>
               )}
@@ -1237,7 +1237,7 @@ const ApptiviaScorecard: React.FC = () => {
               return (
                 <div className="bg-white rounded-lg p-4 shadow-sm mb-4">
                   <div className="flex items-center gap-2 mb-3">
-                    <h3 className="text-sm font-semibold text-gray-900">Team Comparison</h3>
+                    <h3 className="text-sm font-semibold text-apptivia-ink">Team Comparison</h3>
                     <InfoTooltip text="Average Apptivia Score per team for the current filters." />
                   </div>
                   <div className="space-y-1.5">
@@ -1247,9 +1247,9 @@ const ApptiviaScorecard: React.FC = () => {
                       const trendIcon = idx === 0 ? '1st' : idx === 1 ? '2nd' : idx === 2 ? '3rd' : `${idx + 1}th`;
                       return (
                         <div key={team.name} className="flex items-center gap-3 text-xs">
-                          <span className="w-6 text-right font-bold text-gray-400 shrink-0">{trendIcon}</span>
-                          <span className="font-medium text-gray-900 w-36 truncate shrink-0">{team.name}</span>
-                          <span className="text-gray-400 shrink-0">{team.count} reps</span>
+                          <span className="w-6 text-right font-bold text-apptivia-carbon-400 shrink-0">{trendIcon}</span>
+                          <span className="font-medium text-apptivia-ink w-36 truncate shrink-0">{team.name}</span>
+                          <span className="text-apptivia-carbon-400 shrink-0">{team.count} reps</span>
                           <div className="flex-1 bg-apptivia-carbon-100 rounded-full h-1.5">
                             <div className={`h-1.5 rounded-full ${barBg}`} style={{ width: `${Math.min(100, team.avg)}%` }} />
                           </div>
@@ -1267,11 +1267,11 @@ const ApptiviaScorecard: React.FC = () => {
               {!isPowerUser && (
                 <div className="bg-white rounded-lg p-3 shadow-sm flex flex-col overflow-hidden">
                   <div className="flex items-center gap-2 mb-1">
-                    <h3 className="text-sm font-semibold text-gray-900">Team KPI Health</h3>
+                    <h3 className="text-sm font-semibold text-apptivia-ink">Team KPI Health</h3>
                     <InfoTooltip text="Heatmap showing each rep's attainment per KPI. Green = 90%+ (on track), yellow = 80–89%, orange = 60–79% (needs attention), red = below 60%." />
                   </div>
                   {/* Color legend */}
-                  <div className="flex items-center gap-3 mb-1 text-[9px] text-gray-500">
+                  <div className="flex items-center gap-3 mb-1 text-[9px] text-apptivia-carbon-500">
                     <div className="flex items-center gap-1"><span className="inline-block w-2.5 h-2.5 rounded bg-green-500" /> 90%+</div>
                     <div className="flex items-center gap-1"><span className="inline-block w-2.5 h-2.5 rounded bg-yellow-400" /> 80–89%</div>
                     <div className="flex items-center gap-1"><span className="inline-block w-2.5 h-2.5 rounded bg-orange-400" /> 60–79%</div>
@@ -1281,9 +1281,9 @@ const ApptiviaScorecard: React.FC = () => {
                     <table className="w-full text-xs">
                       <thead className="sticky top-0 z-10">
                         <tr>
-                          <th className="text-left px-2 py-1.5 text-gray-500 font-medium bg-white w-24">Rep</th>
+                          <th className="text-left px-2 py-1.5 text-apptivia-carbon-500 font-medium bg-white w-24">Rep</th>
                           {kpiKeys.map(key => (
-                            <th key={key} className="text-center px-1.5 py-1.5 text-gray-500 font-medium bg-white text-[10px] leading-tight" title={kpiLabels[key]}>
+                            <th key={key} className="text-center px-1.5 py-1.5 text-apptivia-carbon-500 font-medium bg-white text-[10px] leading-tight" title={kpiLabels[key]}>
                               {kpiLabels[key] || key}
                             </th>
                           ))}
@@ -1292,7 +1292,7 @@ const ApptiviaScorecard: React.FC = () => {
                       <tbody>
                         {tableSortedRows.map(row => (
                           <tr key={row.profile_id}>
-                            <td className="px-2 py-1 font-medium text-gray-700 whitespace-nowrap w-24 truncate" title={row.name}>
+                            <td className="px-2 py-1 font-medium text-apptivia-carbon-700 whitespace-nowrap w-24 truncate" title={row.name}>
                               {row.name.split(' ')[0]}
                             </td>
                             {kpiKeys.map(key => {
@@ -1326,7 +1326,7 @@ const ApptiviaScorecard: React.FC = () => {
                   <button
                     type="button"
                     onClick={() => setOverlayRepIds([])}
-                    className="mt-1 text-[10px] text-gray-400 hover:text-gray-600"
+                    className="mt-1 text-[10px] text-apptivia-carbon-400 hover:text-apptivia-carbon-600"
                   >
                     Clear overlays
                   </button>
@@ -1345,7 +1345,7 @@ const ApptiviaScorecard: React.FC = () => {
                     {canViewAnalytics && (
                       <button
                         onClick={() => navigate('/analytics', { state: { filters: { dateRange: filters.dateRange, departments: filters.departments, teams: filters.teams, members: filters.members } } })}
-                        className="px-3 py-1.5 rounded-md text-xs font-semibold bg-apptivia-coral-tone-50 text-blue-700 hover:bg-apptivia-coral-tone-50"
+                        className="px-3 py-1.5 rounded-md text-xs font-semibold bg-apptivia-coral-tone-50 text-apptivia-coral hover:bg-apptivia-coral-tone-50"
                       >
                         View Analytics
                       </button>
@@ -1362,10 +1362,10 @@ const ApptiviaScorecard: React.FC = () => {
                 )}
               </div>
               <div className="flex items-center justify-between gap-3 mb-2">
-                <div className="text-xs text-gray-500">
+                <div className="text-xs text-apptivia-carbon-500">
                   {isPowerUser ? 'Your performance metrics with optional benchmarking' : 'Detailed performance metrics and Apptivia Scores'}
                 </div>
-                <div className="text-[11px] text-gray-500 text-right whitespace-nowrap">{filterSummary}</div>
+                <div className="text-[11px] text-apptivia-carbon-500 text-right whitespace-nowrap">{filterSummary}</div>
               </div>
               <div
                 ref={tableRef}
@@ -1391,7 +1391,7 @@ const ApptiviaScorecard: React.FC = () => {
                 }}
               >
                 {data.rows.length === 0 ? (
-                  <div className="text-center py-8 text-gray-500">No data available for selected filters</div>
+                  <div className="text-center py-8 text-apptivia-carbon-500">No data available for selected filters</div>
                 ) : (
                   <table className="w-full text-xs text-left table-fixed">
                     <thead>
@@ -1406,7 +1406,7 @@ const ApptiviaScorecard: React.FC = () => {
                             onClick={() => handleSortColumn(key)}
                           >
                             {kpiLabels[key]} {sortColumn === key && (sortDirection === 'desc' ? '▼' : '▲')}
-                            {weeklyAverage && <><br /><span className="font-normal text-gray-400">avg/wk</span></>}
+                            {weeklyAverage && <><br /><span className="font-normal text-apptivia-carbon-400">avg/wk</span></>}
                           </th>
                         ))}
                         <th
@@ -1419,14 +1419,14 @@ const ApptiviaScorecard: React.FC = () => {
                         </th>
                       </tr>
                       <tr className="bg-apptivia-paper border-b border-gray-200">
-                        <td className="px-2 py-0.5 text-[10px] text-gray-400 font-medium">Goal | Weight</td>
+                        <td className="px-2 py-0.5 text-[10px] text-apptivia-carbon-400 font-medium">Goal | Weight</td>
                         {kpiKeys.map(key => {
                           const metric = kpiMetrics.find(m => m.key === key);
                           const hist = data.histGoalMap?.[key];
                           const goal = metric?.goal ?? hist?.goal ?? 0;
                           const weight = metric?.weight ?? hist?.weight ?? 0;
                           return (
-                            <td key={key} className="px-2 py-0.5 text-center text-[10px] text-gray-400 font-medium">
+                            <td key={key} className="px-2 py-0.5 text-center text-[10px] text-apptivia-carbon-400 font-medium">
                               {goal} | {Math.round(weight * 100)}%
                             </td>
                           );
@@ -1450,7 +1450,7 @@ const ApptiviaScorecard: React.FC = () => {
                                 <button
                                   type="button"
                                   onClick={() => setRepDetailModal({ profileId: row.profile_id, name: row.name })}
-                                  className="text-left hover:text-blue-700 hover:underline truncate"
+                                  className="text-left hover:text-apptivia-coral hover:underline truncate"
                                 >
                                   {row.name}
                                 </button>
@@ -1463,7 +1463,7 @@ const ApptiviaScorecard: React.FC = () => {
                                           ? prev.filter(id => id !== row.profile_id)
                                           : [...prev, row.profile_id]
                                       )}
-                                      className={`ml-auto text-[10px] leading-none ${overlayRepIds.includes(row.profile_id) ? 'text-blue-600' : 'text-gray-300 hover:text-gray-500'}`}
+                                      className={`ml-auto text-[10px] leading-none ${overlayRepIds.includes(row.profile_id) ? 'text-apptivia-coral' : 'text-apptivia-carbon-300 hover:text-apptivia-carbon-500'}`}
                                     >
                                       {'📈'}
                                     </button>
@@ -1488,7 +1488,7 @@ const ApptiviaScorecard: React.FC = () => {
                                   <span className={`font-bold ${scoreColor}`}>{row.apptivityScore}%</span>
                                   {trendMap[row.profile_id] && (
                                     trendMap[row.profile_id].direction === 'flat' ? (
-                                      <span className="text-[10px] text-gray-400">—</span>
+                                      <span className="text-[10px] text-apptivia-carbon-400">—</span>
                                     ) : (
                                       <span className={`text-[10px] font-semibold ${trendMap[row.profile_id].direction === 'up' ? 'text-emerald-600' : 'text-rose-600'}`}>
                                         {trendMap[row.profile_id].direction === 'up' ? '▲' : '▼'}{Math.abs(trendMap[row.profile_id].delta)}
@@ -1497,7 +1497,7 @@ const ApptiviaScorecard: React.FC = () => {
                                   )}
                                 </div>
                                 {showPacing && trendMap[row.profile_id] && (
-                                  <span className="text-[9px] text-gray-400">~{trendMap[row.profile_id].goalPacing}% pace</span>
+                                  <span className="text-[9px] text-apptivia-carbon-400">~{trendMap[row.profile_id].goalPacing}% pace</span>
                                 )}
                               </div>
                               </Tooltip>
@@ -1516,7 +1516,7 @@ const ApptiviaScorecard: React.FC = () => {
                       return (
                         <tfoot>
                           <tr className="bg-apptivia-coral-tone-50 border-t-2 border-blue-300">
-                            <td className="px-2 py-2 font-bold text-gray-900">Team Average</td>
+                            <td className="px-2 py-2 font-bold text-apptivia-ink">Team Average</td>
                             {kpiKeys.map(key => {
                               const avgPct = Math.round(tableSortedRows.reduce((sum, r) => sum + (r.kpis[key]?.percentage || 0), 0) / tableSortedRows.length);
                               const color = scoreTextColor(avgPct);
@@ -1531,7 +1531,7 @@ const ApptiviaScorecard: React.FC = () => {
                                 <div className="flex items-center gap-1">
                                   <span className={`font-bold ${teamAvgScoreColor}`}>{teamAvgScore}%</span>
                                   {avgDirection === 'flat' ? (
-                                    <span className="text-[10px] text-gray-400">—</span>
+                                    <span className="text-[10px] text-apptivia-carbon-400">—</span>
                                   ) : (
                                     <span className={`text-[10px] font-semibold ${avgDirection === 'up' ? 'text-emerald-600' : 'text-rose-600'}`}>
                                       {avgDirection === 'up' ? '▲' : '▼'}{Math.abs(avgDelta)}
@@ -1587,7 +1587,7 @@ const ApptiviaScorecard: React.FC = () => {
                 setFilters(next);
                 setFiltersResetSignal(prev => prev + 1);
               }}
-              className="px-3 py-1 text-xs rounded-full bg-apptivia-coral-tone-50 text-blue-700 hover:bg-apptivia-coral-tone-50 font-medium transition-colors"
+              className="px-3 py-1 text-xs rounded-full bg-apptivia-coral-tone-50 text-apptivia-coral hover:bg-apptivia-coral-tone-50 font-medium transition-colors"
             >
               My Team
             </button>
@@ -1599,7 +1599,7 @@ const ApptiviaScorecard: React.FC = () => {
                 setFilters({ dateRange: 'This Week', departments: [], teams: [], members: [] });
                 setFiltersResetSignal(prev => prev + 1);
               }}
-              className="px-3 py-1 text-xs rounded-full bg-apptivia-carbon-100 text-indigo-700 hover:bg-apptivia-carbon-100 font-medium transition-colors"
+              className="px-3 py-1 text-xs rounded-full bg-apptivia-carbon-100 text-apptivia-ink hover:bg-apptivia-carbon-100 font-medium transition-colors"
             >
               All Teams
             </button>
@@ -1674,15 +1674,15 @@ const ApptiviaScorecard: React.FC = () => {
         <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center" onClick={() => setRepDetailModal(null)}>
           <div className="bg-white rounded-xl shadow-2xl w-full max-w-lg mx-4 p-5" onClick={e => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-base font-semibold text-gray-900">{repDetailModal.name} — 5-Week Trend</h3>
-              <button type="button" onClick={() => setRepDetailModal(null)} className="text-gray-400 hover:text-gray-600" title="Close">
+              <h3 className="text-base font-semibold text-apptivia-ink">{repDetailModal.name} — 5-Week Trend</h3>
+              <button type="button" onClick={() => setRepDetailModal(null)} className="text-apptivia-carbon-400 hover:text-apptivia-carbon-600" title="Close">
                 <X size={18} />
               </button>
             </div>
             {repTrendLoading ? (
-              <div className="flex items-center justify-center h-48 text-sm text-gray-500">Loading trend data...</div>
+              <div className="flex items-center justify-center h-48 text-sm text-apptivia-carbon-500">Loading trend data...</div>
             ) : repTrendData.length === 0 ? (
-              <div className="flex items-center justify-center h-48 text-sm text-gray-500">No trend data available</div>
+              <div className="flex items-center justify-center h-48 text-sm text-apptivia-carbon-500">No trend data available</div>
             ) : (
               <div>
                 <HistoricalScoresChart
@@ -1694,7 +1694,7 @@ const ApptiviaScorecard: React.FC = () => {
                 <div className="mt-3 grid grid-cols-5 gap-2 text-center text-xs">
                   {repTrendData.map((pt, i) => (
                     <div key={i}>
-                      <div className="text-gray-400">{pt.week}</div>
+                      <div className="text-apptivia-carbon-400">{pt.week}</div>
                       <div className={`font-bold ${scoreTextColor(pt.score)}`}>{pt.score}%</div>
                     </div>
                   ))}

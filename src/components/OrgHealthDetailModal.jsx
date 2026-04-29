@@ -36,18 +36,18 @@ export default function OrgHealthDetailModal({
         <div className={`px-6 py-5 flex items-center justify-between ${scoreColors?.bg || 'bg-apptivia-carbon-100'}`}>
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-lg flex items-center justify-center bg-white/80">
-              {Icon && <Icon size={20} className={scoreColors?.text || 'text-gray-700'} />}
+              {Icon && <Icon size={20} className={scoreColors?.text || 'text-apptivia-carbon-700'} />}
             </div>
             <div>
-              <h2 className={`text-lg font-bold ${scoreColors?.text || 'text-gray-900'}`}>{title}</h2>
-              <p className="text-xs text-gray-500">Org Health Dimension</p>
+              <h2 className={`text-lg font-bold ${scoreColors?.text || 'text-apptivia-ink'}`}>{title}</h2>
+              <p className="text-xs text-apptivia-carbon-500">Org Health Dimension</p>
             </div>
           </div>
           <div className="flex items-center gap-3">
-            <span className={`text-3xl font-bold ${scoreColors?.text || 'text-gray-900'}`}>{score}</span>
+            <span className={`text-3xl font-bold ${scoreColors?.text || 'text-apptivia-ink'}`}>{score}</span>
             <button
               onClick={onClose}
-              className="p-1.5 rounded-lg hover:bg-black/10 transition-colors text-gray-500"
+              className="p-1.5 rounded-lg hover:bg-black/10 transition-colors text-apptivia-carbon-500"
             >
               <X size={18} />
             </button>
@@ -58,17 +58,17 @@ export default function OrgHealthDetailModal({
         <div className="px-6 py-5 space-y-5">
           {/* Explanation */}
           <div>
-            <h3 className="text-sm font-semibold text-gray-900 mb-1.5">What This Measures</h3>
-            <p className="text-xs text-gray-600 leading-relaxed">{explanation}</p>
+            <h3 className="text-sm font-semibold text-apptivia-ink mb-1.5">What This Measures</h3>
+            <p className="text-xs text-apptivia-carbon-600 leading-relaxed">{explanation}</p>
           </div>
 
           {/* Data Points */}
           {dataPoints?.length > 0 && (
             <div>
-              <h3 className="text-sm font-semibold text-gray-900 mb-2">Score Components</h3>
+              <h3 className="text-sm font-semibold text-apptivia-ink mb-2">Score Components</h3>
               <ul className="space-y-1.5">
                 {dataPoints.map((dp, i) => (
-                  <li key={i} className="flex items-start gap-2 text-xs text-gray-600">
+                  <li key={i} className="flex items-start gap-2 text-xs text-apptivia-carbon-600">
                     <span className="mt-0.5 w-1.5 h-1.5 rounded-full bg-apptivia-carbon-400 flex-shrink-0" />
                     {dp}
                   </li>
@@ -80,12 +80,12 @@ export default function OrgHealthDetailModal({
           {/* Live Data Summary */}
           {dataSummary?.length > 0 && (
             <div>
-              <h3 className="text-sm font-semibold text-gray-900 mb-2">Current Data</h3>
+              <h3 className="text-sm font-semibold text-apptivia-ink mb-2">Current Data</h3>
               <div className="bg-apptivia-paper rounded-lg p-3 grid grid-cols-2 gap-3">
                 {dataSummary.map((item, i) => (
                   <div key={i}>
-                    <div className="text-[10px] text-gray-500 uppercase">{item.label}</div>
-                    <div className="text-sm font-bold text-gray-900">{item.value}</div>
+                    <div className="text-[10px] text-apptivia-carbon-500 uppercase">{item.label}</div>
+                    <div className="text-sm font-bold text-apptivia-ink">{item.value}</div>
                   </div>
                 ))}
               </div>
@@ -97,7 +97,7 @@ export default function OrgHealthDetailModal({
         <div className="px-6 py-4 bg-apptivia-paper border-t flex items-center justify-between">
           <button
             onClick={onClose}
-            className="px-4 py-2 text-xs text-gray-500 hover:text-gray-700"
+            className="px-4 py-2 text-xs text-apptivia-carbon-500 hover:text-apptivia-carbon-700"
           >
             Close
           </button>

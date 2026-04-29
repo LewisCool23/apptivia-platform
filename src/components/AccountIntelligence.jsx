@@ -102,39 +102,39 @@ function useIcpConfig(organizationId) {
 // ── Constants ─────────────────────────────────────────────
 
 const TIER_STYLES = {
-  tier_1: { bg: 'bg-apptivia-carbon-100', text: 'text-purple-700', label: 'Tier 1', icon: Crown },
-  tier_2: { bg: 'bg-apptivia-coral-tone-50', text: 'text-blue-700', label: 'Tier 2', icon: Star },
-  tier_3: { bg: 'bg-apptivia-carbon-100', text: 'text-gray-600', label: 'Tier 3', icon: Target },
-  untiered: { bg: 'bg-apptivia-paper', text: 'text-gray-400', label: 'Untiered', icon: Target },
+  tier_1: { bg: 'bg-apptivia-carbon-100', text: 'text-apptivia-ink', label: 'Tier 1', icon: Crown },
+  tier_2: { bg: 'bg-apptivia-coral-tone-50', text: 'text-apptivia-coral', label: 'Tier 2', icon: Star },
+  tier_3: { bg: 'bg-apptivia-carbon-100', text: 'text-apptivia-carbon-600', label: 'Tier 3', icon: Target },
+  untiered: { bg: 'bg-apptivia-paper', text: 'text-apptivia-carbon-400', label: 'Untiered', icon: Target },
 };
 
 const STATUS_STYLES = {
-  active: { bg: 'bg-apptivia-coral-tone-50', text: 'text-blue-700', label: 'Active' },
+  active: { bg: 'bg-apptivia-coral-tone-50', text: 'text-apptivia-coral', label: 'Active' },
   nurture: { bg: 'bg-amber-50', text: 'text-amber-700', label: 'Nurture' },
   engaged: { bg: 'bg-emerald-50', text: 'text-emerald-700', label: 'Engaged' },
-  opportunity: { bg: 'bg-apptivia-carbon-100', text: 'text-purple-700', label: 'Opportunity' },
+  opportunity: { bg: 'bg-apptivia-carbon-100', text: 'text-apptivia-ink', label: 'Opportunity' },
   customer: { bg: 'bg-green-50', text: 'text-green-700', label: 'Customer' },
   churned: { bg: 'bg-red-50', text: 'text-red-600', label: 'Churned' },
 };
 
 const COMMITTEE_ROLES = {
-  decision_maker: { label: 'Decision Maker', color: 'bg-apptivia-carbon-100 text-purple-700', icon: Crown },
+  decision_maker: { label: 'Decision Maker', color: 'bg-apptivia-carbon-100 text-apptivia-ink', icon: Crown },
   champion: { label: 'Champion', color: 'bg-emerald-100 text-emerald-700', icon: Star },
-  influencer: { label: 'Influencer', color: 'bg-apptivia-coral-tone-50 text-blue-700', icon: TrendingUp },
+  influencer: { label: 'Influencer', color: 'bg-apptivia-coral-tone-50 text-apptivia-coral', icon: TrendingUp },
   blocker: { label: 'Blocker', color: 'bg-red-100 text-red-700', icon: Shield },
-  user: { label: 'End User', color: 'bg-apptivia-carbon-100 text-gray-600', icon: User },
+  user: { label: 'End User', color: 'bg-apptivia-carbon-100 text-apptivia-carbon-600', icon: User },
 };
 
 function ScoreBadge({ score, size = 'sm' }) {
   if (score == null || score === 0) {
     return (
-      <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full font-bold bg-apptivia-paper text-gray-400 ${size === 'sm' ? 'text-[10px]' : 'text-xs'}`}>
+      <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full font-bold bg-apptivia-paper text-apptivia-carbon-400 ${size === 'sm' ? 'text-[10px]' : 'text-xs'}`}>
         —
       </span>
     );
   }
   const color = score >= 80 ? 'bg-emerald-100 text-emerald-700' :
-    score >= 60 ? 'bg-apptivia-coral-tone-50 text-blue-700' :
+    score >= 60 ? 'bg-apptivia-coral-tone-50 text-apptivia-coral' :
     score >= 40 ? 'bg-amber-100 text-amber-700' :
     'bg-red-100 text-red-700';
   return (
@@ -148,8 +148,8 @@ function ScoreBadge({ score, size = 'sm' }) {
 
 function SummaryCards({ summary }) {
   const cards = [
-    { label: 'Total Accounts', value: summary.totalAccounts, icon: Building2, color: 'text-blue-600 bg-apptivia-coral-tone-50' },
-    { label: 'Tier 1', value: summary.tier1Count, icon: Crown, color: 'text-purple-600 bg-apptivia-carbon-100' },
+    { label: 'Total Accounts', value: summary.totalAccounts, icon: Building2, color: 'text-apptivia-coral bg-apptivia-coral-tone-50' },
+    { label: 'Tier 1', value: summary.tier1Count, icon: Crown, color: 'text-apptivia-ink bg-apptivia-carbon-100' },
     { label: 'High Intent', value: summary.highIntentCount, icon: Zap, color: 'text-amber-600 bg-amber-50' },
     { label: 'Avg Score', value: summary.avgAccountScore, icon: BarChart3, color: 'text-emerald-600 bg-emerald-50' },
   ];
@@ -159,12 +159,12 @@ function SummaryCards({ summary }) {
       {cards.map((card) => (
         <div key={card.label} className="bg-white rounded-xl border border-gray-100 p-4 hover:shadow-sm transition-shadow">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-xs font-medium text-gray-500">{card.label}</span>
+            <span className="text-xs font-medium text-apptivia-carbon-500">{card.label}</span>
             <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${card.color}`}>
               <card.icon size={16} />
             </div>
           </div>
-          <div className="text-lg font-bold text-gray-900">{card.value}</div>
+          <div className="text-lg font-bold text-apptivia-ink">{card.value}</div>
         </div>
       ))}
     </div>
@@ -192,9 +192,9 @@ function BuyingCommitteePanel({ committee, onUpdate }) {
     <div className="bg-white rounded-xl border border-gray-100 overflow-hidden">
       <div className="px-5 py-3 border-b border-gray-100 flex items-center justify-between bg-apptivia-paper/50">
         <div className="flex items-center gap-2">
-          <Users size={14} className="text-gray-500" />
-          <span className="text-sm font-bold text-gray-900">Buying Committee</span>
-          <span className="text-[10px] text-gray-400">({committee.length})</span>
+          <Users size={14} className="text-apptivia-carbon-500" />
+          <span className="text-sm font-bold text-apptivia-ink">Buying Committee</span>
+          <span className="text-[10px] text-apptivia-carbon-400">({committee.length})</span>
         </div>
         <button onClick={() => setAdding(true)}
           className="flex items-center gap-1 px-2.5 py-1 bg-apptivia-coral text-white rounded-lg text-[10px] font-medium hover:bg-apptivia-coral transition-colors">
@@ -205,8 +205,8 @@ function BuyingCommitteePanel({ committee, onUpdate }) {
       <div className="divide-y divide-gray-50">
         {committee.length === 0 && !adding && (
           <div className="p-6 text-center">
-            <Users size={20} className="text-gray-300 mx-auto mb-2" />
-            <p className="text-xs text-gray-400">No buying committee members mapped yet.</p>
+            <Users size={20} className="text-apptivia-carbon-300 mx-auto mb-2" />
+            <p className="text-xs text-apptivia-carbon-400">No buying committee members mapped yet.</p>
           </div>
         )}
 
@@ -219,20 +219,20 @@ function BuyingCommitteePanel({ committee, onUpdate }) {
                   <r.icon size={14} />
                 </div>
                 <div>
-                  <span className="text-xs font-semibold text-gray-800">{member.name}</span>
+                  <span className="text-xs font-semibold text-apptivia-ink">{member.name}</span>
                   <div className="flex items-center gap-2 mt-0.5">
                     <span className={`px-1.5 py-0.5 rounded text-[9px] font-semibold ${r.color}`}>{r.label}</span>
-                    {member.title && <span className="text-[10px] text-gray-400">{member.title}</span>}
+                    {member.title && <span className="text-[10px] text-apptivia-carbon-400">{member.title}</span>}
                     <span className={`text-[9px] font-medium ${
                       member.influence_level === 'high' ? 'text-red-500' :
-                      member.influence_level === 'medium' ? 'text-amber-500' : 'text-gray-400'
+                      member.influence_level === 'medium' ? 'text-amber-500' : 'text-apptivia-carbon-400'
                     }`}>
                       {member.influence_level} influence
                     </span>
                   </div>
                 </div>
               </div>
-              <button onClick={() => handleRemove(i)} className="text-gray-400 hover:text-red-500 transition-colors">
+              <button onClick={() => handleRemove(i)} className="text-apptivia-carbon-400 hover:text-red-500 transition-colors">
                 <Trash2 size={12} />
               </button>
             </div>
@@ -243,26 +243,26 @@ function BuyingCommitteePanel({ committee, onUpdate }) {
           <div className="p-4 space-y-3 bg-apptivia-coral-tone-50/30">
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="text-[10px] font-semibold text-gray-500 block mb-1">NAME</label>
+                <label className="text-[10px] font-semibold text-apptivia-carbon-500 block mb-1">NAME</label>
                 <input value={newMember.name} onChange={(e) => setNewMember(p => ({ ...p, name: e.target.value }))}
                   placeholder="e.g., Jane Smith" className="w-full px-2.5 py-1.5 border border-gray-200 rounded-lg text-xs" />
               </div>
               <div>
-                <label className="text-[10px] font-semibold text-gray-500 block mb-1">TITLE</label>
+                <label className="text-[10px] font-semibold text-apptivia-carbon-500 block mb-1">TITLE</label>
                 <input value={newMember.title} onChange={(e) => setNewMember(p => ({ ...p, title: e.target.value }))}
                   placeholder="e.g., VP Sales" className="w-full px-2.5 py-1.5 border border-gray-200 rounded-lg text-xs" />
               </div>
             </div>
             <div className="flex gap-3">
               <div className="flex-1">
-                <label className="text-[10px] font-semibold text-gray-500 block mb-1">ROLE</label>
+                <label className="text-[10px] font-semibold text-apptivia-carbon-500 block mb-1">ROLE</label>
                 <select value={newMember.role} onChange={(e) => setNewMember(p => ({ ...p, role: e.target.value }))}
                   className="w-full px-2.5 py-1.5 border border-gray-200 rounded-lg text-xs bg-white">
                   {Object.entries(COMMITTEE_ROLES).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
                 </select>
               </div>
               <div className="flex-1">
-                <label className="text-[10px] font-semibold text-gray-500 block mb-1">INFLUENCE</label>
+                <label className="text-[10px] font-semibold text-apptivia-carbon-500 block mb-1">INFLUENCE</label>
                 <select value={newMember.influence_level} onChange={(e) => setNewMember(p => ({ ...p, influence_level: e.target.value }))}
                   className="w-full px-2.5 py-1.5 border border-gray-200 rounded-lg text-xs bg-white">
                   <option value="high">High</option>
@@ -272,7 +272,7 @@ function BuyingCommitteePanel({ committee, onUpdate }) {
               </div>
             </div>
             <div className="flex justify-end gap-2">
-              <button onClick={() => setAdding(false)} className="px-3 py-1 text-xs text-gray-500 hover:text-gray-700">Cancel</button>
+              <button onClick={() => setAdding(false)} className="px-3 py-1 text-xs text-apptivia-carbon-500 hover:text-apptivia-carbon-700">Cancel</button>
               <button onClick={handleAdd} disabled={!newMember.name.trim()}
                 className="px-3 py-1.5 bg-apptivia-coral text-white rounded-lg text-xs font-medium hover:bg-apptivia-coral disabled:opacity-50">
                 Add Member
@@ -301,10 +301,10 @@ function AccountCard({ account, onSelect, icpConfig }) {
             <Building2 size={18} className="text-white" />
           </div>
           <div>
-            <h3 className="text-sm font-bold text-gray-900">{account.account_name}</h3>
+            <h3 className="text-sm font-bold text-apptivia-ink">{account.account_name}</h3>
             <div className="flex items-center gap-2 mt-0.5">
-              {account.domain && <span className="text-[10px] text-gray-400 flex items-center gap-0.5"><Globe size={8} /> {account.domain}</span>}
-              {account.industry && <span className="text-[10px] text-gray-400 flex items-center gap-0.5"><Briefcase size={8} /> {account.industry}</span>}
+              {account.domain && <span className="text-[10px] text-apptivia-carbon-400 flex items-center gap-0.5"><Globe size={8} /> {account.domain}</span>}
+              {account.industry && <span className="text-[10px] text-apptivia-carbon-400 flex items-center gap-0.5"><Briefcase size={8} /> {account.industry}</span>}
             </div>
           </div>
         </div>
@@ -317,38 +317,38 @@ function AccountCard({ account, onSelect, icpConfig }) {
 
       <div className="grid grid-cols-4 gap-3 mb-3">
         <div>
-          <span className="text-[10px] text-gray-400 block">Account</span>
+          <span className="text-[10px] text-apptivia-carbon-400 block">Account</span>
           <ScoreBadge score={account.account_score} />
         </div>
         <div>
-          <span className="text-[10px] text-gray-400 block">Intent</span>
+          <span className="text-[10px] text-apptivia-carbon-400 block">Intent</span>
           <ScoreBadge score={account.intent_score} />
         </div>
         <div>
-          <span className="text-[10px] text-gray-400 block">Engage</span>
+          <span className="text-[10px] text-apptivia-carbon-400 block">Engage</span>
           <ScoreBadge score={account.engagement_score} />
         </div>
         <div>
-          <span className="text-[10px] text-gray-400 block">Signals</span>
-          <span className="text-xs font-bold text-gray-700">{account.signals_count}</span>
+          <span className="text-[10px] text-apptivia-carbon-400 block">Signals</span>
+          <span className="text-xs font-bold text-apptivia-carbon-700">{account.signals_count}</span>
         </div>
       </div>
 
       {account.buying_committee?.length > 0 && (
         <div className="flex items-center gap-1.5 flex-wrap">
-          <span className="text-[10px] text-gray-400">Committee:</span>
+          <span className="text-[10px] text-apptivia-carbon-400">Committee:</span>
           {account.buying_committee.slice(0, 3).map((m, i) => {
             const r = COMMITTEE_ROLES[m.role] || COMMITTEE_ROLES.user;
             return <span key={i} className={`px-1.5 py-0.5 rounded text-[9px] font-medium ${r.color}`}>{m.name}</span>;
           })}
           {account.buying_committee.length > 3 && (
-            <span className="text-[9px] text-gray-400">+{account.buying_committee.length - 3} more</span>
+            <span className="text-[9px] text-apptivia-carbon-400">+{account.buying_committee.length - 3} more</span>
           )}
         </div>
       )}
 
       {account.assigned_name && (
-        <div className="mt-2 text-[10px] text-gray-400 flex items-center gap-1">
+        <div className="mt-2 text-[10px] text-apptivia-carbon-400 flex items-center gap-1">
           <User size={8} /> {account.assigned_name}
           {account.territory && <><MapPin size={8} className="ml-2" /> {account.territory}</>}
         </div>
@@ -371,7 +371,7 @@ function AccountDetail({ account, onBack, onUpdate, onAnalyze, analyzing, onUpda
     <div className="space-y-4">
       {/* Header */}
       <div className="bg-white rounded-xl border border-gray-100 p-5">
-        <button onClick={onBack} className="text-xs text-blue-600 hover:text-blue-700 font-medium flex items-center gap-1 mb-3">
+        <button onClick={onBack} className="text-xs text-apptivia-coral hover:text-apptivia-coral font-medium flex items-center gap-1 mb-3">
           ← Back to accounts
         </button>
         <div className="flex items-center justify-between">
@@ -380,14 +380,14 @@ function AccountDetail({ account, onBack, onUpdate, onAnalyze, analyzing, onUpda
               <Building2 size={22} className="text-white" />
             </div>
             <div>
-              <h2 className="text-lg font-bold text-gray-900">{account.account_name}</h2>
+              <h2 className="text-lg font-bold text-apptivia-ink">{account.account_name}</h2>
               <div className="flex items-center gap-3 mt-0.5 flex-wrap">
                 <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-semibold ${tier.bg} ${tier.text}`}>
                   <tier.icon size={10} /> {tier.label}
                 </span>
                 <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold ${status.bg} ${status.text}`}>{status.label}</span>
-                {account.domain && <span className="text-xs text-gray-400 flex items-center gap-1"><Globe size={10} /> {account.domain}</span>}
-                {account.industry && <span className="text-xs text-gray-400 flex items-center gap-1"><Briefcase size={10} /> {account.industry}</span>}
+                {account.domain && <span className="text-xs text-apptivia-carbon-400 flex items-center gap-1"><Globe size={10} /> {account.domain}</span>}
+                {account.industry && <span className="text-xs text-apptivia-carbon-400 flex items-center gap-1"><Briefcase size={10} /> {account.industry}</span>}
               </div>
             </div>
           </div>
@@ -430,7 +430,7 @@ function AccountDetail({ account, onBack, onUpdate, onAnalyze, analyzing, onUpda
           { label: 'Engagement Score', value: account.engagement_score, color: 'from-emerald-500 to-teal-500' },
         ].map((s) => (
           <div key={s.label} className="bg-white rounded-xl border border-gray-100 p-4 text-center">
-            <span className="text-[10px] text-gray-400 block mb-1">{s.label}</span>
+            <span className="text-[10px] text-apptivia-carbon-400 block mb-1">{s.label}</span>
             <div className={`text-2xl font-bold bg-gradient-to-r ${s.color} bg-clip-text text-transparent`}>{s.value}</div>
             <div className="w-full bg-apptivia-carbon-100 rounded-full h-1.5 mt-2">
               <div className={`h-1.5 rounded-full bg-gradient-to-r ${s.color}`} style={{ width: `${s.value}%` }} />
@@ -439,12 +439,12 @@ function AccountDetail({ account, onBack, onUpdate, onAnalyze, analyzing, onUpda
         ))}
         {icpScore !== null && (
           <div className="bg-white rounded-xl border border-gray-100 p-4 text-center">
-            <span className="text-[10px] text-gray-400 block mb-1">ICP Fit Score</span>
+            <span className="text-[10px] text-apptivia-carbon-400 block mb-1">ICP Fit Score</span>
             <div className={`text-2xl font-bold ${icpScore >= 75 ? 'text-emerald-600' : icpScore >= 50 ? 'text-amber-600' : 'text-red-500'}`}>{icpScore}</div>
             <div className="w-full bg-apptivia-carbon-100 rounded-full h-1.5 mt-2">
               <div className={`h-1.5 rounded-full ${icpScore >= 75 ? 'bg-emerald-500' : icpScore >= 50 ? 'bg-amber-500' : 'bg-red-400'}`} style={{ width: `${icpScore}%` }} />
             </div>
-            <span className="text-[9px] text-gray-400">
+            <span className="text-[9px] text-apptivia-carbon-400">
               {icpScore >= 75 ? 'Strong fit' : icpScore >= 50 ? 'Partial fit' : 'Low fit'}
             </span>
           </div>
@@ -455,8 +455,8 @@ function AccountDetail({ account, onBack, onUpdate, onAnalyze, analyzing, onUpda
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         {/* Readiness Score */}
         <div className="bg-white rounded-xl border border-gray-100 p-4 text-center">
-          <span className="text-[10px] text-gray-400 block mb-1">Readiness Score</span>
-          <div className={`text-2xl font-bold ${account.readiness_score >= 70 ? 'text-emerald-600' : account.readiness_score >= 40 ? 'text-amber-600' : 'text-gray-400'}`}>
+          <span className="text-[10px] text-apptivia-carbon-400 block mb-1">Readiness Score</span>
+          <div className={`text-2xl font-bold ${account.readiness_score >= 70 ? 'text-emerald-600' : account.readiness_score >= 40 ? 'text-amber-600' : 'text-apptivia-carbon-400'}`}>
             {account.readiness_score ?? '—'}
           </div>
           <div className="w-full bg-apptivia-carbon-100 rounded-full h-1.5 mt-2">
@@ -466,7 +466,7 @@ function AccountDetail({ account, onBack, onUpdate, onAnalyze, analyzing, onUpda
 
         {/* Buying Stage */}
         <div className="bg-white rounded-xl border border-gray-100 p-4 text-center">
-          <span className="text-[10px] text-gray-400 block mb-1">Buying Stage</span>
+          <span className="text-[10px] text-apptivia-carbon-400 block mb-1">Buying Stage</span>
           {account.buying_stage ? (
             <span className={`inline-flex px-3 py-1 rounded-full text-xs font-semibold ${
               account.buying_stage === 'decision' ? 'bg-emerald-100 text-emerald-700' :
@@ -476,21 +476,21 @@ function AccountDetail({ account, onBack, onUpdate, onAnalyze, analyzing, onUpda
               {account.buying_stage.charAt(0).toUpperCase() + account.buying_stage.slice(1)}
             </span>
           ) : (
-            <span className="text-sm text-gray-400">Not Assessed</span>
+            <span className="text-sm text-apptivia-carbon-400">Not Assessed</span>
           )}
         </div>
 
         {/* Signal Velocity */}
         <div className="bg-white rounded-xl border border-gray-100 p-4 text-center">
-          <span className="text-[10px] text-gray-400 block mb-1">Signal Velocity</span>
-          <div className="text-xl font-bold text-purple-600">{account.signal_velocity ?? '—'}</div>
-          <span className="text-[10px] text-gray-400">signals/week</span>
+          <span className="text-[10px] text-apptivia-carbon-400 block mb-1">Signal Velocity</span>
+          <div className="text-xl font-bold text-apptivia-ink">{account.signal_velocity ?? '—'}</div>
+          <span className="text-[10px] text-apptivia-carbon-400">signals/week</span>
         </div>
 
         {/* Tech Fit Score */}
         <div className="bg-white rounded-xl border border-gray-100 p-4 text-center">
-          <span className="text-[10px] text-gray-400 block mb-1">Tech Fit Score</span>
-          <div className={`text-xl font-bold ${account.tech_fit_score >= 70 ? 'text-emerald-600' : account.tech_fit_score >= 40 ? 'text-amber-600' : 'text-gray-400'}`}>
+          <span className="text-[10px] text-apptivia-carbon-400 block mb-1">Tech Fit Score</span>
+          <div className={`text-xl font-bold ${account.tech_fit_score >= 70 ? 'text-emerald-600' : account.tech_fit_score >= 40 ? 'text-amber-600' : 'text-apptivia-carbon-400'}`}>
             {account.tech_fit_score ?? '—'}
           </div>
         </div>
@@ -506,19 +506,19 @@ function AccountDetail({ account, onBack, onUpdate, onAnalyze, analyzing, onUpda
           <div className="p-5 space-y-4">
             {account.ai_summary && (
               <div>
-                <span className="text-xs font-semibold text-gray-600 block mb-1">Summary</span>
-                <p className="text-xs text-gray-700 leading-relaxed">{account.ai_summary}</p>
+                <span className="text-xs font-semibold text-apptivia-carbon-600 block mb-1">Summary</span>
+                <p className="text-xs text-apptivia-carbon-700 leading-relaxed">{account.ai_summary}</p>
               </div>
             )}
             {account.ai_strategy && (
               <div>
-                <span className="text-xs font-semibold text-gray-600 block mb-1">Recommended Strategy</span>
-                <p className="text-xs text-gray-700 leading-relaxed">{account.ai_strategy}</p>
+                <span className="text-xs font-semibold text-apptivia-carbon-600 block mb-1">Recommended Strategy</span>
+                <p className="text-xs text-apptivia-carbon-700 leading-relaxed">{account.ai_strategy}</p>
               </div>
             )}
             {account.ai_risk_factors?.length > 0 && (
               <div>
-                <span className="text-xs font-semibold text-gray-600 block mb-1.5">Risk Factors</span>
+                <span className="text-xs font-semibold text-apptivia-carbon-600 block mb-1.5">Risk Factors</span>
                 <ul className="space-y-1">
                   {account.ai_risk_factors.map((r, i) => (
                     <li key={i} className="text-xs text-red-600 flex items-start gap-1.5">
@@ -534,14 +534,14 @@ function AccountDetail({ account, onBack, onUpdate, onAnalyze, analyzing, onUpda
 
       {/* Tier Selector */}
       <div className="bg-white rounded-xl border border-gray-100 p-4">
-        <span className="text-xs font-semibold text-gray-700 block mb-2">Account Tier</span>
+        <span className="text-xs font-semibold text-apptivia-carbon-700 block mb-2">Account Tier</span>
         <div className="flex gap-2">
           {Object.entries(TIER_STYLES).map(([key, style]) => (
             <button key={key} onClick={() => onUpdate(account.id, { tier: key })}
               className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium transition-all ${
                 account.tier === key
                   ? `${style.bg} ${style.text} ring-2 ring-offset-1 ring-current`
-                  : 'bg-apptivia-paper text-gray-500 hover:bg-apptivia-carbon-100'
+                  : 'bg-apptivia-paper text-apptivia-carbon-500 hover:bg-apptivia-carbon-100'
               }`}>
               <style.icon size={12} /> {style.label}
             </button>
@@ -562,11 +562,11 @@ function AccountDetail({ account, onBack, onUpdate, onAnalyze, analyzing, onUpda
             onClick={() => setShowContacts(!showContacts)}
             className="flex items-center justify-between w-full"
           >
-            <span className="flex items-center gap-2 text-xs font-semibold text-gray-700">
+            <span className="flex items-center gap-2 text-xs font-semibold text-apptivia-carbon-700">
               <Users size={13} className="text-teal-500" />
               Signal Contacts ({signalContacts.length})
             </span>
-            {showContacts ? <ChevronUp size={13} className="text-gray-400" /> : <ChevronDown size={13} className="text-gray-400" />}
+            {showContacts ? <ChevronUp size={13} className="text-apptivia-carbon-400" /> : <ChevronDown size={13} className="text-apptivia-carbon-400" />}
           </button>
           {showContacts && (
             <div className="mt-3 space-y-2 pt-3 border-t border-gray-100">
@@ -577,13 +577,13 @@ function AccountDetail({ account, onBack, onUpdate, onAnalyze, analyzing, onUpda
                     {(person.last_name?.[0] || '').toUpperCase()}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <span className="text-xs font-semibold text-gray-800 block truncate">{person.name || `${person.first_name || ''} ${person.last_name || ''}`.trim() || 'Unknown'}</span>
-                    {person.title && <span className="text-[10px] text-gray-500 block truncate">{person.title}</span>}
+                    <span className="text-xs font-semibold text-apptivia-ink block truncate">{person.name || `${person.first_name || ''} ${person.last_name || ''}`.trim() || 'Unknown'}</span>
+                    {person.title && <span className="text-[10px] text-apptivia-carbon-500 block truncate">{person.title}</span>}
                   </div>
                   <div className="flex items-center gap-1.5 opacity-50 group-hover:opacity-100 transition-opacity">
                     {person.email && (
                       <button onClick={() => navigator.clipboard.writeText(person.email)}
-                        className="p-1 rounded text-blue-400 hover:text-blue-600 hover:bg-apptivia-coral-tone-50 transition-colors"
+                        className="p-1 rounded text-apptivia-coral-tone-300 hover:text-apptivia-coral hover:bg-apptivia-coral-tone-50 transition-colors"
                         title={person.email}><Mail size={12} /></button>
                     )}
                     {person.phone && (
@@ -593,7 +593,7 @@ function AccountDetail({ account, onBack, onUpdate, onAnalyze, analyzing, onUpda
                     )}
                     {person.linkedin_url && (
                       <a href={person.linkedin_url} target="_blank" rel="noreferrer"
-                        className="p-1 rounded text-blue-400 hover:text-blue-600 hover:bg-apptivia-coral-tone-50 transition-colors"
+                        className="p-1 rounded text-apptivia-coral-tone-300 hover:text-apptivia-coral hover:bg-apptivia-coral-tone-50 transition-colors"
                         title="LinkedIn"><Linkedin size={12} /></a>
                     )}
                   </div>
@@ -665,10 +665,10 @@ function CreateDealModal({ isOpen, onClose, account, organizationId, userId }) {
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 p-6">
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h2 className="text-base font-semibold text-gray-800">Create Deal</h2>
-            <p className="text-xs text-gray-500 mt-0.5">{account.account_name} · Starts at Discovery stage</p>
+            <h2 className="text-base font-semibold text-apptivia-ink">Create Deal</h2>
+            <p className="text-xs text-apptivia-carbon-500 mt-0.5">{account.account_name} · Starts at Discovery stage</p>
           </div>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600"><X size={16} /></button>
+          <button onClick={onClose} className="text-apptivia-carbon-400 hover:text-apptivia-carbon-600"><X size={16} /></button>
         </div>
         {success ? (
           <div className="flex items-center justify-center gap-2 py-6 text-emerald-600">
@@ -677,7 +677,7 @@ function CreateDealModal({ isOpen, onClose, account, organizationId, userId }) {
         ) : (
           <form onSubmit={handleSubmit} className="space-y-3">
             <div>
-              <label className="block text-xs font-medium text-gray-600 mb-1">Deal Name</label>
+              <label className="block text-xs font-medium text-apptivia-carbon-600 mb-1">Deal Name</label>
               <input
                 value={form.deal_name}
                 onChange={e => setForm(f => ({ ...f, deal_name: e.target.value }))}
@@ -688,7 +688,7 @@ function CreateDealModal({ isOpen, onClose, account, organizationId, userId }) {
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="block text-xs font-medium text-gray-600 mb-1">Deal Value ($)</label>
+                <label className="block text-xs font-medium text-apptivia-carbon-600 mb-1">Deal Value ($)</label>
                 <input
                   type="number"
                   min="0"
@@ -699,7 +699,7 @@ function CreateDealModal({ isOpen, onClose, account, organizationId, userId }) {
                 />
               </div>
               <div>
-                <label className="block text-xs font-medium text-gray-600 mb-1">Target Close Date</label>
+                <label className="block text-xs font-medium text-apptivia-carbon-600 mb-1">Target Close Date</label>
                 <input
                   type="date"
                   value={form.close_date}
@@ -709,13 +709,13 @@ function CreateDealModal({ isOpen, onClose, account, organizationId, userId }) {
               </div>
             </div>
             <div className="flex items-center gap-2 px-3 py-2 bg-apptivia-coral-tone-50 rounded-lg">
-              <DollarSign size={12} className="text-blue-500 flex-shrink-0" />
-              <span className="text-[11px] text-blue-600">Stage locked to <strong>Discovery</strong> until you validate the opportunity.</span>
+              <DollarSign size={12} className="text-apptivia-coral flex-shrink-0" />
+              <span className="text-[11px] text-apptivia-coral">Stage locked to <strong>Discovery</strong> until you validate the opportunity.</span>
             </div>
             {error && <p className="text-xs text-red-600">{error}</p>}
             <div className="flex gap-2 pt-1">
               <button type="button" onClick={onClose}
-                className="flex-1 py-2 text-sm text-gray-500 border border-gray-200 rounded-lg hover:bg-apptivia-paper">
+                className="flex-1 py-2 text-sm text-apptivia-carbon-500 border border-gray-200 rounded-lg hover:bg-apptivia-paper">
                 Cancel
               </button>
               <button type="submit" disabled={saving}
@@ -759,11 +759,11 @@ function NewAccountModal({ isOpen, onClose, onCreate }) {
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
       <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-md relative">
-        <button onClick={onClose} className="absolute top-4 right-4 text-gray-400 hover:text-gray-600">
+        <button onClick={onClose} className="absolute top-4 right-4 text-apptivia-carbon-400 hover:text-apptivia-carbon-600">
           <X size={20} />
         </button>
 
-        <h2 className="text-xl font-bold text-gray-900 mb-5">New Account</h2>
+        <h2 className="text-xl font-bold text-apptivia-ink mb-5">New Account</h2>
 
         {error && (
           <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-md text-sm text-red-700">{error}</div>
@@ -771,7 +771,7 @@ function NewAccountModal({ isOpen, onClose, onCreate }) {
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Account Name *</label>
+            <label className="block text-sm font-medium text-apptivia-carbon-700 mb-1">Account Name *</label>
             <input
               value={form.account_name}
               onChange={(e) => setForm(p => ({ ...p, account_name: e.target.value }))}
@@ -782,7 +782,7 @@ function NewAccountModal({ isOpen, onClose, onCreate }) {
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Domain</label>
+              <label className="block text-sm font-medium text-apptivia-carbon-700 mb-1">Domain</label>
               <input
                 value={form.domain}
                 onChange={(e) => setForm(p => ({ ...p, domain: e.target.value }))}
@@ -791,7 +791,7 @@ function NewAccountModal({ isOpen, onClose, onCreate }) {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Industry</label>
+              <label className="block text-sm font-medium text-apptivia-carbon-700 mb-1">Industry</label>
               <input
                 value={form.industry}
                 onChange={(e) => setForm(p => ({ ...p, industry: e.target.value }))}
@@ -801,7 +801,7 @@ function NewAccountModal({ isOpen, onClose, onCreate }) {
             </div>
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Tier</label>
+            <label className="block text-sm font-medium text-apptivia-carbon-700 mb-1">Tier</label>
             <div className="flex gap-2">
               {Object.entries(TIER_STYLES).map(([key, style]) => (
                 <button
@@ -809,7 +809,7 @@ function NewAccountModal({ isOpen, onClose, onCreate }) {
                   type="button"
                   onClick={() => setForm(p => ({ ...p, tier: key }))}
                   className={`flex items-center gap-1 px-3 py-1.5 rounded-md text-xs font-medium transition-all ${
-                    form.tier === key ? `${style.bg} ${style.text} ring-1 ring-current` : 'bg-apptivia-paper text-gray-500 hover:bg-apptivia-carbon-100'
+                    form.tier === key ? `${style.bg} ${style.text} ring-1 ring-current` : 'bg-apptivia-paper text-apptivia-carbon-500 hover:bg-apptivia-carbon-100'
                   }`}
                 >
                   <style.icon size={10} /> {style.label}
@@ -821,7 +821,7 @@ function NewAccountModal({ isOpen, onClose, onCreate }) {
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 text-sm font-medium text-gray-700 bg-apptivia-carbon-100 rounded-md hover:bg-apptivia-carbon-200 transition-colors"
+              className="px-4 py-2 text-sm font-medium text-apptivia-carbon-700 bg-apptivia-carbon-100 rounded-md hover:bg-apptivia-carbon-200 transition-colors"
             >
               Cancel
             </button>
@@ -890,8 +890,8 @@ export default function AccountIntelligence({ organizationId, userId, initialAcc
   if (loading && accounts.length === 0) {
     return (
       <div className="flex items-center justify-center py-16">
-        <RefreshCw size={20} className="text-blue-500 animate-spin" />
-        <span className="text-sm text-gray-500 ml-3">Loading accounts...</span>
+        <RefreshCw size={20} className="text-apptivia-coral animate-spin" />
+        <span className="text-sm text-apptivia-carbon-500 ml-3">Loading accounts...</span>
       </div>
     );
   }
@@ -937,12 +937,12 @@ export default function AccountIntelligence({ organizationId, userId, initialAcc
           />
           <div className="flex items-center gap-1">
             <button onClick={() => setFilterTier('all')}
-              className={`px-2.5 py-1.5 rounded-lg text-[10px] font-medium ${filterTier === 'all' ? 'bg-apptivia-coral text-white' : 'bg-apptivia-paper text-gray-500 hover:bg-apptivia-carbon-100'}`}>
+              className={`px-2.5 py-1.5 rounded-lg text-[10px] font-medium ${filterTier === 'all' ? 'bg-apptivia-coral text-white' : 'bg-apptivia-paper text-apptivia-carbon-500 hover:bg-apptivia-carbon-100'}`}>
               All
             </button>
             {Object.entries(TIER_STYLES).filter(([k]) => k !== 'untiered').map(([key, style]) => (
               <button key={key} onClick={() => setFilterTier(key)}
-                className={`px-2.5 py-1.5 rounded-lg text-[10px] font-medium ${filterTier === key ? `${style.bg} ${style.text}` : 'bg-apptivia-paper text-gray-500 hover:bg-apptivia-carbon-100'}`}>
+                className={`px-2.5 py-1.5 rounded-lg text-[10px] font-medium ${filterTier === key ? `${style.bg} ${style.text}` : 'bg-apptivia-paper text-apptivia-carbon-500 hover:bg-apptivia-carbon-100'}`}>
                 {style.label}
               </button>
             ))}
@@ -950,7 +950,7 @@ export default function AccountIntelligence({ organizationId, userId, initialAcc
         </div>
         <div className="flex items-center gap-2">
           <button onClick={importFromCompanies}
-            className="flex items-center gap-1.5 px-3 py-2 bg-apptivia-carbon-100 text-gray-600 rounded-lg text-xs font-medium hover:bg-apptivia-carbon-200 transition-colors">
+            className="flex items-center gap-1.5 px-3 py-2 bg-apptivia-carbon-100 text-apptivia-carbon-600 rounded-lg text-xs font-medium hover:bg-apptivia-carbon-200 transition-colors">
             <ArrowRight size={12} /> Import Companies
           </button>
           <button onClick={scoreAllAccounts} disabled={analyzing}
@@ -968,12 +968,12 @@ export default function AccountIntelligence({ organizationId, userId, initialAcc
       {filteredAccounts.length === 0 ? (
         <div className="bg-white rounded-2xl border border-gray-100 p-12 text-center">
           <div className="w-16 h-16 bg-apptivia-coral-tone-50 rounded-2xl flex items-center justify-center mx-auto mb-4">
-            <Building2 size={28} className="text-blue-500" />
+            <Building2 size={28} className="text-apptivia-coral" />
           </div>
-          <h3 className="text-base font-bold text-gray-900 mb-1">
+          <h3 className="text-base font-bold text-apptivia-ink mb-1">
             {accounts.length === 0 ? 'No accounts yet' : 'No matching accounts'}
           </h3>
-          <p className="text-xs text-gray-500 mb-4 max-w-sm mx-auto">
+          <p className="text-xs text-apptivia-carbon-500 mb-4 max-w-sm mx-auto">
             {accounts.length === 0
               ? 'Create target accounts or import from your company research to get started with account-based intelligence.'
               : 'Try adjusting your filters or search query.'}
@@ -985,7 +985,7 @@ export default function AccountIntelligence({ organizationId, userId, initialAcc
                 Create Account
               </button>
               <button onClick={importFromCompanies}
-                className="px-5 py-2.5 bg-apptivia-carbon-100 text-gray-700 rounded-lg text-xs font-semibold hover:bg-apptivia-carbon-200 transition-colors">
+                className="px-5 py-2.5 bg-apptivia-carbon-100 text-apptivia-carbon-700 rounded-lg text-xs font-semibold hover:bg-apptivia-carbon-200 transition-colors">
                 Import from Companies
               </button>
             </div>

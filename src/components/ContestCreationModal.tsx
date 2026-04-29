@@ -361,22 +361,22 @@ export default function ContestCreationModal({ isOpen, onClose, currentUserId, o
     >
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="bg-gradient-to-r from-blue-50 to-purple-50 border border-blue-100 rounded-lg p-4">
-          <div className="text-sm font-semibold text-blue-900">{contestToEdit ? '✏️ Edit Contest' : '🏆 Create New Contest'}</div>
-          <div className="text-xs text-blue-700 mt-1">
+          <div className="text-sm font-semibold text-apptivia-coral-tone-700">{contestToEdit ? '✏️ Edit Contest' : '🏆 Create New Contest'}</div>
+          <div className="text-xs text-apptivia-coral mt-1">
             {contestToEdit ? 'Update contest details' : 'Launch a new competition to motivate your team'}
           </div>
         </div>
 
         {!contestToEdit && (
           <div className="bg-white border rounded-lg p-3">
-            <div className="text-xs text-gray-500 mb-2">Templates</div>
+            <div className="text-xs text-apptivia-carbon-500 mb-2">Templates</div>
             <div className="flex flex-wrap gap-2">
               {CONTEST_TEMPLATES.map((template) => (
                 <button
                   key={template.id}
                   type="button"
                   onClick={() => applyTemplate(template.id)}
-                  className="px-3 py-1.5 text-xs rounded-full bg-apptivia-carbon-100 text-slate-700 hover:bg-apptivia-carbon-200"
+                  className="px-3 py-1.5 text-xs rounded-full bg-apptivia-carbon-100 text-apptivia-carbon-700 hover:bg-apptivia-carbon-200"
                 >
                   {template.name}
                 </button>
@@ -388,7 +388,7 @@ export default function ContestCreationModal({ isOpen, onClose, currentUserId, o
           <div className="space-y-4">
             {/* Contest Name */}
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1">
+              <label className="block text-sm font-semibold text-apptivia-carbon-700 mb-1">
                 Contest Name *
               </label>
               <input
@@ -403,7 +403,7 @@ export default function ContestCreationModal({ isOpen, onClose, currentUserId, o
 
             {/* Description */}
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1">
+              <label className="block text-sm font-semibold text-apptivia-carbon-700 mb-1">
                 Description
               </label>
               <textarea
@@ -417,7 +417,7 @@ export default function ContestCreationModal({ isOpen, onClose, currentUserId, o
 
             {/* KPI Selection */}
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1">
+              <label className="block text-sm font-semibold text-apptivia-carbon-700 mb-1">
                 KPI to Track *
               </label>
               <select
@@ -437,7 +437,7 @@ export default function ContestCreationModal({ isOpen, onClose, currentUserId, o
 
             {/* Calculation Type */}
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1">
+              <label className="block text-sm font-semibold text-apptivia-carbon-700 mb-1">
                 Calculation Method
               </label>
               <select
@@ -455,7 +455,7 @@ export default function ContestCreationModal({ isOpen, onClose, currentUserId, o
             {/* Date Range */}
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1">
+                <label className="block text-sm font-semibold text-apptivia-carbon-700 mb-1">
                   Start Date *
                 </label>
                 <input
@@ -467,7 +467,7 @@ export default function ContestCreationModal({ isOpen, onClose, currentUserId, o
                 />
               </div>
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1">
+                <label className="block text-sm font-semibold text-apptivia-carbon-700 mb-1">
                   End Date *
                 </label>
                 <input
@@ -482,7 +482,7 @@ export default function ContestCreationModal({ isOpen, onClose, currentUserId, o
 
             {/* Participant Type */}
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1">
+              <label className="block text-sm font-semibold text-apptivia-carbon-700 mb-1">
                 Participant Type
               </label>
               <select
@@ -498,7 +498,7 @@ export default function ContestCreationModal({ isOpen, onClose, currentUserId, o
 
             {/* Reward Type */}
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1">
+              <label className="block text-sm font-semibold text-apptivia-carbon-700 mb-1">
                 Reward Type
               </label>
               <select
@@ -517,7 +517,7 @@ export default function ContestCreationModal({ isOpen, onClose, currentUserId, o
 
             {/* Reward Value */}
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1">
+              <label className="block text-sm font-semibold text-apptivia-carbon-700 mb-1">
                 Reward Value
               </label>
               <input
@@ -531,7 +531,7 @@ export default function ContestCreationModal({ isOpen, onClose, currentUserId, o
 
             {/* Reward Description */}
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1">
+              <label className="block text-sm font-semibold text-apptivia-carbon-700 mb-1">
                 Reward Description
               </label>
               <input
@@ -557,7 +557,7 @@ export default function ContestCreationModal({ isOpen, onClose, currentUserId, o
 
           {/* Info Box */}
           <div className="mt-4 p-3 bg-apptivia-coral-tone-50 border border-blue-200 rounded">
-            <div className="text-sm text-blue-800">
+            <div className="text-sm text-apptivia-coral-tone-700">
               <strong>Note:</strong> All active team members will be automatically enrolled in this contest. 
               You can also add specific members later using the <strong>Add Members</strong> button on the contest card.
               Leaderboards will update in real-time based on KPI performance.

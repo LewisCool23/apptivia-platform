@@ -24,8 +24,8 @@ const TABS = [
 
 const PANELS = [
   { id: 'dialpad',   icon: Phone,    label: 'Dialpad',       color: 'text-emerald-500' },
-  { id: 'contacts',  icon: UserPlus, label: 'Contacts',      color: 'text-blue-500' },
-  { id: 'activity',  icon: Activity, label: 'Activity Feed', color: 'text-purple-500' },
+  { id: 'contacts',  icon: UserPlus, label: 'Contacts',      color: 'text-apptivia-coral' },
+  { id: 'activity',  icon: Activity, label: 'Activity Feed', color: 'text-apptivia-ink' },
 ];
 
 export default function Engage() {
@@ -69,8 +69,8 @@ export default function Engage() {
               <Radar size={20} className="text-white" />
             </div>
             <div>
-              <h1 className="text-xl font-bold text-gray-900">Apptivia Engage</h1>
-              <p className="text-xs text-gray-500">AI-Powered Sales Intelligence & Pipeline Operations</p>
+              <h1 className="text-xl font-bold text-apptivia-ink">Apptivia Engage</h1>
+              <p className="text-xs text-apptivia-carbon-500">AI-Powered Sales Intelligence & Pipeline Operations</p>
             </div>
           </div>
 
@@ -87,7 +87,7 @@ export default function Engage() {
                     : 'hover:bg-apptivia-paper'
                 }`}
               >
-                <Icon size={15} className={activePanel === id ? color : 'text-gray-400'} />
+                <Icon size={15} className={activePanel === id ? color : 'text-apptivia-carbon-400'} />
               </button>
             ))}
           </div>
@@ -104,7 +104,7 @@ export default function Engage() {
                 className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-xs font-medium transition-all whitespace-nowrap ${
                   isActive
                     ? 'bg-gradient-to-r from-blue-500 to-cyan-500 text-white shadow-sm'
-                    : 'text-gray-600 hover:bg-apptivia-paper hover:text-gray-900'
+                    : 'text-apptivia-carbon-600 hover:bg-apptivia-paper hover:text-apptivia-ink'
                 }`}
               >
                 <tab.icon size={14} />
@@ -179,12 +179,12 @@ export default function Engage() {
               <div className="flex flex-col h-full">
                 <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 flex-shrink-0">
                   <div className="flex items-center gap-2">
-                    <Activity size={14} className="text-purple-500" />
-                    <h3 className="font-semibold text-gray-900 text-sm">Activity Feed</h3>
+                    <Activity size={14} className="text-apptivia-ink" />
+                    <h3 className="font-semibold text-apptivia-ink text-sm">Activity Feed</h3>
                   </div>
                   <button
                     onClick={() => setActivePanel(null)}
-                    className="text-gray-400 hover:text-gray-600 transition-colors"
+                    className="text-apptivia-carbon-400 hover:text-apptivia-carbon-600 transition-colors"
                   >
                     <X size={15} />
                   </button>

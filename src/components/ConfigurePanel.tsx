@@ -282,15 +282,15 @@ export default function ConfigurePanel({
       contentClassName="pb-6"
     >
       <div className="flex items-center justify-between mb-3">
-        <div className="text-xs text-gray-500">
-          Scorecard KPIs: <span className="font-semibold text-gray-800">{slots.filter(Boolean).length}/5</span>
+        <div className="text-xs text-apptivia-carbon-500">
+          Scorecard KPIs: <span className="font-semibold text-apptivia-ink">{slots.filter(Boolean).length}/5</span>
         </div>
       </div>
 
       {loading ? (
         <div className="text-center py-8">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto mb-3"></div>
-          <p className="text-xs text-gray-500">Loading quick settings...</p>
+          <p className="text-xs text-apptivia-carbon-500">Loading quick settings...</p>
         </div>
       ) : (
         <div className="space-y-3">
@@ -303,11 +303,11 @@ export default function ConfigurePanel({
               >
                 <div className="flex items-start justify-between gap-2">
                   <div>
-                    <div className="text-[11px] text-gray-500">Slot {index + 1}</div>
-                    <div className="text-sm font-semibold text-gray-900">
+                    <div className="text-[11px] text-apptivia-carbon-500">Slot {index + 1}</div>
+                    <div className="text-sm font-semibold text-apptivia-ink">
                       {config ? config.name : 'Empty Slot'}
                     </div>
-                    <div className="text-[11px] text-gray-500">
+                    <div className="text-[11px] text-apptivia-carbon-500">
                       {config ? (config.description || 'No description') : 'Add a KPI to this slot'}
                     </div>
                   </div>
@@ -325,7 +325,7 @@ export default function ConfigurePanel({
                   <>
                     <div className="grid grid-cols-2 gap-2">
                       <div>
-                        <label className="block text-[11px] text-gray-500 mb-1">Goal</label>
+                        <label className="block text-[11px] text-apptivia-carbon-500 mb-1">Goal</label>
                         <input
                           type="number"
                           value={config.goal}
@@ -338,7 +338,7 @@ export default function ConfigurePanel({
                         />
                       </div>
                       <div>
-                        <label className="block text-[11px] text-gray-500 mb-1">Weight (%)</label>
+                        <label className="block text-[11px] text-apptivia-carbon-500 mb-1">Weight (%)</label>
                         <input
                           type="number"
                           value={Math.round(config.weight * 100)}
@@ -352,7 +352,7 @@ export default function ConfigurePanel({
                         />
                       </div>
                     </div>
-                    <div className="text-[10px] text-gray-400">Unit: {config.unit || 'n/a'}</div>
+                    <div className="text-[10px] text-apptivia-carbon-400">Unit: {config.unit || 'n/a'}</div>
                   </>
                 ) : (
                   <div>
@@ -389,7 +389,7 @@ export default function ConfigurePanel({
                           </button>
                         </div>
                         {availableKpis.length === 0 && (
-                          <div className="text-[11px] text-gray-500">No available KPIs to add.</div>
+                          <div className="text-[11px] text-apptivia-carbon-500">No available KPIs to add.</div>
                         )}
                       </div>
                     ) : (
@@ -398,7 +398,7 @@ export default function ConfigurePanel({
                           setAddingSlotIndex(index);
                           setSelectedAddKey('');
                         }}
-                        className="px-3 py-2 text-xs bg-apptivia-carbon-100 text-gray-700 rounded hover:bg-apptivia-carbon-200"
+                        className="px-3 py-2 text-xs bg-apptivia-carbon-100 text-apptivia-carbon-700 rounded hover:bg-apptivia-carbon-200"
                       >
                         Add KPI
                       </button>
@@ -409,8 +409,8 @@ export default function ConfigurePanel({
             );
           })}
 
-          <div className="pt-2 text-xs text-gray-600">
-            Total Weight: <span className="font-semibold text-gray-900">{totalWeight}%</span>
+          <div className="pt-2 text-xs text-apptivia-carbon-600">
+            Total Weight: <span className="font-semibold text-apptivia-ink">{totalWeight}%</span>
           </div>
 
           {message && (
@@ -425,7 +425,7 @@ export default function ConfigurePanel({
             <button
               onClick={onClose}
               disabled={saving}
-              className="flex-1 px-3 py-2 text-xs text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-apptivia-paper disabled:opacity-50"
+              className="flex-1 px-3 py-2 text-xs text-apptivia-carbon-700 bg-white border border-gray-300 rounded-lg hover:bg-apptivia-paper disabled:opacity-50"
             >
               Close
             </button>

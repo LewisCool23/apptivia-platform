@@ -202,9 +202,9 @@ export default function SignalOutreachModal({ isOpen, onClose, signal, contact }
             <div className="w-7 h-7 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-lg flex items-center justify-center">
               <MessageSquare size={13} className="text-white" />
             </div>
-            <h2 className="text-sm font-semibold text-gray-800">Draft Outreach Message</h2>
+            <h2 className="text-sm font-semibold text-apptivia-ink">Draft Outreach Message</h2>
           </div>
-          <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-apptivia-carbon-100 text-gray-400 hover:text-gray-600 transition-colors">
+          <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-apptivia-carbon-100 text-apptivia-carbon-400 hover:text-apptivia-carbon-600 transition-colors">
             <X size={16} />
           </button>
         </div>
@@ -215,22 +215,22 @@ export default function SignalOutreachModal({ isOpen, onClose, signal, contact }
             <div className="flex items-start gap-2">
               <span className="text-base leading-none mt-0.5">{signalIcon}</span>
               <div className="flex-1 min-w-0">
-                <p className="text-xs font-semibold text-gray-800 leading-snug">{signal.title}</p>
+                <p className="text-xs font-semibold text-apptivia-ink leading-snug">{signal.title}</p>
                 <div className="flex items-center gap-2 mt-1 flex-wrap">
                   {signal.company_name && (
-                    <span className="text-[10px] text-gray-500 font-medium">{signal.company_name}</span>
+                    <span className="text-[10px] text-apptivia-carbon-500 font-medium">{signal.company_name}</span>
                   )}
                   {signal.buying_stage_indicator && (
-                    <span className={`text-[9px] font-medium px-1.5 py-0.5 rounded-full ${buyingStageColors[signal.buying_stage_indicator] || 'bg-apptivia-carbon-100 text-gray-600'}`}>
+                    <span className={`text-[9px] font-medium px-1.5 py-0.5 rounded-full ${buyingStageColors[signal.buying_stage_indicator] || 'bg-apptivia-carbon-100 text-apptivia-carbon-600'}`}>
                       {signal.buying_stage_indicator}
                     </span>
                   )}
-                  <span className="text-[10px] text-gray-400">Score: {signal.signal_score}</span>
+                  <span className="text-[10px] text-apptivia-carbon-400">Score: {signal.signal_score}</span>
                 </div>
               </div>
             </div>
             {signal.ai_outreach_angle && (
-              <p className="text-[10px] text-gray-500 italic pl-6 leading-relaxed">
+              <p className="text-[10px] text-apptivia-carbon-500 italic pl-6 leading-relaxed">
                 "{signal.ai_outreach_angle}"
               </p>
             )}
@@ -240,16 +240,16 @@ export default function SignalOutreachModal({ isOpen, onClose, signal, contact }
           <div className="grid grid-cols-2 gap-2">
             {/* To */}
             <div>
-              <label className="text-[10px] font-semibold text-gray-500 uppercase tracking-wide block mb-1">To</label>
-              <div className="text-xs text-gray-700 bg-apptivia-paper rounded-lg px-2.5 py-1.5 truncate">
-                {contact?.name || <span className="text-gray-400 italic">Company only</span>}
-                {contact?.title && <span className="text-gray-400 block text-[9px]">{contact.title}</span>}
+              <label className="text-[10px] font-semibold text-apptivia-carbon-500 uppercase tracking-wide block mb-1">To</label>
+              <div className="text-xs text-apptivia-carbon-700 bg-apptivia-paper rounded-lg px-2.5 py-1.5 truncate">
+                {contact?.name || <span className="text-apptivia-carbon-400 italic">Company only</span>}
+                {contact?.title && <span className="text-apptivia-carbon-400 block text-[9px]">{contact.title}</span>}
               </div>
             </div>
 
             {/* Channel */}
             <div>
-              <label className="text-[10px] font-semibold text-gray-500 uppercase tracking-wide block mb-1">Channel</label>
+              <label className="text-[10px] font-semibold text-apptivia-carbon-500 uppercase tracking-wide block mb-1">Channel</label>
               <div className="relative">
                 <select
                   value={channel}
@@ -259,14 +259,14 @@ export default function SignalOutreachModal({ isOpen, onClose, signal, contact }
                   <option value="email">✉ Email</option>
                   <option value="linkedin">in LinkedIn</option>
                 </select>
-                <ChevronDown size={10} className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+                <ChevronDown size={10} className="absolute right-2 top-1/2 -translate-y-1/2 text-apptivia-carbon-400 pointer-events-none" />
               </div>
             </div>
           </div>
 
           {/* 4F: Outreach Style Variant Pills */}
           <div>
-            <label className="text-[10px] font-semibold text-gray-500 uppercase tracking-wide block mb-1.5">Outreach Style</label>
+            <label className="text-[10px] font-semibold text-apptivia-carbon-500 uppercase tracking-wide block mb-1.5">Outreach Style</label>
             <div className="flex gap-1.5 flex-wrap">
               {OUTREACH_STYLES.map((style) => (
                 <button
@@ -274,8 +274,8 @@ export default function SignalOutreachModal({ isOpen, onClose, signal, contact }
                   onClick={() => { setActiveStyle(style.key); setCopied(false); }}
                   className={`text-xs px-3 py-1.5 rounded-full border transition-colors ${
                     activeStyle === style.key
-                      ? 'border-purple-400 bg-apptivia-carbon-100 text-purple-700 font-semibold'
-                      : 'border-gray-200 bg-white text-gray-600 hover:bg-apptivia-paper'
+                      ? 'border-purple-400 bg-apptivia-carbon-100 text-apptivia-ink font-semibold'
+                      : 'border-gray-200 bg-white text-apptivia-carbon-600 hover:bg-apptivia-paper'
                   }`}
                   title={style.description}
                 >
@@ -299,7 +299,7 @@ export default function SignalOutreachModal({ isOpen, onClose, signal, contact }
 
           {/* Loading */}
           {isGenerating && (
-            <div className="flex items-center justify-center gap-2 py-4 text-purple-600">
+            <div className="flex items-center justify-center gap-2 py-4 text-apptivia-ink">
               <RefreshCw size={14} className="animate-spin" />
               <span className="text-xs font-medium">Generating with Claude...</span>
             </div>
@@ -316,14 +316,14 @@ export default function SignalOutreachModal({ isOpen, onClose, signal, contact }
           {draft && !isGenerating && (
             <div className="border border-gray-200 rounded-xl overflow-hidden">
               <div className="flex items-center justify-between px-3 py-2 bg-apptivia-paper border-b border-gray-200">
-                <span className="text-[10px] font-semibold text-gray-500 uppercase tracking-wide flex items-center gap-1">
+                <span className="text-[10px] font-semibold text-apptivia-carbon-500 uppercase tracking-wide flex items-center gap-1">
                   {channel === 'email' ? <Mail size={10} /> : <Linkedin size={10} />}
                   {channel === 'email' ? 'Email Draft' : 'LinkedIn Message'}
                 </span>
                 <button
                   onClick={handleCopy}
                   className={`inline-flex items-center gap-1 text-[10px] font-medium px-2 py-0.5 rounded transition-colors ${
-                    copied ? 'text-emerald-600 bg-emerald-50' : 'text-gray-500 hover:text-gray-700 hover:bg-apptivia-carbon-100'
+                    copied ? 'text-emerald-600 bg-emerald-50' : 'text-apptivia-carbon-500 hover:text-apptivia-carbon-700 hover:bg-apptivia-carbon-100'
                   }`}
                 >
                   {copied ? <Check size={9} /> : <Copy size={9} />}
@@ -334,25 +334,25 @@ export default function SignalOutreachModal({ isOpen, onClose, signal, contact }
               <div className="p-3 space-y-2">
                 {channel === 'email' && draft.subject && (
                   <div>
-                    <span className="text-[10px] font-semibold text-gray-400 uppercase">Subject</span>
-                    <p className="text-xs font-medium text-gray-800 mt-0.5">{draft.subject}</p>
+                    <span className="text-[10px] font-semibold text-apptivia-carbon-400 uppercase">Subject</span>
+                    <p className="text-xs font-medium text-apptivia-ink mt-0.5">{draft.subject}</p>
                   </div>
                 )}
                 {draft.body && (
                   <div>
                     {channel === 'email' && draft.subject && (
-                      <span className="text-[10px] font-semibold text-gray-400 uppercase">Body</span>
+                      <span className="text-[10px] font-semibold text-apptivia-carbon-400 uppercase">Body</span>
                     )}
-                    <p className="text-xs text-gray-700 whitespace-pre-wrap leading-relaxed mt-0.5">{draft.body}</p>
+                    <p className="text-xs text-apptivia-carbon-700 whitespace-pre-wrap leading-relaxed mt-0.5">{draft.body}</p>
                   </div>
                 )}
                 {draft.personalization_points?.length > 0 && (
                   <div className="pt-2 border-t border-gray-100">
-                    <span className="text-[10px] font-semibold text-purple-600 uppercase">Personalization notes</span>
+                    <span className="text-[10px] font-semibold text-apptivia-ink uppercase">Personalization notes</span>
                     <ul className="mt-1 space-y-0.5">
                       {draft.personalization_points.map((p, i) => (
-                        <li key={i} className="text-[10px] text-gray-500 flex items-start gap-1">
-                          <span className="text-purple-400 mt-0.5">•</span> {p}
+                        <li key={i} className="text-[10px] text-apptivia-carbon-500 flex items-start gap-1">
+                          <span className="text-apptivia-ink mt-0.5">•</span> {p}
                         </li>
                       ))}
                     </ul>

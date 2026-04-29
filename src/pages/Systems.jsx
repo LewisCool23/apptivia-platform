@@ -260,29 +260,29 @@ export default function Systems() {
       <div className="p-6">
         <div className="flex items-start justify-between mb-4">
           <div>
-            <h1 className="text-2xl font-bold text-blue-700 mb-1">Systems Management</h1>
-            <p className="text-gray-500 text-sm">Manage integrations and system settings</p>
+            <h1 className="text-2xl font-bold text-apptivia-coral mb-1">Systems Management</h1>
+            <p className="text-apptivia-carbon-500 text-sm">Manage integrations and system settings</p>
           </div>
           <div className="flex gap-2 items-center">
             {/* Search */}
             <div className="relative">
-              <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+              <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-apptivia-carbon-400" />
               <input type="text" placeholder="Search..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} onFocus={() => searchQuery && setShowSearchResults(true)} className="w-64 pl-9 pr-8 py-2 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" />
-              {searchQuery && <button onClick={() => { setSearchQuery(''); setSearchResults([]); setShowSearchResults(false); }} className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"><X size={14} /></button>}
+              {searchQuery && <button onClick={() => { setSearchQuery(''); setSearchResults([]); setShowSearchResults(false); }} className="absolute right-2 top-1/2 -translate-y-1/2 text-apptivia-carbon-400 hover:text-apptivia-carbon-600"><X size={14} /></button>}
               {showSearchResults && searchResults.length > 0 && (
                 <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-96 overflow-y-auto z-50">
                   {searchResults.map((result, idx) => (
                     <button key={idx} onClick={() => { navigate(result.link); setSearchQuery(''); setSearchResults([]); setShowSearchResults(false); }} className="w-full text-left px-4 py-3 hover:bg-apptivia-paper border-b last:border-b-0 transition-colors">
-                      <div className="flex items-start gap-3"><span className="text-xl">{result.icon}</span><div className="flex-1 min-w-0"><div className="flex items-center gap-2"><span className="text-xs font-semibold text-gray-900">{result.title}</span><span className="text-[10px] px-1.5 py-0.5 rounded bg-apptivia-carbon-100 text-gray-600">{result.type}</span></div>{result.subtitle && <div className="text-[11px] text-gray-500 mt-0.5 truncate">{result.subtitle}</div>}</div></div>
+                      <div className="flex items-start gap-3"><span className="text-xl">{result.icon}</span><div className="flex-1 min-w-0"><div className="flex items-center gap-2"><span className="text-xs font-semibold text-apptivia-ink">{result.title}</span><span className="text-[10px] px-1.5 py-0.5 rounded bg-apptivia-carbon-100 text-apptivia-carbon-600">{result.type}</span></div>{result.subtitle && <div className="text-[11px] text-apptivia-carbon-500 mt-0.5 truncate">{result.subtitle}</div>}</div></div>
                     </button>
                   ))}
                 </div>
               )}
-              {showSearchResults && searchQuery && searchResults.length === 0 && !searching && <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg p-4 z-50"><div className="text-sm text-gray-500 text-center">No results found</div></div>}
-              {searching && <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg p-4 z-50"><div className="text-sm text-gray-500 text-center">Searching...</div></div>}
+              {showSearchResults && searchQuery && searchResults.length === 0 && !searching && <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg p-4 z-50"><div className="text-sm text-apptivia-carbon-500 text-center">No results found</div></div>}
+              {searching && <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg p-4 z-50"><div className="text-sm text-apptivia-carbon-500 text-center">Searching...</div></div>}
             </div>
             {/* Refresh */}
-            <button onClick={handleRefresh} disabled={isRefreshing} className={`relative p-2 rounded-lg font-semibold text-sm bg-white text-gray-700 border border-gray-200 hover:bg-apptivia-paper group ${isRefreshing ? 'opacity-50 cursor-not-allowed' : 'transition-all duration-200 hover:scale-105 hover:shadow-md'}`} title="Refresh data">
+            <button onClick={handleRefresh} disabled={isRefreshing} className={`relative p-2 rounded-lg font-semibold text-sm bg-white text-apptivia-carbon-700 border border-gray-200 hover:bg-apptivia-paper group ${isRefreshing ? 'opacity-50 cursor-not-allowed' : 'transition-all duration-200 hover:scale-105 hover:shadow-md'}`} title="Refresh data">
               <svg className={`w-[18px] h-[18px] ${isRefreshing ? 'animate-spin' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
               </svg>
@@ -320,7 +320,7 @@ export default function Systems() {
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
                 className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-all ${
-                  activeTab === tab.id ? 'bg-apptivia-coral text-white shadow-sm' : 'text-gray-600 hover:bg-apptivia-carbon-100'
+                  activeTab === tab.id ? 'bg-apptivia-coral text-white shadow-sm' : 'text-apptivia-carbon-600 hover:bg-apptivia-carbon-100'
                 }`}
               >
                 {tab.label}
@@ -340,7 +340,7 @@ export default function Systems() {
           )}
 
           {integrationsLoading ? (
-            <div className="flex items-center justify-center py-12 text-gray-400">
+            <div className="flex items-center justify-center py-12 text-apptivia-carbon-400">
               <Loader2 size={24} className="animate-spin mr-2" />
               Loading integrations...
             </div>
@@ -359,21 +359,21 @@ export default function Systems() {
                       {template.icon}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <div className="font-semibold text-gray-900">{template.display_name}</div>
-                      <div className="text-xs text-gray-500 truncate">{template.description}</div>
+                      <div className="font-semibold text-apptivia-ink">{template.display_name}</div>
+                      <div className="text-xs text-apptivia-carbon-500 truncate">{template.description}</div>
                     </div>
                     {isConnected && <div className="w-2.5 h-2.5 rounded-full bg-green-500 shrink-0" title="Connected" />}
                     {isError && <div className="w-2.5 h-2.5 rounded-full bg-red-500 shrink-0" title="Error" />}
                   </div>
                   <div className="mb-3">
                     {isConnected && !isSyncing && <span className="inline-flex items-center gap-1 text-xs bg-green-50 text-green-700 px-2.5 py-1 rounded-full font-medium"><CheckCircle size={12} /> Connected</span>}
-                    {isSyncing && <span className="inline-flex items-center gap-1 text-xs bg-apptivia-coral-tone-50 text-blue-700 px-2.5 py-1 rounded-full font-medium"><Loader2 size={12} className="animate-spin" /> Syncing...</span>}
+                    {isSyncing && <span className="inline-flex items-center gap-1 text-xs bg-apptivia-coral-tone-50 text-apptivia-coral px-2.5 py-1 rounded-full font-medium"><Loader2 size={12} className="animate-spin" /> Syncing...</span>}
                     {isError && <span className="inline-flex items-center gap-1 text-xs bg-red-50 text-red-700 px-2.5 py-1 rounded-full font-medium"><AlertCircle size={12} /> Error</span>}
-                    {!integration && <span className="inline-flex items-center gap-1 text-xs bg-apptivia-paper text-gray-500 px-2.5 py-1 rounded-full font-medium">Available</span>}
-                    {integration && integration.status === 'disconnected' && <span className="inline-flex items-center gap-1 text-xs bg-apptivia-paper text-gray-500 px-2.5 py-1 rounded-full font-medium">Disconnected</span>}
+                    {!integration && <span className="inline-flex items-center gap-1 text-xs bg-apptivia-paper text-apptivia-carbon-500 px-2.5 py-1 rounded-full font-medium">Available</span>}
+                    {integration && integration.status === 'disconnected' && <span className="inline-flex items-center gap-1 text-xs bg-apptivia-paper text-apptivia-carbon-500 px-2.5 py-1 rounded-full font-medium">Disconnected</span>}
                   </div>
                   {isConnected && integration && (
-                    <div className="text-xs text-gray-400 mb-3 space-y-1">
+                    <div className="text-xs text-apptivia-carbon-400 mb-3 space-y-1">
                       {integration.last_sync_at && <div className="flex items-center gap-1"><Clock size={11} /> Last synced: {new Date(integration.last_sync_at).toLocaleString()}</div>}
                       {integration.last_sync_error && <div className="text-red-500 truncate" title={integration.last_sync_error}>{integration.last_sync_error}</div>}
                     </div>
@@ -394,7 +394,7 @@ export default function Systems() {
                               setSyncHistory(history);
                               setSyncHistoryLoading(false);
                             }}
-                            className="px-3 py-2 bg-apptivia-carbon-100 text-gray-600 rounded-md hover:bg-apptivia-carbon-200 transition-colors"
+                            className="px-3 py-2 bg-apptivia-carbon-100 text-apptivia-carbon-600 rounded-md hover:bg-apptivia-carbon-200 transition-colors"
                             title="Sync History"
                           >
                             <History size={14} />
@@ -418,7 +418,7 @@ export default function Systems() {
                     )}
                   </div>
                   {template.documentation_url && (
-                    <a href={template.documentation_url} target="_blank" rel="noopener noreferrer" className="mt-2 flex items-center gap-1 text-[11px] text-gray-400 hover:text-blue-500 transition-colors">
+                    <a href={template.documentation_url} target="_blank" rel="noopener noreferrer" className="mt-2 flex items-center gap-1 text-[11px] text-apptivia-carbon-400 hover:text-apptivia-coral transition-colors">
                       <ExternalLink size={10} /> API Docs
                     </a>
                   )}
@@ -459,8 +459,8 @@ export default function Systems() {
         <div className="bg-white rounded-lg shadow-sm p-5 mt-4">
           <div className="flex items-center justify-between mb-4">
             <div>
-              <h3 className="text-lg font-semibold text-gray-900">Team Management</h3>
-              <p className="text-xs text-gray-500">
+              <h3 className="text-lg font-semibold text-apptivia-ink">Team Management</h3>
+              <p className="text-xs text-apptivia-carbon-500">
                 {isManager ? 'Manage your team members and settings' : 'Manage all teams across the organization'}
               </p>
             </div>
@@ -479,7 +479,7 @@ export default function Systems() {
         <ConfigurePanel isOpen={configPanelOpen} onClose={() => setConfigPanelOpen(false)} onOpenAdvanced={() => setShowConfigModal(true)} />
         <ConfigureModal isOpen={showConfigModal} onClose={() => setShowConfigModal(false)} />
         <RightFilterPanel isOpen={filtersOpen} onClose={() => setFiltersOpen(false)} title="System Filters" subtitle="Filter integrations" showReset>
-          <div className="text-xs text-gray-500">No filters available yet.</div>
+          <div className="text-xs text-apptivia-carbon-500">No filters available yet.</div>
         </RightFilterPanel>
 
         {/* ════════ Permissions Modal ════════ */}
@@ -488,27 +488,27 @@ export default function Systems() {
             <div className="bg-white w-[95%] max-w-6xl rounded-2xl shadow-2xl p-6" onClick={(e) => e.stopPropagation()}>
               <div className="flex items-start justify-between mb-4">
                 <div>
-                  <h2 className="text-lg font-bold text-gray-900">User Permissions</h2>
-                  <p className="text-xs text-gray-500">Enable or disable permissions for individual users</p>
+                  <h2 className="text-lg font-bold text-apptivia-ink">User Permissions</h2>
+                  <p className="text-xs text-apptivia-carbon-500">Enable or disable permissions for individual users</p>
                 </div>
-                <button onClick={closePermissionsModal} className="text-gray-400 hover:text-gray-600 text-sm">Close</button>
+                <button onClick={closePermissionsModal} className="text-apptivia-carbon-400 hover:text-apptivia-carbon-600 text-sm">Close</button>
               </div>
               <div className="max-h-[75vh] overflow-y-auto pr-1">
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
                   <div className="bg-apptivia-paper rounded-xl p-3 border">
-                    <div className="text-xs font-semibold text-gray-600 mb-2">Users</div>
+                    <div className="text-xs font-semibold text-apptivia-carbon-600 mb-2">Users</div>
                     <div className="space-y-2 max-h-[420px] overflow-auto">
                       {usersList.length === 0 ? (
-                        <div className="text-xs text-gray-500">No users available.</div>
+                        <div className="text-xs text-apptivia-carbon-500">No users available.</div>
                       ) : (
                         usersList.map((u) => (
                           <button
                             key={u.id}
                             onClick={() => setSelectedUserId(String(u.id))}
-                            className={`w-full text-left px-3 py-2 rounded-lg text-xs font-medium transition-all ${String(u.id) === String(selectedUserId) ? 'bg-apptivia-coral text-white' : 'bg-white text-gray-700 hover:bg-apptivia-carbon-100'}`}
+                            className={`w-full text-left px-3 py-2 rounded-lg text-xs font-medium transition-all ${String(u.id) === String(selectedUserId) ? 'bg-apptivia-coral text-white' : 'bg-white text-apptivia-carbon-700 hover:bg-apptivia-carbon-100'}`}
                           >
                             <div>{`${u.first_name || ''} ${u.last_name || ''}`.trim() || u.email || 'User'}</div>
-                            <div className={`${String(u.id) === String(selectedUserId) ? 'text-blue-100' : 'text-gray-400'} text-[10px]`}>{normalizeRole(u.role)}</div>
+                            <div className={`${String(u.id) === String(selectedUserId) ? 'text-apptivia-coral-tone-300' : 'text-apptivia-carbon-400'} text-[10px]`}>{normalizeRole(u.role)}</div>
                           </button>
                         ))
                       )}
@@ -517,12 +517,12 @@ export default function Systems() {
                   <div className="lg:col-span-2 bg-white rounded-xl border p-4">
                     <div className="flex items-center justify-between mb-3">
                       <div>
-                        <div className="text-xs text-gray-500">Selected user</div>
-                        <div className="text-sm font-semibold text-gray-900">
+                        <div className="text-xs text-apptivia-carbon-500">Selected user</div>
+                        <div className="text-sm font-semibold text-apptivia-ink">
                           {selectedUser ? `${selectedUser.first_name || ''} ${selectedUser.last_name || ''}`.trim() || selectedUser.email : 'Choose a user'}
                         </div>
                       </div>
-                      <button onClick={resetPermissionOverrides} className="text-xs font-semibold text-blue-600 hover:text-blue-700" disabled={!selectedUserId}>
+                      <button onClick={resetPermissionOverrides} className="text-xs font-semibold text-apptivia-coral hover:text-apptivia-coral" disabled={!selectedUserId}>
                         Reset to role defaults
                       </button>
                     </div>
@@ -534,12 +534,12 @@ export default function Systems() {
                           className="flex items-start gap-3 border rounded-lg p-3 text-left hover:shadow-sm transition-all"
                           disabled={!selectedUserId}
                         >
-                          <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${perm.enabled ? 'bg-green-100 text-green-700' : 'bg-apptivia-carbon-200 text-gray-500'}`}>
+                          <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${perm.enabled ? 'bg-green-100 text-green-700' : 'bg-apptivia-carbon-200 text-apptivia-carbon-500'}`}>
                             {perm.enabled ? '✓' : '—'}
                           </div>
                           <div>
-                            <div className="text-xs font-semibold text-gray-900">{perm.label}</div>
-                            <div className="text-[11px] text-gray-500">{perm.description}</div>
+                            <div className="text-xs font-semibold text-apptivia-ink">{perm.label}</div>
+                            <div className="text-[11px] text-apptivia-carbon-500">{perm.description}</div>
                           </div>
                         </button>
                       ))}
@@ -565,10 +565,10 @@ export default function Systems() {
             <div className="bg-white w-[95%] max-w-6xl rounded-2xl shadow-2xl p-6" onClick={(e) => e.stopPropagation()}>
               <div className="flex items-start justify-between mb-4">
                 <div>
-                  <h2 className="text-lg font-bold text-gray-900">{isManager ? 'Team Settings' : 'Team Management'}</h2>
-                  <p className="text-xs text-gray-500">{isManager ? 'Manage your assigned team members and integrations' : 'Manage teams and team members across the organization'}</p>
+                  <h2 className="text-lg font-bold text-apptivia-ink">{isManager ? 'Team Settings' : 'Team Management'}</h2>
+                  <p className="text-xs text-apptivia-carbon-500">{isManager ? 'Manage your assigned team members and integrations' : 'Manage teams and team members across the organization'}</p>
                 </div>
-                <button onClick={() => setShowTeamModal(false)} className="text-gray-400 hover:text-gray-600 text-sm">Close</button>
+                <button onClick={() => setShowTeamModal(false)} className="text-apptivia-carbon-400 hover:text-apptivia-carbon-600 text-sm">Close</button>
               </div>
               <TeamManagementPanel
                 teamHook={teamHook}

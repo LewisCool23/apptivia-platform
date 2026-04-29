@@ -65,10 +65,10 @@ export default function ChangePasswordModal({ isOpen, onClose, onSuccess }) {
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-bold text-gray-900">Change Password</h2>
+          <h2 className="text-xl font-bold text-apptivia-ink">Change Password</h2>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 transition-colors"
+            className="text-apptivia-carbon-400 hover:text-apptivia-carbon-600 transition-colors"
           >
             <X size={24} />
           </button>
@@ -88,7 +88,7 @@ export default function ChangePasswordModal({ isOpen, onClose, onSuccess }) {
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-apptivia-carbon-700 mb-1">
               Current Password
             </label>
             <input
@@ -101,7 +101,7 @@ export default function ChangePasswordModal({ isOpen, onClose, onSuccess }) {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-apptivia-carbon-700 mb-1">
               New Password
             </label>
             <input
@@ -112,13 +112,13 @@ export default function ChangePasswordModal({ isOpen, onClose, onSuccess }) {
               required
               minLength={8}
             />
-            <p className="mt-1 text-xs text-gray-500">
+            <p className="mt-1 text-xs text-apptivia-carbon-500">
               Must be at least 8 characters long
             </p>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-apptivia-carbon-700 mb-1">
               Confirm New Password
             </label>
             <input
@@ -135,7 +135,7 @@ export default function ChangePasswordModal({ isOpen, onClose, onSuccess }) {
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 text-gray-700 bg-apptivia-carbon-100 rounded-md hover:bg-apptivia-carbon-200 transition-colors"
+              className="px-4 py-2 text-apptivia-carbon-700 bg-apptivia-carbon-100 rounded-md hover:bg-apptivia-carbon-200 transition-colors"
               disabled={saving}
             >
               Cancel

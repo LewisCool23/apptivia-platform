@@ -55,9 +55,9 @@ export default function EngageDialpadPanel({ onCall, isDeviceReady, onClose, use
       <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 flex-shrink-0">
         <div className="flex items-center gap-2">
           <Phone size={14} className="text-emerald-500" />
-          <h3 className="font-semibold text-gray-900 text-sm">Dialpad</h3>
+          <h3 className="font-semibold text-apptivia-ink text-sm">Dialpad</h3>
         </div>
-        <button onClick={onClose} className="text-gray-400 hover:text-gray-600 transition-colors">
+        <button onClick={onClose} className="text-apptivia-carbon-400 hover:text-apptivia-carbon-600 transition-colors">
           <X size={15} />
         </button>
       </div>
@@ -69,7 +69,7 @@ export default function EngageDialpadPanel({ onCall, isDeviceReady, onClose, use
           placeholder="Contact name (optional)"
           value={name}
           onChange={e => setName(e.target.value)}
-          className="w-full text-center text-xs border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-1 focus:ring-emerald-300 text-gray-700 placeholder-gray-400"
+          className="w-full text-center text-xs border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-1 focus:ring-emerald-300 text-apptivia-carbon-700 placeholder-gray-400"
         />
 
         {/* Number display */}
@@ -80,12 +80,12 @@ export default function EngageDialpadPanel({ onCall, isDeviceReady, onClose, use
             value={number}
             onChange={e => setNumber(e.target.value)}
             onKeyDown={handleKeyDown}
-            className="flex-1 text-center text-xl font-mono border border-gray-200 rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-emerald-300 text-gray-900 placeholder-gray-300"
+            className="flex-1 text-center text-xl font-mono border border-gray-200 rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-emerald-300 text-apptivia-ink placeholder-gray-300"
           />
           {number && (
             <button
               onClick={handleBackspace}
-              className="text-gray-400 hover:text-gray-600 transition-colors p-1 rounded-lg hover:bg-apptivia-carbon-100"
+              className="text-apptivia-carbon-400 hover:text-apptivia-carbon-600 transition-colors p-1 rounded-lg hover:bg-apptivia-carbon-100"
             >
               <Delete size={16} />
             </button>
@@ -98,7 +98,7 @@ export default function EngageDialpadPanel({ onCall, isDeviceReady, onClose, use
             <button
               key={key}
               onClick={() => handleKey(key)}
-              className="h-12 rounded-xl bg-apptivia-paper hover:bg-apptivia-carbon-100 active:bg-apptivia-carbon-200 text-gray-800 font-semibold text-lg transition-colors border border-gray-100"
+              className="h-12 rounded-xl bg-apptivia-paper hover:bg-apptivia-carbon-100 active:bg-apptivia-carbon-200 text-apptivia-ink font-semibold text-lg transition-colors border border-gray-100"
             >
               {key}
             </button>
@@ -116,15 +116,15 @@ export default function EngageDialpadPanel({ onCall, isDeviceReady, onClose, use
         </button>
 
         {!isDeviceReady && (
-          <p className="text-[10px] text-gray-400 text-center -mt-2">Dialer initializing...</p>
+          <p className="text-[10px] text-apptivia-carbon-400 text-center -mt-2">Dialer initializing...</p>
         )}
 
         {/* Recent Calls */}
         {recentCalls.length > 0 && (
           <div className="w-full border-t border-gray-100 pt-3 mt-1">
             <div className="flex items-center gap-1.5 mb-2">
-              <Clock size={11} className="text-gray-400" />
-              <span className="text-[10px] font-semibold text-gray-500 uppercase tracking-wider">Recent Calls</span>
+              <Clock size={11} className="text-apptivia-carbon-400" />
+              <span className="text-[10px] font-semibold text-apptivia-carbon-500 uppercase tracking-wider">Recent Calls</span>
             </div>
             <div className="space-y-1">
               {recentCalls.map((call) => (
@@ -134,10 +134,10 @@ export default function EngageDialpadPanel({ onCall, isDeviceReady, onClose, use
                   className="w-full flex items-center justify-between px-2 py-1.5 rounded-lg hover:bg-apptivia-paper transition-colors text-left"
                 >
                   <div className="min-w-0">
-                    <span className="text-xs font-medium text-gray-700 block truncate">{call.contact_name || 'Unknown'}</span>
-                    <span className="text-[10px] text-gray-400">{call.phone_number}</span>
+                    <span className="text-xs font-medium text-apptivia-carbon-700 block truncate">{call.contact_name || 'Unknown'}</span>
+                    <span className="text-[10px] text-apptivia-carbon-400">{call.phone_number}</span>
                   </div>
-                  <span className="text-[9px] text-gray-400 flex-shrink-0 ml-2">{timeAgo(call.created_at)}</span>
+                  <span className="text-[9px] text-apptivia-carbon-400 flex-shrink-0 ml-2">{timeAgo(call.created_at)}</span>
                 </button>
               ))}
             </div>

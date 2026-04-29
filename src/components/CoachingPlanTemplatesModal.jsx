@@ -139,12 +139,12 @@ export default function CoachingPlanTemplatesModal({ isOpen, onClose, onTemplate
 
   const getCategoryColor = (category) => {
     const colors = {
-      pipeline: 'bg-apptivia-coral-tone-50 border-blue-200 text-blue-700',
+      pipeline: 'bg-apptivia-coral-tone-50 border-blue-200 text-apptivia-coral',
       activity: 'bg-green-50 border-green-200 text-green-700',
-      quality: 'bg-apptivia-carbon-100 border-purple-200 text-purple-700',
+      quality: 'bg-apptivia-carbon-100 border-purple-200 text-apptivia-ink',
       efficiency: 'bg-orange-50 border-orange-200 text-orange-700'
     };
-    return colors[category] || 'bg-apptivia-paper border-gray-200 text-gray-700';
+    return colors[category] || 'bg-apptivia-paper border-gray-200 text-apptivia-carbon-700';
   };
 
   if (!isOpen) return null;
@@ -170,12 +170,12 @@ export default function CoachingPlanTemplatesModal({ isOpen, onClose, onTemplate
       >
         <div className="flex items-center justify-between p-6 border-b border-gray-200">
           <div>
-            <h2 className="text-2xl font-bold text-gray-900">Coaching Plan Templates</h2>
-            <p className="text-sm text-gray-500 mt-1">Choose a template to create a focused coaching plan</p>
+            <h2 className="text-2xl font-bold text-apptivia-ink">Coaching Plan Templates</h2>
+            <p className="text-sm text-apptivia-carbon-500 mt-1">Choose a template to create a focused coaching plan</p>
           </div>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 transition-colors"
+            className="text-apptivia-carbon-400 hover:text-apptivia-carbon-600 transition-colors"
           >
             <X size={24} />
           </button>
@@ -183,7 +183,7 @@ export default function CoachingPlanTemplatesModal({ isOpen, onClose, onTemplate
 
         <div className="flex-1 overflow-y-auto p-6">
           {loading ? (
-            <div className="text-center py-12 text-gray-500">Loading templates...</div>
+            <div className="text-center py-12 text-apptivia-carbon-500">Loading templates...</div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {visibleTemplates.map((template) => (
@@ -199,8 +199,8 @@ export default function CoachingPlanTemplatesModal({ isOpen, onClose, onTemplate
                   <div className="flex items-start gap-3 mb-3">
                     <span className="text-3xl">{template.icon}</span>
                     <div className="flex-1">
-                      <h3 className="font-semibold text-gray-900 mb-1">{template.name}</h3>
-                      <p className="text-xs text-gray-500">{template.description}</p>
+                      <h3 className="font-semibold text-apptivia-ink mb-1">{template.name}</h3>
+                      <p className="text-xs text-apptivia-carbon-500">{template.description}</p>
                     </div>
                   </div>
 
@@ -209,15 +209,15 @@ export default function CoachingPlanTemplatesModal({ isOpen, onClose, onTemplate
                   </div>
 
                   <div className="space-y-2 text-xs">
-                    <div className="flex items-center gap-2 text-gray-600">
+                    <div className="flex items-center gap-2 text-apptivia-carbon-600">
                       <CalendarIcon size={14} />
                       <span>{template.duration_days} days</span>
                     </div>
-                    <div className="flex items-center gap-2 text-gray-600">
+                    <div className="flex items-center gap-2 text-apptivia-carbon-600">
                       <Target size={14} />
                       <span>{template.focus_kpis?.length || 0} KPIs</span>
                     </div>
-                    <div className="flex items-center gap-2 text-gray-600">
+                    <div className="flex items-center gap-2 text-apptivia-carbon-600">
                       <CheckCircle size={14} />
                       <span>{template.suggested_actions?.length || 0} Actions</span>
                     </div>
@@ -225,15 +225,15 @@ export default function CoachingPlanTemplatesModal({ isOpen, onClose, onTemplate
 
                   {selectedTemplate?.id === template.id && (
                     <div className="mt-3 pt-3 border-t border-blue-200">
-                      <div className="text-xs font-medium text-blue-700 mb-2">Focus KPIs:</div>
+                      <div className="text-xs font-medium text-apptivia-coral mb-2">Focus KPIs:</div>
                       <div className="flex flex-wrap gap-1">
                         {template.focus_kpis?.slice(0, 3).map((kpi, idx) => (
-                          <span key={idx} className="px-2 py-0.5 bg-apptivia-coral-tone-50 text-blue-700 rounded text-xs">
+                          <span key={idx} className="px-2 py-0.5 bg-apptivia-coral-tone-50 text-apptivia-coral rounded text-xs">
                             {buildLabel(kpi)}
                           </span>
                         ))}
                         {template.focus_kpis?.length > 3 && (
-                          <span className="px-2 py-0.5 bg-apptivia-coral-tone-50 text-blue-700 rounded text-xs">
+                          <span className="px-2 py-0.5 bg-apptivia-coral-tone-50 text-apptivia-coral rounded text-xs">
                             +{template.focus_kpis.length - 3} more
                           </span>
                         )}
@@ -248,10 +248,10 @@ export default function CoachingPlanTemplatesModal({ isOpen, onClose, onTemplate
 
         {selectedTemplate && (
           <div className="border-t border-gray-200 p-6 bg-apptivia-paper">
-            <h3 className="font-semibold text-gray-900 mb-4">Customize Plan</h3>
+            <h3 className="font-semibold text-apptivia-ink mb-4">Customize Plan</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-apptivia-carbon-700 mb-1">
                   Plan Name
                 </label>
                 <input
@@ -263,7 +263,7 @@ export default function CoachingPlanTemplatesModal({ isOpen, onClose, onTemplate
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-apptivia-carbon-700 mb-1">
                   Duration (days)
                 </label>
                 <select
@@ -278,7 +278,7 @@ export default function CoachingPlanTemplatesModal({ isOpen, onClose, onTemplate
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-apptivia-carbon-700 mb-1">
                   Start Date
                 </label>
                 <input
@@ -289,7 +289,7 @@ export default function CoachingPlanTemplatesModal({ isOpen, onClose, onTemplate
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-apptivia-carbon-700 mb-1">
                   End Date
                 </label>
                 <input
@@ -303,7 +303,7 @@ export default function CoachingPlanTemplatesModal({ isOpen, onClose, onTemplate
             <div className="flex justify-end gap-2">
               <button
                 onClick={onClose}
-                className="px-4 py-2 text-sm font-semibold border border-gray-300 text-gray-700 rounded-md hover:bg-apptivia-paper"
+                className="px-4 py-2 text-sm font-semibold border border-gray-300 text-apptivia-carbon-700 rounded-md hover:bg-apptivia-paper"
               >
                 Cancel
               </button>

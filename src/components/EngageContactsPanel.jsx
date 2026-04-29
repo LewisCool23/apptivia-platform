@@ -46,11 +46,11 @@ export default function EngageContactsPanel({ organizationId, onCallContact, onC
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 flex-shrink-0">
         <div className="flex items-center gap-2">
-          <UserPlus size={14} className="text-blue-500" />
-          <h3 className="font-semibold text-gray-900 text-sm">Saved Contacts</h3>
-          <span className="text-[10px] bg-apptivia-carbon-100 text-gray-500 px-1.5 py-0.5 rounded-full">{contacts.length}</span>
+          <UserPlus size={14} className="text-apptivia-coral" />
+          <h3 className="font-semibold text-apptivia-ink text-sm">Saved Contacts</h3>
+          <span className="text-[10px] bg-apptivia-carbon-100 text-apptivia-carbon-500 px-1.5 py-0.5 rounded-full">{contacts.length}</span>
         </div>
-        <button onClick={onClose} className="text-gray-400 hover:text-gray-600 transition-colors">
+        <button onClick={onClose} className="text-apptivia-carbon-400 hover:text-apptivia-carbon-600 transition-colors">
           <X size={15} />
         </button>
       </div>
@@ -58,7 +58,7 @@ export default function EngageContactsPanel({ organizationId, onCallContact, onC
       {/* Search */}
       <div className="px-3 py-2 border-b border-gray-50 flex-shrink-0">
         <div className="relative">
-          <Search size={12} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400" />
+          <Search size={12} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-apptivia-carbon-400" />
           <input
             type="text"
             placeholder="Search contacts..."
@@ -72,15 +72,15 @@ export default function EngageContactsPanel({ organizationId, onCallContact, onC
       {/* List */}
       <div className="flex-1 overflow-y-auto">
         {loading ? (
-          <div className="flex items-center justify-center h-32 text-xs text-gray-400">Loading...</div>
+          <div className="flex items-center justify-center h-32 text-xs text-apptivia-carbon-400">Loading...</div>
         ) : filtered.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-32 gap-1">
-            <UserPlus size={20} className="text-gray-300" />
-            <p className="text-xs text-gray-400">
+            <UserPlus size={20} className="text-apptivia-carbon-300" />
+            <p className="text-xs text-apptivia-carbon-400">
               {search ? 'No contacts match your search' : 'No saved contacts yet'}
             </p>
             {!search && (
-              <p className="text-[10px] text-gray-400 text-center px-4">
+              <p className="text-[10px] text-apptivia-carbon-400 text-center px-4">
                 Save contacts from the Discover or Signal Prospecting tabs
               </p>
             )}
@@ -97,9 +97,9 @@ export default function EngageContactsPanel({ organizationId, onCallContact, onC
                       {initial}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-xs font-semibold text-gray-900 truncate">{name}</p>
+                      <p className="text-xs font-semibold text-apptivia-ink truncate">{name}</p>
                       {(contact.title || contact.company_name) && (
-                        <p className="text-[10px] text-gray-500 truncate">
+                        <p className="text-[10px] text-apptivia-carbon-500 truncate">
                           {[contact.title, contact.company_name].filter(Boolean).join(' · ')}
                         </p>
                       )}
@@ -118,7 +118,7 @@ export default function EngageContactsPanel({ organizationId, onCallContact, onC
                           <Tooltip text={contact.email} position="right">
                             <button
                               onClick={() => navigator.clipboard.writeText(contact.email)}
-                              className="text-blue-500 hover:text-blue-700 transition-colors"
+                              className="text-apptivia-coral hover:text-apptivia-coral transition-colors"
                             >
                               <Mail size={11} />
                             </button>
@@ -130,7 +130,7 @@ export default function EngageContactsPanel({ organizationId, onCallContact, onC
                               href={contact.linkedin_url}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="text-blue-500 hover:text-blue-700 transition-colors"
+                              className="text-apptivia-coral hover:text-apptivia-coral transition-colors"
                             >
                               <ExternalLink size={11} />
                             </a>

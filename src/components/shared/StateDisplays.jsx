@@ -7,9 +7,9 @@ import { AlertTriangle, Loader2, Inbox } from 'lucide-react';
 export function EmptyState({ icon: Icon = Inbox, title = 'No data', message, action, className = '' }) {
   return (
     <div className={`flex flex-col items-center justify-center py-16 text-center ${className}`}>
-      <Icon className="w-12 h-12 text-gray-300 mb-4" />
-      <h3 className="text-lg font-semibold text-gray-600 mb-1">{title}</h3>
-      {message && <p className="text-sm text-gray-400 max-w-md">{message}</p>}
+      <Icon className="w-12 h-12 text-apptivia-carbon-300 mb-4" />
+      <h3 className="text-lg font-semibold text-apptivia-carbon-600 mb-1">{title}</h3>
+      {message && <p className="text-sm text-apptivia-carbon-400 max-w-md">{message}</p>}
       {action && <div className="mt-4">{action}</div>}
     </div>
   );
@@ -23,7 +23,7 @@ export function ErrorState({ message = 'Something went wrong', onRetry, classNam
     <div className={`flex flex-col items-center justify-center py-16 text-center ${className}`}>
       <AlertTriangle className="w-12 h-12 text-red-300 mb-4" />
       <h3 className="text-lg font-semibold text-red-600 mb-1">Error</h3>
-      <p className="text-sm text-gray-500 max-w-md mb-4">{message}</p>
+      <p className="text-sm text-apptivia-carbon-500 max-w-md mb-4">{message}</p>
       {onRetry && (
         <button
           onClick={onRetry}
@@ -42,8 +42,8 @@ export function ErrorState({ message = 'Something went wrong', onRetry, classNam
 export function LoadingState({ message = 'Loading...', className = '' }) {
   return (
     <div className={`flex flex-col items-center justify-center py-16 ${className}`}>
-      <Loader2 className="w-8 h-8 text-blue-500 animate-spin mb-3" />
-      <p className="text-sm text-gray-500">{message}</p>
+      <Loader2 className="w-8 h-8 text-apptivia-coral animate-spin mb-3" />
+      <p className="text-sm text-apptivia-carbon-500">{message}</p>
     </div>
   );
 }

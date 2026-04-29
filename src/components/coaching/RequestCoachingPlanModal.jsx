@@ -201,10 +201,10 @@ export default function RequestCoachingPlanModal({ isOpen, onClose }) {
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
           <div>
-            <h3 className="text-base font-semibold text-gray-900">Request Coaching Plan</h3>
-            <p className="text-xs text-gray-500 mt-0.5">Your manager will be notified and can create a personalized plan for you.</p>
+            <h3 className="text-base font-semibold text-apptivia-ink">Request Coaching Plan</h3>
+            <p className="text-xs text-apptivia-carbon-500 mt-0.5">Your manager will be notified and can create a personalized plan for you.</p>
           </div>
-          <button onClick={onClose} className="p-1 text-gray-400 hover:text-gray-600 rounded-md hover:bg-apptivia-carbon-100">
+          <button onClick={onClose} className="p-1 text-apptivia-carbon-400 hover:text-apptivia-carbon-600 rounded-md hover:bg-apptivia-carbon-100">
             <X size={18} />
           </button>
         </div>
@@ -213,7 +213,7 @@ export default function RequestCoachingPlanModal({ isOpen, onClose }) {
         <div className="px-6 py-4 space-y-4">
           {loading ? (
             <div className="flex items-center justify-center py-8">
-              <Loader2 size={24} className="animate-spin text-blue-500" />
+              <Loader2 size={24} className="animate-spin text-apptivia-coral" />
             </div>
           ) : (
             <>
@@ -221,19 +221,19 @@ export default function RequestCoachingPlanModal({ isOpen, onClose }) {
               {avgScore !== null && (
                 <div className="bg-apptivia-paper rounded-lg p-3">
                   <div className="flex items-center justify-between mb-2">
-                    <span className="text-xs font-medium text-gray-600">5-Week Avg Score</span>
+                    <span className="text-xs font-medium text-apptivia-carbon-600">5-Week Avg Score</span>
                     <div className="flex items-center gap-1.5">
                       <span className={`text-sm font-bold ${avgScore >= 80 ? 'text-emerald-600' : avgScore >= 50 ? 'text-amber-600' : 'text-red-600'}`}>
                         {avgScore}%
                       </span>
                       {scoreTrend === 'up' && <TrendingUp size={14} className="text-emerald-500" />}
                       {scoreTrend === 'down' && <TrendingDown size={14} className="text-red-500" />}
-                      {scoreTrend === 'flat' && <Minus size={14} className="text-gray-400" />}
+                      {scoreTrend === 'flat' && <Minus size={14} className="text-apptivia-carbon-400" />}
                     </div>
                   </div>
                   {laggingKpis.length > 0 && (
                     <div className="space-y-1.5">
-                      <span className="text-[10px] font-medium text-gray-500 uppercase">Consistently below target (5-week avg)</span>
+                      <span className="text-[10px] font-medium text-apptivia-carbon-500 uppercase">Consistently below target (5-week avg)</span>
                       <div className="space-y-1">
                         {laggingKpis.map(k => (
                           <div key={k.key} className="flex items-center justify-between text-[11px] px-2 py-1 rounded-md bg-red-50 border border-red-100">
@@ -242,7 +242,7 @@ export default function RequestCoachingPlanModal({ isOpen, onClose }) {
                               <span className="text-red-600 font-semibold">{k.pct}%</span>
                               {k.trend === 'up' && <TrendingUp size={10} className="text-emerald-500" />}
                               {k.trend === 'down' && <TrendingDown size={10} className="text-red-500" />}
-                              {k.trend === 'flat' && <Minus size={10} className="text-gray-400" />}
+                              {k.trend === 'flat' && <Minus size={10} className="text-apptivia-carbon-400" />}
                             </div>
                           </div>
                         ))}
@@ -254,8 +254,8 @@ export default function RequestCoachingPlanModal({ isOpen, onClose }) {
 
               {/* Optional message */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Message <span className="text-gray-400 font-normal">(optional)</span>
+                <label className="block text-sm font-medium text-apptivia-carbon-700 mb-1">
+                  Message <span className="text-apptivia-carbon-400 font-normal">(optional)</span>
                 </label>
                 <textarea
                   value={message}
@@ -279,7 +279,7 @@ export default function RequestCoachingPlanModal({ isOpen, onClose }) {
         <div className="flex justify-end gap-2 px-6 py-3 border-t border-gray-100 bg-apptivia-paper">
           <button
             onClick={onClose}
-            className="px-4 py-2 text-sm font-medium text-gray-600 border border-gray-300 rounded-md hover:bg-apptivia-carbon-100"
+            className="px-4 py-2 text-sm font-medium text-apptivia-carbon-600 border border-gray-300 rounded-md hover:bg-apptivia-carbon-100"
           >
             Cancel
           </button>

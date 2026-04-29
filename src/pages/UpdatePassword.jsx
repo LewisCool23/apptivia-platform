@@ -66,8 +66,8 @@ export default function UpdatePassword() {
         <div className="w-16 h-16 rounded-xl bg-gradient-to-r from-blue-500 to-purple-500 flex items-center justify-center mb-6">
           <span className="text-white font-bold text-3xl">A</span>
         </div>
-        <h1 className="text-2xl font-bold text-blue-700 mb-2 text-center">Set a new password</h1>
-        <p className="text-gray-500 mb-4 text-center text-sm">
+        <h1 className="text-2xl font-bold text-apptivia-coral mb-2 text-center">Set a new password</h1>
+        <p className="text-apptivia-carbon-500 mb-4 text-center text-sm">
           {isRecovery
             ? 'Enter your new password below to reset your account.'
             : 'Enter your new password below to update your account.'}
@@ -77,10 +77,10 @@ export default function UpdatePassword() {
             Waiting for session... If you clicked the reset link from your email, please wait a moment. If this persists, try copying the full link directly into your browser.
           </div>
         ) : (
-          <p className="mb-4 text-center text-gray-600 text-sm">Signed in as <span className="font-medium">{session.user.email}</span></p>
+          <p className="mb-4 text-center text-apptivia-carbon-600 text-sm">Signed in as <span className="font-medium">{session.user.email}</span></p>
         )}
         <div className="mb-4 w-full">
-          <label className="block mb-1 font-medium text-sm text-gray-700">New Password</label>
+          <label className="block mb-1 font-medium text-sm text-apptivia-carbon-700">New Password</label>
           <input
             type="password"
             className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200"
@@ -92,7 +92,7 @@ export default function UpdatePassword() {
           />
         </div>
         <div className="mb-6 w-full">
-          <label className="block mb-1 font-medium text-sm text-gray-700">Confirm Password</label>
+          <label className="block mb-1 font-medium text-sm text-apptivia-carbon-700">Confirm Password</label>
           <input
             type="password"
             className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200"
@@ -114,11 +114,11 @@ export default function UpdatePassword() {
           <p className={`mt-2 text-center w-full text-sm ${
             status.type === 'error' ? 'text-red-500' :
             status.type === 'success' ? 'text-green-600' :
-            'text-blue-600'
+            'text-apptivia-coral'
           }`}>{status.text}</p>
         )}
-        <div className="text-center text-gray-500 text-sm mt-6">
-          <a href="/login" className="text-blue-600 hover:underline transition-all duration-200 hover:text-blue-700">Back to login</a>
+        <div className="text-center text-apptivia-carbon-500 text-sm mt-6">
+          <a href="/login" className="text-apptivia-coral hover:underline transition-all duration-200 hover:text-apptivia-coral">Back to login</a>
         </div>
       </form>
     </div>

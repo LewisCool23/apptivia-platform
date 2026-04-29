@@ -54,15 +54,15 @@ const LEVEL_COLORS = {
 
 const RARITY_COLORS = {
   legendary: { border: '#FFD700', glow: 'shadow-yellow-400/40', label: 'text-yellow-300' },
-  epic:      { border: '#9333ea', glow: 'shadow-purple-400/40', label: 'text-purple-300' },
-  rare:      { border: '#3b82f6', glow: 'shadow-blue-400/40',   label: 'text-blue-300'   },
-  common:    { border: '#6b7280', glow: '',                      label: 'text-gray-400'   },
+  epic:      { border: '#9333ea', glow: 'shadow-purple-400/40', label: 'text-apptivia-ink' },
+  rare:      { border: '#3b82f6', glow: 'shadow-blue-400/40',   label: 'text-apptivia-coral-tone-300'   },
+  common:    { border: '#6b7280', glow: '',                      label: 'text-apptivia-carbon-400'   },
 };
 
 const DIFFICULTY_COLORS = {
   easy:   { bg: 'bg-green-500/20', text: 'text-green-300', border: 'border-green-500/30' },
-  medium: { bg: 'bg-apptivia-coral/20',  text: 'text-blue-300',  border: 'border-blue-500/30' },
-  hard:   { bg: 'bg-apptivia-ink/20', text: 'text-purple-300', border: 'border-purple-500/30' },
+  medium: { bg: 'bg-apptivia-coral/20',  text: 'text-apptivia-coral-tone-300',  border: 'border-blue-500/30' },
+  hard:   { bg: 'bg-apptivia-ink/20', text: 'text-apptivia-ink', border: 'border-purple-500/30' },
   expert: { bg: 'bg-amber-500/20', text: 'text-amber-300', border: 'border-amber-500/30' },
 };
 
@@ -369,7 +369,7 @@ function SpotlightSlide({ profiles }) {
           <div className="text-white/60 mt-1 font-medium">Total Points</div>
         </div>
         <div className="bg-white/10 rounded-2xl p-6">
-          <div className="text-5xl font-black text-blue-400 tabular-nums">
+          <div className="text-5xl font-black text-apptivia-coral-tone-300 tabular-nums">
             {top.current_score || 0}%
           </div>
           <div className="text-white/60 mt-1 font-medium">Scorecard</div>
@@ -493,7 +493,7 @@ function TeamStatsSlide({ profiles }) {
   }, {});
 
   const stats = [
-    { label: 'Team Members', value: totalMembers, icon: Users, color: 'text-blue-400' },
+    { label: 'Team Members', value: totalMembers, icon: Users, color: 'text-apptivia-coral-tone-300' },
     { label: 'Total Points', value: totalPoints.toLocaleString(), icon: Zap, color: 'text-amber-400' },
     { label: 'Avg Scorecard', value: `${avgScore}%`, icon: TrendingUp, color: 'text-green-400' },
     { label: 'Longest Streak', value: `${topStreak}d`, icon: Flame, color: 'text-orange-400' },

@@ -57,8 +57,8 @@ export default function UpgradePrompt({ feature, context = 'inline', variant = '
         <div className="flex items-center gap-3">
           <span className="text-2xl">{config.icon}</span>
           <div>
-            <p className="text-sm font-semibold text-purple-800">{config.title}</p>
-            <p className="text-xs text-purple-600">{config.message}</p>
+            <p className="text-sm font-semibold text-apptivia-ink">{config.title}</p>
+            <p className="text-xs text-apptivia-ink">{config.message}</p>
           </div>
         </div>
         <button
@@ -77,23 +77,23 @@ export default function UpgradePrompt({ feature, context = 'inline', variant = '
       <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
         <div className="bg-white rounded-xl shadow-xl w-full max-w-lg">
           <div className="p-6">
-            <h2 className="text-lg font-semibold text-gray-900 mb-1">
+            <h2 className="text-lg font-semibold text-apptivia-ink mb-1">
               {variant === 'feature_gate' && featureLabel ? `${featureLabel} is a Pro Feature` : config.title}
             </h2>
-            <p className="text-sm text-gray-500 mb-6">{config.message}</p>
+            <p className="text-sm text-apptivia-carbon-500 mb-6">{config.message}</p>
 
             {/* Feature comparison table */}
             <div className="mb-6">
-              <div className="grid grid-cols-3 text-xs font-medium text-gray-400 uppercase tracking-wide pb-2 border-b border-gray-100">
+              <div className="grid grid-cols-3 text-xs font-medium text-apptivia-carbon-400 uppercase tracking-wide pb-2 border-b border-gray-100">
                 <span>Feature</span>
                 <span className="text-center">Starter</span>
                 <span className="text-center">Pro</span>
               </div>
               {COMPARISON_FEATURES.map(({ feature: feat, basic, pro }) => (
                 <div key={feat} className="grid grid-cols-3 text-sm py-2 border-b border-gray-50">
-                  <span className="text-gray-700">{feat}</span>
-                  <span className="text-center text-gray-400">{basic}</span>
-                  <span className="text-center font-medium text-indigo-600">{pro}</span>
+                  <span className="text-apptivia-carbon-700">{feat}</span>
+                  <span className="text-center text-apptivia-carbon-400">{basic}</span>
+                  <span className="text-center font-medium text-apptivia-ink">{pro}</span>
                 </div>
               ))}
             </div>
@@ -106,12 +106,12 @@ export default function UpgradePrompt({ feature, context = 'inline', variant = '
                 Upgrade to Pro — $49/seat/mo
               </button>
               {onDismiss && (
-                <button onClick={onDismiss} className="px-4 text-sm text-gray-500 hover:text-gray-700">
+                <button onClick={onDismiss} className="px-4 text-sm text-apptivia-carbon-500 hover:text-apptivia-carbon-700">
                   Not now
                 </button>
               )}
             </div>
-            <p className="text-xs text-gray-400 mt-2 text-center">14-day free trial included</p>
+            <p className="text-xs text-apptivia-carbon-400 mt-2 text-center">14-day free trial included</p>
           </div>
         </div>
       </div>
@@ -124,8 +124,8 @@ export default function UpgradePrompt({ feature, context = 'inline', variant = '
       <div className="flex items-start gap-2">
         <span className="text-lg">{config.icon}</span>
         <div className="flex-1 min-w-0">
-          <p className="text-sm font-semibold text-purple-800">{config.title}</p>
-          <p className="text-xs text-purple-600 mt-0.5">{config.message}</p>
+          <p className="text-sm font-semibold text-apptivia-ink">{config.title}</p>
+          <p className="text-xs text-apptivia-ink mt-0.5">{config.message}</p>
           <button
             onClick={handleUpgrade}
             className="mt-2 px-3 py-1.5 bg-apptivia-ink text-white text-xs font-semibold rounded-md hover:bg-apptivia-ink transition-colors"

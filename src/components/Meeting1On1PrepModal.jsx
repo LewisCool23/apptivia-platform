@@ -176,7 +176,7 @@ export default function Meeting1On1PrepModal({
     ? { text: 'Trending upward — acknowledge momentum and reinforce habits.', color: 'text-green-700 bg-green-50', Icon: TrendingUp }
     : trendDelta < -5
       ? { text: 'Declining trend — explore blockers and adjust approach.', color: 'text-red-700 bg-red-50', Icon: TrendingDown }
-      : { text: 'Stable performance — maintain focus and set stretch goals.', color: 'text-blue-700 bg-apptivia-coral-tone-50', Icon: Minus };
+      : { text: 'Stable performance — maintain focus and set stretch goals.', color: 'text-apptivia-coral bg-apptivia-coral-tone-50', Icon: Minus };
 
   if (!isOpen) return null;
 
@@ -202,7 +202,7 @@ export default function Meeting1On1PrepModal({
           <div className="bg-gradient-to-r from-blue-600 to-indigo-600 px-6 py-4 flex items-center justify-between text-white">
             <div>
               <h2 className="text-lg font-bold">1:1 Prep: {repName}</h2>
-              <p className="text-xs text-blue-200 mt-0.5">{new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
+              <p className="text-xs text-apptivia-coral-tone-300 mt-0.5">{new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
             </div>
             <div className="flex items-center gap-2 no-print">
               <button
@@ -237,27 +237,27 @@ export default function Meeting1On1PrepModal({
 
             {/* 1. Opening Context */}
             <div className="border rounded-lg p-4">
-              <h3 className="text-sm font-semibold text-gray-900 mb-3 flex items-center gap-2">
-                <span className="w-6 h-6 rounded-full bg-apptivia-coral-tone-50 text-blue-600 flex items-center justify-center text-xs font-bold">1</span>
+              <h3 className="text-sm font-semibold text-apptivia-ink mb-3 flex items-center gap-2">
+                <span className="w-6 h-6 rounded-full bg-apptivia-coral-tone-50 text-apptivia-coral flex items-center justify-center text-xs font-bold">1</span>
                 Opening Context
               </h3>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-3">
                 <div className="bg-apptivia-paper rounded p-2 text-center">
-                  <div className="text-[10px] text-gray-500 uppercase">Current Score</div>
-                  <div className="text-lg font-bold text-gray-900">{repAnalysis?.recent || 0}%</div>
+                  <div className="text-[10px] text-apptivia-carbon-500 uppercase">Current Score</div>
+                  <div className="text-lg font-bold text-apptivia-ink">{repAnalysis?.recent || 0}%</div>
                 </div>
                 <div className="bg-apptivia-paper rounded p-2 text-center">
-                  <div className="text-[10px] text-gray-500 uppercase">5-Week Avg</div>
-                  <div className="text-lg font-bold text-gray-900">{repAnalysis?.avg5w || 0}%</div>
+                  <div className="text-[10px] text-apptivia-carbon-500 uppercase">5-Week Avg</div>
+                  <div className="text-lg font-bold text-apptivia-ink">{repAnalysis?.avg5w || 0}%</div>
                 </div>
                 <div className="bg-apptivia-paper rounded p-2 text-center">
-                  <div className="text-[10px] text-gray-500 uppercase">5-Week Trend</div>
+                  <div className="text-[10px] text-apptivia-carbon-500 uppercase">5-Week Trend</div>
                   <div className={`text-lg font-bold ${trendDelta >= 0 ? 'text-green-600' : 'text-red-600'}`}>
                     {trendDelta >= 0 ? '+' : ''}{trendDelta}%
                   </div>
                 </div>
                 <div className="bg-apptivia-paper rounded p-2 text-center">
-                  <div className="text-[10px] text-gray-500 uppercase">vs Last Week</div>
+                  <div className="text-[10px] text-apptivia-carbon-500 uppercase">vs Last Week</div>
                   <div className={`text-lg font-bold ${(repAnalysis?.delta || 0) >= 0 ? 'text-green-600' : 'text-red-600'}`}>
                     {(repAnalysis?.delta || 0) >= 0 ? '+' : ''}{repAnalysis?.delta || 0}%
                   </div>
@@ -271,7 +271,7 @@ export default function Meeting1On1PrepModal({
 
             {/* 2. Priority KPIs to Discuss */}
             <div className="border rounded-lg p-4">
-              <h3 className="text-sm font-semibold text-gray-900 mb-3 flex items-center gap-2">
+              <h3 className="text-sm font-semibold text-apptivia-ink mb-3 flex items-center gap-2">
                 <span className="w-6 h-6 rounded-full bg-red-100 text-red-600 flex items-center justify-center text-xs font-bold">2</span>
                 Priority KPIs to Discuss
                 {laggingKpis.length > 0 && <span className="text-xs text-red-500 font-normal">({laggingKpis.length} lagging)</span>}
@@ -289,7 +289,7 @@ export default function Meeting1On1PrepModal({
                       <div key={kpi.key} className="border rounded-lg p-3 bg-apptivia-paper">
                         <div className="flex items-center justify-between mb-1.5">
                           <div className="flex items-center gap-2">
-                            <span className="text-xs font-semibold text-gray-900">{kpi.label}</span>
+                            <span className="text-xs font-semibold text-apptivia-ink">{kpi.label}</span>
                             <span className={`text-[9px] px-1.5 py-0.5 rounded-full font-medium ${tierColor}`}>
                               {TIER_LABELS[kpi.tier]}
                             </span>
@@ -306,7 +306,7 @@ export default function Meeting1On1PrepModal({
                         </div>
                         {kpi.guidance && (
                           <>
-                            <div className="text-[11px] text-blue-800 bg-apptivia-coral-tone-50 border border-blue-100 rounded px-3 py-2 mb-1.5">
+                            <div className="text-[11px] text-apptivia-coral-tone-700 bg-apptivia-coral-tone-50 border border-blue-100 rounded px-3 py-2 mb-1.5">
                               <span className="font-semibold">Ask:</span> "{kpi.guidance.coachingQuestion}"
                             </div>
                             <div className="text-[11px] text-amber-700 bg-amber-50 border border-amber-100 rounded px-3 py-1.5">
@@ -324,7 +324,7 @@ export default function Meeting1On1PrepModal({
             {/* 3. Strengths to Acknowledge */}
             {strengths.length > 0 && (
               <div className="border rounded-lg p-4">
-                <h3 className="text-sm font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                <h3 className="text-sm font-semibold text-apptivia-ink mb-3 flex items-center gap-2">
                   <span className="w-6 h-6 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center text-xs font-bold">3</span>
                   Strengths to Acknowledge
                 </h3>
@@ -333,7 +333,7 @@ export default function Meeting1On1PrepModal({
                     <div key={kpi.key} className="flex items-center justify-between text-xs bg-emerald-50 rounded px-3 py-2">
                       <div className="flex items-center gap-2">
                         <CheckCircle size={14} className="text-emerald-500" />
-                        <span className="font-medium text-gray-900">{kpi.label}</span>
+                        <span className="font-medium text-apptivia-ink">{kpi.label}</span>
                       </div>
                       <div className="flex items-center gap-2">
                         <span className="font-bold text-emerald-600">{kpi.percentage}%</span>
@@ -350,17 +350,17 @@ export default function Meeting1On1PrepModal({
             {/* 4. Suggested Action Items */}
             {actionItems.length > 0 && (
               <div className="border rounded-lg p-4">
-                <h3 className="text-sm font-semibold text-gray-900 mb-3 flex items-center gap-2">
-                  <span className="w-6 h-6 rounded-full bg-apptivia-carbon-100 text-purple-600 flex items-center justify-center text-xs font-bold">4</span>
+                <h3 className="text-sm font-semibold text-apptivia-ink mb-3 flex items-center gap-2">
+                  <span className="w-6 h-6 rounded-full bg-apptivia-carbon-100 text-apptivia-ink flex items-center justify-center text-xs font-bold">4</span>
                   Suggested Action Items ({actionItems.length})
                 </h3>
                 <ol className="space-y-2">
                   {actionItems.map((item, i) => (
                     <li key={i} className="flex items-start gap-2 text-xs">
-                      <span className="text-purple-500 font-bold mt-0.5 min-w-[16px]">{i + 1}.</span>
+                      <span className="text-apptivia-ink font-bold mt-0.5 min-w-[16px]">{i + 1}.</span>
                       <div>
-                        <span className="font-medium text-gray-900">{item.tip}</span>
-                        <span className="text-gray-400 ml-1">({item.kpiLabel})</span>
+                        <span className="font-medium text-apptivia-ink">{item.tip}</span>
+                        <span className="text-apptivia-carbon-400 ml-1">({item.kpiLabel})</span>
                       </div>
                     </li>
                   ))}
@@ -373,22 +373,22 @@ export default function Meeting1On1PrepModal({
 
             {/* 5. Manager Notes */}
             <div className="border rounded-lg p-4">
-              <h3 className="text-sm font-semibold text-gray-900 mb-3 flex items-center gap-2">
-                <span className="w-6 h-6 rounded-full bg-apptivia-carbon-200 text-gray-600 flex items-center justify-center text-xs font-bold">5</span>
+              <h3 className="text-sm font-semibold text-apptivia-ink mb-3 flex items-center gap-2">
+                <span className="w-6 h-6 rounded-full bg-apptivia-carbon-200 text-apptivia-carbon-600 flex items-center justify-center text-xs font-bold">5</span>
                 Manager Notes
               </h3>
               <textarea
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
                 placeholder="Add your notes before or during the 1:1..."
-                className="w-full border rounded-lg p-3 text-xs text-gray-700 resize-none h-24 focus:outline-none focus:ring-2 focus:ring-blue-300"
+                className="w-full border rounded-lg p-3 text-xs text-apptivia-carbon-700 resize-none h-24 focus:outline-none focus:ring-2 focus:ring-blue-300"
               />
             </div>
 
             {/* 6. Share Agenda Preview */}
             {showSharePreview && (
               <div className="border-2 border-blue-200 rounded-lg p-4 bg-apptivia-coral-tone-50/50 no-print">
-                <h3 className="text-sm font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                <h3 className="text-sm font-semibold text-apptivia-ink mb-3 flex items-center gap-2">
                   <span className="w-6 h-6 rounded-full bg-apptivia-coral text-white flex items-center justify-center text-xs font-bold">
                     <Send size={12} />
                   </span>
@@ -397,12 +397,12 @@ export default function Meeting1On1PrepModal({
                 <textarea
                   value={synopsisText}
                   onChange={(e) => setSynopsisText(e.target.value)}
-                  className="w-full border rounded-lg p-3 text-xs text-gray-700 resize-none h-48 focus:outline-none focus:ring-2 focus:ring-blue-300 bg-white font-mono"
+                  className="w-full border rounded-lg p-3 text-xs text-apptivia-carbon-700 resize-none h-48 focus:outline-none focus:ring-2 focus:ring-blue-300 bg-white font-mono"
                 />
                 <div className="flex items-center justify-between mt-3">
                   <button
                     onClick={() => setShowSharePreview(false)}
-                    className="text-xs text-gray-500 hover:text-gray-700"
+                    className="text-xs text-apptivia-carbon-500 hover:text-apptivia-carbon-700"
                   >
                     Cancel
                   </button>
@@ -427,7 +427,7 @@ export default function Meeting1On1PrepModal({
                     </button>
                   </div>
                 </div>
-                <p className="text-[10px] text-gray-400 mt-2">
+                <p className="text-[10px] text-apptivia-carbon-400 mt-2">
                   This will send an in-app notification to {repName?.split(' ')[0] || 'the rep'} and copy the full agenda to your clipboard.
                 </p>
               </div>

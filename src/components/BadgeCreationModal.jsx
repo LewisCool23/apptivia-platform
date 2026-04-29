@@ -134,18 +134,18 @@ export default function BadgeCreationModal({ isOpen, onClose, onBadgeCreated }) 
         <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="p-2 bg-apptivia-carbon-100 rounded-lg">
-              <Award className="w-5 h-5 text-indigo-600" />
+              <Award className="w-5 h-5 text-apptivia-ink" />
             </div>
             <div>
-              <h2 className="text-xl font-bold text-gray-900">Create Custom Badge</h2>
-              <p className="text-sm text-gray-500">Design a unique badge for special recognition</p>
+              <h2 className="text-xl font-bold text-apptivia-ink">Create Custom Badge</h2>
+              <p className="text-sm text-apptivia-carbon-500">Design a unique badge for special recognition</p>
             </div>
           </div>
           <button
             onClick={onClose}
             className="p-2 hover:bg-apptivia-carbon-100 rounded-lg transition-colors"
           >
-            <X className="w-5 h-5 text-gray-400" />
+            <X className="w-5 h-5 text-apptivia-carbon-400" />
           </button>
         </div>
 
@@ -159,15 +159,15 @@ export default function BadgeCreationModal({ isOpen, onClose, onBadgeCreated }) 
               >
                 {formData.icon}
               </div>
-              <p className="font-semibold text-gray-900">{formData.badge_name || 'Badge Name'}</p>
-              <p className="text-sm text-gray-500">{formData.badge_description || 'Badge description'}</p>
-              <p className="text-xs text-indigo-600 font-medium mt-1">{formData.points} points</p>
+              <p className="font-semibold text-apptivia-ink">{formData.badge_name || 'Badge Name'}</p>
+              <p className="text-sm text-apptivia-carbon-500">{formData.badge_description || 'Badge description'}</p>
+              <p className="text-xs text-apptivia-ink font-medium mt-1">{formData.points} points</p>
             </div>
           </div>
 
           {/* Badge Name */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-apptivia-carbon-700 mb-2">
               Badge Name <span className="text-red-500">*</span>
             </label>
             <input
@@ -183,7 +183,7 @@ export default function BadgeCreationModal({ isOpen, onClose, onBadgeCreated }) 
 
           {/* Badge Description */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-apptivia-carbon-700 mb-2">
               Description
             </label>
             <textarea
@@ -198,7 +198,7 @@ export default function BadgeCreationModal({ isOpen, onClose, onBadgeCreated }) 
 
           {/* Icon Selection */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-apptivia-carbon-700 mb-2">
               Icon
             </label>
             <div className="grid grid-cols-9 gap-2">
@@ -228,7 +228,7 @@ export default function BadgeCreationModal({ isOpen, onClose, onBadgeCreated }) 
 
           {/* Color Selection */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-apptivia-carbon-700 mb-2">
               Badge Color
             </label>
             <div className="grid grid-cols-4 gap-2">
@@ -252,7 +252,7 @@ export default function BadgeCreationModal({ isOpen, onClose, onBadgeCreated }) 
 
           {/* Badge Type */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-apptivia-carbon-700 mb-2">
               Badge Type
             </label>
             <select
@@ -270,7 +270,7 @@ export default function BadgeCreationModal({ isOpen, onClose, onBadgeCreated }) 
 
           {/* Points */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-apptivia-carbon-700 mb-2">
               Points Value
             </label>
             <input
@@ -281,7 +281,7 @@ export default function BadgeCreationModal({ isOpen, onClose, onBadgeCreated }) 
               min="0"
               step="10"
             />
-            <p className="text-xs text-gray-500 mt-1">Points awarded when this badge is earned</p>
+            <p className="text-xs text-apptivia-carbon-500 mt-1">Points awarded when this badge is earned</p>
           </div>
 
           {/* Is Rare */}
@@ -291,9 +291,9 @@ export default function BadgeCreationModal({ isOpen, onClose, onBadgeCreated }) 
               id="is_rare"
               checked={formData.is_rare}
               onChange={(e) => setFormData({ ...formData, is_rare: e.target.checked })}
-              className="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
+              className="w-4 h-4 text-apptivia-ink border-gray-300 rounded focus:ring-indigo-500"
             />
-            <label htmlFor="is_rare" className="ml-2 text-sm text-gray-700">
+            <label htmlFor="is_rare" className="ml-2 text-sm text-apptivia-carbon-700">
               Mark as rare badge (highlights special accomplishments)
             </label>
           </div>
@@ -303,7 +303,7 @@ export default function BadgeCreationModal({ isOpen, onClose, onBadgeCreated }) 
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 text-gray-700 hover:bg-apptivia-carbon-100 rounded-lg transition-colors"
+              className="px-4 py-2 text-apptivia-carbon-700 hover:bg-apptivia-carbon-100 rounded-lg transition-colors"
               disabled={submitting}
             >
               Cancel

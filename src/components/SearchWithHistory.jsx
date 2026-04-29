@@ -191,7 +191,7 @@ export default function SearchWithHistory({
     <div className={`relative ${className}`}>
       <div className="relative">
         {showIcon && (
-          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-apptivia-carbon-400 pointer-events-none" />
         )}
         <input
           ref={inputRef}
@@ -210,7 +210,7 @@ export default function SearchWithHistory({
               onChange('');
               inputRef.current?.focus();
             }}
-            className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 p-0.5"
+            className="absolute right-2 top-1/2 -translate-y-1/2 text-apptivia-carbon-400 hover:text-apptivia-carbon-600 p-0.5"
           >
             <X size={14} />
           </button>
@@ -229,17 +229,17 @@ export default function SearchWithHistory({
               onClick={() => handleSelect(item.query)}
               onMouseEnter={() => setSelectedIndex(idx)}
               className={`w-full text-left px-3 py-2 flex items-center gap-3 text-sm transition-colors ${
-                selectedIndex === idx ? 'bg-apptivia-coral-tone-50 text-blue-700' : 'text-gray-700 hover:bg-apptivia-paper'
+                selectedIndex === idx ? 'bg-apptivia-coral-tone-50 text-apptivia-coral' : 'text-apptivia-carbon-700 hover:bg-apptivia-paper'
               }`}
             >
               {item.type === 'history' ? (
-                <Clock size={14} className="text-gray-400 flex-shrink-0" />
+                <Clock size={14} className="text-apptivia-carbon-400 flex-shrink-0" />
               ) : (
                 <Star size={14} className="text-amber-400 flex-shrink-0" />
               )}
               <span className="flex-1 truncate">{item.query}</span>
               {item.type === 'history' && item.timestamp && (
-                <span className="text-[10px] text-gray-400">{formatTime(item.timestamp)}</span>
+                <span className="text-[10px] text-apptivia-carbon-400">{formatTime(item.timestamp)}</span>
               )}
               {item.type === 'history' && (
                 <button
@@ -247,7 +247,7 @@ export default function SearchWithHistory({
                     e.stopPropagation();
                     removeFromHistory(item.query);
                   }}
-                  className="p-0.5 text-gray-400 hover:text-red-500 opacity-0 group-hover:opacity-100"
+                  className="p-0.5 text-apptivia-carbon-400 hover:text-red-500 opacity-0 group-hover:opacity-100"
                   title="Remove from history"
                 >
                   <X size={12} />
@@ -263,7 +263,7 @@ export default function SearchWithHistory({
                   clearHistory();
                   setIsFocused(false);
                 }}
-                className="text-[11px] text-gray-400 hover:text-red-500"
+                className="text-[11px] text-apptivia-carbon-400 hover:text-red-500"
               >
                 Clear search history
               </button>

@@ -100,16 +100,16 @@ export default function ScheduleReportModal({ isOpen, onClose, onSuccess, editRe
       >
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h2 className="text-xl font-bold text-gray-900">
+            <h2 className="text-xl font-bold text-apptivia-ink">
               {isEditing ? 'Edit Report Schedule' : 'Schedule Report'}
             </h2>
-            <p className="text-sm text-gray-500 mt-1">
+            <p className="text-sm text-apptivia-carbon-500 mt-1">
               {isEditing ? 'Update your automated report delivery' : 'Set up automated report delivery'}
             </p>
           </div>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 transition-colors"
+            className="text-apptivia-carbon-400 hover:text-apptivia-carbon-600 transition-colors"
           >
             <X size={24} />
           </button>
@@ -123,7 +123,7 @@ export default function ScheduleReportModal({ isOpen, onClose, onSuccess, editRe
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-apptivia-carbon-700 mb-1">
               <FileText size={16} className="inline mr-2" />
               Report Type
             </label>
@@ -142,7 +142,7 @@ export default function ScheduleReportModal({ isOpen, onClose, onSuccess, editRe
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-apptivia-carbon-700 mb-1">
                 <Calendar size={16} className="inline mr-2" />
                 Frequency
               </label>
@@ -159,7 +159,7 @@ export default function ScheduleReportModal({ isOpen, onClose, onSuccess, editRe
 
             {formData.frequency === 'weekly' && (
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-apptivia-carbon-700 mb-1">
                   Day of Week
                 </label>
                 <select
@@ -180,7 +180,7 @@ export default function ScheduleReportModal({ isOpen, onClose, onSuccess, editRe
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-apptivia-carbon-700 mb-1">
               <Clock size={16} className="inline mr-2" />
               Time
             </label>
@@ -193,7 +193,7 @@ export default function ScheduleReportModal({ isOpen, onClose, onSuccess, editRe
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-apptivia-carbon-700 mb-1">
               <Mail size={16} className="inline mr-2" />
               Recipients
             </label>
@@ -205,27 +205,27 @@ export default function ScheduleReportModal({ isOpen, onClose, onSuccess, editRe
               placeholder="email1@example.com, email2@example.com"
               required
             />
-            <p className="mt-1 text-xs text-gray-500">
+            <p className="mt-1 text-xs text-apptivia-carbon-500">
               Separate multiple emails with commas
             </p>
           </div>
 
           <div className="space-y-2">
-            <label className="flex items-center gap-2 text-sm text-gray-700">
+            <label className="flex items-center gap-2 text-sm text-apptivia-carbon-700">
               <input
                 type="checkbox"
                 checked={formData.include_charts}
                 onChange={(e) => setFormData({ ...formData, include_charts: e.target.checked })}
-                className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                className="rounded border-gray-300 text-apptivia-coral focus:ring-blue-500"
               />
               Include charts and visualizations
             </label>
-            <label className="flex items-center gap-2 text-sm text-gray-700">
+            <label className="flex items-center gap-2 text-sm text-apptivia-carbon-700">
               <input
                 type="checkbox"
                 checked={formData.include_summary}
                 onChange={(e) => setFormData({ ...formData, include_summary: e.target.checked })}
-                className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                className="rounded border-gray-300 text-apptivia-coral focus:ring-blue-500"
               />
               Include executive summary
             </label>
@@ -235,7 +235,7 @@ export default function ScheduleReportModal({ isOpen, onClose, onSuccess, editRe
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 text-gray-700 bg-apptivia-carbon-100 rounded-md hover:bg-apptivia-carbon-200 transition-colors"
+              className="px-4 py-2 text-apptivia-carbon-700 bg-apptivia-carbon-100 rounded-md hover:bg-apptivia-carbon-200 transition-colors"
               disabled={saving}
             >
               Cancel

@@ -14,7 +14,7 @@ function formatDate(ts) {
 function SentimentBadge({ sentiment }) {
   const map = {
     positive: { label: 'Positive', color: 'bg-emerald-100 text-emerald-700', icon: TrendingUp },
-    neutral:  { label: 'Neutral',  color: 'bg-apptivia-carbon-100 text-gray-600',       icon: Minus },
+    neutral:  { label: 'Neutral',  color: 'bg-apptivia-carbon-100 text-apptivia-carbon-600',       icon: Minus },
     negative: { label: 'Negative', color: 'bg-red-100 text-red-600',         icon: TrendingDown },
   };
   const cfg = map[sentiment] || map.neutral;
@@ -29,10 +29,10 @@ function SentimentBadge({ sentiment }) {
 
 function SignalBadge({ signal }) {
   const map = {
-    advancing: { label: 'Advancing', color: 'bg-apptivia-coral-tone-50 text-blue-700' },
+    advancing: { label: 'Advancing', color: 'bg-apptivia-coral-tone-50 text-apptivia-coral' },
     stalled:   { label: 'Stalled',   color: 'bg-amber-100 text-amber-700' },
     at_risk:   { label: 'At Risk',   color: 'bg-red-100 text-red-700' },
-    unclear:   { label: 'Unclear',   color: 'bg-apptivia-carbon-100 text-gray-500' },
+    unclear:   { label: 'Unclear',   color: 'bg-apptivia-carbon-100 text-apptivia-carbon-500' },
   };
   const cfg = map[signal] || map.unclear;
   return (
@@ -121,12 +121,12 @@ function LogCallModal({ organizationId, userId, deals, onClose, onSaved }) {
               <Phone size={16} className="text-white" />
             </div>
             <div>
-              <h2 className="text-base font-bold text-gray-900">Log a Call</h2>
-              <p className="text-xs text-gray-500">AI will extract next steps, objections & insights</p>
+              <h2 className="text-base font-bold text-apptivia-ink">Log a Call</h2>
+              <p className="text-xs text-apptivia-carbon-500">AI will extract next steps, objections & insights</p>
             </div>
           </div>
           <button onClick={onClose} className="p-2 hover:bg-apptivia-carbon-100 rounded-lg transition-colors">
-            <X size={18} className="text-gray-400" />
+            <X size={18} className="text-apptivia-carbon-400" />
           </button>
         </div>
 
@@ -134,7 +134,7 @@ function LogCallModal({ organizationId, userId, deals, onClose, onSaved }) {
           {/* Row 1: Contact + Deal */}
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-medium text-gray-600 mb-1">Contact Name</label>
+              <label className="block text-xs font-medium text-apptivia-carbon-600 mb-1">Contact Name</label>
               <input
                 className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-400"
                 placeholder="Jane Smith"
@@ -143,7 +143,7 @@ function LogCallModal({ organizationId, userId, deals, onClose, onSaved }) {
               />
             </div>
             <div>
-              <label className="block text-xs font-medium text-gray-600 mb-1">Linked Deal (optional)</label>
+              <label className="block text-xs font-medium text-apptivia-carbon-600 mb-1">Linked Deal (optional)</label>
               <select
                 className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-400 bg-white"
                 value={form.deal_id}
@@ -160,7 +160,7 @@ function LogCallModal({ organizationId, userId, deals, onClose, onSaved }) {
           {/* Row 2: Date + Duration + Direction */}
           <div className="grid grid-cols-3 gap-3">
             <div>
-              <label className="block text-xs font-medium text-gray-600 mb-1">Call Date & Time</label>
+              <label className="block text-xs font-medium text-apptivia-carbon-600 mb-1">Call Date & Time</label>
               <input
                 type="datetime-local"
                 className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-400"
@@ -169,7 +169,7 @@ function LogCallModal({ organizationId, userId, deals, onClose, onSaved }) {
               />
             </div>
             <div>
-              <label className="block text-xs font-medium text-gray-600 mb-1">Duration (mins)</label>
+              <label className="block text-xs font-medium text-apptivia-carbon-600 mb-1">Duration (mins)</label>
               <input
                 type="number"
                 min="1"
@@ -180,7 +180,7 @@ function LogCallModal({ organizationId, userId, deals, onClose, onSaved }) {
               />
             </div>
             <div>
-              <label className="block text-xs font-medium text-gray-600 mb-1">Direction</label>
+              <label className="block text-xs font-medium text-apptivia-carbon-600 mb-1">Direction</label>
               <select
                 className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-400 bg-white"
                 value={form.call_direction}
@@ -194,7 +194,7 @@ function LogCallModal({ organizationId, userId, deals, onClose, onSaved }) {
 
           {/* Notes */}
           <div>
-            <label className="block text-xs font-medium text-gray-600 mb-1">
+            <label className="block text-xs font-medium text-apptivia-carbon-600 mb-1">
               Call Notes / Transcript <span className="text-red-400">*</span>
             </label>
             <textarea
@@ -224,12 +224,12 @@ function LogCallModal({ organizationId, userId, deals, onClose, onSaved }) {
             <div className="bg-gradient-to-br from-violet-50 to-purple-50 border border-violet-100 rounded-xl p-4 space-y-4">
               {/* Badges row */}
               <div className="flex items-center gap-2 flex-wrap">
-                <span className="text-xs font-semibold text-violet-700 mr-1">AI Analysis</span>
+                <span className="text-xs font-semibold text-apptivia-ink mr-1">AI Analysis</span>
                 <SentimentBadge sentiment={analysis.sentiment} />
                 <SignalBadge signal={analysis.deal_stage_signal} />
                 <button
                   onClick={() => setAnalysis(null)}
-                  className="ml-auto text-xs text-gray-400 hover:text-gray-600 flex items-center gap-1"
+                  className="ml-auto text-xs text-apptivia-carbon-400 hover:text-apptivia-carbon-600 flex items-center gap-1"
                 >
                   <X size={12} /> Re-analyze
                 </button>
@@ -237,20 +237,20 @@ function LogCallModal({ organizationId, userId, deals, onClose, onSaved }) {
 
               {/* Summary */}
               {analysis.summary && (
-                <p className="text-sm text-gray-700 leading-relaxed">{analysis.summary}</p>
+                <p className="text-sm text-apptivia-carbon-700 leading-relaxed">{analysis.summary}</p>
               )}
 
               {/* Next Steps */}
               {analysis.next_steps?.length > 0 && (
                 <div>
                   <div className="flex items-center gap-1.5 mb-2">
-                    <Target size={13} className="text-blue-500" />
-                    <span className="text-xs font-semibold text-gray-700">Next Steps</span>
+                    <Target size={13} className="text-apptivia-coral" />
+                    <span className="text-xs font-semibold text-apptivia-carbon-700">Next Steps</span>
                   </div>
                   <ul className="space-y-1">
                     {analysis.next_steps.map((s, i) => (
-                      <li key={i} className="flex items-start gap-2 text-xs text-gray-700">
-                        <span className="w-4 h-4 bg-apptivia-coral-tone-50 text-blue-700 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 text-[10px] font-bold">{i + 1}</span>
+                      <li key={i} className="flex items-start gap-2 text-xs text-apptivia-carbon-700">
+                        <span className="w-4 h-4 bg-apptivia-coral-tone-50 text-apptivia-coral rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 text-[10px] font-bold">{i + 1}</span>
                         {s}
                       </li>
                     ))}
@@ -263,11 +263,11 @@ function LogCallModal({ organizationId, userId, deals, onClose, onSaved }) {
                 <div>
                   <div className="flex items-center gap-1.5 mb-2">
                     <AlertTriangle size={13} className="text-amber-500" />
-                    <span className="text-xs font-semibold text-gray-700">Objections</span>
+                    <span className="text-xs font-semibold text-apptivia-carbon-700">Objections</span>
                   </div>
                   <ul className="space-y-1">
                     {analysis.objections.map((o, i) => (
-                      <li key={i} className="flex items-start gap-2 text-xs text-gray-700">
+                      <li key={i} className="flex items-start gap-2 text-xs text-apptivia-carbon-700">
                         <span className="text-amber-500 mt-0.5">•</span>
                         {o}
                       </li>
@@ -281,7 +281,7 @@ function LogCallModal({ organizationId, userId, deals, onClose, onSaved }) {
                 <div>
                   <div className="flex items-center gap-1.5 mb-2">
                     <Users size={13} className="text-red-500" />
-                    <span className="text-xs font-semibold text-gray-700">Competitors Mentioned</span>
+                    <span className="text-xs font-semibold text-apptivia-carbon-700">Competitors Mentioned</span>
                   </div>
                   <div className="flex flex-wrap gap-1.5">
                     {analysis.competitor_mentions.map((c, i) => (
@@ -302,7 +302,7 @@ function LogCallModal({ organizationId, userId, deals, onClose, onSaved }) {
 
         {/* Footer */}
         <div className="px-6 py-4 border-t border-gray-100 flex items-center justify-between gap-3">
-          <button onClick={onClose} className="px-4 py-2 text-sm text-gray-600 hover:text-gray-900 transition-colors">
+          <button onClick={onClose} className="px-4 py-2 text-sm text-apptivia-carbon-600 hover:text-apptivia-ink transition-colors">
             Cancel
           </button>
           <button
@@ -331,22 +331,22 @@ function CallLogCard({ log }) {
         <div className="flex items-start justify-between gap-3">
           <div className="flex items-center gap-3 min-w-0">
             <div className="w-9 h-9 bg-apptivia-carbon-100 rounded-full flex items-center justify-center flex-shrink-0">
-              <Phone size={15} className="text-violet-600" />
+              <Phone size={15} className="text-apptivia-ink" />
             </div>
             <div className="min-w-0">
               <div className="flex items-center gap-2 flex-wrap">
-                <span className="text-sm font-semibold text-gray-900 truncate">
+                <span className="text-sm font-semibold text-apptivia-ink truncate">
                   {log.contact_name || 'Unknown Contact'}
                 </span>
                 {a?.sentiment && <SentimentBadge sentiment={a.sentiment} />}
                 {a?.deal_stage_signal && <SignalBadge signal={a.deal_stage_signal} />}
               </div>
-              <div className="flex items-center gap-3 mt-0.5 text-xs text-gray-500">
+              <div className="flex items-center gap-3 mt-0.5 text-xs text-apptivia-carbon-500">
                 <span className="flex items-center gap-1"><Calendar size={11} />{formatDate(log.call_date)}</span>
                 {log.duration_minutes && <span>{log.duration_minutes} min</span>}
                 <span className="capitalize">{log.call_direction}</span>
                 {log.engage_pipeline_deals?.deal_name && (
-                  <span className="text-blue-500">{log.engage_pipeline_deals.deal_name}</span>
+                  <span className="text-apptivia-coral">{log.engage_pipeline_deals.deal_name}</span>
                 )}
               </div>
             </div>
@@ -355,13 +355,13 @@ function CallLogCard({ log }) {
             onClick={() => setExpanded(e => !e)}
             className="p-1.5 hover:bg-apptivia-carbon-100 rounded-lg transition-colors flex-shrink-0"
           >
-            {expanded ? <ChevronUp size={16} className="text-gray-400" /> : <ChevronDown size={16} className="text-gray-400" />}
+            {expanded ? <ChevronUp size={16} className="text-apptivia-carbon-400" /> : <ChevronDown size={16} className="text-apptivia-carbon-400" />}
           </button>
         </div>
 
         {/* Summary preview */}
         {!expanded && a?.summary && (
-          <p className="mt-2 text-xs text-gray-600 line-clamp-2 pl-12">{a.summary}</p>
+          <p className="mt-2 text-xs text-apptivia-carbon-600 line-clamp-2 pl-12">{a.summary}</p>
         )}
       </div>
 
@@ -369,20 +369,20 @@ function CallLogCard({ log }) {
         <div className="border-t border-gray-100 px-5 pb-4 pt-3 space-y-3">
           {/* Summary */}
           {a?.summary && (
-            <p className="text-sm text-gray-700 leading-relaxed">{a.summary}</p>
+            <p className="text-sm text-apptivia-carbon-700 leading-relaxed">{a.summary}</p>
           )}
 
           {/* Next steps */}
           {a?.next_steps?.length > 0 && (
             <div>
               <div className="flex items-center gap-1.5 mb-1.5">
-                <Target size={12} className="text-blue-500" />
-                <span className="text-xs font-semibold text-gray-700">Next Steps</span>
+                <Target size={12} className="text-apptivia-coral" />
+                <span className="text-xs font-semibold text-apptivia-carbon-700">Next Steps</span>
               </div>
               <ul className="space-y-1">
                 {a.next_steps.map((s, i) => (
-                  <li key={i} className="flex items-start gap-2 text-xs text-gray-700">
-                    <span className="w-4 h-4 bg-apptivia-coral-tone-50 text-blue-700 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 text-[10px] font-bold">{i + 1}</span>
+                  <li key={i} className="flex items-start gap-2 text-xs text-apptivia-carbon-700">
+                    <span className="w-4 h-4 bg-apptivia-coral-tone-50 text-apptivia-coral rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 text-[10px] font-bold">{i + 1}</span>
                     {s}
                   </li>
                 ))}
@@ -395,11 +395,11 @@ function CallLogCard({ log }) {
             <div>
               <div className="flex items-center gap-1.5 mb-1.5">
                 <AlertTriangle size={12} className="text-amber-500" />
-                <span className="text-xs font-semibold text-gray-700">Objections</span>
+                <span className="text-xs font-semibold text-apptivia-carbon-700">Objections</span>
               </div>
               <ul className="space-y-1">
                 {a.objections.map((o, i) => (
-                  <li key={i} className="flex items-start gap-2 text-xs text-gray-600">
+                  <li key={i} className="flex items-start gap-2 text-xs text-apptivia-carbon-600">
                     <span className="text-amber-400 mt-0.5">•</span>{o}
                   </li>
                 ))}
@@ -412,7 +412,7 @@ function CallLogCard({ log }) {
             <div>
               <div className="flex items-center gap-1.5 mb-1.5">
                 <Users size={12} className="text-red-500" />
-                <span className="text-xs font-semibold text-gray-700">Competitors</span>
+                <span className="text-xs font-semibold text-apptivia-carbon-700">Competitors</span>
               </div>
               <div className="flex flex-wrap gap-1.5">
                 {a.competitor_mentions.map((c, i) => (
@@ -424,11 +424,11 @@ function CallLogCard({ log }) {
 
           {/* Raw notes (collapsed further) */}
           <details className="group">
-            <summary className="text-xs text-gray-400 cursor-pointer hover:text-gray-600 list-none flex items-center gap-1">
+            <summary className="text-xs text-apptivia-carbon-400 cursor-pointer hover:text-apptivia-carbon-600 list-none flex items-center gap-1">
               <ChevronDown size={12} className="group-open:rotate-180 transition-transform" />
               View raw notes
             </summary>
-            <pre className="mt-2 text-xs text-gray-600 bg-apptivia-paper rounded-lg p-3 whitespace-pre-wrap font-sans leading-relaxed">{log.notes}</pre>
+            <pre className="mt-2 text-xs text-apptivia-carbon-600 bg-apptivia-paper rounded-lg p-3 whitespace-pre-wrap font-sans leading-relaxed">{log.notes}</pre>
           </details>
         </div>
       )}
@@ -482,21 +482,21 @@ export default function CallIntelligence({ organizationId, userId }) {
       {/* Stats bar */}
       <div className="grid grid-cols-4 gap-3">
         {[
-          { label: 'Total Calls', value: totalCalls, color: 'text-violet-600' },
+          { label: 'Total Calls', value: totalCalls, color: 'text-apptivia-ink' },
           { label: 'Positive Sentiment', value: positiveCalls, color: 'text-emerald-600' },
           { label: 'Competitor Mentions', value: competitorCalls, color: 'text-amber-600' },
           { label: 'At Risk Deals', value: atRiskCalls, color: 'text-red-600' },
         ].map(stat => (
           <div key={stat.label} className="bg-white rounded-xl border border-gray-100 px-4 py-3 text-center shadow-sm">
             <div className={`text-2xl font-bold ${stat.color}`}>{stat.value}</div>
-            <div className="text-xs text-gray-500 mt-0.5">{stat.label}</div>
+            <div className="text-xs text-apptivia-carbon-500 mt-0.5">{stat.label}</div>
           </div>
         ))}
       </div>
 
       {/* Header + Log Call button */}
       <div className="flex items-center justify-between">
-        <h3 className="text-sm font-semibold text-gray-700">
+        <h3 className="text-sm font-semibold text-apptivia-carbon-700">
           {totalCalls > 0 ? `${totalCalls} call${totalCalls !== 1 ? 's' : ''} logged` : 'No calls logged yet'}
         </h3>
         <button
@@ -510,12 +510,12 @@ export default function CallIntelligence({ organizationId, userId }) {
 
       {/* Call list */}
       {loading ? (
-        <div className="flex items-center justify-center py-16 text-gray-400">
+        <div className="flex items-center justify-center py-16 text-apptivia-carbon-400">
           <Loader2 size={24} className="animate-spin mr-2" />
           <span className="text-sm">Loading calls…</span>
         </div>
       ) : logs.length === 0 ? (
-        <div className="text-center py-16 text-gray-400">
+        <div className="text-center py-16 text-apptivia-carbon-400">
           <Phone size={40} className="mx-auto mb-3 opacity-30" />
           <p className="text-sm font-medium">No calls logged yet</p>
           <p className="text-xs mt-1">Log your first call to unlock AI-powered conversation intelligence.</p>

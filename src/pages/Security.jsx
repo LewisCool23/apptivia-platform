@@ -93,9 +93,9 @@ export default function Security() {
     <div className="min-h-screen bg-apptivia-paper">
       <header className="bg-white border-b border-gray-200">
         <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
-          <Link to="/" className="text-xl font-bold text-blue-600">Apptivia</Link>
+          <Link to="/" className="text-xl font-bold text-apptivia-coral">Apptivia</Link>
           <div className="flex items-center gap-4">
-            <Link to="/login" className="text-sm text-gray-600 hover:text-gray-900">Log In</Link>
+            <Link to="/login" className="text-sm text-apptivia-carbon-600 hover:text-apptivia-ink">Log In</Link>
             <Link to="/signup" className="bg-apptivia-coral text-white text-sm px-4 py-2 rounded-lg hover:bg-apptivia-coral transition-colors">
               Start Free Trial
             </Link>
@@ -105,8 +105,8 @@ export default function Security() {
 
       <main className="max-w-4xl mx-auto px-6 py-16">
         <div className="text-center mb-16">
-          <h1 className="text-3xl font-bold text-gray-900 mb-4">Security at Apptivia</h1>
-          <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+          <h1 className="text-3xl font-bold text-apptivia-ink mb-4">Security at Apptivia</h1>
+          <p className="text-lg text-apptivia-carbon-600 max-w-2xl mx-auto">
             Your sales data is among your most sensitive business information. We take its protection seriously. Here is how we safeguard your data at every layer.
           </p>
         </div>
@@ -114,13 +114,13 @@ export default function Security() {
         <div className="space-y-10">
           {SECURITY_SECTIONS.map((section) => (
             <div key={section.title} className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+              <h2 className="text-lg font-semibold text-apptivia-ink mb-4 flex items-center gap-2">
                 <span className="text-xl">{section.icon}</span>
                 {section.title}
               </h2>
               <ul className="space-y-3">
                 {section.items.map((item, idx) => (
-                  <li key={idx} className="flex items-start gap-3 text-gray-700 text-sm leading-relaxed">
+                  <li key={idx} className="flex items-start gap-3 text-apptivia-carbon-700 text-sm leading-relaxed">
                     <span className="text-green-500 mt-0.5 flex-shrink-0">&#10003;</span>
                     {item}
                   </li>
@@ -131,8 +131,8 @@ export default function Security() {
         </div>
 
         <div className="mt-16 bg-apptivia-coral-tone-50 rounded-xl p-8 text-center">
-          <h2 className="text-xl font-semibold text-gray-900 mb-3">Have a security question?</h2>
-          <p className="text-gray-600 mb-4">
+          <h2 className="text-xl font-semibold text-apptivia-ink mb-3">Have a security question?</h2>
+          <p className="text-apptivia-carbon-600 mb-4">
             If you have questions about our security practices or want to report a vulnerability, please contact our security team.
           </p>
           <a
@@ -144,7 +144,7 @@ export default function Security() {
         </div>
       </main>
 
-      <footer className="bg-apptivia-ink text-gray-400 py-8 mt-16">
+      <footer className="bg-apptivia-ink text-apptivia-carbon-400 py-8 mt-16">
         <div className="max-w-6xl mx-auto px-6 text-center text-sm">
           <p>&copy; 2026 Apptivia. All rights reserved.</p>
           <div className="mt-2 flex justify-center gap-6">

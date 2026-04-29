@@ -345,7 +345,7 @@ export default function IdpTab({ teamMembers }) {
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2 flex-1">
           <div className="relative flex-1 max-w-xs">
-            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-apptivia-carbon-400" />
             <input
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
@@ -353,7 +353,7 @@ export default function IdpTab({ teamMembers }) {
               className="w-full pl-9 pr-8 py-2 text-sm border border-gray-200 rounded-lg"
             />
             {searchQuery && (
-              <button onClick={() => setSearchQuery('')} className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+              <button onClick={() => setSearchQuery('')} className="absolute right-2 top-1/2 -translate-y-1/2 text-apptivia-carbon-400 hover:text-apptivia-carbon-600">
                 <X size={14} />
               </button>
             )}
@@ -361,7 +361,7 @@ export default function IdpTab({ teamMembers }) {
         </div>
         {canManage && (
           <div className="flex items-center gap-2">
-            <button onClick={() => setShowTemplates(true)} className="flex items-center gap-1.5 px-3 py-2 text-sm font-semibold text-gray-700 border border-gray-300 rounded-lg hover:bg-apptivia-paper">
+            <button onClick={() => setShowTemplates(true)} className="flex items-center gap-1.5 px-3 py-2 text-sm font-semibold text-apptivia-carbon-700 border border-gray-300 rounded-lg hover:bg-apptivia-paper">
               <LayoutTemplate size={14} /> Templates
             </button>
             <button onClick={() => { setEditingIdp(null); setForm(emptyForm()); setShowBuilder(true); }}
@@ -386,7 +386,7 @@ export default function IdpTab({ teamMembers }) {
             key={tab.id}
             onClick={() => setStatusFilter(tab.id)}
             className={`px-3 py-1 rounded-full text-xs font-medium transition-all ${
-              statusFilter === tab.id ? 'bg-apptivia-coral text-white' : 'bg-apptivia-carbon-100 text-gray-600 hover:bg-apptivia-carbon-200'
+              statusFilter === tab.id ? 'bg-apptivia-coral text-white' : 'bg-apptivia-carbon-100 text-apptivia-carbon-600 hover:bg-apptivia-carbon-200'
             }`}
           >
             {tab.label}
@@ -412,13 +412,13 @@ export default function IdpTab({ teamMembers }) {
 
       {/* Cards */}
       {loading ? (
-        <div className="text-center py-12 text-sm text-gray-500">Loading development plans...</div>
+        <div className="text-center py-12 text-sm text-apptivia-carbon-500">Loading development plans...</div>
       ) : filtered.length === 0 ? (
         <div className="text-center py-12">
-          <p className="text-sm text-gray-500 mb-2">{isPowerUser ? 'No development plans assigned to you yet' : 'No development plans yet'}</p>
+          <p className="text-sm text-apptivia-carbon-500 mb-2">{isPowerUser ? 'No development plans assigned to you yet' : 'No development plans yet'}</p>
           {canManage && !showBuilder && (
             <button onClick={() => setShowTemplates(true)}
-              className="px-4 py-2 text-sm font-semibold text-blue-600 border border-blue-600 rounded-lg hover:bg-apptivia-coral-tone-50">
+              className="px-4 py-2 text-sm font-semibold text-apptivia-coral border border-blue-600 rounded-lg hover:bg-apptivia-coral-tone-50">
               Create Your First IDP
             </button>
           )}

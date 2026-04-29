@@ -55,10 +55,10 @@ export default function BadgeModal({ isOpen, onClose, badge, profileName }) {
         <div className="relative w-32 h-32 mx-auto mb-6">
           <div className="absolute inset-0 bg-gradient-to-br from-gray-300 via-gray-400 to-gray-500 rounded-full shadow-2xl"></div>
           <div className="absolute inset-2 bg-gradient-to-br from-gray-200 to-gray-400 rounded-full flex items-center justify-center">
-            <Award size={48} className="text-gray-700" strokeWidth={2.5} />
+            <Award size={48} className="text-apptivia-carbon-700" strokeWidth={2.5} />
           </div>
           <div className="absolute -top-2 -right-2 w-8 h-8 bg-apptivia-carbon-300 rounded-full flex items-center justify-center shadow-lg">
-            <Trophy size={16} className="text-gray-600" />
+            <Trophy size={16} className="text-apptivia-carbon-600" />
           </div>
         </div>
       );
@@ -122,14 +122,14 @@ export default function BadgeModal({ isOpen, onClose, badge, profileName }) {
           <div className="absolute top-4 right-4 flex gap-2">
             <button
               onClick={() => setShowShareMenu(!showShareMenu)}
-              className="text-white hover:text-gray-200 transition-colors p-2 hover:bg-white/10 rounded-lg"
+              className="text-white hover:text-apptivia-carbon-300 transition-colors p-2 hover:bg-white/10 rounded-lg"
               aria-label="Share badge"
             >
               <Share2 size={20} />
             </button>
             <button
               onClick={onClose}
-              className="text-white hover:text-gray-200 transition-colors p-2 hover:bg-white/10 rounded-lg"
+              className="text-white hover:text-apptivia-carbon-300 transition-colors p-2 hover:bg-white/10 rounded-lg"
               aria-label="Close"
             >
               <X size={20} />
@@ -140,28 +140,28 @@ export default function BadgeModal({ isOpen, onClose, badge, profileName }) {
             <div className="absolute top-16 right-4 bg-white rounded-lg shadow-xl border border-gray-200 py-2 z-10 min-w-[160px]">
               <button
                 onClick={() => handleShare('email')}
-                className="w-full text-left px-4 py-2 hover:bg-apptivia-paper flex items-center gap-3 text-gray-700 text-sm"
+                className="w-full text-left px-4 py-2 hover:bg-apptivia-paper flex items-center gap-3 text-apptivia-carbon-700 text-sm"
               >
                 <Mail size={16} />
                 Email
               </button>
               <button
                 onClick={() => handleShare('twitter')}
-                className="w-full text-left px-4 py-2 hover:bg-apptivia-paper flex items-center gap-3 text-gray-700 text-sm"
+                className="w-full text-left px-4 py-2 hover:bg-apptivia-paper flex items-center gap-3 text-apptivia-carbon-700 text-sm"
               >
                 <Twitter size={16} />
                 Twitter
               </button>
               <button
                 onClick={() => handleShare('linkedin')}
-                className="w-full text-left px-4 py-2 hover:bg-apptivia-paper flex items-center gap-3 text-gray-700 text-sm"
+                className="w-full text-left px-4 py-2 hover:bg-apptivia-paper flex items-center gap-3 text-apptivia-carbon-700 text-sm"
               >
                 <Linkedin size={16} />
                 LinkedIn
               </button>
               <button
                 onClick={() => handleShare('copy')}
-                className="w-full text-left px-4 py-2 hover:bg-apptivia-paper flex items-center gap-3 text-gray-700 text-sm"
+                className="w-full text-left px-4 py-2 hover:bg-apptivia-paper flex items-center gap-3 text-apptivia-carbon-700 text-sm"
               >
                 {copied ? <Check size={16} className="text-green-600" /> : <Copy size={16} />}
                 {copied ? 'Copied!' : 'Copy Link'}
@@ -185,10 +185,10 @@ export default function BadgeModal({ isOpen, onClose, badge, profileName }) {
         <div className="p-6 space-y-6">
           {badge.description && (
             <div>
-              <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-2">
+              <h3 className="text-sm font-semibold text-apptivia-carbon-500 uppercase tracking-wide mb-2">
                 Description
               </h3>
-              <p className="text-gray-700 leading-relaxed">{badge.description}</p>
+              <p className="text-apptivia-carbon-700 leading-relaxed">{badge.description}</p>
             </div>
           )}
 
@@ -196,10 +196,10 @@ export default function BadgeModal({ isOpen, onClose, badge, profileName }) {
             {badge.category && (
               <div className="bg-apptivia-coral-tone-50 rounded-lg p-3">
                 <div className="flex items-center gap-2 mb-1">
-                  <Target size={16} className="text-blue-600" />
-                  <div className="text-xs font-medium text-gray-500">Category</div>
+                  <Target size={16} className="text-apptivia-coral" />
+                  <div className="text-xs font-medium text-apptivia-carbon-500">Category</div>
                 </div>
-                <div className="text-sm font-semibold text-gray-900 capitalize">
+                <div className="text-sm font-semibold text-apptivia-ink capitalize">
                   {badge.category}
                 </div>
               </div>
@@ -208,10 +208,10 @@ export default function BadgeModal({ isOpen, onClose, badge, profileName }) {
             {badge.points !== undefined && (
               <div className="bg-apptivia-carbon-100 rounded-lg p-3">
                 <div className="flex items-center gap-2 mb-1">
-                  <Trophy size={16} className="text-purple-600" />
-                  <div className="text-xs font-medium text-gray-500">Points</div>
+                  <Trophy size={16} className="text-apptivia-ink" />
+                  <div className="text-xs font-medium text-apptivia-carbon-500">Points</div>
                 </div>
-                <div className="text-sm font-semibold text-gray-900">
+                <div className="text-sm font-semibold text-apptivia-ink">
                   {badge.points}
                 </div>
               </div>
@@ -221,9 +221,9 @@ export default function BadgeModal({ isOpen, onClose, badge, profileName }) {
               <div className="bg-green-50 rounded-lg p-3 col-span-2">
                 <div className="flex items-center gap-2 mb-1">
                   <Calendar size={16} className="text-green-600" />
-                  <div className="text-xs font-medium text-gray-500">Earned Date</div>
+                  <div className="text-xs font-medium text-apptivia-carbon-500">Earned Date</div>
                 </div>
-                <div className="text-sm font-semibold text-gray-900">
+                <div className="text-sm font-semibold text-apptivia-ink">
                   {formatDate(badge.earned_date)}
                 </div>
               </div>
@@ -232,11 +232,11 @@ export default function BadgeModal({ isOpen, onClose, badge, profileName }) {
 
           {badge.criteria && (
             <div>
-              <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-2">
+              <h3 className="text-sm font-semibold text-apptivia-carbon-500 uppercase tracking-wide mb-2">
                 How to Earn
               </h3>
               <div className="bg-apptivia-paper rounded-lg p-3">
-                <p className="text-sm text-gray-700">{badge.criteria}</p>
+                <p className="text-sm text-apptivia-carbon-700">{badge.criteria}</p>
               </div>
             </div>
           )}
@@ -244,10 +244,10 @@ export default function BadgeModal({ isOpen, onClose, badge, profileName }) {
           {badge.rarity && (
             <div className="text-center">
               <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold ${
-                badge.rarity === 'legendary' ? 'bg-apptivia-carbon-100 text-purple-700' :
+                badge.rarity === 'legendary' ? 'bg-apptivia-carbon-100 text-apptivia-ink' :
                 badge.rarity === 'epic' ? 'bg-orange-100 text-orange-700' :
-                badge.rarity === 'rare' ? 'bg-apptivia-coral-tone-50 text-blue-700' :
-                'bg-apptivia-carbon-100 text-gray-700'
+                badge.rarity === 'rare' ? 'bg-apptivia-coral-tone-50 text-apptivia-coral' :
+                'bg-apptivia-carbon-100 text-apptivia-carbon-700'
               }`}>
                 {badge.rarity ? badge.rarity.charAt(0).toUpperCase() + badge.rarity.slice(1) : 'Standard'} Badge
               </span>

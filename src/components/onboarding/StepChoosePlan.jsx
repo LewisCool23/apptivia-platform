@@ -62,17 +62,17 @@ export default function StepChoosePlan({ wizardState, updateState }) {
     <div className="space-y-6">
       <div className="flex items-center gap-3 mb-2">
         <div className="w-10 h-10 bg-apptivia-coral-tone-50 rounded-lg flex items-center justify-center">
-          <CreditCard size={20} className="text-blue-600" />
+          <CreditCard size={20} className="text-apptivia-coral" />
         </div>
         <div>
-          <h3 className="text-lg font-semibold text-gray-900">Choose Your Plan</h3>
-          <p className="text-sm text-gray-500">
+          <h3 className="text-lg font-semibold text-apptivia-ink">Choose Your Plan</h3>
+          <p className="text-sm text-apptivia-carbon-500">
             Select the plan that fits your team. Billing is set up after onboarding — no charge today.
           </p>
         </div>
       </div>
 
-      <div className="bg-apptivia-coral-tone-50 border border-blue-200 rounded-lg px-4 py-3 text-sm text-blue-800">
+      <div className="bg-apptivia-coral-tone-50 border border-blue-200 rounded-lg px-4 py-3 text-sm text-apptivia-coral-tone-700">
         <strong>You're on a 14-day Pro trial.</strong> All features are unlocked during your trial.
         Choose the plan you'd like after your trial ends, or continue with Starter (free).
       </div>
@@ -103,30 +103,30 @@ export default function StepChoosePlan({ wizardState, updateState }) {
               )}
               {isSelected && (
                 <div className="absolute top-3 right-3">
-                  <Check size={18} className="text-blue-600" />
+                  <Check size={18} className="text-apptivia-coral" />
                 </div>
               )}
-              <h4 className="text-lg font-bold text-gray-900">{plan.display}</h4>
+              <h4 className="text-lg font-bold text-apptivia-ink">{plan.display}</h4>
               <div className="mt-1 mb-3">
-                <span className="text-2xl font-bold text-gray-900">{plan.price}</span>
-                {plan.unit && <span className="text-gray-500 text-sm">{plan.unit}</span>}
+                <span className="text-2xl font-bold text-apptivia-ink">{plan.price}</span>
+                {plan.unit && <span className="text-apptivia-carbon-500 text-sm">{plan.unit}</span>}
               </div>
               {monthlyEstimate && (
-                <div className="text-xs text-blue-600 font-medium mb-2">
+                <div className="text-xs text-apptivia-coral font-medium mb-2">
                   ~${monthlyEstimate}/mo for {seatCount} seat{seatCount !== 1 ? 's' : ''}
                 </div>
               )}
-              <p className="text-xs text-gray-500 mb-3">{plan.description}</p>
+              <p className="text-xs text-apptivia-carbon-500 mb-3">{plan.description}</p>
               <ul className="space-y-1.5">
                 {plan.features.map((f, i) => (
-                  <li key={i} className="flex items-start gap-1.5 text-xs text-gray-600">
+                  <li key={i} className="flex items-start gap-1.5 text-xs text-apptivia-carbon-600">
                     <CheckCircle size={12} className="text-emerald-500 flex-shrink-0 mt-0.5" />
                     {f}
                   </li>
                 ))}
               </ul>
               {plan.key === 'Enterprise' && (
-                <div className="mt-3 text-xs text-center text-blue-600 font-medium">
+                <div className="mt-3 text-xs text-center text-apptivia-coral font-medium">
                   Contact sales@apptivia.app for pricing
                 </div>
               )}
@@ -135,7 +135,7 @@ export default function StepChoosePlan({ wizardState, updateState }) {
         })}
       </div>
 
-      <p className="text-xs text-center text-gray-400">
+      <p className="text-xs text-center text-apptivia-carbon-400">
         Per-seat pricing. No long-term contracts. Cancel anytime. Billing is configured after onboarding.
       </p>
     </div>

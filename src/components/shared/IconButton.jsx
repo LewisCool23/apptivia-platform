@@ -32,8 +32,8 @@ export default function IconButton({
   };
 
   const variantClasses = {
-    ghost: 'hover:bg-apptivia-carbon-100 text-gray-500 hover:text-gray-700',
-    outline: 'border border-gray-300 hover:bg-apptivia-paper text-gray-600 hover:text-gray-800',
+    ghost: 'hover:bg-apptivia-carbon-100 text-apptivia-carbon-500 hover:text-apptivia-carbon-700',
+    outline: 'border border-gray-300 hover:bg-apptivia-paper text-apptivia-carbon-600 hover:text-apptivia-ink',
     solid: 'bg-apptivia-coral text-white hover:bg-apptivia-coral',
   };
 

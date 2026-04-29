@@ -33,15 +33,15 @@ export default function CredentialsModal({ providerType, onClose, onConnect, err
             {templateInfo?.icon}
           </div>
           <div className="flex-1">
-            <h2 className="text-lg font-bold text-gray-900">Connect {templateInfo?.display_name || providerType}</h2>
-            <p className="text-xs text-gray-500">Enter your credentials to connect</p>
+            <h2 className="text-lg font-bold text-apptivia-ink">Connect {templateInfo?.display_name || providerType}</h2>
+            <p className="text-xs text-apptivia-carbon-500">Enter your credentials to connect</p>
           </div>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600"><X size={18} /></button>
+          <button onClick={onClose} className="text-apptivia-carbon-400 hover:text-apptivia-carbon-600"><X size={18} /></button>
         </div>
         <div className="space-y-3 mb-5">
           {providerConfig.fields.map(field => (
             <div key={field.key}>
-              <label className="block text-sm font-medium text-gray-700 mb-1">{field.label}</label>
+              <label className="block text-sm font-medium text-apptivia-carbon-700 mb-1">{field.label}</label>
               <input
                 type={field.type || 'text'}
                 placeholder={field.placeholder}

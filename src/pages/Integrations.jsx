@@ -105,8 +105,8 @@ export default function Integrations() {
         {/* Header */}
         <div className="flex items-start justify-between mb-6">
           <div>
-            <h1 className="text-2xl font-bold text-blue-700 mb-1">Integrations</h1>
-            <p className="text-gray-500 text-sm">Connect your sales tools to sync data automatically</p>
+            <h1 className="text-2xl font-bold text-apptivia-coral mb-1">Integrations</h1>
+            <p className="text-apptivia-carbon-500 text-sm">Connect your sales tools to sync data automatically</p>
           </div>
           <div className="flex gap-2 items-center">
             {allConnected.length > 0 && (
@@ -119,7 +119,7 @@ export default function Integrations() {
                 {syncingAll ? 'Syncing All...' : 'Sync All'}
               </button>
             )}
-            <button onClick={handleRefresh} disabled={isRefreshing} className={`relative p-2 rounded-lg text-sm bg-white text-gray-700 border border-gray-200 hover:bg-apptivia-paper group ${isRefreshing ? 'opacity-50 cursor-not-allowed' : 'transition-all duration-200 hover:scale-105 hover:shadow-md'}`} title="Refresh">
+            <button onClick={handleRefresh} disabled={isRefreshing} className={`relative p-2 rounded-lg text-sm bg-white text-apptivia-carbon-700 border border-gray-200 hover:bg-apptivia-paper group ${isRefreshing ? 'opacity-50 cursor-not-allowed' : 'transition-all duration-200 hover:scale-105 hover:shadow-md'}`} title="Refresh">
               <RefreshCw size={18} className={isRefreshing ? 'animate-spin' : ''} />
             </button>
             <PageActionBar
@@ -138,16 +138,16 @@ export default function Integrations() {
         {/* Stats */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
           <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
-            <div className="text-xs text-gray-500 font-medium">Connected</div>
+            <div className="text-xs text-apptivia-carbon-500 font-medium">Connected</div>
             <div className="text-2xl font-bold text-green-600 mt-1">{connectedCount}</div>
           </div>
           <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
-            <div className="text-xs text-gray-500 font-medium">Available</div>
-            <div className="text-2xl font-bold text-gray-900 mt-1">{SUPPORTED_INTEGRATIONS.length}</div>
+            <div className="text-xs text-apptivia-carbon-500 font-medium">Available</div>
+            <div className="text-2xl font-bold text-apptivia-ink mt-1">{SUPPORTED_INTEGRATIONS.length}</div>
           </div>
           <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
-            <div className="text-xs text-gray-500 font-medium">Last Sync</div>
-            <div className="text-sm font-medium text-gray-900 mt-1">
+            <div className="text-xs text-apptivia-carbon-500 font-medium">Last Sync</div>
+            <div className="text-sm font-medium text-apptivia-ink mt-1">
               {lastSync ? new Date(lastSync).toLocaleString() : 'Never'}
             </div>
           </div>
@@ -163,7 +163,7 @@ export default function Integrations() {
 
         {/* Integration Cards — single unified grid with dual-status badges */}
         {(loading || personalLoading) ? (
-          <div className="flex items-center justify-center py-16 text-gray-400">
+          <div className="flex items-center justify-center py-16 text-apptivia-carbon-400">
             <Loader2 size={24} className="animate-spin mr-2" />
             Loading integrations...
           </div>
@@ -188,8 +188,8 @@ export default function Integrations() {
                       {template.icon}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <div className="font-semibold text-gray-900">{template.display_name}</div>
-                      <div className="text-xs text-gray-500 truncate">{template.description}</div>
+                      <div className="font-semibold text-apptivia-ink">{template.display_name}</div>
+                      <div className="text-xs text-apptivia-carbon-500 truncate">{template.description}</div>
                     </div>
                     {anyConnected && <div className="w-2.5 h-2.5 rounded-full bg-green-500 shrink-0" title="Connected" />}
                     {isError && !anyConnected && <div className="w-2.5 h-2.5 rounded-full bg-red-500 shrink-0" title="Error" />}
@@ -198,12 +198,12 @@ export default function Integrations() {
                   {/* Status Badges */}
                   <div className="mb-3 flex flex-wrap gap-1.5">
                     {orgConnected && !isSyncing && (
-                      <span className="inline-flex items-center gap-1 text-xs bg-apptivia-coral-tone-50 text-blue-700 px-2.5 py-1 rounded-full font-medium">
+                      <span className="inline-flex items-center gap-1 text-xs bg-apptivia-coral-tone-50 text-apptivia-coral px-2.5 py-1 rounded-full font-medium">
                         <Building2 size={11} /> Org-wide
                       </span>
                     )}
                     {isSyncing && (
-                      <span className="inline-flex items-center gap-1 text-xs bg-apptivia-coral-tone-50 text-blue-700 px-2.5 py-1 rounded-full font-medium">
+                      <span className="inline-flex items-center gap-1 text-xs bg-apptivia-coral-tone-50 text-apptivia-coral px-2.5 py-1 rounded-full font-medium">
                         <Loader2 size={12} className="animate-spin" /> Syncing...
                       </span>
                     )}
@@ -218,14 +218,14 @@ export default function Integrations() {
                       </span>
                     )}
                     {!anyConnected && !isError && (
-                      <span className="inline-flex items-center gap-1 text-xs bg-apptivia-paper text-gray-500 px-2.5 py-1 rounded-full font-medium">
+                      <span className="inline-flex items-center gap-1 text-xs bg-apptivia-paper text-apptivia-carbon-500 px-2.5 py-1 rounded-full font-medium">
                         Available
                       </span>
                     )}
                   </div>
 
                   {/* Sync Info */}
-                  <div className="text-xs text-gray-400 mb-3 space-y-1">
+                  <div className="text-xs text-apptivia-carbon-400 mb-3 space-y-1">
                     {orgConnected && orgIntegration?.last_sync_at && (
                       <div className="flex items-center gap-1">
                         <Clock size={11} />
@@ -266,7 +266,7 @@ export default function Integrations() {
                               setSyncHistory(history);
                               setSyncHistoryLoading(false);
                             }}
-                            className="px-3 py-2 bg-apptivia-carbon-100 text-gray-600 rounded-md hover:bg-apptivia-carbon-200 transition-colors"
+                            className="px-3 py-2 bg-apptivia-carbon-100 text-apptivia-carbon-600 rounded-md hover:bg-apptivia-carbon-200 transition-colors"
                             title="Sync History"
                           >
                             <History size={14} />
@@ -298,7 +298,7 @@ export default function Integrations() {
                               setSyncHistory(history);
                               setSyncHistoryLoading(false);
                             }}
-                            className="px-3 py-2 bg-apptivia-carbon-100 text-gray-600 rounded-md hover:bg-apptivia-carbon-200 transition-colors"
+                            className="px-3 py-2 bg-apptivia-carbon-100 text-apptivia-carbon-600 rounded-md hover:bg-apptivia-carbon-200 transition-colors"
                             title="Sync History"
                           >
                             <History size={14} />

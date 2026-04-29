@@ -157,7 +157,7 @@ export default function ShareScorecardSnapshotModal({ isOpen, onClose, scorecard
       >
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-gray-200 flex-shrink-0">
-          <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+          <h2 className="text-xl font-bold text-apptivia-ink flex items-center gap-2">
             <span>📊</span>
             Share Weekly Scorecard Snapshot
           </h2>
@@ -165,7 +165,7 @@ export default function ShareScorecardSnapshotModal({ isOpen, onClose, scorecard
             onClick={onClose}
             className="p-2 hover:bg-apptivia-carbon-100 rounded-lg transition-colors"
           >
-            <X size={20} className="text-gray-500" />
+            <X size={20} className="text-apptivia-carbon-500" />
           </button>
         </div>
 
@@ -201,7 +201,7 @@ export default function ShareScorecardSnapshotModal({ isOpen, onClose, scorecard
                   <div className="text-white/70 text-[10px]">Excellent (≥90%)</div>
                 </div>
                 <div className="bg-white/10 rounded-lg p-2 text-center">
-                  <div className="text-xl font-bold text-blue-200">{scoreDistribution.good}</div>
+                  <div className="text-xl font-bold text-apptivia-coral-tone-300">{scoreDistribution.good}</div>
                   <div className="text-white/70 text-[10px]">Good (70-89%)</div>
                 </div>
                 <div className="bg-white/10 rounded-lg p-2 text-center">
@@ -304,14 +304,14 @@ export default function ShareScorecardSnapshotModal({ isOpen, onClose, scorecard
                 </button>
               </div>
 
-              <p className="text-center text-xs text-gray-500 mt-2">
+              <p className="text-center text-xs text-apptivia-carbon-500 mt-2">
                 Share your scorecard snapshot with your team!
               </p>
             </>
           ) : (
             <div className="space-y-3">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                <label className="block text-sm font-medium text-apptivia-carbon-700 mb-1.5">
                   Recipients (comma-separated emails)
                 </label>
                 <input
@@ -324,7 +324,7 @@ export default function ShareScorecardSnapshotModal({ isOpen, onClose, scorecard
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                <label className="block text-sm font-medium text-apptivia-carbon-700 mb-1.5">
                   Subject (optional)
                 </label>
                 <input
@@ -337,7 +337,7 @@ export default function ShareScorecardSnapshotModal({ isOpen, onClose, scorecard
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                <label className="block text-sm font-medium text-apptivia-carbon-700 mb-1.5">
                   Additional notes (optional)
                 </label>
                 <textarea
@@ -379,13 +379,13 @@ export default function ShareScorecardSnapshotModal({ isOpen, onClose, scorecard
                     setEmailSubject('');
                     setEmailNotes('');
                   }}
-                  className="px-4 py-2 bg-apptivia-carbon-200 text-gray-700 rounded-lg text-sm font-medium hover:bg-apptivia-carbon-300 transition-colors"
+                  className="px-4 py-2 bg-apptivia-carbon-200 text-apptivia-carbon-700 rounded-lg text-sm font-medium hover:bg-apptivia-carbon-300 transition-colors"
                 >
                   Cancel
                 </button>
               </div>
 
-              <p className="text-xs text-gray-500 text-center">
+              <p className="text-xs text-apptivia-carbon-500 text-center">
                 An HTML email with scorecard stats will be sent to the recipients
               </p>
             </div>

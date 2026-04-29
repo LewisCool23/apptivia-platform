@@ -42,11 +42,11 @@ export default function FeedbackThumb({ featureArea, contentKey, context }) {
   };
 
   if (voted) {
-    return <span className="text-[10px] text-gray-400 italic">Thanks for the feedback!</span>;
+    return <span className="text-[10px] text-apptivia-carbon-400 italic">Thanks for the feedback!</span>;
   }
 
   return (
-    <span className="inline-flex items-center gap-1.5 text-[10px] text-gray-400">
+    <span className="inline-flex items-center gap-1.5 text-[10px] text-apptivia-carbon-400">
       <span>Helpful?</span>
       <button
         type="button"
@@ -57,7 +57,7 @@ export default function FeedbackThumb({ featureArea, contentKey, context }) {
       >
         Yes
       </button>
-      <span className="text-gray-300">|</span>
+      <span className="text-apptivia-carbon-300">|</span>
       <button
         type="button"
         onClick={() => handleVote(false)}

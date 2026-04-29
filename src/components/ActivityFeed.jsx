@@ -49,15 +49,15 @@ function EventItem({ event, isNew }) {
       <div className="flex-1 min-w-0">
         <div className="flex items-start justify-between gap-2">
           <div>
-            <span className="text-sm font-semibold text-gray-900">{event.title}</span>
+            <span className="text-sm font-semibold text-apptivia-ink">{event.title}</span>
             {actorName && (
-              <span className="text-xs text-gray-500 ml-1.5">by {actorName}</span>
+              <span className="text-xs text-apptivia-carbon-500 ml-1.5">by {actorName}</span>
             )}
           </div>
-          <span className="text-xs text-gray-400 flex-shrink-0 mt-0.5">{timeAgo(event.created_at)}</span>
+          <span className="text-xs text-apptivia-carbon-400 flex-shrink-0 mt-0.5">{timeAgo(event.created_at)}</span>
         </div>
         {event.description && (
-          <p className="text-xs text-gray-600 mt-0.5 leading-relaxed">{event.description}</p>
+          <p className="text-xs text-apptivia-carbon-600 mt-0.5 leading-relaxed">{event.description}</p>
         )}
       </div>
     </div>
@@ -150,20 +150,20 @@ export default function ActivityFeed({ organizationId, maxHeight = 480, compact 
       <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
         <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
           <div className="flex items-center gap-2">
-            <Activity size={15} className="text-violet-500" />
-            <span className="text-sm font-semibold text-gray-800">Activity Feed</span>
+            <Activity size={15} className="text-apptivia-ink" />
+            <span className="text-sm font-semibold text-apptivia-ink">Activity Feed</span>
           </div>
           <button onClick={fetchEvents} className="p-1 hover:bg-apptivia-carbon-100 rounded transition-colors">
-            <RefreshCw size={13} className="text-gray-400" />
+            <RefreshCw size={13} className="text-apptivia-carbon-400" />
           </button>
         </div>
         <div className="overflow-y-auto divide-y divide-gray-50" style={{ maxHeight }}>
           {loading ? (
-            <div className="flex items-center justify-center py-8 text-gray-400">
+            <div className="flex items-center justify-center py-8 text-apptivia-carbon-400">
               <Loader2 size={18} className="animate-spin" />
             </div>
           ) : events.length === 0 ? (
-            <div className="text-center py-8 text-gray-400 text-xs">No activity yet.</div>
+            <div className="text-center py-8 text-apptivia-carbon-400 text-xs">No activity yet.</div>
           ) : (
             events.map(e => <EventItem key={e.id} event={e} isNew={newEventIds.has(e.id)} />)
           )}
@@ -176,7 +176,7 @@ export default function ActivityFeed({ organizationId, maxHeight = 480, compact 
     <div className="space-y-4 px-4 py-3">
       {/* Filters */}
       <div className="flex items-center gap-2 flex-wrap">
-        <Filter size={14} className="text-gray-400 flex-shrink-0" />
+        <Filter size={14} className="text-apptivia-carbon-400 flex-shrink-0" />
         {EVENT_FILTERS.map(f => (
           <button
             key={f.id}
@@ -184,7 +184,7 @@ export default function ActivityFeed({ organizationId, maxHeight = 480, compact 
             className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
               filter === f.id
                 ? 'bg-apptivia-ink text-white'
-                : 'bg-white border border-gray-200 text-gray-600 hover:border-violet-300 hover:text-violet-700'
+                : 'bg-white border border-gray-200 text-apptivia-carbon-600 hover:border-violet-300 hover:text-apptivia-ink'
             }`}
           >
             {f.label}
@@ -192,7 +192,7 @@ export default function ActivityFeed({ organizationId, maxHeight = 480, compact 
         ))}
         <button
           onClick={fetchEvents}
-          className="ml-auto flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-gray-200 text-gray-600 hover:border-violet-300 hover:text-violet-700 transition-colors"
+          className="ml-auto flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-gray-200 text-apptivia-carbon-600 hover:border-violet-300 hover:text-apptivia-ink transition-colors"
         >
           <RefreshCw size={12} />
           Refresh
@@ -202,15 +202,15 @@ export default function ActivityFeed({ organizationId, maxHeight = 480, compact 
       {/* Feed */}
       <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
         {loading ? (
-          <div className="flex items-center justify-center py-16 text-gray-400">
+          <div className="flex items-center justify-center py-16 text-apptivia-carbon-400">
             <Loader2 size={24} className="animate-spin mr-2" />
             <span className="text-sm">Loading activity…</span>
           </div>
         ) : events.length === 0 ? (
           <div className="text-center py-16">
-            <Activity size={36} className="mx-auto mb-3 text-gray-300" />
-            <p className="text-sm text-gray-500 font-medium">No activity yet</p>
-            <p className="text-xs text-gray-400 mt-1">Events appear here as your team works deals, logs calls, and earns badges.</p>
+            <Activity size={36} className="mx-auto mb-3 text-apptivia-carbon-300" />
+            <p className="text-sm text-apptivia-carbon-500 font-medium">No activity yet</p>
+            <p className="text-xs text-apptivia-carbon-400 mt-1">Events appear here as your team works deals, logs calls, and earns badges.</p>
           </div>
         ) : (
           <div className="divide-y divide-gray-50 overflow-y-auto" style={{ maxHeight: 600 }}>

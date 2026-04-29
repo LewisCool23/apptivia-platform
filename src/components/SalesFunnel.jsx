@@ -45,7 +45,7 @@ function ConversionArrow({ fromValue, toValue, industryFrom, industryTo }) {
         <Icon size={12} style={{ color }} />
         <span className="text-sm font-semibold" style={{ color }}>{actual}%</span>
         {industry && (
-          <span className="text-xs text-gray-400">vs {industry}% industry</span>
+          <span className="text-xs text-apptivia-carbon-400">vs {industry}% industry</span>
         )}
       </div>
       <svg width="2" height="12"><line x1="1" y1="0" x2="1" y2="12" stroke="#e5e7eb" strokeWidth="2" /></svg>
@@ -65,8 +65,8 @@ export default function SalesFunnel({ kpiValues = {}, benchmarks = {}, goals = {
       {/* Header */}
       <div className="flex items-center justify-between mb-5">
         <div className="flex items-center gap-2">
-          <h3 className="text-sm font-semibold text-gray-800">Sales Funnel</h3>
-          <span className="text-xs text-gray-400 bg-apptivia-paper px-2 py-0.5 rounded-full">
+          <h3 className="text-sm font-semibold text-apptivia-ink">Sales Funnel</h3>
+          <span className="text-xs text-apptivia-carbon-400 bg-apptivia-paper px-2 py-0.5 rounded-full">
             {viewMode === 'team' ? 'Team Total' : 'Per Rep Avg'}
           </span>
         </div>
@@ -79,8 +79,8 @@ export default function SalesFunnel({ kpiValues = {}, benchmarks = {}, goals = {
                 onClick={() => setBenchmarkType(type)}
                 className={`text-xs px-2.5 py-1 rounded-md transition-colors ${
                   benchmarkType === type
-                    ? 'bg-white text-gray-800 shadow-sm font-medium'
-                    : 'text-gray-500 hover:text-gray-700'
+                    ? 'bg-white text-apptivia-ink shadow-sm font-medium'
+                    : 'text-apptivia-carbon-500 hover:text-apptivia-carbon-700'
                 }`}
               >
                 {type === 'industry' ? 'Industry' : type === 'team_p75' ? 'Team Top 25%' : 'Goal'}
@@ -89,7 +89,7 @@ export default function SalesFunnel({ kpiValues = {}, benchmarks = {}, goals = {
           </div>
           <button
             onClick={() => setShowBenchmarks(v => !v)}
-            className="text-xs text-gray-500 hover:text-gray-700 flex items-center gap-1"
+            className="text-xs text-apptivia-carbon-500 hover:text-apptivia-carbon-700 flex items-center gap-1"
           >
             Benchmarks {showBenchmarks ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
           </button>
@@ -158,7 +158,7 @@ export default function SalesFunnel({ kpiValues = {}, benchmarks = {}, goals = {
                         className="w-2.5 h-2.5 rounded-full flex-shrink-0"
                         style={{ background: stage.color }}
                       />
-                      <span className="text-sm font-medium text-gray-700">{stage.label}</span>
+                      <span className="text-sm font-medium text-apptivia-carbon-700">{stage.label}</span>
                     </div>
                     <div className="flex items-center gap-3">
                       {showBenchmarks && benchmark != null && (
@@ -168,7 +168,7 @@ export default function SalesFunnel({ kpiValues = {}, benchmarks = {}, goals = {
                           label={benchmarkType === 'industry' ? 'Ind.' : benchmarkType === 'team_p75' ? 'Team Top 25%' : 'Goal'}
                         />
                       )}
-                      <span className="text-base font-bold text-gray-900" style={{ minWidth: '2.5rem', textAlign: 'right' }}>
+                      <span className="text-base font-bold text-apptivia-ink" style={{ minWidth: '2.5rem', textAlign: 'right' }}>
                         {value != null ? value.toLocaleString() : '—'}
                       </span>
                     </div>
@@ -181,7 +181,7 @@ export default function SalesFunnel({ kpiValues = {}, benchmarks = {}, goals = {
       </div>
 
       {/* Legend */}
-      <div className="mt-5 pt-4 border-t border-gray-50 flex flex-wrap items-center gap-x-5 gap-y-2 text-xs text-gray-500">
+      <div className="mt-5 pt-4 border-t border-gray-50 flex flex-wrap items-center gap-x-5 gap-y-2 text-xs text-apptivia-carbon-500">
         <div className="flex items-center gap-1.5">
           <div className="w-4 h-0.5 bg-apptivia-carbon-400 opacity-50" />
           <span>Goal marker</span>

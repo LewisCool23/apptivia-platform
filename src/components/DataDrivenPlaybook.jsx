@@ -226,7 +226,7 @@ export default function DataDrivenPlaybook({ scorecardData, lastWeekScorecardDat
           <h2 className="text-base font-semibold">Manager Coaching Playbook</h2>
           <InfoTooltip text="Data-driven coaching actions based on 5-week performance trends." />
         </div>
-        <div className="text-xs text-gray-500 p-4 text-center">Loading team data...</div>
+        <div className="text-xs text-apptivia-carbon-500 p-4 text-center">Loading team data...</div>
       </div>
     );
   }
@@ -256,12 +256,12 @@ export default function DataDrivenPlaybook({ scorecardData, lastWeekScorecardDat
         >
           <div className="flex items-center gap-2">
             <AlertTriangle size={16} className="text-red-500" />
-            <span className="text-sm font-semibold text-gray-900">
+            <span className="text-sm font-semibold text-apptivia-ink">
               Team Weakness Analysis
               {lagging.length > 0 && <span className="ml-1 text-xs text-red-600">({lagging.length} lagging KPI{lagging.length !== 1 ? 's' : ''})</span>}
             </span>
           </div>
-          {expandedSection === 'weaknesses' ? <ChevronUp size={16} className="text-gray-400" /> : <ChevronDown size={16} className="text-gray-400" />}
+          {expandedSection === 'weaknesses' ? <ChevronUp size={16} className="text-apptivia-carbon-400" /> : <ChevronDown size={16} className="text-apptivia-carbon-400" />}
         </button>
         {expandedSection === 'weaknesses' && (
           <div className="px-3 py-2 space-y-2">
@@ -277,14 +277,14 @@ export default function DataDrivenPlaybook({ scorecardData, lastWeekScorecardDat
                   <div key={kpi.key} className="border rounded-lg p-3">
                     <div className="flex items-center justify-between mb-1">
                       <div className="flex items-center gap-2">
-                        <span className="text-xs font-semibold text-gray-900">{kpi.label}</span>
+                        <span className="text-xs font-semibold text-apptivia-ink">{kpi.label}</span>
                         <span className={`text-[9px] px-1.5 py-0.5 rounded-full font-medium ${tierColor}`}>
                           {TIER_LABELS[kpi.tier]}
                         </span>
                       </div>
                       <div className="flex items-center gap-2">
                         <span className="text-xs text-red-600 font-bold">{kpi.avgPercentage}%</span>
-                        <span className="text-[10px] text-gray-400">{kpi.belowTargetCount}/{rows.length} reps below</span>
+                        <span className="text-[10px] text-apptivia-carbon-400">{kpi.belowTargetCount}/{rows.length} reps below</span>
                       </div>
                     </div>
                     <div className="w-full bg-apptivia-carbon-200 rounded-full h-1.5 mb-2">
@@ -298,10 +298,10 @@ export default function DataDrivenPlaybook({ scorecardData, lastWeekScorecardDat
                         <div className="text-[11px] text-amber-700 bg-amber-50 rounded px-2 py-1 mb-1.5">
                           {guidance.diagnosis}
                         </div>
-                        <div className="text-[11px] text-blue-700 bg-apptivia-coral-tone-50 rounded px-2 py-1 mb-1.5">
+                        <div className="text-[11px] text-apptivia-coral bg-apptivia-coral-tone-50 rounded px-2 py-1 mb-1.5">
                           Ask in 1:1: "{guidance.coachingQuestion}"
                         </div>
-                        <ul className="text-[11px] text-gray-600 space-y-0.5 list-disc list-inside">
+                        <ul className="text-[11px] text-apptivia-carbon-600 space-y-0.5 list-disc list-inside">
                           {guidance.tips.slice(0, 3).map((tip, i) => <li key={i}>{tip}</li>)}
                         </ul>
                         <div className="mt-1.5 flex justify-end">
@@ -325,12 +325,12 @@ export default function DataDrivenPlaybook({ scorecardData, lastWeekScorecardDat
         >
           <div className="flex items-center gap-2">
             <Users size={16} className="text-orange-500" />
-            <span className="text-sm font-semibold text-gray-900">
+            <span className="text-sm font-semibold text-apptivia-ink">
               Rep-Specific Coaching
               {repsNeedingCoaching.length > 0 && <span className="ml-1 text-xs text-orange-600">({repsNeedingCoaching.length} rep{repsNeedingCoaching.length !== 1 ? 's' : ''} need attention)</span>}
             </span>
           </div>
-          {expandedSection === 'reps' ? <ChevronUp size={16} className="text-gray-400" /> : <ChevronDown size={16} className="text-gray-400" />}
+          {expandedSection === 'reps' ? <ChevronUp size={16} className="text-apptivia-carbon-400" /> : <ChevronDown size={16} className="text-apptivia-carbon-400" />}
         </button>
         {expandedSection === 'reps' && (
           <div className="px-3 py-2 space-y-2">
@@ -370,14 +370,14 @@ export default function DataDrivenPlaybook({ scorecardData, lastWeekScorecardDat
                       <div className="px-3 py-2 bg-orange-50 border-b">
                         <div className="flex items-center gap-2 mb-1">
                           <Target size={13} className="text-orange-500 flex-shrink-0" />
-                          <span className="text-xs font-semibold text-gray-900">{groupLabel}</span>
-                          {teamAvg != null && <span className="text-[10px] text-gray-500">({teamAvg}% team avg)</span>}
+                          <span className="text-xs font-semibold text-apptivia-ink">{groupLabel}</span>
+                          {teamAvg != null && <span className="text-[10px] text-apptivia-carbon-500">({teamAvg}% team avg)</span>}
                           <span className={`text-[8px] px-1 py-0.5 rounded-full font-medium ${tierColor}`}>{tierLabel}</span>
                           <span className="text-[10px] text-orange-600 font-medium ml-auto">{reps.length} rep{reps.length !== 1 ? 's' : ''}</span>
                         </div>
                         {guidance && (
-                          <div className="text-[11px] text-gray-600 bg-white rounded px-2 py-1.5 border border-gray-100">
-                            <span className="font-medium text-gray-700">Action:</span> {guidance.tips[0]}
+                          <div className="text-[11px] text-apptivia-carbon-600 bg-white rounded px-2 py-1.5 border border-gray-100">
+                            <span className="font-medium text-apptivia-carbon-700">Action:</span> {guidance.tips[0]}
                           </div>
                         )}
                       </div>
@@ -391,11 +391,11 @@ export default function DataDrivenPlaybook({ scorecardData, lastWeekScorecardDat
                           </div>
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center justify-between">
-                              <span className="text-xs font-semibold text-gray-900 truncate">{rep.name}</span>
+                              <span className="text-xs font-semibold text-apptivia-ink truncate">{rep.name}</span>
                               <span className="text-xs font-bold text-red-600">{rep.recent}%</span>
                             </div>
                             <div className="mt-0.5 flex items-center gap-3 text-[10px]">
-                              <span className="text-gray-500">5-wk avg: <span className="font-medium text-gray-700">{rep.avg5w}%</span></span>
+                              <span className="text-apptivia-carbon-500">5-wk avg: <span className="font-medium text-apptivia-carbon-700">{rep.avg5w}%</span></span>
                               <span className={`font-medium ${rep.trendDelta >= 0 ? 'text-green-600' : 'text-red-600'}`}>
                                 {rep.trendDelta >= 0 ? '↑' : '↓'} {rep.trendDelta > 0 ? '+' : ''}{rep.trendDelta}% trend
                               </span>
@@ -405,12 +405,12 @@ export default function DataDrivenPlaybook({ scorecardData, lastWeekScorecardDat
                             </div>
                             {/* Peer comparison */}
                             {rep.deltaVsTeam != null && (
-                              <div className="mt-0.5 text-[10px] text-gray-500">
+                              <div className="mt-0.5 text-[10px] text-apptivia-carbon-500">
                                 <span className={`font-medium ${rep.deltaVsTeam < 0 ? 'text-red-600' : 'text-green-600'}`}>
                                   {Math.abs(rep.deltaVsTeam)}% {rep.deltaVsTeam < 0 ? 'below' : 'above'} team avg
                                 </span>
                                 {rep.topPerformerForWeakest && (
-                                  <span className="text-gray-400 ml-2">
+                                  <span className="text-apptivia-carbon-400 ml-2">
                                     Top: {rep.topPerformerForWeakest.name.split(' ')[0]} ({rep.topPerformerForWeakest.percentage}%)
                                   </span>
                                 )}
@@ -426,7 +426,7 @@ export default function DataDrivenPlaybook({ scorecardData, lastWeekScorecardDat
                               <div className="mt-0.5 text-[10px] text-emerald-600">
                                 Strength: {rep.strongestKpi.label} ({rep.strongestKpi.percentage}%)
                                 {rep.strongestKpi.teamAvg > 0 && rep.strongestKpi.percentage > rep.strongestKpi.teamAvg && (
-                                  <span className="text-gray-400 ml-1">
+                                  <span className="text-apptivia-carbon-400 ml-1">
                                     ({rep.strongestKpi.percentage - rep.strongestKpi.teamAvg}% above team avg)
                                   </span>
                                 )}
@@ -436,7 +436,7 @@ export default function DataDrivenPlaybook({ scorecardData, lastWeekScorecardDat
                               <div className="flex items-center gap-1.5">
                                 <button
                                   onClick={() => setPrepRepId(rep.repId)}
-                                  className="flex items-center gap-1 px-2 py-1 text-[10px] font-medium text-blue-600 border border-blue-200 rounded hover:bg-apptivia-coral-tone-50 transition-colors"
+                                  className="flex items-center gap-1 px-2 py-1 text-[10px] font-medium text-apptivia-coral border border-blue-200 rounded hover:bg-apptivia-coral-tone-50 transition-colors"
                                 >
                                   <CalendarCheck size={12} />
                                   Prep 1:1
@@ -453,7 +453,7 @@ export default function DataDrivenPlaybook({ scorecardData, lastWeekScorecardDat
                                 {onStartReview && (
                                   <button
                                     onClick={() => onStartReview(rep.repId, repNames?.[rep.repId] || 'Rep')}
-                                    className="flex items-center gap-1 px-2 py-1 text-[10px] font-medium text-purple-600 border border-purple-200 rounded hover:bg-apptivia-carbon-100 transition-colors"
+                                    className="flex items-center gap-1 px-2 py-1 text-[10px] font-medium text-apptivia-ink border border-purple-200 rounded hover:bg-apptivia-carbon-100 transition-colors"
                                   >
                                     <ClipboardList size={12} />
                                     Start Review
@@ -482,29 +482,29 @@ export default function DataDrivenPlaybook({ scorecardData, lastWeekScorecardDat
         >
           <div className="flex items-center gap-2">
             {recentChanges.length > 0 && recentChanges[0].delta >= 0
-              ? <TrendingUp size={16} className="text-blue-500" />
-              : <TrendingDown size={16} className="text-blue-500" />
+              ? <TrendingUp size={16} className="text-apptivia-coral" />
+              : <TrendingDown size={16} className="text-apptivia-coral" />
             }
-            <span className="text-sm font-semibold text-gray-900">What Changed Recently</span>
+            <span className="text-sm font-semibold text-apptivia-ink">What Changed Recently</span>
           </div>
-          {expandedSection === 'changes' ? <ChevronUp size={16} className="text-gray-400" /> : <ChevronDown size={16} className="text-gray-400" />}
+          {expandedSection === 'changes' ? <ChevronUp size={16} className="text-apptivia-carbon-400" /> : <ChevronDown size={16} className="text-apptivia-carbon-400" />}
         </button>
         {expandedSection === 'changes' && (
           <div className="px-3 py-2">
             {recentChanges.length === 0 ? (
-              <div className="text-xs text-gray-500 p-2">Need at least 2 weeks of data for trend comparison.</div>
+              <div className="text-xs text-apptivia-carbon-500 p-2">Need at least 2 weeks of data for trend comparison.</div>
             ) : (
               <div className="space-y-2">
                 {recentChanges.map((item, i) => (
                   <div key={i} className={`flex items-center justify-between text-xs border rounded p-2 ${item.type === 'team' ? 'bg-apptivia-coral-tone-50 border-blue-100' : ''}`}>
                     <div className="flex items-center gap-2">
-                      <span className={`font-medium ${item.type === 'team' ? 'text-blue-900' : 'text-gray-900'}`}>{item.label}</span>
-                      {item.type === 'team' && <span className="text-[9px] px-1.5 py-0.5 rounded bg-apptivia-coral-tone-50 text-blue-600">Team</span>}
+                      <span className={`font-medium ${item.type === 'team' ? 'text-apptivia-coral-tone-700' : 'text-apptivia-ink'}`}>{item.label}</span>
+                      {item.type === 'team' && <span className="text-[9px] px-1.5 py-0.5 rounded bg-apptivia-coral-tone-50 text-apptivia-coral">Team</span>}
                     </div>
                     <div className="flex items-center gap-2">
-                      <span className="text-gray-500">{item.prior}%</span>
-                      <span className="text-gray-400">→</span>
-                      <span className="font-bold text-gray-900">{item.current}%</span>
+                      <span className="text-apptivia-carbon-500">{item.prior}%</span>
+                      <span className="text-apptivia-carbon-400">→</span>
+                      <span className="font-bold text-apptivia-ink">{item.current}%</span>
                       <span className={`font-bold ${item.delta >= 0 ? 'text-green-600' : 'text-red-600'}`}>
                         {item.delta >= 0 ? '+' : ''}{item.delta}%
                       </span>
@@ -529,10 +529,10 @@ export default function DataDrivenPlaybook({ scorecardData, lastWeekScorecardDat
           className="w-full flex items-center justify-between px-3 py-2.5 bg-apptivia-carbon-100 hover:bg-apptivia-carbon-100 transition-colors text-left"
         >
           <div className="flex items-center gap-2">
-            <Target size={16} className="text-purple-500" />
-            <span className="text-sm font-semibold text-gray-900">Priority Actions</span>
+            <Target size={16} className="text-apptivia-ink" />
+            <span className="text-sm font-semibold text-apptivia-ink">Priority Actions</span>
           </div>
-          {expandedSection === 'priorities' ? <ChevronUp size={16} className="text-gray-400" /> : <ChevronDown size={16} className="text-gray-400" />}
+          {expandedSection === 'priorities' ? <ChevronUp size={16} className="text-apptivia-carbon-400" /> : <ChevronDown size={16} className="text-apptivia-carbon-400" />}
         </button>
         {expandedSection === 'priorities' && (
           <div className="px-3 py-2">
@@ -544,10 +544,10 @@ export default function DataDrivenPlaybook({ scorecardData, lastWeekScorecardDat
               <div className="space-y-1.5">
                 {priorities.map((p, i) => (
                   <div key={i} className="flex items-start gap-2 text-xs">
-                    <span className="text-purple-500 font-bold mt-0.5">{i + 1}.</span>
+                    <span className="text-apptivia-ink font-bold mt-0.5">{i + 1}.</span>
                     <div>
-                      <span className="font-medium text-gray-900">{p.text}</span>
-                      <span className="text-gray-500"> — {p.detail}</span>
+                      <span className="font-medium text-apptivia-ink">{p.text}</span>
+                      <span className="text-apptivia-carbon-500"> — {p.detail}</span>
                     </div>
                   </div>
                 ))}

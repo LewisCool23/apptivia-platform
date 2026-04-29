@@ -211,11 +211,11 @@ export default function OrgHealthScorecard() {
   }, [scores]);
 
   if (loading) {
-    return <div className="text-center py-12 text-gray-400">Calculating org health...</div>;
+    return <div className="text-center py-12 text-apptivia-carbon-400">Calculating org health...</div>;
   }
 
   if (!scores) {
-    return <div className="text-center py-12 text-gray-400">Unable to load org health data.</div>;
+    return <div className="text-center py-12 text-apptivia-carbon-400">Unable to load org health data.</div>;
   }
 
   const overall = scoreColor(overallScore);
@@ -228,8 +228,8 @@ export default function OrgHealthScorecard() {
           {overallScore}
         </div>
         <div>
-          <h3 className="text-lg font-semibold text-gray-900">Organization Health Score</h3>
-          <p className="text-sm text-gray-500">Composite score across 5 dimensions — updated in real-time</p>
+          <h3 className="text-lg font-semibold text-apptivia-ink">Organization Health Score</h3>
+          <p className="text-sm text-apptivia-carbon-500">Composite score across 5 dimensions — updated in real-time</p>
         </div>
       </div>
 
@@ -247,7 +247,7 @@ export default function OrgHealthScorecard() {
                     <Icon size={16} className={colors.text} />
                   </div>
                   <div>
-                    <div className="text-sm font-semibold text-gray-900 flex items-center gap-1">
+                    <div className="text-sm font-semibold text-apptivia-ink flex items-center gap-1">
                       {dim.label}
                       <InfoTooltip
                         text={ORG_HEALTH_METRICS[dim.key]?.explanation?.slice(0, 120) + '...'}
@@ -255,7 +255,7 @@ export default function OrgHealthScorecard() {
                         wide
                       />
                     </div>
-                    <div className="text-[10px] text-gray-500">{dim.description}</div>
+                    <div className="text-[10px] text-apptivia-carbon-500">{dim.description}</div>
                   </div>
                 </div>
                 <span className={`text-lg font-bold ${colors.text}`}>{score}</span>
@@ -265,7 +265,7 @@ export default function OrgHealthScorecard() {
               </div>
               <button
                 onClick={() => setDetailDim(dim.key)}
-                className="text-xs text-blue-600 hover:text-blue-800 flex items-center gap-1"
+                className="text-xs text-apptivia-coral hover:text-apptivia-coral-tone-700 flex items-center gap-1"
               >
                 View details <ArrowRight size={10} />
               </button>

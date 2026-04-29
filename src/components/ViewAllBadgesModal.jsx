@@ -163,11 +163,11 @@ export default function ViewAllBadgesModal({ isOpen, onClose, userId, refreshKey
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-gray-200">
           <div>
-            <h2 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
+            <h2 className="text-2xl font-bold text-apptivia-ink flex items-center gap-2">
               <span>🎖️</span>
               All Badges
             </h2>
-            <p className="text-sm text-gray-500 mt-1">
+            <p className="text-sm text-apptivia-carbon-500 mt-1">
               {earnedCount} of {totalBadges} badges earned ({progressPercent}%)
             </p>
           </div>
@@ -175,7 +175,7 @@ export default function ViewAllBadgesModal({ isOpen, onClose, userId, refreshKey
             onClick={onClose}
             className="p-2 hover:bg-apptivia-carbon-100 rounded-lg transition-colors"
           >
-            <X size={24} className="text-gray-500" />
+            <X size={24} className="text-apptivia-carbon-500" />
           </button>
         </div>
 
@@ -192,8 +192,8 @@ export default function ViewAllBadgesModal({ isOpen, onClose, userId, refreshKey
           {/* Filter Pills */}
           <div className="flex flex-wrap gap-2">
             <div className="flex items-center gap-2">
-              <Filter size={16} className="text-gray-500" />
-              <span className="text-xs font-semibold text-gray-600">STATUS:</span>
+              <Filter size={16} className="text-apptivia-carbon-500" />
+              <span className="text-xs font-semibold text-apptivia-carbon-600">STATUS:</span>
             </div>
             {['all', 'earned', 'locked'].map(status => (
               <button
@@ -202,7 +202,7 @@ export default function ViewAllBadgesModal({ isOpen, onClose, userId, refreshKey
                 className={`px-3 py-1 rounded-full text-xs font-medium transition-all ${
                   statusFilter === status
                     ? 'bg-apptivia-coral text-white shadow-sm'
-                    : 'bg-apptivia-carbon-100 text-gray-600 hover:bg-apptivia-carbon-200'
+                    : 'bg-apptivia-carbon-100 text-apptivia-carbon-600 hover:bg-apptivia-carbon-200'
                 }`}
               >
                 {status.charAt(0).toUpperCase() + status.slice(1)}
@@ -210,14 +210,14 @@ export default function ViewAllBadgesModal({ isOpen, onClose, userId, refreshKey
             ))}
 
             <div className="flex items-center gap-2 ml-4">
-              <span className="text-xs font-semibold text-gray-600">TYPE:</span>
+              <span className="text-xs font-semibold text-apptivia-carbon-600">TYPE:</span>
             </div>
             <button
               onClick={() => setTypeFilter('all')}
               className={`px-3 py-1 rounded-full text-xs font-medium transition-all ${
                 typeFilter === 'all'
                   ? 'bg-apptivia-ink text-white shadow-sm'
-                  : 'bg-apptivia-carbon-100 text-gray-600 hover:bg-apptivia-carbon-200'
+                  : 'bg-apptivia-carbon-100 text-apptivia-carbon-600 hover:bg-apptivia-carbon-200'
               }`}
             >
               All
@@ -229,7 +229,7 @@ export default function ViewAllBadgesModal({ isOpen, onClose, userId, refreshKey
                 className={`px-3 py-1 rounded-full text-xs font-medium transition-all ${
                   typeFilter === cat
                     ? 'bg-apptivia-ink text-white shadow-sm'
-                    : 'bg-apptivia-carbon-100 text-gray-600 hover:bg-apptivia-carbon-200'
+                    : 'bg-apptivia-carbon-100 text-apptivia-carbon-600 hover:bg-apptivia-carbon-200'
                 }`}
               >
                 {cat}
@@ -237,14 +237,14 @@ export default function ViewAllBadgesModal({ isOpen, onClose, userId, refreshKey
             ))}
 
             <div className="flex items-center gap-2 ml-4">
-              <span className="text-xs font-semibold text-gray-600">RARITY:</span>
+              <span className="text-xs font-semibold text-apptivia-carbon-600">RARITY:</span>
             </div>
             <button
               onClick={() => setRarityFilter('all')}
               className={`px-3 py-1 rounded-full text-xs font-medium transition-all ${
                 rarityFilter === 'all'
                   ? 'bg-apptivia-ink text-white shadow-sm'
-                  : 'bg-apptivia-carbon-100 text-gray-600 hover:bg-apptivia-carbon-200'
+                  : 'bg-apptivia-carbon-100 text-apptivia-carbon-600 hover:bg-apptivia-carbon-200'
               }`}
             >
               All
@@ -256,7 +256,7 @@ export default function ViewAllBadgesModal({ isOpen, onClose, userId, refreshKey
                 className={`px-3 py-1 rounded-full text-xs font-medium transition-all ${
                   rarityFilter === rarity
                     ? 'bg-apptivia-ink text-white shadow-sm'
-                    : 'bg-apptivia-carbon-100 text-gray-600 hover:bg-apptivia-carbon-200'
+                    : 'bg-apptivia-carbon-100 text-apptivia-carbon-600 hover:bg-apptivia-carbon-200'
                 }`}
               >
                 {rarity}
@@ -268,11 +268,11 @@ export default function ViewAllBadgesModal({ isOpen, onClose, userId, refreshKey
         {/* Badges Grid */}
         <div className="flex-1 overflow-y-auto p-6">
           {loading ? (
-            <div className="text-center py-12 text-gray-500">Loading badges...</div>
+            <div className="text-center py-12 text-apptivia-carbon-500">Loading badges...</div>
           ) : filteredBadges.length === 0 ? (
             <div className="text-center py-12">
-              <div className="text-gray-400 text-lg mb-2">No badges found</div>
-              <p className="text-gray-500 text-sm">Try adjusting your filters</p>
+              <div className="text-apptivia-carbon-400 text-lg mb-2">No badges found</div>
+              <p className="text-apptivia-carbon-500 text-sm">Try adjusting your filters</p>
             </div>
           ) : (
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
@@ -293,7 +293,7 @@ export default function ViewAllBadgesModal({ isOpen, onClose, userId, refreshKey
                     title={badge.badge_description}
                   >
                     {isCustom && (
-                      <div className="text-[10px] font-semibold text-indigo-600 mb-1">CUSTOM</div>
+                      <div className="text-[10px] font-semibold text-apptivia-ink mb-1">CUSTOM</div>
                     )}
                     {/* Rarity Badge */}
                     {badge.rarity && earned && (
@@ -308,13 +308,13 @@ export default function ViewAllBadgesModal({ isOpen, onClose, userId, refreshKey
                     </div>
 
                     {/* Badge Name */}
-                    <div className={`font-semibold text-sm ${earned ? 'text-gray-900' : 'text-gray-400'}`}>
+                    <div className={`font-semibold text-sm ${earned ? 'text-apptivia-ink' : 'text-apptivia-carbon-400'}`}>
                       {badge.badge_name}
                     </div>
 
                     {/* Badge Description */}
                     {badge.badge_description && (
-                      <div className={`text-xs mt-1 line-clamp-2 ${earned ? 'text-gray-600' : 'text-gray-400'}`}>
+                      <div className={`text-xs mt-1 line-clamp-2 ${earned ? 'text-apptivia-carbon-600' : 'text-apptivia-carbon-400'}`}>
                         {badge.badge_description}
                       </div>
                     )}
@@ -340,9 +340,9 @@ export default function ViewAllBadgesModal({ isOpen, onClose, userId, refreshKey
                         <span className="text-green-600 font-medium">✓ Earned {earnedDate}</span>
                       ) : (
                         <>
-                          <span className="text-gray-400 font-medium">🔒 Locked</span>
+                          <span className="text-apptivia-carbon-400 font-medium">🔒 Locked</span>
                           {badge.badge_description && (
-                            <div className="text-[10px] text-gray-400 mt-1 line-clamp-2">{badge.badge_description}</div>
+                            <div className="text-[10px] text-apptivia-carbon-400 mt-1 line-clamp-2">{badge.badge_description}</div>
                           )}
                         </>
                       )}
@@ -358,18 +358,18 @@ export default function ViewAllBadgesModal({ isOpen, onClose, userId, refreshKey
         <div className="border-t border-gray-200 p-4 bg-apptivia-paper">
           <div className="flex items-center justify-center gap-6 text-sm">
             <div className="flex items-center gap-2">
-              <span className="text-gray-600">Showing:</span>
-              <span className="font-semibold text-gray-900">{filteredBadges.length} badges</span>
+              <span className="text-apptivia-carbon-600">Showing:</span>
+              <span className="font-semibold text-apptivia-ink">{filteredBadges.length} badges</span>
             </div>
             <div className="flex items-center gap-2">
-              <span className="text-gray-600">Progress:</span>
+              <span className="text-apptivia-carbon-600">Progress:</span>
               <div className="w-32 bg-apptivia-carbon-200 rounded-full h-2">
                 <div
                   className="bg-apptivia-coral h-2 rounded-full transition-all duration-500"
                   style={{ width: `${progressPercent}%` }}
                 />
               </div>
-              <span className="font-semibold text-blue-600">{progressPercent}%</span>
+              <span className="font-semibold text-apptivia-coral">{progressPercent}%</span>
             </div>
           </div>
         </div>

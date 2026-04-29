@@ -26,13 +26,13 @@ export default function SelfAssessmentForm({ review, onSubmit, saving }) {
   return (
     <div className="space-y-5">
       <div className="bg-apptivia-coral-tone-50 rounded-lg p-4 border border-blue-100">
-        <h3 className="text-sm font-semibold text-blue-900 mb-1">Self-Assessment</h3>
-        <p className="text-xs text-blue-700">Share your perspective on your performance during this review period. Be honest and specific.</p>
+        <h3 className="text-sm font-semibold text-apptivia-coral-tone-700 mb-1">Self-Assessment</h3>
+        <p className="text-xs text-apptivia-coral">Share your perspective on your performance during this review period. Be honest and specific.</p>
       </div>
 
       {/* Overall self-assessment */}
       <div>
-        <label className="block text-xs font-semibold text-gray-700 mb-1">Overall Self-Assessment</label>
+        <label className="block text-xs font-semibold text-apptivia-carbon-700 mb-1">Overall Self-Assessment</label>
         <textarea value={selfAssessment} onChange={e => setSelfAssessment(e.target.value)}
           className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm" rows={4}
           placeholder="Describe your overall performance, growth, and contributions during this period..." />
@@ -41,9 +41,9 @@ export default function SelfAssessmentForm({ review, onSubmit, saving }) {
       {/* Accomplishments */}
       <div>
         <div className="flex items-center justify-between mb-2">
-          <label className="text-xs font-semibold text-gray-700">Key Accomplishments</label>
+          <label className="text-xs font-semibold text-apptivia-carbon-700">Key Accomplishments</label>
           <button type="button" onClick={() => addItem(setAccomplishments)}
-            className="text-xs text-blue-600 hover:text-blue-800 flex items-center gap-1"><Plus size={12} /> Add</button>
+            className="text-xs text-apptivia-coral hover:text-apptivia-coral-tone-700 flex items-center gap-1"><Plus size={12} /> Add</button>
         </div>
         {accomplishments.map((item, idx) => (
           <div key={item._key || idx} className="flex gap-2 mb-2">
@@ -59,9 +59,9 @@ export default function SelfAssessmentForm({ review, onSubmit, saving }) {
       {/* Challenges */}
       <div>
         <div className="flex items-center justify-between mb-2">
-          <label className="text-xs font-semibold text-gray-700">Challenges & Areas for Growth</label>
+          <label className="text-xs font-semibold text-apptivia-carbon-700">Challenges & Areas for Growth</label>
           <button type="button" onClick={() => addItem(setChallenges)}
-            className="text-xs text-blue-600 hover:text-blue-800 flex items-center gap-1"><Plus size={12} /> Add</button>
+            className="text-xs text-apptivia-coral hover:text-apptivia-coral-tone-700 flex items-center gap-1"><Plus size={12} /> Add</button>
         </div>
         {challenges.map((item, idx) => (
           <div key={item._key || idx} className="flex gap-2 mb-2">
@@ -77,9 +77,9 @@ export default function SelfAssessmentForm({ review, onSubmit, saving }) {
       {/* Goals for next period */}
       <div>
         <div className="flex items-center justify-between mb-2">
-          <label className="text-xs font-semibold text-gray-700">Goals for Next Period</label>
+          <label className="text-xs font-semibold text-apptivia-carbon-700">Goals for Next Period</label>
           <button type="button" onClick={() => addItem(setGoals)}
-            className="text-xs text-blue-600 hover:text-blue-800 flex items-center gap-1"><Plus size={12} /> Add</button>
+            className="text-xs text-apptivia-coral hover:text-apptivia-coral-tone-700 flex items-center gap-1"><Plus size={12} /> Add</button>
         </div>
         {goals.map((item, idx) => (
           <div key={item._key || idx} className="flex gap-2 mb-2">
@@ -94,7 +94,7 @@ export default function SelfAssessmentForm({ review, onSubmit, saving }) {
 
       {/* Additional comments */}
       <div>
-        <label className="block text-xs font-semibold text-gray-700 mb-1">Additional Comments</label>
+        <label className="block text-xs font-semibold text-apptivia-carbon-700 mb-1">Additional Comments</label>
         <textarea value={comments} onChange={e => setComments(e.target.value)}
           className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm" rows={3}
           placeholder="Any additional thoughts, feedback, or requests..." />

@@ -165,10 +165,10 @@ export default function AccountSetup() {
           <span className="text-white font-bold text-3xl">A</span>
         </div>
 
-        <h1 className="text-2xl font-bold text-blue-700 mb-2 text-center">
+        <h1 className="text-2xl font-bold text-apptivia-coral mb-2 text-center">
           Complete Your Account
         </h1>
-        <p className="text-gray-500 mb-6 text-center text-sm">
+        <p className="text-apptivia-carbon-500 mb-6 text-center text-sm">
           Welcome to Apptivia! Set up your profile and password to get started.
         </p>
 
@@ -181,7 +181,7 @@ export default function AccountSetup() {
         {/* First Name + Last Name */}
         <div className="grid grid-cols-2 gap-4 w-full mb-4">
           <div>
-            <label className="block mb-1 font-medium text-sm text-gray-700">
+            <label className="block mb-1 font-medium text-sm text-apptivia-carbon-700">
               First Name <span className="text-red-500">*</span>
             </label>
             <input
@@ -195,7 +195,7 @@ export default function AccountSetup() {
             />
           </div>
           <div>
-            <label className="block mb-1 font-medium text-sm text-gray-700">
+            <label className="block mb-1 font-medium text-sm text-apptivia-carbon-700">
               Last Name <span className="text-red-500">*</span>
             </label>
             <input
@@ -211,7 +211,7 @@ export default function AccountSetup() {
 
         {/* Password */}
         <div className="mb-4 w-full">
-          <label className="block mb-1 font-medium text-sm text-gray-700">
+          <label className="block mb-1 font-medium text-sm text-apptivia-carbon-700">
             Password <span className="text-red-500">*</span>
           </label>
           <div className="relative">
@@ -227,7 +227,7 @@ export default function AccountSetup() {
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-apptivia-carbon-400 hover:text-apptivia-carbon-600"
               tabIndex={-1}
             >
               {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
@@ -237,7 +237,7 @@ export default function AccountSetup() {
 
         {/* Confirm Password */}
         <div className="mb-4 w-full">
-          <label className="block mb-1 font-medium text-sm text-gray-700">
+          <label className="block mb-1 font-medium text-sm text-apptivia-carbon-700">
             Confirm Password <span className="text-red-500">*</span>
           </label>
           <div className="relative">
@@ -253,7 +253,7 @@ export default function AccountSetup() {
             <button
               type="button"
               onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-apptivia-carbon-400 hover:text-apptivia-carbon-600"
               tabIndex={-1}
             >
               {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
