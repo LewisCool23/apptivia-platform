@@ -58,13 +58,24 @@ export default function UpdatePassword() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-500 via-purple-500 to-indigo-500">
+    <div className="min-h-screen relative bg-apptivia-ink flex items-center justify-center">
+      {/* Decorative gradient overlay - Option B subtle Carbon + Coral glow */}
+      <div
+        className="absolute inset-0 pointer-events-none"
+        style={{
+          background: `
+            radial-gradient(ellipse at top right, #27272A 0%, transparent 60%),
+            radial-gradient(ellipse at bottom left, rgba(255, 77, 46, 0.08) 0%, transparent 50%)
+          `,
+        }}
+      />
+      <div className="relative z-10">
       <form
         onSubmit={handleUpdate}
         className="bg-white p-8 rounded-lg shadow-xl w-full max-w-md flex flex-col items-center"
       >
-        <div className="w-16 h-16 rounded-lg bg-gradient-to-r from-blue-500 to-purple-500 flex items-center justify-center mb-6">
-          <span className="text-white font-bold text-3xl">A</span>
+        <div className="text-center mb-6">
+          <span className="font-display font-black text-3xl tracking-tight text-apptivia-ink">app</span><span className="font-display font-medium text-3xl tracking-tight text-apptivia-coral">tivia</span>
         </div>
         <h1 className="text-2xl font-bold text-apptivia-coral mb-2 text-center">Set a new password</h1>
         <p className="text-apptivia-carbon-500 mb-4 text-center text-sm">
@@ -83,7 +94,7 @@ export default function UpdatePassword() {
           <label className="block mb-1 font-medium text-sm text-apptivia-carbon-700">New Password</label>
           <input
             type="password"
-            className="w-full border border-apptivia-carbon-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200"
+            className="w-full border border-apptivia-carbon-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-apptivia-coral transition-all duration-200"
             required
             minLength={8}
             value={newPassword}
@@ -95,7 +106,7 @@ export default function UpdatePassword() {
           <label className="block mb-1 font-medium text-sm text-apptivia-carbon-700">Confirm Password</label>
           <input
             type="password"
-            className="w-full border border-apptivia-carbon-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200"
+            className="w-full border border-apptivia-carbon-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-apptivia-coral transition-all duration-200"
             required
             minLength={8}
             value={confirmPassword}
@@ -106,7 +117,7 @@ export default function UpdatePassword() {
         <button
           type="submit"
           disabled={isSubmitting || !session}
-          className="w-full bg-gradient-to-r from-blue-500 to-purple-500 text-white py-2.5 rounded-lg font-semibold hover:from-blue-600 hover:to-purple-600 transition-all duration-300 text-sm mb-4 hover:shadow-lg hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+          className="w-full bg-apptivia-coral hover:bg-apptivia-coral-tone-600 text-apptivia-paper py-2.5 rounded-lg font-semibold transition-all duration-300 text-sm mb-4 hover:shadow-lg hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
         >
           {isSubmitting ? 'Updating...' : 'Update Password'}
         </button>
@@ -121,6 +132,7 @@ export default function UpdatePassword() {
           <a href="/login" className="text-apptivia-coral hover:underline transition-all duration-200 hover:text-apptivia-coral">Back to login</a>
         </div>
       </form>
+      </div>
     </div>
   );
 }
