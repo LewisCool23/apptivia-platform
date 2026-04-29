@@ -141,8 +141,8 @@ export default function ViewAllBadgesModal({ isOpen, onClose, userId, refreshKey
       case 'legendary': return '#FFD700';  // Gold
       case 'epic': return '#9333ea';       // Purple
       case 'rare': return '#FF4D2E';       // Coral
-      case 'common': return '#6b7280';     // Gray
-      default: return '#e5e7eb';
+      case 'common': return '#71717A';     // Carbon-500
+      default: return '#E4E4E7';
     }
   };
 

@@ -3,9 +3,9 @@ import { supabase } from '../supabaseClient';
 import { useAuth } from '../AuthContext';
 
 const COLORS = [
-  '#f59e0b', '#fcd34d', '#10b981', '#34d399',
-  '#3b82f6', '#93c5fd', '#8b5cf6', '#c4b5fd',
-  '#ef4444', '#fca5a5', '#ec4899', '#f9a8d4',
+  '#FF4D2E', '#FF8A6B', '#F59E0B', '#16A34A', '#06B6D4',
+  '#FF4D2E', '#71717A', '#FF8A6B', '#C8341B', '#F59E0B',
+  '#FF4D2E', '#16A34A',
 ];
 const CONFETTI_COUNT = 90;
 
@@ -214,7 +214,7 @@ export default function DealCelebration() {
           <div style={{
             fontSize: 26,
             fontWeight: 800,
-            color: '#f8fafc',
+            color: '#F7F5F2',
             marginBottom: 10,
             lineHeight: 1.25,
             maxWidth: 380,
@@ -244,7 +244,7 @@ export default function DealCelebration() {
           {ownerName && (
             <div style={{ marginBottom: 4 }}>
               <span style={{ color: 'rgba(255,255,255,0.45)', fontSize: 14 }}>Closed by </span>
-              <span style={{ color: '#e2e8f0', fontSize: 18, fontWeight: 700 }}>{ownerName}</span>
+              <span style={{ color: '#E4E4E7', fontSize: 18, fontWeight: 700 }}>{ownerName}</span>
             </div>
           )}
 

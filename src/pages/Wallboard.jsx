@@ -55,8 +55,8 @@ const LEVEL_COLORS = {
 const RARITY_COLORS = {
   legendary: { border: '#FFD700', glow: 'shadow-yellow-400/40', label: 'text-yellow-300' },
   epic:      { border: '#9333ea', glow: 'shadow-purple-400/40', label: 'text-apptivia-ink' },
-  rare:      { border: '#3b82f6', glow: 'shadow-blue-400/40',   label: 'text-apptivia-coral-tone-300'   },
-  common:    { border: '#6b7280', glow: '',                      label: 'text-apptivia-carbon-400'   },
+  rare:      { border: '#FF4D2E', glow: 'shadow-apptivia-coral', label: 'text-apptivia-coral-tone-300' },
+  common:    { border: '#71717A', glow: '',                      label: 'text-apptivia-carbon-400' },
 };
 
 const DIFFICULTY_COLORS = {
@@ -67,9 +67,9 @@ const DIFFICULTY_COLORS = {
 };
 
 const CELEBRATION_COLORS = [
-  '#f59e0b', '#fcd34d', '#10b981', '#34d399',
-  '#3b82f6', '#93c5fd', '#8b5cf6', '#c4b5fd',
-  '#ef4444', '#fca5a5', '#ec4899', '#f9a8d4',
+  '#FF4D2E', '#FF8A6B', '#F59E0B', '#16A34A', '#06B6D4',
+  '#FF4D2E', '#71717A', '#FF8A6B', '#C8341B', '#F59E0B',
+  '#FF4D2E', '#16A34A',
 ];
 const CELEBRATION_CONFETTI = Array.from({ length: 90 }, (_, i) => ({
   color: CELEBRATION_COLORS[i % CELEBRATION_COLORS.length],
