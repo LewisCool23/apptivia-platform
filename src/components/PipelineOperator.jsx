@@ -122,10 +122,10 @@ function StageFunnel({ stageBreakdown, cepStages }) {
   const stages = cepStages && cepStages.length > 0
     ? cepStages.filter(s => !s.is_terminal)
     : [
-        { stage_key: 'discovery', stage_name: 'Discovery', color: '#3b82f6', win_probability: null },
-        { stage_key: 'qualification', stage_name: 'Qualification', color: '#6366f1', win_probability: null },
-        { stage_key: 'proposal', stage_name: 'Proposal', color: '#8b5cf6', win_probability: null },
-        { stage_key: 'negotiation', stage_name: 'Negotiation', color: '#f59e0b', win_probability: null },
+        { stage_key: 'discovery', stage_name: 'Discovery', color: '#71717A', win_probability: null },
+        { stage_key: 'qualification', stage_name: 'Qualification', color: '#52525B', win_probability: null },
+        { stage_key: 'proposal', stage_name: 'Proposal', color: '#3F3F46', win_probability: null },
+        { stage_key: 'negotiation', stage_name: 'Negotiation', color: '#F59E0B', win_probability: null },
       ];
 
   const maxValue = Math.max(...stages.map((s) => stageBreakdown[s.stage_key]?.value || 0), 1);
@@ -190,7 +190,7 @@ function CepProgressBadge({ deal, cepStages }) {
       <div className="w-12 bg-apptivia-carbon-100 rounded-full h-1.5 overflow-hidden">
         <div
           className="h-full rounded-full transition-all"
-          style={{ width: `${pct}%`, backgroundColor: allRequiredMet ? '#10b981' : '#f59e0b' }}
+          style={{ width: `${pct}%`, backgroundColor: allRequiredMet ? '#16A34A' : '#F59E0B' }}
         />
       </div>
       <span className="text-[10px] text-apptivia-carbon-500">{completed}/{total}</span>
