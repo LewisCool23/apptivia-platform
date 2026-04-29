@@ -11,8 +11,8 @@ import ConfirmModal from './ConfirmModal';
 // ── Color Picker (8 predefined) ──────────────────────────────
 
 const PRESET_COLORS = [
-  '#94a3b8', '#60a5fa', '#818cf8', '#a78bfa',
-  '#c084fc', '#e879f9', '#34d399', '#f87171',
+  '#FF4D2E', '#FF8A6B', '#F59E0B', '#16A34A',
+  '#06B6D4', '#3F3F46', '#71717A', '#C8341B',
 ];
 
 function ColorPicker({ value, onChange }) {
