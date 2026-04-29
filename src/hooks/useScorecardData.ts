@@ -359,10 +359,8 @@ export function useScorecardData(
           ? { name: rows[0].name, score: rows[0].apptivityScore }
           : null;
 
-        // M13 fix: exclude zero-data reps from team average so they don't drag it down
-        const rowsWithData = rows.filter(r => r.hasData);
-        const teamAverage = rowsWithData.length > 0
-          ? Math.round(rowsWithData.reduce((sum, r) => sum + r.apptivityScore, 0) / rowsWithData.length)
+        const teamAverage = rows.length > 0
+          ? Math.round(rows.reduce((sum, r) => sum + r.apptivityScore, 0) / rows.length)
           : 0;
 
         const aboveTarget = rows.filter(r => r.apptivityScore >= 100).length;
