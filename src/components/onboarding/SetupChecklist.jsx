@@ -88,7 +88,7 @@ export default function SetupChecklist({ organizationId, userRole }) {
       {/* Floating button — positioned to the left of Aaron AI */}
       <button
         onClick={() => setPanelOpen(!panelOpen)}
-        className="fixed bottom-6 right-20 sm:right-[5.5rem] w-12 h-12 sm:w-14 sm:h-14 bg-gradient-to-br from-amber-400 via-orange-500 to-red-500 text-white rounded-full shadow-lg hover:shadow-xl flex items-center justify-center z-40 transition-all duration-300 hover:scale-110"
+        className="fixed bottom-6 right-20 sm:right-[5.5rem] w-12 h-12 sm:w-14 sm:h-14 bg-apptivia-coral text-white rounded-full shadow-lg hover:shadow-xl flex items-center justify-center z-40 transition-all duration-300 hover:scale-110"
         aria-label="Setup checklist"
       >
         <ClipboardCheck size={22} />
@@ -102,13 +102,13 @@ export default function SetupChecklist({ organizationId, userRole }) {
       {panelOpen && (
         <div className="fixed bottom-24 right-20 sm:right-[5.5rem] w-80 bg-white rounded-lg shadow-2xl border border-apptivia-carbon-200 z-50 animate-in slide-in-from-bottom-2 duration-200">
           {/* Header */}
-          <div className="flex items-center justify-between px-4 py-3 border-b border-apptivia-carbon-100 bg-gradient-to-r from-amber-50 to-orange-50 rounded-t-xl">
+          <div className="flex items-center justify-between px-4 py-3 border-b border-apptivia-carbon-100 bg-apptivia-coral-tone-50 rounded-t-xl">
             <div className="flex items-center gap-2">
-              <ClipboardCheck size={16} className="text-orange-600" />
+              <ClipboardCheck size={16} className="text-apptivia-coral" />
               <span className="text-sm font-semibold text-apptivia-ink">
                 Complete Setup
               </span>
-              <span className="text-xs text-orange-600 font-medium bg-orange-100 px-1.5 py-0.5 rounded-full">
+              <span className="text-xs text-apptivia-coral font-medium bg-apptivia-coral-tone-50 px-1.5 py-0.5 rounded-full">
                 {activeItems.length} left
               </span>
             </div>
