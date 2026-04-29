@@ -28,7 +28,7 @@ const EVENT_FILTERS = [
 // ── Activity Event Card ───────────────────────────────────────────────────────
 
 function EventItem({ event, isNew }) {
-  const dotColor = event.color || '#6366f1';
+  const dotColor = event.color || '#FF4D2E';
   const actorName = event.profiles
     ? (event.profiles.full_name || `${event.profiles.first_name || ''} ${event.profiles.last_name || ''}`.trim())
     : null;
