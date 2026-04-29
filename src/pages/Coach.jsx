@@ -1764,7 +1764,7 @@ export default function Coach() {
                     onClick={() => setSelectedSkillset({ id: skillset.skillset_id, name: skillset.skillset_name, color: skillset.color })}
                     className="w-full py-1.5 px-3 rounded-md font-medium text-xs transition-all duration-200 hover:opacity-90 hover:shadow-md mt-auto text-white"
                     style={{
-                      backgroundColor: skillset.color || '#3B82F6',
+                      backgroundColor: skillset.color || '#FF4D2E',
                       color: '#ffffff',
                       textShadow: '0 1px 2px rgba(0, 0, 0, 0.1)'
                     }}
