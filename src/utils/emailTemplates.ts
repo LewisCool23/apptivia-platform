@@ -60,15 +60,15 @@ export function buildEmailWrapper(
 <html>
 <head>
   <style>
-    body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0; }
+    body { font-family: Arial, sans-serif; line-height: 1.6; color: #3F3F46; margin: 0; padding: 0; }
     .container { max-width: 600px; margin: 0 auto; padding: 20px; }
     .header { background: ${HEADER_BG}; color: white; padding: 30px; border-radius: 10px; text-align: center; }
     .stat-box { background: ${EMAIL_COLORS.paper}; padding: 20px; border-radius: 8px; text-align: center; }
     .stat-value { font-size: 32px; font-weight: bold; color: ${EMAIL_COLORS.coral}; }
     .stat-label { font-size: 14px; color: ${EMAIL_COLORS.carbon500}; }
     .section { margin: 20px 0; }
-    .section-title { font-size: 16px; font-weight: bold; margin: 0 0 10px 0; color: #111827; }
-    .footer { text-align: center; color: ${EMAIL_COLORS.carbon500}; font-size: 12px; margin-top: 30px; border-top: 1px solid #e5e7eb; padding-top: 20px; }
+    .section-title { font-size: 16px; font-weight: bold; margin: 0 0 10px 0; color: #0A0A0B; }
+    .footer { text-align: center; color: ${EMAIL_COLORS.carbon500}; font-size: 12px; margin-top: 30px; border-top: 1px solid #E4E4E7; padding-top: 20px; }
   </style>
 </head>
 <body>
@@ -121,11 +121,11 @@ function buildListSection(
   let listHtml: string;
   if (style === 'numbered') {
     listHtml = items.map((item, i) =>
-      `<div style="padding: 8px 0; border-bottom: 1px solid #f3f4f6; font-size: 14px;">${i + 1}. ${item}</div>`
+      `<div style="padding: 8px 0; border-bottom: 1px solid #F7F5F2; font-size: 14px;">${i + 1}. ${item}</div>`
     ).join('');
   } else if (style === 'card') {
     listHtml = items.map(item =>
-      `<div style="background: #f9fafb; padding: 12px 15px; border-radius: 8px; margin-bottom: 8px; border-left: 4px solid ${cardBorderColor || EMAIL_COLORS.coral}; font-size: 14px;">${item}</div>`
+      `<div style="background: #F7F5F2; padding: 12px 15px; border-radius: 8px; margin-bottom: 8px; border-left: 4px solid ${cardBorderColor || EMAIL_COLORS.coral}; font-size: 14px;">${item}</div>`
     ).join('');
   } else {
     listHtml = items.map(item =>
@@ -140,7 +140,7 @@ function buildListSection(
 
 // ── Helper: badge pills ──────────────────────────────────────────────
 
-function buildBadgePills(items: string[], bgColor = '#dbeafe', textColor = '#1d4ed8'): string {
+function buildBadgePills(items: string[], bgColor = '#FFE2DA', textColor = '#C8341B'): string {
   if (items.length === 0) return '';
   return items.map(item =>
     `<span style="display: inline-block; padding: 4px 12px; border-radius: 999px; background: ${bgColor}; color: ${textColor}; font-size: 12px; font-weight: 600; margin: 2px 4px 2px 0;">${item}</span>`
@@ -182,7 +182,7 @@ export function buildScorecardSnapshotEmailHtml(data: ScorecardData, options: Sc
   let bodyHtml = buildStatGrid([{ value: `${teamAverage}%`, label: 'Team Average' }], 1);
 
   // Score Distribution (2x2 grid)
-  bodyHtml += `<div style="margin: 20px 0; background: #f9fafb; padding: 15px; border-radius: 8px;">
+  bodyHtml += `<div style="margin: 20px 0; background: #F7F5F2; padding: 15px; border-radius: 8px;">
     <h3 style="margin: 0 0 10px 0; font-size: 16px;">📈 Score Distribution</h3>
     <table style="width: 100%; border-collapse: collapse;">
       <tr>
@@ -213,17 +213,17 @@ export function buildScorecardSnapshotEmailHtml(data: ScorecardData, options: Sc
     const trendRows = trendWeeks.map(w => {
       const deltaStr = w.delta != null
         ? `<span style="color: ${w.delta >= 0 ? EMAIL_COLORS.success : EMAIL_COLORS.error}; font-weight: bold;">${w.delta >= 0 ? '▲' : '▼'} ${Math.abs(w.delta)}%</span>`
-        : '<span style="color: #9ca3af;">—</span>';
+        : '<span style="color: #71717A;">—</span>';
       return `<tr>
-        <td style="padding: 8px 12px; border-bottom: 1px solid #f3f4f6; font-size: 14px;">${w.week}</td>
-        <td style="padding: 8px 12px; border-bottom: 1px solid #f3f4f6; font-size: 14px; text-align: right; font-weight: bold;">${w.score}%</td>
-        <td style="padding: 8px 12px; border-bottom: 1px solid #f3f4f6; font-size: 14px; text-align: right;">${deltaStr}</td>
+        <td style="padding: 8px 12px; border-bottom: 1px solid #E4E4E7; font-size: 14px;">${w.week}</td>
+        <td style="padding: 8px 12px; border-bottom: 1px solid #E4E4E7; font-size: 14px; text-align: right; font-weight: bold;">${w.score}%</td>
+        <td style="padding: 8px 12px; border-bottom: 1px solid #E4E4E7; font-size: 14px; text-align: right;">${deltaStr}</td>
       </tr>`;
     }).join('');
 
     bodyHtml += `<div style="margin: 20px 0;">
       <h3 style="margin: 0 0 10px 0; font-size: 16px;">📊 5-Week Trend</h3>
-      <table style="width: 100%; border-collapse: collapse; background: #f9fafb; border-radius: 8px; overflow: hidden;">
+      <table style="width: 100%; border-collapse: collapse; background: #F7F5F2; border-radius: 8px; overflow: hidden;">
         <thead>
           <tr style="background: ${EMAIL_COLORS.paper};">
             <th style="padding: 10px 12px; text-align: left; font-size: 13px; color: ${EMAIL_COLORS.carbon500};">Week</th>
@@ -240,7 +240,7 @@ export function buildScorecardSnapshotEmailHtml(data: ScorecardData, options: Sc
   if (kpiScores && kpiScores.length > 0) {
     const kpiRows = kpiScores.map(kpi => {
       const color = kpi.percentage >= 80 ? EMAIL_COLORS.success : kpi.percentage >= 50 ? EMAIL_COLORS.warning : EMAIL_COLORS.error;
-      return `<div style="display: flex; justify-content: space-between; padding: 8px 12px; border-bottom: 1px solid #f3f4f6; font-size: 14px;">
+      return `<div style="display: flex; justify-content: space-between; padding: 8px 12px; border-bottom: 1px solid #F7F5F2; font-size: 14px;">
         <span>${kpi.label}</span>
         <span style="font-weight: bold; color: ${color};">${kpi.percentage}%</span>
       </div>`;
@@ -248,7 +248,7 @@ export function buildScorecardSnapshotEmailHtml(data: ScorecardData, options: Sc
 
     bodyHtml += `<div style="margin: 20px 0;">
       <h3 style="margin: 0 0 10px 0; font-size: 16px;">🎯 KPI Score Breakdown</h3>
-      <div style="background: #f9fafb; border-radius: 8px; overflow: hidden;">${kpiRows}</div>
+      <div style="background: #F7F5F2; border-radius: 8px; overflow: hidden;">${kpiRows}</div>
     </div>`;
   }
 
@@ -482,13 +482,13 @@ export function buildCoachingPlanEmailHtml(plan: CoachingPlan, options: Coaching
 
   // Intro message (for assignment emails)
   if (introMessage) {
-    bodyHtml += `<div style="margin: 20px 0; padding: 15px; background: #eff6ff; border-radius: 8px; border-left: 4px solid ${EMAIL_COLORS.coral}; font-size: 14px;">
+    bodyHtml += `<div style="margin: 20px 0; padding: 15px; background: #FFF5F2; border-radius: 8px; border-left: 4px solid ${EMAIL_COLORS.coral}; font-size: 14px;">
       ${introMessage}
     </div>`;
   }
 
   // Plan name heading
-  bodyHtml += `<h2 style="margin: 20px 0 5px 0; font-size: 20px; color: #111827;">${plan.name}</h2>`;
+  bodyHtml += `<h2 style="margin: 20px 0 5px 0; font-size: 20px; color: #0A0A0B;">${plan.name}</h2>`;
 
   // Date range banner
   if (plan.date_range_start && plan.date_range_end) {
@@ -505,13 +505,13 @@ export function buildCoachingPlanEmailHtml(plan: CoachingPlan, options: Coaching
   // Goals — blue left border card
   if (plan.goals && plan.goals.length > 0) {
     const goalItems = plan.goals.map((g, i) =>
-      `<div style="display: flex; align-items: flex-start; gap: 10px; padding: 8px 0; ${i < plan.goals!.length - 1 ? 'border-bottom: 1px solid #dbeafe;' : ''} font-size: 14px;">
-        <span style="display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; border-radius: 50%; background: #dbeafe; color: #2563eb; font-size: 12px; font-weight: bold; flex-shrink: 0;">${i + 1}</span>
-        <span style="color: #374151;">${g}</span>
+      `<div style="display: flex; align-items: flex-start; gap: 10px; padding: 8px 0; ${i < plan.goals!.length - 1 ? 'border-bottom: 1px solid #FFE2DA;' : ''} font-size: 14px;">
+        <span style="display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; border-radius: 50%; background: #FFE2DA; color: #FF4D2E; font-size: 12px; font-weight: bold; flex-shrink: 0;">${i + 1}</span>
+        <span style="color: #3F3F46;">${g}</span>
       </div>`
     ).join('');
-    bodyHtml += `<div style="margin: 20px 0; padding: 16px; background: #eff6ff; border-left: 4px solid ${EMAIL_COLORS.coral}; border-radius: 8px;">
-      <h3 style="margin: 0 0 12px 0; font-size: 16px; color: #111827;">&#127919; Goals</h3>
+    bodyHtml += `<div style="margin: 20px 0; padding: 16px; background: #FFF5F2; border-left: 4px solid ${EMAIL_COLORS.coral}; border-radius: 8px;">
+      <h3 style="margin: 0 0 12px 0; font-size: 16px; color: #0A0A0B;">&#127919; Goals</h3>
       ${goalItems}
     </div>`;
   }
@@ -519,22 +519,22 @@ export function buildCoachingPlanEmailHtml(plan: CoachingPlan, options: Coaching
   // Focus KPIs — indigo left border card with badge pills
   if (plan.focus_kpis && plan.focus_kpis.length > 0) {
     const kpiLabels = plan.focus_kpis.map(k => k.replace(/_/g, ' ').replace(/([a-zA-Z])(\d)/g, '$1 $2').replace(/\b\w/g, c => c.toUpperCase()));
-    bodyHtml += `<div style="margin: 20px 0; padding: 16px; background: #eef2ff; border-left: 4px solid #6366f1; border-radius: 8px;">
-      <h3 style="margin: 0 0 12px 0; font-size: 16px; color: #111827;">&#128202; Focus KPIs</h3>
-      <div>${buildBadgePills(kpiLabels, '#e0e7ff', '#4338ca')}</div>
+    bodyHtml += `<div style="margin: 20px 0; padding: 16px; background: #FFF5F2; border-left: 4px solid #FF4D2E; border-radius: 8px;">
+      <h3 style="margin: 0 0 12px 0; font-size: 16px; color: #0A0A0B;">&#128202; Focus KPIs</h3>
+      <div>${buildBadgePills(kpiLabels, '#FFE2DA', '#C8341B')}</div>
     </div>`;
   }
 
   // Action Items — green left border card
   if (plan.action_items && plan.action_items.length > 0) {
     const actionItems = plan.action_items.map((a, i) =>
-      `<div style="display: flex; align-items: flex-start; gap: 10px; padding: 8px 0; ${i < plan.action_items!.length - 1 ? 'border-bottom: 1px solid #d1fae5;' : ''} font-size: 14px;">
-        <span style="display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; border-radius: 50%; background: #d1fae5; color: #059669; font-size: 12px; font-weight: bold; flex-shrink: 0;">${i + 1}</span>
-        <span style="color: #374151;">${a}</span>
+      `<div style="display: flex; align-items: flex-start; gap: 10px; padding: 8px 0; ${i < plan.action_items!.length - 1 ? 'border-bottom: 1px solid #DCFCE7;' : ''} font-size: 14px;">
+        <span style="display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; border-radius: 50%; background: #DCFCE7; color: #16A34A; font-size: 12px; font-weight: bold; flex-shrink: 0;">${i + 1}</span>
+        <span style="color: #3F3F46;">${a}</span>
       </div>`
     ).join('');
-    bodyHtml += `<div style="margin: 20px 0; padding: 16px; background: #ecfdf5; border-left: 4px solid ${EMAIL_COLORS.success}; border-radius: 8px;">
-      <h3 style="margin: 0 0 12px 0; font-size: 16px; color: #111827;">&#9989; Action Items</h3>
+    bodyHtml += `<div style="margin: 20px 0; padding: 16px; background: #F0FDF4; border-left: 4px solid ${EMAIL_COLORS.success}; border-radius: 8px;">
+      <h3 style="margin: 0 0 12px 0; font-size: 16px; color: #0A0A0B;">&#9989; Action Items</h3>
       ${actionItems}
     </div>`;
   }
@@ -542,10 +542,10 @@ export function buildCoachingPlanEmailHtml(plan: CoachingPlan, options: Coaching
   // Success Metrics — purple left border card
   if (plan.success_metrics && plan.success_metrics.length > 0) {
     const metricItems = plan.success_metrics.map(s =>
-      `<div style="padding: 8px 0; font-size: 14px; color: #374151;">&#8226; ${s}</div>`
+      `<div style="padding: 8px 0; font-size: 14px; color: #3F3F46;">&#8226; ${s}</div>`
     ).join('');
-    bodyHtml += `<div style="margin: 20px 0; padding: 16px; background: #f5f3ff; border-left: 4px solid ${EMAIL_COLORS.ink}; border-radius: 8px;">
-      <h3 style="margin: 0 0 12px 0; font-size: 16px; color: #111827;">&#128200; Success Metrics</h3>
+    bodyHtml += `<div style="margin: 20px 0; padding: 16px; background: #F7F5F2; border-left: 4px solid ${EMAIL_COLORS.ink}; border-radius: 8px;">
+      <h3 style="margin: 0 0 12px 0; font-size: 16px; color: #0A0A0B;">&#128200; Success Metrics</h3>
       ${metricItems}
     </div>`;
   }
@@ -576,7 +576,7 @@ export function buildCoachingPlanEmailHtml(plan: CoachingPlan, options: Coaching
           <span style="font-weight: 600;">${s.name}</span>
           <span style="color: ${EMAIL_COLORS.carbon500};">${Math.round(s.progress)}%</span>
         </div>
-        <div style="background: #e5e7eb; border-radius: 999px; height: 8px; overflow: hidden;">
+        <div style="background: #E4E4E7; border-radius: 999px; height: 8px; overflow: hidden;">
           <div style="background: ${EMAIL_COLORS.coral}; height: 8px; border-radius: 999px; width: ${barWidth}%;"></div>
         </div>
       </div>`;
@@ -591,7 +591,7 @@ export function buildCoachingPlanEmailHtml(plan: CoachingPlan, options: Coaching
   // XP Estimate — suppress for team-visibility plans
   if (xpEstimate && xpEstimate.length > 0 && !suppressTeamData) {
     const xpPills = xpEstimate.map(e =>
-      `<span style="display: inline-block; padding: 4px 12px; border-radius: 999px; background: #fef9c3; color: #854d0e; font-size: 12px; font-weight: 600; margin: 2px 4px 2px 0;">~${e.estimatedXp} ${e.skillset} XP</span>`
+      `<span style="display: inline-block; padding: 4px 12px; border-radius: 999px; background: #FFFBEB; color: #92400E; font-size: 12px; font-weight: 600; margin: 2px 4px 2px 0;">~${e.estimatedXp} ${e.skillset} XP</span>`
     ).join('');
     bodyHtml += `<div style="margin: 20px 0;">
       <h3 style="margin: 0 0 10px 0; font-size: 16px;">&#9889; Estimated XP Gain</h3>
@@ -601,9 +601,9 @@ export function buildCoachingPlanEmailHtml(plan: CoachingPlan, options: Coaching
 
   // Notes — gray left border card
   if (plan.notes) {
-    bodyHtml += `<div style="margin: 20px 0; padding: 16px; background: #f9fafb; border-left: 4px solid ${EMAIL_COLORS.carbon500}; border-radius: 8px;">
-      <h3 style="margin: 0 0 10px 0; font-size: 16px; color: #111827;">&#128172; Coach Notes</h3>
-      <span style="font-size: 14px; color: #374151;">${plan.notes.replace(/\n/g, '<br/>')}</span>
+    bodyHtml += `<div style="margin: 20px 0; padding: 16px; background: #F7F5F2; border-left: 4px solid ${EMAIL_COLORS.carbon500}; border-radius: 8px;">
+      <h3 style="margin: 0 0 10px 0; font-size: 16px; color: #0A0A0B;">&#128172; Coach Notes</h3>
+      <span style="font-size: 14px; color: #3F3F46;">${plan.notes.replace(/\n/g, '<br/>')}</span>
     </div>`;
   }
 
