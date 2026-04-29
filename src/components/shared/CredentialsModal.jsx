@@ -29,7 +29,7 @@ export default function CredentialsModal({ providerType, onClose, onConnect, err
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={onClose}>
       <div className="bg-white w-[95%] max-w-md rounded-lg shadow-2xl p-6" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center gap-3 mb-4">
-          <div className={`w-10 h-10 bg-gradient-to-br ${templateInfo?.color || 'from-gray-400 to-gray-600'} rounded-lg flex items-center justify-center text-xs font-bold text-white`}>
+          <div className={`w-10 h-10 bg-gradient-to-br ${templateInfo?.color || 'bg-apptivia-carbon-400'} rounded-lg flex items-center justify-center text-xs font-bold text-white`}>
             {templateInfo?.icon}
           </div>
           <div className="flex-1">

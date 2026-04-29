@@ -449,7 +449,7 @@ export default function ConfigureModal({ isOpen, onClose, onSave, currentUserId 
         className="bg-white rounded-lg shadow-2xl max-w-5xl w-full max-h-[90vh] overflow-hidden flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="bg-gradient-to-r from-blue-500 to-purple-500 text-white px-6 py-4">
+        <div className="bg-apptivia-coral text-white px-6 py-4">
           <h2 className="text-2xl font-bold">Scorecard Configuration</h2>
           <p className="text-sm text-whitscorecard')}
             className={`px-6 py-3 font-semibold transition-colors ${
@@ -678,7 +678,7 @@ export default function ConfigureModal({ isOpen, onClose, onSave, currentUserId 
           ) : activeTab === 'scorecard' ? (
             // Scorecard Selection Tab
             <div className="space-y-6">
-              <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-6 rounded-lg border border-apptivia-coral-tone-100">
+              <div className="bg-apptivia-coral-tone-50 p-6 rounded-lg border border-apptivia-coral-tone-100">
                 <h3 className="text-lg font-semibold text-apptivia-ink mb-2">📊 Select Your Top 5 Scorecard Metrics</h3>
                 <p className="text-sm text-apptivia-carbon-600">Choose the 5 most impactful KPIs to display on your main scorecard. These metrics represent the core productivity success indicators for your organization.</p>
               </div>
@@ -783,7 +783,7 @@ export default function ConfigureModal({ isOpen, onClose, onSave, currentUserId 
           ) : (
             // Create New KPI Form
             <div className="max-w-2xl mx-auto space-y-6">
-              <div className="bg-gradient-to-r from-purple-50 to-blue-50 p-6 rounded-lg border border-apptivia-carbon-300">
+              <div className="bg-apptivia-coral-tone-50 p-6 rounded-lg border border-apptivia-carbon-300">
                 <h3 className="text-lg font-semibold text-apptivia-ink mb-2">Create Custom KPI</h3>
                 <p className="text-sm text-apptivia-carbon-600">Add a new metric to track team performance</p>
               </div>
@@ -892,7 +892,7 @@ export default function ConfigureModal({ isOpen, onClose, onSave, currentUserId 
 
                 <button
                   onClick={handleCreateKpi}
-                  className="w-full bg-gradient-to-r from-blue-500 to-purple-500 text-white px-6 py-3 rounded-lg font-semibold hover:from-blue-600 hover:to-purple-600 transition-all duration-200 hover:shadow-lg"
+                  className="w-full bg-apptivia-coral text-white px-6 py-3 rounded-lg font-semibold hover:bg-apptivia-coral-tone-600 transition-all duration-200 hover:shadow-lg"
                 >
                   Create KPI
                 </button>

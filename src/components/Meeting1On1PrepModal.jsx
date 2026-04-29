@@ -199,7 +199,7 @@ export default function Meeting1On1PrepModal({
         <div className="relative w-full max-w-3xl bg-white rounded-lg shadow-2xl overflow-hidden max-h-[90vh] flex flex-col meeting-prep-content">
 
           {/* Header */}
-          <div className="bg-gradient-to-r from-blue-600 to-indigo-600 px-6 py-4 flex items-center justify-between text-white">
+          <div className="bg-apptivia-ink px-6 py-4 flex items-center justify-between text-white">
             <div>
               <h2 className="text-lg font-bold">1:1 Prep: {repName}</h2>
               <p className="text-xs text-apptivia-coral-tone-300 mt-0.5">{new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>

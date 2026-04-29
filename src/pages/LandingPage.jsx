@@ -188,8 +188,8 @@ export default function LandingPage() {
       </nav>
 
       {/* Hero Section */}
-      <section className="bg-gradient-to-br from-slate-900 via-blue-950 to-indigo-950 py-24 relative overflow-hidden">
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-blue-500/10 via-transparent to-transparent" />
+      <section className="bg-apptivia-ink py-24 relative overflow-hidden">
+        <div className="absolute inset-0 " />
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
           <div className="text-center max-w-4xl mx-auto">
             <div className="inline-flex items-center gap-2 bg-apptivia-coral/10 border border-apptivia-coral/20 rounded-full px-4 py-1.5 mb-8">
@@ -198,7 +198,7 @@ export default function LandingPage() {
             </div>
             <h1 className="text-5xl md:text-6xl font-bold text-white mb-6 leading-tight">
               Your reps spend 70% of their day
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-400"> not selling.</span>
+              <span className="text-apptivia-coral"> not selling.</span>
               <br />We fix that.
             </h1>
             <p className="text-xl text-apptivia-coral-tone-300/80 mb-10 max-w-2xl mx-auto leading-relaxed">
@@ -512,8 +512,8 @@ export default function LandingPage() {
       </section>
 
       {/* CTA Section */}
-      <section id="get-started" className="py-20 bg-gradient-to-r from-blue-600 to-indigo-600 relative overflow-hidden">
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_left,_var(--tw-gradient-stops))] from-blue-400/20 via-transparent to-transparent" />
+      <section id="get-started" className="py-20 bg-apptivia-ink relative overflow-hidden">
+        <div className="absolute inset-0 " />
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative">
           <h2 className="text-4xl font-bold text-white mb-4">Your sales manager costs $10K/month.</h2>
           <p className="text-xl text-apptivia-coral-tone-300 mb-4">

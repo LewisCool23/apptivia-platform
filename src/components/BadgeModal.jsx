@@ -53,8 +53,8 @@ export default function BadgeModal({ isOpen, onClose, badge, profileName }) {
     } else if (name.includes('proficient') || name.includes('advanced') || name.includes('silver')) {
       return (
         <div className="relative w-32 h-32 mx-auto mb-6">
-          <div className="absolute inset-0 bg-gradient-to-br from-gray-300 via-gray-400 to-gray-500 rounded-full shadow-2xl"></div>
-          <div className="absolute inset-2 bg-gradient-to-br from-gray-200 to-gray-400 rounded-full flex items-center justify-center">
+          <div className="absolute inset-0 bg-apptivia-carbon-400 rounded-full shadow-2xl"></div>
+          <div className="absolute inset-2 bg-apptivia-carbon-200 rounded-full flex items-center justify-center">
             <Award size={48} className="text-apptivia-carbon-700" strokeWidth={2.5} />
           </div>
           <div className="absolute -top-2 -right-2 w-8 h-8 bg-apptivia-carbon-300 rounded-full flex items-center justify-center shadow-lg">
@@ -77,8 +77,8 @@ export default function BadgeModal({ isOpen, onClose, badge, profileName }) {
     } else if (name.includes('master') || name.includes('diamond')) {
       return (
         <div className="relative w-32 h-32 mx-auto mb-6">
-          <div className="absolute inset-0 bg-gradient-to-br from-cyan-300 via-blue-400 to-purple-500 rounded-full animate-pulse shadow-2xl"></div>
-          <div className="absolute inset-2 bg-gradient-to-br from-cyan-200 to-purple-400 rounded-full flex items-center justify-center">
+          <div className="absolute inset-0 bg-apptivia-coral-tone-300 rounded-full animate-pulse shadow-2xl"></div>
+          <div className="absolute inset-2 bg-apptivia-coral-tone-300 rounded-full flex items-center justify-center">
             <Award size={48} className="text-white" strokeWidth={2.5} />
           </div>
           <div className="absolute -top-2 -right-2 w-8 h-8 bg-apptivia-ink rounded-full flex items-center justify-center shadow-lg">
@@ -90,8 +90,8 @@ export default function BadgeModal({ isOpen, onClose, badge, profileName }) {
       // Default blue badge
       return (
         <div className="relative w-32 h-32 mx-auto mb-6">
-          <div className="absolute inset-0 bg-gradient-to-br from-blue-400 via-blue-500 to-blue-600 rounded-full shadow-2xl"></div>
-          <div className="absolute inset-2 bg-gradient-to-br from-blue-300 to-blue-500 rounded-full flex items-center justify-center">
+          <div className="absolute inset-0 bg-apptivia-coral rounded-full shadow-2xl"></div>
+          <div className="absolute inset-2 bg-apptivia-coral rounded-full flex items-center justify-center">
             <Award size={48} className="text-white" strokeWidth={2.5} />
           </div>
           <div className="absolute -top-2 -right-2 w-8 h-8 bg-apptivia-coral rounded-full flex items-center justify-center shadow-lg">
@@ -118,7 +118,7 @@ export default function BadgeModal({ isOpen, onClose, badge, profileName }) {
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header with gradient */}
-        <div className="bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 p-6 relative">
+        <div className="bg-apptivia-ink p-6 relative">
           <div className="absolute top-4 right-4 flex gap-2">
             <button
               onClick={() => setShowShareMenu(!showShareMenu)}
@@ -259,7 +259,7 @@ export default function BadgeModal({ isOpen, onClose, badge, profileName }) {
         <div className="bg-apptivia-paper px-6 py-4 border-t border-apptivia-carbon-200">
           <button
             onClick={onClose}
-            className="w-full bg-gradient-to-r from-blue-500 to-purple-500 text-white px-6 py-2.5 rounded-lg font-semibold hover:from-blue-600 hover:to-purple-600 transition-all duration-200 hover:shadow-lg"
+            className="w-full bg-apptivia-coral text-white px-6 py-2.5 rounded-lg font-semibold hover:bg-apptivia-coral-tone-600 transition-all duration-200 hover:shadow-lg"
           >
             Close
           </button>

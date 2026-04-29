@@ -1642,7 +1642,7 @@ export default function Contests() {
 
             {/* Results Preview (Downloadable) */}
             <div className="flex-1 overflow-y-auto p-4 bg-apptivia-paper min-h-0">
-              <div ref={sharePreviewRef} className="bg-gradient-to-br from-blue-500 via-purple-500 to-pink-500 rounded-lg p-6 text-white shadow-2xl">
+              <div ref={sharePreviewRef} className="bg-apptivia-ink rounded-lg p-6 text-white shadow-2xl">
                 {/* Contest Header */}
                 <div className="mb-4">
                   <h3 className="text-xl font-bold">{shareModal.contest?.name}</h3>

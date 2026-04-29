@@ -135,7 +135,7 @@ function PromptCard({ template, onDuplicate, onToggleActive, onDelete, onTest })
               <span className="text-[10px] text-apptivia-carbon-400 uppercase font-medium">Prompt Template</span>
               <CopyButton text={template.user_prompt} label="Copy Prompt" />
             </div>
-            <div className="bg-gradient-to-br from-gray-50 to-blue-50/30 rounded-lg p-3 text-xs text-apptivia-carbon-700 font-mono whitespace-pre-wrap leading-relaxed max-h-60 overflow-y-auto border border-apptivia-carbon-100">
+            <div className="bg-apptivia-paper rounded-lg p-3 text-xs text-apptivia-carbon-700 font-mono whitespace-pre-wrap leading-relaxed max-h-60 overflow-y-auto border border-apptivia-carbon-100">
               {template.user_prompt}
             </div>
           </div>
@@ -161,7 +161,7 @@ function PromptCard({ template, onDuplicate, onToggleActive, onDelete, onTest })
           <div className="flex items-center gap-2 pt-2 border-t border-apptivia-carbon-100">
             <button
               onClick={(e) => { e.stopPropagation(); onTest?.(template); }}
-              className="flex items-center gap-1 px-3 py-1.5 bg-gradient-to-r from-blue-500 to-cyan-500 text-white rounded-lg text-[11px] font-semibold hover:opacity-90 transition-opacity"
+              className="flex items-center gap-1 px-3 py-1.5 bg-apptivia-coral text-white rounded-lg text-[11px] font-semibold hover:opacity-90 transition-opacity"
             >
               <Sparkles size={11} /> Test Prompt
             </button>
@@ -247,7 +247,7 @@ function TestPromptModal({ template, onClose }) {
 
           <button
             onClick={handleResolve}
-            className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-gradient-to-r from-blue-500 to-cyan-500 text-white rounded-lg text-xs font-semibold hover:opacity-90 transition-opacity"
+            className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-apptivia-coral text-white rounded-lg text-xs font-semibold hover:opacity-90 transition-opacity"
           >
             <Sparkles size={12} /> Preview Resolved Prompt
           </button>
@@ -425,7 +425,7 @@ function CreatePromptModal({ onClose, onSave }) {
           <button
             onClick={handleSave}
             disabled={saving || !form.name || !form.user_prompt}
-            className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-gradient-to-r from-blue-500 to-cyan-500 text-white rounded-lg text-xs font-semibold hover:opacity-90 transition-opacity disabled:opacity-50"
+            className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-apptivia-coral text-white rounded-lg text-xs font-semibold hover:opacity-90 transition-opacity disabled:opacity-50"
           >
             {saving ? <><RefreshCw size={12} className="animate-spin" /> Saving...</> : <><Save size={12} /> Save Prompt</>}
           </button>
@@ -513,7 +513,7 @@ export default function PromptLibrary({ organizationId }) {
       />
       {/* Header Card */}
       <div className="bg-white rounded-lg border border-apptivia-carbon-100 overflow-hidden">
-        <div className="bg-gradient-to-r from-violet-500 via-purple-500 to-indigo-500 px-6 py-5">
+        <div className="bg-apptivia-ink px-6 py-5">
           <div className="flex items-center gap-3 mb-3">
             <div className="w-9 h-9 bg-white/20 backdrop-blur-sm rounded-lg flex items-center justify-center">
               <BookOpen size={16} className="text-white" />
@@ -602,7 +602,7 @@ export default function PromptLibrary({ organizationId }) {
         {/* Create button */}
         <button
           onClick={() => setShowCreateModal(true)}
-          className="flex items-center gap-1.5 px-4 py-2 bg-gradient-to-r from-violet-500 to-indigo-500 text-white rounded-lg text-xs font-semibold hover:opacity-90 transition-opacity"
+          className="flex items-center gap-1.5 px-4 py-2 bg-apptivia-ink text-white rounded-lg text-xs font-semibold hover:opacity-90 transition-opacity"
         >
           <Plus size={12} /> New Prompt
         </button>

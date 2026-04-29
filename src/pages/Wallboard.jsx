@@ -45,11 +45,11 @@ const DEFAULT_SLIDE_CONFIG = {
 };
 
 const LEVEL_COLORS = {
-  Developing:   { bg: 'from-slate-600 to-slate-700',   badge: 'bg-apptivia-carbon-500' },
-  Intermediate: { bg: 'from-blue-600 to-blue-700',     badge: 'bg-apptivia-coral' },
-  Proficient:   { bg: 'from-purple-600 to-purple-700', badge: 'bg-apptivia-ink' },
-  Elite:        { bg: 'from-amber-500 to-orange-600',  badge: 'bg-amber-500' },
-  Master:       { bg: 'from-rose-500 to-pink-600',     badge: 'bg-rose-500' },
+  Developing:   { bg: 'bg-apptivia-carbon-600',   badge: 'bg-apptivia-carbon-500' },
+  Intermediate: { bg: 'bg-apptivia-coral',     badge: 'bg-apptivia-coral' },
+  Proficient:   { bg: 'bg-apptivia-ink', badge: 'bg-apptivia-ink' },
+  Elite:        { bg: 'bg-amber-500',  badge: 'bg-amber-500' },
+  Master:       { bg: 'bg-rose-500',  badge: 'bg-rose-500' },
 };
 
 const RARITY_COLORS = {
@@ -284,7 +284,7 @@ function LeaderboardSlide({ profiles }) {
               key={rep.id}
               className={`flex items-center gap-4 rounded-lg p-4 transition-all ${
                 isTop3
-                  ? `bg-gradient-to-r ${colors.bg} shadow-lg shadow-black/30`
+                  ? `${colors.bg} shadow-lg shadow-black/30`
                   : 'bg-white/5 border border-white/10'
               }`}
             >
@@ -355,7 +355,7 @@ function SpotlightSlide({ profiles }) {
         <div className="text-8xl font-black text-white leading-none mb-4">
           {top.first_name}<br />{top.last_name}
         </div>
-        <div className={`inline-flex items-center gap-2 px-6 py-2 rounded-full bg-gradient-to-r ${colors.bg} text-white font-bold text-xl`}>
+        <div className={`inline-flex items-center gap-2 px-6 py-2 rounded-full ${colors.bg} text-white font-bold text-xl`}>
           <Star size={20} />
           {level}
         </div>
@@ -525,7 +525,7 @@ function TeamStatsSlide({ profiles }) {
             const count = levelCounts[level] || 0;
             if (count === 0) return null;
             return (
-              <div key={level} className={`flex items-center gap-2 px-4 py-2 rounded-lg bg-gradient-to-r ${colors.bg}`}>
+              <div key={level} className={`flex items-center gap-2 px-4 py-2 rounded-lg ${colors.bg}`}>
                 <span className="text-white font-bold text-lg">{count}</span>
                 <span className="text-white/80 font-medium">{level}</span>
               </div>
@@ -984,7 +984,7 @@ export default function Wallboard() {
   const currentSlide = activeSlides[displayIndex];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-950 via-slate-900 to-blue-950 flex flex-col select-none overflow-hidden">
+    <div className="min-h-screen bg-apptivia-ink flex flex-col select-none overflow-hidden">
       {/* Celebration overlay */}
       <WallboardCelebration orgId={orgId} enabled={celebrationsEnabled} />
 
@@ -1005,7 +1005,7 @@ export default function Wallboard() {
       {/* Header bar */}
       <div className="flex items-center justify-between px-8 py-4 border-b border-white/5">
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-lg flex items-center justify-center">
+          <div className="w-9 h-9 bg-apptivia-ink rounded-lg flex items-center justify-center">
             <Trophy size={18} className="text-white" />
           </div>
           <span className="text-white font-bold text-xl tracking-tight">Apptivia</span>

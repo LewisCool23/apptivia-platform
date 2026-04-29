@@ -360,7 +360,7 @@ export default function ContestCreationModal({ isOpen, onClose, currentUserId, o
       contentClassName="pb-8"
     >
       <form onSubmit={handleSubmit} className="space-y-4">
-        <div className="bg-gradient-to-r from-blue-50 to-purple-50 border border-apptivia-coral-tone-100 rounded-lg p-4">
+        <div className="bg-apptivia-coral-tone-50 border border-apptivia-coral-tone-100 rounded-lg p-4">
           <div className="text-sm font-semibold text-apptivia-coral-tone-700">{contestToEdit ? '✏️ Edit Contest' : '🏆 Create New Contest'}</div>
           <div className="text-xs text-apptivia-coral mt-1">
             {contestToEdit ? 'Update contest details' : 'Launch a new competition to motivate your team'}
@@ -576,7 +576,7 @@ export default function ContestCreationModal({ isOpen, onClose, currentUserId, o
             </button>
             <button
               type="submit"
-              className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 text-white px-4 py-2 rounded hover:from-blue-700 hover:to-purple-700 font-semibold disabled:opacity-50"
+              className="flex-1 bg-apptivia-ink text-white px-4 py-2 rounded hover:bg-apptivia-coral-tone-600 font-semibold disabled:opacity-50"
               disabled={saving || loading}
             >
               {saving ? (contestToEdit ? 'Updating...' : 'Creating...') : (contestToEdit ? 'Update Contest' : 'Create Contest')}

@@ -40,7 +40,7 @@ function TrialBanner({ billing }) {
   if (status === 'trialing' && trialEndsAt) {
     const daysLeft = Math.max(0, Math.ceil((new Date(trialEndsAt) - Date.now()) / 86400000));
     return (
-      <div className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-4 py-2 text-sm flex items-center justify-center gap-3">
+      <div className="bg-apptivia-ink text-white px-4 py-2 text-sm flex items-center justify-center gap-3">
         <Clock size={14} />
         <span><strong>{daysLeft} day{daysLeft !== 1 ? 's' : ''}</strong> left in your Pro trial</span>
         <button
@@ -367,7 +367,7 @@ function DashboardLayout({ children }) {
           <Menu size={24} />
         </button>
         <div className="flex items-center gap-2">
-          <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
+          <div className="w-8 h-8 bg-apptivia-ink rounded-lg flex items-center justify-center">
             <span className="text-white font-bold text-sm">A</span>
           </div>
           <h1 className="font-bold text-lg text-apptivia-ink">Apptivia</h1>
@@ -395,7 +395,7 @@ function DashboardLayout({ children }) {
           <div className="relative flex items-center mb-2">
             {sidebarOpen ? (
               <div className="flex items-center gap-2">
-                <div className="w-7 h-7 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
+                <div className="w-7 h-7 bg-apptivia-ink rounded-lg flex items-center justify-center">
                   <span className="text-white font-bold text-xs">A</span>
                 </div>
                 <div>
@@ -410,7 +410,7 @@ function DashboardLayout({ children }) {
                 aria-label="Expand sidebar"
                 title="Expand sidebar"
               >
-                <div className="w-7 h-7 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
+                <div className="w-7 h-7 bg-apptivia-ink rounded-lg flex items-center justify-center">
                   <span className="text-white font-bold text-xs">A</span>
                 </div>
               </button>
@@ -528,7 +528,7 @@ function DashboardLayout({ children }) {
         <div className="p-4 border-b">
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-3">
-              <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
+              <div className="w-8 h-8 bg-apptivia-ink rounded-lg flex items-center justify-center">
                 <span className="text-white font-bold text-sm">A</span>
               </div>
               <div>
@@ -704,7 +704,7 @@ function DashboardLayout({ children }) {
       {!chatbotOpen && (
         <button
           onClick={() => setChatbotOpen(true)}
-          className="fixed bottom-6 right-6 w-12 h-12 sm:w-14 sm:h-14 bg-gradient-to-br from-blue-500 via-indigo-500 to-purple-600 text-white rounded-full shadow-lg hover:shadow-xl flex items-center justify-center z-40 transition-all duration-300 hover:scale-110 group"
+          className="fixed bottom-6 right-6 w-12 h-12 sm:w-14 sm:h-14 bg-apptivia-coral text-white rounded-full shadow-lg hover:shadow-xl flex items-center justify-center z-40 transition-all duration-300 hover:scale-110 group"
           aria-label="Open Aaron AI Coach"
         >
           <div className="relative">

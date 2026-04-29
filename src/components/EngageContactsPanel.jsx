@@ -93,7 +93,7 @@ export default function EngageContactsPanel({ organizationId, onCallContact, onC
               return (
                 <div key={contact.id} className="px-4 py-3 hover:bg-apptivia-paper/50 transition-colors group">
                   <div className="flex items-start gap-2.5">
-                    <div className="w-7 h-7 rounded-full bg-gradient-to-br from-blue-400 to-cyan-500 flex items-center justify-center text-white text-[10px] font-bold flex-shrink-0 mt-0.5">
+                    <div className="w-7 h-7 rounded-full bg-apptivia-ink flex items-center justify-center text-white text-[10px] font-bold flex-shrink-0 mt-0.5">
                       {initial}
                     </div>
                     <div className="flex-1 min-w-0">

@@ -43,7 +43,7 @@ const PLAYBOOK_TEMPLATES = [
     trigger_type: 'new_lead',
     playbook_type: 'signal',
     icon: Zap,
-    color: 'from-blue-500 to-cyan-500',
+    color: 'bg-apptivia-coral',
     steps: [
       { step_number: 1, action_type: 'research', description: 'Research the lead (company, role, firmographics)' },
       { step_number: 2, action_type: 'email', description: 'Send personalized intro email within 5 minutes' },
@@ -59,7 +59,7 @@ const PLAYBOOK_TEMPLATES = [
     trigger_type: 'deal_stage_change',
     playbook_type: 'pipeline',
     icon: AlertTriangle,
-    color: 'from-red-500 to-rose-500',
+    color: 'bg-red-500',
     steps: [
       { step_number: 1, action_type: 'research', description: 'Audit deal health: objections, timeline, champion status' },
       { step_number: 2, action_type: 'call', description: 'Direct call to champion — pulse check' },
@@ -75,7 +75,7 @@ const PLAYBOOK_TEMPLATES = [
     trigger_type: 'score_threshold',
     playbook_type: 'account',
     icon: TrendingUp,
-    color: 'from-emerald-500 to-teal-500',
+    color: 'bg-emerald-500',
     steps: [
       { step_number: 1, action_type: 'research', description: 'Analyze account usage patterns and growth indicators' },
       { step_number: 2, action_type: 'email', description: 'Share relevant case study or new feature announcement' },
@@ -91,7 +91,7 @@ const PLAYBOOK_TEMPLATES = [
     trigger_type: 'signal_detected',
     playbook_type: 'signal',
     icon: Target,
-    color: 'from-purple-500 to-indigo-500',
+    color: 'bg-apptivia-ink',
     steps: [
       { step_number: 1, action_type: 'research', description: 'Identify competitor weaknesses and contract timing' },
       { step_number: 2, action_type: 'email', description: 'Send value differentiation email (no badmouthing)' },
@@ -159,7 +159,7 @@ function PlaybookCard({ playbook, onSelect, onToggleStatus, onDelete }) {
     >
       <div className="flex items-start justify-between mb-3">
         <div className="flex items-center gap-3 flex-1 min-w-0">
-          <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-pink-500 rounded-lg flex items-center justify-center shrink-0">
+          <div className="w-10 h-10 bg-apptivia-ink rounded-lg flex items-center justify-center shrink-0">
             <BookOpen size={18} className="text-white" />
           </div>
           <div className="flex-1 min-w-0">
@@ -249,7 +249,7 @@ function PlaybookDetail({ playbook, executions, onBack, onUpdate, onStartExecuti
         </button>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-500 rounded-lg flex items-center justify-center">
+            <div className="w-12 h-12 bg-apptivia-ink rounded-lg flex items-center justify-center">
               <BookOpen size={22} className="text-white" />
             </div>
             <div>
@@ -277,7 +277,7 @@ function PlaybookDetail({ playbook, executions, onBack, onUpdate, onStartExecuti
               {playbook.status === 'active' ? 'Pause' : 'Activate'}
             </button>
             <button onClick={() => onStartExecution(playbook.id)}
-              className="flex items-center gap-1.5 px-4 py-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-lg text-xs font-medium hover:from-purple-600 hover:to-pink-600 shadow-sm">
+              className="flex items-center gap-1.5 px-4 py-2 bg-apptivia-ink text-white rounded-lg text-xs font-medium hover:bg-apptivia-coral-tone-600 shadow-sm">
               <Play size={12} /> Run Playbook
             </button>
           </div>
@@ -302,7 +302,7 @@ function PlaybookDetail({ playbook, executions, onBack, onUpdate, onStartExecuti
                     className="flex items-center gap-3 p-4 cursor-pointer"
                     onClick={() => setExpandedStep(expandedStep === i ? null : i)}
                   >
-                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white text-xs font-bold shrink-0">
+                    <div className="w-8 h-8 rounded-full bg-apptivia-ink flex items-center justify-center text-white text-xs font-bold shrink-0">
                       {i + 1}
                     </div>
                     <div className="flex-1 min-w-0">
@@ -593,7 +593,7 @@ function NewPlaybookModal({ isOpen, onClose, onCreate }) {
 function PlaybookTemplateCard({ template, onUse, loading }) {
   return (
     <div className="bg-white rounded-lg border border-apptivia-carbon-100 p-4 hover:shadow-md transition-all group">
-      <div className={`w-9 h-9 bg-gradient-to-br ${template.color} rounded-lg flex items-center justify-center mb-3 shadow-sm`}>
+      <div className={`w-9 h-9 ${template.color} rounded-lg flex items-center justify-center mb-3 shadow-sm`}>
         <template.icon size={16} className="text-white" />
       </div>
       <h4 className="text-xs font-semibold text-apptivia-ink mb-0.5">{template.name}</h4>
@@ -735,7 +735,7 @@ export default function PlaybookBuilder({ organizationId, userId }) {
             <Sparkles size={14} /> AI Generate
           </button>
           <button onClick={() => setShowNewModal(true)}
-            className="flex items-center gap-1.5 px-4 py-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white text-xs font-medium rounded-lg hover:shadow-md transition-all">
+            className="flex items-center gap-1.5 px-4 py-2 bg-apptivia-ink text-white text-xs font-medium rounded-lg hover:shadow-md transition-all">
             <Plus size={14} /> New Playbook
           </button>
         </div>
@@ -744,7 +744,7 @@ export default function PlaybookBuilder({ organizationId, userId }) {
       {/* Grid */}
       {playbooks.length === 0 ? (
         <div className="bg-white rounded-lg border border-apptivia-carbon-100 p-12 text-center">
-          <div className="w-16 h-16 bg-gradient-to-br from-purple-100 to-pink-100 rounded-lg flex items-center justify-center mx-auto mb-4">
+          <div className="w-16 h-16 bg-apptivia-coral-tone-100 rounded-lg flex items-center justify-center mx-auto mb-4">
             <BookOpen size={24} className="text-apptivia-ink" />
           </div>
           <h3 className="text-base font-semibold text-apptivia-ink mb-1">No Playbooks Yet</h3>

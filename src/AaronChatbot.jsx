@@ -1232,7 +1232,7 @@ const AaronChatbot = ({ isOpen, onClose }) => {
 
         <div className="flex flex-col flex-1 min-w-0">
           {/* Header */}
-          <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-4 py-3 flex items-center justify-between select-none">
+          <div className="bg-apptivia-ink text-white px-4 py-3 flex items-center justify-between select-none">
             <div className="flex items-center gap-3 cursor-pointer min-w-0" onClick={() => isMinimized && setIsMinimized(false)}>
               <div className="w-10 h-10 bg-white bg-opacity-20 rounded-lg flex items-center justify-center text-white font-bold shadow-md relative shrink-0">
                 A

@@ -199,7 +199,7 @@ export default function SignalOutreachModal({ isOpen, onClose, signal, contact }
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-apptivia-carbon-100">
           <div className="flex items-center gap-2">
-            <div className="w-7 h-7 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-lg flex items-center justify-center">
+            <div className="w-7 h-7 bg-apptivia-ink rounded-lg flex items-center justify-center">
               <MessageSquare size={13} className="text-white" />
             </div>
             <h2 className="text-sm font-semibold text-apptivia-ink">Draft Outreach Message</h2>
@@ -290,7 +290,7 @@ export default function SignalOutreachModal({ isOpen, onClose, signal, contact }
           {!isGenerating && (
             <button
               onClick={() => handleGenerate(activeStyle)}
-              className="w-full inline-flex items-center justify-center gap-1.5 text-xs font-medium px-4 py-2 rounded-lg bg-gradient-to-r from-purple-500 to-indigo-600 text-white hover:from-purple-600 hover:to-indigo-700 transition-all shadow-sm"
+              className="w-full inline-flex items-center justify-center gap-1.5 text-xs font-medium px-4 py-2 rounded-lg bg-apptivia-ink text-white hover:bg-apptivia-coral-tone-600 transition-all shadow-sm"
             >
               <Sparkles size={12} />
               {draft ? 'Regenerate' : `Generate ${OUTREACH_STYLES.find(s => s.key === activeStyle)?.label || ''} Message`}

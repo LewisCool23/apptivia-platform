@@ -1341,7 +1341,7 @@ export default function Analytics() {
                     </div>
 
                     {/* Quick Links */}
-                    <div className="bg-gradient-to-r from-cyan-50 to-blue-50 rounded-lg p-4 border border-cyan-100">
+                    <div className="bg-apptivia-coral-tone-50 rounded-lg p-4 border border-cyan-100">
                       <div className="text-xs font-semibold text-apptivia-carbon-700 mb-2">Quick Links</div>
                       <div className="flex flex-wrap gap-2">
                         <button onClick={() => navigate('/engage')} className="px-3 py-1.5 bg-white text-xs font-medium text-cyan-700 rounded-lg border border-cyan-200 hover:bg-cyan-50 transition-colors">Pipeline Operator</button>
@@ -1548,7 +1548,7 @@ export default function Analytics() {
                   </div>
                   <div className="space-y-3">
                     {data.rows.slice(0, 5).map((performer, i) => (
-                      <div key={performer.profile_id} className="flex items-center justify-between bg-gradient-to-r from-gray-50 to-white rounded-lg p-3 transition-all duration-200 hover:shadow-md">
+                      <div key={performer.profile_id} className="flex items-center justify-between bg-apptivia-carbon-50 rounded-lg p-3 transition-all duration-200 hover:shadow-md">
                         <div className="flex items-center gap-4">
                           <div className={`w-9 h-9 rounded-full flex items-center justify-center text-base font-bold ${
                             i === 0 ? 'bg-yellow-100 text-yellow-600' :

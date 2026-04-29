@@ -297,7 +297,7 @@ function AccountCard({ account, onSelect, icpConfig }) {
       className="bg-white rounded-lg border border-apptivia-carbon-100 p-5 hover:shadow-md hover:border-apptivia-coral-tone-100 transition-all cursor-pointer">
       <div className="flex items-start justify-between mb-3">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-lg flex items-center justify-center">
+          <div className="w-10 h-10 bg-apptivia-ink rounded-lg flex items-center justify-center">
             <Building2 size={18} className="text-white" />
           </div>
           <div>
@@ -376,7 +376,7 @@ function AccountDetail({ account, onBack, onUpdate, onAnalyze, analyzing, onUpda
         </button>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-lg flex items-center justify-center">
+            <div className="w-12 h-12 bg-apptivia-ink rounded-lg flex items-center justify-center">
               <Building2 size={22} className="text-white" />
             </div>
             <div>
@@ -425,15 +425,15 @@ function AccountDetail({ account, onBack, onUpdate, onAnalyze, analyzing, onUpda
       {/* Scores */}
       <div className={`grid gap-3 ${icpScore !== null ? 'grid-cols-4' : 'grid-cols-3'}`}>
         {[
-          { label: 'Account Score', value: account.account_score, color: 'from-blue-500 to-indigo-500' },
-          { label: 'Intent Score', value: account.intent_score, color: 'from-amber-500 to-orange-500' },
-          { label: 'Engagement Score', value: account.engagement_score, color: 'from-emerald-500 to-teal-500' },
+          { label: 'Account Score', value: account.account_score, textColor: 'text-apptivia-ink', barColor: 'bg-apptivia-ink' },
+          { label: 'Intent Score', value: account.intent_score, textColor: 'text-amber-600', barColor: 'bg-amber-500' },
+          { label: 'Engagement Score', value: account.engagement_score, textColor: 'text-emerald-600', barColor: 'bg-emerald-500' },
         ].map((s) => (
           <div key={s.label} className="bg-white rounded-lg border border-apptivia-carbon-100 p-4 text-center">
             <span className="text-[10px] text-apptivia-carbon-400 block mb-1">{s.label}</span>
-            <div className={`text-2xl font-bold bg-gradient-to-r ${s.color} bg-clip-text text-transparent`}>{s.value}</div>
+            <div className={`text-2xl font-bold ${s.textColor}`}>{s.value}</div>
             <div className="w-full bg-apptivia-carbon-100 rounded-full h-1.5 mt-2">
-              <div className={`h-1.5 rounded-full bg-gradient-to-r ${s.color}`} style={{ width: `${s.value}%` }} />
+              <div className={`h-1.5 rounded-full ${s.barColor}`} style={{ width: `${s.value}%` }} />
             </div>
           </div>
         ))}
@@ -572,7 +572,7 @@ function AccountDetail({ account, onBack, onUpdate, onAnalyze, analyzing, onUpda
             <div className="mt-3 space-y-2 pt-3 border-t border-apptivia-carbon-100">
               {signalContacts.map((person, i) => (
                 <div key={person.id || i} className="flex items-center gap-3 group">
-                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-teal-400 to-cyan-500 flex items-center justify-center text-white text-[10px] font-bold flex-shrink-0">
+                  <div className="w-8 h-8 rounded-full bg-emerald-500 flex items-center justify-center text-white text-[10px] font-bold flex-shrink-0">
                     {(person.first_name?.[0] || person.name?.[0] || '?').toUpperCase()}
                     {(person.last_name?.[0] || '').toUpperCase()}
                   </div>
@@ -719,7 +719,7 @@ function CreateDealModal({ isOpen, onClose, account, organizationId, userId }) {
                 Cancel
               </button>
               <button type="submit" disabled={saving}
-                className="flex-1 py-2 text-sm font-semibold text-white bg-gradient-to-r from-blue-500 to-indigo-500 rounded-lg hover:from-blue-600 hover:to-indigo-600 disabled:opacity-50 flex items-center justify-center gap-2">
+                className="flex-1 py-2 text-sm font-semibold text-white bg-apptivia-ink rounded-lg hover:bg-apptivia-coral-tone-600 disabled:opacity-50 flex items-center justify-center gap-2">
                 {saving ? <><Loader size={13} className="animate-spin" /> Creating...</> : 'Create Deal'}
               </button>
             </div>
@@ -958,7 +958,7 @@ export default function AccountIntelligence({ organizationId, userId, initialAcc
             {analyzing ? <RefreshCw size={12} className="animate-spin" /> : <Sparkles size={12} />} Score All
           </button>
           <button onClick={() => setShowNew(true)}
-            className="flex items-center gap-1.5 px-4 py-2 bg-gradient-to-r from-blue-500 to-indigo-500 text-white rounded-lg text-xs font-semibold hover:from-blue-600 hover:to-indigo-600 transition-all shadow-sm">
+            className="flex items-center gap-1.5 px-4 py-2 bg-apptivia-ink text-white rounded-lg text-xs font-semibold hover:bg-apptivia-coral-tone-600 transition-all shadow-sm">
             <Plus size={14} /> New Account
           </button>
         </div>

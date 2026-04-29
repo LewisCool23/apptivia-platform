@@ -1014,7 +1014,7 @@ export default function Coach() {
           ) : (
             <div className="flex flex-wrap gap-4 items-stretch text-sm text-apptivia-carbon-600">
               {/* Main Level Card */}
-              <div className={`bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-lg px-4 py-4 flex-1 min-w-[280px] flex flex-col justify-between transition-all duration-300 hover:shadow-xl hover:scale-[1.02] ${data.levelProgress === 100 ? 'ring-2 ring-yellow-400 shadow-[0_0_20px_rgba(250,204,21,0.4)]' : ''}`}>
+              <div className={`bg-apptivia-coral text-white rounded-lg px-4 py-4 flex-1 min-w-[280px] flex flex-col justify-between transition-all duration-300 hover:shadow-xl hover:scale-[1.02] ${data.levelProgress === 100 ? 'ring-2 ring-yellow-400 shadow-[0_0_20px_rgba(250,204,21,0.4)]' : ''}`}>
                 <div className="flex items-center gap-2 mb-1">
                   <span className="text-base font-semibold">{data.avgLevel}</span>
                   {data.levelProgress === 100 && (

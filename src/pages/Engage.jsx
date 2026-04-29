@@ -60,12 +60,12 @@ export default function Engage() {
 
   return (
     <DashboardLayout>
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50/30 p-4 md:p-6">
+      <div className="min-h-screen bg-apptivia-paper p-4 md:p-6">
 
         {/* Header */}
         <div className="mb-5 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-lg flex items-center justify-center shadow-lg">
+            <div className="w-10 h-10 bg-apptivia-ink rounded-lg flex items-center justify-center shadow-lg">
               <Radar size={20} className="text-white" />
             </div>
             <div>
@@ -103,7 +103,7 @@ export default function Engage() {
                 onClick={() => setActiveTab(tab.id)}
                 className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-xs font-medium transition-all whitespace-nowrap ${
                   isActive
-                    ? 'bg-gradient-to-r from-blue-500 to-cyan-500 text-white shadow-sm'
+                    ? 'bg-apptivia-coral text-white shadow-sm'
                     : 'text-apptivia-carbon-600 hover:bg-apptivia-paper hover:text-apptivia-ink'
                 }`}
               >

@@ -2,7 +2,7 @@ import React from 'react';
 
 // Reusable skeleton component for loading states
 export const Skeleton = ({ className = '', variant = 'default' }) => {
-  const baseClasses = 'animate-pulse bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 bg-[length:200%_100%] rounded';
+  const baseClasses = 'animate-pulse bg-gradient-to-r from-apptivia-carbon-200 via-apptivia-carbon-300 to-apptivia-carbon-200 bg-[length:200%_100%] rounded';
   
   const variantClasses = {
     default: 'h-4 w-full',

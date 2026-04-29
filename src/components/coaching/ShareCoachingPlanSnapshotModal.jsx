@@ -103,7 +103,7 @@ export default function ShareCoachingPlanSnapshotModal({ isOpen, onClose, plan, 
 
         {/* Snapshot Card */}
         <div className="px-6 py-4">
-          <div ref={snapshotRef} className="bg-gradient-to-br from-blue-600 via-indigo-600 to-purple-700 rounded-lg p-6 text-white">
+          <div ref={snapshotRef} className="bg-apptivia-ink rounded-lg p-6 text-white">
             <div className="flex items-center justify-between mb-4">
               <div>
                 <p className="text-xs font-medium text-apptivia-coral-tone-300 uppercase tracking-wide">Coaching Plan</p>

@@ -590,7 +590,7 @@ function ForecastPanel({ forecast, onGenerate, loading }) {
     <div className="bg-white rounded-lg border border-apptivia-carbon-100 p-5">
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
-          <div className="w-8 h-8 bg-gradient-to-br from-violet-500 to-purple-600 rounded-lg flex items-center justify-center">
+          <div className="w-8 h-8 bg-apptivia-ink rounded-lg flex items-center justify-center">
             <Sparkles size={14} className="text-white" />
           </div>
           <h3 className="text-sm font-semibold text-apptivia-carbon-700">AI Forecast</h3>

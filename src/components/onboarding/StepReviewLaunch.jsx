@@ -10,7 +10,7 @@ export default function StepReviewLaunch({ wizardState, onGoToStep }) {
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-3 mb-2">
-        <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-lg flex items-center justify-center">
+        <div className="w-10 h-10 bg-apptivia-ink rounded-lg flex items-center justify-center">
           <Trophy size={20} className="text-white" />
         </div>
         <div>
@@ -79,7 +79,7 @@ export default function StepReviewLaunch({ wizardState, onGoToStep }) {
 
       {/* Launch Message */}
       {canLaunch && (
-        <div className="bg-gradient-to-r from-blue-600 to-indigo-600 rounded-lg p-6 text-center text-white">
+        <div className="bg-apptivia-ink rounded-lg p-6 text-center text-white">
           <Rocket size={32} className="mx-auto mb-3 opacity-90" />
           <h4 className="text-xl font-bold mb-2">You're ready to go!</h4>
           <p className="text-apptivia-coral-tone-300 text-sm mb-1">

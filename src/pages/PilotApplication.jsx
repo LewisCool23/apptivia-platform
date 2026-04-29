@@ -76,7 +76,7 @@ export default function PilotApplication() {
       </nav>
 
       {/* Hero */}
-      <section className="py-20 bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-white">
+      <section className="py-20 bg-apptivia-ink text-white">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <div className="inline-flex items-center gap-2 bg-emerald-500/10 border border-emerald-500/20 rounded-full px-4 py-1.5 mb-6">
             <span className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse" />

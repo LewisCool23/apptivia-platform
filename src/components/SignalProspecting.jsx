@@ -241,10 +241,10 @@ function ActionQueuePanel({
   };
 
   return (
-    <div className="bg-gradient-to-r from-violet-50 to-purple-50 rounded-lg border border-apptivia-carbon-300 p-4 space-y-3">
+    <div className="bg-apptivia-coral-tone-50 rounded-lg border border-apptivia-carbon-300 p-4 space-y-3">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <div className="w-7 h-7 bg-gradient-to-br from-violet-500 to-purple-600 rounded-lg flex items-center justify-center">
+          <div className="w-7 h-7 bg-apptivia-ink rounded-lg flex items-center justify-center">
             <Zap size={12} className="text-white" />
           </div>
           <div>
@@ -655,7 +655,7 @@ function SignalContactsSection({ companyName, contacts, isEnriching, onEnrich, o
         <div className="space-y-1.5">
           {contacts.map((person, i) => (
             <div key={person.id || i} className="flex items-center gap-2 group/contact">
-              <div className="w-6 h-6 rounded-full bg-gradient-to-br from-teal-400 to-cyan-500 flex items-center justify-center text-white text-[9px] font-bold flex-shrink-0 select-none">
+              <div className="w-6 h-6 rounded-full bg-emerald-500 flex items-center justify-center text-white text-[9px] font-bold flex-shrink-0 select-none">
                 {(person.first_name?.[0] || person.name?.[0] || '?').toUpperCase()}
                 {(person.last_name?.[0] || '').toUpperCase()}
               </div>
@@ -753,7 +753,7 @@ const AccountCard = React.memo(function AccountCard({ group, onAction, onDismiss
       {/* Header */}
       <div className="flex items-start justify-between gap-3 mb-3">
         <div className="flex items-center gap-2.5">
-          <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-slate-600 to-slate-800 flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
+          <div className="w-9 h-9 rounded-lg bg-apptivia-carbon-700 flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
             {group.name[0]?.toUpperCase() || '?'}
           </div>
           <div>
@@ -1161,10 +1161,10 @@ function ScanResultsPanel({ signals, lastScanSignalIds, onAction, onDismiss, onC
   if (newSignals.length === 0) return null;
 
   return (
-    <div className="bg-gradient-to-r from-cyan-50 to-blue-50 rounded-lg border border-cyan-200 p-5">
+    <div className="bg-apptivia-coral-tone-50 rounded-lg border border-cyan-200 p-5">
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
-          <div className="w-8 h-8 bg-gradient-to-br from-cyan-500 to-blue-600 rounded-lg flex items-center justify-center">
+          <div className="w-8 h-8 bg-apptivia-ink rounded-lg flex items-center justify-center">
             <Sparkles size={14} className="text-white" />
           </div>
           <div>
@@ -1467,7 +1467,7 @@ function DailyPriorityPanel({ allSignals, companyContacts, onDraftMessage, onEnr
                 {/* Contact row */}
                 {item.contact ? (
                   <div className="flex items-center gap-1.5 mt-1.5 pt-1.5 border-t border-apptivia-carbon-100">
-                    <div className="w-4 h-4 rounded-full bg-gradient-to-br from-teal-400 to-cyan-500 flex items-center justify-center text-white text-[7px] font-bold flex-shrink-0">
+                    <div className="w-4 h-4 rounded-full bg-emerald-500 flex items-center justify-center text-white text-[7px] font-bold flex-shrink-0">
                       {(item.contact.first_name?.[0] || item.contact.name?.[0] || '?').toUpperCase()}
                     </div>
                     <span className="text-[10px] text-apptivia-carbon-700 font-medium truncate flex-1">
@@ -1560,9 +1560,9 @@ function IcpProspectorHeader({ icpConfig, onEditIcp }) {
     ? `${icpConfig.headcount_min}–${icpConfig.headcount_max} employees`
     : 'Any headcount';
   return (
-    <div className="bg-gradient-to-r from-indigo-50 to-purple-50 border border-apptivia-carbon-300 rounded-lg p-4 flex items-start justify-between gap-3">
+    <div className="bg-apptivia-coral-tone-50 border border-apptivia-carbon-300 rounded-lg p-4 flex items-start justify-between gap-3">
       <div className="flex items-center gap-2.5">
-        <div className="w-9 h-9 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-lg flex items-center justify-center flex-shrink-0">
+        <div className="w-9 h-9 bg-apptivia-ink rounded-lg flex items-center justify-center flex-shrink-0">
           <Target size={16} className="text-white" />
         </div>
         <div>
@@ -1608,7 +1608,7 @@ function IcpProspectorFilters({ filters, onChange, onSearch, isLoading }) {
         <button
           onClick={onSearch}
           disabled={isLoading}
-          className="inline-flex items-center gap-1.5 text-xs font-medium px-4 py-1.5 rounded-lg bg-gradient-to-r from-indigo-500 to-purple-600 text-white hover:from-indigo-600 hover:to-purple-700 disabled:opacity-40 transition-all shadow-sm"
+          className="inline-flex items-center gap-1.5 text-xs font-medium px-4 py-1.5 rounded-lg bg-apptivia-ink text-white hover:bg-apptivia-coral-tone-600 disabled:opacity-40 transition-all shadow-sm"
         >
           {isLoading
             ? <><RefreshCw size={11} className="animate-spin" /> Searching...</>
@@ -1661,7 +1661,7 @@ function IcpCompanyCard({ company, icpScore, isAlreadyAdded, existingAccountId, 
           {company.logo_url ? (
             <img src={company.logo_url} alt={company.name} className="w-9 h-9 rounded-lg object-contain border border-apptivia-carbon-100 flex-shrink-0" />
           ) : (
-            <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
+            <div className="w-9 h-9 rounded-lg bg-apptivia-ink flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
               {company.name[0]?.toUpperCase()}
             </div>
           )}
@@ -1747,7 +1747,7 @@ function IcpCompanyCard({ company, icpScore, isAlreadyAdded, existingAccountId, 
             <div className="space-y-1.5">
               {contacts.map((c, i) => (
                 <div key={c.id || i} className="flex items-center gap-2 text-[10px]">
-                  <div className="w-5 h-5 rounded-full bg-gradient-to-br from-gray-200 to-gray-300 flex items-center justify-center text-apptivia-carbon-600 text-[8px] font-bold flex-shrink-0">
+                  <div className="w-5 h-5 rounded-full bg-apptivia-carbon-200 flex items-center justify-center text-apptivia-carbon-600 text-[8px] font-bold flex-shrink-0">
                     {(c.name || c.first_name || '?')[0]?.toUpperCase()}
                   </div>
                   <div className="min-w-0">
@@ -2238,7 +2238,7 @@ export default function SignalProspecting({ organizationId, userId, onCallContac
       <div className="bg-white rounded-lg border border-apptivia-carbon-100 p-5">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-gradient-to-br from-cyan-500 to-blue-600 rounded-lg flex items-center justify-center">
+            <div className="w-8 h-8 bg-apptivia-ink rounded-lg flex items-center justify-center">
               <Radar size={14} className="text-white" />
             </div>
             <div>
@@ -2262,7 +2262,7 @@ export default function SignalProspecting({ organizationId, userId, onCallContac
             <button
               onClick={() => signals.runSignalScan()}
               disabled={signals.isScanning || !signals.hasOrgSignalConfig}
-              className="inline-flex items-center gap-1.5 text-xs font-medium px-4 py-2 rounded-lg bg-gradient-to-r from-cyan-500 to-blue-600 text-white hover:from-cyan-600 hover:to-blue-700 disabled:opacity-40 transition-all shadow-sm"
+              className="inline-flex items-center gap-1.5 text-xs font-medium px-4 py-2 rounded-lg bg-apptivia-coral text-white hover:bg-apptivia-coral-tone-600 disabled:opacity-40 transition-all shadow-sm"
             >
               {signals.isScanning ? <RefreshCw size={12} className="animate-spin" /> : <Search size={12} />}
               {signals.isScanning ? 'Scanning...' : 'Scan Now'}

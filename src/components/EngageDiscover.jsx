@@ -126,7 +126,7 @@ function CompanyBriefPanel({ company, brief: rawBrief, dataSources, tokensUsed, 
             {company.logo_url ? (
               <img src={company.logo_url} alt="" className="w-12 h-12 rounded-lg border border-apptivia-carbon-100 object-contain" />
             ) : (
-              <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-lg flex items-center justify-center">
+              <div className="w-12 h-12 bg-apptivia-ink rounded-lg flex items-center justify-center">
                 <Building2 size={20} className="text-white" />
               </div>
             )}
@@ -359,7 +359,7 @@ function ProspectBriefPanel({ prospect, brief: rawBrief, dataSources, tokensUsed
             {prospect.photo_url || prospect.avatar_url ? (
               <img src={prospect.photo_url || prospect.avatar_url} alt="" className="w-14 h-14 rounded-full border-2 border-apptivia-carbon-100 object-cover" />
             ) : (
-              <div className="w-14 h-14 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full flex items-center justify-center">
+              <div className="w-14 h-14 bg-apptivia-ink rounded-full flex items-center justify-center">
                 <Users size={22} className="text-white" />
               </div>
             )}
@@ -489,7 +489,7 @@ function ProspectBriefPanel({ prospect, brief: rawBrief, dataSources, tokensUsed
                 {onGenerateDraft && (
                   <button
                     onClick={onGenerateDraft}
-                    className="flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-emerald-500 to-teal-500 hover:opacity-90 text-white text-xs font-medium rounded-lg transition-opacity shadow-sm"
+                    className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-500 hover:opacity-90 text-white text-xs font-medium rounded-lg transition-opacity shadow-sm"
                     title="Generate AI outreach draft"
                   >
                     <FileText size={11} /> Generate Draft
@@ -504,7 +504,7 @@ function ProspectBriefPanel({ prospect, brief: rawBrief, dataSources, tokensUsed
       {/* AI Brief */}
       {brief && (
         <div className="bg-white rounded-lg border border-apptivia-carbon-100 overflow-hidden">
-          <div className="bg-gradient-to-r from-purple-500 to-pink-500 px-5 py-3 flex items-center justify-between">
+          <div className="bg-apptivia-ink px-5 py-3 flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Sparkles size={14} className="text-white" />
               <span className="text-sm font-semibold text-white">AI Prospect Brief</span>
@@ -632,7 +632,7 @@ function OutreachDraftPanel({ draft, tokensUsed }) {
   if (draft.messages?.length > 0) {
     return (
       <div className="bg-white rounded-lg border border-apptivia-carbon-100 overflow-hidden">
-        <div className="bg-gradient-to-r from-emerald-500 to-teal-500 px-5 py-3 flex items-center justify-between">
+        <div className="bg-emerald-500 px-5 py-3 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Send size={14} className="text-white" />
             <span className="text-sm font-semibold text-white">AI Outreach Drafts</span>
@@ -684,7 +684,7 @@ function OutreachDraftPanel({ draft, tokensUsed }) {
   // Standard single-message format
   return (
     <div className="bg-white rounded-lg border border-apptivia-carbon-100 overflow-hidden">
-      <div className="bg-gradient-to-r from-emerald-500 to-teal-500 px-5 py-3 flex items-center justify-between">
+      <div className="bg-emerald-500 px-5 py-3 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Send size={14} className="text-white" />
           <span className="text-sm font-semibold text-white">AI Outreach Draft</span>
@@ -753,7 +753,7 @@ function OutreachModal({
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-apptivia-carbon-100">
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-gradient-to-br from-emerald-500 to-teal-500 rounded-lg flex items-center justify-center">
+            <div className="w-8 h-8 bg-emerald-500 rounded-lg flex items-center justify-center">
               <Send size={14} className="text-white" />
             </div>
             <div>
@@ -840,7 +840,7 @@ function OutreachModal({
           <button
             onClick={onGenerate}
             disabled={loading}
-            className="w-full px-4 py-2.5 bg-gradient-to-r from-emerald-500 to-teal-500 text-white rounded-lg text-xs font-semibold hover:opacity-90 transition-opacity disabled:opacity-50 flex items-center justify-center gap-2"
+            className="w-full px-4 py-2.5 bg-emerald-500 text-white rounded-lg text-xs font-semibold hover:opacity-90 transition-opacity disabled:opacity-50 flex items-center justify-center gap-2"
           >
             {loading ? (
               <><RefreshCw size={12} className="animate-spin" /> Generating...</>
@@ -1487,7 +1487,7 @@ export default function EngageDiscover({ organizationId, userId, initialSearch, 
     <div className="space-y-4">
       {/* Search Panel */}
       <div className="bg-white rounded-lg border border-apptivia-carbon-100 overflow-hidden">
-        <div className="bg-gradient-to-r from-blue-500 via-cyan-500 to-teal-500 px-6 py-5">
+        <div className="bg-apptivia-ink px-6 py-5">
           <div className="flex items-center gap-3 mb-3">
             <div className="w-9 h-9 bg-white/20 backdrop-blur-sm rounded-lg flex items-center justify-center">
               <Sparkles size={16} className="text-white" />
@@ -1634,7 +1634,7 @@ export default function EngageDiscover({ organizationId, userId, initialSearch, 
 
       {disambiguationResults && disambiguationResults.length > 0 && (
         <div className="bg-white rounded-lg border border-apptivia-carbon-100 overflow-hidden">
-          <div className="px-5 py-3 border-b border-apptivia-carbon-100 bg-gradient-to-r from-blue-50 to-cyan-50">
+          <div className="px-5 py-3 border-b border-apptivia-carbon-100 bg-apptivia-coral-tone-50">
             <div className="flex items-center gap-2">
               <Building2 size={14} className="text-apptivia-coral" />
               <span className="text-sm font-semibold text-apptivia-ink">
@@ -1655,7 +1655,7 @@ export default function EngageDiscover({ organizationId, userId, initialSearch, 
                   {company.logo_url ? (
                     <img src={company.logo_url} alt="" className="w-10 h-10 rounded-lg border border-apptivia-carbon-100 object-contain flex-shrink-0" />
                   ) : (
-                    <div className="w-10 h-10 bg-gradient-to-br from-blue-400 to-cyan-500 rounded-lg flex items-center justify-center flex-shrink-0">
+                    <div className="w-10 h-10 bg-apptivia-ink rounded-lg flex items-center justify-center flex-shrink-0">
                       <Building2 size={16} className="text-white" />
                     </div>
                   )}
@@ -1961,7 +1961,7 @@ export default function EngageDiscover({ organizationId, userId, initialSearch, 
       {/* People Search Results */}
       {!loading && peopleSearchResults && peopleSearchResults.length > 0 && (
         <div className="bg-white rounded-lg border border-apptivia-carbon-100 overflow-hidden">
-          <div className="px-5 py-4 border-b border-apptivia-carbon-100 bg-gradient-to-r from-cyan-50 to-blue-50">
+          <div className="px-5 py-4 border-b border-apptivia-carbon-100 bg-apptivia-coral-tone-50">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Users size={16} className="text-cyan-600" />
@@ -2004,7 +2004,7 @@ export default function EngageDiscover({ organizationId, userId, initialSearch, 
                     <tr key={person.id || idx} className="hover:bg-apptivia-coral-tone-50/50 transition-colors group">
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-2">
-                          <div className="w-7 h-7 rounded-full bg-gradient-to-br from-cyan-400 to-blue-500 flex items-center justify-center text-white text-[10px] font-bold flex-shrink-0">
+                          <div className="w-7 h-7 rounded-full bg-apptivia-ink flex items-center justify-center text-white text-[10px] font-bold flex-shrink-0">
                             {(person.first_name?.[0] || '?')}{(person.last_name?.[0] || '')}
                           </div>
                           <span className="font-medium text-apptivia-ink whitespace-nowrap">{name || 'Unknown'}</span>
@@ -2174,7 +2174,7 @@ export default function EngageDiscover({ organizationId, userId, initialSearch, 
             <button
               onClick={handleGenerateOutreach}
               disabled={outreachLoading}
-              className="px-4 py-2 bg-gradient-to-r from-emerald-500 to-teal-500 text-white rounded-lg text-xs font-semibold hover:opacity-90 transition-opacity disabled:opacity-50 flex items-center gap-2"
+              className="px-4 py-2 bg-emerald-500 text-white rounded-lg text-xs font-semibold hover:opacity-90 transition-opacity disabled:opacity-50 flex items-center gap-2"
             >
               {outreachLoading ? (
                 <><RefreshCw size={12} className="animate-spin" /> Generating...</>
@@ -2212,7 +2212,7 @@ export default function EngageDiscover({ organizationId, userId, initialSearch, 
       {/* Empty State */}
       {!loading && !hasResults && !error && (
         <div className="bg-white rounded-lg border border-apptivia-carbon-100 p-10 text-center">
-          <div className="w-14 h-14 bg-gradient-to-br from-blue-100 to-cyan-100 rounded-lg flex items-center justify-center mx-auto mb-4">
+          <div className="w-14 h-14 bg-apptivia-coral-tone-100 rounded-lg flex items-center justify-center mx-auto mb-4">
             <Search size={24} className="text-apptivia-coral" />
           </div>
           <h3 className="text-sm font-semibold text-apptivia-carbon-700 mb-1">Ready to Research</h3>

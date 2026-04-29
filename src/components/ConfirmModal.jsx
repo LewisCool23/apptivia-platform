@@ -29,21 +29,21 @@ export default function ConfirmModal({
 
   const variantConfig = {
     danger: {
-      gradient: 'from-red-500 via-red-600 to-rose-600',
+      gradient: 'bg-red-500',
       icon: Trash2,
       iconBg: 'bg-red-100',
       iconColor: 'text-red-600',
       confirmBtn: 'bg-red-600 hover:bg-red-700 focus:ring-red-500',
     },
     warning: {
-      gradient: 'from-amber-500 via-orange-500 to-orange-600',
+      gradient: 'bg-amber-500',
       icon: AlertTriangle,
       iconBg: 'bg-amber-100',
       iconColor: 'text-amber-600',
       confirmBtn: 'bg-amber-600 hover:bg-amber-700 focus:ring-amber-500',
     },
     success: {
-      gradient: 'from-emerald-500 via-green-500 to-teal-600',
+      gradient: 'bg-emerald-500',
       icon: CheckCircle,
       iconBg: 'bg-emerald-100',
       iconColor: 'text-emerald-600',
@@ -64,7 +64,7 @@ export default function ConfirmModal({
         onClick={(e) => e.stopPropagation()}
       >
         {/* Gradient Header */}
-        <div className={`bg-gradient-to-r ${config.gradient} p-4 relative`}>
+        <div className={`${config.gradient} p-4 relative`}>
           <button
             onClick={onClose}
             className="absolute top-3 right-3 text-white/80 hover:text-white transition-colors p-1.5 hover:bg-white/10 rounded-lg"

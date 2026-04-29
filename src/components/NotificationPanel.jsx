@@ -91,7 +91,7 @@ export default function NotificationPanel() {
         <div className="p-4 border-b">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
+              <div className="w-8 h-8 bg-apptivia-ink rounded-lg flex items-center justify-center">
                 <Bell size={16} className="text-white" />
               </div>
               <div>
