@@ -137,7 +137,7 @@ export default function BadgeModal({ isOpen, onClose, badge, profileName }) {
           </div>
           
           {showShareMenu && (
-            <div className="absolute top-16 right-4 bg-white rounded-lg shadow-xl border border-gray-200 py-2 z-10 min-w-[160px]">
+            <div className="absolute top-16 right-4 bg-white rounded-lg shadow-xl border border-apptivia-carbon-200 py-2 z-10 min-w-[160px]">
               <button
                 onClick={() => handleShare('email')}
                 className="w-full text-left px-4 py-2 hover:bg-apptivia-paper flex items-center gap-3 text-apptivia-carbon-700 text-sm"
@@ -256,7 +256,7 @@ export default function BadgeModal({ isOpen, onClose, badge, profileName }) {
         </div>
 
         {/* Footer */}
-        <div className="bg-apptivia-paper px-6 py-4 border-t border-gray-200">
+        <div className="bg-apptivia-paper px-6 py-4 border-t border-apptivia-carbon-200">
           <button
             onClick={onClose}
             className="w-full bg-gradient-to-r from-blue-500 to-purple-500 text-white px-6 py-2.5 rounded-lg font-semibold hover:from-blue-600 hover:to-purple-600 transition-all duration-200 hover:shadow-lg"

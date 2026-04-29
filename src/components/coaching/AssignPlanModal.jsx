@@ -32,7 +32,7 @@ export default function AssignPlanModal({
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-gray-200">
+        <div className="flex items-center justify-between p-4 border-b border-apptivia-carbon-200">
           <div className="flex items-center gap-3">
             <div className="p-2 bg-green-100 rounded-lg">
               <UserPlus className="w-5 h-5 text-green-600" />
@@ -88,8 +88,8 @@ export default function AssignPlanModal({
         </div>
 
         {/* Footer */}
-        <div className="border-t border-gray-200 p-4 flex justify-end gap-2">
-          <button onClick={onClose} className="px-4 py-2 text-sm font-semibold border border-gray-300 text-apptivia-carbon-700 rounded-md hover:bg-apptivia-paper">
+        <div className="border-t border-apptivia-carbon-200 p-4 flex justify-end gap-2">
+          <button onClick={onClose} className="px-4 py-2 text-sm font-semibold border border-apptivia-carbon-300 text-apptivia-carbon-700 rounded-md hover:bg-apptivia-paper">
             Cancel
           </button>
           <button

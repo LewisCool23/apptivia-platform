@@ -30,7 +30,7 @@ export default function ExportReportModal({ isOpen, onClose, onSelectFormat, tit
       description: 'Branded report with data tables and visuals. Ready to share with leadership.',
       color: 'text-apptivia-coral',
       bg: 'bg-apptivia-coral-tone-50',
-      border: 'border-blue-200 hover:border-blue-400',
+      border: 'border-apptivia-coral-tone-100 hover:border-apptivia-coral-tone-100',
     },
   ];
 
@@ -41,7 +41,7 @@ export default function ExportReportModal({ isOpen, onClose, onSelectFormat, tit
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-apptivia-carbon-100">
           <h2 className="text-lg font-semibold text-apptivia-ink">{title}</h2>
           <button onClick={onClose} className="p-1 rounded-lg hover:bg-apptivia-carbon-100 text-apptivia-carbon-400 hover:text-apptivia-carbon-600">
             <X size={18} />

@@ -153,7 +153,7 @@ export default function ReviewDetailModal({
                 </button>
                 {transition.alt && transition.alt.actor === 'manager' && (
                   <button onClick={() => onTransition(transition.alt.next)}
-                    className="px-4 py-2 text-sm font-semibold text-apptivia-carbon-600 border border-gray-300 rounded-md hover:bg-apptivia-paper">
+                    className="px-4 py-2 text-sm font-semibold text-apptivia-carbon-600 border border-apptivia-carbon-300 rounded-md hover:bg-apptivia-paper">
                     {transition.alt.action}
                   </button>
                 )}
@@ -204,7 +204,7 @@ export default function ReviewDetailModal({
                   </thead>
                   <tbody>
                     {review.kpi_attainment.map((kpi, idx) => (
-                      <tr key={idx} className="border-b border-gray-100">
+                      <tr key={idx} className="border-b border-apptivia-carbon-100">
                         <td className="py-2 pr-4 font-medium">{kpi.name || buildLabel(kpi.key)}</td>
                         <td className="py-2 pr-4">{kpi.avg_value}</td>
                         <td className="py-2 pr-4">{kpi.goal}</td>
@@ -375,14 +375,14 @@ export default function ReviewDetailModal({
                       }
                     }}
                     disabled={aiGenerating}
-                    className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-apptivia-ink bg-apptivia-carbon-100 border border-purple-200 rounded-md hover:bg-apptivia-carbon-100 disabled:opacity-50"
+                    className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-apptivia-ink bg-apptivia-carbon-100 border border-apptivia-carbon-300 rounded-md hover:bg-apptivia-carbon-100 disabled:opacity-50"
                   >
                     <Sparkles size={14} className={aiGenerating ? 'animate-spin' : ''} />
                     {aiGenerating ? 'Generating...' : 'Generate AI Draft'}
                   </button>
                 )}
               </div>
-              <div className="space-y-4 bg-apptivia-carbon-100 rounded-lg p-4 border border-purple-100 relative">
+              <div className="space-y-4 bg-apptivia-carbon-100 rounded-lg p-4 border border-apptivia-carbon-300 relative">
                 {aiGenerating && (
                   <div className="absolute inset-0 bg-white/70 z-10 flex items-center justify-center rounded-lg">
                     <div className="flex items-center gap-2 text-apptivia-ink">
@@ -394,7 +394,7 @@ export default function ReviewDetailModal({
                 <div>
                   <label className="block text-xs font-semibold text-apptivia-carbon-700 mb-1">Overall Summary</label>
                   <textarea value={mgrSummary} onChange={e => setMgrSummary(e.target.value)}
-                    className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm" rows={3} placeholder="Overall assessment..." />
+                    className="w-full border border-apptivia-carbon-300 rounded-md px-3 py-2 text-sm" rows={3} placeholder="Overall assessment..." />
                 </div>
                 <div>
                   <div className="flex items-center justify-between mb-2">
@@ -404,7 +404,7 @@ export default function ReviewDetailModal({
                   {mgrStrengths.map((item, idx) => (
                     <div key={idx} className="flex gap-2 mb-2">
                       <input value={item.text || ''} onChange={e => updateItem(setMgrStrengths, idx, e.target.value)}
-                        className="flex-1 border border-gray-300 rounded-md px-3 py-1.5 text-sm" placeholder="Strength..." />
+                        className="flex-1 border border-apptivia-carbon-300 rounded-md px-3 py-1.5 text-sm" placeholder="Strength..." />
                       {mgrStrengths.length > 1 && <button type="button" onClick={() => removeItem(setMgrStrengths, idx)} className="text-red-400"><Trash2 size={14} /></button>}
                     </div>
                   ))}
@@ -417,7 +417,7 @@ export default function ReviewDetailModal({
                   {mgrImprovements.map((item, idx) => (
                     <div key={idx} className="flex gap-2 mb-2">
                       <input value={item.text || ''} onChange={e => updateItem(setMgrImprovements, idx, e.target.value)}
-                        className="flex-1 border border-gray-300 rounded-md px-3 py-1.5 text-sm" placeholder="Area for improvement..." />
+                        className="flex-1 border border-apptivia-carbon-300 rounded-md px-3 py-1.5 text-sm" placeholder="Area for improvement..." />
                       {mgrImprovements.length > 1 && <button type="button" onClick={() => removeItem(setMgrImprovements, idx)} className="text-red-400"><Trash2 size={14} /></button>}
                     </div>
                   ))}
@@ -430,7 +430,7 @@ export default function ReviewDetailModal({
                   {mgrGoals.map((item, idx) => (
                     <div key={idx} className="flex gap-2 mb-2">
                       <input value={item.text || ''} onChange={e => updateItem(setMgrGoals, idx, e.target.value)}
-                        className="flex-1 border border-gray-300 rounded-md px-3 py-1.5 text-sm" placeholder="Goal..." />
+                        className="flex-1 border border-apptivia-carbon-300 rounded-md px-3 py-1.5 text-sm" placeholder="Goal..." />
                       {mgrGoals.length > 1 && <button type="button" onClick={() => removeItem(setMgrGoals, idx)} className="text-red-400"><Trash2 size={14} /></button>}
                     </div>
                   ))}
@@ -460,12 +460,12 @@ export default function ReviewDetailModal({
                 <div>
                   <label className="block text-xs font-semibold text-apptivia-carbon-700 mb-1">Final Summary</label>
                   <textarea value={finalSummary} onChange={e => setFinalSummary(e.target.value)}
-                    className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm" rows={2} placeholder="Final summary..." />
+                    className="w-full border border-apptivia-carbon-300 rounded-md px-3 py-2 text-sm" rows={2} placeholder="Final summary..." />
                 </div>
                 <div>
                   <label className="block text-xs font-semibold text-apptivia-carbon-700 mb-1">Comments</label>
                   <textarea value={mgrComments} onChange={e => setMgrComments(e.target.value)}
-                    className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm" rows={2} placeholder="Additional comments..." />
+                    className="w-full border border-apptivia-carbon-300 rounded-md px-3 py-2 text-sm" rows={2} placeholder="Additional comments..." />
                 </div>
                 <button onClick={handleManagerSave} disabled={saving}
                   className="px-4 py-2 text-sm font-semibold text-white bg-apptivia-ink rounded-md hover:bg-apptivia-ink disabled:opacity-50">
@@ -514,7 +514,7 @@ export default function ReviewDetailModal({
                 <h3 className="text-sm font-semibold text-green-900 mb-2">Acknowledge Review</h3>
                 <p className="text-xs text-green-700 mb-3">By acknowledging, you confirm you have read and discussed this review with your manager.</p>
                 <textarea value={ackComment} onChange={e => setAckComment(e.target.value)}
-                  className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm mb-3" rows={2} placeholder="Optional comments..." />
+                  className="w-full border border-apptivia-carbon-300 rounded-md px-3 py-2 text-sm mb-3" rows={2} placeholder="Optional comments..." />
                 <button onClick={() => onAcknowledge(ackComment)} disabled={saving}
                   className="px-4 py-2 text-sm font-semibold text-white bg-green-600 rounded-md hover:bg-green-700 disabled:opacity-50">
                   {saving ? 'Processing...' : 'Acknowledge Review'}

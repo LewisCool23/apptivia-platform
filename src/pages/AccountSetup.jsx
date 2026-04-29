@@ -188,7 +188,7 @@ export default function AccountSetup() {
               type="text"
               value={formData.first_name}
               onChange={handleChange('first_name')}
-              className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200"
+              className="w-full border border-apptivia-carbon-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200"
               required
               autoFocus
               placeholder="Jane"
@@ -202,7 +202,7 @@ export default function AccountSetup() {
               type="text"
               value={formData.last_name}
               onChange={handleChange('last_name')}
-              className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200"
+              className="w-full border border-apptivia-carbon-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200"
               required
               placeholder="Doe"
             />
@@ -219,7 +219,7 @@ export default function AccountSetup() {
               type={showPassword ? 'text' : 'password'}
               value={formData.password}
               onChange={handleChange('password')}
-              className="w-full border border-gray-300 rounded-md px-3 py-2 pr-10 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200"
+              className="w-full border border-apptivia-carbon-300 rounded-md px-3 py-2 pr-10 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200"
               required
               minLength={8}
               placeholder="Min. 8 characters"
@@ -245,7 +245,7 @@ export default function AccountSetup() {
               type={showConfirmPassword ? 'text' : 'password'}
               value={formData.confirmPassword}
               onChange={handleChange('confirmPassword')}
-              className="w-full border border-gray-300 rounded-md px-3 py-2 pr-10 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200"
+              className="w-full border border-apptivia-carbon-300 rounded-md px-3 py-2 pr-10 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200"
               required
               minLength={8}
               placeholder="Re-enter password"

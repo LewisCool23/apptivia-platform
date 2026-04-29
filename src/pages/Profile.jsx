@@ -765,7 +765,7 @@ export default function Profile() {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 onFocus={() => searchQuery && setShowSearchResults(true)}
-                className="w-64 pl-9 pr-8 py-2 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-64 pl-9 pr-8 py-2 text-sm border border-apptivia-carbon-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-apptivia-coral"
               />
               {searchQuery && (
                 <button
@@ -780,7 +780,7 @@ export default function Profile() {
                 </button>
               )}
               {showSearchResults && searchResults.length > 0 && (
-                <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-96 overflow-y-auto z-50">
+                <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-apptivia-carbon-200 rounded-lg shadow-lg max-h-96 overflow-y-auto z-50">
                   {searchResults.map((result, idx) => (
                     <button
                       key={idx}
@@ -809,12 +809,12 @@ export default function Profile() {
                 </div>
               )}
               {showSearchResults && searchQuery && searchResults.length === 0 && !searching && (
-                <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg p-4 z-50">
+                <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-apptivia-carbon-200 rounded-lg shadow-lg p-4 z-50">
                   <div className="text-sm text-apptivia-carbon-500 text-center">No results found</div>
                 </div>
               )}
               {searching && (
-                <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg p-4 z-50">
+                <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-apptivia-carbon-200 rounded-lg shadow-lg p-4 z-50">
                   <div className="text-sm text-apptivia-carbon-500 text-center">Searching...</div>
                 </div>
               )}
@@ -823,7 +823,7 @@ export default function Profile() {
             <button
               onClick={handleRefresh}
               disabled={isRefreshing}
-              className={`relative p-2 rounded-lg font-semibold text-sm bg-white text-apptivia-carbon-700 border border-gray-200 hover:bg-apptivia-paper group ${
+              className={`relative p-2 rounded-lg font-semibold text-sm bg-white text-apptivia-carbon-700 border border-apptivia-carbon-200 hover:bg-apptivia-paper group ${
                 isRefreshing ? 'opacity-50 cursor-not-allowed' : 'transition-all duration-200 hover:scale-105 hover:shadow-md'
               }`}
             >
@@ -871,7 +871,7 @@ export default function Profile() {
 
         <div className="space-y-6">
           {/* Tab Navigation */}
-          <div className="bg-white rounded-lg p-2 shadow-sm border border-gray-100">
+          <div className="bg-white rounded-lg p-2 shadow-sm border border-apptivia-carbon-100">
             <div className="flex flex-wrap gap-2">
               {tabs.map((tab) => (
                 <button
@@ -930,7 +930,7 @@ export default function Profile() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {/* Profile Picture */}
                 {String(activeProfile.id) === String(user?.id) && (
-                  <div className="md:col-span-2 flex items-center gap-4 pb-3 border-b border-gray-100 mb-1">
+                  <div className="md:col-span-2 flex items-center gap-4 pb-3 border-b border-apptivia-carbon-100 mb-1">
                     <div className="relative">
                       <div className="w-16 h-16 rounded-full bg-apptivia-coral-tone-50 flex items-center justify-center text-xl font-bold text-apptivia-coral overflow-hidden">
                         {profile?.profile_picture ? (
@@ -1355,7 +1355,7 @@ export default function Profile() {
                     value={slackWebhookUrl}
                     onChange={e => setSlackWebhookUrl(e.target.value)}
                     placeholder="https://hooks.slack.com/services/..."
-                    className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className="w-full px-3 py-2 text-sm border border-apptivia-carbon-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-apptivia-coral"
                   />
                   <p className="text-[10px] text-apptivia-carbon-400 mt-1">
                     <a href="https://api.slack.com/messaging/webhooks" target="_blank" rel="noopener noreferrer" className="text-apptivia-coral hover:underline">How to create an incoming webhook</a>
@@ -1392,7 +1392,7 @@ export default function Profile() {
                 const template = SUPPORTED_INTEGRATIONS.find(t => t.integration_type === integration.integration_type);
                 if (!template) return null;
                 return (
-                  <div key={integration.id} className="bg-apptivia-paper rounded-xl p-5 border border-gray-100 flex flex-col">
+                  <div key={integration.id} className="bg-apptivia-paper rounded-xl p-5 border border-apptivia-carbon-100 flex flex-col">
                     <div className="flex items-center gap-3 mb-3">
                       <div className={`w-11 h-11 bg-gradient-to-br ${template.color} rounded-lg flex items-center justify-center text-xs font-bold text-white shadow-sm`}>
                         {template.icon}
@@ -1453,7 +1453,7 @@ export default function Profile() {
                   const isError = integration?.status === 'error';
 
                   return (
-                    <div key={template.integration_type} className="bg-white rounded-xl p-5 shadow-sm border border-gray-100 flex flex-col hover:shadow-md transition-shadow">
+                    <div key={template.integration_type} className="bg-white rounded-xl p-5 shadow-sm border border-apptivia-carbon-100 flex flex-col hover:shadow-md transition-shadow">
                       <div className="flex items-center gap-3 mb-3">
                         <div className={`w-11 h-11 bg-gradient-to-br ${template.color} rounded-lg flex items-center justify-center text-xs font-bold text-white shadow-sm`}>
                           {template.icon}
@@ -1745,7 +1745,7 @@ export default function Profile() {
       {showAwardBadgeModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={() => setShowAwardBadgeModal(false)}>
           <div className="bg-white rounded-xl shadow-2xl max-w-md w-full" onClick={(e) => e.stopPropagation()}>
-            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-apptivia-carbon-200">
               <div className="flex items-center gap-2">
                 <Gift size={20} className="text-amber-500" />
                 <h3 className="text-lg font-bold text-apptivia-ink">Award Badge</h3>
@@ -1760,7 +1760,7 @@ export default function Profile() {
                 <select
                   value={awardBadgeForm.badge_name}
                   onChange={(e) => setAwardBadgeForm(prev => ({ ...prev, badge_name: e.target.value }))}
-                  className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-3 py-2 text-sm border border-apptivia-carbon-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 >
                   <option value="">Select a badge...</option>
                   {availableBadgeDefs.map((b) => (
@@ -1773,7 +1773,7 @@ export default function Profile() {
                 <select
                   value={awardBadgeForm.profile_id}
                   onChange={(e) => setAwardBadgeForm(prev => ({ ...prev, profile_id: e.target.value }))}
-                  className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-3 py-2 text-sm border border-apptivia-carbon-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 >
                   <option value="">Select a member...</option>
                   {editableProfiles.filter(p => !['admin', 'manager'].includes(normalizeRole(p.role))).map((p) => (

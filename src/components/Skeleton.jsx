@@ -34,7 +34,7 @@ export const StatCardSkeleton = () => (
 
 // Skeleton for table rows
 export const TableRowSkeleton = ({ columns = 5 }) => (
-  <tr className="border-b border-gray-100">
+  <tr className="border-b border-apptivia-carbon-100">
     {Array.from({ length: columns }).map((_, i) => (
       <td key={i} className="px-2 py-3">
         <Skeleton className="h-4 w-full" />
@@ -45,7 +45,7 @@ export const TableRowSkeleton = ({ columns = 5 }) => (
 
 // Skeleton for skillset cards
 export const SkillsetCardSkeleton = () => (
-  <div className="border-2 border-gray-100 rounded-xl p-6 space-y-4">
+  <div className="border-2 border-apptivia-carbon-100 rounded-xl p-6 space-y-4">
     <div className="flex items-center gap-3">
       <Skeleton className="w-12 h-12 rounded-lg" />
       <div className="flex-1 space-y-2">

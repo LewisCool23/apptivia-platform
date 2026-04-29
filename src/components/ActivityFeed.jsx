@@ -147,8 +147,8 @@ export default function ActivityFeed({ organizationId, maxHeight = 480, compact 
 
   if (compact) {
     return (
-      <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
-        <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
+      <div className="bg-white rounded-xl border border-apptivia-carbon-100 shadow-sm overflow-hidden">
+        <div className="flex items-center justify-between px-4 py-3 border-b border-apptivia-carbon-100">
           <div className="flex items-center gap-2">
             <Activity size={15} className="text-apptivia-ink" />
             <span className="text-sm font-semibold text-apptivia-ink">Activity Feed</span>
@@ -184,7 +184,7 @@ export default function ActivityFeed({ organizationId, maxHeight = 480, compact 
             className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
               filter === f.id
                 ? 'bg-apptivia-ink text-white'
-                : 'bg-white border border-gray-200 text-apptivia-carbon-600 hover:border-violet-300 hover:text-apptivia-ink'
+                : 'bg-white border border-apptivia-carbon-200 text-apptivia-carbon-600 hover:border-apptivia-carbon-300 hover:text-apptivia-ink'
             }`}
           >
             {f.label}
@@ -192,7 +192,7 @@ export default function ActivityFeed({ organizationId, maxHeight = 480, compact 
         ))}
         <button
           onClick={fetchEvents}
-          className="ml-auto flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-gray-200 text-apptivia-carbon-600 hover:border-violet-300 hover:text-apptivia-ink transition-colors"
+          className="ml-auto flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-apptivia-carbon-200 text-apptivia-carbon-600 hover:border-apptivia-carbon-300 hover:text-apptivia-ink transition-colors"
         >
           <RefreshCw size={12} />
           Refresh
@@ -200,7 +200,7 @@ export default function ActivityFeed({ organizationId, maxHeight = 480, compact 
       </div>
 
       {/* Feed */}
-      <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
+      <div className="bg-white rounded-xl border border-apptivia-carbon-100 shadow-sm overflow-hidden">
         {loading ? (
           <div className="flex items-center justify-center py-16 text-apptivia-carbon-400">
             <Loader2 size={24} className="animate-spin mr-2" />

@@ -73,7 +73,7 @@ export default function StepIntegration({ wizardState, updateState }) {
           className={`p-4 rounded-xl border-2 text-left transition-all ${
             integrationMethod === 'crm'
               ? 'border-cyan-500 bg-cyan-50 ring-1 ring-cyan-200'
-              : 'border-gray-200 hover:border-gray-300'
+              : 'border-apptivia-carbon-200 hover:border-apptivia-carbon-300'
           }`}
         >
           <Plug size={24} className="text-cyan-600 mb-2" />
@@ -88,7 +88,7 @@ export default function StepIntegration({ wizardState, updateState }) {
           className={`p-4 rounded-xl border-2 text-left transition-all ${
             integrationMethod === 'csv'
               ? 'border-cyan-500 bg-cyan-50 ring-1 ring-cyan-200'
-              : 'border-gray-200 hover:border-gray-300'
+              : 'border-apptivia-carbon-200 hover:border-apptivia-carbon-300'
           }`}
         >
           <FileSpreadsheet size={24} className="text-emerald-600 mb-2" />
@@ -118,7 +118,7 @@ export default function StepIntegration({ wizardState, updateState }) {
                     className={`p-3 rounded-lg border text-left transition-all text-sm ${
                       selectedIntegration?.id === integ.id
                         ? 'border-cyan-500 bg-cyan-50 ring-1 ring-cyan-200'
-                        : 'border-gray-200 hover:border-gray-300'
+                        : 'border-apptivia-carbon-200 hover:border-apptivia-carbon-300'
                     }`}
                   >
                     <div className="font-medium text-apptivia-ink">{integ.display_name}</div>
@@ -139,7 +139,7 @@ export default function StepIntegration({ wizardState, updateState }) {
                   type="password"
                   value={integrationApiKey}
                   onChange={(e) => updateState({ integrationApiKey: e.target.value, integrationTestStatus: null })}
-                  className="flex-1 px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500"
+                  className="flex-1 px-3 py-2.5 border border-apptivia-carbon-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500"
                   placeholder={`Enter your ${selectedIntegration.display_name} API key`}
                 />
                 <button

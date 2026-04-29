@@ -71,7 +71,7 @@ function DemoRequestModal({ isOpen, onClose, planHint }) {
                   required
                   value={form.name}
                   onChange={(e) => setForm(f => ({ ...f, name: e.target.value }))}
-                  className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                  className="w-full px-3 py-2.5 border border-apptivia-carbon-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-apptivia-coral text-sm"
                   placeholder="Your full name"
                 />
               </div>
@@ -82,7 +82,7 @@ function DemoRequestModal({ isOpen, onClose, planHint }) {
                   required
                   value={form.email}
                   onChange={(e) => setForm(f => ({ ...f, email: e.target.value }))}
-                  className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                  className="w-full px-3 py-2.5 border border-apptivia-carbon-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-apptivia-coral text-sm"
                   placeholder="you@company.com"
                 />
               </div>
@@ -92,7 +92,7 @@ function DemoRequestModal({ isOpen, onClose, planHint }) {
                   type="text"
                   value={form.company}
                   onChange={(e) => setForm(f => ({ ...f, company: e.target.value }))}
-                  className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                  className="w-full px-3 py-2.5 border border-apptivia-carbon-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-apptivia-coral text-sm"
                   placeholder="Company name"
                 />
               </div>
@@ -101,7 +101,7 @@ function DemoRequestModal({ isOpen, onClose, planHint }) {
                 <select
                   value={form.teamSize}
                   onChange={(e) => setForm(f => ({ ...f, teamSize: e.target.value }))}
-                  className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm text-apptivia-carbon-700"
+                  className="w-full px-3 py-2.5 border border-apptivia-carbon-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-apptivia-coral text-sm text-apptivia-carbon-700"
                 >
                   <option value="">Select team size</option>
                   <option value="1-10">1-10 reps</option>
@@ -117,7 +117,7 @@ function DemoRequestModal({ isOpen, onClose, planHint }) {
                   value={form.message}
                   onChange={(e) => setForm(f => ({ ...f, message: e.target.value }))}
                   rows={2}
-                  className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm resize-none"
+                  className="w-full px-3 py-2.5 border border-apptivia-carbon-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-apptivia-coral text-sm resize-none"
                   placeholder="Current tools, pain points, goals..."
                 />
               </div>
@@ -192,7 +192,7 @@ export default function LandingPage() {
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-blue-500/10 via-transparent to-transparent" />
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
           <div className="text-center max-w-4xl mx-auto">
-            <div className="inline-flex items-center gap-2 bg-apptivia-coral/10 border border-blue-500/20 rounded-full px-4 py-1.5 mb-8">
+            <div className="inline-flex items-center gap-2 bg-apptivia-coral/10 border border-apptivia-coral/20 rounded-full px-4 py-1.5 mb-8">
               <span className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse" />
               <span className="text-apptivia-coral-tone-300 text-sm font-medium">Sales Performance Intelligence Platform</span>
             </div>
@@ -292,7 +292,7 @@ export default function LandingPage() {
                 bg: 'bg-pink-50',
               },
             ].map((feature, index) => (
-              <div key={index} className="bg-white border border-gray-200 rounded-xl p-6 hover:shadow-lg hover:border-gray-300 transition-all">
+              <div key={index} className="bg-white border border-apptivia-carbon-200 rounded-xl p-6 hover:shadow-lg hover:border-apptivia-carbon-300 transition-all">
                 <div className={`${feature.bg} w-12 h-12 rounded-lg flex items-center justify-center mb-4`}>
                   <feature.icon size={24} className={feature.color} />
                 </div>
@@ -390,7 +390,7 @@ export default function LandingPage() {
                 rating: 5,
               },
             ].map((testimonial, index) => (
-              <div key={index} className="bg-apptivia-paper border border-gray-200 rounded-xl p-6">
+              <div key={index} className="bg-apptivia-paper border border-apptivia-carbon-200 rounded-xl p-6">
                 <div className="flex gap-1 mb-4">
                   {[...Array(testimonial.rating)].map((_, i) => (
                     <Star key={i} size={16} className="text-yellow-500 fill-yellow-500" />
@@ -468,8 +468,8 @@ export default function LandingPage() {
                 key={index}
                 className={`bg-white rounded-xl p-8 ${
                   plan.highlighted
-                    ? 'border-2 border-blue-600 shadow-xl ring-1 ring-blue-100 scale-[1.02]'
-                    : 'border border-gray-200 shadow-sm'
+                    ? 'border-2 border-apptivia-coral shadow-xl ring-1 ring-blue-100 scale-[1.02]'
+                    : 'border border-apptivia-carbon-200 shadow-sm'
                 }`}
               >
                 {plan.highlighted && (
@@ -583,7 +583,7 @@ export default function LandingPage() {
               </ul>
             </div>
           </div>
-          <div className="border-t border-gray-800 pt-8 text-center text-sm">
+          <div className="border-t border-apptivia-carbon-800 pt-8 text-center text-sm">
             <p>&copy; 2026 Apptivia. All rights reserved.</p>
           </div>
         </div>

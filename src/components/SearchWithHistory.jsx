@@ -201,7 +201,7 @@ export default function SearchWithHistory({
           onFocus={() => setIsFocused(true)}
           onKeyDown={handleKeyDown}
           placeholder={placeholder}
-          className={`w-full ${showIcon ? 'pl-9' : 'pl-3'} ${showClear && value ? 'pr-8' : 'pr-3'} py-2 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${inputClassName}`}
+          className={`w-full ${showIcon ? 'pl-9' : 'pl-3'} ${showClear && value ? 'pr-8' : 'pr-3'} py-2 text-sm border border-apptivia-carbon-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-apptivia-coral ${inputClassName}`}
           autoComplete="off"
         />
         {showClear && value && (
@@ -221,7 +221,7 @@ export default function SearchWithHistory({
       {showDropdown && (
         <div
           ref={dropdownRef}
-          className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-72 overflow-y-auto z-50"
+          className="absolute top-full left-0 right-0 mt-1 bg-white border border-apptivia-carbon-200 rounded-lg shadow-lg max-h-72 overflow-y-auto z-50"
         >
           {filteredSuggestions.map((item, idx) => (
             <button
@@ -257,7 +257,7 @@ export default function SearchWithHistory({
           ))}
           
           {getHistory().length > 0 && (
-            <div className="border-t border-gray-100 px-3 py-2">
+            <div className="border-t border-apptivia-carbon-100 px-3 py-2">
               <button
                 onClick={() => {
                   clearHistory();

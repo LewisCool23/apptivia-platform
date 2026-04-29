@@ -251,7 +251,7 @@ export default function ReviewTab({ teamMembers, startForRepId }) {
           <div className="relative flex-1 max-w-xs">
             <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-apptivia-carbon-400" />
             <input value={searchQuery} onChange={e => setSearchQuery(e.target.value)} placeholder="Search reviews..."
-              className="w-full pl-9 pr-8 py-2 text-sm border border-gray-200 rounded-lg" />
+              className="w-full pl-9 pr-8 py-2 text-sm border border-apptivia-carbon-200 rounded-lg" />
             {searchQuery && (
               <button onClick={() => setSearchQuery('')} className="absolute right-2 top-1/2 -translate-y-1/2 text-apptivia-carbon-400 hover:text-apptivia-carbon-600"><X size={14} /></button>
             )}
@@ -322,7 +322,7 @@ export default function ReviewTab({ teamMembers, startForRepId }) {
           <p className="text-sm text-apptivia-carbon-500 mb-2">{isPowerUser ? 'No performance reviews for you yet' : 'No performance reviews yet'}</p>
           {isManager && !showBuilder && (
             <button onClick={() => { setForm(emptyForm()); setShowBuilder(true); }}
-              className="px-4 py-2 text-sm font-semibold text-apptivia-coral border border-blue-600 rounded-lg hover:bg-apptivia-coral-tone-50">
+              className="px-4 py-2 text-sm font-semibold text-apptivia-coral border border-apptivia-coral rounded-lg hover:bg-apptivia-coral-tone-50">
               Create Your First Review
             </button>
           )}

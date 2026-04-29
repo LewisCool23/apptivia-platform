@@ -306,7 +306,7 @@ export default function Meeting1On1PrepModal({
                         </div>
                         {kpi.guidance && (
                           <>
-                            <div className="text-[11px] text-apptivia-coral-tone-700 bg-apptivia-coral-tone-50 border border-blue-100 rounded px-3 py-2 mb-1.5">
+                            <div className="text-[11px] text-apptivia-coral-tone-700 bg-apptivia-coral-tone-50 border border-apptivia-coral-tone-100 rounded px-3 py-2 mb-1.5">
                               <span className="font-semibold">Ask:</span> "{kpi.guidance.coachingQuestion}"
                             </div>
                             <div className="text-[11px] text-amber-700 bg-amber-50 border border-amber-100 rounded px-3 py-1.5">
@@ -387,7 +387,7 @@ export default function Meeting1On1PrepModal({
 
             {/* 6. Share Agenda Preview */}
             {showSharePreview && (
-              <div className="border-2 border-blue-200 rounded-lg p-4 bg-apptivia-coral-tone-50/50 no-print">
+              <div className="border-2 border-apptivia-coral-tone-100 rounded-lg p-4 bg-apptivia-coral-tone-50/50 no-print">
                 <h3 className="text-sm font-semibold text-apptivia-ink mb-3 flex items-center gap-2">
                   <span className="w-6 h-6 rounded-full bg-apptivia-coral text-white flex items-center justify-center text-xs font-bold">
                     <Send size={12} />

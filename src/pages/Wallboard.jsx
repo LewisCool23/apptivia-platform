@@ -61,8 +61,8 @@ const RARITY_COLORS = {
 
 const DIFFICULTY_COLORS = {
   easy:   { bg: 'bg-green-500/20', text: 'text-green-300', border: 'border-green-500/30' },
-  medium: { bg: 'bg-apptivia-coral/20',  text: 'text-apptivia-coral-tone-300',  border: 'border-blue-500/30' },
-  hard:   { bg: 'bg-apptivia-ink/20', text: 'text-apptivia-ink', border: 'border-purple-500/30' },
+  medium: { bg: 'bg-apptivia-coral/20',  text: 'text-apptivia-coral-tone-300',  border: 'border-apptivia-coral/30' },
+  hard:   { bg: 'bg-apptivia-ink/20', text: 'text-apptivia-ink', border: 'border-apptivia-carbon-300/30' },
   expert: { bg: 'bg-amber-500/20', text: 'text-amber-300', border: 'border-amber-500/30' },
 };
 

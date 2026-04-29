@@ -656,7 +656,7 @@ export default function OnboardingWizard({ isOpen, onClose, onComplete, organiza
 
         {/* Resume Banner */}
         {showResumeBanner && (
-          <div className="px-6 py-2 bg-apptivia-coral-tone-50 border-b border-blue-100 flex items-center justify-between flex-shrink-0">
+          <div className="px-6 py-2 bg-apptivia-coral-tone-50 border-b border-apptivia-coral-tone-100 flex items-center justify-between flex-shrink-0">
             <span className="text-sm text-apptivia-coral">Resumed from your previous session</span>
             <button
               onClick={handleStartOver}

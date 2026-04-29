@@ -51,7 +51,7 @@ export default function PageActionBar({
       <button
         onClick={onClick}
         disabled={disabled}
-        className={`relative p-2 rounded-lg font-semibold text-sm bg-white text-apptivia-carbon-700 border border-gray-200 hover:bg-apptivia-paper ${
+        className={`relative p-2 rounded-lg font-semibold text-sm bg-white text-apptivia-carbon-700 border border-apptivia-carbon-200 hover:bg-apptivia-paper ${
           disabled ? 'opacity-50 cursor-not-allowed' : 'transition-all duration-200 hover:scale-105 hover:shadow-md'
         }`}
         aria-label={label}
@@ -95,7 +95,7 @@ export default function PageActionBar({
 
         {/* Dropdown Menu */}
         {actionsOpen && actions.length > 0 && (
-          <div className="absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-xl border border-gray-200 py-2 z-50 animate-fadeIn">
+          <div className="absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-xl border border-apptivia-carbon-200 py-2 z-50 animate-fadeIn">
             {actions.map((action, index) => (
               <button
                 key={index}

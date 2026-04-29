@@ -360,7 +360,7 @@ export default function ContestCreationModal({ isOpen, onClose, currentUserId, o
       contentClassName="pb-8"
     >
       <form onSubmit={handleSubmit} className="space-y-4">
-        <div className="bg-gradient-to-r from-blue-50 to-purple-50 border border-blue-100 rounded-lg p-4">
+        <div className="bg-gradient-to-r from-blue-50 to-purple-50 border border-apptivia-coral-tone-100 rounded-lg p-4">
           <div className="text-sm font-semibold text-apptivia-coral-tone-700">{contestToEdit ? '✏️ Edit Contest' : '🏆 Create New Contest'}</div>
           <div className="text-xs text-apptivia-coral mt-1">
             {contestToEdit ? 'Update contest details' : 'Launch a new competition to motivate your team'}
@@ -395,7 +395,7 @@ export default function ContestCreationModal({ isOpen, onClose, currentUserId, o
                 type="text"
                 value={formData.name}
                 onChange={(e) => updateField('name', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-apptivia-carbon-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
                 placeholder="e.g., Q1 Pipeline Challenge"
                 required
               />
@@ -409,7 +409,7 @@ export default function ContestCreationModal({ isOpen, onClose, currentUserId, o
               <textarea
                 value={formData.description}
                 onChange={(e) => updateField('description', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-apptivia-carbon-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
                 placeholder="Brief description of the contest"
                 rows={2}
               />
@@ -423,7 +423,7 @@ export default function ContestCreationModal({ isOpen, onClose, currentUserId, o
               <select
                 value={formData.kpi_key}
                 onChange={(e) => updateField('kpi_key', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-apptivia-carbon-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
                 required
               >
                 <option value="">Select a KPI...</option>
@@ -443,7 +443,7 @@ export default function ContestCreationModal({ isOpen, onClose, currentUserId, o
               <select
                 value={formData.calculation_type}
                 onChange={(e) => updateField('calculation_type', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-apptivia-carbon-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
                 <option value="sum">Total Sum</option>
                 <option value="average">Average</option>
@@ -462,7 +462,7 @@ export default function ContestCreationModal({ isOpen, onClose, currentUserId, o
                   type="date"
                   value={formData.start_date}
                   onChange={(e) => updateField('start_date', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-apptivia-carbon-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
                   required
                 />
               </div>
@@ -474,7 +474,7 @@ export default function ContestCreationModal({ isOpen, onClose, currentUserId, o
                   type="date"
                   value={formData.end_date}
                   onChange={(e) => updateField('end_date', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-apptivia-carbon-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
                   required
                 />
               </div>
@@ -488,7 +488,7 @@ export default function ContestCreationModal({ isOpen, onClose, currentUserId, o
               <select
                 value={formData.participant_type}
                 onChange={(e) => updateField('participant_type', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-apptivia-carbon-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
                 <option value="individual">Individual Competition</option>
                 <option value="team">Team Competition</option>
@@ -504,7 +504,7 @@ export default function ContestCreationModal({ isOpen, onClose, currentUserId, o
               <select
                 value={formData.reward_type}
                 onChange={(e) => updateField('reward_type', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-apptivia-carbon-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
                 <option value="gift_card">Gift Card</option>
                 <option value="bonus">Cash Bonus</option>
@@ -524,7 +524,7 @@ export default function ContestCreationModal({ isOpen, onClose, currentUserId, o
                 type="text"
                 value={formData.reward_value}
                 onChange={(e) => updateField('reward_value', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-apptivia-carbon-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
                 placeholder="e.g., $100, 1 Day PTO"
               />
             </div>
@@ -538,7 +538,7 @@ export default function ContestCreationModal({ isOpen, onClose, currentUserId, o
                 type="text"
                 value={formData.reward_description}
                 onChange={(e) => updateField('reward_description', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-apptivia-carbon-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
                 placeholder="e.g., $100 Amazon Gift Card"
               />
             </div>
@@ -556,7 +556,7 @@ export default function ContestCreationModal({ isOpen, onClose, currentUserId, o
           )}
 
           {/* Info Box */}
-          <div className="mt-4 p-3 bg-apptivia-coral-tone-50 border border-blue-200 rounded">
+          <div className="mt-4 p-3 bg-apptivia-coral-tone-50 border border-apptivia-coral-tone-100 rounded">
             <div className="text-sm text-apptivia-coral-tone-700">
               <strong>Note:</strong> All active team members will be automatically enrolled in this contest. 
               You can also add specific members later using the <strong>Add Members</strong> button on the contest card.
@@ -569,7 +569,7 @@ export default function ContestCreationModal({ isOpen, onClose, currentUserId, o
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 px-4 py-2 border border-gray-300 rounded hover:bg-apptivia-paper font-semibold"
+              className="flex-1 px-4 py-2 border border-apptivia-carbon-300 rounded hover:bg-apptivia-paper font-semibold"
               disabled={saving}
             >
               Cancel

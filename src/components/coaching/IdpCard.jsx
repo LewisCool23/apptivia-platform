@@ -15,7 +15,7 @@ export default function IdpCard({ idp, canManage, onView, onEdit, onDelete }) {
   const milestoneProgress = totalMilestones > 0 ? Math.round((completedMilestones / totalMilestones) * 100) : 0;
 
   return (
-    <div className={`border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow flex flex-col border-l-4 ${cfg.borderColor}`}>
+    <div className={`border border-apptivia-carbon-200 rounded-lg p-4 hover:shadow-md transition-shadow flex flex-col border-l-4 ${cfg.borderColor}`}>
       {/* Header */}
       <div className="flex items-start justify-between mb-3">
         <div className="flex-1">
@@ -90,7 +90,7 @@ export default function IdpCard({ idp, canManage, onView, onEdit, onDelete }) {
       <div className="flex gap-2">
         <button
           onClick={() => onView(idp)}
-          className="flex-1 flex items-center justify-center gap-1 px-3 py-1.5 text-xs font-semibold text-apptivia-coral border border-blue-600 rounded-md hover:bg-apptivia-coral-tone-50"
+          className="flex-1 flex items-center justify-center gap-1 px-3 py-1.5 text-xs font-semibold text-apptivia-coral border border-apptivia-coral rounded-md hover:bg-apptivia-coral-tone-50"
         >
           <Target size={14} />
           View
@@ -99,7 +99,7 @@ export default function IdpCard({ idp, canManage, onView, onEdit, onDelete }) {
           <>
             <button
               onClick={() => onEdit(idp)}
-              className="flex items-center justify-center gap-1 px-3 py-1.5 text-xs font-semibold text-apptivia-carbon-600 border border-gray-300 rounded-md hover:bg-apptivia-paper"
+              className="flex items-center justify-center gap-1 px-3 py-1.5 text-xs font-semibold text-apptivia-carbon-600 border border-apptivia-carbon-300 rounded-md hover:bg-apptivia-paper"
               title="Edit IDP"
             >
               <Edit size={14} />

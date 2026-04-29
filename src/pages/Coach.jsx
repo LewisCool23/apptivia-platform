@@ -890,7 +890,7 @@ export default function Coach() {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 onFocus={() => searchQuery && setShowSearchResults(true)}
-                className="w-64 pl-9 pr-8 py-2 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-64 pl-9 pr-8 py-2 text-sm border border-apptivia-carbon-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-apptivia-coral"
               />
               {searchQuery && (
                 <button
@@ -906,7 +906,7 @@ export default function Coach() {
               )}
               {/* Search Results Dropdown */}
               {showSearchResults && searchResults.length > 0 && (
-                <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-96 overflow-y-auto z-50">
+                <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-apptivia-carbon-200 rounded-lg shadow-lg max-h-96 overflow-y-auto z-50">
                   {searchResults.map((result, idx) => (
                     <button
                       key={idx}
@@ -935,12 +935,12 @@ export default function Coach() {
                 </div>
               )}
               {showSearchResults && searchQuery && searchResults.length === 0 && !searching && (
-                <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg p-4 z-50">
+                <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-apptivia-carbon-200 rounded-lg shadow-lg p-4 z-50">
                   <div className="text-sm text-apptivia-carbon-500 text-center">No results found</div>
                 </div>
               )}
               {searching && (
-                <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg p-4 z-50">
+                <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-apptivia-carbon-200 rounded-lg shadow-lg p-4 z-50">
                   <div className="text-sm text-apptivia-carbon-500 text-center">Searching...</div>
                 </div>
               )}
@@ -949,7 +949,7 @@ export default function Coach() {
             <button
               onClick={handleRefresh}
               disabled={isRefreshing}
-              className={`relative p-2 rounded-lg font-semibold text-sm bg-white text-apptivia-carbon-700 border border-gray-200 hover:bg-apptivia-paper group ${
+              className={`relative p-2 rounded-lg font-semibold text-sm bg-white text-apptivia-carbon-700 border border-apptivia-carbon-200 hover:bg-apptivia-paper group ${
                 isRefreshing ? 'opacity-50 cursor-not-allowed' : 'transition-all duration-200 hover:scale-105 hover:shadow-md'
               }`}
               /* tooltip handled by custom hover span below */
@@ -1121,7 +1121,7 @@ export default function Coach() {
 
               {/* Side Cards: Growth Path (power user) or Team Leaderboard (manager) */}
               {isPowerUser && (
-                <div className="bg-white border border-gray-200 rounded-lg p-4 min-w-[220px] max-w-[260px] flex flex-col">
+                <div className="bg-white border border-apptivia-carbon-200 rounded-lg p-4 min-w-[220px] max-w-[260px] flex flex-col">
                   <div className="text-sm font-semibold text-apptivia-ink mb-3">My Growth Path</div>
                   {(() => {
                     const pts = data.avgPoints || 0;
@@ -1188,7 +1188,7 @@ export default function Coach() {
 
               <div className="space-y-2">
                 {/* Section 1: KPI Success Trends */}
-                <div className={`rounded-lg border transition-colors ${insightsSection === 'trends' ? 'border-blue-200 bg-apptivia-coral-tone-50/30' : 'border-gray-100 bg-apptivia-coral-tone-50/10 hover:bg-apptivia-coral-tone-50/30'}`}>
+                <div className={`rounded-lg border transition-colors ${insightsSection === 'trends' ? 'border-apptivia-coral-tone-100 bg-apptivia-coral-tone-50/30' : 'border-apptivia-carbon-100 bg-apptivia-coral-tone-50/10 hover:bg-apptivia-coral-tone-50/30'}`}>
                   <button
                     type="button"
                     onClick={() => setInsightsSection(prev => prev === 'trends' ? null : 'trends')}
@@ -1219,7 +1219,7 @@ export default function Coach() {
                         <div className="overflow-y-auto max-h-[300px]">
                           <table className="w-full text-xs">
                             <thead className="sticky top-0 bg-white">
-                              <tr className="border-b border-gray-100">
+                              <tr className="border-b border-apptivia-carbon-100">
                                 <th className="text-left py-1.5 px-2 font-semibold text-apptivia-carbon-700">KPI</th>
                                 {(trendEntries[0]?.[1]?.weeks || []).map((w, i) => (
                                   <th key={i} className="text-center py-1.5 px-1 font-medium text-apptivia-carbon-400 text-[10px]">{w.week}</th>
@@ -1233,7 +1233,7 @@ export default function Coach() {
                                 const isLagging = trend.avgPct < LAGGING_THRESHOLD;
                                 const statusColor = trend.avgPct >= 90 ? 'text-green-600 bg-green-50' : trend.avgPct >= 80 ? 'text-yellow-600 bg-yellow-50' : trend.avgPct >= 60 ? 'text-orange-600 bg-orange-50' : 'text-red-600 bg-red-50';
                                 return (
-                                  <tr key={key} className={`border-b border-gray-50 ${isLagging ? 'bg-red-50/30' : ''}`}>
+                                  <tr key={key} className={`border-b border-apptivia-carbon-100 ${isLagging ? 'bg-red-50/30' : ''}`}>
                                     <td className="py-1.5 px-2 font-medium text-apptivia-ink whitespace-nowrap">{trend.name}</td>
                                     {trend.weeks.map((w, i) => {
                                       const cellColor = w.pct > 0 ? scoreTextColor(w.pct) : 'text-apptivia-carbon-300';
@@ -1264,7 +1264,7 @@ export default function Coach() {
                 </div>
 
                 {/* Section 2: Improvement Suggestions */}
-                <div className={`rounded-lg border transition-colors ${insightsSection === 'suggestions' ? 'border-orange-200 bg-orange-50/30' : 'border-gray-100 bg-orange-50/10 hover:bg-orange-50/30'}`}>
+                <div className={`rounded-lg border transition-colors ${insightsSection === 'suggestions' ? 'border-orange-200 bg-orange-50/30' : 'border-apptivia-carbon-100 bg-orange-50/10 hover:bg-orange-50/30'}`}>
                   <button
                     type="button"
                     onClick={() => setInsightsSection(prev => prev === 'suggestions' ? null : 'suggestions')}
@@ -1325,7 +1325,7 @@ export default function Coach() {
                 </div>
 
                 {/* Section 3: Active Coaching Plans */}
-                <div className={`rounded-lg border transition-colors ${insightsSection === 'plans' ? 'border-green-200 bg-green-50/30' : 'border-gray-100 bg-green-50/10 hover:bg-green-50/30'}`}>
+                <div className={`rounded-lg border transition-colors ${insightsSection === 'plans' ? 'border-green-200 bg-green-50/30' : 'border-apptivia-carbon-100 bg-green-50/10 hover:bg-green-50/30'}`}>
                   <button
                     type="button"
                     onClick={() => setInsightsSection(prev => prev === 'plans' ? null : 'plans')}
@@ -1361,7 +1361,7 @@ export default function Coach() {
                       {activePlansLoading ? (
                         <div className="text-xs text-apptivia-carbon-500 py-4">Loading coaching plans...</div>
                       ) : totalPlans === 0 ? (
-                        <div className="border border-dashed border-gray-200 rounded-lg p-4 text-center">
+                        <div className="border border-dashed border-apptivia-carbon-200 rounded-lg p-4 text-center">
                           <div className="text-sm text-apptivia-carbon-500 mb-2">No active coaching plans</div>
                           <button type="button" onClick={() => setRequestPlanOpen(true)} className="text-xs text-apptivia-coral hover:text-apptivia-coral-tone-700 font-medium">
                             Request Coaching Plan
@@ -1375,7 +1375,7 @@ export default function Coach() {
                             const statusColor = status === 'in_progress' ? 'bg-apptivia-coral-tone-50 text-apptivia-coral' : 'bg-apptivia-carbon-100 text-apptivia-carbon-600';
                             const statusLabel = status === 'in_progress' ? 'In Progress' : 'Active';
                             return (
-                              <div key={plan.id} className="border border-gray-100 rounded-lg p-3 hover:shadow-sm transition-all">
+                              <div key={plan.id} className="border border-apptivia-carbon-100 rounded-lg p-3 hover:shadow-sm transition-all">
                                 <div className="flex items-center justify-between mb-2">
                                   <div className="font-semibold text-sm text-apptivia-ink">{plan.name || 'Coaching Plan'}</div>
                                   <div className="flex items-center gap-2">
@@ -1406,7 +1406,7 @@ export default function Coach() {
                                   </div>
                                 )}
                                 <div className="flex gap-2 mt-2">
-                                  <button type="button" onClick={() => setViewPlanDetail(plan)} className="text-[11px] px-2.5 py-1 rounded-md bg-apptivia-paper text-apptivia-carbon-700 hover:bg-apptivia-carbon-100 font-medium border border-gray-200 transition-colors">
+                                  <button type="button" onClick={() => setViewPlanDetail(plan)} className="text-[11px] px-2.5 py-1 rounded-md bg-apptivia-paper text-apptivia-carbon-700 hover:bg-apptivia-carbon-100 font-medium border border-apptivia-carbon-200 transition-colors">
                                     View Full Plan
                                   </button>
                                   {(status === 'active' || status === 'in_progress') && (
@@ -1441,7 +1441,7 @@ export default function Coach() {
                                       else { effTier = 'No change'; effColor = 'text-apptivia-carbon-500'; }
                                     }
                                     return (
-                                      <div key={plan.id} className="border border-gray-100 rounded-lg p-3 bg-apptivia-paper">
+                                      <div key={plan.id} className="border border-apptivia-carbon-100 rounded-lg p-3 bg-apptivia-paper">
                                         <div className="flex items-center justify-between mb-1">
                                           <span className="font-semibold text-sm text-apptivia-ink">{plan.name || 'Coaching Plan'}</span>
                                           <span className="text-[10px] text-apptivia-carbon-400">{assignment.status === 'cancelled' ? 'Cancelled' : 'Completed'} {assignment.completed_at ? new Date(assignment.completed_at).toLocaleDateString() : ''}</span>
@@ -1490,7 +1490,7 @@ export default function Coach() {
                 </div>
 
                 {/* Section 4: My Development Plans (IDPs) */}
-                <div className={`rounded-lg border transition-colors ${insightsSection === 'idps' ? 'border-purple-200 bg-apptivia-carbon-100/30' : 'border-gray-100 bg-apptivia-carbon-100/10 hover:bg-apptivia-carbon-100/30'}`}>
+                <div className={`rounded-lg border transition-colors ${insightsSection === 'idps' ? 'border-apptivia-carbon-300 bg-apptivia-carbon-100/30' : 'border-apptivia-carbon-100 bg-apptivia-carbon-100/10 hover:bg-apptivia-carbon-100/30'}`}>
                   <button
                     type="button"
                     onClick={() => setInsightsSection(prev => prev === 'idps' ? null : 'idps')}
@@ -1522,7 +1522,7 @@ export default function Coach() {
                       {myIdpsLoading ? (
                         <div className="text-xs text-apptivia-carbon-500 py-4">Loading development plans...</div>
                       ) : myIdps.length === 0 ? (
-                        <div className="border border-dashed border-gray-200 rounded-lg p-4 text-center">
+                        <div className="border border-dashed border-apptivia-carbon-200 rounded-lg p-4 text-center">
                           <div className="text-sm text-apptivia-carbon-500">No development plans assigned yet</div>
                           <div className="text-xs text-apptivia-carbon-400 mt-1">Your manager will create an IDP when ready</div>
                         </div>
@@ -1543,7 +1543,7 @@ export default function Coach() {
                             };
                             const statusLabels = { draft: 'Draft', active: 'Active', in_progress: 'In Progress', completed: 'Completed', overdue: 'Overdue' };
                             return (
-                              <div key={idp.id} className="border border-gray-100 rounded-lg p-3 hover:shadow-sm transition-all">
+                              <div key={idp.id} className="border border-apptivia-carbon-100 rounded-lg p-3 hover:shadow-sm transition-all">
                                 <div className="flex items-center justify-between mb-2">
                                   <div className="font-semibold text-sm text-apptivia-ink truncate">{idp.name}</div>
                                   <div className="flex items-center gap-2 shrink-0">
@@ -1580,7 +1580,7 @@ export default function Coach() {
                                 <button
                                   type="button"
                                   onClick={() => setViewIdpDetail(idp)}
-                                  className="text-[11px] px-2.5 py-1 rounded-md bg-apptivia-carbon-100 text-apptivia-ink hover:bg-apptivia-carbon-100 font-medium border border-purple-200 transition-colors mt-1"
+                                  className="text-[11px] px-2.5 py-1 rounded-md bg-apptivia-carbon-100 text-apptivia-ink hover:bg-apptivia-carbon-100 font-medium border border-apptivia-carbon-300 transition-colors mt-1"
                                 >
                                   View Full Plan
                                 </button>
@@ -1594,7 +1594,7 @@ export default function Coach() {
                 </div>
 
                 {/* Section 5: My Performance Reviews */}
-                <div className={`rounded-lg border transition-colors ${insightsSection === 'reviews' ? 'border-amber-200 bg-amber-50/30' : 'border-gray-100 bg-amber-50/10 hover:bg-amber-50/30'}`}>
+                <div className={`rounded-lg border transition-colors ${insightsSection === 'reviews' ? 'border-amber-200 bg-amber-50/30' : 'border-apptivia-carbon-100 bg-amber-50/10 hover:bg-amber-50/30'}`}>
                   <button
                     type="button"
                     onClick={() => setInsightsSection(prev => prev === 'reviews' ? null : 'reviews')}
@@ -1630,7 +1630,7 @@ export default function Coach() {
                       {myReviewsLoading ? (
                         <div className="text-xs text-apptivia-carbon-500 py-4">Loading performance reviews...</div>
                       ) : myReviews.length === 0 ? (
-                        <div className="border border-dashed border-gray-200 rounded-lg p-4 text-center">
+                        <div className="border border-dashed border-apptivia-carbon-200 rounded-lg p-4 text-center">
                           <div className="text-sm text-apptivia-carbon-500">No performance reviews yet</div>
                           <div className="text-xs text-apptivia-carbon-400 mt-1">Your manager will initiate reviews during review cycles</div>
                         </div>
@@ -1650,7 +1650,7 @@ export default function Coach() {
                             const needsAction = review.status === 'pending_self_assessment' || review.status === 'finalized';
                             const rating = review.final_rating || review.manager_rating;
                             return (
-                              <div key={review.id} className={`border rounded-lg p-3 hover:shadow-sm transition-all ${needsAction ? 'border-amber-200 bg-amber-50/30' : 'border-gray-100'}`}>
+                              <div key={review.id} className={`border rounded-lg p-3 hover:shadow-sm transition-all ${needsAction ? 'border-amber-200 bg-amber-50/30' : 'border-apptivia-carbon-100'}`}>
                                 <div className="flex items-center justify-between mb-2">
                                   <div className="font-semibold text-sm text-apptivia-ink truncate">{review.title}</div>
                                   <div className="flex items-center gap-2 shrink-0">
@@ -1689,7 +1689,7 @@ export default function Coach() {
                                   className={`text-[11px] px-2.5 py-1 rounded-md font-medium border transition-colors mt-1 ${
                                     needsAction
                                       ? 'bg-amber-50 text-amber-700 hover:bg-amber-100 border-amber-200'
-                                      : 'bg-apptivia-paper text-apptivia-carbon-700 hover:bg-apptivia-carbon-100 border-gray-200'
+                                      : 'bg-apptivia-paper text-apptivia-carbon-700 hover:bg-apptivia-carbon-100 border-apptivia-carbon-200'
                                   }`}
                                 >
                                   {review.status === 'pending_self_assessment' ? 'Start Self-Assessment' : review.status === 'finalized' ? 'View & Acknowledge' : 'View Review'}
@@ -1721,7 +1721,7 @@ export default function Coach() {
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 items-stretch auto-rows-fr">
               {data.skillsets.map((skillset, index) => (
-                <div key={index} className="border-2 border-gray-100 rounded-lg p-4 hover:shadow-md transition-all duration-200 hover:-translate-y-0.5 h-full flex flex-col">
+                <div key={index} className="border-2 border-apptivia-carbon-100 rounded-lg p-4 hover:shadow-md transition-all duration-200 hover:-translate-y-0.5 h-full flex flex-col">
                   <div className="flex items-start gap-2 mb-3">
                     <div className="p-2 rounded-lg bg-white shadow-sm flex-shrink-0">
                       <span style={{ color: skillset.color, fontSize: 20 }}>●</span>
@@ -1752,11 +1752,11 @@ export default function Coach() {
                       </Tooltip>
                     </div>
                   </div>
-                  <div className="bg-apptivia-paper rounded-lg p-2.5 border border-gray-100 mb-2">
+                  <div className="bg-apptivia-paper rounded-lg p-2.5 border border-apptivia-carbon-100 mb-2">
                     <div className="text-[10px] font-medium text-apptivia-carbon-500 mb-0.5">Next Achievement</div>
                     <div className="text-xs text-apptivia-ink break-words line-clamp-2">{skillset.next_achievement}</div>
                   </div>
-                  <div className="bg-apptivia-paper rounded-lg p-2.5 border border-gray-100 mb-2">
+                  <div className="bg-apptivia-paper rounded-lg p-2.5 border border-apptivia-carbon-100 mb-2">
                     <div className="text-[10px] font-medium text-apptivia-carbon-500 mb-0.5">{isPowerUser ? 'Skillset Points' : 'Avg Skillset Points'}</div>
                     <div className="text-xs font-semibold text-apptivia-ink">{skillset.points}</div>
                   </div>

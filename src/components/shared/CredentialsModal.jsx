@@ -47,14 +47,14 @@ export default function CredentialsModal({ providerType, onClose, onConnect, err
                 placeholder={field.placeholder}
                 value={values[field.key] || ''}
                 onChange={(e) => setValues(prev => ({ ...prev, [field.key]: e.target.value }))}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                className="w-full px-3 py-2 border border-apptivia-carbon-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-apptivia-coral outline-none"
               />
             </div>
           ))}
         </div>
         {error && <div className="text-xs text-red-500 mb-3">{error}</div>}
         <div className="flex justify-end gap-2">
-          <button onClick={onClose} className="px-4 py-2 text-sm rounded-lg border border-gray-200 hover:bg-apptivia-paper">
+          <button onClick={onClose} className="px-4 py-2 text-sm rounded-lg border border-apptivia-carbon-200 hover:bg-apptivia-paper">
             Cancel
           </button>
           <button

@@ -75,7 +75,7 @@ export default function Engage() {
           </div>
 
           {/* Right-panel icon strip */}
-          <div className="flex items-center gap-1 bg-white border border-gray-100 rounded-xl p-1 shadow-sm">
+          <div className="flex items-center gap-1 bg-white border border-apptivia-carbon-100 rounded-xl p-1 shadow-sm">
             {PANELS.map(({ id, icon: Icon, label, color }) => (
               <button
                 key={id}
@@ -94,7 +94,7 @@ export default function Engage() {
         </div>
 
         {/* Tab Navigation */}
-        <div className="flex items-center gap-1 mb-5 bg-white rounded-xl border border-gray-100 p-1">
+        <div className="flex items-center gap-1 mb-5 bg-white rounded-xl border border-apptivia-carbon-100 p-1">
           {TABS.map((tab) => {
             const isActive = activeTab === tab.id;
             return (
@@ -159,7 +159,7 @@ export default function Engage() {
             className="fixed inset-0 z-30 bg-black/5"
             onClick={() => setActivePanel(null)}
           />
-          <div className="fixed top-0 right-0 h-full w-[360px] bg-white shadow-2xl z-40 border-l border-gray-100 flex flex-col">
+          <div className="fixed top-0 right-0 h-full w-[360px] bg-white shadow-2xl z-40 border-l border-apptivia-carbon-100 flex flex-col">
             {activePanel === 'dialpad' && (
               <EngageDialpadPanel
                 onCall={dialer.startCall}
@@ -177,7 +177,7 @@ export default function Engage() {
             )}
             {activePanel === 'activity' && (
               <div className="flex flex-col h-full">
-                <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 flex-shrink-0">
+                <div className="flex items-center justify-between px-4 py-3 border-b border-apptivia-carbon-100 flex-shrink-0">
                   <div className="flex items-center gap-2">
                     <Activity size={14} className="text-apptivia-ink" />
                     <h3 className="font-semibold text-apptivia-ink text-sm">Activity Feed</h3>

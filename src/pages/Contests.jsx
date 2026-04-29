@@ -999,7 +999,7 @@ export default function Contests() {
         )}
       </div>
       {contest.status === 'completed' && contest.leaderboard?.length > 0 && (
-        <div className="mt-4 bg-apptivia-paper border border-slate-200 rounded-lg p-3">
+        <div className="mt-4 bg-apptivia-paper border border-apptivia-carbon-200 rounded-lg p-3">
           <div className="text-xs text-apptivia-carbon-500 mb-2">Top 3 Results</div>
           <div className="space-y-1 text-sm text-apptivia-carbon-700">
             {contest.leaderboard.slice(0, 3).map((entry) => (
@@ -1071,7 +1071,7 @@ export default function Contests() {
                 value={globalSearchQuery}
                 onChange={(e) => setGlobalSearchQuery(e.target.value)}
                 onFocus={() => globalSearchQuery && setShowGlobalSearchResults(true)}
-                className="w-64 pl-9 pr-8 py-2 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-64 pl-9 pr-8 py-2 text-sm border border-apptivia-carbon-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-apptivia-coral"
               />
               {globalSearchQuery && (
                 <button
@@ -1087,7 +1087,7 @@ export default function Contests() {
               )}
               {/* Search Results Dropdown */}
               {showGlobalSearchResults && globalSearchResults.length > 0 && (
-                <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-96 overflow-y-auto z-50">
+                <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-apptivia-carbon-200 rounded-lg shadow-lg max-h-96 overflow-y-auto z-50">
                   {globalSearchResults.map((result, idx) => (
                     <button
                       key={idx}
@@ -1116,12 +1116,12 @@ export default function Contests() {
                 </div>
               )}
               {showGlobalSearchResults && globalSearchQuery && globalSearchResults.length === 0 && !globalSearching && (
-                <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg p-4 z-50">
+                <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-apptivia-carbon-200 rounded-lg shadow-lg p-4 z-50">
                   <div className="text-sm text-apptivia-carbon-500 text-center">No results found</div>
                 </div>
               )}
               {globalSearching && (
-                <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg p-4 z-50">
+                <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-apptivia-carbon-200 rounded-lg shadow-lg p-4 z-50">
                   <div className="text-sm text-apptivia-carbon-500 text-center">Searching...</div>
                 </div>
               )}
@@ -1130,7 +1130,7 @@ export default function Contests() {
             <button
               onClick={handleRefresh}
               disabled={isRefreshing}
-              className={`relative p-2 rounded-lg font-semibold text-sm bg-white text-apptivia-carbon-700 border border-gray-200 hover:bg-apptivia-paper group ${
+              className={`relative p-2 rounded-lg font-semibold text-sm bg-white text-apptivia-carbon-700 border border-apptivia-carbon-200 hover:bg-apptivia-paper group ${
                 isRefreshing ? 'opacity-50 cursor-not-allowed' : 'transition-all duration-200 hover:scale-105 hover:shadow-md'
               }`}
             >
@@ -1229,7 +1229,7 @@ export default function Contests() {
             <select
               value={kpiFilter}
               onChange={(e) => setKpiFilter(e.target.value)}
-              className="w-full border border-gray-200 rounded px-2 py-1 text-xs"
+              className="w-full border border-apptivia-carbon-200 rounded px-2 py-1 text-xs"
             >
               <option value="all">All KPIs</option>
               {uniqueKpiKeys.map((k) => (
@@ -1242,7 +1242,7 @@ export default function Contests() {
             <select
               value={rewardFilter}
               onChange={(e) => setRewardFilter(e.target.value)}
-              className="w-full border border-gray-200 rounded px-2 py-1 text-xs"
+              className="w-full border border-apptivia-carbon-200 rounded px-2 py-1 text-xs"
             >
               <option value="all">All Rewards</option>
               {uniqueRewardTypes.map((r) => (
@@ -1255,7 +1255,7 @@ export default function Contests() {
             <select
               value={participantFilter}
               onChange={(e) => setParticipantFilter(e.target.value)}
-              className="w-full border border-gray-200 rounded px-2 py-1 text-xs"
+              className="w-full border border-apptivia-carbon-200 rounded px-2 py-1 text-xs"
             >
               <option value="all">All Types</option>
               <option value="individual">Individual</option>
@@ -1267,7 +1267,7 @@ export default function Contests() {
             <select
               value={enrollmentFilter}
               onChange={(e) => setEnrollmentFilter(e.target.value)}
-              className="w-full border border-gray-200 rounded px-2 py-1 text-xs"
+              className="w-full border border-apptivia-carbon-200 rounded px-2 py-1 text-xs"
             >
               <option value="all">All</option>
               <option value="enrolled">Enrolled</option>
@@ -1279,7 +1279,7 @@ export default function Contests() {
             <select
               value={dateFilter}
               onChange={(e) => setDateFilter(e.target.value)}
-              className="w-full border border-gray-200 rounded px-2 py-1 text-xs"
+              className="w-full border border-apptivia-carbon-200 rounded px-2 py-1 text-xs"
             >
               <option value="all">All Dates</option>
               <option value="this_month">This Month</option>
@@ -1292,7 +1292,7 @@ export default function Contests() {
             <select
               value={sortKey}
               onChange={(e) => setSortKey(e.target.value)}
-              className="w-full border border-gray-200 rounded px-2 py-1 text-xs"
+              className="w-full border border-apptivia-carbon-200 rounded px-2 py-1 text-xs"
             >
               <option value="recent">Most Recent</option>
               <option value="participants">Participants</option>
@@ -1316,7 +1316,7 @@ export default function Contests() {
 
         {!loading && !error && (
           <div className="space-y-6">
-            <div className="bg-white rounded-lg p-4 shadow-sm border border-slate-100">
+            <div className="bg-white rounded-lg p-4 shadow-sm border border-apptivia-carbon-100">
               <div className="flex items-center justify-between gap-3 mb-3">
                 <div>
                   <div className="text-xs text-apptivia-carbon-500">Contest Analytics</div>
@@ -1364,7 +1364,7 @@ export default function Contests() {
                   className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all ${
                     statusTab === tab.key
                       ? 'bg-apptivia-coral text-white shadow-sm'
-                      : 'bg-white text-apptivia-carbon-600 border border-gray-200 hover:bg-apptivia-paper'
+                      : 'bg-white text-apptivia-carbon-600 border border-apptivia-carbon-200 hover:bg-apptivia-paper'
                   }`}
                 >
                   {tab.label}
@@ -1381,7 +1381,7 @@ export default function Contests() {
             </div>
 
             {myActiveContest && statusTab !== 'completed' && (
-              <div className="bg-white rounded-lg p-4 shadow-sm border border-blue-100">
+              <div className="bg-white rounded-lg p-4 shadow-sm border border-apptivia-coral-tone-100">
                 <div className="flex items-center justify-between mb-2">
                   <div>
                     <div className="text-xs text-apptivia-coral font-semibold">My Active Contest</div>
@@ -1456,10 +1456,10 @@ export default function Contests() {
                 ) : badgeLeaderboard.length === 0 ? (
                   <div className="text-center py-8 text-apptivia-carbon-400 text-sm">No badges earned yet.</div>
                 ) : (
-                  <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+                  <div className="bg-white rounded-lg border border-apptivia-carbon-200 overflow-hidden">
                     <table className="w-full text-sm">
                       <thead>
-                        <tr className="bg-apptivia-paper border-b border-gray-200">
+                        <tr className="bg-apptivia-paper border-b border-apptivia-carbon-200">
                           <th className="text-left px-4 py-3 font-semibold text-apptivia-carbon-600 w-10">#</th>
                           <th className="text-left px-4 py-3 font-semibold text-apptivia-carbon-600">Rep</th>
                           <th className="text-center px-4 py-3 font-semibold text-apptivia-carbon-600">Total</th>
@@ -1471,7 +1471,7 @@ export default function Contests() {
                       </thead>
                       <tbody>
                         {badgeLeaderboard.map((rep, i) => (
-                          <tr key={rep.id} className={`border-b border-gray-100 ${i < 3 ? 'bg-amber-50/40' : 'hover:bg-apptivia-paper'}`}>
+                          <tr key={rep.id} className={`border-b border-apptivia-carbon-100 ${i < 3 ? 'bg-amber-50/40' : 'hover:bg-apptivia-paper'}`}>
                             <td className="px-4 py-3 text-apptivia-carbon-500 font-medium">
                               {i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `#${i + 1}`}
                             </td>
@@ -1511,19 +1511,19 @@ export default function Contests() {
                 <div className="space-y-6">
                   <h2 className="text-lg font-semibold text-apptivia-carbon-700 flex items-center gap-2">📊 Contest Analytics</h2>
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    <div className="bg-white rounded-lg border border-gray-200 p-4 text-center">
+                    <div className="bg-white rounded-lg border border-apptivia-carbon-200 p-4 text-center">
                       <div className="text-2xl font-bold text-apptivia-coral">{all.length}</div>
                       <div className="text-xs text-apptivia-carbon-500">Total Contests</div>
                     </div>
-                    <div className="bg-white rounded-lg border border-gray-200 p-4 text-center">
+                    <div className="bg-white rounded-lg border border-apptivia-carbon-200 p-4 text-center">
                       <div className="text-2xl font-bold text-emerald-600">{completed.length}</div>
                       <div className="text-xs text-apptivia-carbon-500">Completed</div>
                     </div>
-                    <div className="bg-white rounded-lg border border-gray-200 p-4 text-center">
+                    <div className="bg-white rounded-lg border border-apptivia-carbon-200 p-4 text-center">
                       <div className="text-2xl font-bold text-apptivia-ink">{avgDuration}d</div>
                       <div className="text-xs text-apptivia-carbon-500">Avg Duration</div>
                     </div>
-                    <div className="bg-white rounded-lg border border-gray-200 p-4 text-center">
+                    <div className="bg-white rounded-lg border border-apptivia-carbon-200 p-4 text-center">
                       <div className="text-2xl font-bold text-amber-600">{avgParticipants}</div>
                       <div className="text-xs text-apptivia-carbon-500">Avg Participants</div>
                     </div>
@@ -1531,10 +1531,10 @@ export default function Contests() {
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     {/* Most Popular KPI */}
-                    <div className="bg-white rounded-lg border border-gray-200 p-4">
+                    <div className="bg-white rounded-lg border border-apptivia-carbon-200 p-4">
                       <h3 className="text-sm font-semibold text-apptivia-carbon-700 mb-3">Most Popular KPIs</h3>
                       {Object.entries(kpiCounts).sort((a, b) => b[1] - a[1]).map(([kpi, count]) => (
-                        <div key={kpi} className="flex items-center justify-between py-1.5 border-b border-gray-50 last:border-0">
+                        <div key={kpi} className="flex items-center justify-between py-1.5 border-b border-apptivia-carbon-100 last:border-0">
                           <span className="text-sm text-apptivia-carbon-600">{getKpiDisplayName(kpi)}</span>
                           <div className="flex items-center gap-2">
                             <div className="w-24 bg-apptivia-carbon-100 rounded-full h-2">
@@ -1547,12 +1547,12 @@ export default function Contests() {
                     </div>
 
                     {/* Top Winners */}
-                    <div className="bg-white rounded-lg border border-gray-200 p-4">
+                    <div className="bg-white rounded-lg border border-apptivia-carbon-200 p-4">
                       <h3 className="text-sm font-semibold text-apptivia-carbon-700 mb-3">Top Winners</h3>
                       {topWinners.length === 0 ? (
                         <p className="text-sm text-apptivia-carbon-400 py-4 text-center">No completed contests yet</p>
                       ) : topWinners.map(([name, wins], i) => (
-                        <div key={name} className="flex items-center justify-between py-1.5 border-b border-gray-50 last:border-0">
+                        <div key={name} className="flex items-center justify-between py-1.5 border-b border-apptivia-carbon-100 last:border-0">
                           <div className="flex items-center gap-2">
                             <span className="text-sm font-medium">{i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `#${i + 1}`}</span>
                             <span className="text-sm text-apptivia-carbon-700">{name}</span>
@@ -1565,14 +1565,14 @@ export default function Contests() {
 
                   {/* Export section */}
                   {completed.length > 0 && (
-                    <div className="bg-white rounded-lg border border-gray-200 p-4">
+                    <div className="bg-white rounded-lg border border-apptivia-carbon-200 p-4">
                       <h3 className="text-sm font-semibold text-apptivia-carbon-700 mb-3">Export Results</h3>
                       <div className="flex flex-wrap gap-2">
                         {completed.map(c => (
                           <button
                             key={c.id}
                             onClick={() => exportContestResultsToCSV(c)}
-                            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-apptivia-carbon-600 bg-apptivia-paper border border-gray-200 rounded-lg hover:bg-apptivia-carbon-100 transition-colors"
+                            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-apptivia-carbon-600 bg-apptivia-paper border border-apptivia-carbon-200 rounded-lg hover:bg-apptivia-carbon-100 transition-colors"
                           >
                             <Download size={12} /> {c.name}
                           </button>
@@ -1630,7 +1630,7 @@ export default function Contests() {
         <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4 overflow-y-auto" onClick={closeShareResults}>
           <div className="bg-white rounded-xl shadow-2xl max-w-2xl w-full my-4 max-h-[85vh] overflow-hidden flex flex-col" onClick={(e) => e.stopPropagation()}>
             {/* Header */}
-            <div className="flex items-center justify-between p-4 border-b border-gray-200 flex-shrink-0">
+            <div className="flex items-center justify-between p-4 border-b border-apptivia-carbon-200 flex-shrink-0">
               <h2 className="text-xl font-bold text-apptivia-ink flex items-center gap-2">
                 <span>🏆</span>
                 Share Contest Results
@@ -1712,7 +1712,7 @@ export default function Contests() {
             </div>
 
             {/* Action Buttons */}
-            <div className="border-t border-gray-200 p-4 bg-white flex-shrink-0">
+            <div className="border-t border-apptivia-carbon-200 p-4 bg-white flex-shrink-0">
               {!showEmailForm ? (
                 <>
                   {/* Writeup textarea */}
@@ -1723,7 +1723,7 @@ export default function Contests() {
                       onChange={(e) => setShareNotes(e.target.value)}
                       rows={2}
                       placeholder="Add a brief summary and next steps for the team."
-                      className="w-full border border-gray-200 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      className="w-full border border-apptivia-carbon-200 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-apptivia-coral"
                     />
                   </div>
                   <div className="flex flex-wrap gap-2 justify-center">
@@ -1758,7 +1758,7 @@ export default function Contests() {
                       value={shareRecipients}
                       onChange={(e) => setShareRecipients(e.target.value)}
                       placeholder="rep@company.com, rep2@company.com"
-                      className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      className="w-full px-3 py-2 text-sm border border-apptivia-carbon-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     />
                     {shareRecipients.split(',').filter(r => r.trim()).length > 50 && (
                       <p className="text-xs text-red-500 mt-1">Maximum 50 recipients per email. Only the first 50 will receive the message.</p>

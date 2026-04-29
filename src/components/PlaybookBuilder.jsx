@@ -132,7 +132,7 @@ function SummaryCards({ summary }) {
   return (
     <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
       {cards.map((c) => (
-        <div key={c.label} className="bg-white rounded-xl border border-gray-100 p-4 hover:shadow-sm transition-shadow">
+        <div key={c.label} className="bg-white rounded-xl border border-apptivia-carbon-100 p-4 hover:shadow-sm transition-shadow">
           <div className="flex items-center justify-between mb-2">
             <span className="text-xs font-medium text-apptivia-carbon-500">{c.label}</span>
             <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${c.color}`}>
@@ -154,7 +154,7 @@ function PlaybookCard({ playbook, onSelect, onToggleStatus, onDelete }) {
 
   return (
     <div
-      className="bg-white rounded-xl border border-gray-100 p-5 hover:shadow-md transition-all cursor-pointer group"
+      className="bg-white rounded-xl border border-apptivia-carbon-100 p-5 hover:shadow-md transition-all cursor-pointer group"
       onClick={() => onSelect(playbook)}
     >
       <div className="flex items-start justify-between mb-3">
@@ -193,7 +193,7 @@ function PlaybookCard({ playbook, onSelect, onToggleStatus, onDelete }) {
       )}
 
       {/* Footer stats */}
-      <div className="flex items-center gap-4 pt-3 border-t border-gray-50">
+      <div className="flex items-center gap-4 pt-3 border-t border-apptivia-carbon-100">
         <span className="text-[10px] text-apptivia-carbon-400">
           <strong className="text-apptivia-carbon-600">{playbook.steps?.length || 0}</strong> steps
         </span>
@@ -243,7 +243,7 @@ function PlaybookDetail({ playbook, executions, onBack, onUpdate, onStartExecuti
   return (
     <div className="space-y-4">
       {/* Header */}
-      <div className="bg-white rounded-xl border border-gray-100 p-5">
+      <div className="bg-white rounded-xl border border-apptivia-carbon-100 p-5">
         <button onClick={onBack} className="text-xs text-apptivia-carbon-500 hover:text-apptivia-carbon-700 flex items-center gap-1 mb-3">
           <ChevronRight size={12} className="rotate-180" /> Back to Playbooks
         </button>
@@ -297,7 +297,7 @@ function PlaybookDetail({ playbook, executions, onBack, onUpdate, onStartExecuti
           ) : (
             <div className="space-y-2">
               {playbook.steps.map((step, i) => (
-                <div key={i} className="bg-white rounded-xl border border-gray-100 overflow-hidden hover:shadow-sm transition-shadow">
+                <div key={i} className="bg-white rounded-xl border border-apptivia-carbon-100 overflow-hidden hover:shadow-sm transition-shadow">
                   <div
                     className="flex items-center gap-3 p-4 cursor-pointer"
                     onClick={() => setExpandedStep(expandedStep === i ? null : i)}
@@ -315,7 +315,7 @@ function PlaybookDetail({ playbook, executions, onBack, onUpdate, onStartExecuti
                     {expandedStep === i ? <ChevronUp size={14} className="text-apptivia-carbon-400" /> : <ChevronDown size={14} className="text-apptivia-carbon-400" />}
                   </div>
                   {expandedStep === i && (
-                    <div className="px-4 pb-4 pt-0 space-y-2 border-t border-gray-50">
+                    <div className="px-4 pb-4 pt-0 space-y-2 border-t border-apptivia-carbon-100">
                       {step.description && (
                         <div className="mt-3">
                           <span className="text-[10px] text-apptivia-carbon-400 uppercase font-medium block mb-0.5">Description</span>
@@ -345,7 +345,7 @@ function PlaybookDetail({ playbook, executions, onBack, onUpdate, onStartExecuti
           <h3 className="text-sm font-semibold text-apptivia-ink">Execution History ({executions.length})</h3>
           <div className="space-y-2">
             {executions.length === 0 ? (
-              <div className="bg-white rounded-xl border border-gray-100 p-6 text-center">
+              <div className="bg-white rounded-xl border border-apptivia-carbon-100 p-6 text-center">
                 <Clock size={20} className="mx-auto mb-2 text-apptivia-carbon-300" />
                 <p className="text-xs text-apptivia-carbon-400">No executions yet</p>
               </div>
@@ -353,7 +353,7 @@ function PlaybookDetail({ playbook, executions, onBack, onUpdate, onStartExecuti
               executions.slice(0, 10).map((exec) => {
                 const st = EXEC_STATUS[exec.status] || EXEC_STATUS.running;
                 return (
-                  <div key={exec.id} className="bg-white rounded-xl border border-gray-100 p-4">
+                  <div key={exec.id} className="bg-white rounded-xl border border-apptivia-carbon-100 p-4">
                     <div className="flex items-center justify-between mb-2">
                       <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium ${st.bg} ${st.text}`}>{st.label}</span>
                       <span className="text-[10px] text-apptivia-carbon-400">
@@ -435,7 +435,7 @@ function GeneratePlaybookModal({ isOpen, onClose, onGenerate, generating }) {
               value={scenario}
               onChange={(e) => setScenario(e.target.value)}
               rows={3}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+              className="w-full px-3 py-2 border border-apptivia-carbon-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
               placeholder="e.g., Re-engage churned enterprise customers from last quarter who were using our premium tier..."
               required
             />
@@ -446,7 +446,7 @@ function GeneratePlaybookModal({ isOpen, onClose, onGenerate, generating }) {
               <input
                 value={targetRole}
                 onChange={(e) => setTargetRole(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-3 py-2 border border-apptivia-carbon-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 placeholder="e.g., VP Sales"
               />
             </div>
@@ -455,7 +455,7 @@ function GeneratePlaybookModal({ isOpen, onClose, onGenerate, generating }) {
               <input
                 value={industry}
                 onChange={(e) => setIndustry(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-3 py-2 border border-apptivia-carbon-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 placeholder="e.g., SaaS"
               />
             </div>
@@ -532,7 +532,7 @@ function NewPlaybookModal({ isOpen, onClose, onCreate }) {
             <input
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-3 py-2 border border-apptivia-carbon-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               placeholder="e.g., Enterprise Win-Back Playbook"
               required
             />
@@ -543,7 +543,7 @@ function NewPlaybookModal({ isOpen, onClose, onCreate }) {
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               rows={2}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+              className="w-full px-3 py-2 border border-apptivia-carbon-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
               placeholder="When and how to use this playbook..."
             />
           </div>
@@ -592,7 +592,7 @@ function NewPlaybookModal({ isOpen, onClose, onCreate }) {
 
 function PlaybookTemplateCard({ template, onUse, loading }) {
   return (
-    <div className="bg-white rounded-xl border border-gray-100 p-4 hover:shadow-md transition-all group">
+    <div className="bg-white rounded-xl border border-apptivia-carbon-100 p-4 hover:shadow-md transition-all group">
       <div className={`w-9 h-9 bg-gradient-to-br ${template.color} rounded-lg flex items-center justify-center mb-3 shadow-sm`}>
         <template.icon size={16} className="text-white" />
       </div>
@@ -743,7 +743,7 @@ export default function PlaybookBuilder({ organizationId, userId }) {
 
       {/* Grid */}
       {playbooks.length === 0 ? (
-        <div className="bg-white rounded-2xl border border-gray-100 p-12 text-center">
+        <div className="bg-white rounded-2xl border border-apptivia-carbon-100 p-12 text-center">
           <div className="w-16 h-16 bg-gradient-to-br from-purple-100 to-pink-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
             <BookOpen size={24} className="text-apptivia-ink" />
           </div>

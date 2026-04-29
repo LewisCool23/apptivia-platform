@@ -53,7 +53,7 @@ export default function UpgradePrompt({ feature, context = 'inline', variant = '
   // Banner variant — top-of-page strip
   if (context === 'banner') {
     return (
-      <div className="bg-apptivia-carbon-100 border border-purple-200 rounded-lg p-4 mb-4 flex items-center justify-between">
+      <div className="bg-apptivia-carbon-100 border border-apptivia-carbon-300 rounded-lg p-4 mb-4 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <span className="text-2xl">{config.icon}</span>
           <div>
@@ -84,13 +84,13 @@ export default function UpgradePrompt({ feature, context = 'inline', variant = '
 
             {/* Feature comparison table */}
             <div className="mb-6">
-              <div className="grid grid-cols-3 text-xs font-medium text-apptivia-carbon-400 uppercase tracking-wide pb-2 border-b border-gray-100">
+              <div className="grid grid-cols-3 text-xs font-medium text-apptivia-carbon-400 uppercase tracking-wide pb-2 border-b border-apptivia-carbon-100">
                 <span>Feature</span>
                 <span className="text-center">Starter</span>
                 <span className="text-center">Pro</span>
               </div>
               {COMPARISON_FEATURES.map(({ feature: feat, basic, pro }) => (
-                <div key={feat} className="grid grid-cols-3 text-sm py-2 border-b border-gray-50">
+                <div key={feat} className="grid grid-cols-3 text-sm py-2 border-b border-apptivia-carbon-100">
                   <span className="text-apptivia-carbon-700">{feat}</span>
                   <span className="text-center text-apptivia-carbon-400">{basic}</span>
                   <span className="text-center font-medium text-apptivia-ink">{pro}</span>
@@ -120,7 +120,7 @@ export default function UpgradePrompt({ feature, context = 'inline', variant = '
 
   // Inline variant (default) — compact card
   return (
-    <div className="bg-apptivia-carbon-100 border border-purple-200 rounded-lg p-3 mt-2">
+    <div className="bg-apptivia-carbon-100 border border-apptivia-carbon-300 rounded-lg p-3 mt-2">
       <div className="flex items-start gap-2">
         <span className="text-lg">{config.icon}</span>
         <div className="flex-1 min-w-0">

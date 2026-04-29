@@ -44,7 +44,7 @@ function PageLoader() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-apptivia-paper">
       <div className="flex flex-col items-center gap-3">
-        <div className="w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+        <div className="w-8 h-8 border-2 border-apptivia-coral border-t-transparent rounded-full animate-spin" />
         <span className="text-sm text-apptivia-carbon-400">Loading…</span>
       </div>
     </div>

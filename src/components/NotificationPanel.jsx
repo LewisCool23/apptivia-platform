@@ -129,7 +129,7 @@ export default function NotificationPanel() {
                 return (
                 <div
                   key={n.id}
-                  className={`border rounded-lg p-2 transition-all ${n.read ? 'bg-white' : 'bg-apptivia-coral-tone-50 border-blue-100'}`}
+                  className={`border rounded-lg p-2 transition-all ${n.read ? 'bg-white' : 'bg-apptivia-coral-tone-50 border-apptivia-coral-tone-100'}`}
                 >
                   <div className="flex items-start gap-2">
                     <div className={`w-7 h-7 rounded-lg flex items-center justify-center ${meta.bg} ${meta.fg} shrink-0`}>

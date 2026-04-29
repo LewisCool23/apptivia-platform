@@ -25,7 +25,7 @@ export default function SelfAssessmentForm({ review, onSubmit, saving }) {
 
   return (
     <div className="space-y-5">
-      <div className="bg-apptivia-coral-tone-50 rounded-lg p-4 border border-blue-100">
+      <div className="bg-apptivia-coral-tone-50 rounded-lg p-4 border border-apptivia-coral-tone-100">
         <h3 className="text-sm font-semibold text-apptivia-coral-tone-700 mb-1">Self-Assessment</h3>
         <p className="text-xs text-apptivia-coral">Share your perspective on your performance during this review period. Be honest and specific.</p>
       </div>
@@ -34,7 +34,7 @@ export default function SelfAssessmentForm({ review, onSubmit, saving }) {
       <div>
         <label className="block text-xs font-semibold text-apptivia-carbon-700 mb-1">Overall Self-Assessment</label>
         <textarea value={selfAssessment} onChange={e => setSelfAssessment(e.target.value)}
-          className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm" rows={4}
+          className="w-full border border-apptivia-carbon-300 rounded-md px-3 py-2 text-sm" rows={4}
           placeholder="Describe your overall performance, growth, and contributions during this period..." />
       </div>
 
@@ -48,7 +48,7 @@ export default function SelfAssessmentForm({ review, onSubmit, saving }) {
         {accomplishments.map((item, idx) => (
           <div key={item._key || idx} className="flex gap-2 mb-2">
             <input value={item.text || ''} onChange={e => updateItem(setAccomplishments, idx, e.target.value)}
-              className="flex-1 border border-gray-300 rounded-md px-3 py-1.5 text-sm" placeholder="Describe an accomplishment..." />
+              className="flex-1 border border-apptivia-carbon-300 rounded-md px-3 py-1.5 text-sm" placeholder="Describe an accomplishment..." />
             {accomplishments.length > 1 && (
               <button type="button" onClick={() => removeItem(setAccomplishments, idx)} className="text-red-400 hover:text-red-600"><Trash2 size={14} /></button>
             )}
@@ -66,7 +66,7 @@ export default function SelfAssessmentForm({ review, onSubmit, saving }) {
         {challenges.map((item, idx) => (
           <div key={item._key || idx} className="flex gap-2 mb-2">
             <input value={item.text || ''} onChange={e => updateItem(setChallenges, idx, e.target.value)}
-              className="flex-1 border border-gray-300 rounded-md px-3 py-1.5 text-sm" placeholder="Describe a challenge or growth area..." />
+              className="flex-1 border border-apptivia-carbon-300 rounded-md px-3 py-1.5 text-sm" placeholder="Describe a challenge or growth area..." />
             {challenges.length > 1 && (
               <button type="button" onClick={() => removeItem(setChallenges, idx)} className="text-red-400 hover:text-red-600"><Trash2 size={14} /></button>
             )}
@@ -84,7 +84,7 @@ export default function SelfAssessmentForm({ review, onSubmit, saving }) {
         {goals.map((item, idx) => (
           <div key={item._key || idx} className="flex gap-2 mb-2">
             <input value={item.text || ''} onChange={e => updateItem(setGoals, idx, e.target.value)}
-              className="flex-1 border border-gray-300 rounded-md px-3 py-1.5 text-sm" placeholder="Set a goal for the next review period..." />
+              className="flex-1 border border-apptivia-carbon-300 rounded-md px-3 py-1.5 text-sm" placeholder="Set a goal for the next review period..." />
             {goals.length > 1 && (
               <button type="button" onClick={() => removeItem(setGoals, idx)} className="text-red-400 hover:text-red-600"><Trash2 size={14} /></button>
             )}
@@ -96,7 +96,7 @@ export default function SelfAssessmentForm({ review, onSubmit, saving }) {
       <div>
         <label className="block text-xs font-semibold text-apptivia-carbon-700 mb-1">Additional Comments</label>
         <textarea value={comments} onChange={e => setComments(e.target.value)}
-          className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm" rows={3}
+          className="w-full border border-apptivia-carbon-300 rounded-md px-3 py-2 text-sm" rows={3}
           placeholder="Any additional thoughts, feedback, or requests..." />
       </div>
 

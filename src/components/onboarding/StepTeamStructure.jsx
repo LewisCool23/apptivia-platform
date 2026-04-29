@@ -112,7 +112,7 @@ export default function StepTeamStructure({ wizardState, updateState, profile })
                 type="text"
                 value={dept.name}
                 onChange={(e) => updateDepartment(i, e.target.value)}
-                className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="flex-1 px-3 py-2 border border-apptivia-carbon-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-apptivia-coral"
                 placeholder="e.g. Sales, Marketing, Customer Success"
               />
               {departments.length > 1 && (
@@ -156,13 +156,13 @@ export default function StepTeamStructure({ wizardState, updateState, profile })
                       type="text"
                       value={team.name}
                       onChange={(e) => updateTeam(team._idx, 'name', e.target.value)}
-                      className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      className="flex-1 px-3 py-2 border border-apptivia-carbon-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-apptivia-coral"
                       placeholder="Team name"
                     />
                     <select
                       value={team.managerId || ''}
                       onChange={(e) => updateTeam(team._idx, 'managerId', e.target.value || null)}
-                      className={`px-2 py-2 border rounded-lg text-sm w-44 ${team.managerId ? 'border-gray-300 text-apptivia-carbon-600' : 'border-red-300 text-red-500'}`}
+                      className={`px-2 py-2 border rounded-lg text-sm w-44 ${team.managerId ? 'border-apptivia-carbon-300 text-apptivia-carbon-600' : 'border-red-300 text-red-500'}`}
                     >
                       <option value="">Manager *</option>
                       <option value={profile?.id || 'self'}>Me ({profile?.first_name || 'Admin'})</option>
@@ -213,27 +213,27 @@ export default function StepTeamStructure({ wizardState, updateState, profile })
         <p className="text-xs text-apptivia-carbon-400 mb-3">Invitations will be sent via email. Members can be added later too.</p>
         <div className="space-y-3">
           {teamMembers.map((member, i) => (
-            <div key={i} className="border border-gray-200 rounded-lg p-3 space-y-2">
+            <div key={i} className="border border-apptivia-carbon-200 rounded-lg p-3 space-y-2">
               <div className="grid grid-cols-12 gap-2 items-center">
                 <input
                   type="email"
                   value={member.email}
                   onChange={(e) => updateMember(i, 'email', e.target.value)}
-                  className="col-span-5 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500"
+                  className="col-span-5 px-3 py-2 border border-apptivia-carbon-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500"
                   placeholder="email@company.com"
                 />
                 <input
                   type="text"
                   value={member.first_name}
                   onChange={(e) => updateMember(i, 'first_name', e.target.value)}
-                  className="col-span-3 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500"
+                  className="col-span-3 px-3 py-2 border border-apptivia-carbon-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500"
                   placeholder="First"
                 />
                 <input
                   type="text"
                   value={member.last_name}
                   onChange={(e) => updateMember(i, 'last_name', e.target.value)}
-                  className="col-span-3 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500"
+                  className="col-span-3 px-3 py-2 border border-apptivia-carbon-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500"
                   placeholder="Last"
                 />
                 <button
@@ -253,7 +253,7 @@ export default function StepTeamStructure({ wizardState, updateState, profile })
                     updated[i] = { ...updated[i], title: e.target.value, title_key: selected?.key || '' };
                     updateState({ teamMembers: updated });
                   }}
-                  className="col-span-4 px-2 py-2 border border-gray-300 rounded-lg text-sm"
+                  className="col-span-4 px-2 py-2 border border-apptivia-carbon-300 rounded-lg text-sm"
                 >
                   <option value="">Title</option>
                   {titles.map(t => (
@@ -263,7 +263,7 @@ export default function StepTeamStructure({ wizardState, updateState, profile })
                 <select
                   value={member.role}
                   onChange={(e) => updateMember(i, 'role', e.target.value)}
-                  className="col-span-3 px-2 py-2 border border-gray-300 rounded-lg text-sm"
+                  className="col-span-3 px-2 py-2 border border-apptivia-carbon-300 rounded-lg text-sm"
                 >
                   <option value="power_user">Rep</option>
                   <option value="manager">Manager</option>
@@ -273,7 +273,7 @@ export default function StepTeamStructure({ wizardState, updateState, profile })
                 <select
                   value={member.teamName}
                   onChange={(e) => updateMember(i, 'teamName', e.target.value)}
-                  className="col-span-3 px-2 py-2 border border-gray-300 rounded-lg text-sm"
+                  className="col-span-3 px-2 py-2 border border-apptivia-carbon-300 rounded-lg text-sm"
                   title="Assign to team"
                 >
                   <option value="">Team</option>
@@ -284,7 +284,7 @@ export default function StepTeamStructure({ wizardState, updateState, profile })
                 <select
                   value={member.segment || ''}
                   onChange={(e) => updateMember(i, 'segment', e.target.value || null)}
-                  className="col-span-2 px-2 py-2 border border-gray-300 rounded-lg text-sm"
+                  className="col-span-2 px-2 py-2 border border-apptivia-carbon-300 rounded-lg text-sm"
                   title="Market segment"
                 >
                   <option value="">Segment</option>

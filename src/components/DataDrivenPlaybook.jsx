@@ -376,7 +376,7 @@ export default function DataDrivenPlaybook({ scorecardData, lastWeekScorecardDat
                           <span className="text-[10px] text-orange-600 font-medium ml-auto">{reps.length} rep{reps.length !== 1 ? 's' : ''}</span>
                         </div>
                         {guidance && (
-                          <div className="text-[11px] text-apptivia-carbon-600 bg-white rounded px-2 py-1.5 border border-gray-100">
+                          <div className="text-[11px] text-apptivia-carbon-600 bg-white rounded px-2 py-1.5 border border-apptivia-carbon-100">
                             <span className="font-medium text-apptivia-carbon-700">Action:</span> {guidance.tips[0]}
                           </div>
                         )}
@@ -436,7 +436,7 @@ export default function DataDrivenPlaybook({ scorecardData, lastWeekScorecardDat
                               <div className="flex items-center gap-1.5">
                                 <button
                                   onClick={() => setPrepRepId(rep.repId)}
-                                  className="flex items-center gap-1 px-2 py-1 text-[10px] font-medium text-apptivia-coral border border-blue-200 rounded hover:bg-apptivia-coral-tone-50 transition-colors"
+                                  className="flex items-center gap-1 px-2 py-1 text-[10px] font-medium text-apptivia-coral border border-apptivia-coral-tone-100 rounded hover:bg-apptivia-coral-tone-50 transition-colors"
                                 >
                                   <CalendarCheck size={12} />
                                   Prep 1:1
@@ -453,7 +453,7 @@ export default function DataDrivenPlaybook({ scorecardData, lastWeekScorecardDat
                                 {onStartReview && (
                                   <button
                                     onClick={() => onStartReview(rep.repId, repNames?.[rep.repId] || 'Rep')}
-                                    className="flex items-center gap-1 px-2 py-1 text-[10px] font-medium text-apptivia-ink border border-purple-200 rounded hover:bg-apptivia-carbon-100 transition-colors"
+                                    className="flex items-center gap-1 px-2 py-1 text-[10px] font-medium text-apptivia-ink border border-apptivia-carbon-300 rounded hover:bg-apptivia-carbon-100 transition-colors"
                                   >
                                     <ClipboardList size={12} />
                                     Start Review
@@ -496,7 +496,7 @@ export default function DataDrivenPlaybook({ scorecardData, lastWeekScorecardDat
             ) : (
               <div className="space-y-2">
                 {recentChanges.map((item, i) => (
-                  <div key={i} className={`flex items-center justify-between text-xs border rounded p-2 ${item.type === 'team' ? 'bg-apptivia-coral-tone-50 border-blue-100' : ''}`}>
+                  <div key={i} className={`flex items-center justify-between text-xs border rounded p-2 ${item.type === 'team' ? 'bg-apptivia-coral-tone-50 border-apptivia-coral-tone-100' : ''}`}>
                     <div className="flex items-center gap-2">
                       <span className={`font-medium ${item.type === 'team' ? 'text-apptivia-coral-tone-700' : 'text-apptivia-ink'}`}>{item.label}</span>
                       {item.type === 'team' && <span className="text-[9px] px-1.5 py-0.5 rounded bg-apptivia-coral-tone-50 text-apptivia-coral">Team</span>}

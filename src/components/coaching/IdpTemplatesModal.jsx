@@ -52,7 +52,7 @@ export default function IdpTemplatesModal({ onClose, onSelect, organizationId })
                   <button
                     key={t.id}
                     onClick={() => onSelect(t)}
-                    className="text-left border border-gray-200 rounded-lg p-4 hover:shadow-md hover:border-blue-300 transition-all"
+                    className="text-left border border-apptivia-carbon-200 rounded-lg p-4 hover:shadow-md hover:border-apptivia-coral-tone-100 transition-all"
                   >
                     <div className="flex items-start gap-3">
                       <div className="w-10 h-10 rounded-lg bg-apptivia-coral-tone-50 flex items-center justify-center shrink-0">

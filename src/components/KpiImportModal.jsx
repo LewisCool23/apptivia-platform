@@ -263,7 +263,7 @@ export default function KpiImportModal({ isOpen, onClose, onImportComplete, orga
           {/* Step 1: Upload */}
           {step === 1 && (
             <div className="space-y-6">
-              <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-emerald-400 transition-colors">
+              <div className="border-2 border-dashed border-apptivia-carbon-300 rounded-lg p-8 text-center hover:border-emerald-400 transition-colors">
                 <input ref={fileInputRef} type="file" accept=".csv" onChange={handleFileSelect} className="hidden" />
                 <Upload size={48} className="mx-auto text-apptivia-carbon-400 mb-4" />
                 <h3 className="text-lg font-semibold mb-2">Upload CSV File</h3>

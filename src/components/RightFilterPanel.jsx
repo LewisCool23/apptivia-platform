@@ -62,8 +62,8 @@ export default function RightFilterPanel({
                   disabled={!onReset}
                   className={`px-2.5 py-1 rounded-md text-[11px] font-semibold border transition-all ${
                     onReset
-                      ? 'border-gray-200 text-apptivia-carbon-700 hover:bg-apptivia-paper'
-                      : 'border-gray-100 text-apptivia-carbon-300 cursor-not-allowed'
+                      ? 'border-apptivia-carbon-200 text-apptivia-carbon-700 hover:bg-apptivia-paper'
+                      : 'border-apptivia-carbon-100 text-apptivia-carbon-300 cursor-not-allowed'
                   }`}
                 >
                   {resetLabel}

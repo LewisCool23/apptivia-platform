@@ -101,7 +101,7 @@ export default function PilotApplication() {
           <h2 className="text-2xl font-bold text-apptivia-ink text-center mb-10">What founding pilots get</h2>
           <div className="grid sm:grid-cols-2 gap-6">
             {PILOT_BENEFITS.map((b) => (
-              <div key={b.title} className="bg-white rounded-xl p-6 border border-gray-200 shadow-sm">
+              <div key={b.title} className="bg-white rounded-xl p-6 border border-apptivia-carbon-200 shadow-sm">
                 <div className="flex items-start gap-4">
                   <div className="w-10 h-10 bg-apptivia-coral-tone-50 rounded-lg flex items-center justify-center flex-shrink-0">
                     <b.icon size={20} className="text-apptivia-coral" />
@@ -148,7 +148,7 @@ export default function PilotApplication() {
                         required
                         value={form.name}
                         onChange={(e) => setForm(f => ({ ...f, name: e.target.value }))}
-                        className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                        className="w-full px-3 py-2.5 border border-apptivia-carbon-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-apptivia-coral text-sm"
                         placeholder="Your name"
                       />
                     </div>
@@ -159,7 +159,7 @@ export default function PilotApplication() {
                         required
                         value={form.email}
                         onChange={(e) => setForm(f => ({ ...f, email: e.target.value }))}
-                        className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                        className="w-full px-3 py-2.5 border border-apptivia-carbon-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-apptivia-coral text-sm"
                         placeholder="you@company.com"
                       />
                     </div>
@@ -173,7 +173,7 @@ export default function PilotApplication() {
                         required
                         value={form.company}
                         onChange={(e) => setForm(f => ({ ...f, company: e.target.value }))}
-                        className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                        className="w-full px-3 py-2.5 border border-apptivia-carbon-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-apptivia-coral text-sm"
                         placeholder="Company name"
                       />
                     </div>
@@ -183,7 +183,7 @@ export default function PilotApplication() {
                         required
                         value={form.teamSize}
                         onChange={(e) => setForm(f => ({ ...f, teamSize: e.target.value }))}
-                        className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm text-apptivia-carbon-700"
+                        className="w-full px-3 py-2.5 border border-apptivia-carbon-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-apptivia-coral text-sm text-apptivia-carbon-700"
                       >
                         <option value="">Select size</option>
                         <option value="5-10">5-10 reps</option>
@@ -200,7 +200,7 @@ export default function PilotApplication() {
                     <select
                       value={form.crm}
                       onChange={(e) => setForm(f => ({ ...f, crm: e.target.value }))}
-                      className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm text-apptivia-carbon-700"
+                      className="w-full px-3 py-2.5 border border-apptivia-carbon-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-apptivia-coral text-sm text-apptivia-carbon-700"
                     >
                       <option value="">Select CRM</option>
                       <option value="Salesforce">Salesforce</option>
@@ -218,7 +218,7 @@ export default function PilotApplication() {
                       value={form.biggestPain}
                       onChange={(e) => setForm(f => ({ ...f, biggestPain: e.target.value }))}
                       rows={3}
-                      className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm resize-none"
+                      className="w-full px-3 py-2.5 border border-apptivia-carbon-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-apptivia-coral text-sm resize-none"
                       placeholder="e.g., We don't know which reps need coaching until it's too late..."
                     />
                   </div>
@@ -231,7 +231,7 @@ export default function PilotApplication() {
                       type="text"
                       value={form.currentTools}
                       onChange={(e) => setForm(f => ({ ...f, currentTools: e.target.value }))}
-                      className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                      className="w-full px-3 py-2.5 border border-apptivia-carbon-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-apptivia-coral text-sm"
                       placeholder="e.g., Outreach, Gong, SalesLoft..."
                     />
                   </div>
@@ -259,7 +259,7 @@ export default function PilotApplication() {
 
             {/* Sidebar */}
             <div className="lg:col-span-2 space-y-8">
-              <div className="bg-apptivia-paper rounded-xl p-6 border border-gray-200">
+              <div className="bg-apptivia-paper rounded-xl p-6 border border-apptivia-carbon-200">
                 <h3 className="font-semibold text-apptivia-ink mb-4">Full Pro access includes</h3>
                 <ul className="space-y-3">
                   {WHAT_YOU_GET.map((item) => (
@@ -271,7 +271,7 @@ export default function PilotApplication() {
                 </ul>
               </div>
 
-              <div className="bg-apptivia-paper rounded-xl p-6 border border-gray-200">
+              <div className="bg-apptivia-paper rounded-xl p-6 border border-apptivia-carbon-200">
                 <h3 className="font-semibold text-apptivia-ink mb-4">Ideal pilot fit</h3>
                 <dl className="space-y-3">
                   {IDEAL_FIT.map((item) => (

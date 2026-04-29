@@ -49,7 +49,7 @@ export default function StepOptionalSetup({ wizardState, updateState }) {
       </div>
 
       {/* Wallboard Config */}
-      <div className="border border-gray-200 rounded-lg overflow-hidden">
+      <div className="border border-apptivia-carbon-200 rounded-lg overflow-hidden">
         <button
           type="button"
           onClick={() => toggle('wallboard')}
@@ -71,7 +71,7 @@ export default function StepOptionalSetup({ wizardState, updateState }) {
                     type="checkbox"
                     checked={wallboardSettings.slides[key]?.enabled ?? true}
                     onChange={(e) => updateSlide(key, 'enabled', e.target.checked)}
-                    className="rounded border-gray-300 text-apptivia-coral focus:ring-blue-500"
+                    className="rounded border-apptivia-carbon-300 text-apptivia-coral focus:ring-blue-500"
                   />
                   <span className="text-sm text-apptivia-carbon-700">{label}</span>
                 </label>
@@ -80,7 +80,7 @@ export default function StepOptionalSetup({ wizardState, updateState }) {
                     type="number"
                     value={wallboardSettings.slides[key]?.duration ?? 15}
                     onChange={(e) => updateSlide(key, 'duration', Math.max(5, Math.min(120, Number(e.target.value) || 15)))}
-                    className="w-14 px-2 py-1 border border-gray-300 rounded text-sm text-center"
+                    className="w-14 px-2 py-1 border border-apptivia-carbon-300 rounded text-sm text-center"
                     min="5"
                     max="120"
                   />
@@ -93,7 +93,7 @@ export default function StepOptionalSetup({ wizardState, updateState }) {
                 type="checkbox"
                 checked={wallboardSettings.celebrations}
                 onChange={(e) => updateState({ wallboardSettings: { ...wallboardSettings, celebrations: e.target.checked } })}
-                className="rounded border-gray-300 text-apptivia-coral focus:ring-blue-500"
+                className="rounded border-apptivia-carbon-300 text-apptivia-coral focus:ring-blue-500"
               />
               <span className="text-sm text-apptivia-carbon-700">Celebration overlays (confetti for level-ups, badges, wins)</span>
             </div>
@@ -102,7 +102,7 @@ export default function StepOptionalSetup({ wizardState, updateState }) {
       </div>
 
       {/* Scheduled Reports */}
-      <div className="border border-gray-200 rounded-lg overflow-hidden">
+      <div className="border border-apptivia-carbon-200 rounded-lg overflow-hidden">
         <button
           type="button"
           onClick={() => toggle('reports')}
@@ -133,7 +133,7 @@ export default function StepOptionalSetup({ wizardState, updateState }) {
       </div>
 
       {/* Notification Preferences */}
-      <div className="border border-gray-200 rounded-lg overflow-hidden">
+      <div className="border border-apptivia-carbon-200 rounded-lg overflow-hidden">
         <button
           type="button"
           onClick={() => toggle('notifications')}

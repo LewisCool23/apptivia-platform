@@ -72,7 +72,7 @@ export default function LeaderboardModal({
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="px-6 py-4 border-b border-gray-200">
+        <div className="px-6 py-4 border-b border-apptivia-carbon-200">
           <div className="flex items-center justify-between">
             <div>
               <h2 className="text-2xl font-bold text-apptivia-ink flex items-center gap-2">
@@ -92,7 +92,7 @@ export default function LeaderboardModal({
         {/* Leaderboard Content */}
         <div className="flex-1 overflow-y-auto px-6 py-4">
           {hasNoLeaderboardData && (
-            <div className="mb-4 p-3 bg-apptivia-coral-tone-50 border border-blue-200 rounded-lg text-sm text-apptivia-coral">
+            <div className="mb-4 p-3 bg-apptivia-coral-tone-50 border border-apptivia-coral-tone-100 rounded-lg text-sm text-apptivia-coral">
               Scores haven't been calculated yet. Showing enrolled participants — rankings will update as KPI data comes in.
             </div>
           )}
@@ -107,7 +107,7 @@ export default function LeaderboardModal({
                   key={entry.profile_id}
                   className={`flex items-center justify-between p-4 rounded-lg transition-all ${
                     entry.profile_id === currentUserId
-                      ? 'bg-apptivia-coral-tone-50 border-2 border-blue-300 shadow-md'
+                      ? 'bg-apptivia-coral-tone-50 border-2 border-apptivia-coral-tone-100 shadow-md'
                       : 'bg-apptivia-paper hover:bg-apptivia-carbon-100'
                   }`}
                 >
@@ -155,7 +155,7 @@ export default function LeaderboardModal({
         </div>
 
         {/* Footer */}
-        <div className="px-6 py-4 border-t border-gray-200 bg-apptivia-paper">
+        <div className="px-6 py-4 border-t border-apptivia-carbon-200 bg-apptivia-paper">
           <div className="flex items-center justify-between text-sm text-apptivia-carbon-600">
             <span>Total Participants: {displayEntries.length}</span>
             <button

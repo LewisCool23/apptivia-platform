@@ -100,9 +100,9 @@ export default function SetupChecklist({ organizationId, userRole }) {
 
       {/* Flyout panel */}
       {panelOpen && (
-        <div className="fixed bottom-24 right-20 sm:right-[5.5rem] w-80 bg-white rounded-xl shadow-2xl border border-gray-200 z-50 animate-in slide-in-from-bottom-2 duration-200">
+        <div className="fixed bottom-24 right-20 sm:right-[5.5rem] w-80 bg-white rounded-xl shadow-2xl border border-apptivia-carbon-200 z-50 animate-in slide-in-from-bottom-2 duration-200">
           {/* Header */}
-          <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 bg-gradient-to-r from-amber-50 to-orange-50 rounded-t-xl">
+          <div className="flex items-center justify-between px-4 py-3 border-b border-apptivia-carbon-100 bg-gradient-to-r from-amber-50 to-orange-50 rounded-t-xl">
             <div className="flex items-center gap-2">
               <ClipboardCheck size={16} className="text-orange-600" />
               <span className="text-sm font-semibold text-apptivia-ink">
@@ -125,7 +125,7 @@ export default function SetupChecklist({ organizationId, userRole }) {
             {activeItems.map(item => (
               <div
                 key={item.key}
-                className="rounded-lg px-3 py-2.5 bg-apptivia-paper hover:bg-apptivia-coral-tone-50 transition-colors border border-gray-100"
+                className="rounded-lg px-3 py-2.5 bg-apptivia-paper hover:bg-apptivia-coral-tone-50 transition-colors border border-apptivia-carbon-100"
               >
                 <div className="flex items-center justify-between">
                   <span className="text-sm font-medium text-apptivia-ink">{item.label}</span>

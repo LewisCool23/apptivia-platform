@@ -169,7 +169,7 @@ export default function AddTeamMembersModal({
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="px-5 py-4 border-b border-gray-200 flex-shrink-0">
+        <div className="px-5 py-4 border-b border-apptivia-carbon-200 flex-shrink-0">
           <div className="flex items-center justify-between">
             <div>
               <h2 className="text-lg font-bold text-apptivia-ink flex items-center gap-2">
@@ -188,7 +188,7 @@ export default function AddTeamMembersModal({
         </div>
 
         {/* Search & Filters */}
-        <div className="px-5 py-3 border-b border-gray-100 flex-shrink-0 space-y-2">
+        <div className="px-5 py-3 border-b border-apptivia-carbon-100 flex-shrink-0 space-y-2">
           <div className="relative">
             <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-apptivia-carbon-400" />
             <input
@@ -196,7 +196,7 @@ export default function AddTeamMembersModal({
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search by name, email, or team..."
-              className="w-full pl-9 pr-3 py-2 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="w-full pl-9 pr-3 py-2 text-sm border border-apptivia-carbon-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-apptivia-coral"
             />
           </div>
           <div className="flex items-center justify-between">
@@ -205,7 +205,7 @@ export default function AddTeamMembersModal({
                 type="checkbox"
                 checked={showMyTeamOnly}
                 onChange={(e) => setShowMyTeamOnly(e.target.checked)}
-                className="rounded border-gray-300 text-apptivia-coral focus:ring-blue-500"
+                className="rounded border-apptivia-carbon-300 text-apptivia-coral focus:ring-blue-500"
               />
               My direct reports only
             </label>
@@ -250,7 +250,7 @@ export default function AddTeamMembersModal({
                     onClick={() => toggleSelect(profile.id)}
                     className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left transition-all ${
                       isSelected
-                        ? 'bg-apptivia-coral-tone-50 border border-blue-200'
+                        ? 'bg-apptivia-coral-tone-50 border border-apptivia-coral-tone-100'
                         : 'hover:bg-apptivia-paper border border-transparent'
                     }`}
                   >
@@ -258,7 +258,7 @@ export default function AddTeamMembersModal({
                       className={`w-5 h-5 rounded flex items-center justify-center flex-shrink-0 ${
                         isSelected
                           ? 'bg-apptivia-coral text-white'
-                          : 'border-2 border-gray-300'
+                          : 'border-2 border-apptivia-carbon-300'
                       }`}
                     >
                       {isSelected && <Check size={12} />}
@@ -278,7 +278,7 @@ export default function AddTeamMembersModal({
         </div>
 
         {/* Footer */}
-        <div className="px-5 py-3 border-t border-gray-200 flex-shrink-0 flex gap-2">
+        <div className="px-5 py-3 border-t border-apptivia-carbon-200 flex-shrink-0 flex gap-2">
           <button
             onClick={onClose}
             className="flex-1 px-4 py-2 text-sm font-medium text-apptivia-carbon-700 bg-apptivia-carbon-100 rounded-lg hover:bg-apptivia-carbon-200 transition-colors"

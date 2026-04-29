@@ -235,7 +235,7 @@ const StructuredCoachingPlan = memo(({ data }) => (
     )}
 
     {hasPlan(data.coaching_plan) && (
-      <div className="bg-apptivia-coral-tone-50 border border-blue-200 rounded-lg p-3 space-y-2">
+      <div className="bg-apptivia-coral-tone-50 border border-apptivia-coral-tone-100 rounded-lg p-3 space-y-2">
         <div className="font-semibold text-apptivia-coral-tone-700 text-xs uppercase tracking-wide">Plan</div>
         {data.coaching_plan.week_1_focus && (
           <div>
@@ -260,7 +260,7 @@ const StructuredCoachingPlan = memo(({ data }) => (
     )}
 
     {data.manager_talk_track && (
-      <div className="bg-apptivia-carbon-100 border border-purple-200 rounded-lg p-3">
+      <div className="bg-apptivia-carbon-100 border border-apptivia-carbon-300 rounded-lg p-3">
         <div className="font-semibold text-apptivia-ink text-xs uppercase tracking-wide mb-1">Manager Talk Track</div>
         <div className="text-xs text-apptivia-ink">{data.manager_talk_track}</div>
       </div>
@@ -281,7 +281,7 @@ const StructuredOneOnOnePrep = memo(({ data }) => (
     <div className="font-semibold text-apptivia-ink text-base">{data.rep_name ? `1:1 Prep: ${data.rep_name}` : '1:1 Prep'}</div>
 
     {data.meeting_context && (
-      <div className="bg-apptivia-paper border border-gray-200 rounded-lg p-3 text-xs text-apptivia-carbon-600 space-y-0.5">
+      <div className="bg-apptivia-paper border border-apptivia-carbon-200 rounded-lg p-3 text-xs text-apptivia-carbon-600 space-y-0.5">
         {data.meeting_context.kpi_movement_summary && <div>{data.meeting_context.kpi_movement_summary}</div>}
         {data.meeting_context.open_deals_count != null && <div>Open deals: {data.meeting_context.open_deals_count}</div>}
         {data.meeting_context.deals_at_risk_count != null && <div>Deals at risk: {data.meeting_context.deals_at_risk_count}</div>}
@@ -289,7 +289,7 @@ const StructuredOneOnOnePrep = memo(({ data }) => (
     )}
 
     {data.agenda?.length > 0 && (
-      <div className="bg-apptivia-coral-tone-50 border border-blue-200 rounded-lg p-3">
+      <div className="bg-apptivia-coral-tone-50 border border-apptivia-coral-tone-100 rounded-lg p-3">
         <div className="font-semibold text-apptivia-coral-tone-700 text-xs uppercase tracking-wide mb-1.5">Agenda</div>
         {data.agenda.map((item, i) => (
           <div key={i} className="mb-2 last:mb-0">
@@ -325,7 +325,7 @@ const StructuredOneOnOnePrep = memo(({ data }) => (
     )}
 
     {data.rep_facing_pre_read && (
-      <div className="bg-apptivia-carbon-100 border border-purple-200 rounded-lg p-3">
+      <div className="bg-apptivia-carbon-100 border border-apptivia-carbon-300 rounded-lg p-3">
         <div className="font-semibold text-apptivia-ink text-xs uppercase tracking-wide mb-1">Pre-Read for Rep</div>
         <div className="text-xs text-apptivia-ink">{data.rep_facing_pre_read}</div>
       </div>
@@ -347,7 +347,7 @@ const StructuredPipelineDiagnosis = memo(({ data }) => (
     )}
 
     {data.stage_health?.length > 0 && (
-      <div className="bg-apptivia-paper border border-gray-200 rounded-lg p-3">
+      <div className="bg-apptivia-paper border border-apptivia-carbon-200 rounded-lg p-3">
         <div className="font-semibold text-apptivia-ink text-xs uppercase tracking-wide mb-1.5">Stage Health</div>
         <div className="space-y-1.5">
           {data.stage_health.map((s, i) => (
@@ -382,7 +382,7 @@ const StructuredPipelineDiagnosis = memo(({ data }) => (
     )}
 
     {data.actions_this_week?.length > 0 && (
-      <div className="bg-apptivia-coral-tone-50 border border-blue-200 rounded-lg p-3">
+      <div className="bg-apptivia-coral-tone-50 border border-apptivia-coral-tone-100 rounded-lg p-3">
         <div className="font-semibold text-apptivia-coral-tone-700 text-xs uppercase tracking-wide mb-1.5">Actions This Week</div>
         {data.actions_this_week.map((a, i) => (
           <div key={i} className="flex items-start gap-2 text-xs mb-1 last:mb-0">
@@ -409,7 +409,7 @@ const StructuredPreCallPrep = memo(({ data }) => (
     </div>
 
     {data.who && (
-      <div className="bg-apptivia-coral-tone-50 border border-blue-200 rounded-lg p-3">
+      <div className="bg-apptivia-coral-tone-50 border border-apptivia-coral-tone-100 rounded-lg p-3">
         <div className="font-semibold text-apptivia-coral-tone-700 text-xs uppercase tracking-wide mb-1">Who</div>
         {data.who.key_person && <div className="font-medium text-apptivia-coral text-xs mb-0.5">Key: {data.who.key_person}</div>}
         {data.who.attendees?.length > 0 && (
@@ -449,7 +449,7 @@ const StructuredPreCallPrep = memo(({ data }) => (
     )}
 
     {data.next_step_goal && (
-      <div className="bg-apptivia-carbon-100 border border-purple-200 rounded-lg p-3">
+      <div className="bg-apptivia-carbon-100 border border-apptivia-carbon-300 rounded-lg p-3">
         <div className="font-semibold text-apptivia-ink text-xs uppercase tracking-wide mb-1">Next Step Goal</div>
         <div className="text-xs text-apptivia-ink">{data.next_step_goal}</div>
       </div>
@@ -472,7 +472,7 @@ const StructuredDailyBriefing = memo(({ data }) => {
       )}
 
       {isMorning && data.priorities?.length > 0 && (
-        <div className="bg-apptivia-coral-tone-50 border border-blue-200 rounded-lg p-3">
+        <div className="bg-apptivia-coral-tone-50 border border-apptivia-coral-tone-100 rounded-lg p-3">
           <div className="font-semibold text-apptivia-coral-tone-700 text-xs uppercase tracking-wide mb-1">Today's Priorities</div>
           {data.priorities.map((p, i) => <div key={i} className="text-xs text-apptivia-coral ml-2">{i + 1}. {p}</div>)}
         </div>
@@ -528,14 +528,14 @@ const StructuredDailyBriefing = memo(({ data }) => {
       )}
 
       {!isMorning && data.reflection_question && (
-        <div className="bg-apptivia-carbon-100 border border-purple-200 rounded-lg p-3">
+        <div className="bg-apptivia-carbon-100 border border-apptivia-carbon-300 rounded-lg p-3">
           <div className="font-semibold text-apptivia-ink text-xs uppercase tracking-wide mb-1">Reflection</div>
           <div className="text-xs text-apptivia-ink italic">{data.reflection_question}</div>
         </div>
       )}
 
       {!isMorning && data.tomorrows_commitment && (
-        <div className="bg-apptivia-coral-tone-50 border border-blue-200 rounded-lg p-3">
+        <div className="bg-apptivia-coral-tone-50 border border-apptivia-coral-tone-100 rounded-lg p-3">
           <div className="font-semibold text-apptivia-coral-tone-700 text-xs uppercase tracking-wide mb-1">Tomorrow's Commitment</div>
           <div className="text-xs text-apptivia-coral">{data.tomorrows_commitment}</div>
         </div>
@@ -557,7 +557,7 @@ const StructuredSkillBuilder = memo(({ data }) => (
     </div>
 
     {data.current_state && (
-      <div className="bg-apptivia-paper border border-gray-200 rounded-lg p-3">
+      <div className="bg-apptivia-paper border border-apptivia-carbon-200 rounded-lg p-3">
         <div className="font-semibold text-apptivia-ink text-xs uppercase tracking-wide mb-1">Current State</div>
         {data.current_state.assessment && <div className="text-xs text-apptivia-carbon-700 mb-1">{data.current_state.assessment}</div>}
         {data.current_state.evidence?.length > 0 && (
@@ -569,7 +569,7 @@ const StructuredSkillBuilder = memo(({ data }) => (
     )}
 
     {[data.phase_1, data.phase_2, data.phase_3].filter(Boolean).map((phase, i) => (
-      <div key={i} className="bg-apptivia-coral-tone-50 border border-blue-200 rounded-lg p-3">
+      <div key={i} className="bg-apptivia-coral-tone-50 border border-apptivia-coral-tone-100 rounded-lg p-3">
         <div className="flex items-center gap-2 mb-1">
           <span className="font-semibold text-apptivia-coral-tone-700 text-xs uppercase tracking-wide">{phase.name || `Phase ${i + 1}`}</span>
           {phase.duration && <span className="text-[10px] bg-apptivia-coral-tone-50 text-apptivia-coral px-1.5 py-0.5 rounded">{phase.duration}</span>}
@@ -587,7 +587,7 @@ const StructuredSkillBuilder = memo(({ data }) => (
     )}
 
     {data.managers_role && (
-      <div className="bg-apptivia-carbon-100 border border-purple-200 rounded-lg p-3">
+      <div className="bg-apptivia-carbon-100 border border-apptivia-carbon-300 rounded-lg p-3">
         <div className="font-semibold text-apptivia-ink text-xs uppercase tracking-wide mb-1">Manager's Role</div>
         <div className="text-xs text-apptivia-ink">{data.managers_role}</div>
       </div>
@@ -619,7 +619,7 @@ const ChatBubble = memo(({ msg, onOptionSelect, isLastAaron, isTyping, onNavigat
       <div className={`${msg.structuredData ? 'max-w-[90%]' : 'max-w-[75%]'} rounded-lg px-4 py-2 shadow-sm ${
         isUser
           ? 'bg-apptivia-coral text-white'
-          : 'bg-white text-apptivia-ink border border-gray-200'
+          : 'bg-white text-apptivia-ink border border-apptivia-carbon-200'
       }`}>
         {isUser ? (
           <p className="text-sm whitespace-pre-line">{msg.text}</p>
@@ -665,7 +665,7 @@ const ChatBubble = memo(({ msg, onOptionSelect, isLastAaron, isTyping, onNavigat
         {!isUser && msg.frameworks?.length > 0 && (
           <div className="flex flex-wrap gap-1 mt-1.5">
             {msg.frameworks.map((fw, i) => (
-              <span key={i} className="inline-block text-[10px] px-1.5 py-0.5 rounded-full bg-apptivia-coral-tone-50 text-apptivia-coral border border-blue-200">
+              <span key={i} className="inline-block text-[10px] px-1.5 py-0.5 rounded-full bg-apptivia-coral-tone-50 text-apptivia-coral border border-apptivia-coral-tone-100">
                 {fw}
               </span>
             ))}
@@ -685,7 +685,7 @@ ChatBubble.displayName = 'ChatBubble';
 
 const TypingIndicator = memo(() => (
   <div className="flex justify-start">
-    <div className="bg-white text-apptivia-ink border border-gray-200 rounded-lg px-4 py-3 shadow-sm">
+    <div className="bg-white text-apptivia-ink border border-apptivia-carbon-200 rounded-lg px-4 py-3 shadow-sm">
       <div className="flex gap-1">
         <div className="w-2 h-2 bg-apptivia-carbon-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
         <div className="w-2 h-2 bg-apptivia-carbon-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
@@ -703,7 +703,7 @@ const OptionChips = memo(({ options, onSelect, disabled }) => (
         key={i}
         onClick={() => onSelect(opt.value)}
         disabled={disabled}
-        className="text-xs px-3 py-1.5 rounded-full border border-purple-200 bg-apptivia-carbon-100 text-apptivia-ink hover:bg-apptivia-carbon-100 hover:border-purple-400 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+        className="text-xs px-3 py-1.5 rounded-full border border-apptivia-carbon-300 bg-apptivia-carbon-100 text-apptivia-ink hover:bg-apptivia-carbon-100 hover:border-apptivia-carbon-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
       >
         {opt.label}
       </button>
@@ -1189,8 +1189,8 @@ const AaronChatbot = ({ isOpen, onClose }) => {
       }`}>
         {/* [FEATURE 1] Thread Sidebar — Pro+ only */}
         {showThreadSidebar && !isMinimized && isPro && (
-          <div className="w-48 border-r border-gray-200 bg-apptivia-paper flex flex-col shrink-0">
-            <div className="p-2 border-b border-gray-200 flex items-center justify-between">
+          <div className="w-48 border-r border-apptivia-carbon-200 bg-apptivia-paper flex flex-col shrink-0">
+            <div className="p-2 border-b border-apptivia-carbon-200 flex items-center justify-between">
               <span className="text-xs font-semibold text-apptivia-carbon-600">Threads</span>
               <div className="flex items-center gap-1">
                 <button onClick={handleNewThread} title="New chat" className="p-1 hover:bg-apptivia-carbon-200 rounded"><MessageSquarePlus size={14} className="text-apptivia-carbon-600" /></button>
@@ -1201,7 +1201,7 @@ const AaronChatbot = ({ isOpen, onClose }) => {
               {threads.map(t => (
                 <div
                   key={t.id}
-                  className={`px-2 py-1.5 cursor-pointer flex items-center group text-xs border-b border-gray-100 ${activeThreadId === t.id ? 'bg-apptivia-coral-tone-50 text-apptivia-coral' : 'hover:bg-apptivia-carbon-100 text-apptivia-carbon-700'}`}
+                  className={`px-2 py-1.5 cursor-pointer flex items-center group text-xs border-b border-apptivia-carbon-100 ${activeThreadId === t.id ? 'bg-apptivia-coral-tone-50 text-apptivia-coral' : 'hover:bg-apptivia-carbon-100 text-apptivia-carbon-700'}`}
                   onClick={() => handleLoadThread(t.id)}
                 >
                   {renamingThreadId === t.id ? (
@@ -1343,13 +1343,13 @@ const AaronChatbot = ({ isOpen, onClose }) => {
                       {msg.sender === 'aaron' && msg.id !== 'greeting' && (
                         <div className="flex justify-start mt-0.5 group">
                           {actionMsgId === msg.id ? (
-                            <div className="bg-white border border-gray-200 rounded-lg p-2 ml-0 mt-1 text-xs shadow-sm w-72">
+                            <div className="bg-white border border-apptivia-carbon-200 rounded-lg p-2 ml-0 mt-1 text-xs shadow-sm w-72">
                               {/* Manager/admin: assign to specific rep */}
                               {isManagerRole && teamProfiles.length > 0 && (
                                 <select
                                   value={targetRepId}
                                   onChange={e => setTargetRepId(e.target.value)}
-                                  className="w-full px-2 py-1 border rounded text-xs mb-1.5 bg-apptivia-carbon-100 border-purple-200"
+                                  className="w-full px-2 py-1 border rounded text-xs mb-1.5 bg-apptivia-carbon-100 border-apptivia-carbon-300"
                                 >
                                   <option value="">Assign to myself</option>
                                   {teamProfiles.filter(p => p.id !== user?.id).map(p => (
@@ -1427,7 +1427,7 @@ const AaronChatbot = ({ isOpen, onClose }) => {
 
                 {/* Outcome tagging prompt after 6+ user messages */}
                 {showOutcomePrompt && activeThreadId && (
-                  <div className="mx-4 mb-3 p-3 bg-apptivia-carbon-100 rounded-lg border border-indigo-100">
+                  <div className="mx-4 mb-3 p-3 bg-apptivia-carbon-100 rounded-lg border border-apptivia-carbon-300">
                     <p className="text-xs text-apptivia-ink font-medium mb-2">How did this session go?</p>
                     <div className="flex flex-wrap gap-1.5">
                       {[
@@ -1439,7 +1439,7 @@ const AaronChatbot = ({ isOpen, onClose }) => {
                         <button
                           key={tag}
                           onClick={() => tagOutcome(activeThreadId, tag)}
-                          className="px-2.5 py-1 text-xs rounded-full border border-indigo-200 hover:bg-apptivia-carbon-100 text-apptivia-ink bg-white transition-colors"
+                          className="px-2.5 py-1 text-xs rounded-full border border-apptivia-carbon-300 hover:bg-apptivia-carbon-100 text-apptivia-ink bg-white transition-colors"
                         >
                           {label}
                         </button>
@@ -1454,7 +1454,7 @@ const AaronChatbot = ({ isOpen, onClose }) => {
 
               {/* Starter thread upsell tooltip */}
               {!isPro && !isMinimized && messages.length > 4 && (
-                <div className="shrink-0 px-3 py-1.5 bg-apptivia-carbon-100 border-t border-purple-100 text-center">
+                <div className="shrink-0 px-3 py-1.5 bg-apptivia-carbon-100 border-t border-apptivia-carbon-300 text-center">
                   <span className="text-[10px] text-apptivia-ink">Thread history is a Pro feature — <a href="/organization-settings" className="underline hover:text-apptivia-ink">Upgrade</a></span>
                 </div>
               )}
@@ -1466,12 +1466,12 @@ const AaronChatbot = ({ isOpen, onClose }) => {
                   ? allPresets?.filter(p => STARTER_PRESET_LABELS.includes(p.label))
                   : allPresets;
                 return presets?.length && !isTyping && messages.length <= 2 ? (
-                  <div className="shrink-0 px-4 py-2 bg-apptivia-paper border-t border-gray-100 flex flex-wrap gap-1.5">
+                  <div className="shrink-0 px-4 py-2 bg-apptivia-paper border-t border-apptivia-carbon-100 flex flex-wrap gap-1.5">
                     {presets.map((preset) => (
                       <button
                         key={preset.label}
                         onClick={() => handlePresetClick(preset)}
-                        className="text-xs px-3 py-1.5 rounded-full border border-blue-200 bg-white text-apptivia-coral hover:bg-apptivia-coral-tone-50 hover:border-blue-400 transition-colors"
+                        className="text-xs px-3 py-1.5 rounded-full border border-apptivia-coral-tone-100 bg-white text-apptivia-coral hover:bg-apptivia-coral-tone-50 hover:border-apptivia-coral-tone-100 transition-colors"
                       >
                         {preset.label}
                       </button>
@@ -1484,7 +1484,7 @@ const AaronChatbot = ({ isOpen, onClose }) => {
               })()}
 
               {/* Input Area */}
-              <div className="shrink-0 px-4 py-2 bg-white border-t border-gray-200">
+              <div className="shrink-0 px-4 py-2 bg-white border-t border-apptivia-carbon-200">
                 {contentWarning && (
                   <div className="mb-2 p-2 bg-yellow-50 border border-yellow-200 rounded text-xs text-yellow-800 flex items-center justify-between">
                     <span>{contentWarning}</span>
@@ -1513,7 +1513,7 @@ const AaronChatbot = ({ isOpen, onClose }) => {
                     value={inputValue}
                     onChange={(e) => setInputValue(e.target.value)}
                     disabled={connectionStatus === 'reconnecting' || connectionStatus === 'failed'}
-                    className="flex-1 px-3 py-2 rounded-lg border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="flex-1 px-3 py-2 rounded-lg border border-apptivia-carbon-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed"
                     maxLength={MAX_MESSAGE_LENGTH}
                   />
                   <button

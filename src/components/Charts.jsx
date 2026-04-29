@@ -101,7 +101,7 @@ export const ScoreDistributionChart = ({ data, title, infoText, footer = null })
     const { name, value, kpis } = payload[0].payload || {};
 
     return (
-      <div className="bg-white border border-gray-200 rounded-lg shadow-md p-3 text-xs text-apptivia-carbon-700">
+      <div className="bg-white border border-apptivia-carbon-200 rounded-lg shadow-md p-3 text-xs text-apptivia-carbon-700">
         <div className="font-semibold text-apptivia-ink mb-1">{name}</div>
         <div className="mb-2">Count: <span className="font-semibold">{value}</span></div>
         {Array.isArray(kpis) && kpis.length > 0 && (
@@ -109,7 +109,7 @@ export const ScoreDistributionChart = ({ data, title, infoText, footer = null })
             <div className="text-[11px] text-apptivia-carbon-500 mb-1">KPIs in this category</div>
             <div className="flex flex-wrap gap-1">
               {kpis.map((kpi) => (
-                <span key={kpi} className="px-2 py-0.5 rounded-full bg-apptivia-carbon-100 text-apptivia-carbon-700 border border-gray-200">
+                <span key={kpi} className="px-2 py-0.5 rounded-full bg-apptivia-carbon-100 text-apptivia-carbon-700 border border-apptivia-carbon-200">
                   {kpi}
                 </span>
               ))}

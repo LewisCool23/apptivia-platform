@@ -129,8 +129,8 @@ export default function ContestTemplatesModal({ isOpen, onClose, onTemplateSelec
               onClick={() => handleTemplateClick(template)}
               className={`p-4 border-2 rounded-lg cursor-pointer transition-all hover:shadow-md ${
                 selectedTemplate?.id === template.id
-                  ? 'border-blue-500 bg-apptivia-coral-tone-50'
-                  : 'border-gray-200 hover:border-blue-300'
+                  ? 'border-apptivia-coral bg-apptivia-coral-tone-50'
+                  : 'border-apptivia-carbon-200 hover:border-apptivia-coral-tone-100'
               }`}
             >
               <div className="flex items-start gap-3 mb-2">
@@ -163,7 +163,7 @@ export default function ContestTemplatesModal({ isOpen, onClose, onTemplateSelec
                   type="text"
                   value={customData.name}
                   onChange={(e) => setCustomData({ ...customData, name: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-apptivia-carbon-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
               <div>
@@ -174,7 +174,7 @@ export default function ContestTemplatesModal({ isOpen, onClose, onTemplateSelec
                   type="date"
                   value={customData.start_date}
                   onChange={(e) => setCustomData({ ...customData, start_date: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-apptivia-carbon-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
               <div>
@@ -187,7 +187,7 @@ export default function ContestTemplatesModal({ isOpen, onClose, onTemplateSelec
                   max="90"
                   value={customData.duration}
                   onChange={(e) => setCustomData({ ...customData, duration: parseInt(e.target.value) })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-apptivia-carbon-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
               <div>
@@ -199,7 +199,7 @@ export default function ContestTemplatesModal({ isOpen, onClose, onTemplateSelec
                   min="0"
                   value={customData.reward_value}
                   onChange={(e) => setCustomData({ ...customData, reward_value: parseInt(e.target.value) })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-apptivia-carbon-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
             </div>

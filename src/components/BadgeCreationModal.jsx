@@ -131,7 +131,7 @@ export default function BadgeCreationModal({ isOpen, onClose, onBadgeCreated }) 
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
       <div className="bg-white rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
         {/* Header */}
-        <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
+        <div className="sticky top-0 bg-white border-b border-apptivia-carbon-200 px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="p-2 bg-apptivia-carbon-100 rounded-lg">
               <Award className="w-5 h-5 text-apptivia-ink" />
@@ -151,7 +151,7 @@ export default function BadgeCreationModal({ isOpen, onClose, onBadgeCreated }) 
 
         <form onSubmit={handleSubmit} className="p-6 space-y-6">
           {/* Badge Preview */}
-          <div className="flex items-center justify-center p-6 bg-apptivia-paper rounded-lg border-2 border-dashed border-gray-300">
+          <div className="flex items-center justify-center p-6 bg-apptivia-paper rounded-lg border-2 border-dashed border-apptivia-carbon-300">
             <div className="text-center">
               <div 
                 className="inline-flex items-center justify-center w-20 h-20 rounded-full text-4xl mb-3"
@@ -175,7 +175,7 @@ export default function BadgeCreationModal({ isOpen, onClose, onBadgeCreated }) 
               required
               value={formData.badge_name}
               onChange={(e) => setFormData({ ...formData, badge_name: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+              className="w-full px-3 py-2 border border-apptivia-carbon-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-apptivia-carbon-300"
               placeholder="e.g., Sales Superstar"
               maxLength={100}
             />
@@ -189,7 +189,7 @@ export default function BadgeCreationModal({ isOpen, onClose, onBadgeCreated }) 
             <textarea
               value={formData.badge_description}
               onChange={(e) => setFormData({ ...formData, badge_description: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+              className="w-full px-3 py-2 border border-apptivia-carbon-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-apptivia-carbon-300"
               placeholder="What makes this badge special?"
               rows={3}
               maxLength={500}
@@ -209,8 +209,8 @@ export default function BadgeCreationModal({ isOpen, onClose, onBadgeCreated }) 
                   onClick={() => setFormData({ ...formData, icon: emoji })}
                   className={`p-3 text-2xl rounded-lg border-2 transition-all ${
                     formData.icon === emoji
-                      ? 'border-indigo-500 bg-apptivia-carbon-100'
-                      : 'border-gray-200 hover:border-gray-300 bg-white'
+                      ? 'border-apptivia-carbon-300 bg-apptivia-carbon-100'
+                      : 'border-apptivia-carbon-200 hover:border-apptivia-carbon-300 bg-white'
                   }`}
                 >
                   {emoji}
@@ -220,7 +220,7 @@ export default function BadgeCreationModal({ isOpen, onClose, onBadgeCreated }) 
                 type="text"
                 value={formData.icon}
                 onChange={(e) => setFormData({ ...formData, icon: e.target.value })}
-                className="p-3 text-2xl text-center rounded-lg border-2 border-gray-200 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500"
+                className="p-3 text-2xl text-center rounded-lg border-2 border-apptivia-carbon-200 focus:border-apptivia-carbon-300 focus:ring-2 focus:ring-indigo-500"
                 maxLength={2}
               />
             </div>
@@ -239,8 +239,8 @@ export default function BadgeCreationModal({ isOpen, onClose, onBadgeCreated }) 
                   onClick={() => setFormData({ ...formData, color: color.value })}
                   className={`p-3 rounded-lg border-2 transition-all flex items-center gap-2 ${
                     formData.color === color.value
-                      ? 'border-indigo-500 bg-apptivia-carbon-100'
-                      : 'border-gray-200 hover:border-gray-300 bg-white'
+                      ? 'border-apptivia-carbon-300 bg-apptivia-carbon-100'
+                      : 'border-apptivia-carbon-200 hover:border-apptivia-carbon-300 bg-white'
                   }`}
                 >
                   <div className={`w-6 h-6 rounded-full ${color.preview}`}></div>
@@ -258,7 +258,7 @@ export default function BadgeCreationModal({ isOpen, onClose, onBadgeCreated }) 
             <select
               value={formData.badge_type}
               onChange={(e) => setFormData({ ...formData, badge_type: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+              className="w-full px-3 py-2 border border-apptivia-carbon-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-apptivia-carbon-300"
             >
               {badgeTypes.map((type) => (
                 <option key={type.value} value={type.value}>
@@ -277,7 +277,7 @@ export default function BadgeCreationModal({ isOpen, onClose, onBadgeCreated }) 
               type="number"
               value={formData.points}
               onChange={(e) => setFormData({ ...formData, points: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+              className="w-full px-3 py-2 border border-apptivia-carbon-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-apptivia-carbon-300"
               min="0"
               step="10"
             />
@@ -291,7 +291,7 @@ export default function BadgeCreationModal({ isOpen, onClose, onBadgeCreated }) 
               id="is_rare"
               checked={formData.is_rare}
               onChange={(e) => setFormData({ ...formData, is_rare: e.target.checked })}
-              className="w-4 h-4 text-apptivia-ink border-gray-300 rounded focus:ring-indigo-500"
+              className="w-4 h-4 text-apptivia-ink border-apptivia-carbon-300 rounded focus:ring-indigo-500"
             />
             <label htmlFor="is_rare" className="ml-2 text-sm text-apptivia-carbon-700">
               Mark as rare badge (highlights special accomplishments)
@@ -299,7 +299,7 @@ export default function BadgeCreationModal({ isOpen, onClose, onBadgeCreated }) 
           </div>
 
           {/* Footer Actions */}
-          <div className="flex items-center justify-end gap-3 pt-4 border-t border-gray-200">
+          <div className="flex items-center justify-end gap-3 pt-4 border-t border-apptivia-carbon-200">
             <button
               type="button"
               onClick={onClose}

@@ -197,7 +197,7 @@ export default function StepKpiConfig({ wizardState, updateState, organizationId
                   className={`px-4 py-2 rounded-lg border text-sm font-medium transition-all ${
                     selectedTemplate === t.title_key
                       ? 'border-amber-500 bg-amber-50 text-amber-700 ring-1 ring-amber-200'
-                      : 'border-gray-200 text-apptivia-carbon-700 hover:border-gray-300'
+                      : 'border-apptivia-carbon-200 text-apptivia-carbon-700 hover:border-apptivia-carbon-300'
                   }`}
                 >
                   {t.template_name}
@@ -210,7 +210,7 @@ export default function StepKpiConfig({ wizardState, updateState, organizationId
                 className={`px-4 py-2 rounded-lg border text-sm font-medium transition-all flex items-center gap-1 ${
                   selectedTemplate === 'custom'
                     ? 'border-amber-500 bg-amber-50 text-amber-700 ring-1 ring-amber-200'
-                    : 'border-gray-200 text-apptivia-carbon-700 hover:border-gray-300'
+                    : 'border-apptivia-carbon-200 text-apptivia-carbon-700 hover:border-apptivia-carbon-300'
                 }`}
               >
                 <Sliders size={14} /> Custom
@@ -251,7 +251,7 @@ export default function StepKpiConfig({ wizardState, updateState, organizationId
                   className={`flex items-center gap-3 p-2.5 rounded-lg border transition-all ${
                     kpi.enabled
                       ? 'border-amber-200 bg-amber-50/50'
-                      : 'border-gray-100 bg-apptivia-paper/50 opacity-60'
+                      : 'border-apptivia-carbon-100 bg-apptivia-paper/50 opacity-60'
                   }`}
                 >
                   <button
@@ -260,7 +260,7 @@ export default function StepKpiConfig({ wizardState, updateState, organizationId
                     className={`w-5 h-5 rounded flex items-center justify-center flex-shrink-0 ${
                       kpi.enabled
                         ? 'bg-amber-500 text-white'
-                        : 'border border-gray-300'
+                        : 'border border-apptivia-carbon-300'
                     }`}
                   >
                     {kpi.enabled && <Check size={12} />}
@@ -283,7 +283,7 @@ export default function StepKpiConfig({ wizardState, updateState, organizationId
                           type="number"
                           value={kpi.goal}
                           onChange={(e) => updateKpi(kpi._idx, 'goal', e.target.value)}
-                          className="w-20 px-2 py-1 border border-gray-300 rounded text-sm text-center"
+                          className="w-20 px-2 py-1 border border-apptivia-carbon-300 rounded text-sm text-center"
                           min="1"
                         />
                         <span className="text-xs text-apptivia-carbon-400">{kpi.unit === 'dollars' ? '$' : ''}</span>
@@ -294,7 +294,7 @@ export default function StepKpiConfig({ wizardState, updateState, organizationId
                           type="number"
                           value={kpi.weight}
                           onChange={(e) => updateKpi(kpi._idx, 'weight', e.target.value)}
-                          className="w-16 px-2 py-1 border border-gray-300 rounded text-sm text-center"
+                          className="w-16 px-2 py-1 border border-apptivia-carbon-300 rounded text-sm text-center"
                           min="0"
                           max="100"
                         />

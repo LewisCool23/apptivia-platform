@@ -38,7 +38,7 @@ export default function PlanCard({
   }, [assignmentEffectiveness, plan.id]);
 
   return (
-    <div className={`border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow flex flex-col border-l-4 ${cfg.borderColor}`}>
+    <div className={`border border-apptivia-carbon-200 rounded-lg p-4 hover:shadow-md transition-shadow flex flex-col border-l-4 ${cfg.borderColor}`}>
       {/* Header */}
       <div className="flex items-start justify-between mb-3">
         <div className="flex-1">
@@ -161,7 +161,7 @@ export default function PlanCard({
       <div className="flex gap-2">
         <button
           onClick={() => onView(plan)}
-          className="flex-1 flex items-center justify-center gap-1 px-3 py-1.5 text-xs font-semibold text-apptivia-coral border border-blue-600 rounded-md hover:bg-apptivia-coral-tone-50"
+          className="flex-1 flex items-center justify-center gap-1 px-3 py-1.5 text-xs font-semibold text-apptivia-coral border border-apptivia-coral rounded-md hover:bg-apptivia-coral-tone-50"
         >
           <Target size={14} />
           View
@@ -169,7 +169,7 @@ export default function PlanCard({
         {canCreatePlans && (
           <button
             onClick={() => onEdit(plan)}
-            className="flex items-center justify-center gap-1 px-3 py-1.5 text-xs font-semibold text-apptivia-carbon-600 border border-gray-300 rounded-md hover:bg-apptivia-paper"
+            className="flex items-center justify-center gap-1 px-3 py-1.5 text-xs font-semibold text-apptivia-carbon-600 border border-apptivia-carbon-300 rounded-md hover:bg-apptivia-paper"
             title="Edit Plan"
           >
             <Edit size={14} />
@@ -188,14 +188,14 @@ export default function PlanCard({
           <>
             <button
               onClick={() => onSnapshot && onSnapshot(plan)}
-              className="flex items-center justify-center gap-1 px-3 py-1.5 text-xs font-semibold text-apptivia-ink border border-indigo-300 rounded-md hover:bg-apptivia-carbon-100"
+              className="flex items-center justify-center gap-1 px-3 py-1.5 text-xs font-semibold text-apptivia-ink border border-apptivia-carbon-300 rounded-md hover:bg-apptivia-carbon-100"
               title="Share Snapshot"
             >
               <Share2 size={14} />
             </button>
             <button
               onClick={() => onShare(plan)}
-              className="flex items-center justify-center gap-1 px-3 py-1.5 text-xs font-semibold text-apptivia-coral border border-blue-300 rounded-md hover:bg-apptivia-coral-tone-50"
+              className="flex items-center justify-center gap-1 px-3 py-1.5 text-xs font-semibold text-apptivia-coral border border-apptivia-coral-tone-100 rounded-md hover:bg-apptivia-coral-tone-50"
               title="Share via Email"
             >
               <Mail size={14} />

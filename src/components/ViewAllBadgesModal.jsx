@@ -161,7 +161,7 @@ export default function ViewAllBadgesModal({ isOpen, onClose, userId, refreshKey
     <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4" onClick={onClose}>
       <div className="bg-white rounded-xl shadow-2xl max-w-6xl w-full max-h-[90vh] overflow-hidden flex flex-col" onClick={(e) => e.stopPropagation()}>
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-gray-200">
+        <div className="flex items-center justify-between p-6 border-b border-apptivia-carbon-200">
           <div>
             <h2 className="text-2xl font-bold text-apptivia-ink flex items-center gap-2">
               <span>🎖️</span>
@@ -180,7 +180,7 @@ export default function ViewAllBadgesModal({ isOpen, onClose, userId, refreshKey
         </div>
 
         {/* Filters */}
-        <div className="p-6 border-b border-gray-200 space-y-4">
+        <div className="p-6 border-b border-apptivia-carbon-200 space-y-4">
           {/* Search Bar */}
           <SearchWithHistory
             value={searchQuery}
@@ -355,7 +355,7 @@ export default function ViewAllBadgesModal({ isOpen, onClose, userId, refreshKey
         </div>
 
         {/* Footer Stats */}
-        <div className="border-t border-gray-200 p-4 bg-apptivia-paper">
+        <div className="border-t border-apptivia-carbon-200 p-4 bg-apptivia-paper">
           <div className="flex items-center justify-center gap-6 text-sm">
             <div className="flex items-center gap-2">
               <span className="text-apptivia-carbon-600">Showing:</span>

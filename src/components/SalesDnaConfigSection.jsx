@@ -134,8 +134,8 @@ export default function SalesDnaConfigSection({ organizationId, cepStages, compa
                 })}
                 className={`border-2 rounded-lg p-3 text-left transition-all ${
                   localDna.methodology_approach === approach.key
-                    ? 'border-blue-600 bg-apptivia-coral-tone-50'
-                    : 'border-gray-200 hover:border-blue-300'
+                    ? 'border-apptivia-coral bg-apptivia-coral-tone-50'
+                    : 'border-apptivia-carbon-200 hover:border-apptivia-coral-tone-100'
                 }`}
               >
                 <div className="font-medium text-sm">{approach.label}</div>
@@ -154,7 +154,7 @@ export default function SalesDnaConfigSection({ organizationId, cepStages, compa
             <select
               value={localDna.primary_methodology || ''}
               onChange={(e) => setLocalDna({ ...localDna, primary_methodology: e.target.value || null })}
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500"
+              className="w-full border border-apptivia-carbon-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500"
             >
               <option value="">Select a methodology...</option>
               {SALES_METHODOLOGIES.map(m => (
@@ -187,7 +187,7 @@ export default function SalesDnaConfigSection({ organizationId, cepStages, compa
             <select
               value={localDna.secondary_methodology || ''}
               onChange={(e) => setLocalDna({ ...localDna, secondary_methodology: e.target.value || null })}
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500"
+              className="w-full border border-apptivia-carbon-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500"
             >
               <option value="">Select a secondary methodology...</option>
               {SALES_METHODOLOGIES.filter(m => m.key !== localDna.primary_methodology).map(m => (
@@ -235,7 +235,7 @@ export default function SalesDnaConfigSection({ organizationId, cepStages, compa
                         }
                         setLocalDna({ ...localDna, methodology_stage_mapping: filtered });
                       }}
-                      className="flex-1 border border-gray-300 rounded px-2 py-1.5 text-xs"
+                      className="flex-1 border border-apptivia-carbon-300 rounded px-2 py-1.5 text-xs"
                     >
                       <option value="">Primary ({selectedPrimary?.name})</option>
                       <option value={localDna.secondary_methodology}>{selectedSecondary?.name}</option>
@@ -258,7 +258,7 @@ export default function SalesDnaConfigSection({ organizationId, cepStages, compa
                 type="text"
                 value={localDna.custom_methodology_name || ''}
                 onChange={(e) => setLocalDna({ ...localDna, custom_methodology_name: e.target.value })}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500"
+                className="w-full border border-apptivia-carbon-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500"
                 placeholder="e.g., The Acme Way, Value-Led Enterprise Selling"
               />
             </div>
@@ -301,7 +301,7 @@ export default function SalesDnaConfigSection({ organizationId, cepStages, compa
                       setCustomPrinciple('');
                     }
                   }}
-                  className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500"
+                  className="flex-1 border border-apptivia-carbon-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500"
                   placeholder="Type a principle and press Enter"
                 />
                 <button
@@ -337,7 +337,7 @@ export default function SalesDnaConfigSection({ organizationId, cepStages, compa
                 className={`border-2 rounded-lg p-3 text-left transition-all ${
                   localDna.qualification_framework === fw.key
                     ? 'border-emerald-600 bg-emerald-50'
-                    : 'border-gray-200 hover:border-emerald-300'
+                    : 'border-apptivia-carbon-200 hover:border-emerald-300'
                 }`}
               >
                 <div className="font-semibold text-sm">{fw.name}</div>

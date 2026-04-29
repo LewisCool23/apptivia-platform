@@ -258,7 +258,7 @@ export default function TeamManagementPanel({
                   placeholder="e.g. Enterprise Sales"
                   value={newTeamName}
                   onChange={(e) => setNewTeamName(e.target.value)}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full border border-apptivia-carbon-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-apptivia-coral"
                 />
               </div>
               <div>
@@ -268,7 +268,7 @@ export default function TeamManagementPanel({
                   placeholder="Optional team description"
                   value={newTeamDescription}
                   onChange={(e) => setNewTeamDescription(e.target.value)}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full border border-apptivia-carbon-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-apptivia-coral"
                 />
               </div>
               <div className="flex justify-end gap-2 pt-2">

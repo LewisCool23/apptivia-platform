@@ -565,7 +565,7 @@ function DashboardLayout({ children }) {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               onFocus={() => searchQuery && setShowSearchResults(true)}
-              className="w-full pl-9 pr-3 py-2 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="w-full pl-9 pr-3 py-2 text-sm border border-apptivia-carbon-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-apptivia-coral"
             />
             {searchQuery && (
               <button
@@ -582,7 +582,7 @@ function DashboardLayout({ children }) {
           </div>
           {/* Mobile Search Results */}
           {showSearchResults && searchResults.length > 0 && (
-            <div className="absolute left-4 right-4 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-96 overflow-y-auto z-50">
+            <div className="absolute left-4 right-4 mt-1 bg-white border border-apptivia-carbon-200 rounded-lg shadow-lg max-h-96 overflow-y-auto z-50">
               {searchResults.map((result, idx) => (
                 <button
                   key={idx}

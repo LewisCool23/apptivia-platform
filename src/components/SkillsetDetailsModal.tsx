@@ -285,7 +285,7 @@ export default function SkillsetDetailsModal({
                   {kpiList.map(kpi => (
                     <span
                       key={kpi}
-                      className="px-2.5 py-1 rounded-full text-xs font-semibold bg-white/80 text-apptivia-carbon-700 border border-gray-200"
+                      className="px-2.5 py-1 rounded-full text-xs font-semibold bg-white/80 text-apptivia-carbon-700 border border-apptivia-carbon-200"
                     >
                       {kpi}
                     </span>
@@ -308,7 +308,7 @@ export default function SkillsetDetailsModal({
           ) : (
             <div className="space-y-4">
               {highlightAchievementName && (
-                <div className="bg-apptivia-coral-tone-50 border border-blue-200 rounded-lg p-4 text-sm text-apptivia-coral-tone-700">
+                <div className="bg-apptivia-coral-tone-50 border border-apptivia-coral-tone-100 rounded-lg p-4 text-sm text-apptivia-coral-tone-700">
                   Suggested next achievement: <span className="font-semibold">{highlightAchievementName}</span>
                 </div>
               )}
@@ -333,7 +333,7 @@ export default function SkillsetDetailsModal({
               </div>
 
               {/* Tab Navigation */}
-              <div className="border-b border-gray-200">
+              <div className="border-b border-apptivia-carbon-200">
                 <div className="flex gap-4">
                   <button
                     onClick={() => setActiveTab('achievements')}
@@ -372,7 +372,7 @@ export default function SkillsetDetailsModal({
                       return (
                       <div
                         key={achievement.id}
-                        className={`border rounded-lg p-4 transition-shadow ${isCompleted ? 'bg-green-50 border-green-200 shadow-sm' : 'hover:shadow-md'} ${isHighlighted ? 'ring-2 ring-blue-400 bg-apptivia-coral-tone-50 border-blue-200' : ''}`}
+                        className={`border rounded-lg p-4 transition-shadow ${isCompleted ? 'bg-green-50 border-green-200 shadow-sm' : 'hover:shadow-md'} ${isHighlighted ? 'ring-2 ring-blue-400 bg-apptivia-coral-tone-50 border-apptivia-coral-tone-100' : ''}`}
                       >
                         <div className="flex items-start justify-between mb-2">
                           <div className="flex-1">

@@ -454,7 +454,7 @@ export default function ConfigureModal({ isOpen, onClose, onSave, currentUserId 
           <p className="text-sm text-whitscorecard')}
             className={`px-6 py-3 font-semibold transition-colors ${
               activeTab === 'scorecard'
-                ? 'text-apptivia-coral border-b-2 border-blue-600 bg-white'
+                ? 'text-apptivia-coral border-b-2 border-apptivia-coral bg-white'
                 : 'text-apptivia-carbon-600 hover:text-apptivia-ink'
             }`}
           >
@@ -470,7 +470,7 @@ export default function ConfigureModal({ isOpen, onClose, onSave, currentUserId 
             onClick={() => setActiveTab('manage')}
             className={`px-6 py-3 font-semibold transition-colors ${
               activeTab === 'manage'
-                ? 'text-apptivia-coral border-b-2 border-blue-600 bg-white'
+                ? 'text-apptivia-coral border-b-2 border-apptivia-coral bg-white'
                 : 'text-apptivia-carbon-600 hover:text-apptivia-ink'
             }`}
           >
@@ -480,7 +480,7 @@ export default function ConfigureModal({ isOpen, onClose, onSave, currentUserId 
             onClick={() => setActiveTab('create')}
             className={`px-6 py-3 font-semibold transition-colors ${
               activeTab === 'create'
-                ? 'text-apptivia-coral border-b-2 border-blue-600 bg-white'
+                ? 'text-apptivia-coral border-b-2 border-apptivia-coral bg-white'
                 : 'text-apptivia-carbon-600 hover:text-apptivia-ink'
             }`}
           >
@@ -491,13 +491,13 @@ export default function ConfigureModal({ isOpen, onClose, onSave, currentUserId 
         <div className="p-6 overflow-y-auto flex-1">
           {loading ? (
             <div className="text-center py-12">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-apptivia-coral mx-auto mb-4"></div>
               <p className="text-apptivia-carbon-500">Loading configurations...</p>
             </div>
           ) : activeTab === 'manage' ? (
             <div className="space-y-6">
               {/* Info banner about scorecard KPIs */}
-              <div className="bg-apptivia-coral-tone-50 border-l-4 border-blue-500 p-4 rounded-r-lg">
+              <div className="bg-apptivia-coral-tone-50 border-l-4 border-apptivia-coral p-4 rounded-r-lg">
                 <div className="flex items-start gap-3">
                   <span className="text-apptivia-coral text-xl">💡</span>
                   <div>
@@ -529,8 +529,8 @@ export default function ConfigureModal({ isOpen, onClose, onSave, currentUserId 
                           key={config.key}
                           className={`bg-white rounded-lg p-4 hover:shadow-md transition-all duration-200 ${
                             config.show_on_scorecard 
-                              ? 'border-2 border-blue-500 shadow-sm bg-apptivia-coral-tone-50/30' 
-                              : 'border border-gray-200'
+                              ? 'border-2 border-apptivia-coral shadow-sm bg-apptivia-coral-tone-50/30' 
+                              : 'border border-apptivia-carbon-200'
                           }`}
                         >
                           <div className="flex items-start justify-between gap-4">
@@ -544,7 +544,7 @@ export default function ConfigureModal({ isOpen, onClose, onSave, currentUserId 
                                       const index = kpiConfigs.findIndex(k => k.key === config.key);
                                       updateConfig(index, 'name', e.target.value);
                                     }}
-                                    className="text-lg font-semibold text-apptivia-ink border-b-2 border-blue-500 focus:outline-none"
+                                    className="text-lg font-semibold text-apptivia-ink border-b-2 border-apptivia-coral focus:outline-none"
                                   />
                                 ) : (
                                   <h4 className="text-lg font-semibold text-apptivia-ink">{config.name}</h4>
@@ -567,7 +567,7 @@ export default function ConfigureModal({ isOpen, onClose, onSave, currentUserId 
                                     updateConfig(index, 'description', e.target.value);
                                   }}
                                   placeholder="Description (optional)"
-                                  className="text-sm text-apptivia-carbon-600 w-full border border-gray-300 rounded px-2 py-1"
+                                  className="text-sm text-apptivia-carbon-600 w-full border border-apptivia-carbon-300 rounded px-2 py-1"
                                 />
                               ) : (
                                 <p className="text-sm text-apptivia-carbon-600">{config.description || 'No description'}</p>
@@ -585,7 +585,7 @@ export default function ConfigureModal({ isOpen, onClose, onSave, currentUserId 
                                     const index = kpiConfigs.findIndex(k => k.key === config.key);
                                     updateConfig(index, 'goal', parseFloat(e.target.value) || 0);
                                   }}
-                                  className="w-24 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                                  className="w-24 px-3 py-2 border border-apptivia-carbon-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-apptivia-coral text-sm"
                                   min="0"
                                   step="1"
                                 />
@@ -601,7 +601,7 @@ export default function ConfigureModal({ isOpen, onClose, onSave, currentUserId 
                                       const index = kpiConfigs.findIndex(k => k.key === config.key);
                                       updateConfig(index, 'weight', (parseFloat(e.target.value) || 0) / 100);
                                     }}
-                                    className="w-20 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                                    className="w-20 px-3 py-2 border border-apptivia-carbon-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-apptivia-coral text-sm"
                                     min="0"
                                     max="100"
                                     step="1"
@@ -619,7 +619,7 @@ export default function ConfigureModal({ isOpen, onClose, onSave, currentUserId 
                                       const index = kpiConfigs.findIndex(k => k.key === config.key);
                                       updateConfig(index, 'unit', e.target.value);
                                     }}
-                                    className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-sm"
+                                    className="px-3 py-2 border border-apptivia-carbon-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-sm"
                                   >
                                     {units.map(u => (
                                       <option key={u} value={u}>{u}</option>
@@ -660,7 +660,7 @@ export default function ConfigureModal({ isOpen, onClose, onSave, currentUserId 
                 );
               })}
 
-              <div className="mt-6 p-4 bg-apptivia-coral-tone-50 border border-blue-200 rounded-lg">
+              <div className="mt-6 p-4 bg-apptivia-coral-tone-50 border border-apptivia-coral-tone-100 rounded-lg">
                 <div className="flex items-start gap-2">
                   <span className="text-apptivia-coral text-xl">ℹ️</span>
                   <div className="text-sm text-apptivia-coral-tone-700">
@@ -678,7 +678,7 @@ export default function ConfigureModal({ isOpen, onClose, onSave, currentUserId 
           ) : activeTab === 'scorecard' ? (
             // Scorecard Selection Tab
             <div className="space-y-6">
-              <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-6 rounded-lg border border-blue-200">
+              <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-6 rounded-lg border border-apptivia-coral-tone-100">
                 <h3 className="text-lg font-semibold text-apptivia-ink mb-2">📊 Select Your Top 5 Scorecard Metrics</h3>
                 <p className="text-sm text-apptivia-carbon-600">Choose the 5 most impactful KPIs to display on your main scorecard. These metrics represent the core productivity success indicators for your organization.</p>
               </div>
@@ -700,7 +700,7 @@ export default function ConfigureModal({ isOpen, onClose, onSave, currentUserId 
                     const kpi = kpiConfigs.find(k => k.key === key);
                     if (!kpi) return null;
                     return (
-                      <div key={key} className="bg-apptivia-coral-tone-50 border border-blue-300 rounded-lg p-4 flex items-center justify-between">
+                      <div key={key} className="bg-apptivia-coral-tone-50 border border-apptivia-coral-tone-100 rounded-lg p-4 flex items-center justify-between">
                         <div className="flex items-center gap-4">
                           <span className="bg-apptivia-coral text-white rounded-full w-8 h-8 flex items-center justify-center font-bold">
                             {index + 1}
@@ -750,7 +750,7 @@ export default function ConfigureModal({ isOpen, onClose, onSave, currentUserId 
                       .map(kpi => (
                         <div
                           key={kpi.key}
-                          className="bg-white border border-gray-200 rounded-lg p-4 flex items-center justify-between hover:shadow-md transition-all duration-200"
+                          className="bg-white border border-apptivia-carbon-200 rounded-lg p-4 flex items-center justify-between hover:shadow-md transition-all duration-200"
                         >
                           <div>
                             <h5 className="font-semibold text-apptivia-ink">{kpi.name}</h5>
@@ -783,7 +783,7 @@ export default function ConfigureModal({ isOpen, onClose, onSave, currentUserId 
           ) : (
             // Create New KPI Form
             <div className="max-w-2xl mx-auto space-y-6">
-              <div className="bg-gradient-to-r from-purple-50 to-blue-50 p-6 rounded-lg border border-purple-200">
+              <div className="bg-gradient-to-r from-purple-50 to-blue-50 p-6 rounded-lg border border-apptivia-carbon-300">
                 <h3 className="text-lg font-semibold text-apptivia-ink mb-2">Create Custom KPI</h3>
                 <p className="text-sm text-apptivia-carbon-600">Add a new metric to track team performance</p>
               </div>
@@ -799,7 +799,7 @@ export default function ConfigureModal({ isOpen, onClose, onSave, currentUserId 
                       value={newKpi.key}
                       onChange={(e) => setNewKpi({ ...newKpi, key: e.target.value.toLowerCase().replace(/\s+/g, '_') })}
                       placeholder="e.g., custom_metric"
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      className="w-full px-4 py-2 border border-apptivia-carbon-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-apptivia-coral"
                     />
                     <p className="text-xs text-apptivia-carbon-500 mt-1">Unique identifier (lowercase, underscores)</p>
                   </div>
@@ -813,7 +813,7 @@ export default function ConfigureModal({ isOpen, onClose, onSave, currentUserId 
                       value={newKpi.name}
                       onChange={(e) => setNewKpi({ ...newKpi, name: e.target.value })}
                       placeholder="e.g., Custom Sales Metric"
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      className="w-full px-4 py-2 border border-apptivia-carbon-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-apptivia-coral"
                     />
                     <p className="text-xs text-apptivia-carbon-500 mt-1">Display name for the KPI</p>
                   </div>
@@ -825,7 +825,7 @@ export default function ConfigureModal({ isOpen, onClose, onSave, currentUserId 
                     value={newKpi.description}
                     onChange={(e) => setNewKpi({ ...newKpi, description: e.target.value })}
                     placeholder="Describe what this metric measures..."
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className="w-full px-4 py-2 border border-apptivia-carbon-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-apptivia-coral"
                     rows={3}
                   />
                 </div>
@@ -836,7 +836,7 @@ export default function ConfigureModal({ isOpen, onClose, onSave, currentUserId 
                     <select
                       value={newKpi.category}
                       onChange={(e) => setNewKpi({ ...newKpi, category: e.target.value })}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      className="w-full px-4 py-2 border border-apptivia-carbon-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-apptivia-coral"
                     >
                       <option value="activity">Activity</option>
                       <option value="engagement">Engagement</option>
@@ -851,7 +851,7 @@ export default function ConfigureModal({ isOpen, onClose, onSave, currentUserId 
                     <select
                       value={newKpi.unit}
                       onChange={(e) => setNewKpi({ ...newKpi, unit: e.target.value })}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      className="w-full px-4 py-2 border border-apptivia-carbon-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-apptivia-coral"
                     >
                       <option value="count">Count</option>
                       <option value="minutes">Minutes</option>
@@ -870,7 +870,7 @@ export default function ConfigureModal({ isOpen, onClose, onSave, currentUserId 
                       type="number"
                       value={newKpi.goal}
                       onChange={(e) => setNewKpi({ ...newKpi, goal: parseFloat(e.target.value) || 0 })}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      className="w-full px-4 py-2 border border-apptivia-carbon-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-apptivia-coral"
                       min="0"
                       step="1"
                     />
@@ -882,7 +882,7 @@ export default function ConfigureModal({ isOpen, onClose, onSave, currentUserId 
                       type="number"
                       value={Math.round(newKpi.weight * 100)}
                       onChange={(e) => setNewKpi({ ...newKpi, weight: (parseFloat(e.target.value) || 0) / 100 })}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      className="w-full px-4 py-2 border border-apptivia-carbon-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-apptivia-coral"
                       min="0"
                       max="100"
                       step="1"
@@ -919,7 +919,7 @@ export default function ConfigureModal({ isOpen, onClose, onSave, currentUserId 
             <button
               onClick={onClose}
               disabled={saving}
-              className="px-6 py-2 text-apptivia-carbon-700 bg-white border border-gray-300 rounded-lg hover:bg-apptivia-paper disabled:opacity-50 transition-all duration-200"
+              className="px-6 py-2 text-apptivia-carbon-700 bg-white border border-apptivia-carbon-300 rounded-lg hover:bg-apptivia-paper disabled:opacity-50 transition-all duration-200"
             >
               Close
             </button>

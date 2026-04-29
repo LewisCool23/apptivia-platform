@@ -1425,10 +1425,10 @@ export default function CoachingPlans() {
           <div className="flex gap-2 items-center">
             <div className="relative">
               <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-apptivia-carbon-400" />
-              <input type="text" placeholder="Search..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} onFocus={() => searchQuery && setShowSearchResults(true)} className="w-64 pl-9 pr-8 py-2 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" />
+              <input type="text" placeholder="Search..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} onFocus={() => searchQuery && setShowSearchResults(true)} className="w-64 pl-9 pr-8 py-2 text-sm border border-apptivia-carbon-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-apptivia-coral" />
               {searchQuery && <button onClick={() => { setSearchQuery(''); setSearchResults([]); setShowSearchResults(false); }} className="absolute right-2 top-1/2 -translate-y-1/2 text-apptivia-carbon-400 hover:text-apptivia-carbon-600"><X size={14} /></button>}
               {showSearchResults && searchResults.length > 0 && (
-                <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-96 overflow-y-auto z-50">
+                <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-apptivia-carbon-200 rounded-lg shadow-lg max-h-96 overflow-y-auto z-50">
                   {searchResults.map((result,idx) => (
                     <button key={idx} onClick={() => { navigate(result.link); setSearchQuery(''); setSearchResults([]); setShowSearchResults(false); }} className="w-full text-left px-4 py-3 hover:bg-apptivia-paper border-b last:border-b-0 transition-colors">
                       <div className="flex items-start gap-3"><span className="text-xl">{result.icon}</span><div className="flex-1 min-w-0"><div className="flex items-center gap-2"><span className="text-xs font-semibold text-apptivia-ink">{result.title}</span><span className="text-[10px] px-1.5 py-0.5 rounded bg-apptivia-carbon-100 text-apptivia-carbon-600">{result.type}</span></div>{result.subtitle && <div className="text-[11px] text-apptivia-carbon-500 mt-0.5 truncate">{result.subtitle}</div>}</div></div>
@@ -1436,10 +1436,10 @@ export default function CoachingPlans() {
                   ))}
                 </div>
               )}
-              {showSearchResults && searchQuery && searchResults.length === 0 && !searching && <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg p-4 z-50"><div className="text-sm text-apptivia-carbon-500 text-center">No results found</div></div>}
-              {searching && <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg p-4 z-50"><div className="text-sm text-apptivia-carbon-500 text-center">Searching...</div></div>}
+              {showSearchResults && searchQuery && searchResults.length === 0 && !searching && <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-apptivia-carbon-200 rounded-lg shadow-lg p-4 z-50"><div className="text-sm text-apptivia-carbon-500 text-center">No results found</div></div>}
+              {searching && <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-apptivia-carbon-200 rounded-lg shadow-lg p-4 z-50"><div className="text-sm text-apptivia-carbon-500 text-center">Searching...</div></div>}
             </div>
-            <button onClick={handleRefresh} disabled={isRefreshing} className={`relative p-2 rounded-lg font-semibold text-sm bg-white text-apptivia-carbon-700 border border-gray-200 hover:bg-apptivia-paper group ${isRefreshing ? 'opacity-50 cursor-not-allowed' : 'transition-all duration-200 hover:scale-105 hover:shadow-md'}`} title="Refresh data">
+            <button onClick={handleRefresh} disabled={isRefreshing} className={`relative p-2 rounded-lg font-semibold text-sm bg-white text-apptivia-carbon-700 border border-apptivia-carbon-200 hover:bg-apptivia-paper group ${isRefreshing ? 'opacity-50 cursor-not-allowed' : 'transition-all duration-200 hover:scale-105 hover:shadow-md'}`} title="Refresh data">
               <svg className={`w-[18px] h-[18px] ${isRefreshing ? 'animate-spin' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
               </svg>
@@ -1473,7 +1473,7 @@ export default function CoachingPlans() {
       </div>
 
       {/* Main Tabs: Rep Plans / Playbooks / IDPs / Reviews */}
-      <div className="bg-white rounded-lg p-2 shadow-sm border border-gray-100 mb-4">
+      <div className="bg-white rounded-lg p-2 shadow-sm border border-apptivia-carbon-100 mb-4">
         <div className="flex flex-wrap gap-2">
           {[
             ...(canManagePlans ? [
@@ -1519,7 +1519,7 @@ export default function CoachingPlans() {
 
       {/* [FEATURE 5] Aaron Actions Tab */}
       {activeTab === 'aaron-actions' && (
-        <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-5">
+        <div className="bg-white rounded-lg shadow-sm border border-apptivia-carbon-100 p-5">
           <div className="flex items-center gap-2 mb-4">
             <Target size={18} className="text-apptivia-ink" />
             <h2 className="text-base font-bold text-apptivia-ink">Aaron Coaching Actions</h2>
@@ -1676,7 +1676,7 @@ export default function CoachingPlans() {
                       </button>
                       <button
                         onClick={() => handleDismissRequest(req.id)}
-                        className="px-3 py-1.5 text-xs font-medium text-apptivia-carbon-500 border border-gray-300 rounded-md hover:bg-apptivia-paper"
+                        className="px-3 py-1.5 text-xs font-medium text-apptivia-carbon-500 border border-apptivia-carbon-300 rounded-md hover:bg-apptivia-paper"
                       >
                         Dismiss
                       </button>
@@ -1704,7 +1704,7 @@ export default function CoachingPlans() {
                 className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all ${
                   statusTab === tab.key
                     ? 'bg-apptivia-coral text-white shadow-sm'
-                    : 'bg-white text-apptivia-carbon-600 border border-gray-200 hover:bg-apptivia-paper'
+                    : 'bg-white text-apptivia-carbon-600 border border-apptivia-carbon-200 hover:bg-apptivia-paper'
                 }`}
               >
                 {tab.label}
@@ -1721,8 +1721,8 @@ export default function CoachingPlans() {
         )}
 
         {/* Saved Coaching Plans */}
-        <div id="saved-plans" className="bg-white rounded-lg shadow-sm border border-gray-200">
-          <div className="p-5 border-b border-gray-200 flex items-center justify-between">
+        <div id="saved-plans" className="bg-white rounded-lg shadow-sm border border-apptivia-carbon-200">
+          <div className="p-5 border-b border-apptivia-carbon-200 flex items-center justify-between">
             <div>
               <h3 className="text-lg font-semibold text-apptivia-ink">
                 {isPowerUser ? 'My Plans' : activeTab === 'playbooks' ? 'Saved Manager Playbooks' : 'Saved Rep Plans'}
@@ -1843,7 +1843,7 @@ export default function CoachingPlans() {
                     value={shareEmail}
                     onChange={(e) => setShareEmail(e.target.value)}
                     placeholder="email@example.com"
-                    className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full border border-apptivia-carbon-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   />
                   <p className="text-xs text-apptivia-carbon-400 mt-1">Separate multiple emails with commas</p>
                 </div>
@@ -1854,7 +1854,7 @@ export default function CoachingPlans() {
                     onChange={(e) => setShareNotes(e.target.value)}
                     placeholder="Add any additional context or instructions..."
                     rows={3}
-                    className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-y"
+                    className="w-full border border-apptivia-carbon-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-y"
                   />
                 </div>
                 <p className="text-xs text-apptivia-coral bg-apptivia-coral-tone-50 rounded p-2">
@@ -1865,7 +1865,7 @@ export default function CoachingPlans() {
               <div className="flex justify-end gap-2 mt-6">
                 <button
                   onClick={() => setPlanToShare(null)}
-                  className="px-4 py-2 text-sm font-semibold text-apptivia-carbon-700 border border-gray-300 rounded-md hover:bg-apptivia-paper"
+                  className="px-4 py-2 text-sm font-semibold text-apptivia-carbon-700 border border-apptivia-carbon-300 rounded-md hover:bg-apptivia-paper"
                 >
                   Cancel
                 </button>

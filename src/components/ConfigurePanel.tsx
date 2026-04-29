@@ -289,7 +289,7 @@ export default function ConfigurePanel({
 
       {loading ? (
         <div className="text-center py-8">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto mb-3"></div>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-apptivia-coral mx-auto mb-3"></div>
           <p className="text-xs text-apptivia-carbon-500">Loading quick settings...</p>
         </div>
       ) : (
@@ -299,7 +299,7 @@ export default function ConfigurePanel({
             return (
               <div
                 key={`slot-${index}`}
-                className="bg-white border border-gray-200 rounded-lg p-3 space-y-2"
+                className="bg-white border border-apptivia-carbon-200 rounded-lg p-3 space-y-2"
               >
                 <div className="flex items-start justify-between gap-2">
                   <div>
@@ -332,7 +332,7 @@ export default function ConfigurePanel({
                           onChange={(e) => {
                             updateConfig(config.key, 'goal', parseFloat(e.target.value) || 0);
                           }}
-                          className="w-full px-2 py-1.5 border border-gray-300 rounded text-xs focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                          className="w-full px-2 py-1.5 border border-apptivia-carbon-300 rounded text-xs focus:ring-2 focus:ring-blue-500 focus:border-apptivia-coral"
                           min="0"
                           step="1"
                         />
@@ -345,7 +345,7 @@ export default function ConfigurePanel({
                           onChange={(e) => {
                             updateConfig(config.key, 'weight', (parseFloat(e.target.value) || 0) / 100);
                           }}
-                          className="w-full px-2 py-1.5 border border-gray-300 rounded text-xs focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                          className="w-full px-2 py-1.5 border border-apptivia-carbon-300 rounded text-xs focus:ring-2 focus:ring-blue-500 focus:border-apptivia-coral"
                           min="0"
                           max="100"
                           step="1"
@@ -361,7 +361,7 @@ export default function ConfigurePanel({
                         <select
                           value={selectedAddKey}
                           onChange={(e) => setSelectedAddKey(e.target.value)}
-                          className="w-full px-2 py-1.5 border border-gray-300 rounded text-xs focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                          className="w-full px-2 py-1.5 border border-apptivia-carbon-300 rounded text-xs focus:ring-2 focus:ring-blue-500 focus:border-apptivia-coral"
                         >
                           <option value="">Select a KPI...</option>
                           {availableKpis.map((kpi) => (
@@ -383,7 +383,7 @@ export default function ConfigurePanel({
                               setAddingSlotIndex(null);
                               setSelectedAddKey('');
                             }}
-                            className="flex-1 px-2 py-1.5 text-xs border border-gray-300 rounded hover:bg-apptivia-paper"
+                            className="flex-1 px-2 py-1.5 text-xs border border-apptivia-carbon-300 rounded hover:bg-apptivia-paper"
                           >
                             Cancel
                           </button>
@@ -425,7 +425,7 @@ export default function ConfigurePanel({
             <button
               onClick={onClose}
               disabled={saving}
-              className="flex-1 px-3 py-2 text-xs text-apptivia-carbon-700 bg-white border border-gray-300 rounded-lg hover:bg-apptivia-paper disabled:opacity-50"
+              className="flex-1 px-3 py-2 text-xs text-apptivia-carbon-700 bg-white border border-apptivia-carbon-300 rounded-lg hover:bg-apptivia-paper disabled:opacity-50"
             >
               Close
             </button>

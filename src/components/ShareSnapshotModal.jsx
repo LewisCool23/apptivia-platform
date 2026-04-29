@@ -105,7 +105,7 @@ export default function ShareSnapshotModal({ isOpen, onClose, userData }) {
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-gray-200 flex-shrink-0">
+        <div className="flex items-center justify-between p-4 border-b border-apptivia-carbon-200 flex-shrink-0">
           <h2 className="text-xl font-bold text-apptivia-ink flex items-center gap-2">
             <span>📸</span>
             Share Achievement Snapshot
@@ -218,7 +218,7 @@ export default function ShareSnapshotModal({ isOpen, onClose, userData }) {
         </div>
 
         {/* Action Buttons */}
-        <div className="border-t border-gray-200 p-4 bg-white flex-shrink-0">
+        <div className="border-t border-apptivia-carbon-200 p-4 bg-white flex-shrink-0">
           {!showEmailForm ? (
             <>
               <div className="flex flex-wrap gap-2 justify-center">
@@ -272,7 +272,7 @@ export default function ShareSnapshotModal({ isOpen, onClose, userData }) {
                   value={emailRecipients}
                   onChange={(e) => setEmailRecipients(e.target.value)}
                   placeholder="john@example.com, jane@example.com"
-                  className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-3 py-2 text-sm border border-apptivia-carbon-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
               </div>
 
@@ -285,7 +285,7 @@ export default function ShareSnapshotModal({ isOpen, onClose, userData }) {
                   value={emailSubject}
                   onChange={(e) => setEmailSubject(e.target.value)}
                   placeholder={`${name}'s Achievement Snapshot - Apptivia Platform`}
-                  className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-3 py-2 text-sm border border-apptivia-carbon-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
               </div>
 

@@ -13,7 +13,7 @@ export default function ReviewCard({ review, canManage, teamMembers, onView, onE
   const ratingStars = review.final_rating || review.manager_rating;
 
   return (
-    <div className={`border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow flex flex-col border-l-4 ${cfg.borderColor}`}>
+    <div className={`border border-apptivia-carbon-200 rounded-lg p-4 hover:shadow-md transition-shadow flex flex-col border-l-4 ${cfg.borderColor}`}>
       {/* Header */}
       <div className="flex items-start justify-between mb-3">
         <div className="flex-1">
@@ -59,13 +59,13 @@ export default function ReviewCard({ review, canManage, teamMembers, onView, onE
       {/* Actions */}
       <div className="flex gap-2">
         <button onClick={() => onView(review)}
-          className="flex-1 flex items-center justify-center gap-1 px-3 py-1.5 text-xs font-semibold text-apptivia-coral border border-blue-600 rounded-md hover:bg-apptivia-coral-tone-50">
+          className="flex-1 flex items-center justify-center gap-1 px-3 py-1.5 text-xs font-semibold text-apptivia-coral border border-apptivia-coral rounded-md hover:bg-apptivia-coral-tone-50">
           <Eye size={14} /> View
         </button>
         {canManage && review.status === 'draft' && (
           <>
             <button onClick={() => onEdit(review)}
-              className="flex items-center justify-center gap-1 px-3 py-1.5 text-xs font-semibold text-apptivia-carbon-600 border border-gray-300 rounded-md hover:bg-apptivia-paper" title="Edit">
+              className="flex items-center justify-center gap-1 px-3 py-1.5 text-xs font-semibold text-apptivia-carbon-600 border border-apptivia-carbon-300 rounded-md hover:bg-apptivia-paper" title="Edit">
               <Edit size={14} />
             </button>
             <button onClick={() => onDelete(review)}

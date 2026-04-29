@@ -121,10 +121,10 @@ function CompanyBriefPanel({ company, brief: rawBrief, dataSources, tokensUsed, 
     <div className="space-y-4">
       {/* Company Header */}
       {company && (
-        <div className="bg-white rounded-xl border border-gray-100 p-5">
+        <div className="bg-white rounded-xl border border-apptivia-carbon-100 p-5">
           <div className="flex items-start gap-4">
             {company.logo_url ? (
-              <img src={company.logo_url} alt="" className="w-12 h-12 rounded-lg border border-gray-100 object-contain" />
+              <img src={company.logo_url} alt="" className="w-12 h-12 rounded-lg border border-apptivia-carbon-100 object-contain" />
             ) : (
               <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-lg flex items-center justify-center">
                 <Building2 size={20} className="text-white" />
@@ -171,7 +171,7 @@ function CompanyBriefPanel({ company, brief: rawBrief, dataSources, tokensUsed, 
 
       {/* AI Brief */}
       {brief && (
-        <div className="bg-white rounded-xl border border-gray-100 overflow-hidden">
+        <div className="bg-white rounded-xl border border-apptivia-carbon-100 overflow-hidden">
           <div className="bg-gradient-to-r from-orange-500 to-amber-500 px-5 py-3 flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Sparkles size={14} className="text-white" />
@@ -186,7 +186,7 @@ function CompanyBriefPanel({ company, brief: rawBrief, dataSources, tokensUsed, 
           <div className="p-5 space-y-4">
             {/* Summary */}
             {brief.summary && (
-              <div className="bg-apptivia-coral-tone-50/50 border border-blue-100 rounded-lg p-4">
+              <div className="bg-apptivia-coral-tone-50/50 border border-apptivia-coral-tone-100 rounded-lg p-4">
                 <p className="text-sm text-apptivia-ink leading-relaxed">{brief.summary}</p>
               </div>
             )}
@@ -354,10 +354,10 @@ function ProspectBriefPanel({ prospect, brief: rawBrief, dataSources, tokensUsed
     <div className="space-y-4">
       {/* Prospect Header */}
       {prospect && (
-        <div className="bg-white rounded-xl border border-gray-100 p-5">
+        <div className="bg-white rounded-xl border border-apptivia-carbon-100 p-5">
           <div className="flex items-start gap-4">
             {prospect.photo_url || prospect.avatar_url ? (
-              <img src={prospect.photo_url || prospect.avatar_url} alt="" className="w-14 h-14 rounded-full border-2 border-gray-100 object-cover" />
+              <img src={prospect.photo_url || prospect.avatar_url} alt="" className="w-14 h-14 rounded-full border-2 border-apptivia-carbon-100 object-cover" />
             ) : (
               <div className="w-14 h-14 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full flex items-center justify-center">
                 <Users size={22} className="text-white" />
@@ -481,7 +481,7 @@ function ProspectBriefPanel({ prospect, brief: rawBrief, dataSources, tokensUsed
                 )}
                 <button
                   onClick={handleCopyAll}
-                  className="flex items-center gap-1.5 px-3 py-1.5 border border-gray-200 hover:border-gray-300 text-apptivia-carbon-600 hover:text-apptivia-ink text-xs font-medium rounded-lg transition-colors"
+                  className="flex items-center gap-1.5 px-3 py-1.5 border border-apptivia-carbon-200 hover:border-apptivia-carbon-300 text-apptivia-carbon-600 hover:text-apptivia-ink text-xs font-medium rounded-lg transition-colors"
                   title="Copy all contact info"
                 >
                   {copied === 'all' ? <><Check size={11} className="text-emerald-500" /> Copied!</> : <><ClipboardList size={11} /> Copy All</>}
@@ -503,7 +503,7 @@ function ProspectBriefPanel({ prospect, brief: rawBrief, dataSources, tokensUsed
 
       {/* AI Brief */}
       {brief && (
-        <div className="bg-white rounded-xl border border-gray-100 overflow-hidden">
+        <div className="bg-white rounded-xl border border-apptivia-carbon-100 overflow-hidden">
           <div className="bg-gradient-to-r from-purple-500 to-pink-500 px-5 py-3 flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Sparkles size={14} className="text-white" />
@@ -517,7 +517,7 @@ function ProspectBriefPanel({ prospect, brief: rawBrief, dataSources, tokensUsed
 
           <div className="p-5 space-y-4">
             {brief.summary && (
-              <div className="bg-apptivia-carbon-100/50 border border-purple-100 rounded-lg p-4">
+              <div className="bg-apptivia-carbon-100/50 border border-apptivia-carbon-300 rounded-lg p-4">
                 <p className="text-sm text-apptivia-ink leading-relaxed">{brief.summary}</p>
               </div>
             )}
@@ -624,14 +624,14 @@ function OutreachDraftPanel({ draft, tokensUsed }) {
   const angleColors = [
     { bg: 'bg-red-50', border: 'border-red-200', badge: 'bg-red-100 text-red-700', accent: 'text-red-500' },
     { bg: 'bg-amber-50', border: 'border-amber-200', badge: 'bg-amber-100 text-amber-700', accent: 'text-amber-500' },
-    { bg: 'bg-apptivia-coral-tone-50', border: 'border-blue-200', badge: 'bg-apptivia-coral-tone-50 text-apptivia-coral', accent: 'text-apptivia-coral' },
-    { bg: 'bg-apptivia-carbon-100', border: 'border-purple-200', badge: 'bg-apptivia-carbon-100 text-apptivia-ink', accent: 'text-apptivia-ink' },
+    { bg: 'bg-apptivia-coral-tone-50', border: 'border-apptivia-coral-tone-100', badge: 'bg-apptivia-coral-tone-50 text-apptivia-coral', accent: 'text-apptivia-coral' },
+    { bg: 'bg-apptivia-carbon-100', border: 'border-apptivia-carbon-300', badge: 'bg-apptivia-carbon-100 text-apptivia-ink', accent: 'text-apptivia-ink' },
   ];
 
   // Multi-message format (from multi-angle template)
   if (draft.messages?.length > 0) {
     return (
-      <div className="bg-white rounded-xl border border-gray-100 overflow-hidden">
+      <div className="bg-white rounded-xl border border-apptivia-carbon-100 overflow-hidden">
         <div className="bg-gradient-to-r from-emerald-500 to-teal-500 px-5 py-3 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Send size={14} className="text-white" />
@@ -683,7 +683,7 @@ function OutreachDraftPanel({ draft, tokensUsed }) {
 
   // Standard single-message format
   return (
-    <div className="bg-white rounded-xl border border-gray-100 overflow-hidden">
+    <div className="bg-white rounded-xl border border-apptivia-carbon-100 overflow-hidden">
       <div className="bg-gradient-to-r from-emerald-500 to-teal-500 px-5 py-3 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Send size={14} className="text-white" />
@@ -751,7 +751,7 @@ function OutreachModal({
     <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4" onClick={onClose}>
       <div className={`bg-white rounded-2xl shadow-2xl w-full max-w-lg ${draft ? 'max-h-[85vh] overflow-y-auto' : 'overflow-visible'}`} onClick={e => e.stopPropagation()}>
         {/* Header */}
-        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-apptivia-carbon-100">
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 bg-gradient-to-br from-emerald-500 to-teal-500 rounded-lg flex items-center justify-center">
               <Send size={14} className="text-white" />
@@ -773,7 +773,7 @@ function OutreachModal({
 
         {/* Context line */}
         {(outreachAngles > 0 || fitScore != null) && (
-          <div className="px-5 py-2 bg-apptivia-carbon-100/50 border-b border-purple-100/50">
+          <div className="px-5 py-2 bg-apptivia-carbon-100/50 border-b border-apptivia-carbon-300/50">
             <p className="text-[10px] text-apptivia-ink flex items-center gap-2">
               <Sparkles size={10} />
               Using: {outreachAngles > 0 && `${outreachAngles} outreach angle${outreachAngles > 1 ? 's' : ''}`}
@@ -809,7 +809,7 @@ function OutreachModal({
               <select
                 value={channel}
                 onChange={(e) => setChannel(e.target.value)}
-                className="w-full text-xs border border-gray-200 rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-emerald-200"
+                className="w-full text-xs border border-apptivia-carbon-200 rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-emerald-200"
               >
                 <option value="email">Email</option>
                 <option value="linkedin">LinkedIn</option>
@@ -826,7 +826,7 @@ function OutreachModal({
                     onGenerate({ tone: newTone });
                   }
                 }}
-                className="w-full text-xs border border-gray-200 rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-emerald-200"
+                className="w-full text-xs border border-apptivia-carbon-200 rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-emerald-200"
               >
                 <option value="professional">Professional</option>
                 <option value="casual">Casual</option>
@@ -865,7 +865,7 @@ function OutreachModal({
 
 function CollapsibleSection({ title, icon: Icon, expanded, onToggle, children }) {
   return (
-    <div className="border border-gray-100 rounded-lg overflow-hidden">
+    <div className="border border-apptivia-carbon-100 rounded-lg overflow-hidden">
       <button onClick={onToggle} className="w-full flex items-center justify-between px-4 py-2.5 bg-apptivia-paper/50 hover:bg-apptivia-paper transition-colors">
         <div className="flex items-center gap-2">
           <Icon size={12} className="text-apptivia-carbon-400" />
@@ -1486,7 +1486,7 @@ export default function EngageDiscover({ organizationId, userId, initialSearch, 
   return (
     <div className="space-y-4">
       {/* Search Panel */}
-      <div className="bg-white rounded-xl border border-gray-100 overflow-hidden">
+      <div className="bg-white rounded-xl border border-apptivia-carbon-100 overflow-hidden">
         <div className="bg-gradient-to-r from-blue-500 via-cyan-500 to-teal-500 px-6 py-5">
           <div className="flex items-center gap-3 mb-3">
             <div className="w-9 h-9 bg-white/20 backdrop-blur-sm rounded-lg flex items-center justify-center">
@@ -1626,15 +1626,15 @@ export default function EngageDiscover({ organizationId, userId, initialSearch, 
 
       {/* Company Disambiguation Picker */}
       {disambiguationLoading && (
-        <div className="bg-white rounded-xl border border-gray-100 p-6 text-center">
+        <div className="bg-white rounded-xl border border-apptivia-carbon-100 p-6 text-center">
           <RefreshCw size={20} className="animate-spin text-apptivia-coral mx-auto mb-2" />
           <p className="text-sm text-apptivia-carbon-600">Finding matching companies...</p>
         </div>
       )}
 
       {disambiguationResults && disambiguationResults.length > 0 && (
-        <div className="bg-white rounded-xl border border-gray-100 overflow-hidden">
-          <div className="px-5 py-3 border-b border-gray-100 bg-gradient-to-r from-blue-50 to-cyan-50">
+        <div className="bg-white rounded-xl border border-apptivia-carbon-100 overflow-hidden">
+          <div className="px-5 py-3 border-b border-apptivia-carbon-100 bg-gradient-to-r from-blue-50 to-cyan-50">
             <div className="flex items-center gap-2">
               <Building2 size={14} className="text-apptivia-coral" />
               <span className="text-sm font-semibold text-apptivia-ink">
@@ -1653,7 +1653,7 @@ export default function EngageDiscover({ organizationId, userId, initialSearch, 
                   className="w-full px-5 py-4 flex items-center gap-4 hover:bg-apptivia-coral-tone-50/50 transition-colors text-left group"
                 >
                   {company.logo_url ? (
-                    <img src={company.logo_url} alt="" className="w-10 h-10 rounded-lg border border-gray-100 object-contain flex-shrink-0" />
+                    <img src={company.logo_url} alt="" className="w-10 h-10 rounded-lg border border-apptivia-carbon-100 object-contain flex-shrink-0" />
                   ) : (
                     <div className="w-10 h-10 bg-gradient-to-br from-blue-400 to-cyan-500 rounded-lg flex items-center justify-center flex-shrink-0">
                       <Building2 size={16} className="text-white" />
@@ -1693,8 +1693,8 @@ export default function EngageDiscover({ organizationId, userId, initialSearch, 
 
       {/* Search History */}
       {!loading && searchHistory.length > 0 && (
-        <div className="bg-white rounded-xl border border-gray-100 overflow-hidden">
-          <div className="px-5 py-3 border-b border-gray-100 flex items-center justify-between bg-apptivia-paper/50">
+        <div className="bg-white rounded-xl border border-apptivia-carbon-100 overflow-hidden">
+          <div className="px-5 py-3 border-b border-apptivia-carbon-100 flex items-center justify-between bg-apptivia-paper/50">
             <div className="flex items-center gap-2">
               <History size={14} className="text-apptivia-carbon-500" />
               <span className="text-sm font-bold text-apptivia-ink">Research History</span>
@@ -1762,7 +1762,7 @@ export default function EngageDiscover({ organizationId, userId, initialSearch, 
 
       {/* Loading State */}
       {loading && (
-        <div className="bg-white rounded-xl border border-gray-100 p-8 text-center">
+        <div className="bg-white rounded-xl border border-apptivia-carbon-100 p-8 text-center">
           <RefreshCw size={24} className="animate-spin text-apptivia-coral mx-auto mb-3" />
           <p className="text-sm font-medium text-apptivia-carbon-700">
             {mode === 'company' ? 'Researching company...' : mode === 'people_search' ? 'Searching for people...' : 'Researching prospect...'}
@@ -1785,7 +1785,7 @@ export default function EngageDiscover({ organizationId, userId, initialSearch, 
 
       {/* Cached result indicator with refresh button */}
       {!loading && ((companyResult?._cached) || (prospectResult?._cached)) && (
-        <div className="flex items-center justify-between bg-apptivia-coral-tone-50 border border-blue-200 rounded-lg px-4 py-2">
+        <div className="flex items-center justify-between bg-apptivia-coral-tone-50 border border-apptivia-coral-tone-100 rounded-lg px-4 py-2">
           <span className="text-xs text-apptivia-coral flex items-center gap-1.5">
             <Clock size={12} /> Showing cached result — no API credits used
           </span>
@@ -1814,8 +1814,8 @@ export default function EngageDiscover({ organizationId, userId, initialSearch, 
 
           {/* Suggested Contacts — compact sidebar */}
           <div className="w-72 flex-shrink-0">
-            <div className="bg-white rounded-xl border border-gray-100 overflow-hidden sticky top-4">
-              <div className="px-3 py-2.5 border-b border-gray-100 bg-gradient-to-r from-emerald-50 to-cyan-50">
+            <div className="bg-white rounded-xl border border-apptivia-carbon-100 overflow-hidden sticky top-4">
+              <div className="px-3 py-2.5 border-b border-apptivia-carbon-100 bg-gradient-to-r from-emerald-50 to-cyan-50">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-1.5">
                     <UserPlus size={12} className="text-emerald-600" />
@@ -1945,7 +1945,7 @@ export default function EngageDiscover({ organizationId, userId, initialSearch, 
 
       {/* Cached result indicator for people search */}
       {!loading && peopleResultCached && peopleSearchResults?.length > 0 && (
-        <div className="flex items-center justify-between bg-apptivia-coral-tone-50 border border-blue-200 rounded-lg px-4 py-2">
+        <div className="flex items-center justify-between bg-apptivia-coral-tone-50 border border-apptivia-coral-tone-100 rounded-lg px-4 py-2">
           <span className="text-xs text-apptivia-coral flex items-center gap-1.5">
             <Clock size={12} /> Showing cached result — no API credits used
           </span>
@@ -1960,8 +1960,8 @@ export default function EngageDiscover({ organizationId, userId, initialSearch, 
 
       {/* People Search Results */}
       {!loading && peopleSearchResults && peopleSearchResults.length > 0 && (
-        <div className="bg-white rounded-xl border border-gray-100 overflow-hidden">
-          <div className="px-5 py-4 border-b border-gray-100 bg-gradient-to-r from-cyan-50 to-blue-50">
+        <div className="bg-white rounded-xl border border-apptivia-carbon-100 overflow-hidden">
+          <div className="px-5 py-4 border-b border-apptivia-carbon-100 bg-gradient-to-r from-cyan-50 to-blue-50">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Users size={16} className="text-cyan-600" />
@@ -1980,7 +1980,7 @@ export default function EngageDiscover({ organizationId, userId, initialSearch, 
           <div className="overflow-x-auto">
             <table className="w-full text-xs">
               <thead>
-                <tr className="bg-apptivia-paper border-b border-gray-100">
+                <tr className="bg-apptivia-paper border-b border-apptivia-carbon-100">
                   <th className="text-left px-4 py-2.5 font-semibold text-apptivia-carbon-600">Name</th>
                   <th className="text-left px-4 py-2.5 font-semibold text-apptivia-carbon-600">Title</th>
                   <th className="text-left px-4 py-2.5 font-semibold text-apptivia-carbon-600">Company</th>
@@ -2099,7 +2099,7 @@ export default function EngageDiscover({ organizationId, userId, initialSearch, 
             </table>
           </div>
           {peopleSearchResults.length >= 25 && (
-            <div className="px-5 py-3 border-t border-gray-100 bg-apptivia-paper text-center">
+            <div className="px-5 py-3 border-t border-apptivia-carbon-100 bg-apptivia-paper text-center">
               <span className="text-[10px] text-apptivia-carbon-400">Showing first 25 results. Refine your search for more specific results.</span>
             </div>
           )}
@@ -2108,7 +2108,7 @@ export default function EngageDiscover({ organizationId, userId, initialSearch, 
 
       {/* People search empty state */}
       {!loading && peopleSearchResults && peopleSearchResults.length === 0 && (
-        <div className="bg-white rounded-xl border border-gray-100 p-8 text-center">
+        <div className="bg-white rounded-xl border border-apptivia-carbon-100 p-8 text-center">
           <Users size={24} className="text-apptivia-carbon-300 mx-auto mb-3" />
           <p className="text-sm font-medium text-apptivia-carbon-600">No people found</p>
           <p className="text-xs text-apptivia-carbon-400 mt-1">
@@ -2121,7 +2121,7 @@ export default function EngageDiscover({ organizationId, userId, initialSearch, 
 
       {/* Outreach Generator — inline only for company-only research (prospect uses modal) */}
       {canGenerateOutreach && !prospectResult && (
-        <div className="bg-white rounded-xl border border-gray-100 p-5">
+        <div className="bg-white rounded-xl border border-apptivia-carbon-100 p-5">
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
               <Send size={14} className="text-emerald-500" />
@@ -2151,7 +2151,7 @@ export default function EngageDiscover({ organizationId, userId, initialSearch, 
               <select
                 value={outreachChannel}
                 onChange={(e) => setOutreachChannel(e.target.value)}
-                className="text-xs border border-gray-200 rounded-lg px-3 py-1.5 bg-white focus:outline-none focus:ring-2 focus:ring-emerald-200"
+                className="text-xs border border-apptivia-carbon-200 rounded-lg px-3 py-1.5 bg-white focus:outline-none focus:ring-2 focus:ring-emerald-200"
               >
                 <option value="email">Email</option>
                 <option value="linkedin">LinkedIn</option>
@@ -2162,7 +2162,7 @@ export default function EngageDiscover({ organizationId, userId, initialSearch, 
               <select
                 value={outreachTone}
                 onChange={(e) => setOutreachTone(e.target.value)}
-                className="text-xs border border-gray-200 rounded-lg px-3 py-1.5 bg-white focus:outline-none focus:ring-2 focus:ring-emerald-200"
+                className="text-xs border border-apptivia-carbon-200 rounded-lg px-3 py-1.5 bg-white focus:outline-none focus:ring-2 focus:ring-emerald-200"
               >
                 <option value="professional">Professional</option>
                 <option value="casual">Casual</option>
@@ -2211,7 +2211,7 @@ export default function EngageDiscover({ organizationId, userId, initialSearch, 
 
       {/* Empty State */}
       {!loading && !hasResults && !error && (
-        <div className="bg-white rounded-xl border border-gray-100 p-10 text-center">
+        <div className="bg-white rounded-xl border border-apptivia-carbon-100 p-10 text-center">
           <div className="w-14 h-14 bg-gradient-to-br from-blue-100 to-cyan-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
             <Search size={24} className="text-apptivia-coral" />
           </div>

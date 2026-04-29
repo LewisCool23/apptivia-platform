@@ -223,7 +223,7 @@ export default function OrgHealthScorecard() {
   return (
     <div className="space-y-4">
       {/* Overall Score */}
-      <div className="flex items-center gap-4 p-4 bg-white rounded-lg border border-gray-100">
+      <div className="flex items-center gap-4 p-4 bg-white rounded-lg border border-apptivia-carbon-100">
         <div className={`w-16 h-16 rounded-xl flex items-center justify-center text-2xl font-bold ${overall.bg} ${overall.text}`}>
           {overallScore}
         </div>
@@ -240,7 +240,7 @@ export default function OrgHealthScorecard() {
           const colors = scoreColor(score);
           const Icon = dim.icon;
           return (
-            <div key={dim.key} className="bg-white rounded-lg border border-gray-100 p-4">
+            <div key={dim.key} className="bg-white rounded-lg border border-apptivia-carbon-100 p-4">
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-2">
                   <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${colors.bg}`}>

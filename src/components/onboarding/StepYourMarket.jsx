@@ -143,7 +143,7 @@ function TagField({ label, hint, items, onAdd, onRemove, placeholder, tagClass =
               onChange={(e) => { setValue(e.target.value); if (hasSuggestions) setIsOpen(true); }}
               onFocus={() => { if (hasSuggestions) setIsOpen(true); }}
               onKeyDown={handleKeyDown}
-              className={`w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${hasSuggestions ? 'pr-8' : ''}`}
+              className={`w-full px-3 py-2 border border-apptivia-carbon-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-apptivia-coral ${hasSuggestions ? 'pr-8' : ''}`}
               placeholder={placeholder}
             />
             {hasSuggestions && (
@@ -167,7 +167,7 @@ function TagField({ label, hint, items, onAdd, onRemove, placeholder, tagClass =
           </button>
         </div>
         {isOpen && filtered.length > 0 && (
-          <div className="absolute z-10 w-[calc(100%-3rem)] bg-white border border-gray-200 rounded-lg shadow-lg max-h-40 overflow-y-auto -mt-1">
+          <div className="absolute z-10 w-[calc(100%-3rem)] bg-white border border-apptivia-carbon-200 rounded-lg shadow-lg max-h-40 overflow-y-auto -mt-1">
             {filtered.map((suggestion) => (
               <button
                 key={suggestion}
@@ -263,7 +263,7 @@ export default function StepYourMarket({ wizardState, updateState }) {
       )}
 
       {/* ICP Section */}
-      <div className="bg-apptivia-coral-tone-50/50 border border-blue-100 rounded-lg p-4 space-y-4">
+      <div className="bg-apptivia-coral-tone-50/50 border border-apptivia-coral-tone-100 rounded-lg p-4 space-y-4">
         <h4 className="text-sm font-semibold text-apptivia-coral-tone-700 uppercase tracking-wide">Ideal Customer Profile</h4>
 
         <TagField
@@ -285,7 +285,7 @@ export default function StepYourMarket({ wizardState, updateState }) {
               type="number"
               value={icpConfig.headcount_min}
               onChange={(e) => updateIcp('headcount_min', e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-apptivia-carbon-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500"
               placeholder="50"
             />
           </div>
@@ -295,7 +295,7 @@ export default function StepYourMarket({ wizardState, updateState }) {
               type="number"
               value={icpConfig.headcount_max}
               onChange={(e) => updateIcp('headcount_max', e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-apptivia-carbon-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500"
               placeholder="500"
             />
           </div>
@@ -308,7 +308,7 @@ export default function StepYourMarket({ wizardState, updateState }) {
               type="number"
               value={icpConfig.revenue_min_m}
               onChange={(e) => updateIcp('revenue_min_m', e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-apptivia-carbon-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500"
               placeholder="5"
             />
           </div>
@@ -318,7 +318,7 @@ export default function StepYourMarket({ wizardState, updateState }) {
               type="number"
               value={icpConfig.revenue_max_m}
               onChange={(e) => updateIcp('revenue_max_m', e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-apptivia-carbon-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500"
               placeholder="100"
             />
           </div>

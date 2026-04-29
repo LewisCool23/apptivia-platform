@@ -11,7 +11,7 @@ import FeedbackThumb from './shared/FeedbackThumb';
 const SEVERITY_STYLES = {
   critical: { bg: 'bg-red-50', border: 'border-red-200', text: 'text-red-700', badge: 'bg-red-100 text-red-700', icon: AlertTriangle, iconColor: 'text-red-500' },
   warning: { bg: 'bg-amber-50', border: 'border-amber-200', text: 'text-amber-700', badge: 'bg-amber-100 text-amber-700', icon: AlertTriangle, iconColor: 'text-amber-500' },
-  info: { bg: 'bg-apptivia-coral-tone-50', border: 'border-blue-200', text: 'text-apptivia-coral', badge: 'bg-apptivia-coral-tone-50 text-apptivia-coral', icon: Activity, iconColor: 'text-apptivia-coral' },
+  info: { bg: 'bg-apptivia-coral-tone-50', border: 'border-apptivia-coral-tone-100', text: 'text-apptivia-coral', badge: 'bg-apptivia-coral-tone-50 text-apptivia-coral', icon: Activity, iconColor: 'text-apptivia-coral' },
   positive: { bg: 'bg-emerald-50', border: 'border-emerald-200', text: 'text-emerald-700', badge: 'bg-emerald-100 text-emerald-700', icon: TrendingUp, iconColor: 'text-emerald-500' },
 };
 
@@ -74,7 +74,7 @@ function WatchdogSummary({ summary }) {
   return (
     <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
       {cards.map((card) => (
-        <div key={card.label} className="bg-white rounded-xl border border-gray-100 p-4 hover:shadow-sm transition-shadow">
+        <div key={card.label} className="bg-white rounded-xl border border-apptivia-carbon-100 p-4 hover:shadow-sm transition-shadow">
           <div className="flex items-center justify-between mb-2">
             <span className="text-xs font-medium text-apptivia-carbon-500">{card.label}</span>
             <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${card.color}`}>
@@ -94,7 +94,7 @@ function AnalysisProgress({ steps, isAnalyzing }) {
   if (steps.length === 0) return null;
 
   return (
-    <div className="bg-white rounded-xl border border-gray-100 p-5">
+    <div className="bg-white rounded-xl border border-apptivia-carbon-100 p-5">
       <div className="flex items-center gap-2 mb-3">
         {isAnalyzing ? (
           <RefreshCw size={14} className="text-apptivia-coral animate-spin" />
@@ -265,7 +265,7 @@ function KpiBreakdown({ byKpi }) {
   if (!entries.length) return null;
 
   return (
-    <div className="bg-white rounded-xl border border-gray-100 p-5">
+    <div className="bg-white rounded-xl border border-apptivia-carbon-100 p-5">
       <h3 className="text-sm font-semibold text-apptivia-carbon-700 mb-3">Anomalies by KPI</h3>
       <div className="space-y-2">
         {entries.map(([key, count]) => (
@@ -363,7 +363,7 @@ export default function KpiWatchdog({ organizationId, userId, filterProfileIds }
         <div>
           <div className="flex items-center gap-2">
             <h2 className="text-base font-semibold text-apptivia-ink">KPI Anomaly Watchdog</h2>
-            <span className="inline-flex items-center gap-1 text-[10px] font-medium px-2 py-0.5 rounded-full bg-apptivia-coral-tone-50 text-apptivia-coral border border-blue-100">
+            <span className="inline-flex items-center gap-1 text-[10px] font-medium px-2 py-0.5 rounded-full bg-apptivia-coral-tone-50 text-apptivia-coral border border-apptivia-coral-tone-100">
               <Shield size={8} /> Auto-monitored weekly
             </span>
           </div>
@@ -402,7 +402,7 @@ export default function KpiWatchdog({ organizationId, userId, filterProfileIds }
             <select
               value={filterSeverity}
               onChange={(e) => setFilterSeverity(e.target.value)}
-              className="text-xs border border-gray-200 rounded-lg px-2 py-1.5 bg-white focus:outline-none focus:ring-2 focus:ring-blue-300"
+              className="text-xs border border-apptivia-carbon-200 rounded-lg px-2 py-1.5 bg-white focus:outline-none focus:ring-2 focus:ring-blue-300"
             >
               <option value="all">All Severities</option>
               <option value="critical">Critical</option>
@@ -413,7 +413,7 @@ export default function KpiWatchdog({ organizationId, userId, filterProfileIds }
             <select
               value={filterStatus}
               onChange={(e) => setFilterStatus(e.target.value)}
-              className="text-xs border border-gray-200 rounded-lg px-2 py-1.5 bg-white focus:outline-none focus:ring-2 focus:ring-blue-300"
+              className="text-xs border border-apptivia-carbon-200 rounded-lg px-2 py-1.5 bg-white focus:outline-none focus:ring-2 focus:ring-blue-300"
             >
               <option value="all">All Statuses</option>
               <option value="active">Active</option>
@@ -430,7 +430,7 @@ export default function KpiWatchdog({ organizationId, userId, filterProfileIds }
               <span className="text-sm text-apptivia-carbon-500">Loading anomalies...</span>
             </div>
           ) : filteredAnomalies.length === 0 ? (
-            <div className="bg-white rounded-xl border border-gray-100 py-16 text-center">
+            <div className="bg-white rounded-xl border border-apptivia-carbon-100 py-16 text-center">
               <Shield size={32} className="mx-auto text-emerald-300 mb-3" />
               <p className="text-sm text-apptivia-carbon-500 mb-1">
                 {watchdog.anomalies.length === 0 ? 'No anomalies detected' : 'No anomalies match current filters'}
@@ -447,7 +447,7 @@ export default function KpiWatchdog({ organizationId, userId, filterProfileIds }
                 const isOpen = expandedRep === group.profileId;
                 return (
                   <div key={group.profileId} className={`rounded-xl border transition-colors ${
-                    isOpen ? 'border-red-200 bg-red-50/20' : 'border-gray-100 bg-white hover:bg-apptivia-paper/50'
+                    isOpen ? 'border-red-200 bg-red-50/20' : 'border-apptivia-carbon-100 bg-white hover:bg-apptivia-paper/50'
                   }`}>
                     {/* Accordion header */}
                     <button
@@ -517,7 +517,7 @@ export default function KpiWatchdog({ organizationId, userId, filterProfileIds }
           <KpiBreakdown byKpi={watchdog.summary.byKpi} />
 
           {/* Quick Info */}
-          <div className="bg-white rounded-xl border border-gray-100 p-5">
+          <div className="bg-white rounded-xl border border-apptivia-carbon-100 p-5">
             <h3 className="text-sm font-semibold text-apptivia-carbon-700 mb-3">How It Works</h3>
             <div className="space-y-3">
               <div className="flex items-start gap-2">

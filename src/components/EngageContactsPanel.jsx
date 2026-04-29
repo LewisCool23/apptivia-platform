@@ -44,7 +44,7 @@ export default function EngageContactsPanel({ organizationId, onCallContact, onC
   return (
     <div className="flex flex-col h-full">
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 flex-shrink-0">
+      <div className="flex items-center justify-between px-4 py-3 border-b border-apptivia-carbon-100 flex-shrink-0">
         <div className="flex items-center gap-2">
           <UserPlus size={14} className="text-apptivia-coral" />
           <h3 className="font-semibold text-apptivia-ink text-sm">Saved Contacts</h3>
@@ -56,7 +56,7 @@ export default function EngageContactsPanel({ organizationId, onCallContact, onC
       </div>
 
       {/* Search */}
-      <div className="px-3 py-2 border-b border-gray-50 flex-shrink-0">
+      <div className="px-3 py-2 border-b border-apptivia-carbon-100 flex-shrink-0">
         <div className="relative">
           <Search size={12} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-apptivia-carbon-400" />
           <input
@@ -64,7 +64,7 @@ export default function EngageContactsPanel({ organizationId, onCallContact, onC
             placeholder="Search contacts..."
             value={search}
             onChange={e => setSearch(e.target.value)}
-            className="w-full pl-7 pr-3 py-1.5 text-xs border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-300"
+            className="w-full pl-7 pr-3 py-1.5 text-xs border border-apptivia-carbon-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-300"
           />
         </div>
       </div>

@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom';
 export default function PrivacyPolicy() {
   return (
     <div className="min-h-screen bg-apptivia-paper">
-      <header className="bg-white border-b border-gray-200">
+      <header className="bg-white border-b border-apptivia-carbon-200">
         <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
           <Link to="/" className="text-xl font-bold text-apptivia-coral">Apptivia</Link>
           <div className="flex items-center gap-4">

@@ -91,7 +91,7 @@ const SECURITY_SECTIONS = [
 export default function Security() {
   return (
     <div className="min-h-screen bg-apptivia-paper">
-      <header className="bg-white border-b border-gray-200">
+      <header className="bg-white border-b border-apptivia-carbon-200">
         <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
           <Link to="/" className="text-xl font-bold text-apptivia-coral">Apptivia</Link>
           <div className="flex items-center gap-4">
@@ -113,7 +113,7 @@ export default function Security() {
 
         <div className="space-y-10">
           {SECURITY_SECTIONS.map((section) => (
-            <div key={section.title} className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+            <div key={section.title} className="bg-white rounded-xl p-6 shadow-sm border border-apptivia-carbon-100">
               <h2 className="text-lg font-semibold text-apptivia-ink mb-4 flex items-center gap-2">
                 <span className="text-xl">{section.icon}</span>
                 {section.title}

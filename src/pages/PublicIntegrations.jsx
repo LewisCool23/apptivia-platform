@@ -80,7 +80,7 @@ export default function PublicIntegrations() {
   return (
     <div className="min-h-screen bg-apptivia-paper">
       {/* Header */}
-      <header className="bg-white border-b border-gray-200">
+      <header className="bg-white border-b border-apptivia-carbon-200">
         <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
           <Link to="/" className="text-xl font-bold text-apptivia-coral">Apptivia</Link>
           <div className="flex items-center gap-4">
@@ -93,7 +93,7 @@ export default function PublicIntegrations() {
       </header>
 
       {/* Hero */}
-      <section className="bg-white py-16 border-b border-gray-100">
+      <section className="bg-white py-16 border-b border-apptivia-carbon-100">
         <div className="max-w-4xl mx-auto px-6 text-center">
           <h1 className="text-4xl font-bold text-apptivia-ink mb-4">
             Connect Your Sales Stack
@@ -111,7 +111,7 @@ export default function PublicIntegrations() {
             <h2 className="text-sm font-semibold text-apptivia-carbon-500 uppercase tracking-wider mb-4">{category}</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {INTEGRATIONS.filter(i => i.category === category).map(integration => (
-                <div key={integration.name} className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
+                <div key={integration.name} className="bg-white rounded-xl p-6 shadow-sm border border-apptivia-carbon-100 hover:shadow-md transition-shadow">
                   <div className="flex items-center gap-3 mb-3">
                     <div className={`w-10 h-10 rounded-lg bg-gradient-to-br ${integration.color} flex items-center justify-center text-white font-bold text-xs`}>
                       {integration.icon}

@@ -156,7 +156,7 @@ export default function ShareScorecardSnapshotModal({ isOpen, onClose, scorecard
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-gray-200 flex-shrink-0">
+        <div className="flex items-center justify-between p-4 border-b border-apptivia-carbon-200 flex-shrink-0">
           <h2 className="text-xl font-bold text-apptivia-ink flex items-center gap-2">
             <span>📊</span>
             Share Weekly Scorecard Snapshot
@@ -265,7 +265,7 @@ export default function ShareScorecardSnapshotModal({ isOpen, onClose, scorecard
         </div>
 
         {/* Action Buttons */}
-        <div className="border-t border-gray-200 p-4 bg-white flex-shrink-0">
+        <div className="border-t border-apptivia-carbon-200 p-4 bg-white flex-shrink-0">
           {!showEmailForm ? (
             <>
               <div className="flex flex-wrap gap-2 justify-center">
@@ -319,7 +319,7 @@ export default function ShareScorecardSnapshotModal({ isOpen, onClose, scorecard
                   value={emailRecipients}
                   onChange={(e) => setEmailRecipients(e.target.value)}
                   placeholder="john@example.com, jane@example.com"
-                  className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-3 py-2 text-sm border border-apptivia-carbon-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
               </div>
 
@@ -332,7 +332,7 @@ export default function ShareScorecardSnapshotModal({ isOpen, onClose, scorecard
                   value={emailSubject}
                   onChange={(e) => setEmailSubject(e.target.value)}
                   placeholder="Apptivia Weekly Scorecard Snapshot"
-                  className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-3 py-2 text-sm border border-apptivia-carbon-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
               </div>
 
@@ -345,7 +345,7 @@ export default function ShareScorecardSnapshotModal({ isOpen, onClose, scorecard
                   onChange={(e) => setEmailNotes(e.target.value)}
                   placeholder="Add highlights or focus areas for the week ahead"
                   rows={3}
-                  className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-3 py-2 text-sm border border-apptivia-carbon-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
               </div>
 

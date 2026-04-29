@@ -89,7 +89,7 @@ export class PageErrorBoundary extends React.Component {
               </button>
               <button
                 onClick={() => window.history.back()}
-                className="px-4 py-2 border border-gray-300 text-apptivia-carbon-700 text-sm font-medium rounded-lg hover:bg-apptivia-paper transition-colors"
+                className="px-4 py-2 border border-apptivia-carbon-300 text-apptivia-carbon-700 text-sm font-medium rounded-lg hover:bg-apptivia-paper transition-colors"
               >
                 Go Back
               </button>

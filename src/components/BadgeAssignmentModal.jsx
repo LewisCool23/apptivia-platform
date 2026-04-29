@@ -153,7 +153,7 @@ export default function BadgeAssignmentModal({ isOpen, onClose, badge }) {
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
       <div className="bg-white rounded-lg shadow-xl w-full max-w-3xl max-h-[90vh] flex flex-col">
         {/* Header */}
-        <div className="border-b border-gray-200 px-6 py-4 flex items-center justify-between">
+        <div className="border-b border-apptivia-carbon-200 px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div 
               className="p-2 rounded-lg text-2xl"
@@ -175,7 +175,7 @@ export default function BadgeAssignmentModal({ isOpen, onClose, badge }) {
         </div>
 
         {/* Filters */}
-        <div className="px-6 py-4 bg-apptivia-paper border-b border-gray-200 space-y-3">
+        <div className="px-6 py-4 bg-apptivia-paper border-b border-apptivia-carbon-200 space-y-3">
           <div className="flex gap-3">
             {/* Search */}
             <div className="flex-1 relative">
@@ -185,7 +185,7 @@ export default function BadgeAssignmentModal({ isOpen, onClose, badge }) {
                 placeholder="Search by name or email..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                className="w-full pl-10 pr-3 py-2 border border-apptivia-carbon-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-apptivia-carbon-300"
               />
             </div>
 
@@ -193,7 +193,7 @@ export default function BadgeAssignmentModal({ isOpen, onClose, badge }) {
             <select
               value={departmentFilter}
               onChange={(e) => setDepartmentFilter(e.target.value)}
-              className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+              className="px-3 py-2 border border-apptivia-carbon-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-apptivia-carbon-300"
             >
               <option value="all">All Departments</option>
               {departments.map(dept => (
@@ -221,7 +221,7 @@ export default function BadgeAssignmentModal({ isOpen, onClose, badge }) {
         <div className="flex-1 overflow-y-auto px-6 py-4">
           {loading ? (
             <div className="text-center py-12">
-              <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-gray-200 border-t-indigo-600"></div>
+              <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-apptivia-carbon-200 border-t-indigo-600"></div>
               <p className="text-sm text-apptivia-carbon-500 mt-2">Loading profiles...</p>
             </div>
           ) : filteredProfiles.length === 0 ? (
@@ -244,15 +244,15 @@ export default function BadgeAssignmentModal({ isOpen, onClose, badge }) {
                     key={profile.id}
                     className={`flex items-center gap-3 p-3 rounded-lg border-2 cursor-pointer transition-all ${
                       isSelected
-                        ? 'border-indigo-500 bg-apptivia-carbon-100'
-                        : 'border-gray-200 hover:border-gray-300 bg-white'
+                        ? 'border-apptivia-carbon-300 bg-apptivia-carbon-100'
+                        : 'border-apptivia-carbon-200 hover:border-apptivia-carbon-300 bg-white'
                     }`}
                   >
                     <input
                       type="checkbox"
                       checked={isSelected}
                       onChange={() => handleToggleProfile(profile.id)}
-                      className="w-4 h-4 text-apptivia-ink border-gray-300 rounded focus:ring-indigo-500"
+                      className="w-4 h-4 text-apptivia-ink border-apptivia-carbon-300 rounded focus:ring-indigo-500"
                     />
                     <div className="flex-1 min-w-0">
                       <p className="font-medium text-apptivia-ink truncate">{displayName}</p>
@@ -274,7 +274,7 @@ export default function BadgeAssignmentModal({ isOpen, onClose, badge }) {
         </div>
 
         {/* Footer */}
-        <div className="border-t border-gray-200 px-6 py-4 flex items-center justify-between bg-apptivia-paper">
+        <div className="border-t border-apptivia-carbon-200 px-6 py-4 flex items-center justify-between bg-apptivia-paper">
           <p className="text-sm text-apptivia-carbon-600">
             {selectedProfiles.length > 0 && (
               <span className="font-medium text-apptivia-ink">

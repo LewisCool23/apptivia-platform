@@ -157,7 +157,7 @@ function SummaryCards({ summary }) {
   return (
     <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
       {cards.map((card) => (
-        <div key={card.label} className="bg-white rounded-xl border border-gray-100 p-4 hover:shadow-sm transition-shadow">
+        <div key={card.label} className="bg-white rounded-xl border border-apptivia-carbon-100 p-4 hover:shadow-sm transition-shadow">
           <div className="flex items-center justify-between mb-2">
             <span className="text-xs font-medium text-apptivia-carbon-500">{card.label}</span>
             <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${card.color}`}>
@@ -189,8 +189,8 @@ function BuyingCommitteePanel({ committee, onUpdate }) {
   };
 
   return (
-    <div className="bg-white rounded-xl border border-gray-100 overflow-hidden">
-      <div className="px-5 py-3 border-b border-gray-100 flex items-center justify-between bg-apptivia-paper/50">
+    <div className="bg-white rounded-xl border border-apptivia-carbon-100 overflow-hidden">
+      <div className="px-5 py-3 border-b border-apptivia-carbon-100 flex items-center justify-between bg-apptivia-paper/50">
         <div className="flex items-center gap-2">
           <Users size={14} className="text-apptivia-carbon-500" />
           <span className="text-sm font-bold text-apptivia-ink">Buying Committee</span>
@@ -245,26 +245,26 @@ function BuyingCommitteePanel({ committee, onUpdate }) {
               <div>
                 <label className="text-[10px] font-semibold text-apptivia-carbon-500 block mb-1">NAME</label>
                 <input value={newMember.name} onChange={(e) => setNewMember(p => ({ ...p, name: e.target.value }))}
-                  placeholder="e.g., Jane Smith" className="w-full px-2.5 py-1.5 border border-gray-200 rounded-lg text-xs" />
+                  placeholder="e.g., Jane Smith" className="w-full px-2.5 py-1.5 border border-apptivia-carbon-200 rounded-lg text-xs" />
               </div>
               <div>
                 <label className="text-[10px] font-semibold text-apptivia-carbon-500 block mb-1">TITLE</label>
                 <input value={newMember.title} onChange={(e) => setNewMember(p => ({ ...p, title: e.target.value }))}
-                  placeholder="e.g., VP Sales" className="w-full px-2.5 py-1.5 border border-gray-200 rounded-lg text-xs" />
+                  placeholder="e.g., VP Sales" className="w-full px-2.5 py-1.5 border border-apptivia-carbon-200 rounded-lg text-xs" />
               </div>
             </div>
             <div className="flex gap-3">
               <div className="flex-1">
                 <label className="text-[10px] font-semibold text-apptivia-carbon-500 block mb-1">ROLE</label>
                 <select value={newMember.role} onChange={(e) => setNewMember(p => ({ ...p, role: e.target.value }))}
-                  className="w-full px-2.5 py-1.5 border border-gray-200 rounded-lg text-xs bg-white">
+                  className="w-full px-2.5 py-1.5 border border-apptivia-carbon-200 rounded-lg text-xs bg-white">
                   {Object.entries(COMMITTEE_ROLES).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
                 </select>
               </div>
               <div className="flex-1">
                 <label className="text-[10px] font-semibold text-apptivia-carbon-500 block mb-1">INFLUENCE</label>
                 <select value={newMember.influence_level} onChange={(e) => setNewMember(p => ({ ...p, influence_level: e.target.value }))}
-                  className="w-full px-2.5 py-1.5 border border-gray-200 rounded-lg text-xs bg-white">
+                  className="w-full px-2.5 py-1.5 border border-apptivia-carbon-200 rounded-lg text-xs bg-white">
                   <option value="high">High</option>
                   <option value="medium">Medium</option>
                   <option value="low">Low</option>
@@ -294,7 +294,7 @@ function AccountCard({ account, onSelect, icpConfig }) {
 
   return (
     <div onClick={() => onSelect(account)}
-      className="bg-white rounded-xl border border-gray-100 p-5 hover:shadow-md hover:border-blue-200 transition-all cursor-pointer">
+      className="bg-white rounded-xl border border-apptivia-carbon-100 p-5 hover:shadow-md hover:border-apptivia-coral-tone-100 transition-all cursor-pointer">
       <div className="flex items-start justify-between mb-3">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-lg flex items-center justify-center">
@@ -370,7 +370,7 @@ function AccountDetail({ account, onBack, onUpdate, onAnalyze, analyzing, onUpda
   return (
     <div className="space-y-4">
       {/* Header */}
-      <div className="bg-white rounded-xl border border-gray-100 p-5">
+      <div className="bg-white rounded-xl border border-apptivia-carbon-100 p-5">
         <button onClick={onBack} className="text-xs text-apptivia-coral hover:text-apptivia-coral font-medium flex items-center gap-1 mb-3">
           ← Back to accounts
         </button>
@@ -429,7 +429,7 @@ function AccountDetail({ account, onBack, onUpdate, onAnalyze, analyzing, onUpda
           { label: 'Intent Score', value: account.intent_score, color: 'from-amber-500 to-orange-500' },
           { label: 'Engagement Score', value: account.engagement_score, color: 'from-emerald-500 to-teal-500' },
         ].map((s) => (
-          <div key={s.label} className="bg-white rounded-xl border border-gray-100 p-4 text-center">
+          <div key={s.label} className="bg-white rounded-xl border border-apptivia-carbon-100 p-4 text-center">
             <span className="text-[10px] text-apptivia-carbon-400 block mb-1">{s.label}</span>
             <div className={`text-2xl font-bold bg-gradient-to-r ${s.color} bg-clip-text text-transparent`}>{s.value}</div>
             <div className="w-full bg-apptivia-carbon-100 rounded-full h-1.5 mt-2">
@@ -438,7 +438,7 @@ function AccountDetail({ account, onBack, onUpdate, onAnalyze, analyzing, onUpda
           </div>
         ))}
         {icpScore !== null && (
-          <div className="bg-white rounded-xl border border-gray-100 p-4 text-center">
+          <div className="bg-white rounded-xl border border-apptivia-carbon-100 p-4 text-center">
             <span className="text-[10px] text-apptivia-carbon-400 block mb-1">ICP Fit Score</span>
             <div className={`text-2xl font-bold ${icpScore >= 75 ? 'text-emerald-600' : icpScore >= 50 ? 'text-amber-600' : 'text-red-500'}`}>{icpScore}</div>
             <div className="w-full bg-apptivia-carbon-100 rounded-full h-1.5 mt-2">
@@ -454,7 +454,7 @@ function AccountDetail({ account, onBack, onUpdate, onAnalyze, analyzing, onUpda
       {/* ABM Insights Row */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         {/* Readiness Score */}
-        <div className="bg-white rounded-xl border border-gray-100 p-4 text-center">
+        <div className="bg-white rounded-xl border border-apptivia-carbon-100 p-4 text-center">
           <span className="text-[10px] text-apptivia-carbon-400 block mb-1">Readiness Score</span>
           <div className={`text-2xl font-bold ${account.readiness_score >= 70 ? 'text-emerald-600' : account.readiness_score >= 40 ? 'text-amber-600' : 'text-apptivia-carbon-400'}`}>
             {account.readiness_score ?? '—'}
@@ -465,7 +465,7 @@ function AccountDetail({ account, onBack, onUpdate, onAnalyze, analyzing, onUpda
         </div>
 
         {/* Buying Stage */}
-        <div className="bg-white rounded-xl border border-gray-100 p-4 text-center">
+        <div className="bg-white rounded-xl border border-apptivia-carbon-100 p-4 text-center">
           <span className="text-[10px] text-apptivia-carbon-400 block mb-1">Buying Stage</span>
           {account.buying_stage ? (
             <span className={`inline-flex px-3 py-1 rounded-full text-xs font-semibold ${
@@ -481,14 +481,14 @@ function AccountDetail({ account, onBack, onUpdate, onAnalyze, analyzing, onUpda
         </div>
 
         {/* Signal Velocity */}
-        <div className="bg-white rounded-xl border border-gray-100 p-4 text-center">
+        <div className="bg-white rounded-xl border border-apptivia-carbon-100 p-4 text-center">
           <span className="text-[10px] text-apptivia-carbon-400 block mb-1">Signal Velocity</span>
           <div className="text-xl font-bold text-apptivia-ink">{account.signal_velocity ?? '—'}</div>
           <span className="text-[10px] text-apptivia-carbon-400">signals/week</span>
         </div>
 
         {/* Tech Fit Score */}
-        <div className="bg-white rounded-xl border border-gray-100 p-4 text-center">
+        <div className="bg-white rounded-xl border border-apptivia-carbon-100 p-4 text-center">
           <span className="text-[10px] text-apptivia-carbon-400 block mb-1">Tech Fit Score</span>
           <div className={`text-xl font-bold ${account.tech_fit_score >= 70 ? 'text-emerald-600' : account.tech_fit_score >= 40 ? 'text-amber-600' : 'text-apptivia-carbon-400'}`}>
             {account.tech_fit_score ?? '—'}
@@ -498,7 +498,7 @@ function AccountDetail({ account, onBack, onUpdate, onAnalyze, analyzing, onUpda
 
       {/* AI Insights */}
       {(account.ai_summary || account.ai_strategy) && (
-        <div className="bg-white rounded-xl border border-gray-100 overflow-hidden">
+        <div className="bg-white rounded-xl border border-apptivia-carbon-100 overflow-hidden">
           <div className="bg-gradient-to-r from-orange-500 to-amber-500 px-5 py-3 flex items-center gap-2">
             <Sparkles size={14} className="text-white" />
             <span className="text-sm font-semibold text-white">AI Account Intelligence</span>
@@ -533,7 +533,7 @@ function AccountDetail({ account, onBack, onUpdate, onAnalyze, analyzing, onUpda
       )}
 
       {/* Tier Selector */}
-      <div className="bg-white rounded-xl border border-gray-100 p-4">
+      <div className="bg-white rounded-xl border border-apptivia-carbon-100 p-4">
         <span className="text-xs font-semibold text-apptivia-carbon-700 block mb-2">Account Tier</span>
         <div className="flex gap-2">
           {Object.entries(TIER_STYLES).map(([key, style]) => (
@@ -557,7 +557,7 @@ function AccountDetail({ account, onBack, onUpdate, onAnalyze, analyzing, onUpda
 
       {/* Signal Contacts — only shown if promoted from Signal Prospecting */}
       {signalContacts.length > 0 && (
-        <div className="bg-white rounded-xl border border-gray-100 p-4">
+        <div className="bg-white rounded-xl border border-apptivia-carbon-100 p-4">
           <button
             onClick={() => setShowContacts(!showContacts)}
             className="flex items-center justify-between w-full"
@@ -569,7 +569,7 @@ function AccountDetail({ account, onBack, onUpdate, onAnalyze, analyzing, onUpda
             {showContacts ? <ChevronUp size={13} className="text-apptivia-carbon-400" /> : <ChevronDown size={13} className="text-apptivia-carbon-400" />}
           </button>
           {showContacts && (
-            <div className="mt-3 space-y-2 pt-3 border-t border-gray-100">
+            <div className="mt-3 space-y-2 pt-3 border-t border-apptivia-carbon-100">
               {signalContacts.map((person, i) => (
                 <div key={person.id || i} className="flex items-center gap-3 group">
                   <div className="w-8 h-8 rounded-full bg-gradient-to-br from-teal-400 to-cyan-500 flex items-center justify-center text-white text-[10px] font-bold flex-shrink-0">
@@ -682,7 +682,7 @@ function CreateDealModal({ isOpen, onClose, account, organizationId, userId }) {
                 value={form.deal_name}
                 onChange={e => setForm(f => ({ ...f, deal_name: e.target.value }))}
                 placeholder="e.g. CloudEagle.ai — Discovery"
-                className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-300"
+                className="w-full text-sm border border-apptivia-carbon-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-300"
                 required
               />
             </div>
@@ -695,7 +695,7 @@ function CreateDealModal({ isOpen, onClose, account, organizationId, userId }) {
                   value={form.deal_value}
                   onChange={e => setForm(f => ({ ...f, deal_value: e.target.value }))}
                   placeholder="0"
-                  className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-300"
+                  className="w-full text-sm border border-apptivia-carbon-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-300"
                 />
               </div>
               <div>
@@ -704,7 +704,7 @@ function CreateDealModal({ isOpen, onClose, account, organizationId, userId }) {
                   type="date"
                   value={form.close_date}
                   onChange={e => setForm(f => ({ ...f, close_date: e.target.value }))}
-                  className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-300"
+                  className="w-full text-sm border border-apptivia-carbon-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-300"
                 />
               </div>
             </div>
@@ -715,7 +715,7 @@ function CreateDealModal({ isOpen, onClose, account, organizationId, userId }) {
             {error && <p className="text-xs text-red-600">{error}</p>}
             <div className="flex gap-2 pt-1">
               <button type="button" onClick={onClose}
-                className="flex-1 py-2 text-sm text-apptivia-carbon-500 border border-gray-200 rounded-lg hover:bg-apptivia-paper">
+                className="flex-1 py-2 text-sm text-apptivia-carbon-500 border border-apptivia-carbon-200 rounded-lg hover:bg-apptivia-paper">
                 Cancel
               </button>
               <button type="submit" disabled={saving}
@@ -776,7 +776,7 @@ function NewAccountModal({ isOpen, onClose, onCreate }) {
               value={form.account_name}
               onChange={(e) => setForm(p => ({ ...p, account_name: e.target.value }))}
               placeholder="e.g., Acme Corp"
-              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-3 py-2 border border-apptivia-carbon-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               required
             />
           </div>
@@ -787,7 +787,7 @@ function NewAccountModal({ isOpen, onClose, onCreate }) {
                 value={form.domain}
                 onChange={(e) => setForm(p => ({ ...p, domain: e.target.value }))}
                 placeholder="acme.com"
-                className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-3 py-2 border border-apptivia-carbon-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
             </div>
             <div>
@@ -796,7 +796,7 @@ function NewAccountModal({ isOpen, onClose, onCreate }) {
                 value={form.industry}
                 onChange={(e) => setForm(p => ({ ...p, industry: e.target.value }))}
                 placeholder="e.g., SaaS"
-                className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-3 py-2 border border-apptivia-carbon-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
             </div>
           </div>
@@ -966,7 +966,7 @@ export default function AccountIntelligence({ organizationId, userId, initialAcc
 
       {/* Account List */}
       {filteredAccounts.length === 0 ? (
-        <div className="bg-white rounded-2xl border border-gray-100 p-12 text-center">
+        <div className="bg-white rounded-2xl border border-apptivia-carbon-100 p-12 text-center">
           <div className="w-16 h-16 bg-apptivia-coral-tone-50 rounded-2xl flex items-center justify-center mx-auto mb-4">
             <Building2 size={28} className="text-apptivia-coral" />
           </div>

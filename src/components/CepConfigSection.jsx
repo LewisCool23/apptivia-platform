@@ -23,7 +23,7 @@ function ColorPicker({ value, onChange }) {
           key={c}
           type="button"
           onClick={() => onChange(c)}
-          className={`w-7 h-7 rounded-full border-2 transition-all ${value === c ? 'border-gray-800 scale-110' : 'border-transparent hover:border-gray-300'}`}
+          className={`w-7 h-7 rounded-full border-2 transition-all ${value === c ? 'border-apptivia-carbon-800 scale-110' : 'border-transparent hover:border-apptivia-carbon-300'}`}
           style={{ backgroundColor: c }}
         />
       ))}
@@ -54,14 +54,14 @@ function ChecklistEditor({ items, onChange }) {
             value={item.label}
             onChange={e => updateItem(idx, 'label', e.target.value)}
             placeholder="Checklist item label"
-            className="flex-1 border border-gray-300 rounded px-2 py-1.5 text-sm focus:ring-1 focus:ring-blue-500"
+            className="flex-1 border border-apptivia-carbon-300 rounded px-2 py-1.5 text-sm focus:ring-1 focus:ring-blue-500"
           />
           <label className="flex items-center gap-1 text-xs text-apptivia-carbon-500 whitespace-nowrap">
             <input
               type="checkbox"
               checked={item.required}
               onChange={e => updateItem(idx, 'required', e.target.checked)}
-              className="rounded border-gray-300"
+              className="rounded border-apptivia-carbon-300"
             />
             Req
           </label>
@@ -100,7 +100,7 @@ function ExitCriteriaEditor({ items, onChange }) {
             value={item.label}
             onChange={e => updateItem(idx, e.target.value)}
             placeholder="Exit criterion"
-            className="flex-1 border border-gray-300 rounded px-2 py-1.5 text-sm focus:ring-1 focus:ring-blue-500"
+            className="flex-1 border border-apptivia-carbon-300 rounded px-2 py-1.5 text-sm focus:ring-1 focus:ring-blue-500"
           />
           <button type="button" onClick={() => removeItem(idx)} className="text-apptivia-carbon-400 hover:text-red-500">
             <X size={14} />
@@ -132,7 +132,7 @@ function RoleResponsibilitiesEditor({ items, onChange, titles }) {
           <select
             value={item.title}
             onChange={e => updateItem(idx, 'title', e.target.value)}
-            className="border border-gray-300 rounded px-2 py-1.5 text-sm w-24"
+            className="border border-apptivia-carbon-300 rounded px-2 py-1.5 text-sm w-24"
           >
             {titles.map(t => (
               <option key={t.title_key || t.id} value={t.title_name}>{t.title_name}</option>
@@ -146,7 +146,7 @@ function RoleResponsibilitiesEditor({ items, onChange, titles }) {
             value={item.responsibility}
             onChange={e => updateItem(idx, 'responsibility', e.target.value)}
             placeholder="Responsibility description"
-            className="flex-1 border border-gray-300 rounded px-2 py-1.5 text-sm focus:ring-1 focus:ring-blue-500"
+            className="flex-1 border border-apptivia-carbon-300 rounded px-2 py-1.5 text-sm focus:ring-1 focus:ring-blue-500"
           />
           <button type="button" onClick={() => removeItem(idx)} className="text-apptivia-carbon-400 hover:text-red-500">
             <X size={14} />
@@ -234,7 +234,7 @@ function CepStageEditorModal({ stage, titles, onSave, onClose }) {
                 value={form.stage_name}
                 onChange={e => handleNameChange(e.target.value)}
                 placeholder="e.g. Qualification"
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500"
+                className="w-full border border-apptivia-carbon-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500"
               />
             </div>
             <div>
@@ -256,7 +256,7 @@ function CepStageEditorModal({ stage, titles, onSave, onClose }) {
                 onChange={e => { setAutoKey(false); setForm(f => ({ ...f, stage_key: e.target.value })); }}
                 placeholder="e.g. qualification"
                 disabled={isNew && autoKey}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 disabled:bg-apptivia-paper"
+                className="w-full border border-apptivia-carbon-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 disabled:bg-apptivia-paper"
               />
             </div>
           </div>
@@ -277,7 +277,7 @@ function CepStageEditorModal({ stage, titles, onSave, onClose }) {
                 max="100"
                 value={form.win_probability}
                 onChange={e => setForm(f => ({ ...f, win_probability: e.target.value }))}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
+                className="w-full border border-apptivia-carbon-300 rounded-lg px-3 py-2 text-sm"
               />
             </div>
             <div>
@@ -288,7 +288,7 @@ function CepStageEditorModal({ stage, titles, onSave, onClose }) {
                 value={form.expected_days}
                 onChange={e => setForm(f => ({ ...f, expected_days: e.target.value }))}
                 placeholder="No limit"
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
+                className="w-full border border-apptivia-carbon-300 rounded-lg px-3 py-2 text-sm"
               />
             </div>
           </div>
@@ -299,7 +299,7 @@ function CepStageEditorModal({ stage, titles, onSave, onClose }) {
               type="checkbox"
               checked={form.is_terminal}
               onChange={e => setForm(f => ({ ...f, is_terminal: e.target.checked }))}
-              className="rounded border-gray-300"
+              className="rounded border-apptivia-carbon-300"
             />
             Terminal stage (e.g. Closed Won, Closed Lost)
           </label>
@@ -373,14 +373,14 @@ function TitleRow({ title, onUpdate, onDelete }) {
           type="text"
           value={name}
           onChange={e => setName(e.target.value)}
-          className="border border-gray-300 rounded px-2 py-1 text-sm w-20 focus:ring-1 focus:ring-blue-500"
+          className="border border-apptivia-carbon-300 rounded px-2 py-1 text-sm w-20 focus:ring-1 focus:ring-blue-500"
           placeholder="Name"
         />
         <input
           type="text"
           value={desc}
           onChange={e => setDesc(e.target.value)}
-          className="flex-1 border border-gray-300 rounded px-2 py-1 text-sm focus:ring-1 focus:ring-blue-500"
+          className="flex-1 border border-apptivia-carbon-300 rounded px-2 py-1 text-sm focus:ring-1 focus:ring-blue-500"
           placeholder="Description"
         />
         <button onClick={handleSave} disabled={saving} className="text-emerald-600 hover:text-emerald-800">
@@ -484,7 +484,7 @@ export default function CepConfigSection({ organizationId, compact = false }) {
     if (error) return <div className="text-sm text-red-500 bg-red-50 rounded-lg p-3">{error}</div>;
     if (!hasCep) {
       return (
-        <div className="bg-apptivia-paper border border-dashed border-gray-300 rounded-xl p-8 text-center">
+        <div className="bg-apptivia-paper border border-dashed border-apptivia-carbon-300 rounded-xl p-8 text-center">
           <div className="text-apptivia-carbon-400 mb-3">
             <Layers size={36} className="mx-auto" />
           </div>
@@ -496,7 +496,7 @@ export default function CepConfigSection({ organizationId, compact = false }) {
             <button onClick={handleSeed} disabled={seeding} className="px-4 py-2 bg-apptivia-coral text-white text-sm font-medium rounded-lg hover:bg-apptivia-coral disabled:opacity-50">
               {seeding ? 'Setting up...' : 'Use Standard B2B Template'}
             </button>
-            <button onClick={() => setEditorStage({})} className="px-4 py-2 bg-white border border-gray-300 text-apptivia-carbon-700 text-sm font-medium rounded-lg hover:bg-apptivia-paper">
+            <button onClick={() => setEditorStage({})} className="px-4 py-2 bg-white border border-apptivia-carbon-300 text-apptivia-carbon-700 text-sm font-medium rounded-lg hover:bg-apptivia-paper">
               Build from Scratch
             </button>
           </div>
@@ -561,8 +561,8 @@ export default function CepConfigSection({ organizationId, compact = false }) {
             {titles.map(t => <TitleRow key={t.id} title={t} onUpdate={updateTitle} onDelete={deleteTitle} />)}
           </div>
           <div className="flex items-center gap-2">
-            <input type="text" value={newTitleName} onChange={e => setNewTitleName(e.target.value)} placeholder="Title (e.g. SDR)" className="border border-gray-300 rounded px-2 py-1.5 text-sm w-24 focus:ring-1 focus:ring-blue-500" onKeyDown={e => { if (e.key === 'Enter') handleAddTitle(); }} />
-            <input type="text" value={newTitleDesc} onChange={e => setNewTitleDesc(e.target.value)} placeholder="Description (optional)" className="flex-1 border border-gray-300 rounded px-2 py-1.5 text-sm focus:ring-1 focus:ring-blue-500" onKeyDown={e => { if (e.key === 'Enter') handleAddTitle(); }} />
+            <input type="text" value={newTitleName} onChange={e => setNewTitleName(e.target.value)} placeholder="Title (e.g. SDR)" className="border border-apptivia-carbon-300 rounded px-2 py-1.5 text-sm w-24 focus:ring-1 focus:ring-blue-500" onKeyDown={e => { if (e.key === 'Enter') handleAddTitle(); }} />
+            <input type="text" value={newTitleDesc} onChange={e => setNewTitleDesc(e.target.value)} placeholder="Description (optional)" className="flex-1 border border-apptivia-carbon-300 rounded px-2 py-1.5 text-sm focus:ring-1 focus:ring-blue-500" onKeyDown={e => { if (e.key === 'Enter') handleAddTitle(); }} />
             <button onClick={handleAddTitle} disabled={addingTitle || !newTitleName.trim()} className="px-3 py-1.5 bg-apptivia-carbon-100 rounded hover:bg-apptivia-carbon-200 text-apptivia-carbon-600 disabled:opacity-40"><Plus size={14} /></button>
           </div>
         </div>

@@ -94,7 +94,7 @@ export default function ShareCoachingPlanSnapshotModal({ isOpen, onClose, plan, 
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 overflow-y-auto py-8">
       <div className="bg-white rounded-xl shadow-xl w-full max-w-lg mx-4">
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-apptivia-carbon-100">
           <h3 className="text-base font-semibold text-apptivia-ink">Share Coaching Plan</h3>
           <button onClick={onClose} className="p-1 text-apptivia-carbon-400 hover:text-apptivia-carbon-600 rounded-md hover:bg-apptivia-carbon-100">
             <X size={18} />
@@ -190,7 +190,7 @@ export default function ShareCoachingPlanSnapshotModal({ isOpen, onClose, plan, 
         </div>
 
         {/* Actions */}
-        <div className="px-6 py-3 border-t border-gray-100 bg-apptivia-paper rounded-b-xl">
+        <div className="px-6 py-3 border-t border-apptivia-carbon-100 bg-apptivia-paper rounded-b-xl">
           {!showEmailForm ? (
             <div className="flex gap-2">
               <button
@@ -203,7 +203,7 @@ export default function ShareCoachingPlanSnapshotModal({ isOpen, onClose, plan, 
               </button>
               <button
                 onClick={() => setShowEmailForm(true)}
-                className="flex-1 flex items-center justify-center gap-1.5 px-4 py-2 text-sm font-medium text-apptivia-carbon-700 border border-gray-300 rounded-md hover:bg-apptivia-carbon-100"
+                className="flex-1 flex items-center justify-center gap-1.5 px-4 py-2 text-sm font-medium text-apptivia-carbon-700 border border-apptivia-carbon-300 rounded-md hover:bg-apptivia-carbon-100"
               >
                 <Mail size={14} />
                 Send Email
@@ -216,27 +216,27 @@ export default function ShareCoachingPlanSnapshotModal({ isOpen, onClose, plan, 
                 value={emailRecipients}
                 onChange={e => setEmailRecipients(e.target.value)}
                 placeholder="recipient@email.com, another@email.com"
-                className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full border border-apptivia-carbon-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
               <input
                 type="text"
                 value={emailSubject}
                 onChange={e => setEmailSubject(e.target.value)}
                 placeholder={`Subject: Coaching Plan — ${plan.name}`}
-                className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full border border-apptivia-carbon-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
               <textarea
                 value={emailNotes}
                 onChange={e => setEmailNotes(e.target.value)}
                 rows={2}
                 placeholder="Optional notes..."
-                className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full border border-apptivia-carbon-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
               {emailError && <p className="text-xs text-red-600">{emailError}</p>}
               <div className="flex gap-2">
                 <button
                   onClick={() => setShowEmailForm(false)}
-                  className="flex-1 px-4 py-2 text-sm font-medium text-apptivia-carbon-600 border border-gray-300 rounded-md hover:bg-apptivia-carbon-100"
+                  className="flex-1 px-4 py-2 text-sm font-medium text-apptivia-carbon-600 border border-apptivia-carbon-300 rounded-md hover:bg-apptivia-carbon-100"
                 >
                   Cancel
                 </button>

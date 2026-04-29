@@ -22,7 +22,7 @@ const AI_TARGETS = [
 
 export default function AskAIFooter() {
   return (
-    <div className="border-t border-gray-700 py-10 mt-0">
+    <div className="border-t border-apptivia-carbon-700 py-10 mt-0">
       <div className="max-w-7xl mx-auto px-4 text-center">
         <h3 className="text-lg font-semibold text-white mb-2">
           Ask your AI about Apptivia
@@ -37,7 +37,7 @@ export default function AskAIFooter() {
               href={t.url}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center px-4 py-2 border border-gray-600 rounded-md hover:bg-apptivia-carbon-800 hover:border-gray-500 transition text-sm font-medium text-apptivia-carbon-300 hover:text-white"
+              className="inline-flex items-center px-4 py-2 border border-apptivia-carbon-600 rounded-md hover:bg-apptivia-carbon-800 hover:border-apptivia-carbon-500 transition text-sm font-medium text-apptivia-carbon-300 hover:text-white"
             >
               Ask {t.name}
             </a>

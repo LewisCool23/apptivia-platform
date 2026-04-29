@@ -243,7 +243,7 @@ Mike,Johnson,mike.johnson@company.com,power_user,Marketing Team,Marketing,Market
           {/* Step 1: Upload */}
           {step === 1 && (
             <div className="space-y-6">
-              <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-blue-400 transition-colors">
+              <div className="border-2 border-dashed border-apptivia-carbon-300 rounded-lg p-8 text-center hover:border-apptivia-coral-tone-100 transition-colors">
                 <input
                   ref={fileInputRef}
                   type="file"
@@ -264,7 +264,7 @@ Mike,Johnson,mike.johnson@company.com,power_user,Marketing Team,Marketing,Market
                 </button>
               </div>
 
-              <div className="bg-apptivia-coral-tone-50 border border-blue-200 rounded-lg p-4">
+              <div className="bg-apptivia-coral-tone-50 border border-apptivia-coral-tone-100 rounded-lg p-4">
                 <div className="flex items-start gap-3">
                   <FileText size={20} className="text-apptivia-coral flex-shrink-0 mt-0.5" />
                   <div>
@@ -334,7 +334,7 @@ Mike,Johnson,mike.johnson@company.com,power_user,Marketing Team,Marketing,Market
           {/* Step 3: Importing */}
           {step === 3 && (
             <div className="text-center py-12">
-              <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-600 mx-auto mb-4"></div>
+              <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-apptivia-coral mx-auto mb-4"></div>
               <div className="text-lg font-semibold mb-2">Importing users...</div>
               <div className="text-sm text-apptivia-carbon-600">This may take a few moments</div>
             </div>
@@ -353,7 +353,7 @@ Mike,Johnson,mike.johnson@company.com,power_user,Marketing Team,Marketing,Market
                   <div className="text-3xl font-bold text-green-600">{importResults.created}</div>
                   <div className="text-sm text-green-700">Users Created</div>
                 </div>
-                <div className="bg-apptivia-coral-tone-50 border border-blue-200 rounded-lg p-4 text-center">
+                <div className="bg-apptivia-coral-tone-50 border border-apptivia-coral-tone-100 rounded-lg p-4 text-center">
                   <div className="text-3xl font-bold text-apptivia-coral">{importResults.updated}</div>
                   <div className="text-sm text-apptivia-coral">Users Updated</div>
                 </div>

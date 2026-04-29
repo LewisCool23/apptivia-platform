@@ -4,10 +4,10 @@ import { SKILLSET_CATEGORIES } from '../constants/skillsets';
 
 const APPTIVIA_LEVELS = [
   { name: 'Developing', range: '0 – 999 pts', color: 'from-orange-400 to-orange-600', bg: 'bg-orange-50', border: 'border-orange-200', text: 'text-orange-700', icon: '🌱', description: 'Building foundational habits and early KPI consistency.' },
-  { name: 'Intermediate', range: '1,000 – 2,499 pts', color: 'from-blue-400 to-blue-600', bg: 'bg-apptivia-coral-tone-50', border: 'border-blue-200', text: 'text-apptivia-coral', icon: '📈', description: 'Demonstrating steady performance and growing skillset mastery.' },
+  { name: 'Intermediate', range: '1,000 – 2,499 pts', color: 'from-blue-400 to-blue-600', bg: 'bg-apptivia-coral-tone-50', border: 'border-apptivia-coral-tone-100', text: 'text-apptivia-coral', icon: '📈', description: 'Demonstrating steady performance and growing skillset mastery.' },
   { name: 'Proficient', range: '2,500 – 4,999 pts', color: 'from-emerald-400 to-emerald-600', bg: 'bg-emerald-50', border: 'border-emerald-200', text: 'text-emerald-700', icon: '⚡', description: 'Consistently hitting targets with strong multi-skill execution.' },
   { name: 'Elite', range: '5,000 – 9,999 pts', color: 'from-yellow-400 to-yellow-600', bg: 'bg-yellow-50', border: 'border-yellow-200', text: 'text-yellow-700', icon: '🏅', description: 'Top-tier performance with deep mastery across all skillsets.' },
-  { name: 'Master', range: '10,000+ pts', color: 'from-purple-500 to-pink-500', bg: 'bg-apptivia-carbon-100', border: 'border-purple-200', text: 'text-apptivia-ink', icon: '👑', description: 'Peak sustained excellence — the highest level of achievement.' },
+  { name: 'Master', range: '10,000+ pts', color: 'from-purple-500 to-pink-500', bg: 'bg-apptivia-carbon-100', border: 'border-apptivia-carbon-300', text: 'text-apptivia-ink', icon: '👑', description: 'Peak sustained excellence — the highest level of achievement.' },
 ];
 
 const SKILLSET_LEVELS = [
@@ -99,7 +99,7 @@ export default function ApptiviaLevelInfoModal({ isOpen, onClose }) {
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="bg-white border border-gray-200 rounded-xl p-4">
+                <div className="bg-white border border-apptivia-carbon-200 rounded-xl p-4">
                   <div className="flex items-center gap-2 mb-2">
                     <div className="w-7 h-7 rounded-lg bg-apptivia-coral-tone-50 text-apptivia-coral flex items-center justify-center"><Zap size={16} /></div>
                     <h4 className="text-sm font-semibold text-apptivia-ink">1. Activity → Scorecard</h4>
@@ -109,7 +109,7 @@ export default function ApptiviaLevelInfoModal({ isOpen, onClose }) {
                     and feed into the weekly Apptivia Scorecard KPI tracking.
                   </p>
                 </div>
-                <div className="bg-white border border-gray-200 rounded-xl p-4">
+                <div className="bg-white border border-apptivia-carbon-200 rounded-xl p-4">
                   <div className="flex items-center gap-2 mb-2">
                     <div className="w-7 h-7 rounded-lg bg-yellow-100 text-yellow-600 flex items-center justify-center"><Award size={16} /></div>
                     <h4 className="text-sm font-semibold text-apptivia-ink">2. Scorecard → Achievements</h4>
@@ -119,7 +119,7 @@ export default function ApptiviaLevelInfoModal({ isOpen, onClose }) {
                     that strengthens coaching insights over time.
                   </p>
                 </div>
-                <div className="bg-white border border-gray-200 rounded-xl p-4">
+                <div className="bg-white border border-apptivia-carbon-200 rounded-xl p-4">
                   <div className="flex items-center gap-2 mb-2">
                     <div className="w-7 h-7 rounded-lg bg-apptivia-carbon-100 text-apptivia-ink flex items-center justify-center"><Star size={16} /></div>
                     <h4 className="text-sm font-semibold text-apptivia-ink">3. Achievements → Skillset Mastery</h4>
@@ -129,7 +129,7 @@ export default function ApptiviaLevelInfoModal({ isOpen, onClose }) {
                     skillset mastery progresses and unlocks milestone bonuses.
                   </p>
                 </div>
-                <div className="bg-white border border-gray-200 rounded-xl p-4">
+                <div className="bg-white border border-apptivia-carbon-200 rounded-xl p-4">
                   <div className="flex items-center gap-2 mb-2">
                     <div className="w-7 h-7 rounded-lg bg-pink-100 text-pink-600 flex items-center justify-center"><Trophy size={16} /></div>
                     <h4 className="text-sm font-semibold text-apptivia-ink">4. Mastery → Apptivia Level</h4>
@@ -141,7 +141,7 @@ export default function ApptiviaLevelInfoModal({ isOpen, onClose }) {
                 </div>
               </div>
 
-              <div className="bg-apptivia-coral-tone-50 border border-blue-100 rounded-xl p-4 flex items-start gap-3">
+              <div className="bg-apptivia-coral-tone-50 border border-apptivia-coral-tone-100 rounded-xl p-4 flex items-start gap-3">
                 <div className="w-7 h-7 rounded-lg bg-apptivia-coral-tone-50 text-apptivia-coral flex items-center justify-center shrink-0 mt-0.5"><BookOpen size={16} /></div>
                 <div className="text-xs text-apptivia-coral leading-relaxed">
                   <span className="font-semibold">Pro Tip:</span> Historical data is retained to inform coaching plans, AI-powered guidance, and personalized recommendations. 
@@ -182,17 +182,17 @@ export default function ApptiviaLevelInfoModal({ isOpen, onClose }) {
               <div className="bg-apptivia-paper rounded-xl p-4">
                 <h4 className="text-xs font-semibold text-apptivia-ink mb-2">How Points Are Earned</h4>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                  <div className="text-center p-3 bg-white rounded-lg border border-gray-100">
+                  <div className="text-center p-3 bg-white rounded-lg border border-apptivia-carbon-100">
                     <Award size={18} className="mx-auto text-apptivia-coral mb-1" />
                     <div className="text-xs font-semibold text-apptivia-ink">Achievements</div>
                     <div className="text-[10px] text-apptivia-carbon-500">10–100 pts each</div>
                   </div>
-                  <div className="text-center p-3 bg-white rounded-lg border border-gray-100">
+                  <div className="text-center p-3 bg-white rounded-lg border border-apptivia-carbon-100">
                     <Trophy size={18} className="mx-auto text-apptivia-ink mb-1" />
                     <div className="text-xs font-semibold text-apptivia-ink">Badge Awards</div>
                     <div className="text-[10px] text-apptivia-carbon-500">25–200 pts each</div>
                   </div>
-                  <div className="text-center p-3 bg-white rounded-lg border border-gray-100">
+                  <div className="text-center p-3 bg-white rounded-lg border border-apptivia-carbon-100">
                     <Star size={18} className="mx-auto text-yellow-500 mb-1" />
                     <div className="text-xs font-semibold text-apptivia-ink">Skillset Milestones</div>
                     <div className="text-[10px] text-apptivia-carbon-500">250–1,000 pts at 25/50/75/100%</div>
@@ -220,7 +220,7 @@ export default function ApptiviaLevelInfoModal({ isOpen, onClose }) {
                 </div>
               </div>
 
-              <div className="bg-white border border-gray-200 rounded-xl p-4">
+              <div className="bg-white border border-apptivia-carbon-200 rounded-xl p-4">
                 <h4 className="text-xs font-semibold text-apptivia-ink mb-2">Skillset Categories</h4>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                   {SKILLSET_CATEGORIES.map(s => (
@@ -235,7 +235,7 @@ export default function ApptiviaLevelInfoModal({ isOpen, onClose }) {
                 </div>
               </div>
 
-              <div className="bg-apptivia-carbon-100 border border-purple-100 rounded-xl p-4">
+              <div className="bg-apptivia-carbon-100 border border-apptivia-carbon-300 rounded-xl p-4">
                 <h4 className="text-xs font-semibold text-apptivia-ink mb-1">Milestone Bonuses</h4>
                 <p className="text-xs text-apptivia-ink leading-relaxed">
                   When a skillset reaches 25%, 50%, 75%, or 100% mastery, you earn bonus points: 250, 500, 750, and 1,000 points respectively. 
@@ -250,7 +250,7 @@ export default function ApptiviaLevelInfoModal({ isOpen, onClose }) {
               <p className="text-xs text-apptivia-carbon-500">Achievements and badges are the core building blocks of your progression. They're earned permanently and never removed.</p>
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="bg-white border border-gray-200 rounded-xl p-4">
+                <div className="bg-white border border-apptivia-carbon-200 rounded-xl p-4">
                   <div className="flex items-center gap-2 mb-3">
                     <div className="w-8 h-8 rounded-lg bg-apptivia-coral-tone-50 text-apptivia-coral flex items-center justify-center"><Target size={18} /></div>
                     <h4 className="text-sm font-semibold text-apptivia-ink">Achievements</h4>
@@ -275,7 +275,7 @@ export default function ApptiviaLevelInfoModal({ isOpen, onClose }) {
                   </ul>
                 </div>
 
-                <div className="bg-white border border-gray-200 rounded-xl p-4">
+                <div className="bg-white border border-apptivia-carbon-200 rounded-xl p-4">
                   <div className="flex items-center gap-2 mb-3">
                     <div className="w-8 h-8 rounded-lg bg-yellow-100 text-yellow-600 flex items-center justify-center"><Award size={18} /></div>
                     <h4 className="text-sm font-semibold text-apptivia-ink">Badges</h4>
@@ -301,12 +301,12 @@ export default function ApptiviaLevelInfoModal({ isOpen, onClose }) {
                 </div>
               </div>
 
-              <div className="bg-white border border-gray-200 rounded-xl p-4">
+              <div className="bg-white border border-apptivia-carbon-200 rounded-xl p-4">
                 <h4 className="text-xs font-semibold text-apptivia-ink mb-3">Achievement Difficulty & Points</h4>
                 <div className="grid grid-cols-4 gap-2">
                   {[
                     { label: 'Easy', pts: '10 pts', color: 'bg-green-100 text-green-700 border-green-200' },
-                    { label: 'Medium', pts: '25 pts', color: 'bg-apptivia-coral-tone-50 text-apptivia-coral border-blue-200' },
+                    { label: 'Medium', pts: '25 pts', color: 'bg-apptivia-coral-tone-50 text-apptivia-coral border-apptivia-coral-tone-100' },
                     { label: 'Hard', pts: '50 pts', color: 'bg-orange-100 text-orange-700 border-orange-200' },
                     { label: 'Expert', pts: '100 pts', color: 'bg-red-100 text-red-700 border-red-200' },
                   ].map(d => (

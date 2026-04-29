@@ -47,7 +47,7 @@ function SequenceList({ sequences, onSelect, onNew, loading }) {
               <button
                 key={seq.id}
                 onClick={() => onSelect(seq.id)}
-                className="w-full text-left p-3 bg-white border border-gray-100 rounded-xl hover:border-blue-200 hover:shadow-sm transition-all group"
+                className="w-full text-left p-3 bg-white border border-apptivia-carbon-100 rounded-xl hover:border-apptivia-coral-tone-100 hover:shadow-sm transition-all group"
               >
                 <div className="flex items-center justify-between mb-1">
                   <span className="text-sm font-medium text-apptivia-ink group-hover:text-apptivia-coral">{seq.name}</span>
@@ -77,14 +77,14 @@ function StepEditor({ step, index, onChange, onRemove }) {
       <div className="absolute left-3 top-0 bottom-0 w-0.5 bg-apptivia-carbon-200" />
       <div className="absolute left-1.5 top-2 w-3 h-3 rounded-full bg-apptivia-coral border-2 border-white shadow-sm z-10" />
 
-      <div className="bg-white border border-gray-100 rounded-xl p-3 shadow-sm">
+      <div className="bg-white border border-apptivia-carbon-100 rounded-xl p-3 shadow-sm">
         <div className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-2">
             <span className="text-[10px] font-bold text-apptivia-carbon-400 uppercase">Step {index + 1}</span>
             <select
               value={step.channel}
               onChange={(e) => onChange({ ...step, channel: e.target.value })}
-              className="text-xs border border-gray-200 rounded-md px-2 py-1 focus:ring-1 focus:ring-blue-300"
+              className="text-xs border border-apptivia-carbon-200 rounded-md px-2 py-1 focus:ring-1 focus:ring-blue-300"
             >
               {CHANNEL_OPTIONS.map(ch => (
                 <option key={ch.value} value={ch.value}>{ch.label}</option>
@@ -98,7 +98,7 @@ function StepEditor({ step, index, onChange, onRemove }) {
                 max="90"
                 value={step.delay_days ?? 1}
                 onChange={(e) => onChange({ ...step, delay_days: parseInt(e.target.value) || 0 })}
-                className="w-10 text-center border border-gray-200 rounded px-1 py-0.5 text-xs"
+                className="w-10 text-center border border-apptivia-carbon-200 rounded px-1 py-0.5 text-xs"
               />
               <span>day{(step.delay_days ?? 1) !== 1 ? 's' : ''} delay</span>
             </div>
@@ -114,7 +114,7 @@ function StepEditor({ step, index, onChange, onRemove }) {
             placeholder="Email subject..."
             value={step.subject || ''}
             onChange={(e) => onChange({ ...step, subject: e.target.value })}
-            className="w-full text-xs border border-gray-200 rounded-lg px-3 py-1.5 mb-2 focus:ring-1 focus:ring-blue-300 focus:border-blue-300"
+            className="w-full text-xs border border-apptivia-carbon-200 rounded-lg px-3 py-1.5 mb-2 focus:ring-1 focus:ring-blue-300 focus:border-apptivia-coral-tone-100"
           />
         )}
 
@@ -123,7 +123,7 @@ function StepEditor({ step, index, onChange, onRemove }) {
           value={step.body || ''}
           onChange={(e) => onChange({ ...step, body: e.target.value })}
           rows={3}
-          className="w-full text-xs border border-gray-200 rounded-lg px-3 py-2 focus:ring-1 focus:ring-blue-300 focus:border-blue-300 resize-none"
+          className="w-full text-xs border border-apptivia-carbon-200 rounded-lg px-3 py-2 focus:ring-1 focus:ring-blue-300 focus:border-apptivia-coral-tone-100 resize-none"
         />
 
         <div className="flex items-center gap-3 mt-2">
@@ -277,13 +277,13 @@ function SequenceDetail({ sequenceId, onBack, organizationId }) {
               <input
                 value={editName}
                 onChange={(e) => setEditName(e.target.value)}
-                className="text-base font-semibold border border-gray-200 rounded-lg px-2 py-1 w-64"
+                className="text-base font-semibold border border-apptivia-carbon-200 rounded-lg px-2 py-1 w-64"
               />
               <input
                 value={editDescription}
                 onChange={(e) => setEditDescription(e.target.value)}
                 placeholder="Description..."
-                className="text-xs text-apptivia-carbon-500 border border-gray-200 rounded-lg px-2 py-1 w-64 block"
+                className="text-xs text-apptivia-carbon-500 border border-apptivia-carbon-200 rounded-lg px-2 py-1 w-64 block"
               />
             </div>
           ) : (
@@ -303,7 +303,7 @@ function SequenceDetail({ sequenceId, onBack, organizationId }) {
             </>
           ) : (
             <>
-              <button onClick={() => setEditing(true)} className="flex items-center gap-1 px-2 py-1.5 text-xs text-apptivia-carbon-600 border border-gray-200 rounded-lg hover:bg-apptivia-paper">
+              <button onClick={() => setEditing(true)} className="flex items-center gap-1 px-2 py-1.5 text-xs text-apptivia-carbon-600 border border-apptivia-carbon-200 rounded-lg hover:bg-apptivia-paper">
                 <Edit2 size={12} />Edit
               </button>
               <button onClick={handleStatusToggle} className={`flex items-center gap-1 px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${
@@ -337,7 +337,7 @@ function SequenceDetail({ sequenceId, onBack, organizationId }) {
         </div>
 
         {steps.length === 0 ? (
-          <div className="text-center py-8 text-apptivia-carbon-400 text-xs border border-dashed border-gray-200 rounded-xl">
+          <div className="text-center py-8 text-apptivia-carbon-400 text-xs border border-dashed border-apptivia-carbon-200 rounded-xl">
             No steps yet. Add your first step to build the sequence.
           </div>
         ) : (
@@ -357,7 +357,7 @@ function SequenceDetail({ sequenceId, onBack, organizationId }) {
 
       {/* Enroll prospect */}
       {sequence.status === 'active' && (
-        <div className="border border-gray-100 rounded-xl p-3">
+        <div className="border border-apptivia-carbon-100 rounded-xl p-3">
           <h3 className="text-xs font-semibold text-apptivia-carbon-600 uppercase tracking-wider mb-2">Enroll Prospect</h3>
           <div className="flex gap-2">
             <input
@@ -366,7 +366,7 @@ function SequenceDetail({ sequenceId, onBack, organizationId }) {
               value={enrollEmail}
               onChange={(e) => setEnrollEmail(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleEnroll()}
-              className="flex-1 text-xs border border-gray-200 rounded-lg px-3 py-1.5 focus:ring-1 focus:ring-blue-300"
+              className="flex-1 text-xs border border-apptivia-carbon-200 rounded-lg px-3 py-1.5 focus:ring-1 focus:ring-blue-300"
             />
             <button
               onClick={handleEnroll}
@@ -447,7 +447,7 @@ export default function SequenceBuilder({ organizationId, userId }) {
             value={newName}
             onChange={(e) => setNewName(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleCreate()}
-            className="flex-1 text-sm border border-gray-200 rounded-lg px-3 py-2 focus:ring-1 focus:ring-blue-300"
+            className="flex-1 text-sm border border-apptivia-carbon-200 rounded-lg px-3 py-2 focus:ring-1 focus:ring-blue-300"
           />
           <button onClick={handleCreate} className="px-3 py-2 bg-apptivia-coral text-white text-xs rounded-lg hover:bg-apptivia-coral">Create</button>
           <button onClick={() => setCreating(false)} className="text-apptivia-carbon-400 hover:text-apptivia-carbon-600"><X size={16} /></button>

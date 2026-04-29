@@ -119,7 +119,7 @@ export default function Integrations() {
                 {syncingAll ? 'Syncing All...' : 'Sync All'}
               </button>
             )}
-            <button onClick={handleRefresh} disabled={isRefreshing} className={`relative p-2 rounded-lg text-sm bg-white text-apptivia-carbon-700 border border-gray-200 hover:bg-apptivia-paper group ${isRefreshing ? 'opacity-50 cursor-not-allowed' : 'transition-all duration-200 hover:scale-105 hover:shadow-md'}`} title="Refresh">
+            <button onClick={handleRefresh} disabled={isRefreshing} className={`relative p-2 rounded-lg text-sm bg-white text-apptivia-carbon-700 border border-apptivia-carbon-200 hover:bg-apptivia-paper group ${isRefreshing ? 'opacity-50 cursor-not-allowed' : 'transition-all duration-200 hover:scale-105 hover:shadow-md'}`} title="Refresh">
               <RefreshCw size={18} className={isRefreshing ? 'animate-spin' : ''} />
             </button>
             <PageActionBar
@@ -137,15 +137,15 @@ export default function Integrations() {
 
         {/* Stats */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-          <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+          <div className="bg-white rounded-xl p-4 shadow-sm border border-apptivia-carbon-100">
             <div className="text-xs text-apptivia-carbon-500 font-medium">Connected</div>
             <div className="text-2xl font-bold text-green-600 mt-1">{connectedCount}</div>
           </div>
-          <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+          <div className="bg-white rounded-xl p-4 shadow-sm border border-apptivia-carbon-100">
             <div className="text-xs text-apptivia-carbon-500 font-medium">Available</div>
             <div className="text-2xl font-bold text-apptivia-ink mt-1">{SUPPORTED_INTEGRATIONS.length}</div>
           </div>
-          <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+          <div className="bg-white rounded-xl p-4 shadow-sm border border-apptivia-carbon-100">
             <div className="text-xs text-apptivia-carbon-500 font-medium">Last Sync</div>
             <div className="text-sm font-medium text-apptivia-ink mt-1">
               {lastSync ? new Date(lastSync).toLocaleString() : 'Never'}
@@ -181,7 +181,7 @@ export default function Integrations() {
               const anyConnected = orgConnected || personalConnected;
 
               return (
-                <div key={template.integration_type} className="bg-white rounded-xl p-5 shadow-sm border border-gray-100 flex flex-col hover:shadow-md transition-shadow">
+                <div key={template.integration_type} className="bg-white rounded-xl p-5 shadow-sm border border-apptivia-carbon-100 flex flex-col hover:shadow-md transition-shadow">
                   {/* Header */}
                   <div className="flex items-center gap-3 mb-4">
                     <div className={`w-11 h-11 bg-gradient-to-br ${template.color} rounded-lg flex items-center justify-center text-xs font-bold text-white shadow-sm`}>

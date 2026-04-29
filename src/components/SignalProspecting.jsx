@@ -241,7 +241,7 @@ function ActionQueuePanel({
   };
 
   return (
-    <div className="bg-gradient-to-r from-violet-50 to-purple-50 rounded-xl border border-violet-200 p-4 space-y-3">
+    <div className="bg-gradient-to-r from-violet-50 to-purple-50 rounded-xl border border-apptivia-carbon-300 p-4 space-y-3">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <div className="w-7 h-7 bg-gradient-to-br from-violet-500 to-purple-600 rounded-lg flex items-center justify-center">
@@ -309,7 +309,7 @@ function ActionQueuePanel({
           const signalInfo = SIGNAL_ICONS[signal?.signal_type] || {};
 
           return (
-            <div key={item.id} className="bg-white rounded-lg border border-violet-100 p-3 space-y-2">
+            <div key={item.id} className="bg-white rounded-lg border border-apptivia-carbon-300 p-3 space-y-2">
               {/* Header row */}
               <div className="flex items-start justify-between gap-2">
                 <div className="flex items-center gap-2 min-w-0">
@@ -374,7 +374,7 @@ function ActionQueuePanel({
 
               {/* ── Dismissal chip selector ── */}
               {isDismissing && (
-                <div className="border-t border-gray-100 pt-2 space-y-2">
+                <div className="border-t border-apptivia-carbon-100 pt-2 space-y-2">
                   <p className="text-[11px] font-medium text-apptivia-carbon-700">Why are you dismissing this?</p>
                   <div className="flex flex-wrap gap-1.5">
                     {DISMISSAL_CATEGORIES.map((cat) => {
@@ -385,8 +385,8 @@ function ActionQueuePanel({
                           onClick={() => setDismissCategory(cat.key)}
                           className={`inline-flex items-center gap-1 text-[11px] font-medium px-2.5 py-1 rounded-full border transition-colors ${
                             isSelected
-                              ? 'bg-apptivia-carbon-100 border-violet-300 text-apptivia-ink'
-                              : 'bg-white border-gray-200 text-apptivia-carbon-600 hover:bg-apptivia-paper hover:border-gray-300'
+                              ? 'bg-apptivia-carbon-100 border-apptivia-carbon-300 text-apptivia-ink'
+                              : 'bg-white border-apptivia-carbon-200 text-apptivia-carbon-600 hover:bg-apptivia-paper hover:border-apptivia-carbon-300'
                           }`}
                         >
                           {React.createElement(cat.icon, { size: 10 })} {cat.label}
@@ -400,7 +400,7 @@ function ActionQueuePanel({
                       placeholder="Optional: tell us more..."
                       value={dismissReason}
                       onChange={(e) => setDismissReason(e.target.value)}
-                      className="w-full text-xs text-apptivia-carbon-700 border border-gray-200 rounded-md px-2.5 py-1.5 focus:outline-none focus:ring-1 focus:ring-violet-300 placeholder-gray-400"
+                      className="w-full text-xs text-apptivia-carbon-700 border border-apptivia-carbon-200 rounded-md px-2.5 py-1.5 focus:outline-none focus:ring-1 focus:ring-violet-300 placeholder-gray-400"
                     />
                   )}
                   <div className="flex items-center justify-between">
@@ -430,7 +430,7 @@ function ActionQueuePanel({
 
               {/* ── Expanded editable draft ── */}
               {isExpanded && !isDismissing && (
-                <div className="ml-0 space-y-2 border-t border-violet-100 pt-2">
+                <div className="ml-0 space-y-2 border-t border-apptivia-carbon-300 pt-2">
                   {item.draft_email_subject && (
                     <div>
                       <p className="text-[10px] font-semibold text-apptivia-carbon-500 uppercase tracking-wide mb-0.5">Email Subject</p>
@@ -438,7 +438,7 @@ function ActionQueuePanel({
                         type="text"
                         value={editSubject[item.id] ?? item.draft_email_subject}
                         onChange={(e) => setEditSubject(prev => ({ ...prev, [item.id]: e.target.value }))}
-                        className="w-full text-xs text-apptivia-ink font-medium border border-gray-200 rounded-md px-2.5 py-1.5 focus:outline-none focus:ring-1 focus:ring-violet-300"
+                        className="w-full text-xs text-apptivia-ink font-medium border border-apptivia-carbon-200 rounded-md px-2.5 py-1.5 focus:outline-none focus:ring-1 focus:ring-violet-300"
                       />
                     </div>
                   )}
@@ -449,7 +449,7 @@ function ActionQueuePanel({
                         value={editBody[item.id] ?? item.draft_email_body}
                         onChange={(e) => setEditBody(prev => ({ ...prev, [item.id]: e.target.value }))}
                         rows={6}
-                        className="w-full text-xs text-apptivia-carbon-700 border border-gray-200 rounded-md p-2 resize-y focus:outline-none focus:ring-1 focus:ring-violet-300"
+                        className="w-full text-xs text-apptivia-carbon-700 border border-apptivia-carbon-200 rounded-md p-2 resize-y focus:outline-none focus:ring-1 focus:ring-violet-300"
                       />
                     </div>
                   )}
@@ -460,7 +460,7 @@ function ActionQueuePanel({
                         readOnly
                         value={item.draft_linkedin_message}
                         rows={3}
-                        className="w-full text-xs text-apptivia-carbon-700 bg-apptivia-paper border border-gray-200 rounded-md p-2 resize-none focus:outline-none"
+                        className="w-full text-xs text-apptivia-carbon-700 bg-apptivia-paper border border-apptivia-carbon-200 rounded-md p-2 resize-none focus:outline-none"
                       />
                     </div>
                   )}
@@ -483,7 +483,7 @@ function ActionQueuePanel({
 
               {/* [SPEC 09] Play type selector */}
               {showPlaySelector === item.id && (
-                <div className="border-t border-violet-100 pt-2 space-y-2">
+                <div className="border-t border-apptivia-carbon-300 pt-2 space-y-2">
                   <p className="text-[11px] font-medium text-apptivia-carbon-700">Select a play type:</p>
                   <div className="flex flex-wrap gap-1.5">
                     {PLAY_TYPES.map((pt) => (
@@ -492,7 +492,7 @@ function ActionQueuePanel({
                         onClick={() => { onExpandToPlay(item.id, pt.key); setShowPlaySelector(null); }}
                         disabled={expandingActionId === item.id}
                         title={pt.desc}
-                        className="inline-flex items-center gap-1 text-[11px] font-medium px-2.5 py-1 rounded-full border bg-white border-gray-200 text-apptivia-carbon-600 hover:bg-apptivia-carbon-100 hover:border-violet-300 hover:text-apptivia-ink transition-colors disabled:opacity-50"
+                        className="inline-flex items-center gap-1 text-[11px] font-medium px-2.5 py-1 rounded-full border bg-white border-apptivia-carbon-200 text-apptivia-carbon-600 hover:bg-apptivia-carbon-100 hover:border-apptivia-carbon-300 hover:text-apptivia-ink transition-colors disabled:opacity-50"
                       >
                         {React.createElement(pt.icon, { size: 10 })} {pt.label}
                       </button>
@@ -508,7 +508,7 @@ function ActionQueuePanel({
 
               {/* [SPEC 09] Step timeline for expanded plays */}
               {item.play_type && item.play_type !== 'single_action' && (actionSteps?.[item.id] || []).length > 0 && (
-                <div className="border-t border-violet-100 pt-2 space-y-1.5">
+                <div className="border-t border-apptivia-carbon-300 pt-2 space-y-1.5">
                   <div className="flex items-center gap-1.5 mb-1">
                     <Layers size={10} className="text-apptivia-ink" />
                     <span className="text-[10px] font-semibold text-apptivia-ink uppercase tracking-wide">
@@ -523,7 +523,7 @@ function ActionQueuePanel({
                     const badge = STEP_STATUS_BADGE[step.status] || STEP_STATUS_BADGE.pending;
                     return (
                       <div key={step.id} className="flex items-start gap-2 p-2 bg-apptivia-paper rounded-lg">
-                        <div className={`w-5 h-5 rounded flex items-center justify-center flex-shrink-0 ${ch.color} bg-white border border-gray-100`}>
+                        <div className={`w-5 h-5 rounded flex items-center justify-center flex-shrink-0 ${ch.color} bg-white border border-apptivia-carbon-100`}>
                           {React.createElement(ch.icon, { size: 10 })}
                         </div>
                         <div className="flex-1 min-w-0">
@@ -579,7 +579,7 @@ function SignalSummaryCards({ summary }) {
   return (
     <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
       {cards.map((card) => (
-        <div key={card.label} className="bg-white rounded-xl border border-gray-100 p-4 hover:shadow-sm transition-shadow">
+        <div key={card.label} className="bg-white rounded-xl border border-apptivia-carbon-100 p-4 hover:shadow-sm transition-shadow">
           <div className="flex items-center justify-between mb-2">
             <span className="text-xs font-medium text-apptivia-carbon-500">{card.label}</span>
             <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${card.color}`}>
@@ -606,7 +606,7 @@ function BuyingStageFunnel({ byBuyingStage = {} }) {
   ];
 
   return (
-    <div className="bg-white rounded-xl border border-gray-100 p-4">
+    <div className="bg-white rounded-xl border border-apptivia-carbon-100 p-4">
       <div className="flex items-center gap-2 mb-3">
         <Layers size={16} className="text-apptivia-carbon-500" />
         <span className="text-sm font-semibold text-apptivia-carbon-700">Buying Stage Distribution</span>
@@ -647,7 +647,7 @@ function BuyingStageFunnel({ byBuyingStage = {} }) {
 function SignalContactsSection({ companyName, contacts, isEnriching, onEnrich, onCallContact }) {
   if (contacts && contacts.length > 0) {
     return (
-      <div className="mt-2 pt-2 border-t border-gray-100">
+      <div className="mt-2 pt-2 border-t border-apptivia-carbon-100">
         <div className="flex items-center gap-1.5 mb-1.5">
           <Users size={10} className="text-teal-500" />
           <span className="text-[10px] font-semibold text-apptivia-carbon-500 uppercase tracking-wide">Key Contacts</span>
@@ -706,7 +706,7 @@ function SignalContactsSection({ companyName, contacts, isEnriching, onEnrich, o
 
   if (contacts && contacts.length === 0 && !isEnriching) {
     return (
-      <div className="mt-2 pt-2 border-t border-gray-100">
+      <div className="mt-2 pt-2 border-t border-apptivia-carbon-100">
         <span className="text-[10px] text-apptivia-carbon-400 italic">No contacts found for {companyName}</span>
       </div>
     );
@@ -714,7 +714,7 @@ function SignalContactsSection({ companyName, contacts, isEnriching, onEnrich, o
 
   if (isEnriching) {
     return (
-      <div className="mt-2 pt-2 border-t border-gray-100 flex items-center gap-1.5">
+      <div className="mt-2 pt-2 border-t border-apptivia-carbon-100 flex items-center gap-1.5">
         <Loader size={10} className="animate-spin text-teal-500" />
         <span className="text-[10px] text-apptivia-carbon-400">Finding contacts...</span>
       </div>
@@ -722,7 +722,7 @@ function SignalContactsSection({ companyName, contacts, isEnriching, onEnrich, o
   }
 
   return (
-    <div className="mt-2 pt-2 border-t border-gray-100">
+    <div className="mt-2 pt-2 border-t border-apptivia-carbon-100">
       <button
         onClick={onEnrich}
         className="inline-flex items-center gap-1 text-[10px] font-medium text-teal-600 hover:text-teal-800 hover:bg-teal-50 px-2 py-0.5 rounded transition-colors"
@@ -749,7 +749,7 @@ const AccountCard = React.memo(function AccountCard({ group, onAction, onDismiss
   const domain = group.signals.find((s) => s.raw_data?.domain)?.raw_data?.domain || '';
 
   return (
-    <div className={`bg-white rounded-xl border ${hasHighIntent ? 'border-amber-200' : 'border-gray-100'} p-4 hover:shadow-sm transition-shadow`}>
+    <div className={`bg-white rounded-xl border ${hasHighIntent ? 'border-amber-200' : 'border-apptivia-carbon-100'} p-4 hover:shadow-sm transition-shadow`}>
       {/* Header */}
       <div className="flex items-start justify-between gap-3 mb-3">
         <div className="flex items-center gap-2.5">
@@ -880,7 +880,7 @@ const AccountCard = React.memo(function AccountCard({ group, onAction, onDismiss
 
       {/* Expanded signals */}
       {expanded && (
-        <div className="mt-3 space-y-2 pt-3 border-t border-gray-100">
+        <div className="mt-3 space-y-2 pt-3 border-t border-apptivia-carbon-100">
           {group.signals.map((signal) => (
             <SignalCard
               key={signal.id}
@@ -919,7 +919,7 @@ const SignalCard = React.memo(function SignalCard({ signal, onAction, onDismiss,
   const stageStyle = signal.buying_stage_indicator ? buyingStageStyles[signal.buying_stage_indicator] : null;
 
   return (
-    <div className={`bg-white rounded-xl border ${getSignalTier(signal.signal_score, getSignalCategory(signal.signal_type)).label === 'T1' ? 'border-amber-200' : 'border-gray-100'} p-4 hover:shadow-sm transition-shadow ${age?.stale ? 'opacity-75' : ''}`}>
+    <div className={`bg-white rounded-xl border ${getSignalTier(signal.signal_score, getSignalCategory(signal.signal_type)).label === 'T1' ? 'border-amber-200' : 'border-apptivia-carbon-100'} p-4 hover:shadow-sm transition-shadow ${age?.stale ? 'opacity-75' : ''}`}>
       <div className="flex items-start gap-3">
         {/* Icon */}
         <div className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${iconConfig.color}`}>
@@ -1020,7 +1020,7 @@ const SignalCard = React.memo(function SignalCard({ signal, onAction, onDismiss,
                 </div>
               )}
               {/* Quick-action buttons inside AI Insights */}
-              <div className="flex items-center gap-2 pt-2 border-t border-purple-100/50 mt-2">
+              <div className="flex items-center gap-2 pt-2 border-t border-apptivia-carbon-300/50 mt-2">
                 {signal.company_name && onResearchCompany && (
                   <button
                     onClick={() => onResearchCompany(signal.company_name)}
@@ -1139,7 +1139,7 @@ const SignalCard = React.memo(function SignalCard({ signal, onAction, onDismiss,
                 >
                   <CheckCheck size={14} />
                 </button>
-                <div className="absolute right-0 top-full mt-1 hidden group-hover:flex flex-col bg-white border border-gray-200 rounded-lg shadow-lg z-10 overflow-hidden w-28">
+                <div className="absolute right-0 top-full mt-1 hidden group-hover:flex flex-col bg-white border border-apptivia-carbon-200 rounded-lg shadow-lg z-10 overflow-hidden w-28">
                   <button onClick={() => onMarkOutcome(signal.id, 'won')}   className="px-3 py-1.5 text-[11px] text-left text-emerald-700 hover:bg-emerald-50 font-medium">✓ Won</button>
                   <button onClick={() => onMarkOutcome(signal.id, 'lost')}  className="px-3 py-1.5 text-[11px] text-left text-rose-600 hover:bg-rose-50 font-medium">✗ Lost</button>
                   <button onClick={() => onMarkOutcome(signal.id, 'pending')} className="px-3 py-1.5 text-[11px] text-left text-apptivia-carbon-600 hover:bg-apptivia-paper">⏳ Pursuing</button>
@@ -1232,7 +1232,7 @@ function TrackingScriptModal({ isOpen, onClose, organizationId }) {
           </div>
           <button onClick={onClose} className="text-apptivia-carbon-400 hover:text-apptivia-carbon-600"><X size={16} /></button>
         </div>
-        <pre className="bg-apptivia-paper rounded-lg p-3 text-[10px] text-apptivia-carbon-700 overflow-x-auto whitespace-pre-wrap break-all border border-gray-200 font-mono leading-relaxed">
+        <pre className="bg-apptivia-paper rounded-lg p-3 text-[10px] text-apptivia-carbon-700 overflow-x-auto whitespace-pre-wrap break-all border border-apptivia-carbon-200 font-mono leading-relaxed">
           {snippet}
         </pre>
         <div className="flex items-center gap-3 mt-4">
@@ -1280,7 +1280,7 @@ function WebsiteVisitorPanel({ organizationId, onDraftMessage, onEnrichCompany, 
   useEffect(() => { load(); }, [load]);
 
   return (
-    <div className="bg-white rounded-xl border border-gray-100 p-5">
+    <div className="bg-white rounded-xl border border-apptivia-carbon-100 p-5">
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
           <Monitor size={13} className="text-teal-500" />
@@ -1414,7 +1414,7 @@ function DailyPriorityPanel({ allSignals, companyContacts, onDraftMessage, onEnr
   if (priorityList.length === 0) return null;
 
   return (
-    <div className="bg-white rounded-xl border border-gray-100 p-5">
+    <div className="bg-white rounded-xl border border-apptivia-carbon-100 p-5">
       <div className="flex items-center justify-between mb-4">
         <div>
           <h3 className="text-sm font-semibold text-apptivia-ink">Today's Priority List</h3>
@@ -1466,7 +1466,7 @@ function DailyPriorityPanel({ allSignals, companyContacts, onDraftMessage, onEnr
 
                 {/* Contact row */}
                 {item.contact ? (
-                  <div className="flex items-center gap-1.5 mt-1.5 pt-1.5 border-t border-gray-50">
+                  <div className="flex items-center gap-1.5 mt-1.5 pt-1.5 border-t border-apptivia-carbon-100">
                     <div className="w-4 h-4 rounded-full bg-gradient-to-br from-teal-400 to-cyan-500 flex items-center justify-center text-white text-[7px] font-bold flex-shrink-0">
                       {(item.contact.first_name?.[0] || item.contact.name?.[0] || '?').toUpperCase()}
                     </div>
@@ -1520,7 +1520,7 @@ function TopCompaniesPanel({ companies, companyContacts }) {
   if (!companies.length) return null;
 
   return (
-    <div className="bg-white rounded-xl border border-gray-100 p-5">
+    <div className="bg-white rounded-xl border border-apptivia-carbon-100 p-5">
       <h3 className="text-sm font-semibold text-apptivia-carbon-700 mb-3">Top Signal Companies</h3>
       <div className="space-y-2">
         {companies.slice(0, 8).map((c, i) => (
@@ -1560,7 +1560,7 @@ function IcpProspectorHeader({ icpConfig, onEditIcp }) {
     ? `${icpConfig.headcount_min}–${icpConfig.headcount_max} employees`
     : 'Any headcount';
   return (
-    <div className="bg-gradient-to-r from-indigo-50 to-purple-50 border border-indigo-100 rounded-xl p-4 flex items-start justify-between gap-3">
+    <div className="bg-gradient-to-r from-indigo-50 to-purple-50 border border-apptivia-carbon-300 rounded-xl p-4 flex items-start justify-between gap-3">
       <div className="flex items-center gap-2.5">
         <div className="w-9 h-9 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-lg flex items-center justify-center flex-shrink-0">
           <Target size={16} className="text-white" />
@@ -1584,7 +1584,7 @@ function IcpProspectorHeader({ icpConfig, onEditIcp }) {
 
 function IcpProspectorFilters({ filters, onChange, onSearch, isLoading }) {
   return (
-    <div className="bg-white rounded-xl border border-gray-100 p-4 space-y-3">
+    <div className="bg-white rounded-xl border border-apptivia-carbon-100 p-4 space-y-3">
       <div className="flex items-center gap-2 flex-wrap">
         <div className="relative flex-1 min-w-40">
           <Search size={12} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-apptivia-carbon-400 pointer-events-none" />
@@ -1593,7 +1593,7 @@ function IcpProspectorFilters({ filters, onChange, onSearch, isLoading }) {
             onChange={e => onChange({ keywords: e.target.value })}
             onKeyDown={e => e.key === 'Enter' && onSearch()}
             placeholder="Keyword or industry..."
-            className="w-full text-xs border border-gray-200 rounded-lg pl-7 pr-3 py-1.5 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-300"
+            className="w-full text-xs border border-apptivia-carbon-200 rounded-lg pl-7 pr-3 py-1.5 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-300"
           />
         </div>
         <label className="flex items-center gap-1.5 text-xs text-apptivia-carbon-500 cursor-pointer select-none">
@@ -1654,12 +1654,12 @@ function IcpCompanyCard({ company, icpScore, isAlreadyAdded, existingAccountId, 
   };
 
   return (
-    <div className={`bg-white rounded-xl border ${isAlreadyAdded ? 'border-emerald-200' : 'border-gray-100'} p-4 hover:shadow-sm transition-shadow`}>
+    <div className={`bg-white rounded-xl border ${isAlreadyAdded ? 'border-emerald-200' : 'border-apptivia-carbon-100'} p-4 hover:shadow-sm transition-shadow`}>
       {/* Header */}
       <div className="flex items-start justify-between gap-3 mb-3">
         <div className="flex items-center gap-2.5 min-w-0">
           {company.logo_url ? (
-            <img src={company.logo_url} alt={company.name} className="w-9 h-9 rounded-lg object-contain border border-gray-100 flex-shrink-0" />
+            <img src={company.logo_url} alt={company.name} className="w-9 h-9 rounded-lg object-contain border border-apptivia-carbon-100 flex-shrink-0" />
           ) : (
             <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
               {company.name[0]?.toUpperCase()}
@@ -1738,7 +1738,7 @@ function IcpCompanyCard({ company, icpScore, isAlreadyAdded, existingAccountId, 
 
       {/* Contacts expansion */}
       {showContacts && (
-        <div className="mt-2 pt-2 border-t border-gray-50">
+        <div className="mt-2 pt-2 border-t border-apptivia-carbon-100">
           {isEnriching ? (
             <div className="flex items-center gap-1.5 text-[10px] text-apptivia-carbon-400">
               <Loader size={10} className="animate-spin" /> Finding contacts...
@@ -1847,7 +1847,7 @@ function IcpProspectorView({ icp, icpConfig, onDraftMessage, onNavigateDiscover,
       />
 
       {icp.loading ? (
-        <div className="bg-white rounded-xl border border-gray-100 py-16 text-center">
+        <div className="bg-white rounded-xl border border-apptivia-carbon-100 py-16 text-center">
           <RefreshCw size={28} className="mx-auto text-apptivia-ink mb-3 animate-spin" />
           <p className="text-sm text-apptivia-carbon-500">Searching Apollo for ICP-matching companies...</p>
         </div>
@@ -1857,7 +1857,7 @@ function IcpProspectorView({ icp, icpConfig, onDraftMessage, onNavigateDiscover,
           <button onClick={() => icp.search()} className="text-xs text-apptivia-ink underline">Retry</button>
         </div>
       ) : icp.results.length === 0 ? (
-        <div className="bg-white rounded-xl border border-gray-100 py-16 text-center">
+        <div className="bg-white rounded-xl border border-apptivia-carbon-100 py-16 text-center">
           <Target size={32} className="mx-auto text-apptivia-carbon-300 mb-3" />
           <p className="text-sm text-apptivia-carbon-500 mb-1">No results yet</p>
           <p className="text-xs text-apptivia-carbon-400">
@@ -1901,7 +1901,7 @@ function IcpProspectorView({ icp, icpConfig, onDraftMessage, onNavigateDiscover,
             <button
               onClick={icp.loadMore}
               disabled={icp.loadingMore}
-              className="w-full py-2.5 text-xs font-medium text-apptivia-ink hover:text-apptivia-ink border border-dashed border-indigo-200 hover:border-indigo-400 rounded-xl transition-colors flex items-center justify-center gap-2"
+              className="w-full py-2.5 text-xs font-medium text-apptivia-ink hover:text-apptivia-ink border border-dashed border-apptivia-carbon-300 hover:border-apptivia-carbon-300 rounded-xl transition-colors flex items-center justify-center gap-2"
             >
               {icp.loadingMore
                 ? <><RefreshCw size={12} className="animate-spin" /> Loading more...</>
@@ -2235,7 +2235,7 @@ export default function SignalProspecting({ organizationId, userId, onCallContac
       )}
 
       {/* Signal Scanner */}
-      <div className="bg-white rounded-xl border border-gray-100 p-5">
+      <div className="bg-white rounded-xl border border-apptivia-carbon-100 p-5">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 bg-gradient-to-br from-cyan-500 to-blue-600 rounded-lg flex items-center justify-center">
@@ -2393,7 +2393,7 @@ export default function SignalProspecting({ organizationId, userId, onCallContac
                 onFocus={() => setShowAutocomplete(true)}
                 onBlur={() => setTimeout(() => setShowAutocomplete(false), 150)}
                 placeholder="Search company or signal..."
-                className="text-xs border border-gray-200 rounded-lg pl-7 pr-3 py-1.5 bg-white focus:outline-none focus:ring-2 focus:ring-blue-300 w-48"
+                className="text-xs border border-apptivia-carbon-200 rounded-lg pl-7 pr-3 py-1.5 bg-white focus:outline-none focus:ring-2 focus:ring-blue-300 w-48"
               />
               {searchQuery && (
                 <button
@@ -2404,7 +2404,7 @@ export default function SignalProspecting({ organizationId, userId, onCallContac
                 </button>
               )}
               {showAutocomplete && autocompleteOptions.length > 0 && (
-                <div className="absolute top-full left-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-20 w-56 max-h-40 overflow-y-auto">
+                <div className="absolute top-full left-0 mt-1 bg-white border border-apptivia-carbon-200 rounded-lg shadow-lg z-20 w-56 max-h-40 overflow-y-auto">
                   {autocompleteOptions.map((name) => (
                     <button
                       key={name}
@@ -2423,7 +2423,7 @@ export default function SignalProspecting({ organizationId, userId, onCallContac
             <select
               value={filterType}
               onChange={(e) => setFilterType(e.target.value)}
-              className="text-xs border border-gray-200 rounded-lg px-2 py-1.5 bg-white focus:outline-none focus:ring-2 focus:ring-blue-300"
+              className="text-xs border border-apptivia-carbon-200 rounded-lg px-2 py-1.5 bg-white focus:outline-none focus:ring-2 focus:ring-blue-300"
             >
               <option value="all">All Types</option>
               {signals.SIGNAL_TYPES.map((t) => (
@@ -2433,7 +2433,7 @@ export default function SignalProspecting({ organizationId, userId, onCallContac
             <select
               value={filterStatus}
               onChange={(e) => setFilterStatus(e.target.value)}
-              className="text-xs border border-gray-200 rounded-lg px-2 py-1.5 bg-white focus:outline-none focus:ring-2 focus:ring-blue-300"
+              className="text-xs border border-apptivia-carbon-200 rounded-lg px-2 py-1.5 bg-white focus:outline-none focus:ring-2 focus:ring-blue-300"
             >
               <option value="all">All Statuses</option>
               <option value="new">New</option>
@@ -2470,7 +2470,7 @@ export default function SignalProspecting({ organizationId, userId, onCallContac
               <span className="text-sm text-apptivia-carbon-500">Loading signals...</span>
             </div>
           ) : filteredSignals.length === 0 ? (
-            <div className="bg-white rounded-xl border border-gray-100 py-16 text-center">
+            <div className="bg-white rounded-xl border border-apptivia-carbon-100 py-16 text-center">
               <Radar size={32} className="mx-auto text-apptivia-carbon-300 mb-3" />
               <p className="text-sm text-apptivia-carbon-500 mb-1">No signals detected yet</p>
               <p className="text-xs text-apptivia-carbon-400">Configure Signal Prospecting in Organization Settings and run a scan</p>
@@ -2551,7 +2551,7 @@ export default function SignalProspecting({ organizationId, userId, onCallContac
             const activeTypes = signals.SIGNAL_TYPES.filter((t) => (signals.summary.byType[t.key] || 0) > 0);
             if (activeTypes.length === 0) return null;
             return (
-              <div className="bg-white rounded-xl border border-gray-100 p-5">
+              <div className="bg-white rounded-xl border border-apptivia-carbon-100 p-5">
                 <h3 className="text-sm font-semibold text-apptivia-carbon-700 mb-3">By Signal Type</h3>
                 <div className="space-y-2">
                   {activeTypes.map((t) => (

@@ -85,7 +85,7 @@ function CrmPushSection({ integrationId }) {
         ) : (
           <div className="space-y-1 max-h-48 overflow-y-auto">
             {queue.map(item => (
-              <div key={item.id} className="flex items-center justify-between py-1.5 text-xs border-b border-gray-50">
+              <div key={item.id} className="flex items-center justify-between py-1.5 text-xs border-b border-apptivia-carbon-100">
                 <span className="text-apptivia-carbon-700">{item.entity_type}: {item.action}</span>
                 <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-medium ${STATUS_BADGE[item.status] || 'bg-apptivia-carbon-100 text-apptivia-carbon-500'}`}>
                   {item.status}
@@ -100,7 +100,7 @@ function CrmPushSection({ integrationId }) {
         ) : (
           <div className="space-y-1 max-h-48 overflow-y-auto">
             {pushHistory.slice(0, 10).map(entry => (
-              <div key={entry.id} className="flex items-center justify-between py-1.5 text-xs border-b border-gray-50">
+              <div key={entry.id} className="flex items-center justify-between py-1.5 text-xs border-b border-apptivia-carbon-100">
                 <div>
                   <span className="text-apptivia-carbon-700 font-medium">{entry.entity_type}: {entry.action}</span>
                   <span className="text-apptivia-carbon-400 ml-2">{entry.external_id ? `→ ${entry.external_id}` : ''}</span>

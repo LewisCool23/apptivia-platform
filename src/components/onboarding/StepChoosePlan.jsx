@@ -72,7 +72,7 @@ export default function StepChoosePlan({ wizardState, updateState }) {
         </div>
       </div>
 
-      <div className="bg-apptivia-coral-tone-50 border border-blue-200 rounded-lg px-4 py-3 text-sm text-apptivia-coral-tone-700">
+      <div className="bg-apptivia-coral-tone-50 border border-apptivia-coral-tone-100 rounded-lg px-4 py-3 text-sm text-apptivia-coral-tone-700">
         <strong>You're on a 14-day Pro trial.</strong> All features are unlocked during your trial.
         Choose the plan you'd like after your trial ends, or continue with Starter (free).
       </div>
@@ -90,10 +90,10 @@ export default function StepChoosePlan({ wizardState, updateState }) {
               onClick={() => updateState({ selectedTier: plan.key })}
               className={`relative p-5 rounded-xl border-2 text-left transition-all ${
                 isSelected
-                  ? 'border-blue-600 bg-apptivia-coral-tone-50/50 ring-1 ring-blue-200'
+                  ? 'border-apptivia-coral bg-apptivia-coral-tone-50/50 ring-1 ring-blue-200'
                   : plan.highlighted
-                    ? 'border-blue-200 hover:border-blue-400'
-                    : 'border-gray-200 hover:border-gray-300'
+                    ? 'border-apptivia-coral-tone-100 hover:border-apptivia-coral-tone-100'
+                    : 'border-apptivia-carbon-200 hover:border-apptivia-carbon-300'
               }`}
             >
               {plan.highlighted && (

@@ -197,7 +197,7 @@ export default function SignalOutreachModal({ isOpen, onClose, signal, contact }
       {/* Modal */}
       <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-xl max-h-[90vh] flex flex-col overflow-hidden">
         {/* Header */}
-        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-apptivia-carbon-100">
           <div className="flex items-center gap-2">
             <div className="w-7 h-7 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-lg flex items-center justify-center">
               <MessageSquare size={13} className="text-white" />
@@ -254,7 +254,7 @@ export default function SignalOutreachModal({ isOpen, onClose, signal, contact }
                 <select
                   value={channel}
                   onChange={(e) => setChannel(e.target.value)}
-                  className="w-full text-xs border border-gray-200 rounded-lg px-2.5 py-1.5 bg-white appearance-none focus:outline-none focus:ring-2 focus:ring-purple-300 pr-6"
+                  className="w-full text-xs border border-apptivia-carbon-200 rounded-lg px-2.5 py-1.5 bg-white appearance-none focus:outline-none focus:ring-2 focus:ring-purple-300 pr-6"
                 >
                   <option value="email">✉ Email</option>
                   <option value="linkedin">in LinkedIn</option>
@@ -274,8 +274,8 @@ export default function SignalOutreachModal({ isOpen, onClose, signal, contact }
                   onClick={() => { setActiveStyle(style.key); setCopied(false); }}
                   className={`text-xs px-3 py-1.5 rounded-full border transition-colors ${
                     activeStyle === style.key
-                      ? 'border-purple-400 bg-apptivia-carbon-100 text-apptivia-ink font-semibold'
-                      : 'border-gray-200 bg-white text-apptivia-carbon-600 hover:bg-apptivia-paper'
+                      ? 'border-apptivia-carbon-300 bg-apptivia-carbon-100 text-apptivia-ink font-semibold'
+                      : 'border-apptivia-carbon-200 bg-white text-apptivia-carbon-600 hover:bg-apptivia-paper'
                   }`}
                   title={style.description}
                 >
@@ -314,8 +314,8 @@ export default function SignalOutreachModal({ isOpen, onClose, signal, contact }
 
           {/* Draft output */}
           {draft && !isGenerating && (
-            <div className="border border-gray-200 rounded-xl overflow-hidden">
-              <div className="flex items-center justify-between px-3 py-2 bg-apptivia-paper border-b border-gray-200">
+            <div className="border border-apptivia-carbon-200 rounded-xl overflow-hidden">
+              <div className="flex items-center justify-between px-3 py-2 bg-apptivia-paper border-b border-apptivia-carbon-200">
                 <span className="text-[10px] font-semibold text-apptivia-carbon-500 uppercase tracking-wide flex items-center gap-1">
                   {channel === 'email' ? <Mail size={10} /> : <Linkedin size={10} />}
                   {channel === 'email' ? 'Email Draft' : 'LinkedIn Message'}
@@ -347,7 +347,7 @@ export default function SignalOutreachModal({ isOpen, onClose, signal, contact }
                   </div>
                 )}
                 {draft.personalization_points?.length > 0 && (
-                  <div className="pt-2 border-t border-gray-100">
+                  <div className="pt-2 border-t border-apptivia-carbon-100">
                     <span className="text-[10px] font-semibold text-apptivia-ink uppercase">Personalization notes</span>
                     <ul className="mt-1 space-y-0.5">
                       {draft.personalization_points.map((p, i) => (

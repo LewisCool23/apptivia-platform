@@ -101,7 +101,7 @@ function SummaryCards({ summary }) {
   return (
     <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
       {cards.map((card) => (
-        <div key={card.label} className="bg-white rounded-xl border border-gray-100 p-4 hover:shadow-sm transition-shadow">
+        <div key={card.label} className="bg-white rounded-xl border border-apptivia-carbon-100 p-4 hover:shadow-sm transition-shadow">
           <div className="flex items-center justify-between mb-2">
             <span className="text-xs font-medium text-apptivia-carbon-500">{card.label}</span>
             <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${card.color}`}>
@@ -131,7 +131,7 @@ function StageFunnel({ stageBreakdown, cepStages }) {
   const maxValue = Math.max(...stages.map((s) => stageBreakdown[s.stage_key]?.value || 0), 1);
 
   return (
-    <div className="bg-white rounded-xl border border-gray-100 p-5">
+    <div className="bg-white rounded-xl border border-apptivia-carbon-100 p-5">
       <h3 className="text-sm font-semibold text-apptivia-carbon-700 mb-4">
         {cepStages?.length > 0 ? 'CEP Stages' : 'Pipeline Stages'}
       </h3>
@@ -214,7 +214,7 @@ function DealCepPanel({ deal, cepStages, onClose, onAdvance, onUpdateChecklist, 
   if (!currentStage || !dealStageData) {
     const nonTerminal = cepStages.filter(s => !s.is_terminal);
     return (
-      <div className="bg-white rounded-xl border border-gray-100 p-5">
+      <div className="bg-white rounded-xl border border-apptivia-carbon-100 p-5">
         <div className="flex items-center justify-between mb-3">
           <h3 className="text-sm font-semibold text-apptivia-carbon-700">Assign CEP Stage</h3>
           <button onClick={onClose} className="text-apptivia-carbon-400 hover:text-apptivia-carbon-600"><X size={16} /></button>
@@ -225,7 +225,7 @@ function DealCepPanel({ deal, cepStages, onClose, onAdvance, onUpdateChecklist, 
             <button
               key={s.id}
               onClick={() => onAssignStage(deal.id, s.id, s.stage_key, s.win_probability)}
-              className="flex items-center gap-2 w-full text-left p-2 rounded-lg hover:bg-apptivia-paper transition-colors border border-gray-100"
+              className="flex items-center gap-2 w-full text-left p-2 rounded-lg hover:bg-apptivia-paper transition-colors border border-apptivia-carbon-100"
             >
               <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: s.color }} />
               <span className="text-xs font-medium text-apptivia-carbon-700">{s.stage_name}</span>
@@ -256,7 +256,7 @@ function DealCepPanel({ deal, cepStages, onClose, onAdvance, onUpdateChecklist, 
   const overExpected = currentStage.expected_days && daysInStage > currentStage.expected_days;
 
   return (
-    <div className="bg-white rounded-xl border border-gray-100 p-5 space-y-4">
+    <div className="bg-white rounded-xl border border-apptivia-carbon-100 p-5 space-y-4">
       {/* Header */}
       <div className="flex items-center justify-between">
         <h3 className="text-sm font-semibold text-apptivia-ink truncate">{deal.deal_name}</h3>
@@ -442,7 +442,7 @@ function DealTable({ deals, onUpdateDeal, onDeleteDeal, cepStages, hasCep, selec
   };
 
   return (
-    <div className="bg-white rounded-xl border border-gray-100 overflow-hidden">
+    <div className="bg-white rounded-xl border border-apptivia-carbon-100 overflow-hidden">
       <ConfirmModal
         isOpen={deleteConfirm.isOpen}
         onClose={() => setDeleteConfirm({ isOpen: false, deal: null })}
@@ -457,13 +457,13 @@ function DealTable({ deals, onUpdateDeal, onDeleteDeal, cepStages, hasCep, selec
         confirmText="Delete"
         variant="danger"
       />
-      <div className="px-5 py-3 border-b border-gray-100 flex items-center justify-between">
+      <div className="px-5 py-3 border-b border-apptivia-carbon-100 flex items-center justify-between">
         <h3 className="text-sm font-semibold text-apptivia-carbon-700">Active Deals</h3>
         <div className="flex items-center gap-2">
           <select
             value={filterStage}
             onChange={(e) => setFilterStage(e.target.value)}
-            className="text-xs border border-gray-200 rounded-lg px-2 py-1.5 bg-white text-apptivia-carbon-600 focus:outline-none focus:ring-2 focus:ring-blue-300"
+            className="text-xs border border-apptivia-carbon-200 rounded-lg px-2 py-1.5 bg-white text-apptivia-carbon-600 focus:outline-none focus:ring-2 focus:ring-blue-300"
           >
             <option value="all">All Stages</option>
             {stageOptions.map(s => (
@@ -482,7 +482,7 @@ function DealTable({ deals, onUpdateDeal, onDeleteDeal, cepStages, hasCep, selec
         <div className="overflow-x-auto">
           <table className="w-full text-left">
             <thead>
-              <tr className="text-xs text-apptivia-carbon-500 border-b border-gray-50 bg-apptivia-paper/50">
+              <tr className="text-xs text-apptivia-carbon-500 border-b border-apptivia-carbon-100 bg-apptivia-paper/50">
                 <th className="px-5 py-2.5 font-medium cursor-pointer" onClick={() => toggleSort('deal_name')}>
                   <div className="flex items-center gap-1">Deal <SortIcon field="deal_name" /></div>
                 </th>
@@ -509,7 +509,7 @@ function DealTable({ deals, onUpdateDeal, onDeleteDeal, cepStages, hasCep, selec
                 return (
                   <tr
                     key={deal.id}
-                    className={`border-b border-gray-50 hover:bg-apptivia-coral-tone-50/30 transition-colors ${
+                    className={`border-b border-apptivia-carbon-100 hover:bg-apptivia-coral-tone-50/30 transition-colors ${
                       hasCep ? 'cursor-pointer' : ''
                     } ${selectedDealId === deal.id ? 'bg-apptivia-coral-tone-50/50' : ''}`}
                     onClick={() => hasCep && onSelectDeal(deal)}
@@ -587,7 +587,7 @@ function DealTable({ deals, onUpdateDeal, onDeleteDeal, cepStages, hasCep, selec
 
 function ForecastPanel({ forecast, onGenerate, loading }) {
   return (
-    <div className="bg-white rounded-xl border border-gray-100 p-5">
+    <div className="bg-white rounded-xl border border-apptivia-carbon-100 p-5">
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
           <div className="w-8 h-8 bg-gradient-to-br from-violet-500 to-purple-600 rounded-lg flex items-center justify-center">
@@ -695,7 +695,7 @@ function NewDealModal({ onSave, onClose, cepStages }) {
               type="text"
               value={form.deal_name}
               onChange={(e) => setForm((f) => ({ ...f, deal_name: e.target.value }))}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-apptivia-carbon-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               placeholder="e.g. Acme Corp — Enterprise License"
               autoFocus
             />
@@ -708,7 +708,7 @@ function NewDealModal({ onSave, onClose, cepStages }) {
                 type="number"
                 value={form.deal_value}
                 onChange={(e) => setForm((f) => ({ ...f, deal_value: e.target.value }))}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-apptivia-carbon-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 placeholder="25000"
               />
             </div>
@@ -718,7 +718,7 @@ function NewDealModal({ onSave, onClose, cepStages }) {
                 type="date"
                 value={form.close_date}
                 onChange={(e) => setForm((f) => ({ ...f, close_date: e.target.value }))}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-apptivia-carbon-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
           </div>
@@ -736,7 +736,7 @@ function NewDealModal({ onSave, onClose, cepStages }) {
                     probability: sel?.win_probability ?? f.probability,
                   }));
                 }}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-apptivia-carbon-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
                 {stageOptions.map(s => (
                   <option key={s.stage_key} value={s.stage_key}>{s.stage_name}</option>
@@ -751,7 +751,7 @@ function NewDealModal({ onSave, onClose, cepStages }) {
                 max="100"
                 value={form.probability}
                 onChange={(e) => setForm((f) => ({ ...f, probability: parseInt(e.target.value) || 0 }))}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-apptivia-carbon-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
           </div>
@@ -761,7 +761,7 @@ function NewDealModal({ onSave, onClose, cepStages }) {
             <select
               value={form.forecast_category}
               onChange={(e) => setForm((f) => ({ ...f, forecast_category: e.target.value }))}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-apptivia-carbon-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               <option value="commit">Commit</option>
               <option value="best_case">Best Case</option>
@@ -831,7 +831,7 @@ export default function PipelineOperator({ organizationId, userId }) {
           <button
             onClick={handleRefresh}
             disabled={pipeline.refreshing}
-            className="inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg border border-gray-200 text-apptivia-carbon-600 hover:bg-apptivia-paper transition-colors disabled:opacity-50"
+            className="inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg border border-apptivia-carbon-200 text-apptivia-carbon-600 hover:bg-apptivia-paper transition-colors disabled:opacity-50"
           >
             <RefreshCw size={12} className={pipeline.refreshing ? 'animate-spin' : ''} />
             {pipeline.refreshing ? 'Refreshing...' : 'Refresh'}

@@ -820,7 +820,7 @@ export default function Analytics() {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 onFocus={() => searchQuery && setShowSearchResults(true)}
-                className="w-64 pl-9 pr-8 py-2 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-64 pl-9 pr-8 py-2 text-sm border border-apptivia-carbon-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-apptivia-coral"
               />
               {searchQuery && (
                 <button
@@ -836,7 +836,7 @@ export default function Analytics() {
               )}
               {/* Search Results Dropdown */}
               {showSearchResults && searchResults.length > 0 && (
-                <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-96 overflow-y-auto z-50">
+                <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-apptivia-carbon-200 rounded-lg shadow-lg max-h-96 overflow-y-auto z-50">
                   {searchResults.map((result, idx) => (
                     <button
                       key={idx}
@@ -865,12 +865,12 @@ export default function Analytics() {
                 </div>
               )}
               {showSearchResults && searchQuery && searchResults.length === 0 && !searching && (
-                <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg p-4 z-50">
+                <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-apptivia-carbon-200 rounded-lg shadow-lg p-4 z-50">
                   <div className="text-sm text-apptivia-carbon-500 text-center">No results found</div>
                 </div>
               )}
               {searching && (
-                <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg p-4 z-50">
+                <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-apptivia-carbon-200 rounded-lg shadow-lg p-4 z-50">
                   <div className="text-sm text-apptivia-carbon-500 text-center">Searching...</div>
                 </div>
               )}
@@ -879,7 +879,7 @@ export default function Analytics() {
             <button
               onClick={handleRefresh}
               disabled={isRefreshing}
-              className={`relative p-2 rounded-lg font-semibold text-sm bg-white text-apptivia-carbon-700 border border-gray-200 hover:bg-apptivia-paper group ${
+              className={`relative p-2 rounded-lg font-semibold text-sm bg-white text-apptivia-carbon-700 border border-apptivia-carbon-200 hover:bg-apptivia-paper group ${
                 isRefreshing ? 'opacity-50 cursor-not-allowed' : 'transition-all duration-200 hover:scale-105 hover:shadow-md'
               }`}
             >
@@ -926,7 +926,7 @@ export default function Analytics() {
 
         {!loading && !error && (
           <div className="space-y-6 mt-6">
-            <div className="bg-white rounded-lg p-2 shadow-sm border border-gray-100">
+            <div className="bg-white rounded-lg p-2 shadow-sm border border-apptivia-carbon-100">
               <div className="flex flex-wrap gap-2">
                 {tabs.map((tab) => (
                   <button
@@ -979,7 +979,7 @@ export default function Analytics() {
                       title="Pick any day — the full Mon–Sun week will be used"
                       value={customWeekDate}
                       onChange={e => setCustomWeekDate(e.target.value)}
-                      className="border border-gray-200 rounded px-2 py-0.5 text-xs"
+                      className="border border-apptivia-carbon-200 rounded px-2 py-0.5 text-xs"
                     />
                     {customWeekDate && (
                       <span className="text-[11px] text-apptivia-carbon-400">
@@ -991,14 +991,14 @@ export default function Analytics() {
               </div>
               <button
                 onClick={() => setFiltersOpen(true)}
-                className="px-3 py-1.5 rounded-md text-xs font-semibold bg-white border border-gray-200 text-apptivia-carbon-700 hover:bg-apptivia-paper"
+                className="px-3 py-1.5 rounded-md text-xs font-semibold bg-white border border-apptivia-carbon-200 text-apptivia-carbon-700 hover:bg-apptivia-paper"
               >
                 More Filters
               </button>
             </div>
 
             {data.rows.length === 0 && (
-              <div className="bg-apptivia-paper border border-gray-200 rounded-lg p-6 text-center">
+              <div className="bg-apptivia-paper border border-apptivia-carbon-200 rounded-lg p-6 text-center">
                 <div className="text-apptivia-carbon-500 text-sm">No data for the selected filters.</div>
                 <div className="text-xs text-apptivia-carbon-400 mt-1">Try expanding the date range or teams.</div>
               </div>
@@ -1116,7 +1116,7 @@ export default function Analytics() {
                   <div className="overflow-x-auto">
                     <table className="w-full text-left text-xs">
                       <thead>
-                        <tr className="text-apptivia-carbon-500 border-b border-gray-100">
+                        <tr className="text-apptivia-carbon-500 border-b border-apptivia-carbon-100">
                           <th className="py-2 px-3 font-medium">KPI Name</th>
                           <th className="py-2 px-3 font-medium">Category</th>
                           <th className="py-2 px-3 font-medium">Goal</th>
@@ -1134,7 +1134,7 @@ export default function Analytics() {
                             ? Math.round(data.rows.reduce((sum, row) => sum + (row.kpis[metric.key]?.value || 0), 0) / data.rows.length * 10) / 10
                             : 0;
                           return (
-                            <tr key={metric.key} className="border-b border-gray-50 hover:bg-apptivia-paper/50">
+                            <tr key={metric.key} className="border-b border-apptivia-carbon-100 hover:bg-apptivia-paper/50">
                               <td className="py-2.5 px-3">
                                 <div className="font-medium text-apptivia-ink">{metric.name}</div>
                                 {metric.description && <div className="text-[10px] text-apptivia-carbon-400 mt-0.5 truncate max-w-[200px]">{metric.description}</div>}
@@ -1212,7 +1212,7 @@ export default function Analytics() {
                       viewMode="team"
                     />
                     {/* Summary conversion stats */}
-                    <div className="bg-white rounded-xl border border-gray-100 p-6">
+                    <div className="bg-white rounded-xl border border-apptivia-carbon-100 p-6">
                       <h3 className="text-sm font-semibold text-apptivia-ink mb-4">Conversion Rates</h3>
                       {[
                         { from: 'call_connects', to: 'meetings', label: 'Call → Meeting Rate', desc: 'How many calls result in a booked meeting' },
@@ -1287,7 +1287,7 @@ export default function Analytics() {
                 </div>
                 {engageLoading && <div className="text-center py-8 text-sm text-apptivia-carbon-500">Loading Engage data...</div>}
                 {!engageLoading && !engageStats && (
-                  <div className="bg-apptivia-paper border border-gray-200 rounded-lg p-6 text-center">
+                  <div className="bg-apptivia-paper border border-apptivia-carbon-200 rounded-lg p-6 text-center">
                     <div className="text-apptivia-carbon-500 text-sm">No Engage data found.</div>
                     <div className="text-xs text-apptivia-carbon-400 mt-1">Start using Engage to see analytics here.</div>
                     <button
@@ -1302,12 +1302,12 @@ export default function Analytics() {
                   <>
                     {/* Summary Cards */}
                     <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                      <div className="bg-white rounded-lg p-3 shadow-sm border-l-4 border-purple-500">
+                      <div className="bg-white rounded-lg p-3 shadow-sm border-l-4 border-apptivia-carbon-300">
                         <div className="text-xs text-apptivia-carbon-500">Accounts</div>
                         <div className="text-lg font-bold text-apptivia-ink">{engageStats.totalAccounts}</div>
                         <div className="text-[11px] text-apptivia-carbon-400">Avg score: {engageStats.avgAccountScore}</div>
                       </div>
-                      <div className="bg-white rounded-lg p-3 shadow-sm border-l-4 border-blue-500">
+                      <div className="bg-white rounded-lg p-3 shadow-sm border-l-4 border-apptivia-coral">
                         <div className="text-xs text-apptivia-carbon-500">Tier 1</div>
                         <div className="text-lg font-bold text-apptivia-coral">{engageStats.tier1}</div>
                       </div>
@@ -1345,8 +1345,8 @@ export default function Analytics() {
                       <div className="text-xs font-semibold text-apptivia-carbon-700 mb-2">Quick Links</div>
                       <div className="flex flex-wrap gap-2">
                         <button onClick={() => navigate('/engage')} className="px-3 py-1.5 bg-white text-xs font-medium text-cyan-700 rounded-lg border border-cyan-200 hover:bg-cyan-50 transition-colors">Pipeline Operator</button>
-                        <button onClick={() => navigate('/engage')} className="px-3 py-1.5 bg-white text-xs font-medium text-apptivia-coral rounded-lg border border-blue-200 hover:bg-apptivia-coral-tone-50 transition-colors">Signal Prospecting</button>
-                        <button onClick={() => navigate('/engage')} className="px-3 py-1.5 bg-white text-xs font-medium text-apptivia-ink rounded-lg border border-purple-200 hover:bg-apptivia-carbon-100 transition-colors">Accounts</button>
+                        <button onClick={() => navigate('/engage')} className="px-3 py-1.5 bg-white text-xs font-medium text-apptivia-coral rounded-lg border border-apptivia-coral-tone-100 hover:bg-apptivia-coral-tone-50 transition-colors">Signal Prospecting</button>
+                        <button onClick={() => navigate('/engage')} className="px-3 py-1.5 bg-white text-xs font-medium text-apptivia-ink rounded-lg border border-apptivia-carbon-300 hover:bg-apptivia-carbon-100 transition-colors">Accounts</button>
                       </div>
                     </div>
                   </>
@@ -1366,7 +1366,7 @@ export default function Analytics() {
                 {!isPro ? (
                   <div>
                     {/* Blurred placeholder rows */}
-                    <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+                    <div className="bg-white rounded-lg border border-apptivia-carbon-200 overflow-hidden">
                       <table className="w-full text-sm">
                         <thead className="bg-apptivia-paper">
                           <tr><th className="px-4 py-2 text-left text-xs font-semibold text-apptivia-carbon-600">Metric</th><th className="px-4 py-2 text-center text-xs font-semibold text-apptivia-carbon-600">Your Avg</th><th className="px-4 py-2 text-center text-xs font-semibold text-apptivia-carbon-600">Peer Avg</th><th className="px-4 py-2 text-center text-xs font-semibold text-apptivia-carbon-600">Percentile</th></tr>
@@ -1387,7 +1387,7 @@ export default function Analytics() {
                       <p className="text-xs text-apptivia-carbon-400">Compared against {enterpriseBenchmarkData.org_count} peer organization{enterpriseBenchmarkData.org_count !== 1 ? 's' : ''} (anonymized){enterpriseBenchmarkData.using_industry_baseline ? ' · Showing industry medians' : ''}</p>
                     )}
                     {(enterpriseBenchmarkData.benchmarks || []).length > 0 ? (
-                      <div className="bg-white rounded-lg border border-gray-200 divide-y divide-gray-50">
+                      <div className="bg-white rounded-lg border border-apptivia-carbon-200 divide-y divide-gray-50">
                         {enterpriseBenchmarkData.benchmarks.map((b, i) => (
                           <div key={i} className="px-4 py-3">
                             <div className="flex items-center justify-between mb-1">
@@ -1422,11 +1422,11 @@ export default function Analytics() {
                     )}
                   </div>
                 ) : benchmarksError ? (
-                  <div className="bg-apptivia-coral-tone-50 border border-blue-200 rounded-lg p-4 text-center">
+                  <div className="bg-apptivia-coral-tone-50 border border-apptivia-coral-tone-100 rounded-lg p-4 text-center">
                     <p className="text-sm text-apptivia-coral">Benchmarks activate once more Apptivia organizations join your segment. Check back soon.</p>
                   </div>
                 ) : benchmarks.length > 0 ? (
-                  <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+                  <div className="bg-white rounded-lg border border-apptivia-carbon-200 overflow-hidden">
                     <table className="w-full text-sm">
                       <thead className="bg-apptivia-paper">
                         <tr>
@@ -1508,7 +1508,7 @@ export default function Analytics() {
 
                 {/* Coached vs Uncoached Cohort Comparison */}
                 {!isPowerUser && cohortData && (
-                  <div className="bg-white rounded-xl border border-gray-100 p-4">
+                  <div className="bg-white rounded-xl border border-apptivia-carbon-100 p-4">
                     <h3 className="font-semibold text-apptivia-ink text-sm mb-1">Coached vs. Uncoached — KPI Impact</h3>
                     <p className="text-xs text-apptivia-carbon-400 mb-4">Last {cohortData.period_weeks || 4} weeks · Coached = received AI coaching suggestion</p>
                     <div className="grid grid-cols-2 gap-4">

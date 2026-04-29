@@ -115,7 +115,7 @@ function LogCallModal({ organizationId, userId, deals, onClose, onSaved }) {
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col">
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-apptivia-carbon-100">
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 bg-gradient-to-br from-violet-500 to-purple-600 rounded-xl flex items-center justify-center">
               <Phone size={16} className="text-white" />
@@ -136,7 +136,7 @@ function LogCallModal({ organizationId, userId, deals, onClose, onSaved }) {
             <div>
               <label className="block text-xs font-medium text-apptivia-carbon-600 mb-1">Contact Name</label>
               <input
-                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-400"
+                className="w-full border border-apptivia-carbon-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-400"
                 placeholder="Jane Smith"
                 value={form.contact_name}
                 onChange={e => setForm(f => ({ ...f, contact_name: e.target.value }))}
@@ -145,7 +145,7 @@ function LogCallModal({ organizationId, userId, deals, onClose, onSaved }) {
             <div>
               <label className="block text-xs font-medium text-apptivia-carbon-600 mb-1">Linked Deal (optional)</label>
               <select
-                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-400 bg-white"
+                className="w-full border border-apptivia-carbon-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-400 bg-white"
                 value={form.deal_id}
                 onChange={e => setForm(f => ({ ...f, deal_id: e.target.value }))}
               >
@@ -163,7 +163,7 @@ function LogCallModal({ organizationId, userId, deals, onClose, onSaved }) {
               <label className="block text-xs font-medium text-apptivia-carbon-600 mb-1">Call Date & Time</label>
               <input
                 type="datetime-local"
-                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-400"
+                className="w-full border border-apptivia-carbon-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-400"
                 value={form.call_date}
                 onChange={e => setForm(f => ({ ...f, call_date: e.target.value }))}
               />
@@ -173,7 +173,7 @@ function LogCallModal({ organizationId, userId, deals, onClose, onSaved }) {
               <input
                 type="number"
                 min="1"
-                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-400"
+                className="w-full border border-apptivia-carbon-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-400"
                 placeholder="30"
                 value={form.duration_minutes}
                 onChange={e => setForm(f => ({ ...f, duration_minutes: e.target.value }))}
@@ -182,7 +182,7 @@ function LogCallModal({ organizationId, userId, deals, onClose, onSaved }) {
             <div>
               <label className="block text-xs font-medium text-apptivia-carbon-600 mb-1">Direction</label>
               <select
-                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-400 bg-white"
+                className="w-full border border-apptivia-carbon-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-400 bg-white"
                 value={form.call_direction}
                 onChange={e => setForm(f => ({ ...f, call_direction: e.target.value }))}
               >
@@ -198,7 +198,7 @@ function LogCallModal({ organizationId, userId, deals, onClose, onSaved }) {
               Call Notes / Transcript <span className="text-red-400">*</span>
             </label>
             <textarea
-              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-400 resize-none"
+              className="w-full border border-apptivia-carbon-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-400 resize-none"
               rows={6}
               placeholder="Paste call notes, key talking points, or a transcript excerpt…"
               value={form.notes}
@@ -221,7 +221,7 @@ function LogCallModal({ organizationId, userId, deals, onClose, onSaved }) {
 
           {/* AI Analysis Results */}
           {analysis && (
-            <div className="bg-gradient-to-br from-violet-50 to-purple-50 border border-violet-100 rounded-xl p-4 space-y-4">
+            <div className="bg-gradient-to-br from-violet-50 to-purple-50 border border-apptivia-carbon-300 rounded-xl p-4 space-y-4">
               {/* Badges row */}
               <div className="flex items-center gap-2 flex-wrap">
                 <span className="text-xs font-semibold text-apptivia-ink mr-1">AI Analysis</span>
@@ -301,7 +301,7 @@ function LogCallModal({ organizationId, userId, deals, onClose, onSaved }) {
         </div>
 
         {/* Footer */}
-        <div className="px-6 py-4 border-t border-gray-100 flex items-center justify-between gap-3">
+        <div className="px-6 py-4 border-t border-apptivia-carbon-100 flex items-center justify-between gap-3">
           <button onClick={onClose} className="px-4 py-2 text-sm text-apptivia-carbon-600 hover:text-apptivia-ink transition-colors">
             Cancel
           </button>
@@ -326,7 +326,7 @@ function CallLogCard({ log }) {
   const a = log.ai_analysis;
 
   return (
-    <div className="bg-white rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
+    <div className="bg-white rounded-xl border border-apptivia-carbon-100 shadow-sm hover:shadow-md transition-shadow">
       <div className="px-5 py-4">
         <div className="flex items-start justify-between gap-3">
           <div className="flex items-center gap-3 min-w-0">
@@ -366,7 +366,7 @@ function CallLogCard({ log }) {
       </div>
 
       {expanded && (
-        <div className="border-t border-gray-100 px-5 pb-4 pt-3 space-y-3">
+        <div className="border-t border-apptivia-carbon-100 px-5 pb-4 pt-3 space-y-3">
           {/* Summary */}
           {a?.summary && (
             <p className="text-sm text-apptivia-carbon-700 leading-relaxed">{a.summary}</p>
@@ -487,7 +487,7 @@ export default function CallIntelligence({ organizationId, userId }) {
           { label: 'Competitor Mentions', value: competitorCalls, color: 'text-amber-600' },
           { label: 'At Risk Deals', value: atRiskCalls, color: 'text-red-600' },
         ].map(stat => (
-          <div key={stat.label} className="bg-white rounded-xl border border-gray-100 px-4 py-3 text-center shadow-sm">
+          <div key={stat.label} className="bg-white rounded-xl border border-apptivia-carbon-100 px-4 py-3 text-center shadow-sm">
             <div className={`text-2xl font-bold ${stat.color}`}>{stat.value}</div>
             <div className="text-xs text-apptivia-carbon-500 mt-0.5">{stat.label}</div>
           </div>

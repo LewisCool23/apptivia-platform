@@ -139,12 +139,12 @@ export default function CoachingPlanTemplatesModal({ isOpen, onClose, onTemplate
 
   const getCategoryColor = (category) => {
     const colors = {
-      pipeline: 'bg-apptivia-coral-tone-50 border-blue-200 text-apptivia-coral',
+      pipeline: 'bg-apptivia-coral-tone-50 border-apptivia-coral-tone-100 text-apptivia-coral',
       activity: 'bg-green-50 border-green-200 text-green-700',
-      quality: 'bg-apptivia-carbon-100 border-purple-200 text-apptivia-ink',
+      quality: 'bg-apptivia-carbon-100 border-apptivia-carbon-300 text-apptivia-ink',
       efficiency: 'bg-orange-50 border-orange-200 text-orange-700'
     };
-    return colors[category] || 'bg-apptivia-paper border-gray-200 text-apptivia-carbon-700';
+    return colors[category] || 'bg-apptivia-paper border-apptivia-carbon-200 text-apptivia-carbon-700';
   };
 
   if (!isOpen) return null;
@@ -168,7 +168,7 @@ export default function CoachingPlanTemplatesModal({ isOpen, onClose, onTemplate
         className="bg-white rounded-xl shadow-2xl w-full max-w-5xl max-h-[90vh] overflow-hidden flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between p-6 border-b border-gray-200">
+        <div className="flex items-center justify-between p-6 border-b border-apptivia-carbon-200">
           <div>
             <h2 className="text-2xl font-bold text-apptivia-ink">Coaching Plan Templates</h2>
             <p className="text-sm text-apptivia-carbon-500 mt-1">Choose a template to create a focused coaching plan</p>
@@ -192,8 +192,8 @@ export default function CoachingPlanTemplatesModal({ isOpen, onClose, onTemplate
                   onClick={() => handleTemplateClick(template)}
                   className={`p-4 border-2 rounded-lg cursor-pointer transition-all hover:shadow-md ${
                     selectedTemplate?.id === template.id
-                      ? 'border-blue-500 bg-apptivia-coral-tone-50 ring-2 ring-blue-200'
-                      : 'border-gray-200 hover:border-blue-300'
+                      ? 'border-apptivia-coral bg-apptivia-coral-tone-50 ring-2 ring-blue-200'
+                      : 'border-apptivia-carbon-200 hover:border-apptivia-coral-tone-100'
                   }`}
                 >
                   <div className="flex items-start gap-3 mb-3">
@@ -224,7 +224,7 @@ export default function CoachingPlanTemplatesModal({ isOpen, onClose, onTemplate
                   </div>
 
                   {selectedTemplate?.id === template.id && (
-                    <div className="mt-3 pt-3 border-t border-blue-200">
+                    <div className="mt-3 pt-3 border-t border-apptivia-coral-tone-100">
                       <div className="text-xs font-medium text-apptivia-coral mb-2">Focus KPIs:</div>
                       <div className="flex flex-wrap gap-1">
                         {template.focus_kpis?.slice(0, 3).map((kpi, idx) => (
@@ -247,7 +247,7 @@ export default function CoachingPlanTemplatesModal({ isOpen, onClose, onTemplate
         </div>
 
         {selectedTemplate && (
-          <div className="border-t border-gray-200 p-6 bg-apptivia-paper">
+          <div className="border-t border-apptivia-carbon-200 p-6 bg-apptivia-paper">
             <h3 className="font-semibold text-apptivia-ink mb-4">Customize Plan</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
               <div>
@@ -258,7 +258,7 @@ export default function CoachingPlanTemplatesModal({ isOpen, onClose, onTemplate
                   type="text"
                   value={customData.name}
                   onChange={(e) => setCustomData({ ...customData, name: e.target.value })}
-                  className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full border border-apptivia-carbon-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   placeholder="Enter plan name"
                 />
               </div>
@@ -269,7 +269,7 @@ export default function CoachingPlanTemplatesModal({ isOpen, onClose, onTemplate
                 <select
                   value={customData.duration_days}
                   onChange={(e) => handleDurationChange(parseInt(e.target.value))}
-                  className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full border border-apptivia-carbon-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 >
                   <option value={7}>1 week (7 days)</option>
                   <option value={14}>2 weeks (14 days)</option>
@@ -285,7 +285,7 @@ export default function CoachingPlanTemplatesModal({ isOpen, onClose, onTemplate
                   type="date"
                   value={customData.date_range_start}
                   onChange={(e) => handleStartDateChange(e.target.value)}
-                  className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full border border-apptivia-carbon-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
               </div>
               <div>
@@ -296,14 +296,14 @@ export default function CoachingPlanTemplatesModal({ isOpen, onClose, onTemplate
                   type="date"
                   value={customData.date_range_end}
                   readOnly
-                  className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm bg-apptivia-carbon-100 cursor-not-allowed"
+                  className="w-full border border-apptivia-carbon-300 rounded-md px-3 py-2 text-sm bg-apptivia-carbon-100 cursor-not-allowed"
                 />
               </div>
             </div>
             <div className="flex justify-end gap-2">
               <button
                 onClick={onClose}
-                className="px-4 py-2 text-sm font-semibold border border-gray-300 text-apptivia-carbon-700 rounded-md hover:bg-apptivia-paper"
+                className="px-4 py-2 text-sm font-semibold border border-apptivia-carbon-300 text-apptivia-carbon-700 rounded-md hover:bg-apptivia-paper"
               >
                 Cancel
               </button>

@@ -12,12 +12,12 @@ import SearchWithHistory from './SearchWithHistory';
 // ── Constants ────────────────────────────────────────────────
 
 const CATEGORY_META = {
-  research:       { label: 'Research',        icon: Search,         color: 'bg-apptivia-coral-tone-50 text-apptivia-coral',    border: 'border-blue-200' },
+  research:       { label: 'Research',        icon: Search,         color: 'bg-apptivia-coral-tone-50 text-apptivia-coral',    border: 'border-apptivia-coral-tone-100' },
   outreach:       { label: 'Outreach',        icon: Mail,           color: 'bg-emerald-100 text-emerald-700', border: 'border-emerald-200' },
-  analysis:       { label: 'Analysis',        icon: Brain,          color: 'bg-apptivia-carbon-100 text-apptivia-ink', border: 'border-purple-200' },
+  analysis:       { label: 'Analysis',        icon: Brain,          color: 'bg-apptivia-carbon-100 text-apptivia-ink', border: 'border-apptivia-carbon-300' },
   follow_up:      { label: 'Follow-Up',       icon: MessageSquare,  color: 'bg-amber-100 text-amber-700',  border: 'border-amber-200' },
   deliverability: { label: 'Deliverability',  icon: Shield,         color: 'bg-red-100 text-red-700',      border: 'border-red-200' },
-  general:        { label: 'General',         icon: BookOpen,       color: 'bg-apptivia-carbon-100 text-apptivia-carbon-700',    border: 'border-gray-200' },
+  general:        { label: 'General',         icon: BookOpen,       color: 'bg-apptivia-carbon-100 text-apptivia-carbon-700',    border: 'border-apptivia-carbon-200' },
 };
 
 const MODEL_META = {
@@ -73,7 +73,7 @@ function PromptCard({ template, onDuplicate, onToggleActive, onDelete, onTest })
   const [expanded, setExpanded] = useState(false);
 
   return (
-    <div className={`bg-white rounded-xl border ${template.is_active ? 'border-gray-100' : 'border-red-100 opacity-60'} overflow-hidden transition-all`}>
+    <div className={`bg-white rounded-xl border ${template.is_active ? 'border-apptivia-carbon-100' : 'border-red-100 opacity-60'} overflow-hidden transition-all`}>
       {/* Header */}
       <div
         className="flex items-center justify-between px-5 py-4 cursor-pointer hover:bg-apptivia-paper/50 transition-colors"
@@ -105,7 +105,7 @@ function PromptCard({ template, onDuplicate, onToggleActive, onDelete, onTest })
 
       {/* Expanded Body */}
       {expanded && (
-        <div className="border-t border-gray-50 px-5 py-4 space-y-4">
+        <div className="border-t border-apptivia-carbon-100 px-5 py-4 space-y-4">
           {/* Variables */}
           {template.variables?.length > 0 && (
             <div>
@@ -135,7 +135,7 @@ function PromptCard({ template, onDuplicate, onToggleActive, onDelete, onTest })
               <span className="text-[10px] text-apptivia-carbon-400 uppercase font-medium">Prompt Template</span>
               <CopyButton text={template.user_prompt} label="Copy Prompt" />
             </div>
-            <div className="bg-gradient-to-br from-gray-50 to-blue-50/30 rounded-lg p-3 text-xs text-apptivia-carbon-700 font-mono whitespace-pre-wrap leading-relaxed max-h-60 overflow-y-auto border border-gray-100">
+            <div className="bg-gradient-to-br from-gray-50 to-blue-50/30 rounded-lg p-3 text-xs text-apptivia-carbon-700 font-mono whitespace-pre-wrap leading-relaxed max-h-60 overflow-y-auto border border-apptivia-carbon-100">
               {template.user_prompt}
             </div>
           </div>
@@ -158,7 +158,7 @@ function PromptCard({ template, onDuplicate, onToggleActive, onDelete, onTest })
           </div>
 
           {/* Actions */}
-          <div className="flex items-center gap-2 pt-2 border-t border-gray-50">
+          <div className="flex items-center gap-2 pt-2 border-t border-apptivia-carbon-100">
             <button
               onClick={(e) => { e.stopPropagation(); onTest?.(template); }}
               className="flex items-center gap-1 px-3 py-1.5 bg-gradient-to-r from-blue-500 to-cyan-500 text-white rounded-lg text-[11px] font-semibold hover:opacity-90 transition-opacity"
@@ -217,7 +217,7 @@ function TestPromptModal({ template, onClose }) {
   return (
     <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={onClose}>
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[85vh] overflow-hidden" onClick={e => e.stopPropagation()}>
-        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-apptivia-carbon-100">
           <div>
             <h3 className="text-sm font-bold text-apptivia-ink">{template.name}</h3>
             <p className="text-[11px] text-apptivia-carbon-400">Fill in variables to preview the resolved prompt</p>
@@ -238,7 +238,7 @@ function TestPromptModal({ template, onClose }) {
                     value={vars[v] || ''}
                     onChange={e => setVars(prev => ({ ...prev, [v]: e.target.value }))}
                     placeholder={`Enter ${v.toLowerCase().replace(/_/g, ' ')}...`}
-                    className="w-full text-xs border border-gray-200 rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-blue-200"
+                    className="w-full text-xs border border-apptivia-carbon-200 rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-blue-200"
                   />
                 </div>
               ))}
@@ -261,7 +261,7 @@ function TestPromptModal({ template, onClose }) {
                     <span className="text-[10px] text-apptivia-carbon-400 uppercase font-medium">System Message</span>
                     <CopyButton text={resolved.system} />
                   </div>
-                  <div className="bg-apptivia-carbon-100 rounded-lg p-3 text-xs text-apptivia-ink font-mono whitespace-pre-wrap leading-relaxed border border-violet-100">
+                  <div className="bg-apptivia-carbon-100 rounded-lg p-3 text-xs text-apptivia-ink font-mono whitespace-pre-wrap leading-relaxed border border-apptivia-carbon-300">
                     {resolved.system}
                   </div>
                 </div>
@@ -271,7 +271,7 @@ function TestPromptModal({ template, onClose }) {
                   <span className="text-[10px] text-apptivia-carbon-400 uppercase font-medium">User Message</span>
                   <CopyButton text={resolved.user} />
                 </div>
-                <div className="bg-apptivia-coral-tone-50 rounded-lg p-3 text-xs text-apptivia-coral-tone-700 font-mono whitespace-pre-wrap leading-relaxed border border-blue-100">
+                <div className="bg-apptivia-coral-tone-50 rounded-lg p-3 text-xs text-apptivia-coral-tone-700 font-mono whitespace-pre-wrap leading-relaxed border border-apptivia-coral-tone-100">
                   {resolved.user}
                 </div>
               </div>
@@ -319,7 +319,7 @@ function CreatePromptModal({ onClose, onSave }) {
   return (
     <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={onClose}>
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[85vh] overflow-hidden" onClick={e => e.stopPropagation()}>
-        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-apptivia-carbon-100">
           <div>
             <h3 className="text-sm font-bold text-apptivia-ink">Create New Prompt</h3>
             <p className="text-[11px] text-apptivia-carbon-400">Add a custom prompt template to your library</p>
@@ -332,13 +332,13 @@ function CreatePromptModal({ onClose, onSave }) {
             <div>
               <label className="text-[10px] text-apptivia-carbon-400 uppercase font-medium block mb-1">Name *</label>
               <input type="text" value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
-                className="w-full text-xs border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-200"
+                className="w-full text-xs border border-apptivia-carbon-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-200"
                 placeholder="First Email — Pain Point" />
             </div>
             <div>
               <label className="text-[10px] text-apptivia-carbon-400 uppercase font-medium block mb-1">Key (auto-generated)</label>
               <input type="text" value={form.key} onChange={e => setForm(f => ({ ...f, key: e.target.value }))}
-                className="w-full text-xs border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-200"
+                className="w-full text-xs border border-apptivia-carbon-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-200"
                 placeholder="first_email_pain_point" />
             </div>
           </div>
@@ -347,14 +347,14 @@ function CreatePromptModal({ onClose, onSave }) {
             <div>
               <label className="text-[10px] text-apptivia-carbon-400 uppercase font-medium block mb-1">Category</label>
               <select value={form.category} onChange={e => setForm(f => ({ ...f, category: e.target.value }))}
-                className="w-full text-xs border border-gray-200 rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-blue-200">
+                className="w-full text-xs border border-apptivia-carbon-200 rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-blue-200">
                 {Object.entries(CATEGORY_META).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
               </select>
             </div>
             <div>
               <label className="text-[10px] text-apptivia-carbon-400 uppercase font-medium block mb-1">AI Model</label>
               <select value={form.ai_model} onChange={e => setForm(f => ({ ...f, ai_model: e.target.value }))}
-                className="w-full text-xs border border-gray-200 rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-blue-200">
+                className="w-full text-xs border border-apptivia-carbon-200 rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-blue-200">
                 <option value="chatgpt">ChatGPT</option>
                 <option value="claude">Claude</option>
                 <option value="any">Any</option>
@@ -363,7 +363,7 @@ function CreatePromptModal({ onClose, onSave }) {
             <div>
               <label className="text-[10px] text-apptivia-carbon-400 uppercase font-medium block mb-1">Channel</label>
               <select value={form.channel} onChange={e => setForm(f => ({ ...f, channel: e.target.value }))}
-                className="w-full text-xs border border-gray-200 rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-blue-200">
+                className="w-full text-xs border border-apptivia-carbon-200 rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-blue-200">
                 <option value="">None</option>
                 <option value="email">Email</option>
                 <option value="linkedin">LinkedIn</option>
@@ -375,21 +375,21 @@ function CreatePromptModal({ onClose, onSave }) {
           <div>
             <label className="text-[10px] text-apptivia-carbon-400 uppercase font-medium block mb-1">Description</label>
             <input type="text" value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
-              className="w-full text-xs border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-200"
+              className="w-full text-xs border border-apptivia-carbon-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-200"
               placeholder="Brief description of what this prompt does..." />
           </div>
 
           <div>
             <label className="text-[10px] text-apptivia-carbon-400 uppercase font-medium block mb-1">System Prompt</label>
             <textarea value={form.system_prompt} onChange={e => setForm(f => ({ ...f, system_prompt: e.target.value }))}
-              rows={3} className="w-full text-xs border border-gray-200 rounded-lg px-3 py-2 font-mono focus:outline-none focus:ring-2 focus:ring-blue-200"
+              rows={3} className="w-full text-xs border border-apptivia-carbon-200 rounded-lg px-3 py-2 font-mono focus:outline-none focus:ring-2 focus:ring-blue-200"
               placeholder="System-level instructions (sent as system message)..." />
           </div>
 
           <div>
             <label className="text-[10px] text-apptivia-carbon-400 uppercase font-medium block mb-1">Prompt Template *</label>
             <textarea value={form.user_prompt} onChange={e => setForm(f => ({ ...f, user_prompt: e.target.value }))}
-              rows={6} className="w-full text-xs border border-gray-200 rounded-lg px-3 py-2 font-mono focus:outline-none focus:ring-2 focus:ring-blue-200"
+              rows={6} className="w-full text-xs border border-apptivia-carbon-200 rounded-lg px-3 py-2 font-mono focus:outline-none focus:ring-2 focus:ring-blue-200"
               placeholder="Use {{VARIABLE}} placeholders for dynamic content..." />
           </div>
 
@@ -397,13 +397,13 @@ function CreatePromptModal({ onClose, onSave }) {
             <div>
               <label className="text-[10px] text-apptivia-carbon-400 uppercase font-medium block mb-1">Variables (comma-separated)</label>
               <input type="text" value={form.variables} onChange={e => setForm(f => ({ ...f, variables: e.target.value }))}
-                className="w-full text-xs border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-200"
+                className="w-full text-xs border border-apptivia-carbon-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-200"
                 placeholder="COMPANY, PROSPECT, ANGLE" />
             </div>
             <div>
               <label className="text-[10px] text-apptivia-carbon-400 uppercase font-medium block mb-1">Tags (comma-separated)</label>
               <input type="text" value={form.tags} onChange={e => setForm(f => ({ ...f, tags: e.target.value }))}
-                className="w-full text-xs border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-200"
+                className="w-full text-xs border border-apptivia-carbon-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-200"
                 placeholder="research, outreach, cold-email" />
             </div>
           </div>
@@ -412,13 +412,13 @@ function CreatePromptModal({ onClose, onSave }) {
             <div>
               <label className="text-[10px] text-apptivia-carbon-400 uppercase font-medium block mb-1">Max Tokens</label>
               <input type="number" value={form.max_tokens} onChange={e => setForm(f => ({ ...f, max_tokens: parseInt(e.target.value) || 1000 }))}
-                className="w-full text-xs border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-200" />
+                className="w-full text-xs border border-apptivia-carbon-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-200" />
             </div>
             <div>
               <label className="text-[10px] text-apptivia-carbon-400 uppercase font-medium block mb-1">Temperature</label>
               <input type="number" step="0.1" min="0" max="1" value={form.temperature}
                 onChange={e => setForm(f => ({ ...f, temperature: parseFloat(e.target.value) || 0.7 }))}
-                className="w-full text-xs border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-200" />
+                className="w-full text-xs border border-apptivia-carbon-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-200" />
             </div>
           </div>
 
@@ -512,7 +512,7 @@ export default function PromptLibrary({ organizationId }) {
         isLoading={deleteConfirm.isLoading}
       />
       {/* Header Card */}
-      <div className="bg-white rounded-xl border border-gray-100 overflow-hidden">
+      <div className="bg-white rounded-xl border border-apptivia-carbon-100 overflow-hidden">
         <div className="bg-gradient-to-r from-violet-500 via-purple-500 to-indigo-500 px-6 py-5">
           <div className="flex items-center gap-3 mb-3">
             <div className="w-9 h-9 bg-white/20 backdrop-blur-sm rounded-lg flex items-center justify-center">
@@ -548,7 +548,7 @@ export default function PromptLibrary({ organizationId }) {
       </div>
 
       {/* Workflow guide */}
-      <div className="bg-white rounded-xl border border-gray-100 p-4">
+      <div className="bg-white rounded-xl border border-apptivia-carbon-100 p-4">
         <h3 className="text-xs font-bold text-apptivia-carbon-700 mb-2 flex items-center gap-1.5"><Target size={12} /> Recommended Workflow</h3>
         <div className="flex items-center gap-2 text-[11px] text-apptivia-carbon-500">
           <span className="flex items-center gap-1 px-2 py-1 bg-apptivia-coral-tone-50 text-apptivia-coral rounded-lg font-medium">1. Research</span>
@@ -582,7 +582,7 @@ export default function PromptLibrary({ organizationId }) {
         <select
           value={categoryFilter}
           onChange={e => setCategoryFilter(e.target.value)}
-          className="text-xs border border-gray-200 rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-blue-200"
+          className="text-xs border border-apptivia-carbon-200 rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-blue-200"
         >
           <option value="all">All Categories</option>
           {Object.entries(CATEGORY_META).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
@@ -592,7 +592,7 @@ export default function PromptLibrary({ organizationId }) {
         <select
           value={modelFilter}
           onChange={e => setModelFilter(e.target.value)}
-          className="text-xs border border-gray-200 rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-blue-200"
+          className="text-xs border border-apptivia-carbon-200 rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-blue-200"
         >
           <option value="all">All Models</option>
           <option value="chatgpt">ChatGPT</option>
@@ -616,7 +616,7 @@ export default function PromptLibrary({ organizationId }) {
       {/* Prompt Cards */}
       <div className="space-y-2">
         {filtered.length === 0 && (
-          <div className="text-center py-10 bg-white rounded-xl border border-gray-100">
+          <div className="text-center py-10 bg-white rounded-xl border border-apptivia-carbon-100">
             <BookOpen size={24} className="mx-auto text-apptivia-carbon-300 mb-2" />
             <p className="text-sm text-apptivia-carbon-500">No prompts match your filters</p>
             <p className="text-[11px] text-apptivia-carbon-400">Try adjusting your search or category filter</p>
