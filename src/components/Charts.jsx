@@ -109,7 +109,7 @@ export const ScoreDistributionChart = ({ data, title, infoText, footer = null })
             <div className="text-[11px] text-gray-500 mb-1">KPIs in this category</div>
             <div className="flex flex-wrap gap-1">
               {kpis.map((kpi) => (
-                <span key={kpi} className="px-2 py-0.5 rounded-full bg-gray-100 text-gray-700 border border-gray-200">
+                <span key={kpi} className="px-2 py-0.5 rounded-full bg-apptivia-carbon-100 text-gray-700 border border-gray-200">
                   {kpi}
                 </span>
               ))}

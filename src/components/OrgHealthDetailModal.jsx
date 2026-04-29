@@ -33,7 +33,7 @@ export default function OrgHealthDetailModal({
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className={`px-6 py-5 flex items-center justify-between ${scoreColors?.bg || 'bg-gray-100'}`}>
+        <div className={`px-6 py-5 flex items-center justify-between ${scoreColors?.bg || 'bg-apptivia-carbon-100'}`}>
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-lg flex items-center justify-center bg-white/80">
               {Icon && <Icon size={20} className={scoreColors?.text || 'text-gray-700'} />}
@@ -69,7 +69,7 @@ export default function OrgHealthDetailModal({
               <ul className="space-y-1.5">
                 {dataPoints.map((dp, i) => (
                   <li key={i} className="flex items-start gap-2 text-xs text-gray-600">
-                    <span className="mt-0.5 w-1.5 h-1.5 rounded-full bg-gray-400 flex-shrink-0" />
+                    <span className="mt-0.5 w-1.5 h-1.5 rounded-full bg-apptivia-carbon-400 flex-shrink-0" />
                     {dp}
                   </li>
                 ))}
@@ -81,7 +81,7 @@ export default function OrgHealthDetailModal({
           {dataSummary?.length > 0 && (
             <div>
               <h3 className="text-sm font-semibold text-gray-900 mb-2">Current Data</h3>
-              <div className="bg-gray-50 rounded-lg p-3 grid grid-cols-2 gap-3">
+              <div className="bg-apptivia-paper rounded-lg p-3 grid grid-cols-2 gap-3">
                 {dataSummary.map((item, i) => (
                   <div key={i}>
                     <div className="text-[10px] text-gray-500 uppercase">{item.label}</div>
@@ -94,7 +94,7 @@ export default function OrgHealthDetailModal({
         </div>
 
         {/* Footer */}
-        <div className="px-6 py-4 bg-gray-50 border-t flex items-center justify-between">
+        <div className="px-6 py-4 bg-apptivia-paper border-t flex items-center justify-between">
           <button
             onClick={onClose}
             className="px-4 py-2 text-xs text-gray-500 hover:text-gray-700"
@@ -103,7 +103,7 @@ export default function OrgHealthDetailModal({
           </button>
           <button
             onClick={() => { onClose(); navigate(linkTo); }}
-            className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 transition-colors"
+            className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-semibold text-white bg-apptivia-coral hover:bg-apptivia-coral transition-colors"
           >
             {linkLabel} <ArrowRight size={12} />
           </button>

@@ -216,8 +216,11 @@ export function useScorecardData(
         const refDate = isLivePeriod ? new Date().toISOString() : new Date(qStart).toISOString();
 
         const stage2: Promise<any>[] = [
-          // 2a: kpi_metric_history (needs scorecardMetricIds from metrics)
-          scorecardMetricIds.length > 0
+          // 2a: kpi_metric_history — only used when NO organizationId (global fallback).
+          // When org is set, kpi_org_configs (from Stage 1) is the sole source of truth
+          // for goals/weights. Querying kpi_metric_history would return stale global
+          // defaults that override correct per-org values.
+          (!organizationId && scorecardMetricIds.length > 0)
             ? supabase.from('kpi_metric_history')
                 .select('kpi_id, goal, weight, direction, valid_from, valid_to')
                 .in('kpi_id', scorecardMetricIds)
@@ -259,13 +262,13 @@ export function useScorecardData(
         });
 
         function histGoal(metric: any): number {
-          return histGoalMap[metric.id]?.goal ?? metric.goal;
+          return metric.goal ?? histGoalMap[metric.id]?.goal ?? 0;
         }
         function histWeight(metric: any): number {
-          return histGoalMap[metric.id]?.weight ?? metric.weight;
+          return metric.weight ?? histGoalMap[metric.id]?.weight ?? 0;
         }
         function histDirection(metric: any): string {
-          return histGoalMap[metric.id]?.direction ?? metric.direction ?? 'higher';
+          return metric.direction ?? histGoalMap[metric.id]?.direction ?? 'higher';
         }
 
         // calcPct imported from ../utils/kpiCalc (X3 fix: single implementation)
@@ -370,10 +373,13 @@ export function useScorecardData(
         // regardless of whether the scorecard is showing a weekly average.
         // Snap to Mon-Sun boundaries so each query hits exactly one DB week.
         let trendAnchor = getMonday(new Date(new Date(qEnd || periodEnd).getTime() - 1));
-        // Exclude current incomplete week from trend comparison —
-        // always compare the two most recently completed weeks.
+        // For historical periods that fall on the current incomplete week,
+        // snap back to the last completed week so the trend is meaningful.
+        // But for the LIVE period (user is viewing "this week"), keep the
+        // anchor on this week so the trend shows this-week vs last-week,
+        // even if this week's data is still accumulating.
         const trendCurrentMonday = getMonday(new Date());
-        if (trendAnchor.getTime() >= trendCurrentMonday.getTime()) {
+        if (!isLivePeriod && trendAnchor.getTime() >= trendCurrentMonday.getTime()) {
           trendAnchor = new Date(trendCurrentMonday.getTime() - 7 * 86400000);
         }
         const curMonday  = trendAnchor.toISOString().split('T')[0];

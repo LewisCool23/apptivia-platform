@@ -256,7 +256,7 @@ function CepStageEditorModal({ stage, titles, onSave, onClose }) {
                 onChange={e => { setAutoKey(false); setForm(f => ({ ...f, stage_key: e.target.value })); }}
                 placeholder="e.g. qualification"
                 disabled={isNew && autoKey}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 disabled:bg-gray-50"
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 disabled:bg-apptivia-paper"
               />
             </div>
           </div>
@@ -325,13 +325,13 @@ function CepStageEditorModal({ stage, titles, onSave, onClose }) {
         </div>
 
         <div className="sticky bottom-0 bg-white px-6 py-4 border-t flex justify-end gap-3">
-          <button onClick={onClose} className="px-4 py-2 text-sm text-gray-600 hover:bg-gray-100 rounded-lg">
+          <button onClick={onClose} className="px-4 py-2 text-sm text-gray-600 hover:bg-apptivia-carbon-100 rounded-lg">
             Cancel
           </button>
           <button
             onClick={handleSave}
             disabled={saving}
-            className="px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+            className="px-4 py-2 text-sm bg-apptivia-coral text-white rounded-lg hover:bg-apptivia-coral disabled:opacity-50"
           >
             {saving ? 'Saving...' : isNew ? 'Add Stage' : 'Save Changes'}
           </button>
@@ -395,7 +395,7 @@ function TitleRow({ title, onUpdate, onDelete }) {
 
   return (
     <div className="flex items-center gap-3 py-1.5 group">
-      <span className="inline-flex items-center justify-center w-10 h-6 bg-gray-100 rounded text-xs font-bold text-gray-700">
+      <span className="inline-flex items-center justify-center w-10 h-6 bg-apptivia-carbon-100 rounded text-xs font-bold text-gray-700">
         {title.title_name}
       </span>
       <span className="flex-1 text-sm text-gray-600">{title.description || '—'}</span>
@@ -484,7 +484,7 @@ export default function CepConfigSection({ organizationId, compact = false }) {
     if (error) return <div className="text-sm text-red-500 bg-red-50 rounded-lg p-3">{error}</div>;
     if (!hasCep) {
       return (
-        <div className="bg-gray-50 border border-dashed border-gray-300 rounded-xl p-8 text-center">
+        <div className="bg-apptivia-paper border border-dashed border-gray-300 rounded-xl p-8 text-center">
           <div className="text-gray-400 mb-3">
             <Layers size={36} className="mx-auto" />
           </div>
@@ -493,10 +493,10 @@ export default function CepConfigSection({ organizationId, compact = false }) {
             Configure your Customer Engagement Process to add checklists, exit criteria, and role responsibilities for pipeline deals.
           </p>
           <div className="flex items-center justify-center gap-3">
-            <button onClick={handleSeed} disabled={seeding} className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 disabled:opacity-50">
+            <button onClick={handleSeed} disabled={seeding} className="px-4 py-2 bg-apptivia-coral text-white text-sm font-medium rounded-lg hover:bg-apptivia-coral disabled:opacity-50">
               {seeding ? 'Setting up...' : 'Use Standard B2B Template'}
             </button>
-            <button onClick={() => setEditorStage({})} className="px-4 py-2 bg-white border border-gray-300 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-50">
+            <button onClick={() => setEditorStage({})} className="px-4 py-2 bg-white border border-gray-300 text-gray-700 text-sm font-medium rounded-lg hover:bg-apptivia-paper">
               Build from Scratch
             </button>
           </div>
@@ -515,7 +515,7 @@ export default function CepConfigSection({ organizationId, compact = false }) {
           <div className="border rounded-lg overflow-hidden">
             <table className="w-full text-sm">
               <thead>
-                <tr className="bg-gray-50 text-left text-xs text-gray-500 uppercase tracking-wide">
+                <tr className="bg-apptivia-paper text-left text-xs text-gray-500 uppercase tracking-wide">
                   <th className="px-3 py-2 w-8"></th>
                   <th className="px-3 py-2">Stage</th>
                   <th className="px-3 py-2 text-center">Win %</th>
@@ -527,7 +527,7 @@ export default function CepConfigSection({ organizationId, compact = false }) {
               </thead>
               <tbody>
                 {stages.sort((a, b) => a.stage_order - b.stage_order).map(stage => (
-                  <tr key={stage.id} className="border-t hover:bg-gray-50/50">
+                  <tr key={stage.id} className="border-t hover:bg-apptivia-paper/50">
                     <td className="px-3 py-2 text-gray-300"><GripVertical size={14} /></td>
                     <td className="px-3 py-2">
                       <div className="flex items-center gap-2">
@@ -540,7 +540,7 @@ export default function CepConfigSection({ organizationId, compact = false }) {
                     <td className="px-3 py-2 text-center text-gray-600">{(stage.checklist_items || []).length} items</td>
                     <td className="px-3 py-2 text-center text-gray-600">{stage.expected_days ?? '—'}</td>
                     <td className="px-3 py-2 text-center">
-                      {stage.is_terminal && <span className="text-[10px] font-medium bg-gray-200 text-gray-600 px-1.5 py-0.5 rounded">Terminal</span>}
+                      {stage.is_terminal && <span className="text-[10px] font-medium bg-apptivia-carbon-200 text-gray-600 px-1.5 py-0.5 rounded">Terminal</span>}
                     </td>
                     <td className="px-3 py-2 text-right">
                       <div className="flex items-center justify-end gap-1">
@@ -563,7 +563,7 @@ export default function CepConfigSection({ organizationId, compact = false }) {
           <div className="flex items-center gap-2">
             <input type="text" value={newTitleName} onChange={e => setNewTitleName(e.target.value)} placeholder="Title (e.g. SDR)" className="border border-gray-300 rounded px-2 py-1.5 text-sm w-24 focus:ring-1 focus:ring-blue-500" onKeyDown={e => { if (e.key === 'Enter') handleAddTitle(); }} />
             <input type="text" value={newTitleDesc} onChange={e => setNewTitleDesc(e.target.value)} placeholder="Description (optional)" className="flex-1 border border-gray-300 rounded px-2 py-1.5 text-sm focus:ring-1 focus:ring-blue-500" onKeyDown={e => { if (e.key === 'Enter') handleAddTitle(); }} />
-            <button onClick={handleAddTitle} disabled={addingTitle || !newTitleName.trim()} className="px-3 py-1.5 bg-gray-100 rounded hover:bg-gray-200 text-gray-600 disabled:opacity-40"><Plus size={14} /></button>
+            <button onClick={handleAddTitle} disabled={addingTitle || !newTitleName.trim()} className="px-3 py-1.5 bg-apptivia-carbon-100 rounded hover:bg-apptivia-carbon-200 text-gray-600 disabled:opacity-40"><Plus size={14} /></button>
           </div>
         </div>
       </div>

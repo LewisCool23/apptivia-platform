@@ -34,7 +34,7 @@ function EventItem({ event, isNew }) {
     : null;
 
   return (
-    <div className={`flex items-start gap-3 px-5 py-3.5 transition-colors ${isNew ? 'bg-violet-50/60 animate-pulse-once' : 'hover:bg-gray-50'}`}>
+    <div className={`flex items-start gap-3 px-5 py-3.5 transition-colors ${isNew ? 'bg-apptivia-carbon-100/60 animate-pulse-once' : 'hover:bg-apptivia-paper'}`}>
       {/* Timeline dot + line */}
       <div className="flex flex-col items-center flex-shrink-0 pt-0.5">
         <div
@@ -153,7 +153,7 @@ export default function ActivityFeed({ organizationId, maxHeight = 480, compact 
             <Activity size={15} className="text-violet-500" />
             <span className="text-sm font-semibold text-gray-800">Activity Feed</span>
           </div>
-          <button onClick={fetchEvents} className="p-1 hover:bg-gray-100 rounded transition-colors">
+          <button onClick={fetchEvents} className="p-1 hover:bg-apptivia-carbon-100 rounded transition-colors">
             <RefreshCw size={13} className="text-gray-400" />
           </button>
         </div>
@@ -183,7 +183,7 @@ export default function ActivityFeed({ organizationId, maxHeight = 480, compact 
             onClick={() => setFilter(f.id)}
             className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
               filter === f.id
-                ? 'bg-violet-500 text-white'
+                ? 'bg-apptivia-ink text-white'
                 : 'bg-white border border-gray-200 text-gray-600 hover:border-violet-300 hover:text-violet-700'
             }`}
           >

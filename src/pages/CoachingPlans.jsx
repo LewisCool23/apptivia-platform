@@ -1430,8 +1430,8 @@ export default function CoachingPlans() {
               {showSearchResults && searchResults.length > 0 && (
                 <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-96 overflow-y-auto z-50">
                   {searchResults.map((result,idx) => (
-                    <button key={idx} onClick={() => { navigate(result.link); setSearchQuery(''); setSearchResults([]); setShowSearchResults(false); }} className="w-full text-left px-4 py-3 hover:bg-gray-50 border-b last:border-b-0 transition-colors">
-                      <div className="flex items-start gap-3"><span className="text-xl">{result.icon}</span><div className="flex-1 min-w-0"><div className="flex items-center gap-2"><span className="text-xs font-semibold text-gray-900">{result.title}</span><span className="text-[10px] px-1.5 py-0.5 rounded bg-gray-100 text-gray-600">{result.type}</span></div>{result.subtitle && <div className="text-[11px] text-gray-500 mt-0.5 truncate">{result.subtitle}</div>}</div></div>
+                    <button key={idx} onClick={() => { navigate(result.link); setSearchQuery(''); setSearchResults([]); setShowSearchResults(false); }} className="w-full text-left px-4 py-3 hover:bg-apptivia-paper border-b last:border-b-0 transition-colors">
+                      <div className="flex items-start gap-3"><span className="text-xl">{result.icon}</span><div className="flex-1 min-w-0"><div className="flex items-center gap-2"><span className="text-xs font-semibold text-gray-900">{result.title}</span><span className="text-[10px] px-1.5 py-0.5 rounded bg-apptivia-carbon-100 text-gray-600">{result.type}</span></div>{result.subtitle && <div className="text-[11px] text-gray-500 mt-0.5 truncate">{result.subtitle}</div>}</div></div>
                     </button>
                   ))}
                 </div>
@@ -1439,11 +1439,11 @@ export default function CoachingPlans() {
               {showSearchResults && searchQuery && searchResults.length === 0 && !searching && <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg p-4 z-50"><div className="text-sm text-gray-500 text-center">No results found</div></div>}
               {searching && <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg p-4 z-50"><div className="text-sm text-gray-500 text-center">Searching...</div></div>}
             </div>
-            <button onClick={handleRefresh} disabled={isRefreshing} className={`relative p-2 rounded-lg font-semibold text-sm bg-white text-gray-700 border border-gray-200 hover:bg-gray-50 group ${isRefreshing ? 'opacity-50 cursor-not-allowed' : 'transition-all duration-200 hover:scale-105 hover:shadow-md'}`} title="Refresh data">
+            <button onClick={handleRefresh} disabled={isRefreshing} className={`relative p-2 rounded-lg font-semibold text-sm bg-white text-gray-700 border border-gray-200 hover:bg-apptivia-paper group ${isRefreshing ? 'opacity-50 cursor-not-allowed' : 'transition-all duration-200 hover:scale-105 hover:shadow-md'}`} title="Refresh data">
               <svg className={`w-[18px] h-[18px] ${isRefreshing ? 'animate-spin' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
               </svg>
-              <span className="absolute top-full left-1/2 -translate-x-1/2 mt-2 px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 pointer-events-none group-hover:opacity-100 whitespace-nowrap transition-opacity z-50">
+              <span className="absolute top-full left-1/2 -translate-x-1/2 mt-2 px-2 py-1 bg-apptivia-ink text-white text-xs rounded opacity-0 pointer-events-none group-hover:opacity-100 whitespace-nowrap transition-opacity z-50">
                 {isRefreshing ? 'Refreshing...' : 'Refresh'}
               </span>
             </button>
@@ -1497,8 +1497,8 @@ export default function CoachingPlans() {
               }}
               className={`px-4 py-2 rounded-md text-sm font-semibold transition-all ${
                 activeTab === tab.id
-                  ? 'bg-blue-600 text-white shadow-sm'
-                  : 'text-gray-600 hover:bg-gray-100'
+                  ? 'bg-apptivia-coral text-white shadow-sm'
+                  : 'text-gray-600 hover:bg-apptivia-carbon-100'
               }`}
             >
               {tab.label}
@@ -1529,7 +1529,7 @@ export default function CoachingPlans() {
           {/* ROI Summary (managers+) */}
           {actionsSummary && (
             <div className="grid grid-cols-3 gap-3 mb-4">
-              <div className="bg-indigo-50 rounded-lg p-3 text-center">
+              <div className="bg-apptivia-carbon-100 rounded-lg p-3 text-center">
                 <div className="text-2xl font-semibold text-indigo-700">{actionsSummary.total_actions}</div>
                 <div className="text-xs text-indigo-500 mt-0.5">Actions logged</div>
               </div>
@@ -1537,7 +1537,7 @@ export default function CoachingPlans() {
                 <div className="text-2xl font-semibold text-green-700">{actionsSummary.total_crm_synced}</div>
                 <div className="text-xs text-green-500 mt-0.5">Synced to CRM</div>
               </div>
-              <div className="bg-gray-50 rounded-lg p-3 text-center">
+              <div className="bg-apptivia-paper rounded-lg p-3 text-center">
                 <div className="text-2xl font-semibold text-gray-700 capitalize">
                   {actionsSummary.top_frameworks?.[0]?.name?.replace(/_/g, ' ') || '—'}
                 </div>
@@ -1555,7 +1555,7 @@ export default function CoachingPlans() {
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
-                <thead className="bg-gray-50">
+                <thead className="bg-apptivia-paper">
                   <tr>
                     <th className="px-4 py-2 text-left text-xs font-semibold text-gray-600">Date</th>
                     <th className="px-4 py-2 text-left text-xs font-semibold text-gray-600">Type</th>
@@ -1567,9 +1567,9 @@ export default function CoachingPlans() {
                 <tbody>
                   {coachingActions.map(action => {
                     const typeLabels = { task_created: 'Task', call_logged: 'Call', meeting_scheduled: 'Meeting', note_added: 'Note', follow_up_set: 'Follow-up' };
-                    const crmColors = { pending: 'bg-gray-100 text-gray-600', pushed: 'bg-green-100 text-green-700', skipped: 'bg-blue-100 text-blue-600', failed: 'bg-red-100 text-red-700' };
+                    const crmColors = { pending: 'bg-apptivia-carbon-100 text-gray-600', pushed: 'bg-green-100 text-green-700', skipped: 'bg-apptivia-coral-tone-50 text-blue-600', failed: 'bg-red-100 text-red-700' };
                     return (
-                      <tr key={action.id} className="border-t hover:bg-gray-50">
+                      <tr key={action.id} className="border-t hover:bg-apptivia-paper">
                         <td className="px-4 py-3 text-gray-500 whitespace-nowrap">{new Date(action.created_at).toLocaleDateString()}</td>
                         <td className="px-4 py-3 text-gray-700">{typeLabels[action.action_type] || action.action_type}</td>
                         <td className="px-4 py-3 text-gray-800 font-medium">{action.action_label}</td>
@@ -1601,7 +1601,7 @@ export default function CoachingPlans() {
               setShowBuilder(true);
               window.scrollTo({ top: 0, behavior: 'smooth' });
             }}
-            className="flex items-center gap-2 px-4 py-2 text-sm font-semibold bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors shadow-sm"
+            className="flex items-center gap-2 px-4 py-2 text-sm font-semibold bg-apptivia-coral text-white rounded-lg hover:bg-apptivia-coral transition-colors shadow-sm"
           >
             <Plus size={16} />
             {activeTab === 'playbooks' ? 'Create Manager Playbook' : 'Create Coaching Plan'}
@@ -1670,13 +1670,13 @@ export default function CoachingPlans() {
                     <div className="flex items-center gap-2 ml-3 shrink-0">
                       <button
                         onClick={() => handleFulfillRequest(req)}
-                        className="px-3 py-1.5 text-xs font-semibold bg-blue-600 text-white rounded-md hover:bg-blue-700"
+                        className="px-3 py-1.5 text-xs font-semibold bg-apptivia-coral text-white rounded-md hover:bg-apptivia-coral"
                       >
                         Create Plan
                       </button>
                       <button
                         onClick={() => handleDismissRequest(req.id)}
-                        className="px-3 py-1.5 text-xs font-medium text-gray-500 border border-gray-300 rounded-md hover:bg-gray-50"
+                        className="px-3 py-1.5 text-xs font-medium text-gray-500 border border-gray-300 rounded-md hover:bg-apptivia-paper"
                       >
                         Dismiss
                       </button>
@@ -1703,8 +1703,8 @@ export default function CoachingPlans() {
                 onClick={() => setStatusTab(tab.key)}
                 className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all ${
                   statusTab === tab.key
-                    ? 'bg-blue-600 text-white shadow-sm'
-                    : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'
+                    ? 'bg-apptivia-coral text-white shadow-sm'
+                    : 'bg-white text-gray-600 border border-gray-200 hover:bg-apptivia-paper'
                 }`}
               >
                 {tab.label}
@@ -1745,7 +1745,7 @@ export default function CoachingPlans() {
                 {canCreatePlans && (
                   <button
                     onClick={() => { resetPlanForm(); setShowBuilder(true); }}
-                    className="px-4 py-2 text-sm font-semibold bg-blue-600 text-white rounded-md hover:bg-blue-700"
+                    className="px-4 py-2 text-sm font-semibold bg-apptivia-coral text-white rounded-md hover:bg-apptivia-coral"
                   >
                     {activeTab === 'playbooks' ? 'Create Your First Manager Playbook' : 'Create Your First Plan'}
                   </button>
@@ -1857,7 +1857,7 @@ export default function CoachingPlans() {
                     className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-y"
                   />
                 </div>
-                <p className="text-xs text-blue-600 bg-blue-50 rounded p-2">
+                <p className="text-xs text-blue-600 bg-apptivia-coral-tone-50 rounded p-2">
                   This will share the complete coaching plan including goals, KPIs, action items, and success metrics.
                 </p>
               </div>
@@ -1865,14 +1865,14 @@ export default function CoachingPlans() {
               <div className="flex justify-end gap-2 mt-6">
                 <button
                   onClick={() => setPlanToShare(null)}
-                  className="px-4 py-2 text-sm font-semibold text-gray-700 border border-gray-300 rounded-md hover:bg-gray-50"
+                  className="px-4 py-2 text-sm font-semibold text-gray-700 border border-gray-300 rounded-md hover:bg-apptivia-paper"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={handleSendShareEmail}
                   disabled={sharingPlan || !shareEmail.trim()}
-                  className="px-4 py-2 text-sm font-semibold text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="px-4 py-2 text-sm font-semibold text-white bg-apptivia-coral rounded-md hover:bg-apptivia-coral disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {sharingPlan ? 'Sending...' : 'Share Plan'}
                 </button>

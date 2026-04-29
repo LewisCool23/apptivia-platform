@@ -12,9 +12,9 @@ import ConfirmModal from './ConfirmModal';
 // ── Legacy stage colors (fallback when no CEP) ──────────────
 
 const STAGE_COLORS = {
-  discovery: { bg: 'bg-blue-100', text: 'text-blue-700', dot: 'bg-blue-500' },
-  qualification: { bg: 'bg-indigo-100', text: 'text-indigo-700', dot: 'bg-indigo-500' },
-  proposal: { bg: 'bg-purple-100', text: 'text-purple-700', dot: 'bg-purple-500' },
+  discovery: { bg: 'bg-apptivia-coral-tone-50', text: 'text-blue-700', dot: 'bg-apptivia-coral' },
+  qualification: { bg: 'bg-apptivia-carbon-100', text: 'text-indigo-700', dot: 'bg-apptivia-ink' },
+  proposal: { bg: 'bg-apptivia-carbon-100', text: 'text-purple-700', dot: 'bg-apptivia-ink' },
   negotiation: { bg: 'bg-amber-100', text: 'text-amber-700', dot: 'bg-amber-500' },
   closed_won: { bg: 'bg-emerald-100', text: 'text-emerald-700', dot: 'bg-emerald-500' },
   closed_lost: { bg: 'bg-red-100', text: 'text-red-700', dot: 'bg-red-500' },
@@ -22,8 +22,8 @@ const STAGE_COLORS = {
 
 const FORECAST_BADGES = {
   commit: { bg: 'bg-emerald-100', text: 'text-emerald-700' },
-  best_case: { bg: 'bg-blue-100', text: 'text-blue-700' },
-  pipeline: { bg: 'bg-gray-100', text: 'text-gray-600' },
+  best_case: { bg: 'bg-apptivia-coral-tone-50', text: 'text-blue-700' },
+  pipeline: { bg: 'bg-apptivia-carbon-100', text: 'text-gray-600' },
   omitted: { bg: 'bg-red-100', text: 'text-red-600' },
 };
 
@@ -73,7 +73,7 @@ function SummaryCards({ summary }) {
       value: formatCurrency(summary.totalValue),
       sub: `${summary.dealCount} ${summary.dealCount === 1 ? 'deal' : 'deals'}`,
       icon: DollarSign,
-      color: 'text-blue-600 bg-blue-50',
+      color: 'text-blue-600 bg-apptivia-coral-tone-50',
     },
     {
       label: 'Weighted Value',
@@ -87,14 +87,14 @@ function SummaryCards({ summary }) {
       value: summary.atRiskCount,
       sub: formatCurrency(summary.atRiskValue),
       icon: AlertTriangle,
-      color: summary.atRiskCount > 0 ? 'text-red-600 bg-red-50' : 'text-gray-500 bg-gray-50',
+      color: summary.atRiskCount > 0 ? 'text-red-600 bg-red-50' : 'text-gray-500 bg-apptivia-paper',
     },
     {
       label: 'Closing This Month',
       value: summary.closingThisMonth,
       sub: formatCurrency(summary.closingThisMonthValue),
       icon: Calendar,
-      color: 'text-purple-600 bg-purple-50',
+      color: 'text-purple-600 bg-apptivia-carbon-100',
     },
   ];
 
@@ -145,7 +145,7 @@ function StageFunnel({ stageBreakdown, cepStages }) {
               <div className="w-24 text-xs font-medium text-gray-600 truncate">
                 {stageObj.stage_name}
               </div>
-              <div className="flex-1 bg-gray-100 rounded-full h-6 overflow-hidden relative">
+              <div className="flex-1 bg-apptivia-carbon-100 rounded-full h-6 overflow-hidden relative">
                 <div
                   className="h-full rounded-full transition-all duration-500"
                   style={{ width: `${Math.max(pct, 2)}%`, backgroundColor: stageObj.color, opacity: 0.7 }}
@@ -187,7 +187,7 @@ function CepProgressBadge({ deal, cepStages }) {
 
   return (
     <div className="flex items-center gap-1.5">
-      <div className="w-12 bg-gray-100 rounded-full h-1.5 overflow-hidden">
+      <div className="w-12 bg-apptivia-carbon-100 rounded-full h-1.5 overflow-hidden">
         <div
           className="h-full rounded-full transition-all"
           style={{ width: `${pct}%`, backgroundColor: allRequiredMet ? '#10b981' : '#f59e0b' }}
@@ -225,7 +225,7 @@ function DealCepPanel({ deal, cepStages, onClose, onAdvance, onUpdateChecklist, 
             <button
               key={s.id}
               onClick={() => onAssignStage(deal.id, s.id, s.stage_key, s.win_probability)}
-              className="flex items-center gap-2 w-full text-left p-2 rounded-lg hover:bg-gray-50 transition-colors border border-gray-100"
+              className="flex items-center gap-2 w-full text-left p-2 rounded-lg hover:bg-apptivia-paper transition-colors border border-gray-100"
             >
               <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: s.color }} />
               <span className="text-xs font-medium text-gray-700">{s.stage_name}</span>
@@ -312,7 +312,7 @@ function DealCepPanel({ deal, cepStages, onClose, onAdvance, onUpdateChecklist, 
               <button
                 key={item.key}
                 onClick={() => toggleCheck(item.key)}
-                className="flex items-center gap-2 w-full text-left p-1.5 rounded hover:bg-gray-50 transition-colors"
+                className="flex items-center gap-2 w-full text-left p-1.5 rounded hover:bg-apptivia-paper transition-colors"
               >
                 {checklist[item.key]
                   ? <CheckSquare size={14} className="text-emerald-500 flex-shrink-0" />
@@ -350,7 +350,7 @@ function DealCepPanel({ deal, cepStages, onClose, onAdvance, onUpdateChecklist, 
           <div className="space-y-1">
             {currentStage.role_responsibilities.map((rr, i) => (
               <div key={i} className="flex items-start gap-2 text-xs">
-                <span className="font-semibold text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded">{rr.title}</span>
+                <span className="font-semibold text-blue-600 bg-apptivia-coral-tone-50 px-1.5 py-0.5 rounded">{rr.title}</span>
                 <span className="text-gray-600">{rr.responsibility}</span>
               </div>
             ))}
@@ -370,7 +370,7 @@ function DealCepPanel({ deal, cepStages, onClose, onAdvance, onUpdateChecklist, 
           {nextStage && (
             <button
               onClick={() => onAdvance(deal.id, currentStage.id, nextStage.id, nextStage.stage_key, nextStage.win_probability)}
-              className="w-full inline-flex items-center justify-center gap-1.5 text-xs font-medium px-3 py-2 rounded-lg bg-blue-500 text-white hover:bg-blue-600 transition-colors"
+              className="w-full inline-flex items-center justify-center gap-1.5 text-xs font-medium px-3 py-2 rounded-lg bg-apptivia-coral text-white hover:bg-apptivia-coral transition-colors"
             >
               Advance to {nextStage.stage_name} <ArrowRight size={12} />
             </button>
@@ -482,7 +482,7 @@ function DealTable({ deals, onUpdateDeal, onDeleteDeal, cepStages, hasCep, selec
         <div className="overflow-x-auto">
           <table className="w-full text-left">
             <thead>
-              <tr className="text-xs text-gray-500 border-b border-gray-50 bg-gray-50/50">
+              <tr className="text-xs text-gray-500 border-b border-gray-50 bg-apptivia-paper/50">
                 <th className="px-5 py-2.5 font-medium cursor-pointer" onClick={() => toggleSort('deal_name')}>
                   <div className="flex items-center gap-1">Deal <SortIcon field="deal_name" /></div>
                 </th>
@@ -509,9 +509,9 @@ function DealTable({ deals, onUpdateDeal, onDeleteDeal, cepStages, hasCep, selec
                 return (
                   <tr
                     key={deal.id}
-                    className={`border-b border-gray-50 hover:bg-blue-50/30 transition-colors ${
+                    className={`border-b border-gray-50 hover:bg-apptivia-coral-tone-50/30 transition-colors ${
                       hasCep ? 'cursor-pointer' : ''
-                    } ${selectedDealId === deal.id ? 'bg-blue-50/50' : ''}`}
+                    } ${selectedDealId === deal.id ? 'bg-apptivia-coral-tone-50/50' : ''}`}
                     onClick={() => hasCep && onSelectDeal(deal)}
                   >
                     <td className="px-5 py-3">
@@ -598,7 +598,7 @@ function ForecastPanel({ forecast, onGenerate, loading }) {
         <button
           onClick={onGenerate}
           disabled={loading}
-          className="inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg bg-purple-50 text-purple-600 hover:bg-purple-100 transition-colors disabled:opacity-50"
+          className="inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg bg-apptivia-carbon-100 text-purple-600 hover:bg-apptivia-carbon-100 transition-colors disabled:opacity-50"
         >
           {loading ? <RefreshCw size={12} className="animate-spin" /> : <Sparkles size={12} />}
           {loading ? 'Analyzing...' : 'Generate Forecast'}
@@ -607,7 +607,7 @@ function ForecastPanel({ forecast, onGenerate, loading }) {
 
       {forecast ? (
         <div className="prose prose-sm max-w-none">
-          <div className="bg-purple-50/50 rounded-lg p-4 text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">
+          <div className="bg-apptivia-carbon-100/50 rounded-lg p-4 text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">
             {forecast}
           </div>
         </div>
@@ -774,14 +774,14 @@ function NewDealModal({ onSave, onClose, cepStages }) {
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 transition-colors"
+              className="px-4 py-2 text-gray-700 bg-apptivia-carbon-100 rounded-md hover:bg-apptivia-carbon-200 transition-colors"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={!form.deal_name || !form.deal_value || saving}
-              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors disabled:opacity-50"
+              className="px-4 py-2 bg-apptivia-coral text-white rounded-md hover:bg-apptivia-coral transition-colors disabled:opacity-50"
             >
               {saving ? 'Adding...' : 'Add Deal'}
             </button>
@@ -820,7 +820,7 @@ export default function PipelineOperator({ organizationId, userId }) {
           <h2 className="text-base font-semibold text-gray-900 flex items-center gap-2">
             Pipeline Operator
             {hasCep && (
-              <span className="inline-flex items-center gap-1 text-[10px] font-medium text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-full">
+              <span className="inline-flex items-center gap-1 text-[10px] font-medium text-indigo-600 bg-apptivia-carbon-100 px-2 py-0.5 rounded-full">
                 <Layers size={10} /> CEP Active
               </span>
             )}
@@ -831,14 +831,14 @@ export default function PipelineOperator({ organizationId, userId }) {
           <button
             onClick={handleRefresh}
             disabled={pipeline.refreshing}
-            className="inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 transition-colors disabled:opacity-50"
+            className="inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg border border-gray-200 text-gray-600 hover:bg-apptivia-paper transition-colors disabled:opacity-50"
           >
             <RefreshCw size={12} className={pipeline.refreshing ? 'animate-spin' : ''} />
             {pipeline.refreshing ? 'Refreshing...' : 'Refresh'}
           </button>
           <button
             onClick={() => setShowNewDeal(true)}
-            className="inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg bg-blue-500 text-white hover:bg-blue-600 transition-colors"
+            className="inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg bg-apptivia-coral text-white hover:bg-apptivia-coral transition-colors"
           >
             <Plus size={12} /> Add Deal
           </button>

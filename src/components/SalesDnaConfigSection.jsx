@@ -59,7 +59,7 @@ export default function SalesDnaConfigSection({ organizationId, cepStages, compa
             <button
               onClick={handleSave}
               disabled={saving || !isDirty}
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 text-sm flex items-center gap-2"
+              className="px-4 py-2 bg-apptivia-coral text-white rounded-lg hover:bg-apptivia-coral disabled:opacity-50 text-sm flex items-center gap-2"
             >
               {saved ? <><Check size={14} /> Saved</> : saving ? 'Saving...' : 'Save Sales DNA'}
             </button>
@@ -84,7 +84,7 @@ export default function SalesDnaConfigSection({ organizationId, cepStages, compa
           </p>
         </div>
         {selectedPrimary && (
-          <span className="ml-auto text-xs bg-blue-50 text-blue-700 px-2 py-1 rounded-full">
+          <span className="ml-auto text-xs bg-apptivia-coral-tone-50 text-blue-700 px-2 py-1 rounded-full">
             {selectedPrimary.name}
           </span>
         )}
@@ -103,7 +103,7 @@ export default function SalesDnaConfigSection({ organizationId, cepStages, compa
             <button
               onClick={handleSave}
               disabled={saving || !isDirty}
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 text-sm flex items-center gap-2"
+              className="px-4 py-2 bg-apptivia-coral text-white rounded-lg hover:bg-apptivia-coral disabled:opacity-50 text-sm flex items-center gap-2"
             >
               {saved ? <><Check size={14} /> Saved</> : saving ? 'Saving...' : 'Save Sales DNA'}
             </button>
@@ -134,7 +134,7 @@ export default function SalesDnaConfigSection({ organizationId, cepStages, compa
                 })}
                 className={`border-2 rounded-lg p-3 text-left transition-all ${
                   localDna.methodology_approach === approach.key
-                    ? 'border-blue-600 bg-blue-50'
+                    ? 'border-blue-600 bg-apptivia-coral-tone-50'
                     : 'border-gray-200 hover:border-blue-300'
                 }`}
               >
@@ -162,7 +162,7 @@ export default function SalesDnaConfigSection({ organizationId, cepStages, compa
               ))}
             </select>
             {selectedPrimary && (
-              <div className="mt-2 p-3 bg-gray-50 rounded-lg text-xs">
+              <div className="mt-2 p-3 bg-apptivia-paper rounded-lg text-xs">
                 <div className="font-medium text-gray-700 mb-1">Core Principles:</div>
                 <ul className="space-y-0.5 text-gray-600">
                   {selectedPrimary.core_principles.map((p, i) => (
@@ -195,7 +195,7 @@ export default function SalesDnaConfigSection({ organizationId, cepStages, compa
               ))}
             </select>
             {selectedSecondary && (
-              <div className="mt-2 p-3 bg-gray-50 rounded-lg text-xs">
+              <div className="mt-2 p-3 bg-apptivia-paper rounded-lg text-xs">
                 <div className="font-medium text-gray-700 mb-1">Core Principles:</div>
                 <ul className="space-y-0.5 text-gray-600">
                   {selectedSecondary.core_principles.map((p, i) => (
@@ -271,7 +271,7 @@ export default function SalesDnaConfigSection({ organizationId, cepStages, compa
               </p>
               <div className="space-y-1.5 mb-2">
                 {(localDna.custom_methodology_principles || []).map((p, i) => (
-                  <div key={i} className="flex items-center gap-2 text-sm bg-gray-50 rounded px-3 py-1.5">
+                  <div key={i} className="flex items-center gap-2 text-sm bg-apptivia-paper rounded px-3 py-1.5">
                     <span className="text-gray-400">{i + 1}.</span>
                     <span className="flex-1 text-gray-700">{p}</span>
                     <button
@@ -315,7 +315,7 @@ export default function SalesDnaConfigSection({ organizationId, cepStages, compa
                       setCustomPrinciple('');
                     }
                   }}
-                  className="px-3 py-2 bg-gray-100 rounded-lg hover:bg-gray-200 text-gray-600 text-sm"
+                  className="px-3 py-2 bg-apptivia-carbon-100 rounded-lg hover:bg-apptivia-carbon-200 text-gray-600 text-sm"
                 >
                   Add
                 </button>

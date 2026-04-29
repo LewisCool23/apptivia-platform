@@ -29,7 +29,7 @@ export default function TwilioDialerWidget({
   const initial = (activeContact?.name?.[0] ?? '?').toUpperCase();
 
   return (
-    <div className="fixed bottom-6 right-6 z-50 bg-gray-900 text-white rounded-2xl shadow-2xl p-4 w-60 flex flex-col gap-3">
+    <div className="fixed bottom-6 right-6 z-50 bg-apptivia-ink text-white rounded-2xl shadow-2xl p-4 w-60 flex flex-col gap-3">
       {/* Contact info */}
       <div className="flex items-center gap-3">
         <div className="w-10 h-10 rounded-full bg-gradient-to-br from-green-400 to-emerald-500 flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
@@ -65,7 +65,7 @@ export default function TwilioDialerWidget({
           className={`w-11 h-11 rounded-full flex items-center justify-center transition-colors
             ${isMuted
               ? 'bg-amber-500 hover:bg-amber-600'
-              : 'bg-gray-700 hover:bg-gray-600'}
+              : 'bg-apptivia-carbon-700 hover:bg-apptivia-carbon-600'}
             disabled:opacity-40 disabled:cursor-not-allowed`}
           title={isMuted ? 'Unmute' : 'Mute'}
         >

@@ -3,6 +3,7 @@ import { supabase } from '../supabaseClient';
 import { TITLES } from '../constants/titles';
 
 interface Title {
+  id?: string;
   key: string;
   label: string;
 }
@@ -21,7 +22,7 @@ export function useTitles(organizationId?: string | null) {
       // Fetch global titles (organization_id IS NULL) + org-specific if orgId provided
       let query = supabase
         .from('titles')
-        .select('title_key, title_name')
+        .select('id, title_key, title_name')
         .eq('is_active', true)
         .order('sort_order');
 
@@ -36,7 +37,7 @@ export function useTitles(organizationId?: string | null) {
       const { data, error } = await query;
 
       if (!cancelled && data && !error && data.length > 0) {
-        setTitles(data.map((t: any) => ({ key: t.title_key, label: t.title_name })));
+        setTitles(data.map((t: any) => ({ id: t.id, key: t.title_key, label: t.title_name })));
       }
       // If error or empty, keep the fallback TITLES constant
     }

@@ -99,7 +99,7 @@ export default function SkillsetDetailsModal({
         .select('*')
         .eq('skillset_id', skillsetId)
         .order('points', { ascending: true });
-      if (organizationId) achievementsQuery = achievementsQuery.eq('organization_id', organizationId);
+      // Achievements are global structural definitions (org_id = NULL after migration 157)
 
       const [achievementsRes, metricsRes, profilesRes] = await Promise.all([
         achievementsQuery,
@@ -308,13 +308,13 @@ export default function SkillsetDetailsModal({
           ) : (
             <div className="space-y-4">
               {highlightAchievementName && (
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-sm text-blue-800">
+                <div className="bg-apptivia-coral-tone-50 border border-blue-200 rounded-lg p-4 text-sm text-blue-800">
                   Suggested next achievement: <span className="font-semibold">{highlightAchievementName}</span>
                 </div>
               )}
               
               {/* Overall Progress Section */}
-              <div className="bg-gray-50 rounded-lg p-4">
+              <div className="bg-apptivia-paper rounded-lg p-4">
                 <h3 className="font-semibold mb-3">{audienceLabel} Overview</h3>
                 <div className="grid grid-cols-3 gap-4">
                   <div>
@@ -372,17 +372,17 @@ export default function SkillsetDetailsModal({
                       return (
                       <div
                         key={achievement.id}
-                        className={`border rounded-lg p-4 transition-shadow ${isCompleted ? 'bg-green-50 border-green-200 shadow-sm' : 'hover:shadow-md'} ${isHighlighted ? 'ring-2 ring-blue-400 bg-blue-50 border-blue-200' : ''}`}
+                        className={`border rounded-lg p-4 transition-shadow ${isCompleted ? 'bg-green-50 border-green-200 shadow-sm' : 'hover:shadow-md'} ${isHighlighted ? 'ring-2 ring-blue-400 bg-apptivia-coral-tone-50 border-blue-200' : ''}`}
                       >
                         <div className="flex items-start justify-between mb-2">
                           <div className="flex-1">
                             <div className="flex items-center gap-2 mb-1 flex-wrap">
                               <h4 className="font-semibold text-gray-900">{achievement.name}</h4>
-                              <span className={`px-2 py-1 rounded text-xs font-medium ${difficultyColors[achievement.difficulty] || 'bg-gray-100 text-gray-700'}`}>
+                              <span className={`px-2 py-1 rounded text-xs font-medium ${difficultyColors[achievement.difficulty] || 'bg-apptivia-carbon-100 text-gray-700'}`}>
                                 {achievement.difficulty}
                               </span>
                               {isHighlighted && (
-                                <span className="px-2 py-1 rounded text-xs font-semibold bg-blue-600 text-white">Suggested</span>
+                                <span className="px-2 py-1 rounded text-xs font-semibold bg-apptivia-coral text-white">Suggested</span>
                               )}
                               {isCompleted && (
                                 <span className="px-2 py-1 rounded text-xs font-semibold bg-green-600 text-white">Completed</span>
@@ -441,7 +441,7 @@ export default function SkillsetDetailsModal({
                               <div className="text-xs text-gray-500">{profile.achievements_completed} achievements</div>
                             </div>
                           </div>
-                          <div className="w-full bg-gray-200 rounded-full h-2">
+                          <div className="w-full bg-apptivia-carbon-200 rounded-full h-2">
                             <div className="h-2 rounded-full transition-all" style={{ width: `${profile.progress}%`, backgroundColor: resolvedColor }}></div>
                           </div>
                         </div>
@@ -454,10 +454,10 @@ export default function SkillsetDetailsModal({
           )}
         </div>
 
-        <div className="bg-gray-50 px-6 py-4 flex justify-end border-t">
+        <div className="bg-apptivia-paper px-6 py-4 flex justify-end border-t">
           <button
             onClick={onClose}
-            className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300"
+            className="px-4 py-2 bg-apptivia-carbon-200 text-gray-700 rounded-lg hover:bg-apptivia-carbon-300"
           >
             Close
           </button>

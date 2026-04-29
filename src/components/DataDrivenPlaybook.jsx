@@ -287,7 +287,7 @@ export default function DataDrivenPlaybook({ scorecardData, lastWeekScorecardDat
                         <span className="text-[10px] text-gray-400">{kpi.belowTargetCount}/{rows.length} reps below</span>
                       </div>
                     </div>
-                    <div className="w-full bg-gray-200 rounded-full h-1.5 mb-2">
+                    <div className="w-full bg-apptivia-carbon-200 rounded-full h-1.5 mb-2">
                       <div
                         className="h-1.5 rounded-full bg-red-400 transition-all"
                         style={{ width: `${Math.min(kpi.avgPercentage, 100)}%` }}
@@ -298,7 +298,7 @@ export default function DataDrivenPlaybook({ scorecardData, lastWeekScorecardDat
                         <div className="text-[11px] text-amber-700 bg-amber-50 rounded px-2 py-1 mb-1.5">
                           {guidance.diagnosis}
                         </div>
-                        <div className="text-[11px] text-blue-700 bg-blue-50 rounded px-2 py-1 mb-1.5">
+                        <div className="text-[11px] text-blue-700 bg-apptivia-coral-tone-50 rounded px-2 py-1 mb-1.5">
                           Ask in 1:1: "{guidance.coachingQuestion}"
                         </div>
                         <ul className="text-[11px] text-gray-600 space-y-0.5 list-disc list-inside">
@@ -436,7 +436,7 @@ export default function DataDrivenPlaybook({ scorecardData, lastWeekScorecardDat
                               <div className="flex items-center gap-1.5">
                                 <button
                                   onClick={() => setPrepRepId(rep.repId)}
-                                  className="flex items-center gap-1 px-2 py-1 text-[10px] font-medium text-blue-600 border border-blue-200 rounded hover:bg-blue-50 transition-colors"
+                                  className="flex items-center gap-1 px-2 py-1 text-[10px] font-medium text-blue-600 border border-blue-200 rounded hover:bg-apptivia-coral-tone-50 transition-colors"
                                 >
                                   <CalendarCheck size={12} />
                                   Prep 1:1
@@ -453,7 +453,7 @@ export default function DataDrivenPlaybook({ scorecardData, lastWeekScorecardDat
                                 {onStartReview && (
                                   <button
                                     onClick={() => onStartReview(rep.repId, repNames?.[rep.repId] || 'Rep')}
-                                    className="flex items-center gap-1 px-2 py-1 text-[10px] font-medium text-purple-600 border border-purple-200 rounded hover:bg-purple-50 transition-colors"
+                                    className="flex items-center gap-1 px-2 py-1 text-[10px] font-medium text-purple-600 border border-purple-200 rounded hover:bg-apptivia-carbon-100 transition-colors"
                                   >
                                     <ClipboardList size={12} />
                                     Start Review
@@ -478,7 +478,7 @@ export default function DataDrivenPlaybook({ scorecardData, lastWeekScorecardDat
       <div className="border rounded-lg mb-3 overflow-hidden">
         <button
           onClick={() => toggleSection('changes')}
-          className="w-full flex items-center justify-between px-3 py-2.5 bg-blue-50 hover:bg-blue-100 transition-colors text-left"
+          className="w-full flex items-center justify-between px-3 py-2.5 bg-apptivia-coral-tone-50 hover:bg-apptivia-coral-tone-50 transition-colors text-left"
         >
           <div className="flex items-center gap-2">
             {recentChanges.length > 0 && recentChanges[0].delta >= 0
@@ -496,10 +496,10 @@ export default function DataDrivenPlaybook({ scorecardData, lastWeekScorecardDat
             ) : (
               <div className="space-y-2">
                 {recentChanges.map((item, i) => (
-                  <div key={i} className={`flex items-center justify-between text-xs border rounded p-2 ${item.type === 'team' ? 'bg-blue-50 border-blue-100' : ''}`}>
+                  <div key={i} className={`flex items-center justify-between text-xs border rounded p-2 ${item.type === 'team' ? 'bg-apptivia-coral-tone-50 border-blue-100' : ''}`}>
                     <div className="flex items-center gap-2">
                       <span className={`font-medium ${item.type === 'team' ? 'text-blue-900' : 'text-gray-900'}`}>{item.label}</span>
-                      {item.type === 'team' && <span className="text-[9px] px-1.5 py-0.5 rounded bg-blue-100 text-blue-600">Team</span>}
+                      {item.type === 'team' && <span className="text-[9px] px-1.5 py-0.5 rounded bg-apptivia-coral-tone-50 text-blue-600">Team</span>}
                     </div>
                     <div className="flex items-center gap-2">
                       <span className="text-gray-500">{item.prior}%</span>
@@ -526,7 +526,7 @@ export default function DataDrivenPlaybook({ scorecardData, lastWeekScorecardDat
       <div className="border rounded-lg overflow-hidden">
         <button
           onClick={() => toggleSection('priorities')}
-          className="w-full flex items-center justify-between px-3 py-2.5 bg-purple-50 hover:bg-purple-100 transition-colors text-left"
+          className="w-full flex items-center justify-between px-3 py-2.5 bg-apptivia-carbon-100 hover:bg-apptivia-carbon-100 transition-colors text-left"
         >
           <div className="flex items-center gap-2">
             <Target size={16} className="text-purple-500" />

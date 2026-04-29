@@ -62,7 +62,7 @@ export default function RightFilterPanel({
                   disabled={!onReset}
                   className={`px-2.5 py-1 rounded-md text-[11px] font-semibold border transition-all ${
                     onReset
-                      ? 'border-gray-200 text-gray-700 hover:bg-gray-50'
+                      ? 'border-gray-200 text-gray-700 hover:bg-apptivia-paper'
                       : 'border-gray-100 text-gray-300 cursor-not-allowed'
                   }`}
                 >
@@ -71,7 +71,7 @@ export default function RightFilterPanel({
               )}
               <button
                 onClick={onClose}
-                className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-all duration-200"
+                className="p-2 text-gray-600 hover:bg-apptivia-carbon-100 rounded-lg transition-all duration-200"
                 aria-label="Close filters"
               >
                 <X size={18} />

@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo, memo } from 'react';
-import { Send, X, Minimize2, Maximize2, Shield, Trash2, RotateCcw, Sparkles, MessageSquarePlus, ChevronLeft, ChevronRight, Pencil, Trash, CheckCircle, Brain } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Send, X, Minimize2, Maximize2, Shield, Trash2, RotateCcw, Sparkles, MessageSquarePlus, ChevronLeft, ChevronRight, Pencil, Trash, CheckCircle, Brain, Expand, Shrink } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import socket from './socket';
 import { useAuth } from './AuthContext';
@@ -23,6 +24,9 @@ const ROLE_PRESETS = {
     { label: 'Deal Strategy', prompt: 'Help me strategize on my current pipeline — which deals need attention and what actions should I take?' },
     { label: 'Call Prep', prompt: 'Help me prepare for my next sales call — give me a structured call plan with opener, key questions, and close.' },
     { label: 'Handle Objection', prompt: 'A prospect just pushed back. Help me craft a response using proven objection handling techniques.' },
+    { label: 'Pre-Call Prep', prompt: 'Generate a pre-call prep card for my next upcoming meeting — who am I talking to, likely topics, questions to ask, and objection prep.' },
+    { label: 'Skill Builder', prompt: 'Assess my weakest skill dimension based on my KPIs and build a 4-week phased skill development plan.' },
+    { label: 'Daily Briefing', prompt: 'Give me my daily briefing — priorities, KPI watch, and what to focus on.' },
   ],
   manager: [
     { label: 'Team Overview', prompt: 'Give me a summary of my team\'s performance this week — who needs coaching and who is excelling?' },
@@ -43,6 +47,7 @@ const TITLE_PRESETS = {
     { label: 'Handle Objection', prompt: 'A prospect just pushed back on my call. Help me craft a response using proven objection handling techniques.' },
     { label: 'Pipeline Builder', prompt: 'Analyze my current activity metrics and help me build a plan to hit my pipeline target this week.' },
     { label: 'Meeting Prep', prompt: 'Help me prepare for an upcoming meeting — what should I research and what questions should I ask?' },
+    { label: 'Daily Briefing', prompt: 'Give me my daily briefing — priorities, KPI watch, and what to focus on.' },
   ],
   sdr: null, // alias → resolved to bdr at runtime
   ae: [
@@ -51,6 +56,7 @@ const TITLE_PRESETS = {
     { label: 'Executive Briefing', prompt: 'Help me prepare for a meeting with an executive buyer — structure my talking points and value props.' },
     { label: 'Negotiation Coach', prompt: 'I\'m in negotiations on a deal. Help me handle pricing objections and create urgency to close.' },
     { label: 'Proposal Builder', prompt: 'Help me structure a compelling proposal that quantifies the value of our solution vs. the cost of inaction.' },
+    { label: 'Pre-Call Prep', prompt: 'Generate a pre-call prep card for my next upcoming meeting — who am I talking to, likely topics, questions to ask, and objection prep.' },
   ],
   sales_manager: null, // uses role-based manager presets (already defined above)
 };
@@ -204,17 +210,423 @@ const saveMessages = (msgs, userId) => {
 
 // ─── Sub-components ──────────────────────────────────────────────────────────
 
-const ChatBubble = memo(({ msg, onOptionSelect, isLastAaron, isTyping }) => {
+// ── Structured Output Renderers (Spec 07) ────────────────────────────────────
+
+const hasDiagnosis = (d) => d && (d.primary_kpi_gap || d.evidence?.length > 0 || d.underlying_belief);
+const hasPlan = (p) => p && (p.week_1_focus || p.week_2_focus || p.week_4_checkpoint);
+
+const StructuredCoachingPlan = memo(({ data }) => (
+  <div className="space-y-3 text-sm">
+    <div className="font-semibold text-gray-900 text-base">{data.rep_name ? `Coaching Plan: ${data.rep_name}` : 'Coaching Plan'}</div>
+
+    {hasDiagnosis(data.diagnosis) && (
+      <div className="bg-red-50 border border-red-200 rounded-lg p-3">
+        <div className="font-semibold text-red-800 text-xs uppercase tracking-wide mb-1">Diagnosis</div>
+        {data.diagnosis.primary_kpi_gap && <div className="font-medium text-red-700 mb-1">{data.diagnosis.primary_kpi_gap}</div>}
+        {data.diagnosis.evidence?.length > 0 && (
+          <ul className="list-disc ml-4 text-red-600 text-xs space-y-0.5">
+            {data.diagnosis.evidence.map((e, i) => <li key={i}>{e}</li>)}
+          </ul>
+        )}
+        {data.diagnosis.underlying_belief && (
+          <div className="mt-1.5 text-xs text-red-600 italic">Underlying belief: {data.diagnosis.underlying_belief}</div>
+        )}
+      </div>
+    )}
+
+    {hasPlan(data.coaching_plan) && (
+      <div className="bg-apptivia-coral-tone-50 border border-blue-200 rounded-lg p-3 space-y-2">
+        <div className="font-semibold text-blue-800 text-xs uppercase tracking-wide">Plan</div>
+        {data.coaching_plan.week_1_focus && (
+          <div>
+            <div className="font-medium text-blue-700 text-xs">Week 1: {data.coaching_plan.week_1_focus}</div>
+            {data.coaching_plan.week_1_actions?.map((a, i) => <div key={i} className="text-xs text-blue-600 ml-3">- {a}</div>)}
+          </div>
+        )}
+        {data.coaching_plan.week_2_focus && (
+          <div>
+            <div className="font-medium text-blue-700 text-xs">Week 2: {data.coaching_plan.week_2_focus}</div>
+            {data.coaching_plan.week_2_actions?.map((a, i) => <div key={i} className="text-xs text-blue-600 ml-3">- {a}</div>)}
+          </div>
+        )}
+        {data.coaching_plan.week_4_checkpoint && (
+          <div className="text-xs text-blue-600 mt-1">Week 4 checkpoint: {data.coaching_plan.week_4_checkpoint}</div>
+        )}
+      </div>
+    )}
+
+    {data.framework_used && (
+      <div className="text-[10px] text-gray-400">Framework: {data.framework_used}</div>
+    )}
+
+    {data.manager_talk_track && (
+      <div className="bg-apptivia-carbon-100 border border-purple-200 rounded-lg p-3">
+        <div className="font-semibold text-purple-800 text-xs uppercase tracking-wide mb-1">Manager Talk Track</div>
+        <div className="text-xs text-purple-700">{data.manager_talk_track}</div>
+      </div>
+    )}
+
+    {data.rep_facing_message && (
+      <div className="bg-green-50 border border-green-200 rounded-lg p-3">
+        <div className="font-semibold text-green-800 text-xs uppercase tracking-wide mb-1">Rep-Facing Message</div>
+        <div className="text-xs text-green-700">{data.rep_facing_message}</div>
+      </div>
+    )}
+  </div>
+));
+StructuredCoachingPlan.displayName = 'StructuredCoachingPlan';
+
+const StructuredOneOnOnePrep = memo(({ data }) => (
+  <div className="space-y-3 text-sm">
+    <div className="font-semibold text-gray-900 text-base">{data.rep_name ? `1:1 Prep: ${data.rep_name}` : '1:1 Prep'}</div>
+
+    {data.meeting_context && (
+      <div className="bg-apptivia-paper border border-gray-200 rounded-lg p-3 text-xs text-gray-600 space-y-0.5">
+        {data.meeting_context.kpi_movement_summary && <div>{data.meeting_context.kpi_movement_summary}</div>}
+        {data.meeting_context.open_deals_count != null && <div>Open deals: {data.meeting_context.open_deals_count}</div>}
+        {data.meeting_context.deals_at_risk_count != null && <div>Deals at risk: {data.meeting_context.deals_at_risk_count}</div>}
+      </div>
+    )}
+
+    {data.agenda?.length > 0 && (
+      <div className="bg-apptivia-coral-tone-50 border border-blue-200 rounded-lg p-3">
+        <div className="font-semibold text-blue-800 text-xs uppercase tracking-wide mb-1.5">Agenda</div>
+        {data.agenda.map((item, i) => (
+          <div key={i} className="mb-2 last:mb-0">
+            <div className="flex items-center gap-2">
+              <span className="font-medium text-blue-700 text-xs">{item.topic}</span>
+              {item.minutes && <span className="text-[10px] bg-apptivia-coral-tone-50 text-blue-600 px-1.5 py-0.5 rounded">{item.minutes} min</span>}
+            </div>
+            {item.talking_points?.map((tp, j) => <div key={j} className="text-xs text-blue-600 ml-3">- {tp}</div>)}
+          </div>
+        ))}
+      </div>
+    )}
+
+    {data.celebrate?.length > 0 && (
+      <div className="bg-green-50 border border-green-200 rounded-lg p-3">
+        <div className="font-semibold text-green-800 text-xs uppercase tracking-wide mb-1">Celebrate</div>
+        {data.celebrate.map((c, i) => <div key={i} className="text-xs text-green-700">+ {c}</div>)}
+      </div>
+    )}
+
+    {data.investigate?.length > 0 && (
+      <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
+        <div className="font-semibold text-yellow-800 text-xs uppercase tracking-wide mb-1">Investigate</div>
+        {data.investigate.map((v, i) => <div key={i} className="text-xs text-yellow-700">? {v}</div>)}
+      </div>
+    )}
+
+    {data.decide?.length > 0 && (
+      <div className="bg-orange-50 border border-orange-200 rounded-lg p-3">
+        <div className="font-semibold text-orange-800 text-xs uppercase tracking-wide mb-1">Decide</div>
+        {data.decide.map((d, i) => <div key={i} className="text-xs text-orange-700">{d}</div>)}
+      </div>
+    )}
+
+    {data.rep_facing_pre_read && (
+      <div className="bg-apptivia-carbon-100 border border-purple-200 rounded-lg p-3">
+        <div className="font-semibold text-purple-800 text-xs uppercase tracking-wide mb-1">Pre-Read for Rep</div>
+        <div className="text-xs text-purple-700">{data.rep_facing_pre_read}</div>
+      </div>
+    )}
+  </div>
+));
+StructuredOneOnOnePrep.displayName = 'StructuredOneOnOnePrep';
+
+const healthColor = { green: 'bg-green-500', yellow: 'bg-yellow-500', red: 'bg-red-500' };
+
+const StructuredPipelineDiagnosis = memo(({ data }) => (
+  <div className="space-y-3 text-sm">
+    <div className="font-semibold text-gray-900 text-base">
+      Pipeline Diagnosis{data.team_or_rep_name ? `: ${data.team_or_rep_name}` : ''}{data.scope ? ` (${data.scope})` : ''}
+    </div>
+
+    {data.diagnosis_summary && (
+      <div className="text-xs text-gray-700 leading-relaxed">{data.diagnosis_summary}</div>
+    )}
+
+    {data.stage_health?.length > 0 && (
+      <div className="bg-apptivia-paper border border-gray-200 rounded-lg p-3">
+        <div className="font-semibold text-gray-800 text-xs uppercase tracking-wide mb-1.5">Stage Health</div>
+        <div className="space-y-1.5">
+          {data.stage_health.map((s, i) => (
+            <div key={i} className="flex items-center gap-2 text-xs">
+              <span className={`w-2 h-2 rounded-full shrink-0 ${healthColor[s.health] || 'bg-apptivia-carbon-400'}`} />
+              <span className="font-medium text-gray-700 min-w-[80px]">{s.stage}</span>
+              {s.deal_count != null && <span className="text-gray-500">{s.deal_count} deals</span>}
+              {s.value != null && <span className="text-gray-500">${(s.value / 1000).toFixed(0)}K</span>}
+              {s.issue && <span className="text-gray-400 italic truncate">{s.issue}</span>}
+            </div>
+          ))}
+        </div>
+      </div>
+    )}
+
+    {data.stalled_deals?.length > 0 && (
+      <div className="bg-red-50 border border-red-200 rounded-lg p-3">
+        <div className="font-semibold text-red-800 text-xs uppercase tracking-wide mb-1.5">Stalled Deals</div>
+        {data.stalled_deals.map((d, i) => (
+          <div key={i} className="mb-1.5 last:mb-0 text-xs">
+            <div className="font-medium text-red-700">{d.deal_name}{d.value != null ? ` ($${(d.value / 1000).toFixed(0)}K)` : ''}{d.days_in_stage != null ? ` — ${d.days_in_stage}d in stage` : ''}</div>
+            {d.recommended_action && <div className="text-red-600 ml-3">Action: {d.recommended_action}</div>}
+          </div>
+        ))}
+      </div>
+    )}
+
+    {data.missing_pipeline_value != null && (
+      <div className="text-xs font-medium text-orange-700 bg-orange-50 border border-orange-200 rounded-lg px-3 py-2">
+        Pipeline gap: ${(data.missing_pipeline_value / 1000).toFixed(0)}K needed to cover quota
+      </div>
+    )}
+
+    {data.actions_this_week?.length > 0 && (
+      <div className="bg-apptivia-coral-tone-50 border border-blue-200 rounded-lg p-3">
+        <div className="font-semibold text-blue-800 text-xs uppercase tracking-wide mb-1.5">Actions This Week</div>
+        {data.actions_this_week.map((a, i) => (
+          <div key={i} className="flex items-start gap-2 text-xs mb-1 last:mb-0">
+            <span className="text-blue-600 shrink-0">[ ]</span>
+            <div>
+              <span className="text-blue-700">{a.action}</span>
+              {a.owner && <span className="text-blue-500 ml-1">({a.owner})</span>}
+              {a.deadline && <span className="text-blue-400 ml-1">by {a.deadline}</span>}
+            </div>
+          </div>
+        ))}
+      </div>
+    )}
+  </div>
+));
+StructuredPipelineDiagnosis.displayName = 'StructuredPipelineDiagnosis';
+
+// ── Pre-Call Prep Card (Spec 11 Mode 2) ──────────────────────────────────────
+const StructuredPreCallPrep = memo(({ data }) => (
+  <div className="space-y-3 text-sm">
+    <div className="font-semibold text-gray-900 text-base">
+      {data.meeting_title ? `Pre-Call Prep: ${data.meeting_title}` : 'Pre-Call Prep'}
+      {data.meeting_time && <span className="text-xs text-gray-500 ml-2">{data.meeting_time}</span>}
+    </div>
+
+    {data.who && (
+      <div className="bg-apptivia-coral-tone-50 border border-blue-200 rounded-lg p-3">
+        <div className="font-semibold text-blue-800 text-xs uppercase tracking-wide mb-1">Who</div>
+        {data.who.key_person && <div className="font-medium text-blue-700 text-xs mb-0.5">Key: {data.who.key_person}</div>}
+        {data.who.attendees?.length > 0 && (
+          <div className="text-xs text-blue-600">{data.who.attendees.join(', ')}</div>
+        )}
+        {data.who.relationship_notes && (
+          <div className="text-xs text-blue-500 italic mt-1">{data.who.relationship_notes}</div>
+        )}
+      </div>
+    )}
+
+    {data.likely_topics?.length > 0 && (
+      <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
+        <div className="font-semibold text-yellow-800 text-xs uppercase tracking-wide mb-1">Likely Topics</div>
+        {data.likely_topics.map((t, i) => <div key={i} className="text-xs text-yellow-700 ml-2">- {t}</div>)}
+      </div>
+    )}
+
+    {data.questions_to_ask?.length > 0 && (
+      <div className="bg-green-50 border border-green-200 rounded-lg p-3">
+        <div className="font-semibold text-green-800 text-xs uppercase tracking-wide mb-1">Questions to Ask</div>
+        {data.questions_to_ask.map((q, i) => (
+          <div key={i} className="mb-1.5 last:mb-0">
+            <div className="text-xs font-medium text-green-700">{i + 1}. {q.question || q}</div>
+            {q.why && <div className="text-[10px] text-green-500 ml-4 italic">{q.why}</div>}
+          </div>
+        ))}
+      </div>
+    )}
+
+    {data.objection_prep && (
+      <div className="bg-red-50 border border-red-200 rounded-lg p-3">
+        <div className="font-semibold text-red-800 text-xs uppercase tracking-wide mb-1">Objection Prep</div>
+        {data.objection_prep.objection && <div className="text-xs font-medium text-red-700 mb-1">"{data.objection_prep.objection}"</div>}
+        {data.objection_prep.response_framework && <div className="text-xs text-red-600">{data.objection_prep.response_framework}</div>}
+      </div>
+    )}
+
+    {data.next_step_goal && (
+      <div className="bg-apptivia-carbon-100 border border-purple-200 rounded-lg p-3">
+        <div className="font-semibold text-purple-800 text-xs uppercase tracking-wide mb-1">Next Step Goal</div>
+        <div className="text-xs text-purple-700">{data.next_step_goal}</div>
+      </div>
+    )}
+  </div>
+));
+StructuredPreCallPrep.displayName = 'StructuredPreCallPrep';
+
+// ── Daily Briefing Card (Spec 11 Mode 1) ─────────────────────────────────────
+const StructuredDailyBriefing = memo(({ data }) => {
+  const isMorning = data.type === 'daily_briefing_morning';
+  return (
+    <div className="space-y-3 text-sm">
+      <div className="font-semibold text-gray-900 text-base">
+        {isMorning ? 'Morning Briefing' : 'End-of-Day Reflection'}
+      </div>
+
+      {isMorning && data.greeting && (
+        <div className="text-sm text-gray-700 italic">{data.greeting}</div>
+      )}
+
+      {isMorning && data.priorities?.length > 0 && (
+        <div className="bg-apptivia-coral-tone-50 border border-blue-200 rounded-lg p-3">
+          <div className="font-semibold text-blue-800 text-xs uppercase tracking-wide mb-1">Today's Priorities</div>
+          {data.priorities.map((p, i) => <div key={i} className="text-xs text-blue-700 ml-2">{i + 1}. {p}</div>)}
+        </div>
+      )}
+
+      {isMorning && data.kpi_watch?.length > 0 && (
+        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
+          <div className="font-semibold text-yellow-800 text-xs uppercase tracking-wide mb-1">KPI Watch</div>
+          {data.kpi_watch.map((k, i) => (
+            <div key={i} className="flex items-start gap-2 mb-1 last:mb-0">
+              <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium ${
+                k.status === 'ahead' ? 'bg-green-100 text-green-700' :
+                k.status === 'behind' ? 'bg-red-100 text-red-700' :
+                'bg-apptivia-carbon-100 text-gray-600'
+              }`}>{k.status}</span>
+              <div className="text-xs text-yellow-700"><span className="font-medium">{k.kpi}</span>: {k.action}</div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {isMorning && data.todays_meetings?.length > 0 && (
+        <div className="bg-green-50 border border-green-200 rounded-lg p-3">
+          <div className="font-semibold text-green-800 text-xs uppercase tracking-wide mb-1">Today's Meetings</div>
+          {data.todays_meetings.map((m, i) => (
+            <div key={i} className="mb-1 last:mb-0">
+              <div className="text-xs font-medium text-green-700">{m.time}: {m.title}</div>
+              {m.prep_note && <div className="text-[10px] text-green-500 ml-3">{m.prep_note}</div>}
+            </div>
+          ))}
+        </div>
+      )}
+
+      {isMorning && data.one_thing_to_watch && (
+        <div className="bg-orange-50 border border-orange-200 rounded-lg p-3">
+          <div className="font-semibold text-orange-800 text-xs uppercase tracking-wide mb-1">One Thing to Watch</div>
+          <div className="text-xs text-orange-700">{data.one_thing_to_watch}</div>
+        </div>
+      )}
+
+      {!isMorning && data.what_moved?.length > 0 && (
+        <div className="bg-green-50 border border-green-200 rounded-lg p-3">
+          <div className="font-semibold text-green-800 text-xs uppercase tracking-wide mb-1">What Moved Today</div>
+          {data.what_moved.map((w, i) => <div key={i} className="text-xs text-green-700 ml-2">+ {w}</div>)}
+        </div>
+      )}
+
+      {!isMorning && data.what_stalled?.length > 0 && (
+        <div className="bg-red-50 border border-red-200 rounded-lg p-3">
+          <div className="font-semibold text-red-800 text-xs uppercase tracking-wide mb-1">What Stalled</div>
+          {data.what_stalled.map((w, i) => <div key={i} className="text-xs text-red-600 ml-2">- {w}</div>)}
+        </div>
+      )}
+
+      {!isMorning && data.reflection_question && (
+        <div className="bg-apptivia-carbon-100 border border-purple-200 rounded-lg p-3">
+          <div className="font-semibold text-purple-800 text-xs uppercase tracking-wide mb-1">Reflection</div>
+          <div className="text-xs text-purple-700 italic">{data.reflection_question}</div>
+        </div>
+      )}
+
+      {!isMorning && data.tomorrows_commitment && (
+        <div className="bg-apptivia-coral-tone-50 border border-blue-200 rounded-lg p-3">
+          <div className="font-semibold text-blue-800 text-xs uppercase tracking-wide mb-1">Tomorrow's Commitment</div>
+          <div className="text-xs text-blue-700">{data.tomorrows_commitment}</div>
+        </div>
+      )}
+
+      {isMorning && data.yesterdays_commitments && (
+        <div className="text-[10px] text-gray-400 italic">Yesterday: {data.yesterdays_commitments}</div>
+      )}
+    </div>
+  );
+});
+StructuredDailyBriefing.displayName = 'StructuredDailyBriefing';
+
+// ── Skill Builder Card (Spec 11 Mode 4) ──────────────────────────────────────
+const StructuredSkillBuilder = memo(({ data }) => (
+  <div className="space-y-3 text-sm">
+    <div className="font-semibold text-gray-900 text-base">
+      Skill Builder{data.skill_dimension ? `: ${data.skill_dimension.replace(/_/g, ' ')}` : ''}
+    </div>
+
+    {data.current_state && (
+      <div className="bg-apptivia-paper border border-gray-200 rounded-lg p-3">
+        <div className="font-semibold text-gray-800 text-xs uppercase tracking-wide mb-1">Current State</div>
+        {data.current_state.assessment && <div className="text-xs text-gray-700 mb-1">{data.current_state.assessment}</div>}
+        {data.current_state.evidence?.length > 0 && (
+          <ul className="list-disc ml-4 text-xs text-gray-600 space-y-0.5">
+            {data.current_state.evidence.map((e, i) => <li key={i}>{e}</li>)}
+          </ul>
+        )}
+      </div>
+    )}
+
+    {[data.phase_1, data.phase_2, data.phase_3].filter(Boolean).map((phase, i) => (
+      <div key={i} className="bg-apptivia-coral-tone-50 border border-blue-200 rounded-lg p-3">
+        <div className="flex items-center gap-2 mb-1">
+          <span className="font-semibold text-blue-800 text-xs uppercase tracking-wide">{phase.name || `Phase ${i + 1}`}</span>
+          {phase.duration && <span className="text-[10px] bg-apptivia-coral-tone-50 text-blue-600 px-1.5 py-0.5 rounded">{phase.duration}</span>}
+        </div>
+        {phase.focus && <div className="text-xs text-blue-700 font-medium mb-1">{phase.focus}</div>}
+        {phase.exercises?.map((ex, j) => <div key={j} className="text-xs text-blue-600 ml-2">- {ex}</div>)}
+      </div>
+    ))}
+
+    {data.success_metrics?.length > 0 && (
+      <div className="bg-green-50 border border-green-200 rounded-lg p-3">
+        <div className="font-semibold text-green-800 text-xs uppercase tracking-wide mb-1">Success Metrics</div>
+        {data.success_metrics.map((m, i) => <div key={i} className="text-xs text-green-700 ml-2">- {m}</div>)}
+      </div>
+    )}
+
+    {data.managers_role && (
+      <div className="bg-apptivia-carbon-100 border border-purple-200 rounded-lg p-3">
+        <div className="font-semibold text-purple-800 text-xs uppercase tracking-wide mb-1">Manager's Role</div>
+        <div className="text-xs text-purple-700">{data.managers_role}</div>
+      </div>
+    )}
+  </div>
+));
+StructuredSkillBuilder.displayName = 'StructuredSkillBuilder';
+
+/** Render structured Aaron output by type, or return null to fall back to markdown */
+function renderStructuredOutput(structuredData) {
+  if (!structuredData?.type) return null;
+  switch (structuredData.type) {
+    case 'coaching_plan': return <StructuredCoachingPlan data={structuredData} />;
+    case 'one_on_one_prep': return <StructuredOneOnOnePrep data={structuredData} />;
+    case 'pipeline_diagnosis': return <StructuredPipelineDiagnosis data={structuredData} />;
+    case 'pre_call_prep': return <StructuredPreCallPrep data={structuredData} />;
+    case 'skill_builder': return <StructuredSkillBuilder data={structuredData} />;
+    case 'daily_briefing_morning':
+    case 'daily_briefing_eod':
+    case 'daily_briefing': return <StructuredDailyBriefing data={structuredData} />;
+    default: return null;
+  }
+}
+
+const ChatBubble = memo(({ msg, onOptionSelect, isLastAaron, isTyping, onNavigate }) => {
   const isUser = msg.sender === 'user';
   return (
     <div className={`flex ${isUser ? 'justify-end' : 'justify-start'}`}>
-      <div className={`max-w-[75%] rounded-lg px-4 py-2 shadow-sm ${
+      <div className={`${msg.structuredData ? 'max-w-[90%]' : 'max-w-[75%]'} rounded-lg px-4 py-2 shadow-sm ${
         isUser
-          ? 'bg-blue-600 text-white'
+          ? 'bg-apptivia-coral text-white'
           : 'bg-white text-gray-800 border border-gray-200'
       }`}>
         {isUser ? (
           <p className="text-sm whitespace-pre-line">{msg.text}</p>
+        ) : msg.structuredData ? (
+          <div className="text-sm">
+            {renderStructuredOutput(msg.structuredData)}
+          </div>
         ) : (
           <div className="text-sm aaron-markdown">
             <ReactMarkdown
@@ -228,7 +640,22 @@ const ChatBubble = memo(({ msg, onOptionSelect, isLastAaron, isTyping }) => {
                 li: ({ children }) => <li className="text-sm leading-relaxed">{children}</li>,
                 strong: ({ children }) => <strong className="font-semibold text-gray-900">{children}</strong>,
                 em: ({ children }) => <em className="italic text-gray-700">{children}</em>,
-                code: ({ children }) => <code className="text-xs bg-gray-100 text-blue-700 px-1 py-0.5 rounded">{children}</code>,
+                code: ({ children }) => <code className="text-xs bg-apptivia-carbon-100 text-blue-700 px-1 py-0.5 rounded">{children}</code>,
+                a: ({ href, children }) => {
+                  const isInternal = href && href.startsWith('/');
+                  return (
+                    <button
+                      onClick={(e) => {
+                        e.preventDefault();
+                        if (isInternal && onNavigate) onNavigate(href);
+                        else if (href) window.open(href, '_blank', 'noopener');
+                      }}
+                      className="text-blue-600 hover:text-blue-800 underline underline-offset-2 cursor-pointer font-medium inline"
+                    >
+                      {children}
+                    </button>
+                  );
+                },
               }}
             >
               {msg.text}
@@ -238,7 +665,7 @@ const ChatBubble = memo(({ msg, onOptionSelect, isLastAaron, isTyping }) => {
         {!isUser && msg.frameworks?.length > 0 && (
           <div className="flex flex-wrap gap-1 mt-1.5">
             {msg.frameworks.map((fw, i) => (
-              <span key={i} className="inline-block text-[10px] px-1.5 py-0.5 rounded-full bg-blue-50 text-blue-600 border border-blue-200">
+              <span key={i} className="inline-block text-[10px] px-1.5 py-0.5 rounded-full bg-apptivia-coral-tone-50 text-blue-600 border border-blue-200">
                 {fw}
               </span>
             ))}
@@ -260,9 +687,9 @@ const TypingIndicator = memo(() => (
   <div className="flex justify-start">
     <div className="bg-white text-gray-800 border border-gray-200 rounded-lg px-4 py-3 shadow-sm">
       <div className="flex gap-1">
-        <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-        <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-        <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+        <div className="w-2 h-2 bg-apptivia-carbon-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+        <div className="w-2 h-2 bg-apptivia-carbon-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+        <div className="w-2 h-2 bg-apptivia-carbon-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
       </div>
     </div>
   </div>
@@ -276,7 +703,7 @@ const OptionChips = memo(({ options, onSelect, disabled }) => (
         key={i}
         onClick={() => onSelect(opt.value)}
         disabled={disabled}
-        className="text-xs px-3 py-1.5 rounded-full border border-purple-200 bg-purple-50 text-purple-700 hover:bg-purple-100 hover:border-purple-400 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+        className="text-xs px-3 py-1.5 rounded-full border border-purple-200 bg-apptivia-carbon-100 text-purple-700 hover:bg-apptivia-carbon-100 hover:border-purple-400 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
       >
         {opt.label}
       </button>
@@ -290,6 +717,7 @@ OptionChips.displayName = 'OptionChips';
 const STARTER_PRESET_LABELS = ['Coach Me', 'My Performance'];
 
 const AaronChatbot = ({ isOpen, onClose }) => {
+  const navigate = useNavigate();
   const { user, profile, role } = useAuth();
   const { plan: billingPlan, status: billingStatus } = useBilling();
   const isStarterAaron = billingPlan === 'Basic' || billingStatus === 'expired';
@@ -325,6 +753,7 @@ const AaronChatbot = ({ isOpen, onClose }) => {
   const [messages, setMessages] = useState(() => loadMessages(user?.id) || [greetingMessage]);
   const [inputValue, setInputValue] = useState('');
   const [isMinimized, setIsMinimized] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(false);
   const [isTyping, setIsTyping] = useState(false);
   const [isConnected, setIsConnected] = useState(false);
   const [useOfflineMode, setUseOfflineMode] = useState(true);
@@ -348,9 +777,31 @@ const AaronChatbot = ({ isOpen, onClose }) => {
   const [actionLabel, setActionLabel] = useState('');
   const [actionSaving, setActionSaving] = useState(false);
   const [actionToast, setActionToast] = useState('');
+  const [targetRepId, setTargetRepId] = useState('');
+  const [teamProfiles, setTeamProfiles] = useState([]);
+
+  // [SPEC 07] Save structured output to Coaching Plans
+  const [savingPlanMsgId, setSavingPlanMsgId] = useState(null);
+  const [savedPlanMsgIds, setSavedPlanMsgIds] = useState(new Set());
   const [memoryPanelOpen, setMemoryPanelOpen] = useState(false);
   const [showOutcomePrompt, setShowOutcomePrompt] = useState(false);
   const outcomeShownRef = useRef(false);
+
+  const isManagerRole = ['admin', 'manager', 'coach'].includes(role);
+
+  // Fetch team profiles for manager rep selector (lazy — only when Log Action panel opens)
+  useEffect(() => {
+    if (!actionMsgId || !isManagerRole || teamProfiles.length > 0) return;
+    (async () => {
+      const { data } = await supabase
+        .from('profiles')
+        .select('id, first_name, last_name, role')
+        .eq('organization_id', profile?.organization_id)
+        .not('role', 'in', '("admin")')
+        .order('first_name');
+      if (data) setTeamProfiles(data);
+    })();
+  }, [actionMsgId, isManagerRole, profile?.organization_id]);
 
   // Clear chat when user switches (same machine, different login)
   useEffect(() => {
@@ -450,6 +901,7 @@ const AaronChatbot = ({ isOpen, onClose }) => {
         text: data.message,
         timestamp: new Date(),
         ...(data.frameworks?.length ? { frameworks: data.frameworks } : {}),
+        ...(data.structuredData ? { structuredData: data.structuredData } : {}),
         ...(options.length ? { options } : {}),
       }]);
     };
@@ -489,10 +941,14 @@ const AaronChatbot = ({ isOpen, onClose }) => {
     };
   }, [isOpen, user?.id, profile?.first_name, role, userPermissions]);
 
-  // Auto-scroll
+  // Auto-scroll to latest message on new messages, open, or un-minimize
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages, isTyping]);
+    if (isOpen && !isMinimized) {
+      // Small delay so the DOM has painted after open/un-minimize
+      const t = setTimeout(() => messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' }), 50);
+      return () => clearTimeout(t);
+    }
+  }, [messages, isTyping, isOpen, isMinimized]);
 
   // Auto-focus input when panel opens or un-minimizes
   useEffect(() => {
@@ -594,25 +1050,55 @@ const AaronChatbot = ({ isOpen, onClose }) => {
   }, [renameValue, loadThreads]);
 
   // [FEATURE 5] Log coaching action
-  const handleLogAction = useCallback(async (aaronMessage) => {
+  const handleLogAction = useCallback(async (aaronMessage, msgFrameworks) => {
     setActionSaving(true);
     try {
-      const data = await backendFetch('/api/aaron/coaching-action', {
+      const payload = {
         action_type: actionType,
         action_label: actionLabel || undefined,
+        source_framework: msgFrameworks?.[0] || undefined,
         thread_id: activeThreadId || undefined,
-        metadata: { aaron_message: aaronMessage?.slice(0, 500) },
-      });
-      setActionToast(data?.crm_push_status === 'pending' ? 'Action logged — syncing to CRM...' : 'Action logged');
+        metadata: { aaron_message: aaronMessage?.slice(0, 1000) },
+      };
+      // Manager assigns to a specific rep
+      if (targetRepId && isManagerRole) {
+        payload.target_rep_id = targetRepId;
+      }
+      const data = await backendFetch('/api/aaron/coaching-action', payload);
+      const repLabel = targetRepId ? teamProfiles.find(p => p.id === targetRepId) : null;
+      const repMsg = repLabel ? ` for ${repLabel.first_name}` : '';
+      setActionToast(data?.crm_push_status === 'pending' ? `Action logged${repMsg} — syncing to CRM...` : `Action logged${repMsg}`);
       setActionMsgId(null);
       setActionLabel('');
-      setTimeout(() => setActionToast(''), 3000);
+      setTargetRepId('');
+      setTimeout(() => setActionToast(''), 4000);
     } catch (err) {
       console.error('Log action error:', err);
     } finally {
       setActionSaving(false);
     }
-  }, [actionType, actionLabel, activeThreadId]);
+  }, [actionType, actionLabel, activeThreadId, targetRepId, isManagerRole, teamProfiles]);
+
+  // [SPEC 07] Save structured output to Coaching Plans
+  const handleSaveStructuredPlan = useCallback(async (msg) => {
+    if (!msg.structuredData?.type) return;
+    setSavingPlanMsgId(msg.id);
+    try {
+      const data = await backendFetch('/api/aaron/save-structured-plan', {
+        structuredData: msg.structuredData,
+        structuredType: msg.structuredData.type,
+      });
+      setSavedPlanMsgIds(prev => new Set([...prev, msg.id]));
+      setActionToast(`Saved "${data.name}" to Coaching Plans`);
+      setTimeout(() => setActionToast(''), 5000);
+    } catch (err) {
+      console.error('Save structured plan error:', err);
+      setActionToast('Failed to save plan');
+      setTimeout(() => setActionToast(''), 4000);
+    } finally {
+      setSavingPlanMsgId(null);
+    }
+  }, []);
 
   // 4B: Send a message (shared by form submit and preset click)
   const sendMessage = useCallback((text, presetLabel) => {
@@ -668,19 +1154,20 @@ const AaronChatbot = ({ isOpen, onClose }) => {
     sendMessage(preset.prompt, preset.label);
   }, [isTyping, sendMessage]);
 
-  // Keyboard shortcut: Escape to close / minimize
+  // Keyboard shortcut: Escape to collapse / minimize / close
   useEffect(() => {
     if (!isOpen) return;
     const handler = (e) => {
       if (e.key === 'Escape') {
         e.preventDefault();
-        if (!isMinimized) setIsMinimized(true);
+        if (isExpanded) setIsExpanded(false);
+        else if (!isMinimized) setIsMinimized(true);
         else onClose();
       }
     };
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
-  }, [isOpen, isMinimized, onClose]);
+  }, [isOpen, isMinimized, isExpanded, onClose]);
 
   // Clean up offline timer on unmount
   useEffect(() => () => {
@@ -690,25 +1177,31 @@ const AaronChatbot = ({ isOpen, onClose }) => {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed bottom-6 right-6 z-50">
+    <div
+      className={isExpanded
+        ? 'fixed inset-0 z-50 flex items-center justify-center bg-black/30 p-4'
+        : 'fixed bottom-6 right-6 z-50'}
+      onClick={isExpanded ? (e) => { if (e.target === e.currentTarget) setIsExpanded(false); } : undefined}
+    >
       <div className={`bg-white rounded-lg shadow-2xl overflow-hidden transition-all duration-300 flex ${
+        isExpanded ? 'w-[720px] max-w-[95vw] h-[80vh]' :
         isMinimized ? 'w-80 h-16' : showThreadSidebar ? 'w-[640px] sm:w-[720px] h-[500px] sm:h-[560px]' : 'w-80 sm:w-96 h-[500px] sm:h-[560px]'
       }`}>
         {/* [FEATURE 1] Thread Sidebar — Pro+ only */}
         {showThreadSidebar && !isMinimized && isPro && (
-          <div className="w-48 border-r border-gray-200 bg-gray-50 flex flex-col shrink-0">
+          <div className="w-48 border-r border-gray-200 bg-apptivia-paper flex flex-col shrink-0">
             <div className="p-2 border-b border-gray-200 flex items-center justify-between">
               <span className="text-xs font-semibold text-gray-600">Threads</span>
               <div className="flex items-center gap-1">
-                <button onClick={handleNewThread} title="New chat" className="p-1 hover:bg-gray-200 rounded"><MessageSquarePlus size={14} className="text-gray-600" /></button>
-                <button onClick={() => setShowThreadSidebar(false)} className="p-1 hover:bg-gray-200 rounded"><ChevronLeft size={14} className="text-gray-600" /></button>
+                <button onClick={handleNewThread} title="New chat" className="p-1 hover:bg-apptivia-carbon-200 rounded"><MessageSquarePlus size={14} className="text-gray-600" /></button>
+                <button onClick={() => setShowThreadSidebar(false)} className="p-1 hover:bg-apptivia-carbon-200 rounded"><ChevronLeft size={14} className="text-gray-600" /></button>
               </div>
             </div>
             <div className="flex-1 overflow-y-auto">
               {threads.map(t => (
                 <div
                   key={t.id}
-                  className={`px-2 py-1.5 cursor-pointer flex items-center group text-xs border-b border-gray-100 ${activeThreadId === t.id ? 'bg-blue-50 text-blue-700' : 'hover:bg-gray-100 text-gray-700'}`}
+                  className={`px-2 py-1.5 cursor-pointer flex items-center group text-xs border-b border-gray-100 ${activeThreadId === t.id ? 'bg-apptivia-coral-tone-50 text-blue-700' : 'hover:bg-apptivia-carbon-100 text-gray-700'}`}
                   onClick={() => handleLoadThread(t.id)}
                 >
                   {renamingThreadId === t.id ? (
@@ -725,7 +1218,7 @@ const AaronChatbot = ({ isOpen, onClose }) => {
                     <>
                       <span className="flex-1 truncate">{t.thread_name || 'Untitled'}</span>
                       <div className="hidden group-hover:flex items-center gap-0.5">
-                        <button onClick={e => { e.stopPropagation(); setRenamingThreadId(t.id); setRenameValue(t.thread_name || ''); }} className="p-0.5 hover:bg-gray-200 rounded"><Pencil size={10} /></button>
+                        <button onClick={e => { e.stopPropagation(); setRenamingThreadId(t.id); setRenameValue(t.thread_name || ''); }} className="p-0.5 hover:bg-apptivia-carbon-200 rounded"><Pencil size={10} /></button>
                         <button onClick={e => { e.stopPropagation(); handleDeleteThread(t.id); }} className="p-0.5 hover:bg-red-100 rounded text-red-500"><Trash size={10} /></button>
                       </div>
                     </>
@@ -740,62 +1233,80 @@ const AaronChatbot = ({ isOpen, onClose }) => {
         <div className="flex flex-col flex-1 min-w-0">
           {/* Header */}
           <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-4 py-3 flex items-center justify-between select-none">
-            <div className="flex items-center gap-3 cursor-pointer" onClick={() => setIsMinimized(m => !m)}>
-              <div className="w-10 h-10 bg-white bg-opacity-20 rounded-lg flex items-center justify-center text-white font-bold shadow-md relative">
+            <div className="flex items-center gap-3 cursor-pointer min-w-0" onClick={() => isMinimized && setIsMinimized(false)}>
+              <div className="w-10 h-10 bg-white bg-opacity-20 rounded-lg flex items-center justify-center text-white font-bold shadow-md relative shrink-0">
                 A
                 <Sparkles size={8} className="absolute -top-0.5 -right-0.5 text-yellow-300" />
               </div>
-              <div>
-                <div className="font-semibold text-sm">Aaron AI Coach</div>
-                <div className="flex items-center gap-2 text-xs text-blue-100">
-                  <div className={`w-2 h-2 rounded-full ${isConnected ? 'bg-green-400' : 'bg-yellow-400'}`} />
+              <div className="min-w-0">
+                <div className="font-semibold text-sm whitespace-nowrap">Aaron AI Coach</div>
+                <div className="flex items-center gap-2 text-xs text-blue-100 whitespace-nowrap">
+                  <div className={`w-2 h-2 rounded-full shrink-0 ${isConnected ? 'bg-green-400' : 'bg-yellow-400'}`} />
                   {isConnected ? 'Live' : 'Offline Mode'}
                 </div>
               </div>
             </div>
-            <div className="flex items-center gap-1.5">
-              {/* [FEATURE 1] Thread toggle */}
-              {isPro && !isMinimized && (
+            <div className="flex items-center gap-1.5 shrink-0">
+              {/* These buttons only show when chat is open (not minimized) */}
+              {!isMinimized && (
+                <>
+                  {/* [FEATURE 1] Thread toggle */}
+                  {isPro && (
+                    <button
+                      onClick={() => setShowThreadSidebar(s => !s)}
+                      aria-label="Toggle threads"
+                      title="Conversation threads"
+                      className="text-white opacity-70 hover:opacity-100 transition-opacity p-1 rounded hover:bg-white/10"
+                    >
+                      {showThreadSidebar ? <ChevronLeft size={14} /> : <ChevronRight size={14} />}
+                    </button>
+                  )}
+                  <button
+                    onClick={() => setMemoryPanelOpen(true)}
+                    aria-label="View Aaron's memory"
+                    title="View Aaron's memory"
+                    className="text-white opacity-70 hover:opacity-100 transition-opacity p-1 rounded hover:bg-white/10"
+                  >
+                    <Brain size={14} />
+                  </button>
+                  <button
+                    onClick={handleClearMemory}
+                    aria-label="Clear Aaron's memory"
+                    title="Clear Aaron's memory"
+                    className="text-white opacity-70 hover:opacity-100 transition-opacity p-1 rounded hover:bg-white/10"
+                  >
+                    <RotateCcw size={14} />
+                  </button>
+                  <button
+                    onClick={handleClearChat}
+                    aria-label="Clear chat"
+                    title="Clear chat"
+                    className="text-white opacity-70 hover:opacity-100 transition-opacity p-1 rounded hover:bg-white/10"
+                  >
+                    <Trash2 size={15} />
+                  </button>
+                  {/* Expand / Collapse modal */}
+                  <button
+                    onClick={() => setIsExpanded(e => !e)}
+                    aria-label={isExpanded ? 'Collapse' : 'Expand'}
+                    title={isExpanded ? 'Collapse to widget' : 'Expand to full view'}
+                    className="text-white opacity-90 hover:opacity-100 transition-opacity p-1 rounded hover:bg-white/10"
+                  >
+                    {isExpanded ? <Shrink size={16} /> : <Expand size={16} />}
+                  </button>
+                </>
+              )}
+              {/* Minimize / Restore (hidden when expanded) */}
+              {!isExpanded && (
                 <button
-                  onClick={() => setShowThreadSidebar(s => !s)}
-                  aria-label="Toggle threads"
-                  title="Conversation threads"
-                  className="text-white opacity-70 hover:opacity-100 transition-opacity p-1 rounded hover:bg-white/10"
+                  onClick={() => setIsMinimized(m => !m)}
+                  aria-label={isMinimized ? 'Restore' : 'Minimize'}
+                  title={isMinimized ? 'Restore chat' : 'Minimize to bar'}
+                  className="text-white opacity-90 hover:opacity-100 transition-opacity p-1 rounded hover:bg-white/10"
                 >
-                  {showThreadSidebar ? <ChevronLeft size={14} /> : <ChevronRight size={14} />}
+                  {isMinimized ? <Maximize2 size={18} /> : <Minimize2 size={18} />}
                 </button>
               )}
-              <button
-                onClick={() => setMemoryPanelOpen(true)}
-                aria-label="View Aaron's memory"
-                title="View Aaron's memory"
-                className="text-white opacity-70 hover:opacity-100 transition-opacity p-1 rounded hover:bg-white/10"
-              >
-                <Brain size={14} />
-              </button>
-              <button
-                onClick={handleClearMemory}
-                aria-label="Clear Aaron's memory"
-                title="Clear Aaron's memory"
-                className="text-white opacity-70 hover:opacity-100 transition-opacity p-1 rounded hover:bg-white/10"
-              >
-                <RotateCcw size={14} />
-              </button>
-              <button
-                onClick={handleClearChat}
-                aria-label="Clear chat"
-                title="Clear chat"
-                className="text-white opacity-70 hover:opacity-100 transition-opacity p-1 rounded hover:bg-white/10"
-              >
-                <Trash2 size={15} />
-              </button>
-              <button
-                onClick={() => setIsMinimized(m => !m)}
-                aria-label={isMinimized ? 'Maximize' : 'Minimize'}
-                className="text-white opacity-90 hover:opacity-100 transition-opacity p-1 rounded hover:bg-white/10"
-              >
-                {isMinimized ? <Maximize2 size={18} /> : <Minimize2 size={18} />}
-              </button>
               <button
                 onClick={onClose}
                 aria-label="Close"
@@ -816,7 +1327,7 @@ const AaronChatbot = ({ isOpen, onClose }) => {
                 </div>
               )}
 
-              <div className="flex-1 overflow-y-auto p-4 bg-gray-50 space-y-3">
+              <div className="flex-1 overflow-y-auto p-4 bg-apptivia-paper space-y-3">
                 {messages.map((msg, idx) => {
                   const isLastAaron = msg.sender === 'aaron' && !messages.slice(idx + 1).some(m => m.sender === 'aaron');
                   return (
@@ -826,12 +1337,26 @@ const AaronChatbot = ({ isOpen, onClose }) => {
                         onOptionSelect={(text) => sendMessage(text)}
                         isLastAaron={isLastAaron}
                         isTyping={isTyping}
+                        onNavigate={navigate}
                       />
                       {/* [FEATURE 5] Log Action button — appears on hover of Aaron messages */}
                       {msg.sender === 'aaron' && msg.id !== 'greeting' && (
                         <div className="flex justify-start mt-0.5 group">
                           {actionMsgId === msg.id ? (
-                            <div className="bg-white border border-gray-200 rounded-lg p-2 ml-0 mt-1 text-xs shadow-sm w-64">
+                            <div className="bg-white border border-gray-200 rounded-lg p-2 ml-0 mt-1 text-xs shadow-sm w-72">
+                              {/* Manager/admin: assign to specific rep */}
+                              {isManagerRole && teamProfiles.length > 0 && (
+                                <select
+                                  value={targetRepId}
+                                  onChange={e => setTargetRepId(e.target.value)}
+                                  className="w-full px-2 py-1 border rounded text-xs mb-1.5 bg-apptivia-carbon-100 border-purple-200"
+                                >
+                                  <option value="">Assign to myself</option>
+                                  {teamProfiles.filter(p => p.id !== user?.id).map(p => (
+                                    <option key={p.id} value={p.id}>{p.first_name} {p.last_name} ({p.role})</option>
+                                  ))}
+                                </select>
+                              )}
                               <select
                                 value={actionType}
                                 onChange={e => setActionType(e.target.value)}
@@ -849,11 +1374,14 @@ const AaronChatbot = ({ isOpen, onClose }) => {
                                 placeholder="Action label (auto-generated if empty)"
                                 className="w-full px-2 py-1 border rounded text-xs mb-1.5"
                               />
+                              {msg.frameworks?.length > 0 && (
+                                <div className="text-[10px] text-gray-400 mb-1.5">Framework: {msg.frameworks.join(', ')}</div>
+                              )}
                               <div className="flex gap-1.5">
                                 <button
-                                  onClick={() => handleLogAction(msg.text)}
+                                  onClick={() => handleLogAction(msg.text, msg.frameworks)}
                                   disabled={actionSaving}
-                                  className="px-2 py-1 bg-blue-600 text-white rounded text-xs font-medium hover:bg-blue-700 disabled:opacity-50"
+                                  className="px-2 py-1 bg-apptivia-coral text-white rounded text-xs font-medium hover:bg-apptivia-coral disabled:opacity-50"
                                 >
                                   {actionSaving ? 'Saving...' : 'Log it'}
                                 </button>
@@ -863,9 +1391,27 @@ const AaronChatbot = ({ isOpen, onClose }) => {
                           ) : (
                             <button
                               onClick={() => setActionMsgId(msg.id)}
-                              className="opacity-0 group-hover:opacity-100 transition-opacity text-[10px] text-gray-400 hover:text-blue-600 ml-1 mt-0.5"
+                              className="text-[10px] text-blue-500 hover:text-blue-700 font-medium ml-1 mt-0.5"
                             >
                               Log Action
+                            </button>
+                          )}
+                        </div>
+                      )}
+                      {/* [SPEC 07] Save structured output to Coaching Plans */}
+                      {msg.sender === 'aaron' && msg.structuredData && (
+                        <div className="flex justify-start mt-0.5">
+                          {savedPlanMsgIds.has(msg.id) ? (
+                            <span className="text-[10px] text-green-600 font-medium ml-1 mt-0.5 flex items-center gap-0.5">
+                              <CheckCircle size={10} /> Saved to Coach
+                            </span>
+                          ) : (
+                            <button
+                              onClick={() => handleSaveStructuredPlan(msg)}
+                              disabled={savingPlanMsgId === msg.id}
+                              className="text-[10px] text-purple-500 hover:text-purple-700 font-medium ml-1 mt-0.5"
+                            >
+                              {savingPlanMsgId === msg.id ? 'Saving...' : 'Save to Coach'}
                             </button>
                           )}
                         </div>
@@ -881,7 +1427,7 @@ const AaronChatbot = ({ isOpen, onClose }) => {
 
                 {/* Outcome tagging prompt after 6+ user messages */}
                 {showOutcomePrompt && activeThreadId && (
-                  <div className="mx-4 mb-3 p-3 bg-indigo-50 rounded-lg border border-indigo-100">
+                  <div className="mx-4 mb-3 p-3 bg-apptivia-carbon-100 rounded-lg border border-indigo-100">
                     <p className="text-xs text-indigo-700 font-medium mb-2">How did this session go?</p>
                     <div className="flex flex-wrap gap-1.5">
                       {[
@@ -893,7 +1439,7 @@ const AaronChatbot = ({ isOpen, onClose }) => {
                         <button
                           key={tag}
                           onClick={() => tagOutcome(activeThreadId, tag)}
-                          className="px-2.5 py-1 text-xs rounded-full border border-indigo-200 hover:bg-indigo-100 text-indigo-700 bg-white transition-colors"
+                          className="px-2.5 py-1 text-xs rounded-full border border-indigo-200 hover:bg-apptivia-carbon-100 text-indigo-700 bg-white transition-colors"
                         >
                           {label}
                         </button>
@@ -908,7 +1454,7 @@ const AaronChatbot = ({ isOpen, onClose }) => {
 
               {/* Starter thread upsell tooltip */}
               {!isPro && !isMinimized && messages.length > 4 && (
-                <div className="shrink-0 px-3 py-1.5 bg-purple-50 border-t border-purple-100 text-center">
+                <div className="shrink-0 px-3 py-1.5 bg-apptivia-carbon-100 border-t border-purple-100 text-center">
                   <span className="text-[10px] text-purple-600">Thread history is a Pro feature — <a href="/organization-settings" className="underline hover:text-purple-800">Upgrade</a></span>
                 </div>
               )}
@@ -920,12 +1466,12 @@ const AaronChatbot = ({ isOpen, onClose }) => {
                   ? allPresets?.filter(p => STARTER_PRESET_LABELS.includes(p.label))
                   : allPresets;
                 return presets?.length && !isTyping && messages.length <= 2 ? (
-                  <div className="shrink-0 px-4 py-2 bg-gray-50 border-t border-gray-100 flex flex-wrap gap-1.5">
+                  <div className="shrink-0 px-4 py-2 bg-apptivia-paper border-t border-gray-100 flex flex-wrap gap-1.5">
                     {presets.map((preset) => (
                       <button
                         key={preset.label}
                         onClick={() => handlePresetClick(preset)}
-                        className="text-xs px-3 py-1.5 rounded-full border border-blue-200 bg-white text-blue-700 hover:bg-blue-50 hover:border-blue-400 transition-colors"
+                        className="text-xs px-3 py-1.5 rounded-full border border-blue-200 bg-white text-blue-700 hover:bg-apptivia-coral-tone-50 hover:border-blue-400 transition-colors"
                       >
                         {preset.label}
                       </button>
@@ -973,7 +1519,7 @@ const AaronChatbot = ({ isOpen, onClose }) => {
                   <button
                     type="submit"
                     disabled={!inputValue.trim() || connectionStatus === 'reconnecting' || connectionStatus === 'failed'}
-                    className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                    className="bg-apptivia-coral text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-apptivia-coral transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
                   >
                     <Send size={16} />
                   </button>

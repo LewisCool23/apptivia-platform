@@ -57,7 +57,7 @@ export default function BadgeModal({ isOpen, onClose, badge, profileName }) {
           <div className="absolute inset-2 bg-gradient-to-br from-gray-200 to-gray-400 rounded-full flex items-center justify-center">
             <Award size={48} className="text-gray-700" strokeWidth={2.5} />
           </div>
-          <div className="absolute -top-2 -right-2 w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center shadow-lg">
+          <div className="absolute -top-2 -right-2 w-8 h-8 bg-apptivia-carbon-300 rounded-full flex items-center justify-center shadow-lg">
             <Trophy size={16} className="text-gray-600" />
           </div>
         </div>
@@ -81,7 +81,7 @@ export default function BadgeModal({ isOpen, onClose, badge, profileName }) {
           <div className="absolute inset-2 bg-gradient-to-br from-cyan-200 to-purple-400 rounded-full flex items-center justify-center">
             <Award size={48} className="text-white" strokeWidth={2.5} />
           </div>
-          <div className="absolute -top-2 -right-2 w-8 h-8 bg-purple-400 rounded-full flex items-center justify-center shadow-lg">
+          <div className="absolute -top-2 -right-2 w-8 h-8 bg-apptivia-ink rounded-full flex items-center justify-center shadow-lg">
             <Trophy size={16} className="text-white" />
           </div>
         </div>
@@ -94,7 +94,7 @@ export default function BadgeModal({ isOpen, onClose, badge, profileName }) {
           <div className="absolute inset-2 bg-gradient-to-br from-blue-300 to-blue-500 rounded-full flex items-center justify-center">
             <Award size={48} className="text-white" strokeWidth={2.5} />
           </div>
-          <div className="absolute -top-2 -right-2 w-8 h-8 bg-blue-400 rounded-full flex items-center justify-center shadow-lg">
+          <div className="absolute -top-2 -right-2 w-8 h-8 bg-apptivia-coral rounded-full flex items-center justify-center shadow-lg">
             <Trophy size={16} className="text-white" />
           </div>
         </div>
@@ -140,28 +140,28 @@ export default function BadgeModal({ isOpen, onClose, badge, profileName }) {
             <div className="absolute top-16 right-4 bg-white rounded-lg shadow-xl border border-gray-200 py-2 z-10 min-w-[160px]">
               <button
                 onClick={() => handleShare('email')}
-                className="w-full text-left px-4 py-2 hover:bg-gray-50 flex items-center gap-3 text-gray-700 text-sm"
+                className="w-full text-left px-4 py-2 hover:bg-apptivia-paper flex items-center gap-3 text-gray-700 text-sm"
               >
                 <Mail size={16} />
                 Email
               </button>
               <button
                 onClick={() => handleShare('twitter')}
-                className="w-full text-left px-4 py-2 hover:bg-gray-50 flex items-center gap-3 text-gray-700 text-sm"
+                className="w-full text-left px-4 py-2 hover:bg-apptivia-paper flex items-center gap-3 text-gray-700 text-sm"
               >
                 <Twitter size={16} />
                 Twitter
               </button>
               <button
                 onClick={() => handleShare('linkedin')}
-                className="w-full text-left px-4 py-2 hover:bg-gray-50 flex items-center gap-3 text-gray-700 text-sm"
+                className="w-full text-left px-4 py-2 hover:bg-apptivia-paper flex items-center gap-3 text-gray-700 text-sm"
               >
                 <Linkedin size={16} />
                 LinkedIn
               </button>
               <button
                 onClick={() => handleShare('copy')}
-                className="w-full text-left px-4 py-2 hover:bg-gray-50 flex items-center gap-3 text-gray-700 text-sm"
+                className="w-full text-left px-4 py-2 hover:bg-apptivia-paper flex items-center gap-3 text-gray-700 text-sm"
               >
                 {copied ? <Check size={16} className="text-green-600" /> : <Copy size={16} />}
                 {copied ? 'Copied!' : 'Copy Link'}
@@ -194,7 +194,7 @@ export default function BadgeModal({ isOpen, onClose, badge, profileName }) {
 
           <div className="grid grid-cols-2 gap-4">
             {badge.category && (
-              <div className="bg-blue-50 rounded-lg p-3">
+              <div className="bg-apptivia-coral-tone-50 rounded-lg p-3">
                 <div className="flex items-center gap-2 mb-1">
                   <Target size={16} className="text-blue-600" />
                   <div className="text-xs font-medium text-gray-500">Category</div>
@@ -206,7 +206,7 @@ export default function BadgeModal({ isOpen, onClose, badge, profileName }) {
             )}
 
             {badge.points !== undefined && (
-              <div className="bg-purple-50 rounded-lg p-3">
+              <div className="bg-apptivia-carbon-100 rounded-lg p-3">
                 <div className="flex items-center gap-2 mb-1">
                   <Trophy size={16} className="text-purple-600" />
                   <div className="text-xs font-medium text-gray-500">Points</div>
@@ -235,7 +235,7 @@ export default function BadgeModal({ isOpen, onClose, badge, profileName }) {
               <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-2">
                 How to Earn
               </h3>
-              <div className="bg-gray-50 rounded-lg p-3">
+              <div className="bg-apptivia-paper rounded-lg p-3">
                 <p className="text-sm text-gray-700">{badge.criteria}</p>
               </div>
             </div>
@@ -244,10 +244,10 @@ export default function BadgeModal({ isOpen, onClose, badge, profileName }) {
           {badge.rarity && (
             <div className="text-center">
               <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold ${
-                badge.rarity === 'legendary' ? 'bg-purple-100 text-purple-700' :
+                badge.rarity === 'legendary' ? 'bg-apptivia-carbon-100 text-purple-700' :
                 badge.rarity === 'epic' ? 'bg-orange-100 text-orange-700' :
-                badge.rarity === 'rare' ? 'bg-blue-100 text-blue-700' :
-                'bg-gray-100 text-gray-700'
+                badge.rarity === 'rare' ? 'bg-apptivia-coral-tone-50 text-blue-700' :
+                'bg-apptivia-carbon-100 text-gray-700'
               }`}>
                 {badge.rarity ? badge.rarity.charAt(0).toUpperCase() + badge.rarity.slice(1) : 'Standard'} Badge
               </span>
@@ -256,7 +256,7 @@ export default function BadgeModal({ isOpen, onClose, badge, profileName }) {
         </div>
 
         {/* Footer */}
-        <div className="bg-gray-50 px-6 py-4 border-t border-gray-200">
+        <div className="bg-apptivia-paper px-6 py-4 border-t border-gray-200">
           <button
             onClick={onClose}
             className="w-full bg-gradient-to-r from-blue-500 to-purple-500 text-white px-6 py-2.5 rounded-lg font-semibold hover:from-blue-600 hover:to-purple-600 transition-all duration-200 hover:shadow-lg"

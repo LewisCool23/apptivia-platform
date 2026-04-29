@@ -90,7 +90,7 @@ function getSuggestions(industry, field) {
 
 // ── Enhanced TagField with multi-select dropdown ─────────────────────────────
 
-function TagField({ label, hint, items, onAdd, onRemove, placeholder, tagClass = 'bg-blue-100 text-blue-700', required, suggestions = [] }) {
+function TagField({ label, hint, items, onAdd, onRemove, placeholder, tagClass = 'bg-apptivia-coral-tone-50 text-blue-700', required, suggestions = [] }) {
   const [value, setValue] = useState('');
   const [isOpen, setIsOpen] = useState(false);
   const wrapperRef = useRef(null);
@@ -160,7 +160,7 @@ function TagField({ label, hint, items, onAdd, onRemove, placeholder, tagClass =
           <button
             type="button"
             onClick={() => handleAdd()}
-            className="px-3 py-2 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-lg text-sm"
+            className="px-3 py-2 bg-apptivia-carbon-100 hover:bg-apptivia-carbon-200 text-gray-600 rounded-lg text-sm"
             title="Add custom value"
           >
             <Plus size={14} />
@@ -174,7 +174,7 @@ function TagField({ label, hint, items, onAdd, onRemove, placeholder, tagClass =
                 type="button"
                 onMouseDown={(e) => e.preventDefault()}
                 onClick={() => handleSelect(suggestion)}
-                className="w-full text-left px-3 py-1.5 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors"
+                className="w-full text-left px-3 py-1.5 text-sm text-gray-700 hover:bg-apptivia-coral-tone-50 hover:text-blue-700 transition-colors"
               >
                 {suggestion}
               </button>
@@ -244,7 +244,7 @@ export default function StepYourMarket({ wizardState, updateState }) {
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-3 mb-2">
-        <div className="w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center">
+        <div className="w-10 h-10 bg-apptivia-carbon-100 rounded-lg flex items-center justify-center">
           <Target size={20} className="text-indigo-600" />
         </div>
         <div>
@@ -256,14 +256,14 @@ export default function StepYourMarket({ wizardState, updateState }) {
       </div>
 
       {industry && (
-        <div className="flex items-center gap-2 text-xs text-indigo-600 bg-indigo-50 px-3 py-2 rounded-lg">
+        <div className="flex items-center gap-2 text-xs text-indigo-600 bg-apptivia-carbon-100 px-3 py-2 rounded-lg">
           <Sparkles size={14} />
           <span>Suggestions pre-loaded for <strong>{industry}</strong> — select from dropdowns or type custom values</span>
         </div>
       )}
 
       {/* ICP Section */}
-      <div className="bg-blue-50/50 border border-blue-100 rounded-lg p-4 space-y-4">
+      <div className="bg-apptivia-coral-tone-50/50 border border-blue-100 rounded-lg p-4 space-y-4">
         <h4 className="text-sm font-semibold text-blue-800 uppercase tracking-wide">Ideal Customer Profile</h4>
 
         <TagField
@@ -274,7 +274,7 @@ export default function StepYourMarket({ wizardState, updateState }) {
           onRemove={(i) => removeIcpItem('target_industries', i)}
           suggestions={INDUSTRY_OPTIONS.filter((o) => o !== 'Other')}
           placeholder="Search or type an industry..."
-          tagClass="bg-blue-100 text-blue-700"
+          tagClass="bg-apptivia-coral-tone-50 text-blue-700"
           required
         />
 
@@ -332,7 +332,7 @@ export default function StepYourMarket({ wizardState, updateState }) {
           onRemove={(i) => removeIcpItem('target_technologies', i)}
           suggestions={getSuggestions(industry, 'target_technologies')}
           placeholder="Search or type a technology..."
-          tagClass="bg-blue-100 text-blue-700"
+          tagClass="bg-apptivia-coral-tone-50 text-blue-700"
         />
       </div>
 
@@ -373,7 +373,7 @@ export default function StepYourMarket({ wizardState, updateState }) {
           onRemove={(i) => removeSignalItem('solution_keywords', i)}
           suggestions={getSuggestions(industry, 'solution_keywords')}
           placeholder="Select or type a keyword..."
-          tagClass="bg-blue-100 text-blue-700"
+          tagClass="bg-apptivia-coral-tone-50 text-blue-700"
         />
 
         <TagField
@@ -384,7 +384,7 @@ export default function StepYourMarket({ wizardState, updateState }) {
           onRemove={(i) => removeSignalItem('job_titles_to_track', i)}
           suggestions={getSuggestions(industry, 'job_titles_to_track')}
           placeholder="Select or type a job title..."
-          tagClass="bg-purple-100 text-purple-700"
+          tagClass="bg-apptivia-carbon-100 text-purple-700"
         />
 
         <TagField

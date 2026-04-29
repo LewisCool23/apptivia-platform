@@ -364,6 +364,32 @@ export function useKpiWatchdog(organizationId: string, userId?: string) {
             });
           }
 
+          // F16: Detect stagnation (|deviation| < 5% when both current and previous are near rolling avg)
+          const STAGNATION_THRESHOLD = 5;
+          if (Math.abs(deviationPct) < STAGNATION_THRESHOLD && rollingAvg > 0 && current > 0) {
+            const prevDev = previous > 0 ? Math.abs((previous - rollingAvg) / rollingAvg * 100) : null;
+            if (prevDev !== null && prevDev < STAGNATION_THRESHOLD) {
+              anomalies.push({
+                organization_id: organizationId,
+                profile_id: profile.id,
+                kpi_key: metric.key,
+                kpi_name: metric.name,
+                anomaly_type: 'stagnation' as any,
+                severity: 'info' as any,
+                current_value: Math.round(current * 10) / 10,
+                previous_value: Math.round(previous * 10) / 10,
+                rolling_avg: Math.round(rollingAvg * 10) / 10,
+                deviation_pct: Math.round(deviationPct * 10) / 10,
+                period_start: lastMonday.toISOString().split('T')[0],
+                period_end: lastSunday.toISOString().split('T')[0],
+                detected_at: now.toISOString(),
+                status: 'active',
+                ai_analysis: `${metric.name} has been flat for 3+ weeks — currently at ${Math.round(current)} vs. ${Math.round(rollingAvg)} rolling avg.`,
+                ai_recommendation: `Stagnation often indicates a ceiling. Consider adjusting approach, setting stretch goals, or coaching on new techniques for ${metric.name}.`,
+              });
+            }
+          }
+
           // 4A: Detect positive improvements (≥15% but below the 50% spike threshold)
           if (deviationPct >= POSITIVE_INSIGHT_THRESHOLD && deviationPct < ANOMALY_SPIKE_THRESHOLD) {
             const roundedDev = Math.round(deviationPct);

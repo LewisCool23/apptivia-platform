@@ -67,9 +67,9 @@ export const TIER_LABELS: Record<number, string> = {
 
 export const TIER_COLORS: Record<number, string> = {
   1: 'bg-red-100 text-red-700',
-  2: 'bg-blue-100 text-blue-700',
+  2: 'bg-apptivia-coral-tone-50 text-blue-700',
   3: 'bg-cyan-100 text-cyan-700',
-  4: 'bg-gray-100 text-gray-600',
+  4: 'bg-apptivia-carbon-100 text-gray-600',
 };
 
 /**
@@ -89,9 +89,9 @@ export function getKpiTier(kpiKey: string, scorecardKpiKeys: Set<string> | strin
 
 /** Skillset categories for display (e.g., in ApptiviaLevelInfoModal) */
 export const SKILLSET_CATEGORIES = [
-  { name: 'Conversationalist', kpis: 'Talk Time, Conversations', color: 'bg-blue-500' },
+  { name: 'Conversationalist', kpis: 'Talk Time, Conversations', color: 'bg-apptivia-coral' },
   { name: 'Call Conqueror', kpis: 'Call Connects, Meetings, Discovery, Dials', color: 'bg-green-500' },
-  { name: 'Email Warrior', kpis: 'Emails Sent, Social Touches', color: 'bg-purple-500' },
+  { name: 'Email Warrior', kpis: 'Emails Sent, Social Touches', color: 'bg-apptivia-ink' },
   { name: 'Pipeline Guru', kpis: 'Sourced Opps, Pipeline, Revenue, Deals Closed', color: 'bg-orange-500' },
   { name: 'Task Master', kpis: 'Follow-ups, Demos, Tasks, Win Rate', color: 'bg-red-500' },
   { name: 'Scorecard Master', kpis: 'Scorecard Streaks, 100% Weeks', color: 'bg-yellow-500' },
@@ -111,11 +111,11 @@ export function getSkillsetsForKpi(kpiKey: string): string[] {
  * Skillset mastery level based on progress percentage.
  */
 export const SKILLSET_LEVEL_COLORS: Record<string, string> = {
-  Beginner: 'bg-gray-100 text-gray-600',
+  Beginner: 'bg-apptivia-carbon-100 text-gray-600',
   Developing: 'bg-orange-100 text-orange-700',
-  Intermediate: 'bg-blue-100 text-blue-700',
+  Intermediate: 'bg-apptivia-coral-tone-50 text-blue-700',
   Advanced: 'bg-emerald-100 text-emerald-700',
-  Master: 'bg-purple-100 text-purple-700',
+  Master: 'bg-apptivia-carbon-100 text-purple-700',
 };
 
 export function getSkillsetLevel(progress: number): string {
@@ -229,7 +229,7 @@ export function estimateSkillsetXp(focusKpis: string[]): { skillset: string; est
   return Object.entries(skillsetXp)
     .map(([skillset, estimatedXp]) => {
       const cat = SKILLSET_CATEGORIES.find(c => c.name.toLowerCase() === skillset.toLowerCase());
-      return { skillset: cat?.name || skillset, estimatedXp, color: cat?.color || 'bg-gray-500' };
+      return { skillset: cat?.name || skillset, estimatedXp, color: cat?.color || 'bg-apptivia-carbon-500' };
     })
     .sort((a, b) => b.estimatedXp - a.estimatedXp);
 }

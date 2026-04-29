@@ -139,12 +139,12 @@ export default function CoachingPlanTemplatesModal({ isOpen, onClose, onTemplate
 
   const getCategoryColor = (category) => {
     const colors = {
-      pipeline: 'bg-blue-50 border-blue-200 text-blue-700',
+      pipeline: 'bg-apptivia-coral-tone-50 border-blue-200 text-blue-700',
       activity: 'bg-green-50 border-green-200 text-green-700',
-      quality: 'bg-purple-50 border-purple-200 text-purple-700',
+      quality: 'bg-apptivia-carbon-100 border-purple-200 text-purple-700',
       efficiency: 'bg-orange-50 border-orange-200 text-orange-700'
     };
-    return colors[category] || 'bg-gray-50 border-gray-200 text-gray-700';
+    return colors[category] || 'bg-apptivia-paper border-gray-200 text-gray-700';
   };
 
   if (!isOpen) return null;
@@ -192,7 +192,7 @@ export default function CoachingPlanTemplatesModal({ isOpen, onClose, onTemplate
                   onClick={() => handleTemplateClick(template)}
                   className={`p-4 border-2 rounded-lg cursor-pointer transition-all hover:shadow-md ${
                     selectedTemplate?.id === template.id
-                      ? 'border-blue-500 bg-blue-50 ring-2 ring-blue-200'
+                      ? 'border-blue-500 bg-apptivia-coral-tone-50 ring-2 ring-blue-200'
                       : 'border-gray-200 hover:border-blue-300'
                   }`}
                 >
@@ -228,12 +228,12 @@ export default function CoachingPlanTemplatesModal({ isOpen, onClose, onTemplate
                       <div className="text-xs font-medium text-blue-700 mb-2">Focus KPIs:</div>
                       <div className="flex flex-wrap gap-1">
                         {template.focus_kpis?.slice(0, 3).map((kpi, idx) => (
-                          <span key={idx} className="px-2 py-0.5 bg-blue-100 text-blue-700 rounded text-xs">
+                          <span key={idx} className="px-2 py-0.5 bg-apptivia-coral-tone-50 text-blue-700 rounded text-xs">
                             {buildLabel(kpi)}
                           </span>
                         ))}
                         {template.focus_kpis?.length > 3 && (
-                          <span className="px-2 py-0.5 bg-blue-100 text-blue-700 rounded text-xs">
+                          <span className="px-2 py-0.5 bg-apptivia-coral-tone-50 text-blue-700 rounded text-xs">
                             +{template.focus_kpis.length - 3} more
                           </span>
                         )}
@@ -247,7 +247,7 @@ export default function CoachingPlanTemplatesModal({ isOpen, onClose, onTemplate
         </div>
 
         {selectedTemplate && (
-          <div className="border-t border-gray-200 p-6 bg-gray-50">
+          <div className="border-t border-gray-200 p-6 bg-apptivia-paper">
             <h3 className="font-semibold text-gray-900 mb-4">Customize Plan</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
               <div>
@@ -296,20 +296,20 @@ export default function CoachingPlanTemplatesModal({ isOpen, onClose, onTemplate
                   type="date"
                   value={customData.date_range_end}
                   readOnly
-                  className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm bg-gray-100 cursor-not-allowed"
+                  className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm bg-apptivia-carbon-100 cursor-not-allowed"
                 />
               </div>
             </div>
             <div className="flex justify-end gap-2">
               <button
                 onClick={onClose}
-                className="px-4 py-2 text-sm font-semibold border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50"
+                className="px-4 py-2 text-sm font-semibold border border-gray-300 text-gray-700 rounded-md hover:bg-apptivia-paper"
               >
                 Cancel
               </button>
               <button
                 onClick={handleUseTemplate}
-                className="px-4 py-2 text-sm font-semibold bg-blue-600 text-white rounded-md hover:bg-blue-700"
+                className="px-4 py-2 text-sm font-semibold bg-apptivia-coral text-white rounded-md hover:bg-apptivia-coral"
               >
                 Use This Template
               </button>

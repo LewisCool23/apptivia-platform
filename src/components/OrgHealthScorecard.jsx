@@ -260,7 +260,7 @@ export default function OrgHealthScorecard() {
                 </div>
                 <span className={`text-lg font-bold ${colors.text}`}>{score}</span>
               </div>
-              <div className="w-full bg-gray-100 rounded-full h-2 mb-2">
+              <div className="w-full bg-apptivia-carbon-100 rounded-full h-2 mb-2">
                 <div className={`h-full rounded-full ${colors.bar} transition-all`} style={{ width: `${score}%` }} />
               </div>
               <button

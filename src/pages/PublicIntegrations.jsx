@@ -78,14 +78,14 @@ const CATEGORIES = [...new Set(INTEGRATIONS.map(i => i.category))];
 
 export default function PublicIntegrations() {
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-apptivia-paper">
       {/* Header */}
       <header className="bg-white border-b border-gray-200">
         <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
           <Link to="/" className="text-xl font-bold text-blue-600">Apptivia</Link>
           <div className="flex items-center gap-4">
             <Link to="/login" className="text-sm text-gray-600 hover:text-gray-900">Log In</Link>
-            <Link to="/signup" className="bg-blue-600 text-white text-sm px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+            <Link to="/signup" className="bg-apptivia-coral text-white text-sm px-4 py-2 rounded-lg hover:bg-apptivia-coral transition-colors">
               Start Free Trial
             </Link>
           </div>
@@ -127,18 +127,18 @@ export default function PublicIntegrations() {
       </section>
 
       {/* CTA */}
-      <section className="bg-blue-600 py-16">
+      <section className="bg-apptivia-coral py-16">
         <div className="max-w-4xl mx-auto px-6 text-center">
           <h2 className="text-2xl font-bold text-white mb-4">Ready to connect your tools?</h2>
           <p className="text-blue-100 mb-8">Start your free trial and connect your first integration in under 5 minutes.</p>
-          <Link to="/signup" className="inline-block bg-white text-blue-600 font-semibold px-8 py-3 rounded-lg hover:bg-blue-50 transition-colors">
+          <Link to="/signup" className="inline-block bg-white text-blue-600 font-semibold px-8 py-3 rounded-lg hover:bg-apptivia-coral-tone-50 transition-colors">
             Get Started Free
           </Link>
         </div>
       </section>
 
       {/* Footer */}
-      <footer className="bg-gray-900 text-gray-400 py-8">
+      <footer className="bg-apptivia-ink text-gray-400 py-8">
         <div className="max-w-6xl mx-auto px-6 text-center text-sm">
           <p>&copy; 2026 Apptivia. All rights reserved.</p>
           <div className="mt-2 flex justify-center gap-6">

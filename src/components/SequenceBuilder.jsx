@@ -10,11 +10,11 @@ const CHANNEL_OPTIONS = [
 ];
 
 const STATUS_BADGES = {
-  draft:     { label: 'Draft',     color: 'bg-gray-100 text-gray-600' },
+  draft:     { label: 'Draft',     color: 'bg-apptivia-carbon-100 text-gray-600' },
   active:    { label: 'Active',    color: 'bg-green-100 text-green-700' },
   paused:    { label: 'Paused',    color: 'bg-yellow-100 text-yellow-700' },
-  completed: { label: 'Completed', color: 'bg-blue-100 text-blue-700' },
-  archived:  { label: 'Archived',  color: 'bg-gray-100 text-gray-400' },
+  completed: { label: 'Completed', color: 'bg-apptivia-coral-tone-50 text-blue-700' },
+  archived:  { label: 'Archived',  color: 'bg-apptivia-carbon-100 text-gray-400' },
 };
 
 function SequenceList({ sequences, onSelect, onNew, loading }) {
@@ -24,7 +24,7 @@ function SequenceList({ sequences, onSelect, onNew, loading }) {
         <h2 className="text-base font-semibold text-gray-900">Sequences</h2>
         <button
           onClick={onNew}
-          className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-500 text-white text-xs font-medium rounded-lg hover:bg-blue-600 transition-colors"
+          className="flex items-center gap-1.5 px-3 py-1.5 bg-apptivia-coral text-white text-xs font-medium rounded-lg hover:bg-apptivia-coral transition-colors"
         >
           <Plus size={14} />
           New Sequence
@@ -74,8 +74,8 @@ function StepEditor({ step, index, onChange, onRemove }) {
   return (
     <div className="relative pl-8 pb-4">
       {/* Connector line */}
-      <div className="absolute left-3 top-0 bottom-0 w-0.5 bg-gray-200" />
-      <div className="absolute left-1.5 top-2 w-3 h-3 rounded-full bg-blue-500 border-2 border-white shadow-sm z-10" />
+      <div className="absolute left-3 top-0 bottom-0 w-0.5 bg-apptivia-carbon-200" />
+      <div className="absolute left-1.5 top-2 w-3 h-3 rounded-full bg-apptivia-coral border-2 border-white shadow-sm z-10" />
 
       <div className="bg-white border border-gray-100 rounded-xl p-3 shadow-sm">
         <div className="flex items-center justify-between mb-2">
@@ -297,13 +297,13 @@ function SequenceDetail({ sequenceId, onBack, organizationId }) {
           {editing ? (
             <>
               <button onClick={() => { setEditing(false); load(); }} className="text-xs text-gray-500 hover:text-gray-700 px-2 py-1">Cancel</button>
-              <button onClick={handleSave} disabled={saving} className="flex items-center gap-1 px-3 py-1.5 bg-blue-500 text-white text-xs rounded-lg hover:bg-blue-600 disabled:opacity-50">
+              <button onClick={handleSave} disabled={saving} className="flex items-center gap-1 px-3 py-1.5 bg-apptivia-coral text-white text-xs rounded-lg hover:bg-apptivia-coral disabled:opacity-50">
                 <Save size={12} />{saving ? 'Saving...' : 'Save'}
               </button>
             </>
           ) : (
             <>
-              <button onClick={() => setEditing(true)} className="flex items-center gap-1 px-2 py-1.5 text-xs text-gray-600 border border-gray-200 rounded-lg hover:bg-gray-50">
+              <button onClick={() => setEditing(true)} className="flex items-center gap-1 px-2 py-1.5 text-xs text-gray-600 border border-gray-200 rounded-lg hover:bg-apptivia-paper">
                 <Edit2 size={12} />Edit
               </button>
               <button onClick={handleStatusToggle} className={`flex items-center gap-1 px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${
@@ -319,7 +319,7 @@ function SequenceDetail({ sequenceId, onBack, organizationId }) {
       </div>
 
       {/* Stats bar */}
-      <div className="flex items-center gap-4 mb-6 px-3 py-2 bg-gray-50 rounded-lg text-[11px] text-gray-500">
+      <div className="flex items-center gap-4 mb-6 px-3 py-2 bg-apptivia-paper rounded-lg text-[11px] text-gray-500">
         <span><Users size={11} className="inline mr-1" />{stats.total || 0} enrolled</span>
         <span className="text-green-600">{stats.active || 0} active</span>
         <span className="text-blue-600">{stats.completed || 0} completed</span>
@@ -371,7 +371,7 @@ function SequenceDetail({ sequenceId, onBack, organizationId }) {
             <button
               onClick={handleEnroll}
               disabled={enrolling || !enrollEmail}
-              className="flex items-center gap-1 px-3 py-1.5 bg-blue-500 text-white text-xs rounded-lg hover:bg-blue-600 disabled:opacity-50"
+              className="flex items-center gap-1 px-3 py-1.5 bg-apptivia-coral text-white text-xs rounded-lg hover:bg-apptivia-coral disabled:opacity-50"
             >
               <ArrowRight size={12} />{enrolling ? 'Enrolling...' : 'Enroll'}
             </button>
@@ -449,7 +449,7 @@ export default function SequenceBuilder({ organizationId, userId }) {
             onKeyDown={(e) => e.key === 'Enter' && handleCreate()}
             className="flex-1 text-sm border border-gray-200 rounded-lg px-3 py-2 focus:ring-1 focus:ring-blue-300"
           />
-          <button onClick={handleCreate} className="px-3 py-2 bg-blue-500 text-white text-xs rounded-lg hover:bg-blue-600">Create</button>
+          <button onClick={handleCreate} className="px-3 py-2 bg-apptivia-coral text-white text-xs rounded-lg hover:bg-apptivia-coral">Create</button>
           <button onClick={() => setCreating(false)} className="text-gray-400 hover:text-gray-600"><X size={16} /></button>
         </div>
       ) : null}

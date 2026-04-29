@@ -54,13 +54,13 @@ export default function CredentialsModal({ providerType, onClose, onConnect, err
         </div>
         {error && <div className="text-xs text-red-500 mb-3">{error}</div>}
         <div className="flex justify-end gap-2">
-          <button onClick={onClose} className="px-4 py-2 text-sm rounded-lg border border-gray-200 hover:bg-gray-50">
+          <button onClick={onClose} className="px-4 py-2 text-sm rounded-lg border border-gray-200 hover:bg-apptivia-paper">
             Cancel
           </button>
           <button
             disabled={!allFilled || saving}
             onClick={handleSubmit}
-            className="px-4 py-2 text-sm rounded-lg bg-blue-600 text-white font-medium hover:bg-blue-700 disabled:opacity-50 transition-colors"
+            className="px-4 py-2 text-sm rounded-lg bg-apptivia-coral text-white font-medium hover:bg-apptivia-coral disabled:opacity-50 transition-colors"
           >
             {saving ? <Loader2 size={14} className="animate-spin inline mr-1" /> : null}
             {saving ? 'Connecting...' : 'Connect'}

@@ -176,7 +176,7 @@ export default function Meeting1On1PrepModal({
     ? { text: 'Trending upward — acknowledge momentum and reinforce habits.', color: 'text-green-700 bg-green-50', Icon: TrendingUp }
     : trendDelta < -5
       ? { text: 'Declining trend — explore blockers and adjust approach.', color: 'text-red-700 bg-red-50', Icon: TrendingDown }
-      : { text: 'Stable performance — maintain focus and set stretch goals.', color: 'text-blue-700 bg-blue-50', Icon: Minus };
+      : { text: 'Stable performance — maintain focus and set stretch goals.', color: 'text-blue-700 bg-apptivia-coral-tone-50', Icon: Minus };
 
   if (!isOpen) return null;
 
@@ -238,25 +238,25 @@ export default function Meeting1On1PrepModal({
             {/* 1. Opening Context */}
             <div className="border rounded-lg p-4">
               <h3 className="text-sm font-semibold text-gray-900 mb-3 flex items-center gap-2">
-                <span className="w-6 h-6 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-xs font-bold">1</span>
+                <span className="w-6 h-6 rounded-full bg-apptivia-coral-tone-50 text-blue-600 flex items-center justify-center text-xs font-bold">1</span>
                 Opening Context
               </h3>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-3">
-                <div className="bg-gray-50 rounded p-2 text-center">
+                <div className="bg-apptivia-paper rounded p-2 text-center">
                   <div className="text-[10px] text-gray-500 uppercase">Current Score</div>
                   <div className="text-lg font-bold text-gray-900">{repAnalysis?.recent || 0}%</div>
                 </div>
-                <div className="bg-gray-50 rounded p-2 text-center">
+                <div className="bg-apptivia-paper rounded p-2 text-center">
                   <div className="text-[10px] text-gray-500 uppercase">5-Week Avg</div>
                   <div className="text-lg font-bold text-gray-900">{repAnalysis?.avg5w || 0}%</div>
                 </div>
-                <div className="bg-gray-50 rounded p-2 text-center">
+                <div className="bg-apptivia-paper rounded p-2 text-center">
                   <div className="text-[10px] text-gray-500 uppercase">5-Week Trend</div>
                   <div className={`text-lg font-bold ${trendDelta >= 0 ? 'text-green-600' : 'text-red-600'}`}>
                     {trendDelta >= 0 ? '+' : ''}{trendDelta}%
                   </div>
                 </div>
-                <div className="bg-gray-50 rounded p-2 text-center">
+                <div className="bg-apptivia-paper rounded p-2 text-center">
                   <div className="text-[10px] text-gray-500 uppercase">vs Last Week</div>
                   <div className={`text-lg font-bold ${(repAnalysis?.delta || 0) >= 0 ? 'text-green-600' : 'text-red-600'}`}>
                     {(repAnalysis?.delta || 0) >= 0 ? '+' : ''}{repAnalysis?.delta || 0}%
@@ -286,7 +286,7 @@ export default function Meeting1On1PrepModal({
                     const tierColor = TIER_COLORS[kpi.tier] || TIER_COLORS[4];
                     const delta = kpi.percentage - kpi.teamAvg;
                     return (
-                      <div key={kpi.key} className="border rounded-lg p-3 bg-gray-50">
+                      <div key={kpi.key} className="border rounded-lg p-3 bg-apptivia-paper">
                         <div className="flex items-center justify-between mb-1.5">
                           <div className="flex items-center gap-2">
                             <span className="text-xs font-semibold text-gray-900">{kpi.label}</span>
@@ -301,12 +301,12 @@ export default function Meeting1On1PrepModal({
                             </span>
                           </div>
                         </div>
-                        <div className="w-full bg-gray-200 rounded-full h-1.5 mb-2">
+                        <div className="w-full bg-apptivia-carbon-200 rounded-full h-1.5 mb-2">
                           <div className="h-1.5 rounded-full bg-red-400" style={{ width: `${Math.min(kpi.percentage, 100)}%` }} />
                         </div>
                         {kpi.guidance && (
                           <>
-                            <div className="text-[11px] text-blue-800 bg-blue-50 border border-blue-100 rounded px-3 py-2 mb-1.5">
+                            <div className="text-[11px] text-blue-800 bg-apptivia-coral-tone-50 border border-blue-100 rounded px-3 py-2 mb-1.5">
                               <span className="font-semibold">Ask:</span> "{kpi.guidance.coachingQuestion}"
                             </div>
                             <div className="text-[11px] text-amber-700 bg-amber-50 border border-amber-100 rounded px-3 py-1.5">
@@ -351,7 +351,7 @@ export default function Meeting1On1PrepModal({
             {actionItems.length > 0 && (
               <div className="border rounded-lg p-4">
                 <h3 className="text-sm font-semibold text-gray-900 mb-3 flex items-center gap-2">
-                  <span className="w-6 h-6 rounded-full bg-purple-100 text-purple-600 flex items-center justify-center text-xs font-bold">4</span>
+                  <span className="w-6 h-6 rounded-full bg-apptivia-carbon-100 text-purple-600 flex items-center justify-center text-xs font-bold">4</span>
                   Suggested Action Items ({actionItems.length})
                 </h3>
                 <ol className="space-y-2">
@@ -374,7 +374,7 @@ export default function Meeting1On1PrepModal({
             {/* 5. Manager Notes */}
             <div className="border rounded-lg p-4">
               <h3 className="text-sm font-semibold text-gray-900 mb-3 flex items-center gap-2">
-                <span className="w-6 h-6 rounded-full bg-gray-200 text-gray-600 flex items-center justify-center text-xs font-bold">5</span>
+                <span className="w-6 h-6 rounded-full bg-apptivia-carbon-200 text-gray-600 flex items-center justify-center text-xs font-bold">5</span>
                 Manager Notes
               </h3>
               <textarea
@@ -387,9 +387,9 @@ export default function Meeting1On1PrepModal({
 
             {/* 6. Share Agenda Preview */}
             {showSharePreview && (
-              <div className="border-2 border-blue-200 rounded-lg p-4 bg-blue-50/50 no-print">
+              <div className="border-2 border-blue-200 rounded-lg p-4 bg-apptivia-coral-tone-50/50 no-print">
                 <h3 className="text-sm font-semibold text-gray-900 mb-3 flex items-center gap-2">
-                  <span className="w-6 h-6 rounded-full bg-blue-500 text-white flex items-center justify-center text-xs font-bold">
+                  <span className="w-6 h-6 rounded-full bg-apptivia-coral text-white flex items-center justify-center text-xs font-bold">
                     <Send size={12} />
                   </span>
                   Preview Agenda for {repName}
@@ -416,7 +416,7 @@ export default function Meeting1On1PrepModal({
                       onClick={handleShareAgenda}
                       disabled={shared}
                       className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-semibold text-white transition-colors ${
-                        shared ? 'bg-green-500' : 'bg-blue-600 hover:bg-blue-700'
+                        shared ? 'bg-green-500' : 'bg-apptivia-coral hover:bg-apptivia-coral'
                       }`}
                     >
                       {shared ? (

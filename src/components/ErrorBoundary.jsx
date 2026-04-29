@@ -20,17 +20,17 @@ class ErrorBoundary extends React.Component {
   render() {
     if (this.state.hasError) {
       return (
-        <div className="min-h-screen bg-gray-50 flex items-center justify-center p-6">
+        <div className="min-h-screen bg-apptivia-paper flex items-center justify-center p-6">
           <div className="bg-white border rounded-xl shadow-sm p-6 max-w-lg text-center">
             <h1 className="text-lg font-semibold text-gray-900 mb-2">Something went wrong</h1>
             <p className="text-sm text-gray-500 mb-3">An unexpected error occurred while rendering this page.</p>
             <button
               onClick={() => window.location.reload()}
-              className="mb-3 px-4 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700"
+              className="mb-3 px-4 py-2 bg-apptivia-coral text-white text-sm rounded-lg hover:bg-apptivia-coral"
             >
               Reload Page
             </button>
-            <div className="text-xs text-left bg-gray-50 border rounded p-3 text-gray-700 overflow-auto max-h-48 whitespace-pre-wrap">
+            <div className="text-xs text-left bg-apptivia-paper border rounded p-3 text-gray-700 overflow-auto max-h-48 whitespace-pre-wrap">
               {String(this.state.error?.message || this.state.error || 'Unknown error')}
               {this.state.error?.stack ? `\n\n${this.state.error.stack}` : ''}
               {this.state.errorInfo?.componentStack ? `\n\n${this.state.errorInfo.componentStack}` : ''}
@@ -83,13 +83,13 @@ export class PageErrorBoundary extends React.Component {
             <div className="flex items-center justify-center gap-3">
               <button
                 onClick={this.reset}
-                className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors"
+                className="px-4 py-2 bg-apptivia-coral text-white text-sm font-medium rounded-lg hover:bg-apptivia-coral transition-colors"
               >
                 Try Again
               </button>
               <button
                 onClick={() => window.history.back()}
-                className="px-4 py-2 border border-gray-300 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-50 transition-colors"
+                className="px-4 py-2 border border-gray-300 text-gray-700 text-sm font-medium rounded-lg hover:bg-apptivia-paper transition-colors"
               >
                 Go Back
               </button>

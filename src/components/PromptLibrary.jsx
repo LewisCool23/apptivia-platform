@@ -12,18 +12,18 @@ import SearchWithHistory from './SearchWithHistory';
 // ── Constants ────────────────────────────────────────────────
 
 const CATEGORY_META = {
-  research:       { label: 'Research',        icon: Search,         color: 'bg-blue-100 text-blue-700',    border: 'border-blue-200' },
+  research:       { label: 'Research',        icon: Search,         color: 'bg-apptivia-coral-tone-50 text-blue-700',    border: 'border-blue-200' },
   outreach:       { label: 'Outreach',        icon: Mail,           color: 'bg-emerald-100 text-emerald-700', border: 'border-emerald-200' },
-  analysis:       { label: 'Analysis',        icon: Brain,          color: 'bg-purple-100 text-purple-700', border: 'border-purple-200' },
+  analysis:       { label: 'Analysis',        icon: Brain,          color: 'bg-apptivia-carbon-100 text-purple-700', border: 'border-purple-200' },
   follow_up:      { label: 'Follow-Up',       icon: MessageSquare,  color: 'bg-amber-100 text-amber-700',  border: 'border-amber-200' },
   deliverability: { label: 'Deliverability',  icon: Shield,         color: 'bg-red-100 text-red-700',      border: 'border-red-200' },
-  general:        { label: 'General',         icon: BookOpen,       color: 'bg-gray-100 text-gray-700',    border: 'border-gray-200' },
+  general:        { label: 'General',         icon: BookOpen,       color: 'bg-apptivia-carbon-100 text-gray-700',    border: 'border-gray-200' },
 };
 
 const MODEL_META = {
   chatgpt: { label: 'ChatGPT', color: 'bg-green-50 text-green-700', icon: '🟢' },
   claude:  { label: 'Claude',  color: 'bg-orange-50 text-orange-700', icon: '🟠' },
-  any:     { label: 'Any',     color: 'bg-gray-50 text-gray-600',    icon: '⚪' },
+  any:     { label: 'Any',     color: 'bg-apptivia-paper text-gray-600',    icon: '⚪' },
 };
 
 // ── Sub-Components ───────────────────────────────────────────
@@ -49,7 +49,7 @@ function ModelBadge({ model }) {
 
 function VariablePill({ name }) {
   return (
-    <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-indigo-50 text-indigo-600 text-[10px] font-mono font-medium">
+    <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-apptivia-carbon-100 text-indigo-600 text-[10px] font-mono font-medium">
       {'{{' + name + '}}'}
     </span>
   );
@@ -60,7 +60,7 @@ function CopyButton({ text, label = 'Copy' }) {
   return (
     <button
       onClick={() => { navigator.clipboard.writeText(text); setCopied(true); setTimeout(() => setCopied(false), 2000); }}
-      className="inline-flex items-center gap-1 px-2 py-1 rounded text-[10px] font-medium text-gray-500 hover:text-gray-700 hover:bg-gray-100 transition-colors"
+      className="inline-flex items-center gap-1 px-2 py-1 rounded text-[10px] font-medium text-gray-500 hover:text-gray-700 hover:bg-apptivia-carbon-100 transition-colors"
     >
       {copied ? <><Check size={10} className="text-emerald-500" /> Copied</> : <><Copy size={10} /> {label}</>}
     </button>
@@ -76,7 +76,7 @@ function PromptCard({ template, onDuplicate, onToggleActive, onDelete, onTest })
     <div className={`bg-white rounded-xl border ${template.is_active ? 'border-gray-100' : 'border-red-100 opacity-60'} overflow-hidden transition-all`}>
       {/* Header */}
       <div
-        className="flex items-center justify-between px-5 py-4 cursor-pointer hover:bg-gray-50/50 transition-colors"
+        className="flex items-center justify-between px-5 py-4 cursor-pointer hover:bg-apptivia-paper/50 transition-colors"
         onClick={() => setExpanded(!expanded)}
       >
         <div className="flex items-center gap-3 min-w-0">
@@ -97,7 +97,7 @@ function PromptCard({ template, onDuplicate, onToggleActive, onDelete, onTest })
             </span>
           )}
           {template.is_system && (
-            <span className="text-[10px] bg-violet-50 text-violet-600 px-1.5 py-0.5 rounded font-medium">System</span>
+            <span className="text-[10px] bg-apptivia-carbon-100 text-violet-600 px-1.5 py-0.5 rounded font-medium">System</span>
           )}
           {expanded ? <ChevronUp size={14} className="text-gray-400" /> : <ChevronDown size={14} className="text-gray-400" />}
         </div>
@@ -123,7 +123,7 @@ function PromptCard({ template, onDuplicate, onToggleActive, onDelete, onTest })
                 <span className="text-[10px] text-gray-400 uppercase font-medium">System Prompt</span>
                 <CopyButton text={template.system_prompt} label="Copy System" />
               </div>
-              <div className="bg-gray-50 rounded-lg p-3 text-xs text-gray-600 font-mono whitespace-pre-wrap leading-relaxed max-h-40 overflow-y-auto">
+              <div className="bg-apptivia-paper rounded-lg p-3 text-xs text-gray-600 font-mono whitespace-pre-wrap leading-relaxed max-h-40 overflow-y-auto">
                 {template.system_prompt}
               </div>
             </div>
@@ -145,7 +145,7 @@ function PromptCard({ template, onDuplicate, onToggleActive, onDelete, onTest })
             <div className="flex flex-wrap gap-1.5">
               <Tag size={10} className="text-gray-300 mt-0.5" />
               {template.tags.map(tag => (
-                <span key={tag} className="text-[10px] text-gray-400 bg-gray-50 px-1.5 py-0.5 rounded">{tag}</span>
+                <span key={tag} className="text-[10px] text-gray-400 bg-apptivia-paper px-1.5 py-0.5 rounded">{tag}</span>
               ))}
             </div>
           )}
@@ -167,7 +167,7 @@ function PromptCard({ template, onDuplicate, onToggleActive, onDelete, onTest })
             </button>
             <button
               onClick={(e) => { e.stopPropagation(); onDuplicate?.(template); }}
-              className="flex items-center gap-1 px-3 py-1.5 bg-gray-100 text-gray-600 rounded-lg text-[11px] font-medium hover:bg-gray-200 transition-colors"
+              className="flex items-center gap-1 px-3 py-1.5 bg-apptivia-carbon-100 text-gray-600 rounded-lg text-[11px] font-medium hover:bg-apptivia-carbon-200 transition-colors"
             >
               <Copy size={11} /> Duplicate & Edit
             </button>
@@ -261,7 +261,7 @@ function TestPromptModal({ template, onClose }) {
                     <span className="text-[10px] text-gray-400 uppercase font-medium">System Message</span>
                     <CopyButton text={resolved.system} />
                   </div>
-                  <div className="bg-violet-50 rounded-lg p-3 text-xs text-violet-800 font-mono whitespace-pre-wrap leading-relaxed border border-violet-100">
+                  <div className="bg-apptivia-carbon-100 rounded-lg p-3 text-xs text-violet-800 font-mono whitespace-pre-wrap leading-relaxed border border-violet-100">
                     {resolved.system}
                   </div>
                 </div>
@@ -271,7 +271,7 @@ function TestPromptModal({ template, onClose }) {
                   <span className="text-[10px] text-gray-400 uppercase font-medium">User Message</span>
                   <CopyButton text={resolved.user} />
                 </div>
-                <div className="bg-blue-50 rounded-lg p-3 text-xs text-blue-800 font-mono whitespace-pre-wrap leading-relaxed border border-blue-100">
+                <div className="bg-apptivia-coral-tone-50 rounded-lg p-3 text-xs text-blue-800 font-mono whitespace-pre-wrap leading-relaxed border border-blue-100">
                   {resolved.user}
                 </div>
               </div>
@@ -551,11 +551,11 @@ export default function PromptLibrary({ organizationId }) {
       <div className="bg-white rounded-xl border border-gray-100 p-4">
         <h3 className="text-xs font-bold text-gray-700 mb-2 flex items-center gap-1.5"><Target size={12} /> Recommended Workflow</h3>
         <div className="flex items-center gap-2 text-[11px] text-gray-500">
-          <span className="flex items-center gap-1 px-2 py-1 bg-blue-50 text-blue-700 rounded-lg font-medium">1. Research</span>
+          <span className="flex items-center gap-1 px-2 py-1 bg-apptivia-coral-tone-50 text-blue-700 rounded-lg font-medium">1. Research</span>
           <span className="text-gray-300">→</span>
           <span className="flex items-center gap-1 px-2 py-1 bg-emerald-50 text-emerald-700 rounded-lg font-medium">2. Angles</span>
           <span className="text-gray-300">→</span>
-          <span className="flex items-center gap-1 px-2 py-1 bg-purple-50 text-purple-700 rounded-lg font-medium">3. Draft</span>
+          <span className="flex items-center gap-1 px-2 py-1 bg-apptivia-carbon-100 text-purple-700 rounded-lg font-medium">3. Draft</span>
           <span className="text-gray-300">→</span>
           <span className="flex items-center gap-1 px-2 py-1 bg-amber-50 text-amber-700 rounded-lg font-medium">4. Analyze</span>
           <span className="text-gray-300">→</span>
@@ -608,7 +608,7 @@ export default function PromptLibrary({ organizationId }) {
         </button>
 
         {/* Refresh */}
-        <button onClick={refresh} className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors">
+        <button onClick={refresh} className="p-2 text-gray-400 hover:text-gray-600 hover:bg-apptivia-carbon-100 rounded-lg transition-colors">
           <RefreshCw size={14} />
         </button>
       </div>

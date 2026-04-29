@@ -70,7 +70,7 @@ export default function PlanBuilderForm({
         </div>
         <button
           onClick={onCancel}
-          className="px-3 py-1.5 text-xs font-semibold text-gray-600 border border-gray-300 rounded-md hover:bg-gray-50"
+          className="px-3 py-1.5 text-xs font-semibold text-gray-600 border border-gray-300 rounded-md hover:bg-apptivia-paper"
         >
           Cancel
         </button>
@@ -132,7 +132,7 @@ export default function PlanBuilderForm({
           <div className="flex items-center gap-2">
             <button
               onClick={() => onPersonSelected(planFor.memberId)}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-purple-600 border border-purple-300 rounded-md hover:bg-purple-50 transition-colors"
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-purple-600 border border-purple-300 rounded-md hover:bg-apptivia-carbon-100 transition-colors"
             >
               <Sparkles size={14} />
               Regenerate Plan
@@ -151,7 +151,7 @@ export default function PlanBuilderForm({
             value={planForm.name}
             onChange={(e) => setPlanForm({ ...planForm, name: e.target.value })}
             disabled={inputDisabled}
-            className={`w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent ${inputDisabled ? 'bg-gray-50 text-gray-400' : ''}`}
+            className={`w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent ${inputDisabled ? 'bg-apptivia-paper text-gray-400' : ''}`}
             placeholder="e.g., Q1 Pipeline Acceleration Plan"
           />
         </div>
@@ -165,7 +165,7 @@ export default function PlanBuilderForm({
               value={planForm.date_range_start}
               onChange={(e) => setPlanForm({ ...planForm, date_range_start: e.target.value })}
               disabled={inputDisabled}
-              className={`w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent ${inputDisabled ? 'bg-gray-50 text-gray-400' : ''}`}
+              className={`w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent ${inputDisabled ? 'bg-apptivia-paper text-gray-400' : ''}`}
             />
           </div>
           <div>
@@ -175,7 +175,7 @@ export default function PlanBuilderForm({
               value={planForm.date_range_end}
               onChange={(e) => setPlanForm({ ...planForm, date_range_end: e.target.value })}
               disabled={inputDisabled}
-              className={`w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent ${inputDisabled ? 'bg-gray-50 text-gray-400' : ''}`}
+              className={`w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent ${inputDisabled ? 'bg-apptivia-paper text-gray-400' : ''}`}
             />
           </div>
         </div>
@@ -198,7 +198,7 @@ export default function PlanBuilderForm({
                   value={goal}
                   onChange={(e) => updateArrayField('goals', index, e.target.value)}
                   disabled={inputDisabled}
-                  className={`flex-1 border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent ${inputDisabled ? 'bg-gray-50 text-gray-400' : ''}`}
+                  className={`flex-1 border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent ${inputDisabled ? 'bg-apptivia-paper text-gray-400' : ''}`}
                   placeholder="e.g., Increase pipeline by 25% this quarter"
                 />
                 {planForm.goals.length > 1 && !inputDisabled && (
@@ -228,7 +228,7 @@ export default function PlanBuilderForm({
                   value={kpi}
                   onChange={(e) => handleFocusKpiChange(index, e.target.value)}
                   disabled={inputDisabled}
-                  className={`flex-1 border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent ${inputDisabled ? 'bg-gray-50 text-gray-400' : ''}`}
+                  className={`flex-1 border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent ${inputDisabled ? 'bg-apptivia-paper text-gray-400' : ''}`}
                 >
                   <option value="">Select a KPI...</option>
                   {availableKPIs.map(k => (
@@ -249,7 +249,7 @@ export default function PlanBuilderForm({
 
         {/* Skillset Impact Preview — shown for rep plans after AI generation */}
         {skillsetPreview && !isPlaybook && skillsetPreview.projected?.length > 0 && (
-          <div className="bg-indigo-50 border border-indigo-200 rounded-lg p-4">
+          <div className="bg-apptivia-carbon-100 border border-indigo-200 rounded-lg p-4">
             <h4 className="text-sm font-semibold text-indigo-800 mb-3">Skillset Impact Preview</h4>
             <div className="grid grid-cols-2 gap-2">
               {skillsetPreview.projected.map(s => {
@@ -287,7 +287,7 @@ export default function PlanBuilderForm({
                   value={action}
                   onChange={(e) => updateArrayField('action_items', index, e.target.value)}
                   disabled={inputDisabled}
-                  className={`flex-1 border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent ${inputDisabled ? 'bg-gray-50 text-gray-400' : ''}`}
+                  className={`flex-1 border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent ${inputDisabled ? 'bg-apptivia-paper text-gray-400' : ''}`}
                   placeholder={`Action item ${index + 1}`}
                 />
                 {planForm.action_items.length > 1 && !inputDisabled && (
@@ -318,7 +318,7 @@ export default function PlanBuilderForm({
                   value={metric}
                   onChange={(e) => updateArrayField('success_metrics', index, e.target.value)}
                   disabled={inputDisabled}
-                  className={`flex-1 border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent ${inputDisabled ? 'bg-gray-50 text-gray-400' : ''}`}
+                  className={`flex-1 border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent ${inputDisabled ? 'bg-apptivia-paper text-gray-400' : ''}`}
                   placeholder="e.g., Achieve 20% conversion rate"
                 />
                 {planForm.success_metrics.length > 1 && !inputDisabled && (
@@ -339,7 +339,7 @@ export default function PlanBuilderForm({
             onChange={(e) => setPlanForm({ ...planForm, notes: e.target.value })}
             disabled={inputDisabled}
             rows={4}
-            className={`w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent ${inputDisabled ? 'bg-gray-50 text-gray-400' : ''}`}
+            className={`w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent ${inputDisabled ? 'bg-apptivia-paper text-gray-400' : ''}`}
             placeholder="Additional notes or context..."
           />
         </div>
@@ -348,14 +348,14 @@ export default function PlanBuilderForm({
         <div className="flex justify-end gap-2 pt-4 border-t border-gray-200">
           <button
             onClick={onCancel}
-            className="px-4 py-2 text-sm font-semibold border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50"
+            className="px-4 py-2 text-sm font-semibold border border-gray-300 text-gray-700 rounded-md hover:bg-apptivia-paper"
           >
             Cancel
           </button>
           <button
             onClick={handleSavePlan}
             disabled={savingPlan || inputDisabled}
-            className="px-4 py-2 text-sm font-semibold bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-60"
+            className="px-4 py-2 text-sm font-semibold bg-apptivia-coral text-white rounded-md hover:bg-apptivia-coral disabled:opacity-60"
           >
             {savingPlan ? 'Saving...' : (editingPlan ? (isPlaybook ? 'Update Playbook' : 'Update Plan') : (isPlaybook ? 'Save Playbook' : 'Save Plan'))}
           </button>

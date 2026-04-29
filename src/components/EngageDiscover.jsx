@@ -32,7 +32,7 @@ const DEFAULT_PEOPLE_SENIORITY = ['owner', 'founder', 'c_suite', 'partner', 'vp'
 
 function ScoreBadge({ score, label }) {
   const color = score >= 80 ? 'bg-emerald-100 text-emerald-700' :
-    score >= 60 ? 'bg-blue-100 text-blue-700' :
+    score >= 60 ? 'bg-apptivia-coral-tone-50 text-blue-700' :
     score >= 40 ? 'bg-yellow-100 text-yellow-700' :
     'bg-red-100 text-red-700';
   return (
@@ -44,8 +44,8 @@ function ScoreBadge({ score, label }) {
 
 function DataSourceBadges({ sources }) {
   const badges = {
-    apollo: { label: 'Apollo', color: 'bg-blue-50 text-blue-600' },
-    tavily: { label: 'Tavily', color: 'bg-purple-50 text-purple-600' },
+    apollo: { label: 'Apollo', color: 'bg-apptivia-coral-tone-50 text-blue-600' },
+    tavily: { label: 'Tavily', color: 'bg-apptivia-carbon-100 text-purple-600' },
     claude: { label: 'Claude AI', color: 'bg-orange-50 text-orange-600' },
     pdl: { label: 'PDL', color: 'bg-green-50 text-green-600' },
   };
@@ -53,7 +53,7 @@ function DataSourceBadges({ sources }) {
     <div className="flex items-center gap-1.5 flex-wrap">
       <span className="text-[10px] text-gray-400 uppercase font-medium">Sources:</span>
       {(sources || []).map((s) => {
-        const b = badges[s] || { label: s, color: 'bg-gray-50 text-gray-500' };
+        const b = badges[s] || { label: s, color: 'bg-apptivia-paper text-gray-500' };
         return <span key={s} className={`px-2 py-0.5 rounded-full text-[10px] font-medium ${b.color}`}>{b.label}</span>;
       })}
     </div>
@@ -101,6 +101,22 @@ function CompanyBriefPanel({ company, brief: rawBrief, dataSources, tokensUsed, 
     }
   }, [rawBrief]);
 
+  // Fallback when research returned no usable data
+  if (!company && !brief) {
+    return (
+      <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-5">
+        <div className="flex items-center gap-2 mb-2">
+          <AlertTriangle size={16} className="text-yellow-600" />
+          <span className="text-sm font-semibold text-yellow-700">Company research unavailable</span>
+        </div>
+        <p className="text-xs text-yellow-600 mb-2">Could not retrieve company data. Try searching by domain (e.g. drift.com) for better results.</p>
+        {errors?.length > 0 && errors.map((e, i) => (
+          <p key={i} className="text-[10px] text-yellow-500">{e.step}: {e.error}</p>
+        ))}
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-4">
       {/* Company Header */}
@@ -146,7 +162,7 @@ function CompanyBriefPanel({ company, brief: rawBrief, dataSources, tokensUsed, 
                 )}
               </div>
               {company.short_description && (
-                <p className="text-xs text-gray-500 mt-2 line-clamp-2">{company.short_description}</p>
+                <p className="text-xs text-gray-500 mt-2 leading-relaxed">{company.short_description}</p>
               )}
             </div>
           </div>
@@ -170,14 +186,14 @@ function CompanyBriefPanel({ company, brief: rawBrief, dataSources, tokensUsed, 
           <div className="p-5 space-y-4">
             {/* Summary */}
             {brief.summary && (
-              <div className="bg-blue-50/50 border border-blue-100 rounded-lg p-4">
+              <div className="bg-apptivia-coral-tone-50/50 border border-blue-100 rounded-lg p-4">
                 <p className="text-sm text-gray-800 leading-relaxed">{brief.summary}</p>
               </div>
             )}
 
             {/* ICP Fit */}
             {brief.icp_fit_score != null && (
-              <div className="flex items-center gap-3 bg-gray-50 rounded-lg p-3">
+              <div className="flex items-center gap-3 bg-apptivia-paper rounded-lg p-3">
                 <span className="text-xs font-medium text-gray-500">ICP Fit:</span>
                 <ScoreBadge score={brief.icp_fit_score} label />
                 {brief.icp_reasoning && <span className="text-xs text-gray-500 flex-1">{brief.icp_reasoning}</span>}
@@ -351,7 +367,7 @@ function ProspectBriefPanel({ prospect, brief: rawBrief, dataSources, tokensUsed
               <div className="flex items-center gap-2 flex-wrap">
                 <h3 className="text-lg font-bold text-gray-900">{prospectName}</h3>
                 {prospect.seniority && (
-                  <span className="text-[10px] text-purple-600 bg-purple-50 px-2 py-0.5 rounded-full font-medium capitalize">{prospect.seniority}</span>
+                  <span className="text-[10px] text-purple-600 bg-apptivia-carbon-100 px-2 py-0.5 rounded-full font-medium capitalize">{prospect.seniority}</span>
                 )}
               </div>
 
@@ -376,18 +392,22 @@ function ProspectBriefPanel({ prospect, brief: rawBrief, dataSources, tokensUsed
 
               {/* Row 2: Contact info with copy buttons */}
               <div className="flex items-center gap-3 mt-2 flex-wrap">
-                {prospect.email && (
+                {prospect.email ? (
                   <button
                     onClick={() => copyField('email', prospect.email)}
-                    className="group/email text-xs text-blue-600 hover:text-blue-700 flex items-center gap-1 bg-blue-50 hover:bg-blue-100 px-2 py-1 rounded-lg transition-colors"
+                    className="group/email text-xs text-blue-600 hover:text-blue-700 flex items-center gap-1 bg-apptivia-coral-tone-50 hover:bg-apptivia-coral-tone-50 px-2 py-1 rounded-lg transition-colors"
                     title={`Copy: ${prospect.email}`}
                   >
                     <Mail size={10} />
                     <span className="max-w-[180px] truncate">{prospect.email}</span>
                     {copied === 'email' ? <Check size={9} className="text-emerald-500" /> : <Copy size={9} className="opacity-50 group-hover/email:opacity-100" />}
                   </button>
+                ) : (
+                  <span className="text-xs text-gray-400 flex items-center gap-1 bg-apptivia-paper px-2 py-1 rounded-lg">
+                    <Mail size={10} /> Email not available
+                  </span>
                 )}
-                {phone && (
+                {phone ? (
                   <button
                     onClick={() => copyField('phone', phone)}
                     className="group/phone text-xs text-emerald-600 hover:text-emerald-700 flex items-center gap-1 bg-emerald-50 hover:bg-emerald-100 px-2 py-1 rounded-lg transition-colors"
@@ -397,12 +417,20 @@ function ProspectBriefPanel({ prospect, brief: rawBrief, dataSources, tokensUsed
                     <span>{phone}</span>
                     {copied === 'phone' ? <Check size={9} className="text-emerald-500" /> : <Copy size={9} className="opacity-50 group-hover/phone:opacity-100" />}
                   </button>
+                ) : (
+                  <span className="text-xs text-gray-400 flex items-center gap-1 bg-apptivia-paper px-2 py-1 rounded-lg">
+                    <Phone size={10} /> Phone not available
+                  </span>
                 )}
-                {prospect.linkedin_url && (
+                {prospect.linkedin_url ? (
                   <a href={prospect.linkedin_url} target="_blank" rel="noopener noreferrer"
-                    className="text-xs text-blue-500 hover:text-blue-600 flex items-center gap-1 bg-blue-50 hover:bg-blue-100 px-2 py-1 rounded-lg transition-colors">
+                    className="text-xs text-blue-500 hover:text-blue-600 flex items-center gap-1 bg-apptivia-coral-tone-50 hover:bg-apptivia-coral-tone-50 px-2 py-1 rounded-lg transition-colors">
                     <Linkedin size={10} /> LinkedIn <ExternalLink size={8} />
                   </a>
+                ) : (
+                  <span className="text-xs text-gray-400 flex items-center gap-1 bg-apptivia-paper px-2 py-1 rounded-lg">
+                    <Linkedin size={10} /> LinkedIn not available
+                  </span>
                 )}
                 {twitterUrl && (
                   <a href={twitterUrl} target="_blank" rel="noopener noreferrer"
@@ -412,7 +440,7 @@ function ProspectBriefPanel({ prospect, brief: rawBrief, dataSources, tokensUsed
                 )}
                 {companyWebsite && (
                   <a href={companyWebsite.startsWith('http') ? companyWebsite : `https://${companyWebsite}`} target="_blank" rel="noopener noreferrer"
-                    className="text-xs text-gray-500 hover:text-gray-700 flex items-center gap-1 bg-gray-50 hover:bg-gray-100 px-2 py-1 rounded-lg transition-colors">
+                    className="text-xs text-gray-500 hover:text-gray-700 flex items-center gap-1 bg-apptivia-paper hover:bg-apptivia-carbon-100 px-2 py-1 rounded-lg transition-colors">
                     <Globe size={10} /> Website <ExternalLink size={8} />
                   </a>
                 )}
@@ -431,7 +459,7 @@ function ProspectBriefPanel({ prospect, brief: rawBrief, dataSources, tokensUsed
                 {prospect.email && (
                   <a
                     href={`mailto:${prospect.email}`}
-                    className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-500 hover:bg-blue-600 text-white text-xs font-medium rounded-lg transition-colors shadow-sm"
+                    className="flex items-center gap-1.5 px-3 py-1.5 bg-apptivia-coral hover:bg-apptivia-coral text-white text-xs font-medium rounded-lg transition-colors shadow-sm"
                   >
                     <Mail size={11} /> Email
                   </a>
@@ -442,10 +470,10 @@ function ProspectBriefPanel({ prospect, brief: rawBrief, dataSources, tokensUsed
                     disabled={isSaved || savingContact}
                     className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg transition-colors shadow-sm ${
                       isSaved
-                        ? 'bg-gray-100 text-gray-400 cursor-default'
+                        ? 'bg-apptivia-carbon-100 text-gray-400 cursor-default'
                         : savingContact
-                          ? 'bg-purple-300 text-white cursor-wait'
-                          : 'bg-purple-500 hover:bg-purple-600 text-white'
+                          ? 'bg-apptivia-ink text-white cursor-wait'
+                          : 'bg-apptivia-ink hover:bg-apptivia-ink text-white'
                     }`}
                   >
                     {isSaved ? <><BookmarkCheck size={11} /> Saved</> : savingContact ? <><UserPlus size={11} /> Saving...</> : <><UserPlus size={11} /> Save Contact</>}
@@ -489,13 +517,13 @@ function ProspectBriefPanel({ prospect, brief: rawBrief, dataSources, tokensUsed
 
           <div className="p-5 space-y-4">
             {brief.summary && (
-              <div className="bg-purple-50/50 border border-purple-100 rounded-lg p-4">
+              <div className="bg-apptivia-carbon-100/50 border border-purple-100 rounded-lg p-4">
                 <p className="text-sm text-gray-800 leading-relaxed">{brief.summary}</p>
               </div>
             )}
 
             {brief.fit_score != null && (
-              <div className="flex items-center gap-3 bg-gray-50 rounded-lg p-3">
+              <div className="flex items-center gap-3 bg-apptivia-paper rounded-lg p-3">
                 <span className="text-xs font-medium text-gray-500">Prospect Fit:</span>
                 <ScoreBadge score={brief.fit_score} label />
                 {brief.fit_reasoning && <span className="text-xs text-gray-500 flex-1">{brief.fit_reasoning}</span>}
@@ -556,7 +584,7 @@ function ProspectBriefPanel({ prospect, brief: rawBrief, dataSources, tokensUsed
             )}
 
             {brief.best_channel && (
-              <div className="flex items-center gap-4 bg-gray-50 rounded-lg p-3">
+              <div className="flex items-center gap-4 bg-apptivia-paper rounded-lg p-3">
                 <div>
                   <span className="text-[10px] text-gray-400 uppercase font-medium block">Best Channel</span>
                   <span className="text-xs font-semibold text-gray-700 capitalize">{brief.best_channel}</span>
@@ -596,8 +624,8 @@ function OutreachDraftPanel({ draft, tokensUsed }) {
   const angleColors = [
     { bg: 'bg-red-50', border: 'border-red-200', badge: 'bg-red-100 text-red-700', accent: 'text-red-500' },
     { bg: 'bg-amber-50', border: 'border-amber-200', badge: 'bg-amber-100 text-amber-700', accent: 'text-amber-500' },
-    { bg: 'bg-blue-50', border: 'border-blue-200', badge: 'bg-blue-100 text-blue-700', accent: 'text-blue-500' },
-    { bg: 'bg-purple-50', border: 'border-purple-200', badge: 'bg-purple-100 text-purple-700', accent: 'text-purple-500' },
+    { bg: 'bg-apptivia-coral-tone-50', border: 'border-blue-200', badge: 'bg-apptivia-coral-tone-50 text-blue-700', accent: 'text-blue-500' },
+    { bg: 'bg-apptivia-carbon-100', border: 'border-purple-200', badge: 'bg-apptivia-carbon-100 text-purple-700', accent: 'text-purple-500' },
   ];
 
   // Multi-message format (from multi-angle template)
@@ -678,7 +706,7 @@ function OutreachDraftPanel({ draft, tokensUsed }) {
             <span className="text-[10px] text-gray-400 uppercase font-medium">Message</span>
             <CopyButton text={draft.body} />
           </div>
-          <div className="bg-gray-50 rounded-lg p-4 mt-1">
+          <div className="bg-apptivia-paper rounded-lg p-4 mt-1">
             <p className="text-xs text-gray-800 leading-relaxed whitespace-pre-wrap">{draft.body}</p>
           </div>
         </div>
@@ -745,7 +773,7 @@ function OutreachModal({
 
         {/* Context line */}
         {(outreachAngles > 0 || fitScore != null) && (
-          <div className="px-5 py-2 bg-purple-50/50 border-b border-purple-100/50">
+          <div className="px-5 py-2 bg-apptivia-carbon-100/50 border-b border-purple-100/50">
             <p className="text-[10px] text-purple-600 flex items-center gap-2">
               <Sparkles size={10} />
               Using: {outreachAngles > 0 && `${outreachAngles} outreach angle${outreachAngles > 1 ? 's' : ''}`}
@@ -838,7 +866,7 @@ function OutreachModal({
 function CollapsibleSection({ title, icon: Icon, expanded, onToggle, children }) {
   return (
     <div className="border border-gray-100 rounded-lg overflow-hidden">
-      <button onClick={onToggle} className="w-full flex items-center justify-between px-4 py-2.5 bg-gray-50/50 hover:bg-gray-50 transition-colors">
+      <button onClick={onToggle} className="w-full flex items-center justify-between px-4 py-2.5 bg-apptivia-paper/50 hover:bg-apptivia-paper transition-colors">
         <div className="flex items-center gap-2">
           <Icon size={12} className="text-gray-400" />
           <span className="text-xs font-semibold text-gray-700">{title}</span>
@@ -911,6 +939,15 @@ export default function EngageDiscover({ organizationId, userId, initialSearch, 
 
   // Auto-research flag: when set to true, fires handleResearch after mode/input state settles
   const [autoResearchPending, setAutoResearchPending] = useState(false);
+
+  // Known contact data: when navigating Find People → Prospect Research, carry over email/phone/LinkedIn
+  const [knownContactData, setKnownContactData] = useState(null);
+
+  // Force refresh flag — bypasses cache when user explicitly clicks refresh
+  const [forceRefresh, setForceRefresh] = useState(false);
+
+  // Track whether current people results came from cache
+  const [peopleResultCached, setPeopleResultCached] = useState(false);
 
   // ── Search History ──────────────────────────────────────
 
@@ -985,6 +1022,9 @@ export default function EngageDiscover({ organizationId, userId, initialSearch, 
     try {
       let title;
       let content;
+      let companyId = null;
+      let prospectId = null;
+
       if (searchType === 'company') {
         title = result?.company?.name || result?.company?.domain || query;
         content = {
@@ -995,6 +1035,21 @@ export default function EngageDiscover({ organizationId, userId, initialSearch, 
           brief: result?.brief || null,
           data_sources: result?.data_sources || [],
         };
+        // Upsert engage_companies record to satisfy CHECK constraint
+        const domain = (result?.company?.domain || query || '').replace(/^https?:\/\//, '').replace(/^www\./, '').replace(/\/.*$/, '').trim();
+        if (domain) {
+          try {
+            const { data: co } = await engageDb.upsertCompany({
+              organization_id: organizationId,
+              name: result?.company?.name || domain,
+              domain,
+              industry: result?.company?.industry || null,
+              description: result?.company?.description || null,
+              source: 'research',
+            });
+            if (co?.id) companyId = co.id;
+          } catch { /* proceed without company_id */ }
+        }
       } else if (searchType === 'people_search') {
         const count = result?.people?.length || 0;
         title = `${count} people — ${query}`;
@@ -1008,6 +1063,19 @@ export default function EngageDiscover({ organizationId, userId, initialSearch, 
           brief: null,
           data_sources: ['apollo'],
         };
+        // People search by company domain — upsert the company
+        const domain = query.replace(/^https?:\/\//, '').replace(/^www\./, '').replace(/\/.*$/, '').trim();
+        if (domain && domain.includes('.')) {
+          try {
+            const { data: co } = await engageDb.upsertCompany({
+              organization_id: organizationId,
+              name: domain,
+              domain,
+              source: 'people_search',
+            });
+            if (co?.id) companyId = co.id;
+          } catch { /* proceed without company_id */ }
+        }
       } else {
         title = result?.prospect?.full_name || result?.prospect?.email || query;
         content = {
@@ -1018,12 +1086,49 @@ export default function EngageDiscover({ organizationId, userId, initialSearch, 
           brief: result?.brief || null,
           data_sources: result?.data_sources || [],
         };
+        // Upsert prospect record to satisfy CHECK constraint
+        const prospect = result?.prospect;
+        const email = prospect?.email || (query.includes('@') ? query : null);
+        if (email) {
+          try {
+            const { data: p } = await engageDb.upsertProspect({
+              organization_id: organizationId,
+              email,
+              first_name: prospect?.first_name || null,
+              last_name: prospect?.last_name || null,
+              title: prospect?.title || null,
+              company_name: prospect?.organization?.name || null,
+              source: 'research',
+            });
+            if (p?.id) prospectId = p.id;
+          } catch { /* proceed without prospect_id */ }
+        }
+        // Also try company from prospect's org data
+        const orgDomain = prospect?.organization?.primary_domain || prospect?.organization?.website_url;
+        if (!prospectId && orgDomain) {
+          const domain = orgDomain.replace(/^https?:\/\//, '').replace(/^www\./, '').replace(/\/.*$/, '').trim();
+          try {
+            const { data: co } = await engageDb.upsertCompany({
+              organization_id: organizationId,
+              name: prospect?.organization?.name || domain,
+              domain,
+              source: 'prospect_research',
+            });
+            if (co?.id) companyId = co.id;
+          } catch { /* proceed without company_id */ }
+        }
       }
+
+      // Only save report if we have at least one FK (CHECK constraint requires it)
+      if (!companyId && !prospectId) return;
+
       await engageDb.saveReport({
         organization_id: organizationId,
         report_type: searchType,
         title,
         content,
+        company_id: companyId || undefined,
+        prospect_id: prospectId || undefined,
         model_used: searchType === 'people_search' ? 'apollo' : 'claude',
         data_sources: content.data_sources,
         tokens_used: result?.tokens_used || 0,
@@ -1126,6 +1231,58 @@ export default function EngageDiscover({ organizationId, userId, initialSearch, 
 
   const handleResearchRef = useRef(null);
 
+  // Helper: fetch company research with cache check
+  const fetchCompanyResearchWithCache = async (domain) => {
+    // Check cache first (unless force refresh)
+    if (!forceRefresh && organizationId) {
+      const cached = await engageDb.getCachedReport(organizationId, 'company', domain);
+      if (cached?.content) {
+        return {
+          ok: true,
+          company: cached.content.company || null,
+          brief: cached.content.brief || null,
+          data_sources: cached.content.data_sources || [],
+          tokens_used: 0,
+          errors: [],
+          _cached: true,
+        };
+      }
+    }
+    return engageApi.researchCompany(domain);
+  };
+
+  // Helper: fetch people at company with cache check
+  const fetchPeopleWithCache = async (domain, opts) => {
+    if (!forceRefresh && organizationId) {
+      const cached = await engageDb.getCachedReport(organizationId, 'people_search', domain);
+      if (cached?.content?.people?.length) {
+        return { _cached: true, people: cached.content.people };
+      }
+    }
+    const result = await engageApi.findPeopleAtCompany(domain, opts);
+    const people = result?.data?.people || result?.data?.contacts || result?.data || [];
+    return { _cached: false, people: Array.isArray(people) ? people : [] };
+  };
+
+  // Helper: fetch prospect research with cache check
+  const fetchProspectWithCache = async (identifier, query) => {
+    if (!forceRefresh && organizationId) {
+      const cached = await engageDb.getCachedReport(organizationId, 'prospect', query);
+      if (cached?.content) {
+        return {
+          ok: true,
+          prospect: cached.content.prospect || null,
+          brief: cached.content.brief || null,
+          data_sources: cached.content.data_sources || [],
+          tokens_used: 0,
+          errors: [],
+          _cached: true,
+        };
+      }
+    }
+    return engageApi.researchProspect(identifier);
+  };
+
   const handleResearch = async () => {
     if (!searchInput.trim()) return;
     setAutoResearchPending(false); // Clear auto-research flag (set by Eye icon click)
@@ -1134,6 +1291,7 @@ export default function EngageDiscover({ organizationId, userId, initialSearch, 
     setCompanyResult(null);
     setProspectResult(null);
     setPeopleSearchResults(null);
+    setPeopleResultCached(false);
     setOutreachDraft(null);
     setDisambiguationResults(null);
     setSuggestedContacts(null);
@@ -1145,9 +1303,9 @@ export default function EngageDiscover({ organizationId, userId, initialSearch, 
         // If it looks like a domain (has a dot and no spaces), go straight to research
         const looksLikeDomain = input.includes('.') && !input.includes(' ');
         if (looksLikeDomain) {
-          const result = await engageApi.researchCompany(input);
+          const result = await fetchCompanyResearchWithCache(input);
           setCompanyResult(result);
-          saveToHistory('company', input, result);
+          if (!result._cached) saveToHistory('company', input, result);
           // Fetch suggested contacts in background
           fetchSuggestedContacts(input);
         } else {
@@ -1162,9 +1320,9 @@ export default function EngageDiscover({ organizationId, userId, initialSearch, 
               setLoading(true);
               setDisambiguationLoading(false);
               const domain = companies[0].primary_domain || companies[0].website_url?.replace(/^https?:\/\//, '').replace(/\/.*$/, '') || input;
-              const result = await engageApi.researchCompany(domain);
+              const result = await fetchCompanyResearchWithCache(domain);
               setCompanyResult(result);
-              saveToHistory('company', domain, result);
+              if (!result._cached) saveToHistory('company', domain, result);
               fetchSuggestedContacts(domain);
               setLoading(false);
             } else if (companies.length > 1) {
@@ -1174,9 +1332,9 @@ export default function EngageDiscover({ organizationId, userId, initialSearch, 
               // No results — try as-is
               setDisambiguationLoading(false);
               setLoading(true);
-              const result = await engageApi.researchCompany(input);
+              const result = await fetchCompanyResearchWithCache(input);
               setCompanyResult(result);
-              saveToHistory('company', input, result);
+              if (!result._cached) saveToHistory('company', input, result);
               fetchSuggestedContacts(input);
               setLoading(false);
             }
@@ -1184,9 +1342,9 @@ export default function EngageDiscover({ organizationId, userId, initialSearch, 
             // Disambiguation failed — fall back to direct research
             setDisambiguationLoading(false);
             setLoading(true);
-            const result = await engageApi.researchCompany(input);
+            const result = await fetchCompanyResearchWithCache(input);
             setCompanyResult(result);
-            saveToHistory('company', input, result);
+            if (!result._cached) saveToHistory('company', input, result);
             fetchSuggestedContacts(input);
             setLoading(false);
           }
@@ -1199,10 +1357,10 @@ export default function EngageDiscover({ organizationId, userId, initialSearch, 
           const companyOpts = {};
           if (peopleSearchFilters?.titles?.length) companyOpts.titles = peopleSearchFilters.titles;
           if (peopleSearchFilters?.seniority?.length) companyOpts.seniority = peopleSearchFilters.seniority;
-          const result = await engageApi.findPeopleAtCompany(domain, Object.keys(companyOpts).length ? companyOpts : undefined);
-          const people = result?.data?.people || result?.data?.contacts || result?.data || [];
-          setPeopleSearchResults(Array.isArray(people) ? people : []);
-          saveToHistory('people_search', domain, { people: Array.isArray(people) ? people : [], mode: 'company' });
+          const { _cached, people } = await fetchPeopleWithCache(domain, Object.keys(companyOpts).length ? companyOpts : undefined);
+          setPeopleSearchResults(people);
+          setPeopleResultCached(!!_cached);
+          if (!_cached) saveToHistory('people_search', domain, { people, mode: 'company' });
         } else {
           // Technology search — find people at companies using this technology
           const filters = peopleSearchFilters || {};
@@ -1238,14 +1396,25 @@ export default function EngageDiscover({ organizationId, userId, initialSearch, 
           };
         }
 
-        const result = await engageApi.researchProspect(identifier);
+        const result = await fetchProspectWithCache(identifier, input);
+        // Merge known contact data from Find People / Suggested Contacts if available
+        if (knownContactData && result?.prospect) {
+          if (!result.prospect.email && knownContactData.email) result.prospect.email = knownContactData.email;
+          if (!result.prospect.linkedin_url && knownContactData.linkedin_url) result.prospect.linkedin_url = knownContactData.linkedin_url;
+          const existingPhone = result.prospect.sanitized_phone || result.prospect.phone_number || result.prospect.phone;
+          if (!existingPhone && knownContactData.phone) result.prospect.phone_number = knownContactData.phone;
+          if (!result.prospect.title && knownContactData.title) result.prospect.title = knownContactData.title;
+          if (!result.prospect.organization && knownContactData.organization) result.prospect.organization = knownContactData.organization;
+        }
+        setKnownContactData(null); // Clear after use
         setProspectResult(result);
-        saveToHistory('prospect', searchInput.trim(), result);
+        if (!result._cached) saveToHistory('prospect', input, result);
       }
     } catch (err) {
       setError(err.message || 'Research failed. Make sure the backend is running.');
     } finally {
       setLoading(false);
+      setForceRefresh(false); // Reset force refresh after any search
     }
   };
 
@@ -1257,9 +1426,9 @@ export default function EngageDiscover({ organizationId, userId, initialSearch, 
     try {
       const domain = company.primary_domain || company.website_url?.replace(/^https?:\/\//, '').replace(/\/.*$/, '') || company.name;
       setSearchInput(domain);
-      const result = await engageApi.researchCompany(domain);
+      const result = await fetchCompanyResearchWithCache(domain);
       setCompanyResult(result);
-      saveToHistory('company', domain, result);
+      if (!result._cached) saveToHistory('company', domain, result);
       fetchSuggestedContacts(domain);
     } catch (err) {
       setError(err.message || 'Research failed');
@@ -1342,16 +1511,6 @@ export default function EngageDiscover({ organizationId, userId, initialSearch, 
               <Building2 size={12} /> Company Research
             </button>
             <button
-              onClick={() => { setMode('prospect'); setSearchInput(''); setError(null); setCompanyResult(null); setProspectResult(null); setPeopleSearchResults(null); setOutreachDraft(null); setDisambiguationResults(null); setSuggestedContacts(null); }}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
-                mode === 'prospect'
-                  ? 'bg-white text-purple-600 shadow-sm'
-                  : 'bg-white/20 text-white/80 hover:bg-white/30'
-              }`}
-            >
-              <Users size={12} /> Prospect Research
-            </button>
-            <button
               onClick={() => { setMode('people_search'); setSearchInput(''); setError(null); setCompanyResult(null); setProspectResult(null); setPeopleSearchResults(null); setPeopleSearchFilters(null); setOutreachDraft(null); setDisambiguationResults(null); setSuggestedContacts(null); }}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
                 mode === 'people_search'
@@ -1360,6 +1519,16 @@ export default function EngageDiscover({ organizationId, userId, initialSearch, 
               }`}
             >
               <UserPlus size={12} /> Find People
+            </button>
+            <button
+              onClick={() => { setMode('prospect'); setSearchInput(''); setError(null); setCompanyResult(null); setProspectResult(null); setPeopleSearchResults(null); setOutreachDraft(null); setDisambiguationResults(null); setSuggestedContacts(null); }}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                mode === 'prospect'
+                  ? 'bg-white text-purple-600 shadow-sm'
+                  : 'bg-white/20 text-white/80 hover:bg-white/30'
+              }`}
+            >
+              <Users size={12} /> Prospect Research
             </button>
           </div>
 
@@ -1415,7 +1584,7 @@ export default function EngageDiscover({ organizationId, userId, initialSearch, 
             <button
               onClick={handleResearch}
               disabled={loading || !searchInput.trim()}
-              className="px-5 py-3 bg-white text-blue-600 rounded-lg text-sm font-semibold hover:bg-blue-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-sm flex items-center gap-2"
+              className="px-5 py-3 bg-white text-blue-600 rounded-lg text-sm font-semibold hover:bg-apptivia-coral-tone-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-sm flex items-center gap-2"
             >
               {loading ? (
                 <>
@@ -1481,7 +1650,7 @@ export default function EngageDiscover({ organizationId, userId, initialSearch, 
                 <button
                   key={company.id || idx}
                   onClick={() => handleDisambiguationSelect(company)}
-                  className="w-full px-5 py-4 flex items-center gap-4 hover:bg-blue-50/50 transition-colors text-left group"
+                  className="w-full px-5 py-4 flex items-center gap-4 hover:bg-apptivia-coral-tone-50/50 transition-colors text-left group"
                 >
                   {company.logo_url ? (
                     <img src={company.logo_url} alt="" className="w-10 h-10 rounded-lg border border-gray-100 object-contain flex-shrink-0" />
@@ -1525,7 +1694,7 @@ export default function EngageDiscover({ organizationId, userId, initialSearch, 
       {/* Search History */}
       {!loading && searchHistory.length > 0 && (
         <div className="bg-white rounded-xl border border-gray-100 overflow-hidden">
-          <div className="px-5 py-3 border-b border-gray-100 flex items-center justify-between bg-gray-50/50">
+          <div className="px-5 py-3 border-b border-gray-100 flex items-center justify-between bg-apptivia-paper/50">
             <div className="flex items-center gap-2">
               <History size={14} className="text-gray-500" />
               <span className="text-sm font-bold text-gray-900">Research History</span>
@@ -1536,7 +1705,7 @@ export default function EngageDiscover({ organizationId, userId, initialSearch, 
             {searchHistory.map((report) => (
               <div
                 key={report.id}
-                className="px-5 py-3 flex items-center justify-between hover:bg-gray-50 transition-colors group"
+                className="px-5 py-3 flex items-center justify-between hover:bg-apptivia-paper transition-colors group"
               >
                 <div
                   className="flex items-center gap-3 flex-1 min-w-0 cursor-pointer"
@@ -1544,10 +1713,10 @@ export default function EngageDiscover({ organizationId, userId, initialSearch, 
                 >
                   <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${
                     report.report_type === 'company'
-                      ? 'bg-blue-50 text-blue-600'
+                      ? 'bg-apptivia-coral-tone-50 text-blue-600'
                       : report.report_type === 'people_search'
                       ? 'bg-cyan-50 text-cyan-600'
-                      : 'bg-purple-50 text-purple-600'
+                      : 'bg-apptivia-carbon-100 text-purple-600'
                   }`}>
                     {report.report_type === 'company' ? <Building2 size={14} /> : report.report_type === 'people_search' ? <UserPlus size={14} /> : <Users size={14} />}
                   </div>
@@ -1572,7 +1741,7 @@ export default function EngageDiscover({ organizationId, userId, initialSearch, 
                 <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                   <button
                     onClick={() => loadFromHistory(report)}
-                    className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
+                    className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-apptivia-coral-tone-50 rounded transition-colors"
                     title="Load results"
                   >
                     <Eye size={12} />
@@ -1606,7 +1775,7 @@ export default function EngageDiscover({ organizationId, userId, initialSearch, 
           <div className="flex items-center justify-center gap-3 mt-3">
             {['Apollo', 'Tavily', 'Claude AI'].map((step, i) => (
               <span key={step} className="flex items-center gap-1.5 text-[10px] text-gray-400">
-                <span className={`w-1.5 h-1.5 rounded-full ${i === 0 ? 'bg-blue-400 animate-pulse' : i === 1 ? 'bg-purple-400 animate-pulse' : 'bg-orange-400 animate-pulse'}`} />
+                <span className={`w-1.5 h-1.5 rounded-full ${i === 0 ? 'bg-apptivia-coral animate-pulse' : i === 1 ? 'bg-apptivia-ink animate-pulse' : 'bg-orange-400 animate-pulse'}`} />
                 {step}
               </span>
             ))}
@@ -1614,134 +1783,148 @@ export default function EngageDiscover({ organizationId, userId, initialSearch, 
         </div>
       )}
 
-      {/* Results */}
-      {!loading && companyResult && (
-        <CompanyBriefPanel
-          company={companyResult.company}
-          brief={companyResult.brief}
-          dataSources={companyResult.data_sources}
-          tokensUsed={companyResult.tokens_used}
-          errors={companyResult.errors}
-        />
+      {/* Cached result indicator with refresh button */}
+      {!loading && ((companyResult?._cached) || (prospectResult?._cached)) && (
+        <div className="flex items-center justify-between bg-apptivia-coral-tone-50 border border-blue-200 rounded-lg px-4 py-2">
+          <span className="text-xs text-blue-600 flex items-center gap-1.5">
+            <Clock size={12} /> Showing cached result — no API credits used
+          </span>
+          <button
+            onClick={() => { setForceRefresh(true); setTimeout(() => handleResearchRef.current?.(), 50); }}
+            className="text-xs text-blue-600 hover:text-blue-800 font-medium flex items-center gap-1 bg-apptivia-coral-tone-50 hover:bg-apptivia-coral-tone-100 px-2.5 py-1 rounded transition-colors"
+          >
+            <RefreshCw size={11} /> Refresh with new data
+          </button>
+        </div>
       )}
 
-      {/* Suggested Contacts (after company research) */}
+      {/* Company Research: side-by-side layout — Brief (left ~75%) + Suggested Contacts (right ~25%) */}
       {!loading && companyResult && (
-        <div className="bg-white rounded-xl border border-gray-100 overflow-hidden">
-          <div className="px-5 py-3 border-b border-gray-100 bg-gradient-to-r from-emerald-50 to-cyan-50">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <UserPlus size={14} className="text-emerald-600" />
-                <span className="text-sm font-semibold text-gray-800">Suggested Contacts</span>
-                {suggestedContactsLoading && <RefreshCw size={12} className="animate-spin text-gray-400" />}
-              </div>
-              {suggestedContacts && suggestedContacts.length > 0 && (
-                <button
-                  onClick={() => {
-                    const domain = companyResult.company?.primary_domain || companyResult.company?.domain || searchInput;
-                    setMode('people_search');
-                    setFindPeopleMode('company');
-                    setSearchInput(domain.replace(/^https?:\/\//, '').replace(/^www\./, '').replace(/\/.*$/, ''));
-                    setCompanyResult(null);
-                    setSuggestedContacts(null);
-                    setDisambiguationResults(null);
-                    // Auto-trigger
-                    setTimeout(() => handleResearchRef.current?.(), 200);
-                  }}
-                  className="text-[10px] text-cyan-600 font-medium hover:text-cyan-700 flex items-center gap-1"
-                >
-                  View all 25 <ArrowRight size={10} />
-                </button>
-              )}
-            </div>
-            <p className="text-[10px] text-gray-500 mt-0.5">Key people to reach out to at this company</p>
+        <div className="flex gap-4 items-start">
+          {/* Company Research Brief — main column */}
+          <div className="flex-1 min-w-0">
+            <CompanyBriefPanel
+              company={companyResult.company}
+              brief={companyResult.brief}
+              dataSources={companyResult.data_sources}
+              tokensUsed={companyResult.tokens_used}
+              errors={companyResult.errors}
+            />
           </div>
-          {suggestedContactsLoading ? (
-            <div className="p-6 text-center">
-              <RefreshCw size={16} className="animate-spin text-emerald-400 mx-auto mb-2" />
-              <p className="text-xs text-gray-400">Finding key contacts...</p>
-            </div>
-          ) : suggestedContacts && suggestedContacts.length > 0 ? (
-            <div className="divide-y divide-gray-50">
-              {suggestedContacts.map((person, idx) => {
-                const name = person.name || `${person.first_name || ''} ${person.last_name || ''}`.trim();
-                const email = person.email || '';
-                const phone = person.phone_numbers?.[0]?.sanitized_number || person.phone_numbers?.[0]?.raw_number || person.sanitized_phone || person.phone_number || person.phone || '';
-                const linkedin = person.linkedin_url || '';
-                return (
-                  <div key={person.id || idx} className="px-5 py-3 flex items-center gap-3 hover:bg-emerald-50/30 transition-colors group">
-                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-emerald-400 to-cyan-500 flex items-center justify-center text-white text-[10px] font-bold flex-shrink-0">
-                      {(person.first_name?.[0] || '?')}{(person.last_name?.[0] || '')}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs font-semibold text-gray-800">{name || 'Unknown'}</span>
-                        {person.seniority && (
-                          <span className="text-[9px] text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded capitalize">{person.seniority}</span>
-                        )}
-                      </div>
-                      <span className="text-[10px] text-gray-500 block truncate">{person.title || ''}</span>
-                    </div>
-                    <div className="flex items-center gap-2 flex-shrink-0">
-                      {email && (
-                        <button
-                          onClick={() => navigator.clipboard.writeText(email)}
-                          className="text-blue-500 hover:text-blue-700" title={email}
-                        >
-                          <Mail size={12} />
-                        </button>
-                      )}
-                      {phone && (
-                        <button
-                          onClick={() => navigator.clipboard.writeText(phone)}
-                          className="text-emerald-500 hover:text-emerald-700" title={phone}
-                        >
-                          <Phone size={12} />
-                        </button>
-                      )}
-                      {linkedin && (
-                        <a href={linkedin} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:text-blue-700">
-                          <Linkedin size={12} />
-                        </a>
-                      )}
-                      {(() => {
-                        const saved = savedContactIds.has(getSavedKey(person));
-                        return (
-                          <button
-                            onClick={() => saveContact(person)}
-                            disabled={saved}
-                            className={`transition-colors ${saved ? 'text-blue-500' : 'text-gray-300 hover:text-blue-500 opacity-0 group-hover:opacity-100'}`}
-                            title={saved ? 'Contact saved' : 'Save contact'}
-                          >
-                            {saved ? <BookmarkCheck size={12} /> : <Bookmark size={12} />}
-                          </button>
-                        );
-                      })()}
-                      <button
-                        onClick={() => {
-                          const org = person.organization?.name || person.organization_name || '';
-                          setMode('prospect');
-                          setSearchInput(org ? `${name} at ${org}` : name);
-                          setCompanyResult(null);
-                          setSuggestedContacts(null);
-                          setPeopleSearchResults(null);
-                          setAutoResearchPending(true);
-                        }}
-                        className="text-purple-400 hover:text-purple-600 transition-colors"
-                        title="Research this prospect"
-                      >
-                        <Eye size={12} />
-                      </button>
-                    </div>
+
+          {/* Suggested Contacts — compact sidebar */}
+          <div className="w-72 flex-shrink-0">
+            <div className="bg-white rounded-xl border border-gray-100 overflow-hidden sticky top-4">
+              <div className="px-3 py-2.5 border-b border-gray-100 bg-gradient-to-r from-emerald-50 to-cyan-50">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-1.5">
+                    <UserPlus size={12} className="text-emerald-600" />
+                    <span className="text-xs font-semibold text-gray-800">Suggested Contacts</span>
+                    {suggestedContactsLoading && <RefreshCw size={10} className="animate-spin text-gray-400" />}
                   </div>
-                );
-              })}
+                  {suggestedContacts && suggestedContacts.length > 0 && (
+                    <button
+                      onClick={() => {
+                        const domain = companyResult.company?.primary_domain || companyResult.company?.domain || searchInput;
+                        setMode('people_search');
+                        setFindPeopleMode('company');
+                        setSearchInput(domain.replace(/^https?:\/\//, '').replace(/^www\./, '').replace(/\/.*$/, ''));
+                        setCompanyResult(null);
+                        setSuggestedContacts(null);
+                        setDisambiguationResults(null);
+                        setTimeout(() => handleResearchRef.current?.(), 200);
+                      }}
+                      className="text-[9px] text-cyan-600 font-medium hover:text-cyan-700 flex items-center gap-0.5"
+                    >
+                      View all <ArrowRight size={8} />
+                    </button>
+                  )}
+                </div>
+                <p className="text-[9px] text-gray-500 mt-0.5">Key people to reach out to</p>
+              </div>
+              {suggestedContactsLoading ? (
+                <div className="p-4 text-center">
+                  <RefreshCw size={14} className="animate-spin text-emerald-400 mx-auto mb-1" />
+                  <p className="text-[10px] text-gray-400">Finding contacts...</p>
+                </div>
+              ) : suggestedContacts && suggestedContacts.length > 0 ? (
+                <div className="divide-y divide-gray-50 max-h-[600px] overflow-y-auto">
+                  {suggestedContacts.map((person, idx) => {
+                    const name = person.name || `${person.first_name || ''} ${person.last_name || ''}`.trim();
+                    const email = person.email || '';
+                    const phone = person.phone_numbers?.[0]?.sanitized_number || person.phone_numbers?.[0]?.raw_number || person.sanitized_phone || person.phone_number || person.phone || '';
+                    const linkedin = person.linkedin_url || '';
+                    return (
+                      <div key={person.id || idx} className="px-3 py-2 flex items-center gap-2 hover:bg-emerald-50/30 transition-colors group">
+                        <div className="w-6 h-6 rounded-full bg-gradient-to-br from-emerald-400 to-cyan-500 flex items-center justify-center text-white text-[8px] font-bold flex-shrink-0">
+                          {(person.first_name?.[0] || '?')}{(person.last_name?.[0] || '')}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-1">
+                            <span className="text-[11px] font-semibold text-gray-800 truncate">{name || 'Unknown'}</span>
+                            {person.seniority && (
+                              <span className="text-[8px] text-emerald-600 bg-emerald-50 px-1 py-0.5 rounded capitalize flex-shrink-0">{person.seniority}</span>
+                            )}
+                          </div>
+                          <span className="text-[9px] text-gray-500 block truncate">{person.title || ''}</span>
+                        </div>
+                        <div className="flex items-center gap-1 flex-shrink-0">
+                          {email && (
+                            <button onClick={() => navigator.clipboard.writeText(email)} className="text-blue-500 hover:text-blue-700" title={email}>
+                              <Mail size={10} />
+                            </button>
+                          )}
+                          {phone && (
+                            <button onClick={() => navigator.clipboard.writeText(phone)} className="text-emerald-500 hover:text-emerald-700" title={phone}>
+                              <Phone size={10} />
+                            </button>
+                          )}
+                          {linkedin && (
+                            <a href={linkedin} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:text-blue-700">
+                              <Linkedin size={10} />
+                            </a>
+                          )}
+                          {(() => {
+                            const saved = savedContactIds.has(getSavedKey(person));
+                            return (
+                              <button
+                                onClick={() => saveContact(person)}
+                                disabled={saved}
+                                className={`transition-colors ${saved ? 'text-blue-500' : 'text-gray-300 hover:text-blue-500 opacity-0 group-hover:opacity-100'}`}
+                                title={saved ? 'Contact saved' : 'Save contact'}
+                              >
+                                {saved ? <BookmarkCheck size={10} /> : <Bookmark size={10} />}
+                              </button>
+                            );
+                          })()}
+                          <button
+                            onClick={() => {
+                              const org = person.organization?.name || person.organization_name || '';
+                              setMode('prospect');
+                              setSearchInput(org ? `${name} at ${org}` : name);
+                              setKnownContactData({ email, phone, linkedin_url: linkedin, title: person.title, organization: person.organization });
+                              setCompanyResult(null);
+                              setSuggestedContacts(null);
+                              setPeopleSearchResults(null);
+                              setAutoResearchPending(true);
+                            }}
+                            className="text-purple-400 hover:text-purple-600 transition-colors"
+                            title="Research this prospect"
+                          >
+                            <Eye size={10} />
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : suggestedContacts && suggestedContacts.length === 0 ? (
+                <div className="p-3 text-center">
+                  <p className="text-[10px] text-gray-400">No contacts found. Try "Find People".</p>
+                </div>
+              ) : null}
             </div>
-          ) : suggestedContacts && suggestedContacts.length === 0 ? (
-            <div className="p-4 text-center">
-              <p className="text-xs text-gray-400">No contacts found. Try "Find People" with this company&apos;s domain.</p>
-            </div>
-          ) : null}
+          </div>
         </div>
       )}
 
@@ -1760,6 +1943,21 @@ export default function EngageDiscover({ organizationId, userId, initialSearch, 
         />
       )}
 
+      {/* Cached result indicator for people search */}
+      {!loading && peopleResultCached && peopleSearchResults?.length > 0 && (
+        <div className="flex items-center justify-between bg-apptivia-coral-tone-50 border border-blue-200 rounded-lg px-4 py-2">
+          <span className="text-xs text-blue-600 flex items-center gap-1.5">
+            <Clock size={12} /> Showing cached result — no API credits used
+          </span>
+          <button
+            onClick={() => { setForceRefresh(true); setTimeout(() => handleResearchRef.current?.(), 50); }}
+            className="text-xs text-blue-600 hover:text-blue-800 font-medium flex items-center gap-1 bg-apptivia-coral-tone-50 hover:bg-apptivia-coral-tone-100 px-2.5 py-1 rounded transition-colors"
+          >
+            <RefreshCw size={11} /> Refresh with new data
+          </button>
+        </div>
+      )}
+
       {/* People Search Results */}
       {!loading && peopleSearchResults && peopleSearchResults.length > 0 && (
         <div className="bg-white rounded-xl border border-gray-100 overflow-hidden">
@@ -1775,14 +1973,14 @@ export default function EngageDiscover({ organizationId, userId, initialSearch, 
                 </span>
               </div>
               <span className="text-[10px] text-gray-400 flex items-center gap-1">
-                <span className="w-1.5 h-1.5 rounded-full bg-blue-400" /> Apollo Data
+                <span className="w-1.5 h-1.5 rounded-full bg-apptivia-coral" /> Apollo Data
               </span>
             </div>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full text-xs">
               <thead>
-                <tr className="bg-gray-50 border-b border-gray-100">
+                <tr className="bg-apptivia-paper border-b border-gray-100">
                   <th className="text-left px-4 py-2.5 font-semibold text-gray-600">Name</th>
                   <th className="text-left px-4 py-2.5 font-semibold text-gray-600">Title</th>
                   <th className="text-left px-4 py-2.5 font-semibold text-gray-600">Company</th>
@@ -1803,7 +2001,7 @@ export default function EngageDiscover({ organizationId, userId, initialSearch, 
                   const title = person.title || person.headline || '';
 
                   return (
-                    <tr key={person.id || idx} className="hover:bg-blue-50/50 transition-colors group">
+                    <tr key={person.id || idx} className="hover:bg-apptivia-coral-tone-50/50 transition-colors group">
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-2">
                           <div className="w-7 h-7 rounded-full bg-gradient-to-br from-cyan-400 to-blue-500 flex items-center justify-center text-white text-[10px] font-bold flex-shrink-0">
@@ -1881,6 +2079,8 @@ export default function EngageDiscover({ organizationId, userId, initialSearch, 
                               const fullName = name || '';
                               setMode('prospect');
                               setSearchInput(org ? `${fullName} at ${org}` : fullName);
+                              // Carry over known contact data so Prospect Research shows it immediately
+                              setKnownContactData({ email, phone, linkedin_url: linkedin, title, organization: person.organization });
                               setPeopleSearchResults(null);
                               setPeopleSearchFilters(null);
                               setAutoResearchPending(true);
@@ -1899,7 +2099,7 @@ export default function EngageDiscover({ organizationId, userId, initialSearch, 
             </table>
           </div>
           {peopleSearchResults.length >= 25 && (
-            <div className="px-5 py-3 border-t border-gray-100 bg-gray-50 text-center">
+            <div className="px-5 py-3 border-t border-gray-100 bg-apptivia-paper text-center">
               <span className="text-[10px] text-gray-400">Showing first 25 results. Refine your search for more specific results.</span>
             </div>
           )}
@@ -2027,7 +2227,7 @@ export default function EngageDiscover({ organizationId, userId, initialSearch, 
               { icon: Mail, label: 'AI Outreach', desc: 'Personalized email & LinkedIn drafts' },
             ].map(({ icon: Icon, label, desc }) => (
               <div key={label} className="text-center">
-                <div className="w-9 h-9 bg-gray-50 rounded-lg flex items-center justify-center mx-auto mb-1.5">
+                <div className="w-9 h-9 bg-apptivia-paper rounded-lg flex items-center justify-center mx-auto mb-1.5">
                   <Icon size={16} className="text-gray-400" />
                 </div>
                 <span className="text-[11px] font-medium text-gray-600 block">{label}</span>

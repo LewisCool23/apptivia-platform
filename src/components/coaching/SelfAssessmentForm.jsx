@@ -25,7 +25,7 @@ export default function SelfAssessmentForm({ review, onSubmit, saving }) {
 
   return (
     <div className="space-y-5">
-      <div className="bg-blue-50 rounded-lg p-4 border border-blue-100">
+      <div className="bg-apptivia-coral-tone-50 rounded-lg p-4 border border-blue-100">
         <h3 className="text-sm font-semibold text-blue-900 mb-1">Self-Assessment</h3>
         <p className="text-xs text-blue-700">Share your perspective on your performance during this review period. Be honest and specific.</p>
       </div>
@@ -102,7 +102,7 @@ export default function SelfAssessmentForm({ review, onSubmit, saving }) {
 
       <div className="flex justify-end">
         <button onClick={handleSubmit} disabled={saving || !selfAssessment.trim()}
-          className="px-4 py-2 text-sm font-semibold text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:opacity-50">
+          className="px-4 py-2 text-sm font-semibold text-white bg-apptivia-coral rounded-md hover:bg-apptivia-coral disabled:opacity-50">
           {saving ? 'Submitting...' : 'Submit Self-Assessment'}
         </button>
       </div>

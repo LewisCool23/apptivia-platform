@@ -135,7 +135,7 @@ export default function StepTeamStructure({ wizardState, updateState, profile })
           Teams <span className="text-red-500">*</span>
         </label>
         {departments.filter(d => d.name.trim()).map((dept) => (
-          <div key={dept.name} className="mb-4 bg-gray-50 rounded-lg p-3">
+          <div key={dept.name} className="mb-4 bg-apptivia-paper rounded-lg p-3">
             <div className="flex items-center justify-between mb-2">
               <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">{dept.name}</span>
               <button

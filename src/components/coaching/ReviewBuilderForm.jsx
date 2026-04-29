@@ -38,7 +38,7 @@ export default function ReviewBuilderForm({
           </h3>
           <p className="text-xs text-gray-500">Set up a review with historical data auto-populated</p>
         </div>
-        <button onClick={onCancel} className="px-3 py-1.5 text-xs font-semibold text-gray-600 border border-gray-300 rounded-md hover:bg-gray-50">
+        <button onClick={onCancel} className="px-3 py-1.5 text-xs font-semibold text-gray-600 border border-gray-300 rounded-md hover:bg-apptivia-paper">
           Cancel
         </button>
       </div>
@@ -72,7 +72,7 @@ export default function ReviewBuilderForm({
                 onClick={() => handleTypeChange(t.id)}
                 className={`flex-1 border rounded-lg p-3 text-left transition-all ${
                   form.review_type === t.id
-                    ? 'border-blue-500 bg-blue-50 ring-1 ring-blue-200'
+                    ? 'border-blue-500 bg-apptivia-coral-tone-50 ring-1 ring-blue-200'
                     : 'border-gray-200 hover:border-gray-300'
                 }`}
               >
@@ -106,9 +106,9 @@ export default function ReviewBuilderForm({
 
         {/* Save */}
         <div className="flex justify-end gap-3 pt-2">
-          <button onClick={onCancel} className="px-4 py-2 text-sm text-gray-600 border border-gray-300 rounded-md hover:bg-gray-50">Cancel</button>
+          <button onClick={onCancel} className="px-4 py-2 text-sm text-gray-600 border border-gray-300 rounded-md hover:bg-apptivia-paper">Cancel</button>
           <button onClick={onSave} disabled={saving || !form.title || !form.profile_id || !form.review_type}
-            className="px-4 py-2 text-sm font-semibold text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:opacity-50">
+            className="px-4 py-2 text-sm font-semibold text-white bg-apptivia-coral rounded-md hover:bg-apptivia-coral disabled:opacity-50">
             {saving ? 'Creating...' : (editingReview ? 'Update Review' : 'Create Review')}
           </button>
         </div>

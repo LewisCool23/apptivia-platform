@@ -17,7 +17,7 @@ export default function StepSalesDna({ wizardState, updateState }) {
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-3 mb-2">
-        <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
+        <div className="w-10 h-10 bg-apptivia-carbon-100 rounded-lg flex items-center justify-center">
           <Compass size={20} className="text-purple-600" />
         </div>
         <div>
@@ -45,7 +45,7 @@ export default function StepSalesDna({ wizardState, updateState }) {
               onClick={() => update('methodology_approach', opt.key)}
               className={`p-3 rounded-lg border text-left transition-all text-sm ${
                 salesDna.methodology_approach === opt.key
-                  ? 'border-purple-500 bg-purple-50 ring-1 ring-purple-200'
+                  ? 'border-purple-500 bg-apptivia-carbon-100 ring-1 ring-purple-200'
                   : 'border-gray-200 hover:border-gray-300'
               }`}
             >
@@ -146,7 +146,7 @@ export default function StepSalesDna({ wizardState, updateState }) {
               onClick={() => update('qualification_framework', f.key)}
               className={`p-3 rounded-lg border text-left transition-all text-sm ${
                 salesDna.qualification_framework === f.key
-                  ? 'border-purple-500 bg-purple-50 ring-1 ring-purple-200'
+                  ? 'border-purple-500 bg-apptivia-carbon-100 ring-1 ring-purple-200'
                   : 'border-gray-200 hover:border-gray-300'
               }`}
             >
@@ -169,7 +169,7 @@ export default function StepSalesDna({ wizardState, updateState }) {
 
       {/* CEP Pipeline Configuration */}
       {salesDna.qualification_framework && (salesDna.primary_methodology || salesDna.methodology_approach === 'custom') && (
-        <div className="bg-indigo-50/50 border border-indigo-200/60 rounded-lg p-4">
+        <div className="bg-apptivia-carbon-100/50 border border-indigo-200/60 rounded-lg p-4">
           <h4 className="text-sm font-medium text-indigo-800 mb-2">
             Sales Pipeline Stages
           </h4>

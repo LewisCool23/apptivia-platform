@@ -8,9 +8,9 @@ const STATUS_BADGE = {
   sent:       'bg-green-100 text-green-700',
   success:    'bg-green-100 text-green-700',
   pending:    'bg-yellow-100 text-yellow-700',
-  processing: 'bg-blue-100 text-blue-700',
+  processing: 'bg-apptivia-coral-tone-50 text-blue-700',
   failed:     'bg-red-100 text-red-700',
-  skipped:    'bg-gray-100 text-gray-500',
+  skipped:    'bg-apptivia-carbon-100 text-gray-500',
 };
 
 function CrmPushSection({ integrationId }) {
@@ -68,7 +68,7 @@ function CrmPushSection({ integrationId }) {
         {['queue', 'history'].map(t => (
           <button key={t} onClick={() => { setTab(t); loadData(t); }}
             className={`px-2.5 py-1 text-xs rounded-full font-medium transition-colors ${
-              tab === t ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+              tab === t ? 'bg-apptivia-ink text-white' : 'bg-apptivia-carbon-100 text-gray-600 hover:bg-apptivia-carbon-200'
             }`}>
             {t === 'queue' ? 'Queue' : 'History'}
           </button>
@@ -87,7 +87,7 @@ function CrmPushSection({ integrationId }) {
             {queue.map(item => (
               <div key={item.id} className="flex items-center justify-between py-1.5 text-xs border-b border-gray-50">
                 <span className="text-gray-700">{item.entity_type}: {item.action}</span>
-                <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-medium ${STATUS_BADGE[item.status] || 'bg-gray-100 text-gray-500'}`}>
+                <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-medium ${STATUS_BADGE[item.status] || 'bg-apptivia-carbon-100 text-gray-500'}`}>
                   {item.status}
                 </span>
               </div>
@@ -106,7 +106,7 @@ function CrmPushSection({ integrationId }) {
                   <span className="text-gray-400 ml-2">{entry.external_id ? `→ ${entry.external_id}` : ''}</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-medium ${STATUS_BADGE[entry.status] || 'bg-gray-100 text-gray-500'}`}>
+                  <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-medium ${STATUS_BADGE[entry.status] || 'bg-apptivia-carbon-100 text-gray-500'}`}>
                     {entry.status}
                   </span>
                   <span className="text-gray-400 text-[10px]">

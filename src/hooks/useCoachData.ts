@@ -140,9 +140,7 @@ export function useCoachData(
 
         const [profilesResult, skillsetsResult, metricsResult] = await Promise.all([
           profilesQuery,
-          orgId
-            ? supabase.from('skillsets').select('id, name, description, color').eq('organization_id', orgId).order('name')
-            : supabase.from('skillsets').select('id, name, description, color').order('name'),
+          supabase.from('skillsets').select('id, name, description, color').order('name'),
           metricsPromise,
         ]);
 

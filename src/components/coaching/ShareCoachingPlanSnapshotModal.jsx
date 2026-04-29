@@ -96,7 +96,7 @@ export default function ShareCoachingPlanSnapshotModal({ isOpen, onClose, plan, 
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
           <h3 className="text-base font-semibold text-gray-900">Share Coaching Plan</h3>
-          <button onClick={onClose} className="p-1 text-gray-400 hover:text-gray-600 rounded-md hover:bg-gray-100">
+          <button onClick={onClose} className="p-1 text-gray-400 hover:text-gray-600 rounded-md hover:bg-apptivia-carbon-100">
             <X size={18} />
           </button>
         </div>
@@ -190,20 +190,20 @@ export default function ShareCoachingPlanSnapshotModal({ isOpen, onClose, plan, 
         </div>
 
         {/* Actions */}
-        <div className="px-6 py-3 border-t border-gray-100 bg-gray-50 rounded-b-xl">
+        <div className="px-6 py-3 border-t border-gray-100 bg-apptivia-paper rounded-b-xl">
           {!showEmailForm ? (
             <div className="flex gap-2">
               <button
                 onClick={handleDownload}
                 disabled={downloading}
-                className="flex-1 flex items-center justify-center gap-1.5 px-4 py-2 text-sm font-semibold bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-60"
+                className="flex-1 flex items-center justify-center gap-1.5 px-4 py-2 text-sm font-semibold bg-apptivia-coral text-white rounded-md hover:bg-apptivia-coral disabled:opacity-60"
               >
                 {downloading ? <Loader2 size={14} className="animate-spin" /> : <Download size={14} />}
                 Download PNG
               </button>
               <button
                 onClick={() => setShowEmailForm(true)}
-                className="flex-1 flex items-center justify-center gap-1.5 px-4 py-2 text-sm font-medium text-gray-700 border border-gray-300 rounded-md hover:bg-gray-100"
+                className="flex-1 flex items-center justify-center gap-1.5 px-4 py-2 text-sm font-medium text-gray-700 border border-gray-300 rounded-md hover:bg-apptivia-carbon-100"
               >
                 <Mail size={14} />
                 Send Email
@@ -236,14 +236,14 @@ export default function ShareCoachingPlanSnapshotModal({ isOpen, onClose, plan, 
               <div className="flex gap-2">
                 <button
                   onClick={() => setShowEmailForm(false)}
-                  className="flex-1 px-4 py-2 text-sm font-medium text-gray-600 border border-gray-300 rounded-md hover:bg-gray-100"
+                  className="flex-1 px-4 py-2 text-sm font-medium text-gray-600 border border-gray-300 rounded-md hover:bg-apptivia-carbon-100"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={handleSendEmail}
                   disabled={sending}
-                  className="flex-1 flex items-center justify-center gap-1.5 px-4 py-2 text-sm font-semibold bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-60"
+                  className="flex-1 flex items-center justify-center gap-1.5 px-4 py-2 text-sm font-semibold bg-apptivia-coral text-white rounded-md hover:bg-apptivia-coral disabled:opacity-60"
                 >
                   {sending ? <Loader2 size={14} className="animate-spin" /> : emailSuccess ? <CheckCircle size={14} /> : <Mail size={14} />}
                   {sending ? 'Sending...' : emailSuccess ? 'Sent!' : 'Send'}

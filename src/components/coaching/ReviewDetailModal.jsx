@@ -97,7 +97,7 @@ export default function ReviewDetailModal({
                 <StatusIcon size={12} /> {cfg.label}
               </span>
               <span className={`px-2 py-0.5 text-[10px] rounded-full font-semibold ${
-                review.review_type === 'annual' ? 'bg-purple-100 text-purple-700' : 'bg-blue-100 text-blue-700'
+                review.review_type === 'annual' ? 'bg-apptivia-carbon-100 text-purple-700' : 'bg-apptivia-coral-tone-50 text-blue-700'
               }`}>
                 {typeLabel}
               </span>
@@ -111,10 +111,10 @@ export default function ReviewDetailModal({
             )}
           </div>
           <div className="flex items-center gap-2 print-hidden">
-            <button onClick={handlePrint} className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg" title="Print / Save as PDF">
+            <button onClick={handlePrint} className="p-2 text-gray-400 hover:text-gray-600 hover:bg-apptivia-carbon-100 rounded-lg" title="Print / Save as PDF">
               <Printer size={18} />
             </button>
-            <button onClick={onClose} className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg">
+            <button onClick={onClose} className="p-2 text-gray-400 hover:text-gray-600 hover:bg-apptivia-carbon-100 rounded-lg">
               <X size={18} />
             </button>
           </div>
@@ -123,7 +123,7 @@ export default function ReviewDetailModal({
         <div className="p-6 space-y-6">
           {/* Rating display */}
           {(review.final_rating || review.manager_rating) && (
-            <div className="flex items-center gap-4 bg-gray-50 rounded-lg p-4">
+            <div className="flex items-center gap-4 bg-apptivia-paper rounded-lg p-4">
               <div className="text-center">
                 <div className="text-3xl font-bold text-gray-900">{review.final_rating || review.manager_rating}/5</div>
                 <div className="text-xs text-gray-500">{review.final_rating ? 'Final Rating' : 'Manager Rating'}</div>
@@ -148,12 +148,12 @@ export default function ReviewDetailModal({
             {isManager && transition && transition.actor === 'manager' && (
               <div className="flex flex-wrap gap-2">
                 <button onClick={() => onTransition(transition.next)}
-                  className="px-4 py-2 text-sm font-semibold text-white bg-blue-600 rounded-md hover:bg-blue-700" disabled={saving}>
+                  className="px-4 py-2 text-sm font-semibold text-white bg-apptivia-coral rounded-md hover:bg-apptivia-coral" disabled={saving}>
                   {saving ? 'Processing...' : transition.action}
                 </button>
                 {transition.alt && transition.alt.actor === 'manager' && (
                   <button onClick={() => onTransition(transition.alt.next)}
-                    className="px-4 py-2 text-sm font-semibold text-gray-600 border border-gray-300 rounded-md hover:bg-gray-50">
+                    className="px-4 py-2 text-sm font-semibold text-gray-600 border border-gray-300 rounded-md hover:bg-apptivia-paper">
                     {transition.alt.action}
                   </button>
                 )}
@@ -176,7 +176,7 @@ export default function ReviewDetailModal({
               <h3 className="text-sm font-semibold text-gray-900 mb-3 flex items-center gap-1.5"><TrendingUp size={14} /> Scorecard Scores</h3>
               <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 gap-2">
                 {review.scorecard_summary.map((w, idx) => (
-                  <div key={idx} className="bg-gray-50 rounded-lg p-2 text-center">
+                  <div key={idx} className="bg-apptivia-paper rounded-lg p-2 text-center">
                     <div className="text-xs text-gray-500">{new Date(w.week).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}</div>
                     <div className={`text-lg font-bold ${w.score >= 80 ? 'text-green-600' : w.score >= 60 ? 'text-yellow-600' : 'text-red-600'}`}>
                       {w.score}%
@@ -228,7 +228,7 @@ export default function ReviewDetailModal({
               <h3 className="text-sm font-semibold text-gray-900 mb-3 flex items-center gap-1.5"><BookOpen size={14} /> Skillset Progress</h3>
               <div className="flex flex-wrap gap-2">
                 {review.skillset_progress.map((s, idx) => (
-                  <div key={idx} className="bg-gray-50 rounded-lg px-3 py-2">
+                  <div key={idx} className="bg-apptivia-paper rounded-lg px-3 py-2">
                     <div className="text-xs font-medium text-gray-700">{s.skillset_key?.replace(/_/g, ' ')}</div>
                     <div className="text-xs text-gray-500">Level {s.level} · {s.mastery_label} · {s.current_xp} XP</div>
                   </div>
@@ -261,7 +261,7 @@ export default function ReviewDetailModal({
               <h3 className="text-sm font-semibold text-gray-900 mb-3 flex items-center gap-1.5"><Award size={14} /> Badges Earned ({review.badges_earned.length})</h3>
               <div className="flex flex-wrap gap-2">
                 {review.badges_earned.map((b, idx) => (
-                  <div key={idx} className="bg-blue-50 rounded-lg px-3 py-2">
+                  <div key={idx} className="bg-apptivia-coral-tone-50 rounded-lg px-3 py-2">
                     <div className="text-xs font-medium text-blue-800">{b.name}</div>
                     <div className="text-[10px] text-blue-500">{b.tier}</div>
                   </div>
@@ -276,10 +276,10 @@ export default function ReviewDetailModal({
               <h3 className="text-sm font-semibold text-gray-900 mb-3">Coaching Plans</h3>
               <div className="space-y-2">
                 {review.coaching_plans_summary.map((p, idx) => (
-                  <div key={idx} className="flex items-center justify-between bg-gray-50 rounded-lg px-3 py-2">
+                  <div key={idx} className="flex items-center justify-between bg-apptivia-paper rounded-lg px-3 py-2">
                     <span className="text-sm text-gray-800">{p.name}</span>
                     <span className={`px-2 py-0.5 rounded text-[10px] font-medium ${
-                      p.status === 'completed' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'
+                      p.status === 'completed' ? 'bg-green-100 text-green-700' : 'bg-apptivia-carbon-100 text-gray-600'
                     }`}>{p.status}</span>
                   </div>
                 ))}
@@ -293,13 +293,13 @@ export default function ReviewDetailModal({
               <h3 className="text-sm font-semibold text-gray-900 mb-3">Development Plans</h3>
               <div className="space-y-2">
                 {review.idps_summary.map((i, idx) => (
-                  <div key={idx} className="flex items-center justify-between bg-gray-50 rounded-lg px-3 py-2">
+                  <div key={idx} className="flex items-center justify-between bg-apptivia-paper rounded-lg px-3 py-2">
                     <div>
                       <span className="text-sm text-gray-800">{i.name}</span>
                       <span className="text-xs text-gray-500 ml-2">{i.milestones_completed}/{i.milestones_total} milestones</span>
                     </div>
                     <span className={`px-2 py-0.5 rounded text-[10px] font-medium ${
-                      i.status === 'completed' ? 'bg-green-100 text-green-700' : 'bg-blue-100 text-blue-700'
+                      i.status === 'completed' ? 'bg-green-100 text-green-700' : 'bg-apptivia-coral-tone-50 text-blue-700'
                     }`}>{i.status}</span>
                   </div>
                 ))}
@@ -316,7 +316,7 @@ export default function ReviewDetailModal({
           {review.rep_self_assessment && review.status !== 'pending_self_assessment' && (
             <section>
               <h3 className="text-sm font-semibold text-gray-900 mb-3 flex items-center gap-1.5"><FileText size={14} /> Self-Assessment</h3>
-              <div className="bg-blue-50 rounded-lg p-4 space-y-3">
+              <div className="bg-apptivia-coral-tone-50 rounded-lg p-4 space-y-3">
                 <p className="text-sm text-gray-800 whitespace-pre-wrap">{review.rep_self_assessment}</p>
                 {review.rep_accomplishments?.length > 0 && (
                   <div>
@@ -375,14 +375,14 @@ export default function ReviewDetailModal({
                       }
                     }}
                     disabled={aiGenerating}
-                    className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-purple-700 bg-purple-50 border border-purple-200 rounded-md hover:bg-purple-100 disabled:opacity-50"
+                    className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-purple-700 bg-apptivia-carbon-100 border border-purple-200 rounded-md hover:bg-apptivia-carbon-100 disabled:opacity-50"
                   >
                     <Sparkles size={14} className={aiGenerating ? 'animate-spin' : ''} />
                     {aiGenerating ? 'Generating...' : 'Generate AI Draft'}
                   </button>
                 )}
               </div>
-              <div className="space-y-4 bg-purple-50 rounded-lg p-4 border border-purple-100 relative">
+              <div className="space-y-4 bg-apptivia-carbon-100 rounded-lg p-4 border border-purple-100 relative">
                 {aiGenerating && (
                   <div className="absolute inset-0 bg-white/70 z-10 flex items-center justify-center rounded-lg">
                     <div className="flex items-center gap-2 text-purple-700">
@@ -468,7 +468,7 @@ export default function ReviewDetailModal({
                     className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm" rows={2} placeholder="Additional comments..." />
                 </div>
                 <button onClick={handleManagerSave} disabled={saving}
-                  className="px-4 py-2 text-sm font-semibold text-white bg-purple-600 rounded-md hover:bg-purple-700 disabled:opacity-50">
+                  className="px-4 py-2 text-sm font-semibold text-white bg-apptivia-ink rounded-md hover:bg-apptivia-ink disabled:opacity-50">
                   {saving ? 'Saving...' : 'Save Assessment'}
                 </button>
               </div>
@@ -479,7 +479,7 @@ export default function ReviewDetailModal({
           {review.manager_summary && review.status !== 'manager_review' && review.status !== 'reopened' && (
             <section>
               <h3 className="text-sm font-semibold text-gray-900 mb-3">Manager Assessment</h3>
-              <div className="bg-purple-50 rounded-lg p-4 space-y-3">
+              <div className="bg-apptivia-carbon-100 rounded-lg p-4 space-y-3">
                 <p className="text-sm text-gray-800 whitespace-pre-wrap">{review.manager_summary}</p>
                 {review.manager_strengths?.length > 0 && (
                   <div>

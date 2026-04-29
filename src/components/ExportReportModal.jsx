@@ -29,7 +29,7 @@ export default function ExportReportModal({ isOpen, onClose, onSelectFormat, tit
       label: 'PDF Report',
       description: 'Branded report with data tables and visuals. Ready to share with leadership.',
       color: 'text-blue-600',
-      bg: 'bg-blue-50',
+      bg: 'bg-apptivia-coral-tone-50',
       border: 'border-blue-200 hover:border-blue-400',
     },
   ];
@@ -43,7 +43,7 @@ export default function ExportReportModal({ isOpen, onClose, onSelectFormat, tit
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
           <h2 className="text-lg font-semibold text-gray-900">{title}</h2>
-          <button onClick={onClose} className="p-1 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-gray-600">
+          <button onClick={onClose} className="p-1 rounded-lg hover:bg-apptivia-carbon-100 text-gray-400 hover:text-gray-600">
             <X size={18} />
           </button>
         </div>

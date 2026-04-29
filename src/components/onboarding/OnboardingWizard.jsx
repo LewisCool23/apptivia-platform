@@ -180,48 +180,34 @@ export default function OnboardingWizard({ isOpen, onClose, onComplete, organiza
   const saveOrgInfo = async () => {
     const { orgData, adminTitle } = wizardState;
     if (isNewOrg && !createdOrgId) {
-      // Idempotency guard: check if user already has an org (e.g. from a previous
-      // wizard attempt that was interrupted). Reuse it instead of creating a duplicate.
-      const { data: existingProfile } = await supabase
-        .from('profiles')
-        .select('organization_id')
-        .eq('id', profile.id)
-        .single();
-      if (existingProfile?.organization_id) {
-        // User already linked to an org — reuse it
-        setCreatedOrgId(existingProfile.organization_id);
+      // F3: Create org via server endpoint (trial abuse prevention + created_by_user_id tracking)
+      const result = await backendFetch('/api/onboarding/create-org', {
+        name: orgData.name.trim(),
+        industry: orgData.industry,
+        primary_contact_name: orgData.primary_contact_name.trim(),
+        primary_contact_email: orgData.primary_contact_email.trim(),
+      });
+      setCreatedOrgId(result.id);
+      if (result.already_exists) {
+        // User already linked to an org — update its info
         const { error: err } = await supabase.from('organizations').update({
           name: orgData.name.trim(),
           industry: orgData.industry,
           primary_contact_name: orgData.primary_contact_name.trim(),
           primary_contact_email: orgData.primary_contact_email.trim(),
-        }).eq('id', existingProfile.organization_id);
+        }).eq('id', result.id);
         if (err) throw new Error(err.message);
         if (adminTitle) {
           await backendFetch('/api/onboarding/link-org', {
-            organization_id: existingProfile.organization_id,
+            organization_id: result.id,
             title: adminTitle,
           });
         }
         return;
       }
-
-      const { data, error: err } = await supabase.from('organizations').insert({
-        name: orgData.name.trim(),
-        industry: orgData.industry,
-        subscription_plan: 'Pro',
-        subscription_status: 'trialing',
-        trial_ends_at: new Date(Date.now() + 14 * 86400000).toISOString(),
-        primary_contact_name: orgData.primary_contact_name.trim(),
-        primary_contact_email: orgData.primary_contact_email.trim(),
-        onboarding_status: 'in_progress',
-        onboarding_step: 1,
-      }).select().single();
-      if (err) throw new Error(err.message);
-      setCreatedOrgId(data.id);
       // Link current user to org via backend admin client (bypasses RLS)
       await backendFetch('/api/onboarding/link-org', {
-        organization_id: data.id,
+        organization_id: result.id,
         title: adminTitle || undefined,
       });
       await refreshProfile();
@@ -649,10 +635,10 @@ export default function OnboardingWizard({ isOpen, onClose, onComplete, organiza
                 <div
                   className={`w-full h-1.5 rounded-full transition-colors ${
                     step.id < currentStep
-                      ? 'bg-blue-500'
+                      ? 'bg-apptivia-coral'
                       : step.id === currentStep
-                        ? 'bg-blue-400'
-                        : 'bg-gray-200'
+                        ? 'bg-apptivia-coral'
+                        : 'bg-apptivia-carbon-200'
                   }`}
                 />
               </div>
@@ -670,7 +656,7 @@ export default function OnboardingWizard({ isOpen, onClose, onComplete, organiza
 
         {/* Resume Banner */}
         {showResumeBanner && (
-          <div className="px-6 py-2 bg-blue-50 border-b border-blue-100 flex items-center justify-between flex-shrink-0">
+          <div className="px-6 py-2 bg-apptivia-coral-tone-50 border-b border-blue-100 flex items-center justify-between flex-shrink-0">
             <span className="text-sm text-blue-700">Resumed from your previous session</span>
             <button
               onClick={handleStartOver}
@@ -712,7 +698,7 @@ export default function OnboardingWizard({ isOpen, onClose, onComplete, organiza
         )}
 
         {/* Footer Navigation */}
-        <div className="px-6 py-4 border-t bg-gray-50 rounded-b-2xl flex items-center justify-between flex-shrink-0">
+        <div className="px-6 py-4 border-t bg-apptivia-paper rounded-b-2xl flex items-center justify-between flex-shrink-0">
           <div>
             {currentStep > 1 && (
               <button
@@ -751,7 +737,7 @@ export default function OnboardingWizard({ isOpen, onClose, onComplete, organiza
                 type="button"
                 onClick={handleNext}
                 disabled={loading}
-                className="flex items-center gap-2 px-6 py-2.5 bg-blue-600 text-white rounded-lg text-sm font-semibold hover:bg-blue-700 disabled:opacity-50 transition-colors"
+                className="flex items-center gap-2 px-6 py-2.5 bg-apptivia-coral text-white rounded-lg text-sm font-semibold hover:bg-apptivia-coral disabled:opacity-50 transition-colors"
               >
                 {loading ? <Loader2 size={16} className="animate-spin" /> : null}
                 Next <ArrowRight size={16} />

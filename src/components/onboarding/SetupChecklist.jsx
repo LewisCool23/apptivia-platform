@@ -125,7 +125,7 @@ export default function SetupChecklist({ organizationId, userRole }) {
             {activeItems.map(item => (
               <div
                 key={item.key}
-                className="rounded-lg px-3 py-2.5 bg-gray-50 hover:bg-blue-50 transition-colors border border-gray-100"
+                className="rounded-lg px-3 py-2.5 bg-apptivia-paper hover:bg-apptivia-coral-tone-50 transition-colors border border-gray-100"
               >
                 <div className="flex items-center justify-between">
                   <span className="text-sm font-medium text-gray-800">{item.label}</span>

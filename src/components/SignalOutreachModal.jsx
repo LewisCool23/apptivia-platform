@@ -204,14 +204,14 @@ export default function SignalOutreachModal({ isOpen, onClose, signal, contact }
             </div>
             <h2 className="text-sm font-semibold text-gray-800">Draft Outreach Message</h2>
           </div>
-          <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors">
+          <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-apptivia-carbon-100 text-gray-400 hover:text-gray-600 transition-colors">
             <X size={16} />
           </button>
         </div>
 
         <div className="overflow-y-auto flex-1 p-5 space-y-4">
           {/* Signal context */}
-          <div className="bg-gray-50 rounded-xl p-3 space-y-1.5">
+          <div className="bg-apptivia-paper rounded-xl p-3 space-y-1.5">
             <div className="flex items-start gap-2">
               <span className="text-base leading-none mt-0.5">{signalIcon}</span>
               <div className="flex-1 min-w-0">
@@ -221,7 +221,7 @@ export default function SignalOutreachModal({ isOpen, onClose, signal, contact }
                     <span className="text-[10px] text-gray-500 font-medium">{signal.company_name}</span>
                   )}
                   {signal.buying_stage_indicator && (
-                    <span className={`text-[9px] font-medium px-1.5 py-0.5 rounded-full ${buyingStageColors[signal.buying_stage_indicator] || 'bg-gray-100 text-gray-600'}`}>
+                    <span className={`text-[9px] font-medium px-1.5 py-0.5 rounded-full ${buyingStageColors[signal.buying_stage_indicator] || 'bg-apptivia-carbon-100 text-gray-600'}`}>
                       {signal.buying_stage_indicator}
                     </span>
                   )}
@@ -241,7 +241,7 @@ export default function SignalOutreachModal({ isOpen, onClose, signal, contact }
             {/* To */}
             <div>
               <label className="text-[10px] font-semibold text-gray-500 uppercase tracking-wide block mb-1">To</label>
-              <div className="text-xs text-gray-700 bg-gray-50 rounded-lg px-2.5 py-1.5 truncate">
+              <div className="text-xs text-gray-700 bg-apptivia-paper rounded-lg px-2.5 py-1.5 truncate">
                 {contact?.name || <span className="text-gray-400 italic">Company only</span>}
                 {contact?.title && <span className="text-gray-400 block text-[9px]">{contact.title}</span>}
               </div>
@@ -274,8 +274,8 @@ export default function SignalOutreachModal({ isOpen, onClose, signal, contact }
                   onClick={() => { setActiveStyle(style.key); setCopied(false); }}
                   className={`text-xs px-3 py-1.5 rounded-full border transition-colors ${
                     activeStyle === style.key
-                      ? 'border-purple-400 bg-purple-50 text-purple-700 font-semibold'
-                      : 'border-gray-200 bg-white text-gray-600 hover:bg-gray-50'
+                      ? 'border-purple-400 bg-apptivia-carbon-100 text-purple-700 font-semibold'
+                      : 'border-gray-200 bg-white text-gray-600 hover:bg-apptivia-paper'
                   }`}
                   title={style.description}
                 >
@@ -315,7 +315,7 @@ export default function SignalOutreachModal({ isOpen, onClose, signal, contact }
           {/* Draft output */}
           {draft && !isGenerating && (
             <div className="border border-gray-200 rounded-xl overflow-hidden">
-              <div className="flex items-center justify-between px-3 py-2 bg-gray-50 border-b border-gray-200">
+              <div className="flex items-center justify-between px-3 py-2 bg-apptivia-paper border-b border-gray-200">
                 <span className="text-[10px] font-semibold text-gray-500 uppercase tracking-wide flex items-center gap-1">
                   {channel === 'email' ? <Mail size={10} /> : <Linkedin size={10} />}
                   {channel === 'email' ? 'Email Draft' : 'LinkedIn Message'}
@@ -323,7 +323,7 @@ export default function SignalOutreachModal({ isOpen, onClose, signal, contact }
                 <button
                   onClick={handleCopy}
                   className={`inline-flex items-center gap-1 text-[10px] font-medium px-2 py-0.5 rounded transition-colors ${
-                    copied ? 'text-emerald-600 bg-emerald-50' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100'
+                    copied ? 'text-emerald-600 bg-emerald-50' : 'text-gray-500 hover:text-gray-700 hover:bg-apptivia-carbon-100'
                   }`}
                 >
                   {copied ? <Check size={9} /> : <Copy size={9} />}

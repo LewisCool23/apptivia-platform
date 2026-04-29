@@ -153,6 +153,31 @@ export default function ConfigurePanel({
         }
       }
 
+      // Round-trip validation: re-read saved values and verify they match
+      if (orgId) {
+        const { data: verifyData } = await supabase
+          .from('kpi_org_configs')
+          .select('kpi_id, goal, weight, kpi_metrics!inner(key)')
+          .eq('organization_id', orgId)
+          .eq('is_active', true);
+        const mismatches: string[] = [];
+        for (const key of selectedKeys) {
+          const config = kpiConfigs.find((k) => k.key === key);
+          if (!config) continue;
+          const saved = (verifyData || []).find((v: any) => (v.kpi_metrics as any)?.key === key);
+          if (saved && (saved.goal !== config.goal || saved.weight !== config.weight)) {
+            mismatches.push(`${key}: expected ${config.goal}/${config.weight}, got ${saved.goal}/${saved.weight}`);
+          }
+        }
+        if (mismatches.length > 0) {
+          console.error('[ConfigurePanel] Round-trip validation failed:', mismatches);
+          toast.dismiss(loadingToast);
+          toast.error('Settings saved but verification failed — please refresh and check values');
+          setMessage('Warning: saved values may not have applied correctly. Please refresh.');
+          return;
+        }
+      }
+
       toast.dismiss(loadingToast);
       toast.success('Quick settings saved!');
       if (onSave) onSave();
@@ -349,7 +374,7 @@ export default function ConfigurePanel({
                           <button
                             onClick={() => handleAdd(index)}
                             disabled={!selectedAddKey}
-                            className="flex-1 px-2 py-1.5 text-xs bg-blue-500 text-white rounded hover:bg-blue-600 disabled:opacity-50"
+                            className="flex-1 px-2 py-1.5 text-xs bg-apptivia-coral text-white rounded hover:bg-apptivia-coral disabled:opacity-50"
                           >
                             Add KPI
                           </button>
@@ -358,7 +383,7 @@ export default function ConfigurePanel({
                               setAddingSlotIndex(null);
                               setSelectedAddKey('');
                             }}
-                            className="flex-1 px-2 py-1.5 text-xs border border-gray-300 rounded hover:bg-gray-50"
+                            className="flex-1 px-2 py-1.5 text-xs border border-gray-300 rounded hover:bg-apptivia-paper"
                           >
                             Cancel
                           </button>
@@ -373,7 +398,7 @@ export default function ConfigurePanel({
                           setAddingSlotIndex(index);
                           setSelectedAddKey('');
                         }}
-                        className="px-3 py-2 text-xs bg-gray-100 text-gray-700 rounded hover:bg-gray-200"
+                        className="px-3 py-2 text-xs bg-apptivia-carbon-100 text-gray-700 rounded hover:bg-apptivia-carbon-200"
                       >
                         Add KPI
                       </button>
@@ -400,14 +425,14 @@ export default function ConfigurePanel({
             <button
               onClick={onClose}
               disabled={saving}
-              className="flex-1 px-3 py-2 text-xs text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50"
+              className="flex-1 px-3 py-2 text-xs text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-apptivia-paper disabled:opacity-50"
             >
               Close
             </button>
             <button
               onClick={handleSave}
               disabled={saving || loading || slots.filter(Boolean).length === 0}
-              className="flex-1 px-3 py-2 text-xs bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50"
+              className="flex-1 px-3 py-2 text-xs bg-apptivia-coral text-white rounded-lg hover:bg-apptivia-coral disabled:opacity-50"
             >
               {saving ? 'Saving...' : 'Save Changes'}
             </button>

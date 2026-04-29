@@ -27,11 +27,11 @@ export default function BadgeCreationModal({ isOpen, onClose, onBadgeCreated }) 
   ];
 
   const colorOptions = [
-    { value: '#4F46E5', label: 'Indigo', preview: 'bg-indigo-600' },
+    { value: '#4F46E5', label: 'Indigo', preview: 'bg-apptivia-ink' },
     { value: '#FFD700', label: 'Gold', preview: 'bg-yellow-400' },
     { value: '#10B981', label: 'Green', preview: 'bg-green-500' },
     { value: '#EF4444', label: 'Red', preview: 'bg-red-500' },
-    { value: '#8B5CF6', label: 'Purple', preview: 'bg-purple-600' },
+    { value: '#8B5CF6', label: 'Purple', preview: 'bg-apptivia-ink' },
     { value: '#EC4899', label: 'Pink', preview: 'bg-pink-500' },
     { value: '#F59E0B', label: 'Orange', preview: 'bg-orange-500' },
     { value: '#06B6D4', label: 'Cyan', preview: 'bg-cyan-500' },
@@ -133,7 +133,7 @@ export default function BadgeCreationModal({ isOpen, onClose, onBadgeCreated }) 
         {/* Header */}
         <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-indigo-100 rounded-lg">
+            <div className="p-2 bg-apptivia-carbon-100 rounded-lg">
               <Award className="w-5 h-5 text-indigo-600" />
             </div>
             <div>
@@ -143,7 +143,7 @@ export default function BadgeCreationModal({ isOpen, onClose, onBadgeCreated }) 
           </div>
           <button
             onClick={onClose}
-            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+            className="p-2 hover:bg-apptivia-carbon-100 rounded-lg transition-colors"
           >
             <X className="w-5 h-5 text-gray-400" />
           </button>
@@ -151,7 +151,7 @@ export default function BadgeCreationModal({ isOpen, onClose, onBadgeCreated }) 
 
         <form onSubmit={handleSubmit} className="p-6 space-y-6">
           {/* Badge Preview */}
-          <div className="flex items-center justify-center p-6 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
+          <div className="flex items-center justify-center p-6 bg-apptivia-paper rounded-lg border-2 border-dashed border-gray-300">
             <div className="text-center">
               <div 
                 className="inline-flex items-center justify-center w-20 h-20 rounded-full text-4xl mb-3"
@@ -209,7 +209,7 @@ export default function BadgeCreationModal({ isOpen, onClose, onBadgeCreated }) 
                   onClick={() => setFormData({ ...formData, icon: emoji })}
                   className={`p-3 text-2xl rounded-lg border-2 transition-all ${
                     formData.icon === emoji
-                      ? 'border-indigo-500 bg-indigo-50'
+                      ? 'border-indigo-500 bg-apptivia-carbon-100'
                       : 'border-gray-200 hover:border-gray-300 bg-white'
                   }`}
                 >
@@ -239,7 +239,7 @@ export default function BadgeCreationModal({ isOpen, onClose, onBadgeCreated }) 
                   onClick={() => setFormData({ ...formData, color: color.value })}
                   className={`p-3 rounded-lg border-2 transition-all flex items-center gap-2 ${
                     formData.color === color.value
-                      ? 'border-indigo-500 bg-indigo-50'
+                      ? 'border-indigo-500 bg-apptivia-carbon-100'
                       : 'border-gray-200 hover:border-gray-300 bg-white'
                   }`}
                 >
@@ -303,7 +303,7 @@ export default function BadgeCreationModal({ isOpen, onClose, onBadgeCreated }) 
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+              className="px-4 py-2 text-gray-700 hover:bg-apptivia-carbon-100 rounded-lg transition-colors"
               disabled={submitting}
             >
               Cancel
@@ -311,7 +311,7 @@ export default function BadgeCreationModal({ isOpen, onClose, onBadgeCreated }) 
             <button
               type="submit"
               disabled={submitting}
-              className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="px-4 py-2 bg-apptivia-ink text-white rounded-lg hover:bg-apptivia-ink disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               {submitting ? 'Creating...' : 'Create Badge'}
             </button>

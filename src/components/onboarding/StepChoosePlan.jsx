@@ -61,7 +61,7 @@ export default function StepChoosePlan({ wizardState, updateState }) {
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-3 mb-2">
-        <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+        <div className="w-10 h-10 bg-apptivia-coral-tone-50 rounded-lg flex items-center justify-center">
           <CreditCard size={20} className="text-blue-600" />
         </div>
         <div>
@@ -72,7 +72,7 @@ export default function StepChoosePlan({ wizardState, updateState }) {
         </div>
       </div>
 
-      <div className="bg-blue-50 border border-blue-200 rounded-lg px-4 py-3 text-sm text-blue-800">
+      <div className="bg-apptivia-coral-tone-50 border border-blue-200 rounded-lg px-4 py-3 text-sm text-blue-800">
         <strong>You're on a 14-day Pro trial.</strong> All features are unlocked during your trial.
         Choose the plan you'd like after your trial ends, or continue with Starter (free).
       </div>
@@ -90,14 +90,14 @@ export default function StepChoosePlan({ wizardState, updateState }) {
               onClick={() => updateState({ selectedTier: plan.key })}
               className={`relative p-5 rounded-xl border-2 text-left transition-all ${
                 isSelected
-                  ? 'border-blue-600 bg-blue-50/50 ring-1 ring-blue-200'
+                  ? 'border-blue-600 bg-apptivia-coral-tone-50/50 ring-1 ring-blue-200'
                   : plan.highlighted
                     ? 'border-blue-200 hover:border-blue-400'
                     : 'border-gray-200 hover:border-gray-300'
               }`}
             >
               {plan.highlighted && (
-                <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-blue-600 text-white text-xs font-semibold px-3 py-0.5 rounded-full">
+                <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-apptivia-coral text-white text-xs font-semibold px-3 py-0.5 rounded-full">
                   MOST POPULAR
                 </div>
               )}

@@ -45,9 +45,9 @@ const DEFAULT_SLIDE_CONFIG = {
 };
 
 const LEVEL_COLORS = {
-  Developing:   { bg: 'from-slate-600 to-slate-700',   badge: 'bg-slate-500' },
-  Intermediate: { bg: 'from-blue-600 to-blue-700',     badge: 'bg-blue-500' },
-  Proficient:   { bg: 'from-purple-600 to-purple-700', badge: 'bg-purple-500' },
+  Developing:   { bg: 'from-slate-600 to-slate-700',   badge: 'bg-apptivia-carbon-500' },
+  Intermediate: { bg: 'from-blue-600 to-blue-700',     badge: 'bg-apptivia-coral' },
+  Proficient:   { bg: 'from-purple-600 to-purple-700', badge: 'bg-apptivia-ink' },
   Elite:        { bg: 'from-amber-500 to-orange-600',  badge: 'bg-amber-500' },
   Master:       { bg: 'from-rose-500 to-pink-600',     badge: 'bg-rose-500' },
 };
@@ -61,8 +61,8 @@ const RARITY_COLORS = {
 
 const DIFFICULTY_COLORS = {
   easy:   { bg: 'bg-green-500/20', text: 'text-green-300', border: 'border-green-500/30' },
-  medium: { bg: 'bg-blue-500/20',  text: 'text-blue-300',  border: 'border-blue-500/30' },
-  hard:   { bg: 'bg-purple-500/20', text: 'text-purple-300', border: 'border-purple-500/30' },
+  medium: { bg: 'bg-apptivia-coral/20',  text: 'text-blue-300',  border: 'border-blue-500/30' },
+  hard:   { bg: 'bg-apptivia-ink/20', text: 'text-purple-300', border: 'border-purple-500/30' },
   expert: { bg: 'bg-amber-500/20', text: 'text-amber-300', border: 'border-amber-500/30' },
 };
 
@@ -214,20 +214,25 @@ function useWallboardData(orgId, selectedTeamId) {
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
-  // Live updates
+  // Live updates — F26: debounced to prevent refetch storms on rapid kpi_values changes
   useEffect(() => {
-    const channel = supabase
-      .channel('wallboard_live')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'kpi_values' }, () => {
+    let debounceTimer = null;
+    const debouncedFetch = () => {
+      if (debounceTimer) clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(() => {
         refreshRef.current += 1;
         fetchData();
-      })
-      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'profiles' }, () => fetchData())
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'profile_badges' }, () => fetchData())
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'profile_achievements' }, () => fetchData())
+      }, 500);
+    };
+    const channel = supabase
+      .channel('wallboard_live')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'kpi_values' }, debouncedFetch)
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'profiles' }, debouncedFetch)
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'profile_badges' }, debouncedFetch)
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'profile_achievements' }, debouncedFetch)
       .subscribe();
 
-    return () => { supabase.removeChannel(channel); };
+    return () => { if (debounceTimer) clearTimeout(debounceTimer); supabase.removeChannel(channel); };
   }, [fetchData]);
 
   return { profiles, contests, recentBadges, teams, weeklyKpis, priorWeekKpis, recentAchievements, wallboardConfig, loading };
@@ -1015,9 +1020,9 @@ export default function Wallboard() {
               onChange={(e) => setSelectedTeamId(e.target.value || null)}
               className="bg-white/5 border border-white/10 text-white rounded-lg px-3 py-1.5 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none cursor-pointer"
             >
-              <option value="" className="bg-gray-900">All Teams</option>
+              <option value="" className="bg-apptivia-ink">All Teams</option>
               {teams.map(t => (
-                <option key={t.id} value={t.id} className="bg-gray-900">{t.name}</option>
+                <option key={t.id} value={t.id} className="bg-apptivia-ink">{t.name}</option>
               ))}
             </select>
           )}

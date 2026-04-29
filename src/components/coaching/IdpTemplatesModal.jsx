@@ -36,7 +36,7 @@ export default function IdpTemplatesModal({ onClose, onSelect, organizationId })
             <h2 className="text-lg font-bold text-gray-900">IDP Templates</h2>
             <p className="text-xs text-gray-500">Choose a template to pre-fill your development plan</p>
           </div>
-          <button onClick={onClose} className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg"><X size={18} /></button>
+          <button onClick={onClose} className="p-2 text-gray-400 hover:text-gray-600 hover:bg-apptivia-carbon-100 rounded-lg"><X size={18} /></button>
         </div>
 
         <div className="p-6">
@@ -55,14 +55,14 @@ export default function IdpTemplatesModal({ onClose, onSelect, organizationId })
                     className="text-left border border-gray-200 rounded-lg p-4 hover:shadow-md hover:border-blue-300 transition-all"
                   >
                     <div className="flex items-start gap-3">
-                      <div className="w-10 h-10 rounded-lg bg-blue-50 flex items-center justify-center shrink-0">
+                      <div className="w-10 h-10 rounded-lg bg-apptivia-coral-tone-50 flex items-center justify-center shrink-0">
                         <IconComp size={20} className="text-blue-600" />
                       </div>
                       <div className="flex-1">
                         <div className="flex items-center gap-2 mb-1">
                           <h4 className="font-semibold text-gray-900 text-sm">{t.name}</h4>
                           {t.is_system && (
-                            <span className="px-1.5 py-0.5 text-[9px] rounded bg-gray-100 text-gray-500 font-medium">System</span>
+                            <span className="px-1.5 py-0.5 text-[9px] rounded bg-apptivia-carbon-100 text-gray-500 font-medium">System</span>
                           )}
                         </div>
                         <p className="text-xs text-gray-500 mb-2">{t.description}</p>

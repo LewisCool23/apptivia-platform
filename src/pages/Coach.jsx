@@ -800,14 +800,12 @@ export default function Coach() {
         });
       }
 
-      // Search achievements (org-scoped)
-      let achievementsSearch = supabase
+      // Search achievements (global structural definitions)
+      const { data: achievements } = await supabase
         .from('achievements')
         .select('id, name, description')
         .ilike('name', `%${searchTerm}%`)
         .limit(5);
-      if (orgId) achievementsSearch = achievementsSearch.eq('organization_id', orgId);
-      const { data: achievements } = await achievementsSearch;
 
       if (achievements) {
         achievements.forEach((achievement) => {
@@ -821,14 +819,12 @@ export default function Coach() {
         });
       }
 
-      // Search skillsets (org-scoped)
-      let skillsetsSearch = supabase
+      // Search skillsets (global structural definitions)
+      const { data: skillsets } = await supabase
         .from('skillsets')
         .select('id, name, description')
         .ilike('name', `%${searchTerm}%`)
         .limit(5);
-      if (orgId) skillsetsSearch = skillsetsSearch.eq('organization_id', orgId);
-      const { data: skillsets } = await skillsetsSearch;
 
       if (skillsets) {
         skillsets.forEach((skillset) => {
@@ -920,14 +916,14 @@ export default function Coach() {
                         setSearchResults([]);
                         setShowSearchResults(false);
                       }}
-                      className="w-full text-left px-4 py-3 hover:bg-gray-50 border-b last:border-b-0 transition-colors"
+                      className="w-full text-left px-4 py-3 hover:bg-apptivia-paper border-b last:border-b-0 transition-colors"
                     >
                       <div className="flex items-start gap-3">
                         <span className="text-xl">{result.icon}</span>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2">
                             <span className="text-xs font-semibold text-gray-900">{result.title}</span>
-                            <span className="text-[10px] px-1.5 py-0.5 rounded bg-gray-100 text-gray-600">{result.type}</span>
+                            <span className="text-[10px] px-1.5 py-0.5 rounded bg-apptivia-carbon-100 text-gray-600">{result.type}</span>
                           </div>
                           {result.subtitle && (
                             <div className="text-[11px] text-gray-500 mt-0.5 truncate">{result.subtitle}</div>
@@ -953,7 +949,7 @@ export default function Coach() {
             <button
               onClick={handleRefresh}
               disabled={isRefreshing}
-              className={`relative p-2 rounded-lg font-semibold text-sm bg-white text-gray-700 border border-gray-200 hover:bg-gray-50 group ${
+              className={`relative p-2 rounded-lg font-semibold text-sm bg-white text-gray-700 border border-gray-200 hover:bg-apptivia-paper group ${
                 isRefreshing ? 'opacity-50 cursor-not-allowed' : 'transition-all duration-200 hover:scale-105 hover:shadow-md'
               }`}
               /* tooltip handled by custom hover span below */
@@ -971,7 +967,7 @@ export default function Coach() {
                   d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" 
                 />
               </svg>
-              <span className="absolute top-full left-1/2 -translate-x-1/2 mt-2 px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 pointer-events-none group-hover:opacity-100 whitespace-nowrap transition-opacity z-50">
+              <span className="absolute top-full left-1/2 -translate-x-1/2 mt-2 px-2 py-1 bg-apptivia-ink text-white text-xs rounded opacity-0 pointer-events-none group-hover:opacity-100 whitespace-nowrap transition-opacity z-50">
                 {isRefreshing ? 'Refreshing...' : 'Refresh'}
               </span>
             </button>
@@ -1011,7 +1007,7 @@ export default function Coach() {
         <div className="mb-6">
           {loading ? (
             <div className="flex flex-wrap gap-4 items-center">
-              <div className="bg-gray-200 rounded-lg px-6 py-6 flex-1 min-w-[300px] animate-pulse" style={{ height: '280px' }} />
+              <div className="bg-apptivia-carbon-200 rounded-lg px-6 py-6 flex-1 min-w-[300px] animate-pulse" style={{ height: '280px' }} />
             </div>
           ) : error ? (
             <div className="text-center py-8 text-red-500">Error: {error}</div>
@@ -1044,11 +1040,11 @@ export default function Coach() {
                     const lvl = getEffectiveLevel(p.total_points || 0, skillsetProgresses).level;
                     dist[lvl] = (dist[lvl] || 0) + 1;
                   });
-                  const colors = { Developing: 'bg-orange-400', Intermediate: 'bg-blue-400', Proficient: 'bg-emerald-400', Elite: 'bg-yellow-400', Master: 'bg-purple-400' };
+                  const colors = { Developing: 'bg-orange-400', Intermediate: 'bg-apptivia-coral', Proficient: 'bg-emerald-400', Elite: 'bg-yellow-400', Master: 'bg-apptivia-ink' };
                   return (
                     <div className="flex flex-wrap gap-1.5 mb-2">
                       {Object.entries(dist).filter(([, count]) => count > 0).map(([label, count]) => (
-                        <span key={label} className={`px-2 py-0.5 rounded-full text-[10px] font-semibold ${colors[label] || 'bg-gray-400'} text-white/90`}>
+                        <span key={label} className={`px-2 py-0.5 rounded-full text-[10px] font-semibold ${colors[label] || 'bg-apptivia-carbon-400'} text-white/90`}>
                           {count} {label}
                         </span>
                       ))}
@@ -1062,7 +1058,7 @@ export default function Coach() {
                     <div className="text-lg font-bold cursor-help">{data.avgPoints || 0}</div>
                     <div className="text-xs">Level Points</div>
                     <div className="absolute bottom-full left-0 mb-2 hidden group-hover/pts:block z-50">
-                      <div className="bg-gray-900 text-white text-[10px] rounded-lg px-3 py-2 whitespace-nowrap shadow-lg">
+                      <div className="bg-apptivia-ink text-white text-[10px] rounded-lg px-3 py-2 whitespace-nowrap shadow-lg">
                         <div className="font-semibold mb-1">Points Breakdown</div>
                         <div>Achievements: {isPowerUser ? userAchievementCount : data.totalAchievements} earned</div>
                         <div>Badges: {data.totalBadges} earned</div>
@@ -1096,7 +1092,7 @@ export default function Coach() {
                   }
                 </div>
                 <div className="w-full mt-4 pt-4 border-t border-white border-opacity-10 flex justify-between items-center">
-                  <Tooltip text={isPowerUser ? "Your weighted average KPI attainment for the current period" : "Weighted average of all KPI attainment percentages for the current period"} position="bottom">
+                  <Tooltip text={isPowerUser ? "Your weighted average KPI attainment for the current period" : "Weighted average of all KPI attainment percentages for the current period"} position="right">
                     <div className="flex flex-col items-center min-w-[60px] cursor-help">
                       <div className="text-lg font-bold">{data.avgScore}%</div>
                       <div className="text-xs text-white/80">{isPowerUser ? 'Score' : 'Avg Score'}</div>
@@ -1138,9 +1134,9 @@ export default function Coach() {
                       <div className="space-y-2 flex-1">
                         {LEVELS.map((lvl, i) => (
                           <div key={lvl.label} className={`flex items-center gap-2 text-xs ${i === currentIdx ? 'font-bold' : i < currentIdx ? 'text-gray-400' : 'text-gray-500'}`}>
-                            <span className={`w-2 h-2 rounded-full ${i <= currentIdx ? (levelColors[i] || 'text-gray-400').replace('text-', 'bg-') : 'bg-gray-200'}`} />
+                            <span className={`w-2 h-2 rounded-full ${i <= currentIdx ? (levelColors[i] || 'text-gray-400').replace('text-', 'bg-') : 'bg-apptivia-carbon-200'}`} />
                             <span className={i === currentIdx ? levelColors[i] || '' : ''}>{lvl.label}</span>
-                            {i === currentIdx && <span className="ml-auto text-[10px] bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded">YOU</span>}
+                            {i === currentIdx && <span className="ml-auto text-[10px] bg-apptivia-coral-tone-50 text-blue-700 px-1.5 py-0.5 rounded">YOU</span>}
                             {i < currentIdx && <span className="ml-auto text-[10px] text-green-500">✓</span>}
                           </div>
                         ))}
@@ -1192,7 +1188,7 @@ export default function Coach() {
 
               <div className="space-y-2">
                 {/* Section 1: KPI Success Trends */}
-                <div className={`rounded-lg border transition-colors ${insightsSection === 'trends' ? 'border-blue-200 bg-blue-50/30' : 'border-gray-100 bg-blue-50/10 hover:bg-blue-50/30'}`}>
+                <div className={`rounded-lg border transition-colors ${insightsSection === 'trends' ? 'border-blue-200 bg-apptivia-coral-tone-50/30' : 'border-gray-100 bg-apptivia-coral-tone-50/10 hover:bg-apptivia-coral-tone-50/30'}`}>
                   <button
                     type="button"
                     onClick={() => setInsightsSection(prev => prev === 'trends' ? null : 'trends')}
@@ -1376,14 +1372,14 @@ export default function Coach() {
                           {activePlans.map(plan => {
                             const assignment = myAssignments[plan.id] || {};
                             const status = assignment.status || 'active';
-                            const statusColor = status === 'in_progress' ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-600';
+                            const statusColor = status === 'in_progress' ? 'bg-apptivia-coral-tone-50 text-blue-700' : 'bg-apptivia-carbon-100 text-gray-600';
                             const statusLabel = status === 'in_progress' ? 'In Progress' : 'Active';
                             return (
                               <div key={plan.id} className="border border-gray-100 rounded-lg p-3 hover:shadow-sm transition-all">
                                 <div className="flex items-center justify-between mb-2">
                                   <div className="font-semibold text-sm text-gray-900">{plan.name || 'Coaching Plan'}</div>
                                   <div className="flex items-center gap-2">
-                                    <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-semibold ${plan.plan_type === 'ai_self_coaching' ? 'bg-purple-100 text-purple-700' : 'bg-blue-100 text-blue-700'}`}>
+                                    <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-semibold ${plan.plan_type === 'ai_self_coaching' ? 'bg-apptivia-carbon-100 text-purple-700' : 'bg-apptivia-coral-tone-50 text-blue-700'}`}>
                                       {plan.plan_type === 'ai_self_coaching' ? 'AI Generated' : 'Manager Assigned'}
                                     </span>
                                     <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-semibold ${statusColor}`}>{statusLabel}</span>
@@ -1392,7 +1388,7 @@ export default function Coach() {
                                 {plan.focus_kpis?.length > 0 && (
                                   <div className="flex flex-wrap gap-1 mb-2">
                                     {plan.focus_kpis.map((kpi, i) => (
-                                      <span key={i} className="text-[10px] px-2 py-0.5 rounded-full bg-gray-100 text-gray-600 font-medium">{buildLabel(kpi)}</span>
+                                      <span key={i} className="text-[10px] px-2 py-0.5 rounded-full bg-apptivia-carbon-100 text-gray-600 font-medium">{buildLabel(kpi)}</span>
                                     ))}
                                   </div>
                                 )}
@@ -1410,7 +1406,7 @@ export default function Coach() {
                                   </div>
                                 )}
                                 <div className="flex gap-2 mt-2">
-                                  <button type="button" onClick={() => setViewPlanDetail(plan)} className="text-[11px] px-2.5 py-1 rounded-md bg-gray-50 text-gray-700 hover:bg-gray-100 font-medium border border-gray-200 transition-colors">
+                                  <button type="button" onClick={() => setViewPlanDetail(plan)} className="text-[11px] px-2.5 py-1 rounded-md bg-apptivia-paper text-gray-700 hover:bg-apptivia-carbon-100 font-medium border border-gray-200 transition-colors">
                                     View Full Plan
                                   </button>
                                   {(status === 'active' || status === 'in_progress') && (
@@ -1445,7 +1441,7 @@ export default function Coach() {
                                       else { effTier = 'No change'; effColor = 'text-gray-500'; }
                                     }
                                     return (
-                                      <div key={plan.id} className="border border-gray-100 rounded-lg p-3 bg-gray-50">
+                                      <div key={plan.id} className="border border-gray-100 rounded-lg p-3 bg-apptivia-paper">
                                         <div className="flex items-center justify-between mb-1">
                                           <span className="font-semibold text-sm text-gray-900">{plan.name || 'Coaching Plan'}</span>
                                           <span className="text-[10px] text-gray-400">{assignment.status === 'cancelled' ? 'Cancelled' : 'Completed'} {assignment.completed_at ? new Date(assignment.completed_at).toLocaleDateString() : ''}</span>
@@ -1453,7 +1449,7 @@ export default function Coach() {
                                         {focusKpis.length > 0 && (
                                           <div className="flex flex-wrap gap-1 mb-2">
                                             {focusKpis.map((kpi, i) => (
-                                              <span key={i} className="text-[10px] px-2 py-0.5 rounded-full bg-gray-100 text-gray-600 font-medium">{buildLabel(kpi)}</span>
+                                              <span key={i} className="text-[10px] px-2 py-0.5 rounded-full bg-apptivia-carbon-100 text-gray-600 font-medium">{buildLabel(kpi)}</span>
                                             ))}
                                           </div>
                                         )}
@@ -1494,7 +1490,7 @@ export default function Coach() {
                 </div>
 
                 {/* Section 4: My Development Plans (IDPs) */}
-                <div className={`rounded-lg border transition-colors ${insightsSection === 'idps' ? 'border-purple-200 bg-purple-50/30' : 'border-gray-100 bg-purple-50/10 hover:bg-purple-50/30'}`}>
+                <div className={`rounded-lg border transition-colors ${insightsSection === 'idps' ? 'border-purple-200 bg-apptivia-carbon-100/30' : 'border-gray-100 bg-apptivia-carbon-100/10 hover:bg-apptivia-carbon-100/30'}`}>
                   <button
                     type="button"
                     onClick={() => setInsightsSection(prev => prev === 'idps' ? null : 'idps')}
@@ -1539,8 +1535,8 @@ export default function Coach() {
                             const isOverdue = idp.period_end && new Date() > new Date(idp.period_end) && idp.status !== 'completed';
                             const displayStatus = isOverdue ? 'overdue' : idp.status;
                             const statusStyles = {
-                              draft: 'bg-gray-100 text-gray-600',
-                              active: 'bg-blue-100 text-blue-700',
+                              draft: 'bg-apptivia-carbon-100 text-gray-600',
+                              active: 'bg-apptivia-coral-tone-50 text-blue-700',
                               in_progress: 'bg-yellow-100 text-yellow-700',
                               completed: 'bg-green-100 text-green-700',
                               overdue: 'bg-red-100 text-red-700',
@@ -1551,7 +1547,7 @@ export default function Coach() {
                                 <div className="flex items-center justify-between mb-2">
                                   <div className="font-semibold text-sm text-gray-900 truncate">{idp.name}</div>
                                   <div className="flex items-center gap-2 shrink-0">
-                                    <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-semibold ${idp.plan_type === 'annual' ? 'bg-purple-100 text-purple-700' : 'bg-indigo-100 text-indigo-700'}`}>
+                                    <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-semibold ${idp.plan_type === 'annual' ? 'bg-apptivia-carbon-100 text-purple-700' : 'bg-apptivia-carbon-100 text-indigo-700'}`}>
                                       {idp.plan_type === 'annual' ? 'Annual' : idp.plan_type === 'quarterly' ? 'Quarterly' : 'Custom'}
                                     </span>
                                     <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-semibold ${statusStyles[displayStatus] || statusStyles.draft}`}>
@@ -1565,7 +1561,7 @@ export default function Coach() {
                                 {idp.focus_kpis?.length > 0 && (
                                   <div className="flex flex-wrap gap-1 mb-2">
                                     {idp.focus_kpis.slice(0, 4).map((kpi, i) => (
-                                      <span key={i} className="text-[10px] px-2 py-0.5 rounded-full bg-purple-50 text-purple-600 font-medium">{buildLabel(kpi)}</span>
+                                      <span key={i} className="text-[10px] px-2 py-0.5 rounded-full bg-apptivia-carbon-100 text-purple-600 font-medium">{buildLabel(kpi)}</span>
                                     ))}
                                     {idp.focus_kpis.length > 4 && <span className="text-[10px] text-gray-400">+{idp.focus_kpis.length - 4}</span>}
                                   </div>
@@ -1576,15 +1572,15 @@ export default function Coach() {
                                       <span>Milestones ({completedMs}/{milestones.length})</span>
                                       <span className="font-semibold text-purple-600">{msPct}%</span>
                                     </div>
-                                    <div className="w-full bg-gray-200 rounded-full h-1.5 overflow-hidden">
-                                      <div className="h-1.5 rounded-full bg-purple-500 transition-all duration-500" style={{ width: `${msPct}%` }} />
+                                    <div className="w-full bg-apptivia-carbon-200 rounded-full h-1.5 overflow-hidden">
+                                      <div className="h-1.5 rounded-full bg-apptivia-ink transition-all duration-500" style={{ width: `${msPct}%` }} />
                                     </div>
                                   </div>
                                 )}
                                 <button
                                   type="button"
                                   onClick={() => setViewIdpDetail(idp)}
-                                  className="text-[11px] px-2.5 py-1 rounded-md bg-purple-50 text-purple-700 hover:bg-purple-100 font-medium border border-purple-200 transition-colors mt-1"
+                                  className="text-[11px] px-2.5 py-1 rounded-md bg-apptivia-carbon-100 text-purple-700 hover:bg-apptivia-carbon-100 font-medium border border-purple-200 transition-colors mt-1"
                                 >
                                   View Full Plan
                                 </button>
@@ -1642,10 +1638,10 @@ export default function Coach() {
                         <div className="space-y-3">
                           {myReviews.map(review => {
                             const reviewStatusStyles = {
-                              draft: { bg: 'bg-gray-100 text-gray-600', label: 'Draft' },
+                              draft: { bg: 'bg-apptivia-carbon-100 text-gray-600', label: 'Draft' },
                               pending_self_assessment: { bg: 'bg-amber-100 text-amber-700', label: 'Self-Assessment Needed' },
-                              self_assessment_submitted: { bg: 'bg-blue-100 text-blue-700', label: 'Under Review' },
-                              manager_review: { bg: 'bg-blue-100 text-blue-700', label: 'Manager Reviewing' },
+                              self_assessment_submitted: { bg: 'bg-apptivia-coral-tone-50 text-blue-700', label: 'Under Review' },
+                              manager_review: { bg: 'bg-apptivia-coral-tone-50 text-blue-700', label: 'Manager Reviewing' },
                               finalized: { bg: 'bg-green-100 text-green-700', label: 'Ready to Acknowledge' },
                               acknowledged: { bg: 'bg-emerald-100 text-emerald-700', label: 'Acknowledged' },
                               reopened: { bg: 'bg-yellow-100 text-yellow-700', label: 'Reopened' },
@@ -1658,7 +1654,7 @@ export default function Coach() {
                                 <div className="flex items-center justify-between mb-2">
                                   <div className="font-semibold text-sm text-gray-900 truncate">{review.title}</div>
                                   <div className="flex items-center gap-2 shrink-0">
-                                    <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-semibold ${review.review_type === 'annual' ? 'bg-purple-100 text-purple-700' : 'bg-blue-100 text-blue-700'}`}>
+                                    <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-semibold ${review.review_type === 'annual' ? 'bg-apptivia-carbon-100 text-purple-700' : 'bg-apptivia-coral-tone-50 text-blue-700'}`}>
                                       {review.review_type === 'annual' ? 'Annual' : 'Mid-Year'}
                                     </span>
                                     <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-semibold ${rs.bg}`}>
@@ -1693,7 +1689,7 @@ export default function Coach() {
                                   className={`text-[11px] px-2.5 py-1 rounded-md font-medium border transition-colors mt-1 ${
                                     needsAction
                                       ? 'bg-amber-50 text-amber-700 hover:bg-amber-100 border-amber-200'
-                                      : 'bg-gray-50 text-gray-700 hover:bg-gray-100 border-gray-200'
+                                      : 'bg-apptivia-paper text-gray-700 hover:bg-apptivia-carbon-100 border-gray-200'
                                   }`}
                                 >
                                   {review.status === 'pending_self_assessment' ? 'Start Self-Assessment' : review.status === 'finalized' ? 'View & Acknowledge' : 'View Review'}
@@ -1734,7 +1730,7 @@ export default function Coach() {
                       <div className="flex items-center gap-2 mb-1">
                         <h3 className="font-bold text-base text-gray-900">{skillset.skillset_name}</h3>
                         <Tooltip text={`Skillset level based on achievement progress: Beginner (0-24%), Intermediate (25-49%), Advanced (50-74%), Expert (75-99%), Master (100%)`} position="bottom" wide>
-                        <span className={`px-1.5 py-0.5 rounded-full text-[9px] font-semibold cursor-help ${SKILLSET_LEVEL_COLORS[getSkillsetLevel(skillset.progress)] || 'bg-gray-100 text-gray-600'}`}>
+                        <span className={`px-1.5 py-0.5 rounded-full text-[9px] font-semibold cursor-help ${SKILLSET_LEVEL_COLORS[getSkillsetLevel(skillset.progress)] || 'bg-apptivia-carbon-100 text-gray-600'}`}>
                           {getSkillsetLevel(skillset.progress)}
                         </span>
                       </Tooltip>
@@ -1743,10 +1739,10 @@ export default function Coach() {
                     </div>
                   </div>
                   <div className="mb-3">
-                    <div className="relative w-full bg-gray-200 rounded-full h-1.5 overflow-hidden">
+                    <div className="relative w-full bg-apptivia-carbon-200 rounded-full h-1.5 overflow-hidden">
                       <div className="h-1.5 rounded-full transition-all duration-500 ease-out" style={{ width: `${skillset.progress}%`, backgroundColor: skillset.color }}></div>
                       {[25, 50, 75].map(pct => (
-                        <div key={pct} className="absolute top-0 h-full w-px bg-gray-400/50" style={{ left: `${pct}%` }} />
+                        <div key={pct} className="absolute top-0 h-full w-px bg-apptivia-carbon-400/50" style={{ left: `${pct}%` }} />
                       ))}
                     </div>
                     <div className="flex justify-between text-xs mt-1">
@@ -1756,11 +1752,11 @@ export default function Coach() {
                       </Tooltip>
                     </div>
                   </div>
-                  <div className="bg-gray-50 rounded-lg p-2.5 border border-gray-100 mb-2">
+                  <div className="bg-apptivia-paper rounded-lg p-2.5 border border-gray-100 mb-2">
                     <div className="text-[10px] font-medium text-gray-500 mb-0.5">Next Achievement</div>
                     <div className="text-xs text-gray-900 break-words line-clamp-2">{skillset.next_achievement}</div>
                   </div>
-                  <div className="bg-gray-50 rounded-lg p-2.5 border border-gray-100 mb-2">
+                  <div className="bg-apptivia-paper rounded-lg p-2.5 border border-gray-100 mb-2">
                     <div className="text-[10px] font-medium text-gray-500 mb-0.5">{isPowerUser ? 'Skillset Points' : 'Avg Skillset Points'}</div>
                     <div className="text-xs font-semibold text-gray-900">{skillset.points}</div>
                   </div>

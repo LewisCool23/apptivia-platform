@@ -229,7 +229,7 @@ export default function SearchWithHistory({
               onClick={() => handleSelect(item.query)}
               onMouseEnter={() => setSelectedIndex(idx)}
               className={`w-full text-left px-3 py-2 flex items-center gap-3 text-sm transition-colors ${
-                selectedIndex === idx ? 'bg-blue-50 text-blue-700' : 'text-gray-700 hover:bg-gray-50'
+                selectedIndex === idx ? 'bg-apptivia-coral-tone-50 text-blue-700' : 'text-gray-700 hover:bg-apptivia-paper'
               }`}
             >
               {item.type === 'history' ? (

@@ -22,7 +22,7 @@ export default function ReviewCard({ review, canManage, teamMembers, onView, onE
         </div>
         <div className="flex flex-col items-end gap-1">
           <span className={`px-2 py-0.5 text-[10px] rounded-full font-semibold ${
-            review.review_type === 'annual' ? 'bg-purple-100 text-purple-700' : 'bg-blue-100 text-blue-700'
+            review.review_type === 'annual' ? 'bg-apptivia-carbon-100 text-purple-700' : 'bg-apptivia-coral-tone-50 text-blue-700'
           }`}>
             {typeLabel}
           </span>
@@ -59,13 +59,13 @@ export default function ReviewCard({ review, canManage, teamMembers, onView, onE
       {/* Actions */}
       <div className="flex gap-2">
         <button onClick={() => onView(review)}
-          className="flex-1 flex items-center justify-center gap-1 px-3 py-1.5 text-xs font-semibold text-blue-600 border border-blue-600 rounded-md hover:bg-blue-50">
+          className="flex-1 flex items-center justify-center gap-1 px-3 py-1.5 text-xs font-semibold text-blue-600 border border-blue-600 rounded-md hover:bg-apptivia-coral-tone-50">
           <Eye size={14} /> View
         </button>
         {canManage && review.status === 'draft' && (
           <>
             <button onClick={() => onEdit(review)}
-              className="flex items-center justify-center gap-1 px-3 py-1.5 text-xs font-semibold text-gray-600 border border-gray-300 rounded-md hover:bg-gray-50" title="Edit">
+              className="flex items-center justify-center gap-1 px-3 py-1.5 text-xs font-semibold text-gray-600 border border-gray-300 rounded-md hover:bg-apptivia-paper" title="Edit">
               <Edit size={14} />
             </button>
             <button onClick={() => onDelete(review)}

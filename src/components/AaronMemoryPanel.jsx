@@ -81,7 +81,7 @@ export default function AaronMemoryPanel({ isOpen, onClose }) {
                   <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">Recent topics</p>
                   <div className="flex flex-wrap gap-1.5">
                     {memory.last_topics.map((t, i) => (
-                      <span key={i} className="px-2 py-0.5 bg-indigo-50 text-indigo-700 text-xs rounded-full">{t}</span>
+                      <span key={i} className="px-2 py-0.5 bg-apptivia-carbon-100 text-indigo-700 text-xs rounded-full">{t}</span>
                     ))}
                   </div>
                 </div>

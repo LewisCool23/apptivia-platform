@@ -4,6 +4,22 @@ import { supabase } from '../../supabaseClient';
 import { useKpiTemplates } from '../../hooks/useKpiTemplates';
 import { validateKpiGoals } from './onboardingConstants';
 
+// F13: KPI-to-integration mapping — shows which integration provides each KPI's data
+const KPI_INTEGRATION_REQ = {
+  call_connects: 'Salesforce/HubSpot', talk_time_minutes: 'Gong', dials: 'Salesforce/HubSpot',
+  meetings: 'Google Cal/Outlook', conversations: 'Gong', demos_completed: 'Salesforce/HubSpot',
+  follow_ups: 'Salesforce/HubSpot', discovery_calls: 'Gong',
+  pipeline_created: 'Salesforce/HubSpot', pipeline_advanced: 'Salesforce/HubSpot',
+  sourced_opps: 'Salesforce/HubSpot', stage2_opps: 'Salesforce/HubSpot', stage3_opps: 'Salesforce/HubSpot',
+  closed_won: 'Salesforce/HubSpot', revenue_generated: 'Salesforce/HubSpot',
+  average_deal_size: 'Salesforce/HubSpot', win_rate: 'Salesforce/HubSpot', sales_cycle_days: 'Salesforce/HubSpot',
+  emails_sent: 'Outreach/SalesLoft', emails_opened: 'Outreach/SalesLoft',
+  sequences_started: 'Outreach/SalesLoft', tasks_completed: 'Outreach/SalesLoft',
+  talk_to_listen_ratio: 'Gong', longest_monologue_sec: 'Gong', questions_asked: 'Gong',
+  next_steps_mentioned: 'Gong', interactivity_score: 'Gong',
+  gifts_sent: 'Sendoso', gifts_accepted: 'Sendoso', gift_influenced_meetings: 'Sendoso',
+};
+
 const CATEGORY_ORDER = ['activity', 'engagement', 'pipeline', 'revenue', 'efficiency'];
 const CATEGORY_LABELS = {
   activity: 'Activity',
@@ -235,7 +251,7 @@ export default function StepKpiConfig({ wizardState, updateState, organizationId
                   className={`flex items-center gap-3 p-2.5 rounded-lg border transition-all ${
                     kpi.enabled
                       ? 'border-amber-200 bg-amber-50/50'
-                      : 'border-gray-100 bg-gray-50/50 opacity-60'
+                      : 'border-gray-100 bg-apptivia-paper/50 opacity-60'
                   }`}
                 >
                   <button
@@ -250,7 +266,14 @@ export default function StepKpiConfig({ wizardState, updateState, organizationId
                     {kpi.enabled && <Check size={12} />}
                   </button>
                   <div className="flex-1 min-w-0">
-                    <div className="text-sm font-medium text-gray-900">{kpi.name}</div>
+                    <div className="text-sm font-medium text-gray-900">
+                      {kpi.name}
+                      {kpi.enabled && KPI_INTEGRATION_REQ[kpi.key] && (
+                        <span className="ml-1.5 text-[10px] font-normal text-gray-400">
+                          via {KPI_INTEGRATION_REQ[kpi.key]}
+                        </span>
+                      )}
+                    </div>
                   </div>
                   {kpi.enabled && (
                     <>

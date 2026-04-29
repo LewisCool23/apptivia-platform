@@ -41,7 +41,7 @@ function SignalTagField({ label, hint, items, value, onChange, onAdd, onRemove, 
           placeholder={placeholder}
           className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
         />
-        <button type="button" onClick={onAdd} className="px-3 py-2 bg-gray-100 rounded-lg hover:bg-gray-200 text-gray-600">
+        <button type="button" onClick={onAdd} className="px-3 py-2 bg-apptivia-carbon-100 rounded-lg hover:bg-apptivia-carbon-200 text-gray-600">
           <Plus size={14} />
         </button>
       </div>
@@ -96,9 +96,9 @@ function SubscriptionTab({ organization, members, teams, setMessage }) {
     setActionLoading(false);
   };
 
-  const statusColor = status === 'active' ? 'bg-green-100 text-green-700' : status === 'trialing' ? 'bg-blue-100 text-blue-700' : status === 'past_due' ? 'bg-red-100 text-red-700' : 'bg-gray-100 text-gray-600';
+  const statusColor = status === 'active' ? 'bg-green-100 text-green-700' : status === 'trialing' ? 'bg-apptivia-coral-tone-50 text-blue-700' : status === 'past_due' ? 'bg-red-100 text-red-700' : 'bg-apptivia-carbon-100 text-gray-600';
 
-  if (loading) return <div className="bg-white rounded-lg shadow-sm p-6"><div className="animate-pulse h-40 bg-gray-100 rounded-lg" /></div>;
+  if (loading) return <div className="bg-white rounded-lg shadow-sm p-6"><div className="animate-pulse h-40 bg-apptivia-carbon-100 rounded-lg" /></div>;
 
   return (
     <div className="space-y-6">
@@ -141,11 +141,11 @@ function SubscriptionTab({ organization, members, teams, setMessage }) {
         </div>
         <div className="flex gap-3">
           {hasStripe ? (
-            <button onClick={handlePortal} disabled={actionLoading} className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50">
+            <button onClick={handlePortal} disabled={actionLoading} className="px-6 py-2 bg-apptivia-coral text-white rounded-lg hover:bg-apptivia-coral disabled:opacity-50">
               {actionLoading ? 'Loading...' : 'Manage Billing'}
             </button>
           ) : (
-            <button onClick={() => handleCheckout(currentTier)} disabled={actionLoading} className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50">
+            <button onClick={() => handleCheckout(currentTier)} disabled={actionLoading} className="px-6 py-2 bg-apptivia-coral text-white rounded-lg hover:bg-apptivia-coral disabled:opacity-50">
               {actionLoading ? 'Loading...' : 'Set Up Billing'}
             </button>
           )}
@@ -165,23 +165,23 @@ function SubscriptionTab({ organization, members, teams, setMessage }) {
               Enterprise: ['Everything in Pro', 'Custom integrations', 'SSO & audit log', 'API access', 'Dedicated support', 'SLA guarantee'],
             };
             return (
-              <div key={tier} className={`border rounded-lg p-5 ${isCurrent ? 'border-blue-500 bg-blue-50/30 ring-1 ring-blue-200' : 'border-gray-200'} ${tier === 'Pro' && !isCurrent ? 'border-purple-300' : ''}`}>
+              <div key={tier} className={`border rounded-lg p-5 ${isCurrent ? 'border-blue-500 bg-apptivia-coral-tone-50/30 ring-1 ring-blue-200' : 'border-gray-200'} ${tier === 'Pro' && !isCurrent ? 'border-purple-300' : ''}`}>
                 <div className="flex items-center justify-between mb-2">
                   <h4 className="font-semibold text-lg">{TIER_DISPLAY[tier]}</h4>
-                  {isCurrent && <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">Current</span>}
-                  {tier === 'Pro' && !isCurrent && <span className="text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full">Popular</span>}
+                  {isCurrent && <span className="text-xs bg-apptivia-coral-tone-50 text-blue-700 px-2 py-0.5 rounded-full">Current</span>}
+                  {tier === 'Pro' && !isCurrent && <span className="text-xs bg-apptivia-carbon-100 text-purple-700 px-2 py-0.5 rounded-full">Popular</span>}
                 </div>
                 <div className="text-2xl font-bold mb-3">{TIER_SEAT_PRICES[tier] ? `$${TIER_SEAT_PRICES[tier]}` : 'Custom'}{TIER_SEAT_PRICES[tier] && <span className="text-sm font-normal text-gray-500">/seat/mo</span>}</div>
                 <ul className="space-y-1.5 text-sm text-gray-600 mb-4">
                   {(features[tier] || []).map((f, i) => <li key={i} className="flex items-start gap-1.5"><Check size={14} className="text-green-500 mt-0.5 flex-shrink-0" />{f}</li>)}
                 </ul>
                 {!isCurrent && isUpgrade && tier !== 'Enterprise' && (
-                  <button onClick={() => handleCheckout(tier)} disabled={actionLoading} className="w-full py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm disabled:opacity-50">
+                  <button onClick={() => handleCheckout(tier)} disabled={actionLoading} className="w-full py-2 bg-apptivia-coral text-white rounded-lg hover:bg-apptivia-coral text-sm disabled:opacity-50">
                     {actionLoading ? 'Loading...' : `Upgrade to ${TIER_DISPLAY[tier]}`}
                   </button>
                 )}
                 {tier === 'Enterprise' && !isCurrent && (
-                  <a href="mailto:support@apptivia.app?subject=Enterprise Plan Inquiry" className="block w-full py-2 text-center border border-gray-300 rounded-lg hover:bg-gray-50 text-sm">Contact Sales</a>
+                  <a href="mailto:support@apptivia.app?subject=Enterprise Plan Inquiry" className="block w-full py-2 text-center border border-gray-300 rounded-lg hover:bg-apptivia-paper text-sm">Contact Sales</a>
                 )}
                 {isCurrent && <div className="text-center text-sm text-gray-400 py-2">Your current plan</div>}
               </div>
@@ -956,13 +956,13 @@ export default function OrganizationSettings() {
               {showSearchResults && searchResults.length > 0 && (
                 <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-96 overflow-y-auto z-50">
                   {searchResults.map((result, idx) => (
-                    <button key={idx} onClick={() => { navigate(result.link); setSearchQuery(''); setSearchResults([]); setShowSearchResults(false); }} className="w-full text-left px-4 py-3 hover:bg-gray-50 border-b last:border-b-0 transition-colors">
+                    <button key={idx} onClick={() => { navigate(result.link); setSearchQuery(''); setSearchResults([]); setShowSearchResults(false); }} className="w-full text-left px-4 py-3 hover:bg-apptivia-paper border-b last:border-b-0 transition-colors">
                       <div className="flex items-start gap-3">
                         <span className="text-xl">{result.icon}</span>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2">
                             <span className="text-xs font-semibold text-gray-900">{result.title}</span>
-                            <span className="text-[10px] px-1.5 py-0.5 rounded bg-gray-100 text-gray-600">{result.type}</span>
+                            <span className="text-[10px] px-1.5 py-0.5 rounded bg-apptivia-carbon-100 text-gray-600">{result.type}</span>
                           </div>
                           {result.subtitle && <div className="text-[11px] text-gray-500 mt-0.5 truncate">{result.subtitle}</div>}
                         </div>
@@ -982,11 +982,11 @@ export default function OrganizationSettings() {
                 </div>
               )}
             </div>
-            <button onClick={handleRefresh} disabled={isRefreshing} className={`relative p-2 rounded-lg font-semibold text-sm bg-white text-gray-700 border border-gray-200 hover:bg-gray-50 group ${isRefreshing ? 'opacity-50 cursor-not-allowed' : 'transition-all duration-200 hover:scale-105 hover:shadow-md'}`} title="Refresh data">
+            <button onClick={handleRefresh} disabled={isRefreshing} className={`relative p-2 rounded-lg font-semibold text-sm bg-white text-gray-700 border border-gray-200 hover:bg-apptivia-paper group ${isRefreshing ? 'opacity-50 cursor-not-allowed' : 'transition-all duration-200 hover:scale-105 hover:shadow-md'}`} title="Refresh data">
               <svg className={`w-[18px] h-[18px] ${isRefreshing ? 'animate-spin' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
               </svg>
-              <span className="absolute top-full left-1/2 -translate-x-1/2 mt-2 px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 pointer-events-none group-hover:opacity-100 whitespace-nowrap transition-opacity z-50">
+              <span className="absolute top-full left-1/2 -translate-x-1/2 mt-2 px-2 py-1 bg-apptivia-ink text-white text-xs rounded opacity-0 pointer-events-none group-hover:opacity-100 whitespace-nowrap transition-opacity z-50">
                 {isRefreshing ? 'Refreshing...' : 'Refresh'}
               </span>
             </button>
@@ -1117,7 +1117,7 @@ export default function OrganizationSettings() {
                     <span className="text-sm text-gray-600">Enable ICP Scoring</span>
                     <div
                       onClick={() => setIcpConfig(c => ({ ...c, enabled: !c.enabled }))}
-                      className={`relative w-11 h-6 rounded-full transition-colors cursor-pointer ${icpConfig.enabled ? 'bg-blue-600' : 'bg-gray-300'}`}
+                      className={`relative w-11 h-6 rounded-full transition-colors cursor-pointer ${icpConfig.enabled ? 'bg-apptivia-coral' : 'bg-apptivia-carbon-300'}`}
                     >
                       <div className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${icpConfig.enabled ? 'translate-x-5' : 'translate-x-0'}`} />
                     </div>
@@ -1125,7 +1125,7 @@ export default function OrganizationSettings() {
                 </div>
 
                 {icpConfig.enabled && (
-                  <div className="space-y-4 bg-blue-50/50 border border-blue-100 rounded-lg p-4">
+                  <div className="space-y-4 bg-apptivia-coral-tone-50/50 border border-blue-100 rounded-lg p-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">Target Industries <span className="text-gray-400 font-normal">(comma-separated)</span></label>
                       <input
@@ -1212,8 +1212,8 @@ export default function OrganizationSettings() {
                       onClick={() => setShowAddSignalForm(v => !v)}
                       className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm transition-colors ${
                         showAddSignalForm
-                          ? 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                          : 'bg-blue-600 text-white hover:bg-blue-700'
+                          ? 'bg-apptivia-carbon-200 text-gray-700 hover:bg-apptivia-carbon-300'
+                          : 'bg-apptivia-coral text-white hover:bg-apptivia-coral'
                       }`}
                     >
                       <Plus size={14} />
@@ -1273,7 +1273,7 @@ export default function OrganizationSettings() {
                           onAdd={() => addSignalItem('job_titles_to_track', 'job_title')}
                           onRemove={(i) => removeSignalItem('job_titles_to_track', i)}
                           placeholder="e.g. VP Sales, SDR Manager, RevOps"
-                          tagClass="bg-blue-100 text-blue-700"
+                          tagClass="bg-apptivia-coral-tone-50 text-blue-700"
                         />
                       </div>
                     )}
@@ -1333,7 +1333,7 @@ export default function OrganizationSettings() {
                   <div className="space-y-6">
                     {/* Add custom signal form — appears at top of library */}
                     {showAddSignalForm && (
-                      <div className="border border-blue-200 rounded-lg p-4 bg-blue-50/40 space-y-3">
+                      <div className="border border-blue-200 rounded-lg p-4 bg-apptivia-coral-tone-50/40 space-y-3">
                         <h4 className="text-sm font-semibold text-gray-700">New Custom Signal</h4>
                         <div className="grid grid-cols-2 gap-3">
                           <div>
@@ -1411,7 +1411,7 @@ export default function OrganizationSettings() {
                             type="button"
                             onClick={addCustomSignal}
                             disabled={savingSignal || !newCustomSignal.signal_name.trim() || !newCustomSignal.signal_key.trim()}
-                            className="px-4 py-1.5 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700 disabled:opacity-50"
+                            className="px-4 py-1.5 bg-apptivia-coral text-white rounded-lg text-sm hover:bg-apptivia-coral disabled:opacity-50"
                           >
                             {savingSignal ? 'Saving...' : 'Add Signal'}
                           </button>
@@ -1429,7 +1429,7 @@ export default function OrganizationSettings() {
                           <button
                             type="button"
                             onClick={() => toggleSection('customSignals')}
-                            className="w-full flex items-center justify-between px-4 py-2.5 bg-purple-50/60 hover:bg-purple-100/50 transition-colors"
+                            className="w-full flex items-center justify-between px-4 py-2.5 bg-apptivia-carbon-100/60 hover:bg-apptivia-carbon-100/50 transition-colors"
                           >
                             <h4 className="text-xs font-bold text-purple-700 uppercase tracking-wide">
                               Custom Signals — This Org Only ({customs.length})
@@ -1443,8 +1443,8 @@ export default function OrganizationSettings() {
                               ) : (
                                 <div className="space-y-1.5">
                                   {customs.map(cfg => {
-                                    const colorMap = { purple: 'bg-purple-50 border-purple-100', cyan: 'bg-cyan-50 border-cyan-100', amber: 'bg-amber-50 border-amber-100', gray: 'bg-gray-50 border-gray-200' };
-                                    const badgeMap = { purple: 'bg-purple-100 text-purple-700', cyan: 'bg-cyan-100 text-cyan-700', amber: 'bg-amber-100 text-amber-700', gray: 'bg-gray-100 text-gray-600' };
+                                    const colorMap = { purple: 'bg-apptivia-carbon-100 border-purple-100', cyan: 'bg-cyan-50 border-cyan-100', amber: 'bg-amber-50 border-amber-100', gray: 'bg-apptivia-paper border-gray-200' };
+                                    const badgeMap = { purple: 'bg-apptivia-carbon-100 text-purple-700', cyan: 'bg-cyan-100 text-cyan-700', amber: 'bg-amber-100 text-amber-700', gray: 'bg-apptivia-carbon-100 text-gray-600' };
                                     const col = catColors[cfg.category] || 'gray';
                                     return (
                                       <div key={cfg.id} className={`flex items-center justify-between px-3 py-2 rounded-lg border ${colorMap[col]}`}>
@@ -1486,7 +1486,7 @@ export default function OrganizationSettings() {
                       if (!defs.length) return null;
                       const isExpanded = expandedSections[stateKey];
                       const borderColor = color === 'amber' ? 'border-amber-200' : 'border-blue-200';
-                      const bgColor = color === 'amber' ? 'bg-amber-50/60 hover:bg-amber-100/50' : 'bg-blue-50/60 hover:bg-blue-100/50';
+                      const bgColor = color === 'amber' ? 'bg-amber-50/60 hover:bg-amber-100/50' : 'bg-apptivia-coral-tone-50/60 hover:bg-apptivia-coral-tone-50/50';
                       const textColor = color === 'amber' ? 'text-amber-700' : 'text-blue-700';
                       const chevronColor = color === 'amber' ? 'text-amber-400' : 'text-blue-400';
                       return (
@@ -1510,7 +1510,7 @@ export default function OrganizationSettings() {
                                 const override = signalLibrary.orgConfigs.find(c => c.signal_definition_id === def.id);
                                 const isEnabled = override ? override.is_enabled : true;
                                 return (
-                                  <div key={def.id} className={`flex items-center justify-between px-3 py-2 rounded-lg border ${isEnabled ? 'bg-white border-gray-200' : 'bg-gray-50 border-gray-100 opacity-60'}`}>
+                                  <div key={def.id} className={`flex items-center justify-between px-3 py-2 rounded-lg border ${isEnabled ? 'bg-white border-gray-200' : 'bg-apptivia-paper border-gray-100 opacity-60'}`}>
                                     <div className="flex-1 min-w-0">
                                       <span className="text-sm font-medium text-gray-800">{def.signal_name}</span>
                                       {def.description && <p className="text-xs text-gray-500 mt-0.5 truncate">{def.description}</p>}
@@ -1519,7 +1519,7 @@ export default function OrganizationSettings() {
                                       <span className="text-xs text-gray-400">Score {def.default_score}</span>
                                       <div
                                         onClick={() => !savingSignal && toggleUniversalSignal(def.id, isEnabled)}
-                                        className={`relative w-9 h-5 rounded-full transition-colors cursor-pointer ${isEnabled ? 'bg-blue-500' : 'bg-gray-300'} ${savingSignal ? 'opacity-50 pointer-events-none' : ''}`}
+                                        className={`relative w-9 h-5 rounded-full transition-colors cursor-pointer ${isEnabled ? 'bg-apptivia-coral' : 'bg-apptivia-carbon-300'} ${savingSignal ? 'opacity-50 pointer-events-none' : ''}`}
                                       >
                                         <div className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform ${isEnabled ? 'translate-x-4' : 'translate-x-0'}`} />
                                       </div>
@@ -1550,7 +1550,7 @@ export default function OrganizationSettings() {
                     <button
                       type="button"
                       onClick={() => toggleSection('salesMethodology')}
-                      className="w-full flex items-center justify-between px-4 py-2.5 bg-blue-50/80 hover:bg-blue-100/60 transition-colors"
+                      className="w-full flex items-center justify-between px-4 py-2.5 bg-apptivia-coral-tone-50/80 hover:bg-apptivia-coral-tone-50/60 transition-colors"
                     >
                       <h4 className="text-xs font-bold text-blue-800 uppercase tracking-wide">Methodology & Qualification</h4>
                       {expandedSections.salesMethodology ? <ChevronDown size={14} className="text-blue-500" /> : <ChevronRight size={14} className="text-blue-500" />}
@@ -1567,7 +1567,7 @@ export default function OrganizationSettings() {
                     <button
                       type="button"
                       onClick={() => toggleSection('salesProcess')}
-                      className="w-full flex items-center justify-between px-4 py-2.5 bg-indigo-50/80 hover:bg-indigo-100/60 transition-colors"
+                      className="w-full flex items-center justify-between px-4 py-2.5 bg-apptivia-carbon-100/80 hover:bg-apptivia-carbon-100/60 transition-colors"
                     >
                       <h4 className="text-xs font-bold text-indigo-800 uppercase tracking-wide">Sales Process (CEP)</h4>
                       {expandedSections.salesProcess ? <ChevronDown size={14} className="text-indigo-500" /> : <ChevronRight size={14} className="text-indigo-500" />}
@@ -1592,7 +1592,7 @@ export default function OrganizationSettings() {
                 {loadingFeedback ? (
                   <p className="text-sm text-gray-400">Loading feedback data...</p>
                 ) : !feedbackInsights ? (
-                  <div className="text-xs text-gray-400 bg-gray-50 rounded-lg p-4 text-center">
+                  <div className="text-xs text-gray-400 bg-apptivia-paper rounded-lg p-4 text-center">
                     No feedback collected yet. Feedback widgets appear next to coaching suggestions throughout the app.
                   </div>
                 ) : (
@@ -1609,7 +1609,7 @@ export default function OrganizationSettings() {
                     <div className="border rounded-lg overflow-hidden">
                       <table className="w-full text-sm">
                         <thead>
-                          <tr className="bg-gray-50 text-left text-xs text-gray-500 uppercase tracking-wide">
+                          <tr className="bg-apptivia-paper text-left text-xs text-gray-500 uppercase tracking-wide">
                             <th className="px-3 py-2">Feature Area</th>
                             <th className="px-3 py-2 text-center">Ratings</th>
                             <th className="px-3 py-2 text-center">Helpful %</th>
@@ -1664,7 +1664,7 @@ export default function OrganizationSettings() {
                     const slideEnabled = wallboardSettings.slides[key]?.enabled !== false;
                     const slideDuration = wallboardSettings.slides[key]?.duration || 15;
                     return (
-                      <div key={key} className="flex items-center justify-between py-2 px-3 bg-gray-50 rounded-lg">
+                      <div key={key} className="flex items-center justify-between py-2 px-3 bg-apptivia-paper rounded-lg">
                         <div className="flex items-center gap-4">
                           <button
                             type="button"
@@ -1672,7 +1672,7 @@ export default function OrganizationSettings() {
                               ...ws,
                               slides: { ...ws.slides, [key]: { ...ws.slides[key], enabled: !slideEnabled } }
                             }))}
-                            className={`w-10 h-5 rounded-full transition-colors ${slideEnabled ? 'bg-blue-600' : 'bg-gray-300'} relative flex-shrink-0`}
+                            className={`w-10 h-5 rounded-full transition-colors ${slideEnabled ? 'bg-apptivia-coral' : 'bg-apptivia-carbon-300'} relative flex-shrink-0`}
                           >
                             <span className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform ${slideEnabled ? 'translate-x-5' : 'translate-x-0.5'}`} />
                           </button>
@@ -1697,11 +1697,11 @@ export default function OrganizationSettings() {
                   })}
                 </div>
 
-                <div className="flex items-center gap-4 mt-4 py-2 px-3 bg-gray-50 rounded-lg">
+                <div className="flex items-center gap-4 mt-4 py-2 px-3 bg-apptivia-paper rounded-lg">
                   <button
                     type="button"
                     onClick={() => setWallboardSettings(ws => ({ ...ws, celebrations: !ws.celebrations }))}
-                    className={`w-10 h-5 rounded-full transition-colors ${wallboardSettings.celebrations ? 'bg-blue-600' : 'bg-gray-300'} relative flex-shrink-0`}
+                    className={`w-10 h-5 rounded-full transition-colors ${wallboardSettings.celebrations ? 'bg-apptivia-coral' : 'bg-apptivia-carbon-300'} relative flex-shrink-0`}
                   >
                     <span className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform ${wallboardSettings.celebrations ? 'translate-x-5' : 'translate-x-0.5'}`} />
                   </button>
@@ -1712,7 +1712,7 @@ export default function OrganizationSettings() {
 
               <div className="border-t pt-4">
                 <h4 className="text-sm font-semibold text-gray-700 mb-2">Onboarding Status</h4>
-                <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                <div className="flex items-center justify-between p-3 bg-apptivia-paper rounded-lg">
                   <div>
                     <div className="text-sm font-medium">
                       {organization?.onboarding_status === 'completed' ? (
@@ -1731,7 +1731,7 @@ export default function OrganizationSettings() {
                     <button
                       type="button"
                       onClick={() => setShowOnboarding(true)}
-                      className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700"
+                      className="px-4 py-2 bg-apptivia-coral text-white rounded-lg text-sm hover:bg-apptivia-coral"
                     >
                       Resume Onboarding
                     </button>
@@ -1750,7 +1750,7 @@ export default function OrganizationSettings() {
             <div className="bg-white rounded-lg shadow-sm p-6">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-lg font-semibold">Teams</h3>
-                <button onClick={teamHook.openAddTeamModal} className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700">
+                <button onClick={teamHook.openAddTeamModal} className="px-4 py-2 bg-apptivia-coral text-white rounded-lg text-sm hover:bg-apptivia-coral">
                   + Add Team
                 </button>
               </div>
@@ -1793,7 +1793,7 @@ export default function OrganizationSettings() {
                     <UserPlus size={14} />
                     Add Existing Users
                   </button>
-                  <button onClick={() => setShowInviteModal(true)} className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700">
+                  <button onClick={() => setShowInviteModal(true)} className="px-4 py-2 bg-apptivia-coral text-white rounded-lg text-sm hover:bg-apptivia-coral">
                     + Invite Members
                   </button>
                 </div>
@@ -1827,7 +1827,7 @@ export default function OrganizationSettings() {
                           <td className="py-3 text-gray-600">{member.email}</td>
                           <td className="py-3 text-gray-600 text-xs">{member.title || '-'}</td>
                           <td className="py-3">
-                            <span className="px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs">
+                            <span className="px-2 py-1 bg-apptivia-coral-tone-50 text-blue-700 rounded text-xs">
                               {member.role}
                             </span>
                             {isPending && (
@@ -1898,7 +1898,7 @@ export default function OrganizationSettings() {
               {isManagerOrAbove && (
                 <button
                   onClick={() => { setEditingReport(null); setShowScheduleModal(true); }}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700 flex items-center gap-2"
+                  className="px-4 py-2 bg-apptivia-coral text-white rounded-lg text-sm hover:bg-apptivia-coral flex items-center gap-2"
                 >
                   <Plus size={14} />
                   New Report Schedule
@@ -1923,7 +1923,7 @@ export default function OrganizationSettings() {
                 {scheduledReports.map((report) => {
                   const recipientCount = Array.isArray(report.recipients) ? report.recipients.length : 0;
                   return (
-                    <div key={report.id} className={`border rounded-lg p-4 ${report.active ? 'bg-white' : 'bg-gray-50 opacity-75'}`}>
+                    <div key={report.id} className={`border rounded-lg p-4 ${report.active ? 'bg-white' : 'bg-apptivia-paper opacity-75'}`}>
                       <div className="flex items-start justify-between">
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 mb-1">
@@ -1932,7 +1932,7 @@ export default function OrganizationSettings() {
                               {REPORT_TYPE_LABELS[report.report_type] || report.report_type}
                             </span>
                             {!report.active && (
-                              <span className="px-2 py-0.5 text-xs font-medium bg-gray-200 text-gray-600 rounded-full">Paused</span>
+                              <span className="px-2 py-0.5 text-xs font-medium bg-apptivia-carbon-200 text-gray-600 rounded-full">Paused</span>
                             )}
                           </div>
                           <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-gray-500 mt-1">
@@ -1968,7 +1968,7 @@ export default function OrganizationSettings() {
                           <div className="flex items-center gap-1 ml-3 flex-shrink-0">
                             <button
                               onClick={() => { setEditingReport(report); setShowScheduleModal(true); }}
-                              className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
+                              className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-apptivia-coral-tone-50 rounded transition-colors"
                               title="Edit"
                             >
                               <Pencil size={14} />
@@ -2034,15 +2034,17 @@ export default function OrganizationSettings() {
                     <div className="flex items-center justify-between mb-3">
                       <div>
                         <span className="font-medium text-gray-900">{template.template_name}</span>
-                        <span className="ml-2 text-xs px-2 py-0.5 rounded-full bg-gray-100 text-gray-600">
+                        <span className="ml-2 text-xs px-2 py-0.5 rounded-full bg-apptivia-carbon-100 text-gray-600">
                           {template.title_key}
                         </span>
                         {template.is_default && !template.organization_id && (
-                          <span className="ml-2 text-xs px-2 py-0.5 rounded-full bg-blue-50 text-blue-600">Global Default</span>
+                          <span className="ml-2 text-xs px-2 py-0.5 rounded-full bg-apptivia-coral-tone-50 text-blue-600">Global Default</span>
                         )}
                       </div>
                       <button
                         onClick={async () => {
+                          // F22: Confirm before destructive template apply
+                          if (!window.confirm(`Apply "${template.template_name}"? This will replace your current KPI goals, weights, and scorecard visibility settings.`)) return;
                           setApplyingTemplate(template.id);
                           try {
                             await kpiTemplates.applyTemplate(template);
@@ -2054,7 +2056,7 @@ export default function OrganizationSettings() {
                           }
                         }}
                         disabled={applyingTemplate === template.id}
-                        className="px-3 py-1.5 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 disabled:opacity-50"
+                        className="px-3 py-1.5 bg-apptivia-coral text-white text-sm rounded-lg hover:bg-apptivia-coral disabled:opacity-50"
                       >
                         {applyingTemplate === template.id ? 'Applying...' : 'Apply to Scorecard'}
                       </button>
@@ -2062,7 +2064,7 @@ export default function OrganizationSettings() {
 
                     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2">
                       {(template.kpi_configs || []).map((cfg, i) => (
-                        <div key={i} className="bg-gray-50 rounded px-3 py-2 text-center">
+                        <div key={i} className="bg-apptivia-paper rounded px-3 py-2 text-center">
                           <div className="text-xs font-medium text-gray-700 truncate">{cfg.kpi_key.replace(/_/g, ' ')}</div>
                           <div className="text-sm font-semibold text-gray-900 mt-0.5">{cfg.goal}</div>
                           <div className="text-[10px] text-gray-500">Weight: {Math.round(cfg.weight * 100)}%</div>
@@ -2086,7 +2088,7 @@ export default function OrganizationSettings() {
               </div>
               <button
                 onClick={() => setShowKpiImport(true)}
-                className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors"
+                className="flex items-center gap-2 px-4 py-2 bg-apptivia-coral text-white rounded-lg text-sm font-medium hover:bg-apptivia-coral transition-colors"
               >
                 <Upload size={16} />
                 Import CSV
@@ -2098,7 +2100,7 @@ export default function OrganizationSettings() {
               <h4 className="text-sm font-semibold text-gray-700 mb-3">Import History</h4>
               {loadingImportHistory ? (
                 <div className="animate-pulse space-y-2">
-                  {[1, 2, 3].map(i => <div key={i} className="h-12 bg-gray-100 rounded-lg" />)}
+                  {[1, 2, 3].map(i => <div key={i} className="h-12 bg-apptivia-carbon-100 rounded-lg" />)}
                 </div>
               ) : importHistory.length === 0 ? (
                 <div className="text-center py-10 border border-dashed border-gray-200 rounded-lg">
@@ -2109,7 +2111,7 @@ export default function OrganizationSettings() {
               ) : (
                 <div className="border rounded-lg overflow-hidden">
                   <table className="w-full text-sm">
-                    <thead className="bg-gray-50 text-gray-600">
+                    <thead className="bg-apptivia-paper text-gray-600">
                       <tr>
                         <th className="text-left px-4 py-2.5 font-medium">Date</th>
                         <th className="text-left px-4 py-2.5 font-medium">File</th>
@@ -2125,10 +2127,10 @@ export default function OrganizationSettings() {
                           completed: 'bg-green-100 text-green-700',
                           partial: 'bg-yellow-100 text-yellow-700',
                           failed: 'bg-red-100 text-red-700',
-                          processing: 'bg-blue-100 text-blue-700',
+                          processing: 'bg-apptivia-coral-tone-50 text-blue-700',
                         };
                         return (
-                          <tr key={job.id} className="hover:bg-gray-50">
+                          <tr key={job.id} className="hover:bg-apptivia-paper">
                             <td className="px-4 py-2.5 text-gray-600">
                               {new Date(job.created_at).toLocaleDateString()}
                             </td>
@@ -2136,7 +2138,7 @@ export default function OrganizationSettings() {
                               {job.filename || '—'}
                             </td>
                             <td className="px-4 py-2.5">
-                              <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${statusColors[job.status] || 'bg-gray-100 text-gray-600'}`}>
+                              <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${statusColors[job.status] || 'bg-apptivia-carbon-100 text-gray-600'}`}>
                                 {job.status}
                               </span>
                             </td>
@@ -2180,7 +2182,7 @@ export default function OrganizationSettings() {
                   </div>
                   <label className="relative inline-flex items-center cursor-pointer">
                     <input type="checkbox" defaultChecked className="sr-only peer" />
-                    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                    <div className="w-11 h-6 bg-apptivia-carbon-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-apptivia-coral"></div>
                   </label>
                 </div>
               ))}
@@ -2195,7 +2197,7 @@ export default function OrganizationSettings() {
           <div className="bg-white rounded-lg shadow-xl w-full max-w-md p-6">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-lg font-bold text-gray-900">Invite Members</h2>
-              <button onClick={() => setShowInviteModal(false)} className="p-1 hover:bg-gray-100 rounded"><X size={18} /></button>
+              <button onClick={() => setShowInviteModal(false)} className="p-1 hover:bg-apptivia-carbon-100 rounded"><X size={18} /></button>
             </div>
             <p className="text-sm text-gray-500 mb-4">Enter email addresses (one per line or comma-separated)</p>
 
@@ -2250,11 +2252,11 @@ export default function OrganizationSettings() {
             </div>
 
             <div className="flex justify-end gap-2">
-              <button onClick={() => setShowInviteModal(false)} className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg text-sm hover:bg-gray-200">Cancel</button>
+              <button onClick={() => setShowInviteModal(false)} className="px-4 py-2 bg-apptivia-carbon-100 text-gray-700 rounded-lg text-sm hover:bg-apptivia-carbon-200">Cancel</button>
               <button
                 onClick={handleInviteMembers}
                 disabled={!inviteEmails.trim() || inviteSending}
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700 disabled:opacity-50"
+                className="px-4 py-2 bg-apptivia-coral text-white rounded-lg text-sm hover:bg-apptivia-coral disabled:opacity-50"
               >
                 {inviteSending ? 'Sending...' : 'Send Invitations'}
               </button>
@@ -2269,7 +2271,7 @@ export default function OrganizationSettings() {
           <div className="bg-white rounded-lg shadow-xl w-full max-w-sm p-6">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-lg font-bold text-gray-900">Create Team</h2>
-              <button onClick={() => teamHook.setShowAddTeamModal(false)} className="p-1 hover:bg-gray-100 rounded"><X size={18} /></button>
+              <button onClick={() => teamHook.setShowAddTeamModal(false)} className="p-1 hover:bg-apptivia-carbon-100 rounded"><X size={18} /></button>
             </div>
 
             <div className="space-y-3 mb-4">
@@ -2313,11 +2315,11 @@ export default function OrganizationSettings() {
             </div>
 
             <div className="flex justify-end gap-2">
-              <button onClick={() => teamHook.setShowAddTeamModal(false)} className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg text-sm hover:bg-gray-200">Cancel</button>
+              <button onClick={() => teamHook.setShowAddTeamModal(false)} className="px-4 py-2 bg-apptivia-carbon-100 text-gray-700 rounded-lg text-sm hover:bg-apptivia-carbon-200">Cancel</button>
               <button
                 onClick={handleAddTeam}
                 disabled={!teamHook.newTeamName.trim() || teamHook.addingTeam}
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700 disabled:opacity-50"
+                className="px-4 py-2 bg-apptivia-coral text-white rounded-lg text-sm hover:bg-apptivia-coral disabled:opacity-50"
               >
                 {teamHook.addingTeam ? 'Creating...' : 'Create Team'}
               </button>
@@ -2332,7 +2334,7 @@ export default function OrganizationSettings() {
           <div className="bg-white rounded-lg shadow-xl w-full max-w-sm p-6">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-lg font-bold text-gray-900">Edit Member</h2>
-              <button onClick={() => setEditingMember(null)} className="p-1 hover:bg-gray-100 rounded"><X size={18} /></button>
+              <button onClick={() => setEditingMember(null)} className="p-1 hover:bg-apptivia-carbon-100 rounded"><X size={18} /></button>
             </div>
             <p className="text-sm text-gray-500 mb-4">{editingMember.first_name} {editingMember.last_name} ({editingMember.email})</p>
 
@@ -2401,11 +2403,11 @@ export default function OrganizationSettings() {
             </div>
 
             <div className="flex justify-end gap-2">
-              <button onClick={() => setEditingMember(null)} className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg text-sm hover:bg-gray-200">Cancel</button>
+              <button onClick={() => setEditingMember(null)} className="px-4 py-2 bg-apptivia-carbon-100 text-gray-700 rounded-lg text-sm hover:bg-apptivia-carbon-200">Cancel</button>
               <button
                 onClick={handleSaveMember}
                 disabled={savingMember}
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700 disabled:opacity-50"
+                className="px-4 py-2 bg-apptivia-coral text-white rounded-lg text-sm hover:bg-apptivia-coral disabled:opacity-50"
               >
                 {savingMember ? 'Saving...' : 'Save Changes'}
               </button>
@@ -2448,7 +2450,7 @@ export default function OrganizationSettings() {
                 <h2 className="text-xl font-bold text-gray-900">Add Existing Users</h2>
                 <p className="text-sm text-gray-500 mt-1">Select users to add to {organization?.name || 'your organization'}</p>
               </div>
-              <button onClick={() => setShowAddUsersModal(false)} className="p-1 hover:bg-gray-100 rounded">
+              <button onClick={() => setShowAddUsersModal(false)} className="p-1 hover:bg-apptivia-carbon-100 rounded">
                 <X size={20} className="text-gray-500" />
               </button>
             </div>
@@ -2501,10 +2503,10 @@ export default function OrganizationSettings() {
                     {/* Select All */}
                     <button
                       onClick={() => selectAllFiltered(filtered)}
-                      className="w-full flex items-center gap-3 px-3 py-2 rounded-md hover:bg-gray-50 text-sm font-medium text-gray-700 border-b mb-1"
+                      className="w-full flex items-center gap-3 px-3 py-2 rounded-md hover:bg-apptivia-paper text-sm font-medium text-gray-700 border-b mb-1"
                     >
                       <div className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-colors ${
-                        allFilteredSelected ? 'bg-blue-600 border-blue-600' : 'border-gray-300'
+                        allFilteredSelected ? 'bg-apptivia-coral border-blue-600' : 'border-gray-300'
                       }`}>
                         {allFilteredSelected && <Check size={14} className="text-white" />}
                       </div>
@@ -2519,11 +2521,11 @@ export default function OrganizationSettings() {
                           key={u.id}
                           onClick={() => toggleUserSelection(u.id)}
                           className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-md text-left transition-colors ${
-                            selected ? 'bg-blue-50' : 'hover:bg-gray-50'
+                            selected ? 'bg-apptivia-coral-tone-50' : 'hover:bg-apptivia-paper'
                           }`}
                         >
                           <div className={`w-5 h-5 rounded border-2 flex items-center justify-center flex-shrink-0 transition-colors ${
-                            selected ? 'bg-blue-600 border-blue-600' : 'border-gray-300'
+                            selected ? 'bg-apptivia-coral border-blue-600' : 'border-gray-300'
                           }`}>
                             {selected && <Check size={14} className="text-white" />}
                           </div>
@@ -2531,7 +2533,7 @@ export default function OrganizationSettings() {
                             <div className="text-sm font-medium text-gray-900 truncate">{name || u.email}</div>
                             {name && <div className="text-xs text-gray-500 truncate">{u.email}</div>}
                           </div>
-                          <span className="text-[10px] px-2 py-0.5 bg-gray-100 text-gray-600 rounded-full flex-shrink-0">
+                          <span className="text-[10px] px-2 py-0.5 bg-apptivia-carbon-100 text-gray-600 rounded-full flex-shrink-0">
                             {u.role || 'user'}
                           </span>
                         </button>
@@ -2543,21 +2545,21 @@ export default function OrganizationSettings() {
             </div>
 
             {/* Footer */}
-            <div className="flex items-center justify-between p-6 border-t bg-gray-50">
+            <div className="flex items-center justify-between p-6 border-t bg-apptivia-paper">
               <span className="text-sm text-gray-500">
                 {selectedUserIds.length} user{selectedUserIds.length !== 1 ? 's' : ''} selected
               </span>
               <div className="flex gap-3">
                 <button
                   onClick={() => setShowAddUsersModal(false)}
-                  className="px-4 py-2 bg-gray-100 text-gray-700 rounded-md text-sm hover:bg-gray-200"
+                  className="px-4 py-2 bg-apptivia-carbon-100 text-gray-700 rounded-md text-sm hover:bg-apptivia-carbon-200"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={assignSelectedUsers}
                   disabled={selectedUserIds.length === 0 || assigningUsers}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-md text-sm hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                  className="px-4 py-2 bg-apptivia-coral text-white rounded-md text-sm hover:bg-apptivia-coral disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
                 >
                   <UserPlus size={14} />
                   {assigningUsers ? 'Adding...' : `Add ${selectedUserIds.length || ''} User${selectedUserIds.length !== 1 ? 's' : ''}`}

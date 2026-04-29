@@ -122,10 +122,31 @@ export interface SignalActionItem {
   outreach_angle?: string;
   recommended_action?: string;
   status: 'pending' | 'approved' | 'sent' | 'dismissed';
+  play_type?: 'single_action' | 'pre_call_nurture' | 'post_call_follow_up' | 'no_show_recovery' | 'lead_reactivation' | 'social_to_pipeline';
   created_at: string;
   actioned_at?: string;
   actioned_by?: string;
   signal?: IntentSignal;
+}
+
+// [SPEC 09] Multi-step play step
+export interface ActionStep {
+  id: string;
+  action_id: string;
+  organization_id: string;
+  step_order: number;
+  channel: 'email' | 'linkedin_dm' | 'linkedin_connection' | 'phone_call' | 'task';
+  step_type: string;
+  draft_subject?: string;
+  draft_body: string;
+  scheduled_for: string;
+  status: 'pending' | 'sent' | 'replied' | 'skipped_replied_earlier' | 'cancelled' | 'failed';
+  sent_at?: string;
+  reply_at?: string;
+  skip_if_replied: boolean;
+  skip_if_meeting_booked: boolean;
+  created_at: string;
+  updated_at: string;
 }
 
 interface SignalState {
@@ -150,6 +171,9 @@ interface SignalState {
   actionQueueLoading: boolean;
   lastScanAt: string | null;
   nextScanAt: string | null;
+  // [SPEC 09] Multi-step play steps
+  actionSteps: Record<string, ActionStep[]>;
+  expandingActionId: string | null;
 }
 
 const SIGNAL_TYPES = [
@@ -323,6 +347,8 @@ export function useSignalProspecting(organizationId: string, userId?: string) {
     actionQueueLoading: false,
     lastScanAt: null,
     nextScanAt: null,
+    actionSteps: {},
+    expandingActionId: null,
   });
 
   // Use a ref for in-flight tracking to avoid stale closure issues
@@ -407,13 +433,8 @@ export function useSignalProspecting(organizationId: string, userId?: string) {
       if (fnError) throw new Error(fnError.message || 'Signal scan failed');
       if (json?.error) throw new Error(json.error);
 
-      // Step 2: Edge Function succeeded — NOW safe to remove old signals
-      // Delete only signals created BEFORE this scan started
-      await supabase
-        .from('engage_intent_signals')
-        .delete()
-        .eq('organization_id', organizationId)
-        .lt('created_at', scanStartedAt);
+      // Merge strategy: edge function handles dedup + stale cleanup.
+      // No frontend DELETE needed — new signals are added, old ones preserved.
 
       const returnedSignals: IntentSignal[] = json.signals || [];
 
@@ -754,8 +775,27 @@ export function useSignalProspecting(organizationId: string, userId?: string) {
     await fetchActionQueue();
   }, [fetchActionQueue]);
 
-  const dismissAction = useCallback(async (actionId: string) => {
-    await backendFetch(`/api/engage/action-queue/${actionId}/dismiss`);
+  const dismissAction = useCallback(async (
+    actionId: string,
+    dismissal_category?: string,
+    dismissal_reason?: string,
+  ) => {
+    await backendFetch(`/api/engage/action-queue/${actionId}/dismiss`, {
+      dismissal_category,
+      dismissal_reason,
+    });
+    await fetchActionQueue();
+  }, [fetchActionQueue]);
+
+  const sendAction = useCallback(async (
+    actionId: string,
+    sent_subject: string,
+    sent_body: string,
+  ) => {
+    await backendFetch(`/api/engage/action-queue/${actionId}/send`, {
+      sent_subject,
+      sent_body,
+    });
     await fetchActionQueue();
   }, [fetchActionQueue]);
 
@@ -767,6 +807,56 @@ export function useSignalProspecting(organizationId: string, userId?: string) {
     await backendFetch(`/api/engage/signals/${signalId}/outcome`, { outcome, deal_id: dealId });
     await fetchSignals();
   }, [fetchSignals]);
+
+  // [SPEC 09] Expand a single action into a multi-step play
+  const expandToPlay = useCallback(async (actionId: string, playType: string) => {
+    patch({ expandingActionId: actionId });
+    try {
+      const result = await backendFetch<{ ok: boolean; steps: ActionStep[] }>(
+        `/api/engage/action-queue/${actionId}/expand-to-play`,
+        { play_type: playType }
+      );
+      if (result?.steps) {
+        setState(prev => ({
+          ...prev,
+          actionSteps: { ...prev.actionSteps, [actionId]: result.steps },
+          expandingActionId: null,
+        }));
+      }
+      await fetchActionQueue();
+      return result?.steps || [];
+    } catch (err) {
+      patch({ expandingActionId: null });
+      throw err;
+    }
+  }, [fetchActionQueue, patch]);
+
+  // [SPEC 09] Fetch steps for a specific action
+  const fetchActionSteps = useCallback(async (actionId: string) => {
+    try {
+      const result = await backendFetch<{ ok: boolean; steps: ActionStep[] }>(
+        `/api/engage/action-queue/${actionId}/steps`,
+        undefined,
+        'GET'
+      );
+      if (result?.steps) {
+        setState(prev => ({
+          ...prev,
+          actionSteps: { ...prev.actionSteps, [actionId]: result.steps },
+        }));
+      }
+      return result?.steps || [];
+    } catch (err) {
+      console.warn('[Signal] Fetch action steps failed:', err);
+      return [];
+    }
+  }, []);
+
+  // [SPEC 09] Update or cancel a step
+  const updateActionStep = useCallback(async (stepId: string, actionId: string, updates: Record<string, unknown>) => {
+    await backendFetch(`/api/engage/action-steps/${stepId}`, updates, 'PATCH');
+    await fetchActionSteps(actionId);
+  }, [fetchActionSteps]);
 
   // ── Org ICP + scan timing ──────────────────────────────
 
@@ -897,6 +987,11 @@ export function useSignalProspecting(organizationId: string, userId?: string) {
     fetchActionQueue,
     approveAction,
     dismissAction,
+    sendAction,
     markSignalOutcome,
+    // [SPEC 09] Multi-step plays
+    expandToPlay,
+    fetchActionSteps,
+    updateActionStep,
   };
 }

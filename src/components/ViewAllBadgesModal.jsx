@@ -173,7 +173,7 @@ export default function ViewAllBadgesModal({ isOpen, onClose, userId, refreshKey
           </div>
           <button
             onClick={onClose}
-            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+            className="p-2 hover:bg-apptivia-carbon-100 rounded-lg transition-colors"
           >
             <X size={24} className="text-gray-500" />
           </button>
@@ -201,8 +201,8 @@ export default function ViewAllBadgesModal({ isOpen, onClose, userId, refreshKey
                 onClick={() => setStatusFilter(status)}
                 className={`px-3 py-1 rounded-full text-xs font-medium transition-all ${
                   statusFilter === status
-                    ? 'bg-blue-600 text-white shadow-sm'
-                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                    ? 'bg-apptivia-coral text-white shadow-sm'
+                    : 'bg-apptivia-carbon-100 text-gray-600 hover:bg-apptivia-carbon-200'
                 }`}
               >
                 {status.charAt(0).toUpperCase() + status.slice(1)}
@@ -216,8 +216,8 @@ export default function ViewAllBadgesModal({ isOpen, onClose, userId, refreshKey
               onClick={() => setTypeFilter('all')}
               className={`px-3 py-1 rounded-full text-xs font-medium transition-all ${
                 typeFilter === 'all'
-                  ? 'bg-indigo-600 text-white shadow-sm'
-                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                  ? 'bg-apptivia-ink text-white shadow-sm'
+                  : 'bg-apptivia-carbon-100 text-gray-600 hover:bg-apptivia-carbon-200'
               }`}
             >
               All
@@ -228,8 +228,8 @@ export default function ViewAllBadgesModal({ isOpen, onClose, userId, refreshKey
                 onClick={() => setTypeFilter(cat)}
                 className={`px-3 py-1 rounded-full text-xs font-medium transition-all ${
                   typeFilter === cat
-                    ? 'bg-indigo-600 text-white shadow-sm'
-                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                    ? 'bg-apptivia-ink text-white shadow-sm'
+                    : 'bg-apptivia-carbon-100 text-gray-600 hover:bg-apptivia-carbon-200'
                 }`}
               >
                 {cat}
@@ -243,8 +243,8 @@ export default function ViewAllBadgesModal({ isOpen, onClose, userId, refreshKey
               onClick={() => setRarityFilter('all')}
               className={`px-3 py-1 rounded-full text-xs font-medium transition-all ${
                 rarityFilter === 'all'
-                  ? 'bg-purple-600 text-white shadow-sm'
-                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                  ? 'bg-apptivia-ink text-white shadow-sm'
+                  : 'bg-apptivia-carbon-100 text-gray-600 hover:bg-apptivia-carbon-200'
               }`}
             >
               All
@@ -255,8 +255,8 @@ export default function ViewAllBadgesModal({ isOpen, onClose, userId, refreshKey
                 onClick={() => setRarityFilter(rarity)}
                 className={`px-3 py-1 rounded-full text-xs font-medium transition-all ${
                   rarityFilter === rarity
-                    ? 'bg-purple-600 text-white shadow-sm'
-                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                    ? 'bg-apptivia-ink text-white shadow-sm'
+                    : 'bg-apptivia-carbon-100 text-gray-600 hover:bg-apptivia-carbon-200'
                 }`}
               >
                 {rarity}
@@ -287,7 +287,7 @@ export default function ViewAllBadgesModal({ isOpen, onClose, userId, refreshKey
                   <div
                     key={badge.id}
                     className={`rounded-lg p-4 text-center border-2 transition-all hover:scale-105 cursor-pointer ${
-                      earned ? `bg-white ${rarityGlow}` : 'bg-gray-50 opacity-60'
+                      earned ? `bg-white ${rarityGlow}` : 'bg-apptivia-paper opacity-60'
                     }`}
                     style={{ borderColor: earned ? rarityColor : '#d1d5db' }}
                     title={badge.badge_description}
@@ -322,7 +322,7 @@ export default function ViewAllBadgesModal({ isOpen, onClose, userId, refreshKey
                     {/* Progress Bar for Multi-Tier Badges */}
                     {badge.requirements?.tiers && (
                       <div className="mt-2">
-                        <div className="w-full bg-gray-200 rounded-full h-1.5">
+                        <div className="w-full bg-apptivia-carbon-200 rounded-full h-1.5">
                           <div
                             className="h-1.5 rounded-full"
                             style={{
@@ -355,7 +355,7 @@ export default function ViewAllBadgesModal({ isOpen, onClose, userId, refreshKey
         </div>
 
         {/* Footer Stats */}
-        <div className="border-t border-gray-200 p-4 bg-gray-50">
+        <div className="border-t border-gray-200 p-4 bg-apptivia-paper">
           <div className="flex items-center justify-center gap-6 text-sm">
             <div className="flex items-center gap-2">
               <span className="text-gray-600">Showing:</span>
@@ -363,9 +363,9 @@ export default function ViewAllBadgesModal({ isOpen, onClose, userId, refreshKey
             </div>
             <div className="flex items-center gap-2">
               <span className="text-gray-600">Progress:</span>
-              <div className="w-32 bg-gray-200 rounded-full h-2">
+              <div className="w-32 bg-apptivia-carbon-200 rounded-full h-2">
                 <div
-                  className="bg-blue-600 h-2 rounded-full transition-all duration-500"
+                  className="bg-apptivia-coral h-2 rounded-full transition-all duration-500"
                   style={{ width: `${progressPercent}%` }}
                 />
               </div>

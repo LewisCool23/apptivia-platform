@@ -465,7 +465,7 @@ export default function ConfigureModal({ isOpen, onClose, onSave, currentUserId 
         </div>
 
         {/* Tabs */}
-        <div className="flex border-b bg-gray-50">
+        <div className="flex border-b bg-apptivia-paper">
           <button
             onClick={() => setActiveTab('manage')}
             className={`px-6 py-3 font-semibold transition-colors ${
@@ -497,13 +497,13 @@ export default function ConfigureModal({ isOpen, onClose, onSave, currentUserId 
           ) : activeTab === 'manage' ? (
             <div className="space-y-6">
               {/* Info banner about scorecard KPIs */}
-              <div className="bg-blue-50 border-l-4 border-blue-500 p-4 rounded-r-lg">
+              <div className="bg-apptivia-coral-tone-50 border-l-4 border-blue-500 p-4 rounded-r-lg">
                 <div className="flex items-start gap-3">
                   <span className="text-blue-600 text-xl">💡</span>
                   <div>
                     <p className="text-blue-900 font-semibold mb-1">Apptivia Score Calculation</p>
                     <p className="text-blue-800 text-sm">
-                      Only KPIs marked with <span className="inline-flex items-center bg-blue-600 text-white px-2 py-0.5 rounded text-xs font-bold mx-1">📊 Scorecard #X</span> contribute to the Apptivia Score. 
+                      Only KPIs marked with <span className="inline-flex items-center bg-apptivia-coral text-white px-2 py-0.5 rounded text-xs font-bold mx-1">📊 Scorecard #X</span> contribute to the Apptivia Score. 
                       Select your 5 scorecard KPIs in the <button onClick={() => setActiveTab('scorecard')} className="underline font-semibold">Scorecard Selection</button> tab.
                     </p>
                   </div>
@@ -518,7 +518,7 @@ export default function ConfigureModal({ isOpen, onClose, onSave, currentUserId 
                 return (
                   <div key={category} className="space-y-3">
                     <h3 className="text-lg font-semibold text-gray-900 capitalize flex items-center gap-2">
-                      <span className="w-2 h-2 rounded-full bg-blue-500"></span>
+                      <span className="w-2 h-2 rounded-full bg-apptivia-coral"></span>
                       {category} Metrics
                       <span className="text-sm font-normal text-gray-500">({categoryKpis.length})</span>
                     </h3>
@@ -529,7 +529,7 @@ export default function ConfigureModal({ isOpen, onClose, onSave, currentUserId 
                           key={config.key}
                           className={`bg-white rounded-lg p-4 hover:shadow-md transition-all duration-200 ${
                             config.show_on_scorecard 
-                              ? 'border-2 border-blue-500 shadow-sm bg-blue-50/30' 
+                              ? 'border-2 border-blue-500 shadow-sm bg-apptivia-coral-tone-50/30' 
                               : 'border border-gray-200'
                           }`}
                         >
@@ -550,12 +550,12 @@ export default function ConfigureModal({ isOpen, onClose, onSave, currentUserId 
                                   <h4 className="text-lg font-semibold text-gray-900">{config.name}</h4>
                                 )}
                                 {config.show_on_scorecard && (
-                                  <span className="text-xs bg-blue-600 text-white px-2 py-1 rounded font-bold flex items-center gap-1">
+                                  <span className="text-xs bg-apptivia-coral text-white px-2 py-1 rounded font-bold flex items-center gap-1">
                                     📊 Scorecard #{config.scorecard_position}
                                   </span>
                                 )}
                                 {config.is_custom && (
-                                  <span className="text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded">Custom</span>
+                                  <span className="text-xs bg-apptivia-carbon-100 text-purple-700 px-2 py-0.5 rounded">Custom</span>
                                 )}
                               </div>
                               {editingKpi === config.key ? (
@@ -636,7 +636,7 @@ export default function ConfigureModal({ isOpen, onClose, onSave, currentUserId 
                               <div className="flex flex-col gap-1">
                                 <button
                                   onClick={() => toggleEdit(config.key)}
-                                  className="p-2 text-blue-600 hover:bg-blue-50 rounded transition-colors"
+                                  className="p-2 text-blue-600 hover:bg-apptivia-coral-tone-50 rounded transition-colors"
                                   title={editingKpi === config.key ? 'Done editing' : 'Edit KPI'}
                                 >
                                   {editingKpi === config.key ? '✓' : '✏️'}
@@ -660,7 +660,7 @@ export default function ConfigureModal({ isOpen, onClose, onSave, currentUserId 
                 );
               })}
 
-              <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+              <div className="mt-6 p-4 bg-apptivia-coral-tone-50 border border-blue-200 rounded-lg">
                 <div className="flex items-start gap-2">
                   <span className="text-blue-600 text-xl">ℹ️</span>
                   <div className="text-sm text-blue-800">
@@ -700,9 +700,9 @@ export default function ConfigureModal({ isOpen, onClose, onSave, currentUserId 
                     const kpi = kpiConfigs.find(k => k.key === key);
                     if (!kpi) return null;
                     return (
-                      <div key={key} className="bg-blue-50 border border-blue-300 rounded-lg p-4 flex items-center justify-between">
+                      <div key={key} className="bg-apptivia-coral-tone-50 border border-blue-300 rounded-lg p-4 flex items-center justify-between">
                         <div className="flex items-center gap-4">
-                          <span className="bg-blue-600 text-white rounded-full w-8 h-8 flex items-center justify-center font-bold">
+                          <span className="bg-apptivia-coral text-white rounded-full w-8 h-8 flex items-center justify-center font-bold">
                             {index + 1}
                           </span>
                           <div>
@@ -759,7 +759,7 @@ export default function ConfigureModal({ isOpen, onClose, onSave, currentUserId 
                           </div>
                           <button
                             onClick={() => handleToggleScorecardKpi(kpi.key)}
-                            className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors text-sm font-medium"
+                            className="px-4 py-2 bg-apptivia-coral text-white rounded hover:bg-apptivia-coral transition-colors text-sm font-medium"
                           >
                             Add to Scorecard
                           </button>
@@ -909,7 +909,7 @@ export default function ConfigureModal({ isOpen, onClose, onSave, currentUserId 
           )}
         </div>
 
-        <div className="bg-gray-50 px-6 py-4 flex justify-between items-center gap-3 border-t">
+        <div className="bg-apptivia-paper px-6 py-4 flex justify-between items-center gap-3 border-t">
           <div className="text-sm text-gray-600">
             Total Weight: <span className="font-bold text-gray-900">
               {Math.round(kpiConfigs.reduce((sum, k) => sum + k.weight, 0) * 100)}%
@@ -919,14 +919,14 @@ export default function ConfigureModal({ isOpen, onClose, onSave, currentUserId 
             <button
               onClick={onClose}
               disabled={saving}
-              className="px-6 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 transition-all duration-200"
+              className="px-6 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-apptivia-paper disabled:opacity-50 transition-all duration-200"
             >
               Close
             </button>
             <button
               onClick={handleSave}
               disabled={saving || loading}
-              className="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50 transition-all duration-200 hover:shadow-lg"
+              className="px-6 py-2 bg-apptivia-coral text-white rounded-lg hover:bg-apptivia-coral disabled:opacity-50 transition-all duration-200 hover:shadow-lg"
             >
               {saving ? 'Saving...' : 'Save All Changes'}
             </button>

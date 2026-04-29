@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Activity, Trophy, CheckCircle, ArrowRight, Star, BarChart3, Brain, Target, TrendingUp, X } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import AskAIFooter from '../components/AskAIFooter';
 
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || '';
 
@@ -50,7 +51,7 @@ function DemoRequestModal({ isOpen, onClose, planHint }) {
             <p className="text-gray-600 mb-6">
               Thanks for your interest in Apptivia. We'll reach out within 24 hours to schedule your personalized demo.
             </p>
-            <button onClick={onClose} className="px-6 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium text-sm transition-colors">
+            <button onClick={onClose} className="px-6 py-2.5 bg-apptivia-coral text-white rounded-lg hover:bg-apptivia-coral font-medium text-sm transition-colors">
               Close
             </button>
           </div>
@@ -128,7 +129,7 @@ function DemoRequestModal({ isOpen, onClose, planHint }) {
               <button
                 type="submit"
                 disabled={status === 'sending'}
-                className="w-full py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-semibold text-sm transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                className="w-full py-3 bg-apptivia-coral text-white rounded-lg hover:bg-apptivia-coral font-semibold text-sm transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
               >
                 {status === 'sending' ? 'Submitting...' : 'Submit Request'}
               </button>
@@ -177,7 +178,7 @@ export default function LandingPage() {
               </button>
               <Link
                 to="/signup"
-                className="px-5 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium text-sm transition-colors"
+                className="px-5 py-2.5 bg-apptivia-coral text-white rounded-lg hover:bg-apptivia-coral font-medium text-sm transition-colors"
               >
                 Start Free Trial
               </Link>
@@ -191,7 +192,7 @@ export default function LandingPage() {
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-blue-500/10 via-transparent to-transparent" />
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
           <div className="text-center max-w-4xl mx-auto">
-            <div className="inline-flex items-center gap-2 bg-blue-500/10 border border-blue-500/20 rounded-full px-4 py-1.5 mb-8">
+            <div className="inline-flex items-center gap-2 bg-apptivia-coral/10 border border-blue-500/20 rounded-full px-4 py-1.5 mb-8">
               <span className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse" />
               <span className="text-blue-300 text-sm font-medium">Sales Performance Intelligence Platform</span>
             </div>
@@ -207,7 +208,7 @@ export default function LandingPage() {
             <div className="flex gap-4 justify-center">
               <Link
                 to="/signup"
-                className="px-8 py-3.5 bg-blue-500 text-white rounded-lg hover:bg-blue-400 font-semibold flex items-center gap-2 transition-colors"
+                className="px-8 py-3.5 bg-apptivia-coral text-white rounded-lg hover:bg-apptivia-coral font-semibold flex items-center gap-2 transition-colors"
               >
                 Start Free Trial <ArrowRight size={18} />
               </Link>
@@ -253,21 +254,21 @@ export default function LandingPage() {
                 title: 'Real-Time Scorecard',
                 description: 'Every rep gets a performance score updated weekly. Configurable KPI weighting, goal pacing, and anomaly detection built in.',
                 color: 'text-blue-600',
-                bg: 'bg-blue-50',
+                bg: 'bg-apptivia-coral-tone-50',
               },
               {
                 icon: Brain,
                 title: 'Aaron AI Coach',
                 description: '14 coaching frameworks, live KPI injection, Sales DNA methodology awareness. Not a generic chatbot — a domain-specific coaching engine.',
                 color: 'text-purple-600',
-                bg: 'bg-purple-50',
+                bg: 'bg-apptivia-carbon-100',
               },
               {
                 icon: Target,
                 title: 'Signal Prospecting',
                 description: '45 buying signals across 3 tiers identify high-intent accounts. AI drafts personalized outreach with human-in-the-loop approval.',
                 color: 'text-indigo-600',
-                bg: 'bg-indigo-50',
+                bg: 'bg-apptivia-carbon-100',
               },
               {
                 icon: Trophy,
@@ -304,7 +305,7 @@ export default function LandingPage() {
       </section>
 
       {/* Competitive Framing */}
-      <section className="py-20 bg-slate-900">
+      <section className="py-20 bg-apptivia-ink">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
             <h2 className="text-4xl font-bold text-white mb-4">Above Your Stack, Not Beside It</h2>
@@ -333,7 +334,7 @@ export default function LandingPage() {
       </section>
 
       {/* How It Works */}
-      <section id="how-it-works" className="py-20 bg-gray-50">
+      <section id="how-it-works" className="py-20 bg-apptivia-paper">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
             <h2 className="text-4xl font-bold text-gray-900 mb-4">Up and Running in 10 Minutes</h2>
@@ -349,7 +350,7 @@ export default function LandingPage() {
               { step: 5, title: 'Prospect', description: 'Engage surfaces buying signals and drafts personalized outreach for your team.' },
             ].map((item) => (
               <div key={item.step} className="text-center">
-                <div className="w-14 h-14 bg-blue-600 text-white rounded-full flex items-center justify-center text-xl font-bold mx-auto mb-4">
+                <div className="w-14 h-14 bg-apptivia-coral text-white rounded-full flex items-center justify-center text-xl font-bold mx-auto mb-4">
                   {item.step}
                 </div>
                 <h3 className="text-lg font-semibold text-gray-900 mb-2">{item.title}</h3>
@@ -389,7 +390,7 @@ export default function LandingPage() {
                 rating: 5,
               },
             ].map((testimonial, index) => (
-              <div key={index} className="bg-gray-50 border border-gray-200 rounded-xl p-6">
+              <div key={index} className="bg-apptivia-paper border border-gray-200 rounded-xl p-6">
                 <div className="flex gap-1 mb-4">
                   {[...Array(testimonial.rating)].map((_, i) => (
                     <Star key={i} size={16} className="text-yellow-500 fill-yellow-500" />
@@ -407,7 +408,7 @@ export default function LandingPage() {
       </section>
 
       {/* Pricing Section */}
-      <section id="pricing" className="py-20 bg-gray-50">
+      <section id="pricing" className="py-20 bg-apptivia-paper">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
             <h2 className="text-4xl font-bold text-gray-900 mb-4">Simple Per-Seat Pricing</h2>
@@ -472,7 +473,7 @@ export default function LandingPage() {
                 }`}
               >
                 {plan.highlighted && (
-                  <div className="bg-blue-600 text-white text-xs font-semibold px-3 py-1 rounded-full inline-block mb-4">
+                  <div className="bg-apptivia-coral text-white text-xs font-semibold px-3 py-1 rounded-full inline-block mb-4">
                     MOST POPULAR
                   </div>
                 )}
@@ -486,8 +487,8 @@ export default function LandingPage() {
                   onClick={() => openDemo(plan.price === 'Custom' ? 'Enterprise Plan' : `${plan.name} Plan`)}
                   className={`block w-full py-3 rounded-lg font-medium mb-6 text-center text-sm transition-colors ${
                     plan.highlighted
-                      ? 'bg-blue-600 text-white hover:bg-blue-700'
-                      : 'bg-gray-100 text-gray-900 hover:bg-gray-200'
+                      ? 'bg-apptivia-coral text-white hover:bg-apptivia-coral'
+                      : 'bg-apptivia-carbon-100 text-gray-900 hover:bg-apptivia-carbon-200'
                   }`}
                 >
                   {plan.price === 'Custom' ? 'Contact Sales' : 'Request a Demo'}
@@ -519,12 +520,18 @@ export default function LandingPage() {
             Apptivia gives every rep a personal AI coach, real-time scorecard, and prospecting intelligence.
           </p>
           <p className="text-lg text-blue-200/80 mb-8">Starting at $19/seat/month.</p>
-          <div className="flex gap-4 justify-center">
+          <div className="flex flex-wrap gap-4 justify-center">
             <Link
               to="/signup"
-              className="px-8 py-3.5 bg-white text-blue-600 rounded-lg hover:bg-blue-50 font-semibold transition-colors"
+              className="px-8 py-3.5 bg-white text-blue-600 rounded-lg hover:bg-apptivia-coral-tone-50 font-semibold transition-colors"
             >
               Start Free Trial
+            </Link>
+            <Link
+              to="/pilot"
+              className="px-8 py-3.5 bg-emerald-500 text-white rounded-lg hover:bg-emerald-600 font-semibold transition-colors"
+            >
+              Join Founding Pilot
             </Link>
             <button
               onClick={() => openDemo()}
@@ -537,7 +544,8 @@ export default function LandingPage() {
       </section>
 
       {/* Footer */}
-      <footer className="bg-gray-900 text-gray-400 py-12">
+      <footer className="bg-apptivia-ink text-gray-400 py-12">
+        <AskAIFooter />
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-8">
             <div className="col-span-2 md:col-span-1">
@@ -562,6 +570,7 @@ export default function LandingPage() {
               <ul className="space-y-2 text-sm">
                 <li><a href="#how-it-works" className="hover:text-white transition-colors">How It Works</a></li>
                 <li><a href="/public-integrations" className="hover:text-white transition-colors">Integrations</a></li>
+                <li><Link to="/pilot" className="hover:text-white transition-colors">Founding Pilot</Link></li>
                 <li><button onClick={() => openDemo()} className="hover:text-white transition-colors text-left">Contact</button></li>
               </ul>
             </div>

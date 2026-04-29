@@ -55,7 +55,7 @@ export default function PlanCard({
             </span>
           )}
           <span className={`px-2 py-0.5 text-[10px] rounded-full ${
-            plan.plan_type === 'auto' ? 'bg-blue-100 text-blue-700' : 'bg-purple-100 text-purple-700'
+            plan.plan_type === 'auto' ? 'bg-apptivia-coral-tone-50 text-blue-700' : 'bg-apptivia-carbon-100 text-purple-700'
           }`}>
             {plan.plan_type === 'auto' ? 'Template' : 'Custom'}
           </span>
@@ -68,12 +68,12 @@ export default function PlanCard({
           <div className="text-xs font-medium text-gray-500 mb-1">Focus KPIs:</div>
           <div className="flex flex-wrap gap-1">
             {plan.focus_kpis.slice(0, 2).map((kpi, idx) => (
-              <span key={idx} className="px-2 py-0.5 bg-gray-100 text-gray-700 rounded text-xs">
+              <span key={idx} className="px-2 py-0.5 bg-apptivia-carbon-100 text-gray-700 rounded text-xs">
                 {buildLabel(kpi)}
               </span>
             ))}
             {plan.focus_kpis.length > 2 && (
-              <span className="px-2 py-0.5 bg-gray-100 text-gray-700 rounded text-xs">
+              <span className="px-2 py-0.5 bg-apptivia-carbon-100 text-gray-700 rounded text-xs">
                 +{plan.focus_kpis.length - 2}
               </span>
             )}
@@ -148,7 +148,7 @@ export default function PlanCard({
       {/* Power user "assigned to you" badge */}
       {isPowerUser && plan.assigned_to?.includes(user?.id) && (
         <div className="mb-3">
-          <span className="inline-flex items-center gap-1 px-2 py-1 bg-indigo-100 text-indigo-700 rounded-full text-xs font-medium">
+          <span className="inline-flex items-center gap-1 px-2 py-1 bg-apptivia-carbon-100 text-indigo-700 rounded-full text-xs font-medium">
             <UserPlus size={12} />
             Assigned to you
           </span>
@@ -161,7 +161,7 @@ export default function PlanCard({
       <div className="flex gap-2">
         <button
           onClick={() => onView(plan)}
-          className="flex-1 flex items-center justify-center gap-1 px-3 py-1.5 text-xs font-semibold text-blue-600 border border-blue-600 rounded-md hover:bg-blue-50"
+          className="flex-1 flex items-center justify-center gap-1 px-3 py-1.5 text-xs font-semibold text-blue-600 border border-blue-600 rounded-md hover:bg-apptivia-coral-tone-50"
         >
           <Target size={14} />
           View
@@ -169,7 +169,7 @@ export default function PlanCard({
         {canCreatePlans && (
           <button
             onClick={() => onEdit(plan)}
-            className="flex items-center justify-center gap-1 px-3 py-1.5 text-xs font-semibold text-gray-600 border border-gray-300 rounded-md hover:bg-gray-50"
+            className="flex items-center justify-center gap-1 px-3 py-1.5 text-xs font-semibold text-gray-600 border border-gray-300 rounded-md hover:bg-apptivia-paper"
             title="Edit Plan"
           >
             <Edit size={14} />
@@ -188,14 +188,14 @@ export default function PlanCard({
           <>
             <button
               onClick={() => onSnapshot && onSnapshot(plan)}
-              className="flex items-center justify-center gap-1 px-3 py-1.5 text-xs font-semibold text-indigo-500 border border-indigo-300 rounded-md hover:bg-indigo-50"
+              className="flex items-center justify-center gap-1 px-3 py-1.5 text-xs font-semibold text-indigo-500 border border-indigo-300 rounded-md hover:bg-apptivia-carbon-100"
               title="Share Snapshot"
             >
               <Share2 size={14} />
             </button>
             <button
               onClick={() => onShare(plan)}
-              className="flex items-center justify-center gap-1 px-3 py-1.5 text-xs font-semibold text-blue-500 border border-blue-300 rounded-md hover:bg-blue-50"
+              className="flex items-center justify-center gap-1 px-3 py-1.5 text-xs font-semibold text-blue-500 border border-blue-300 rounded-md hover:bg-apptivia-coral-tone-50"
               title="Share via Email"
             >
               <Mail size={14} />

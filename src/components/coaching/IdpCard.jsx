@@ -26,7 +26,7 @@ export default function IdpCard({ idp, canManage, onView, onEdit, onDelete }) {
         </div>
         <div className="flex flex-col items-end gap-1">
           <span className={`px-2 py-0.5 text-[10px] rounded-full font-semibold ${
-            idp.plan_type === 'annual' ? 'bg-purple-100 text-purple-700' : 'bg-blue-100 text-blue-700'
+            idp.plan_type === 'annual' ? 'bg-apptivia-carbon-100 text-purple-700' : 'bg-apptivia-coral-tone-50 text-blue-700'
           }`}>
             {typeLabel}
           </span>
@@ -47,12 +47,12 @@ export default function IdpCard({ idp, canManage, onView, onEdit, onDelete }) {
           <div className="text-xs font-medium text-gray-500 mb-1">Focus KPIs:</div>
           <div className="flex flex-wrap gap-1">
             {idp.focus_kpis.slice(0, 3).map((kpi, idx) => (
-              <span key={idx} className="px-2 py-0.5 bg-gray-100 text-gray-700 rounded text-xs">
+              <span key={idx} className="px-2 py-0.5 bg-apptivia-carbon-100 text-gray-700 rounded text-xs">
                 {buildLabel(kpi)}
               </span>
             ))}
             {idp.focus_kpis.length > 3 && (
-              <span className="px-2 py-0.5 bg-gray-100 text-gray-700 rounded text-xs">
+              <span className="px-2 py-0.5 bg-apptivia-carbon-100 text-gray-700 rounded text-xs">
                 +{idp.focus_kpis.length - 3}
               </span>
             )}
@@ -67,9 +67,9 @@ export default function IdpCard({ idp, canManage, onView, onEdit, onDelete }) {
             <span className="text-xs font-medium text-gray-500">Milestones</span>
             <span className="text-xs text-gray-600">{completedMilestones}/{totalMilestones}</span>
           </div>
-          <div className="w-full bg-gray-200 rounded-full h-1.5">
+          <div className="w-full bg-apptivia-carbon-200 rounded-full h-1.5">
             <div
-              className="bg-blue-500 h-1.5 rounded-full transition-all"
+              className="bg-apptivia-coral h-1.5 rounded-full transition-all"
               style={{ width: `${milestoneProgress}%` }}
             />
           </div>
@@ -90,7 +90,7 @@ export default function IdpCard({ idp, canManage, onView, onEdit, onDelete }) {
       <div className="flex gap-2">
         <button
           onClick={() => onView(idp)}
-          className="flex-1 flex items-center justify-center gap-1 px-3 py-1.5 text-xs font-semibold text-blue-600 border border-blue-600 rounded-md hover:bg-blue-50"
+          className="flex-1 flex items-center justify-center gap-1 px-3 py-1.5 text-xs font-semibold text-blue-600 border border-blue-600 rounded-md hover:bg-apptivia-coral-tone-50"
         >
           <Target size={14} />
           View
@@ -99,7 +99,7 @@ export default function IdpCard({ idp, canManage, onView, onEdit, onDelete }) {
           <>
             <button
               onClick={() => onEdit(idp)}
-              className="flex items-center justify-center gap-1 px-3 py-1.5 text-xs font-semibold text-gray-600 border border-gray-300 rounded-md hover:bg-gray-50"
+              className="flex items-center justify-center gap-1 px-3 py-1.5 text-xs font-semibold text-gray-600 border border-gray-300 rounded-md hover:bg-apptivia-paper"
               title="Edit IDP"
             >
               <Edit size={14} />

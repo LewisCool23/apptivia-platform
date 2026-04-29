@@ -14,7 +14,7 @@ function formatDate(ts) {
 function SentimentBadge({ sentiment }) {
   const map = {
     positive: { label: 'Positive', color: 'bg-emerald-100 text-emerald-700', icon: TrendingUp },
-    neutral:  { label: 'Neutral',  color: 'bg-gray-100 text-gray-600',       icon: Minus },
+    neutral:  { label: 'Neutral',  color: 'bg-apptivia-carbon-100 text-gray-600',       icon: Minus },
     negative: { label: 'Negative', color: 'bg-red-100 text-red-600',         icon: TrendingDown },
   };
   const cfg = map[sentiment] || map.neutral;
@@ -29,10 +29,10 @@ function SentimentBadge({ sentiment }) {
 
 function SignalBadge({ signal }) {
   const map = {
-    advancing: { label: 'Advancing', color: 'bg-blue-100 text-blue-700' },
+    advancing: { label: 'Advancing', color: 'bg-apptivia-coral-tone-50 text-blue-700' },
     stalled:   { label: 'Stalled',   color: 'bg-amber-100 text-amber-700' },
     at_risk:   { label: 'At Risk',   color: 'bg-red-100 text-red-700' },
-    unclear:   { label: 'Unclear',   color: 'bg-gray-100 text-gray-500' },
+    unclear:   { label: 'Unclear',   color: 'bg-apptivia-carbon-100 text-gray-500' },
   };
   const cfg = map[signal] || map.unclear;
   return (
@@ -125,7 +125,7 @@ function LogCallModal({ organizationId, userId, deals, onClose, onSaved }) {
               <p className="text-xs text-gray-500">AI will extract next steps, objections & insights</p>
             </div>
           </div>
-          <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
+          <button onClick={onClose} className="p-2 hover:bg-apptivia-carbon-100 rounded-lg transition-colors">
             <X size={18} className="text-gray-400" />
           </button>
         </div>
@@ -250,7 +250,7 @@ function LogCallModal({ organizationId, userId, deals, onClose, onSaved }) {
                   <ul className="space-y-1">
                     {analysis.next_steps.map((s, i) => (
                       <li key={i} className="flex items-start gap-2 text-xs text-gray-700">
-                        <span className="w-4 h-4 bg-blue-100 text-blue-700 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 text-[10px] font-bold">{i + 1}</span>
+                        <span className="w-4 h-4 bg-apptivia-coral-tone-50 text-blue-700 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 text-[10px] font-bold">{i + 1}</span>
                         {s}
                       </li>
                     ))}
@@ -330,7 +330,7 @@ function CallLogCard({ log }) {
       <div className="px-5 py-4">
         <div className="flex items-start justify-between gap-3">
           <div className="flex items-center gap-3 min-w-0">
-            <div className="w-9 h-9 bg-violet-100 rounded-full flex items-center justify-center flex-shrink-0">
+            <div className="w-9 h-9 bg-apptivia-carbon-100 rounded-full flex items-center justify-center flex-shrink-0">
               <Phone size={15} className="text-violet-600" />
             </div>
             <div className="min-w-0">
@@ -353,7 +353,7 @@ function CallLogCard({ log }) {
           </div>
           <button
             onClick={() => setExpanded(e => !e)}
-            className="p-1.5 hover:bg-gray-100 rounded-lg transition-colors flex-shrink-0"
+            className="p-1.5 hover:bg-apptivia-carbon-100 rounded-lg transition-colors flex-shrink-0"
           >
             {expanded ? <ChevronUp size={16} className="text-gray-400" /> : <ChevronDown size={16} className="text-gray-400" />}
           </button>
@@ -382,7 +382,7 @@ function CallLogCard({ log }) {
               <ul className="space-y-1">
                 {a.next_steps.map((s, i) => (
                   <li key={i} className="flex items-start gap-2 text-xs text-gray-700">
-                    <span className="w-4 h-4 bg-blue-100 text-blue-700 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 text-[10px] font-bold">{i + 1}</span>
+                    <span className="w-4 h-4 bg-apptivia-coral-tone-50 text-blue-700 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 text-[10px] font-bold">{i + 1}</span>
                     {s}
                   </li>
                 ))}
@@ -428,7 +428,7 @@ function CallLogCard({ log }) {
               <ChevronDown size={12} className="group-open:rotate-180 transition-transform" />
               View raw notes
             </summary>
-            <pre className="mt-2 text-xs text-gray-600 bg-gray-50 rounded-lg p-3 whitespace-pre-wrap font-sans leading-relaxed">{log.notes}</pre>
+            <pre className="mt-2 text-xs text-gray-600 bg-apptivia-paper rounded-lg p-3 whitespace-pre-wrap font-sans leading-relaxed">{log.notes}</pre>
           </details>
         </div>
       )}

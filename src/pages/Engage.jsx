@@ -83,8 +83,8 @@ export default function Engage() {
                 title={label}
                 className={`w-9 h-9 rounded-lg flex items-center justify-center transition-all ${
                   activePanel === id
-                    ? 'bg-gray-100 shadow-inner'
-                    : 'hover:bg-gray-50'
+                    ? 'bg-apptivia-carbon-100 shadow-inner'
+                    : 'hover:bg-apptivia-paper'
                 }`}
               >
                 <Icon size={15} className={activePanel === id ? color : 'text-gray-400'} />
@@ -104,7 +104,7 @@ export default function Engage() {
                 className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-xs font-medium transition-all whitespace-nowrap ${
                   isActive
                     ? 'bg-gradient-to-r from-blue-500 to-cyan-500 text-white shadow-sm'
-                    : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                    : 'text-gray-600 hover:bg-apptivia-paper hover:text-gray-900'
                 }`}
               >
                 <tab.icon size={14} />

@@ -6,7 +6,6 @@ import ScorecardFilters from './components/ScorecardFilters';
 import RightFilterPanel from './components/RightFilterPanel';
 import PageActionBar from './components/PageActionBar';
 import { useScorecardData } from './hooks/useScorecardData';
-import { useCoachData } from './hooks/useCoachData';
 import { exportScorecardToCSV } from './utils/exportUtils';
 import { getMonday, getMonthRange, getQuarterRange, formatPresetDateRange } from './utils/dateUtils';
 import { calcPct } from './utils/kpiCalc';
@@ -26,10 +25,7 @@ import { useHistoricalScores } from './hooks/useHistoricalScores';
 import Tooltip from './components/shared/Tooltip';
 import InfoTooltip from './components/InfoTooltip';
 import ShareScorecardSnapshotModal from './components/ShareScorecardSnapshotModal';
-import { KPI_GUIDANCE } from './constants/kpiGuidance';
 import { scoreTextColor, scoreBgColor, scoreHex, scoreRowBg } from './constants/scoreColors';
-import FeedbackThumb from './components/shared/FeedbackThumb';
-import { SKILLSET_KPI_MAP } from './constants/skillsets';
 
 interface KPIMetric {
   id: number;
@@ -45,16 +41,6 @@ interface KPIMetric {
 
 // KPIs that should show 1 decimal place; all others display as whole numbers
 const DECIMAL_KPI_KEYS = new Set(['talk_time_minutes']);
-
-const KPI_SKILLSET_MAP: Record<string, string> = Object.entries(SKILLSET_KPI_MAP).reduce(
-  (acc, [skillset, kpis]) => {
-    kpis.forEach((kpi) => {
-      acc[kpi] = skillset;
-    });
-    return acc;
-  },
-  {} as Record<string, string>
-);
 
 const ApptiviaScorecard: React.FC = () => {
   const navigate = useNavigate();
@@ -116,8 +102,6 @@ const ApptiviaScorecard: React.FC = () => {
   const [filtersResetSignal, setFiltersResetSignal] = useState(0);
   const [loadingKpis, setLoadingKpis] = useState(true);
   const [snapshotOpen, setSnapshotOpen] = useState(false);
-  const [coachingKpiPercentages, setCoachingKpiPercentages] = useState<Record<string, number>>({});
-  const [coachingWindowLoading, setCoachingWindowLoading] = useState(false);
   const [repDetailModal, setRepDetailModal] = useState<{ profileId: string; name: string } | null>(null);
   const [repTrendData, setRepTrendData] = useState<{ week: string; score: number }[]>([]);
   const [repTrendLoading, setRepTrendLoading] = useState(false);
@@ -341,85 +325,6 @@ const ApptiviaScorecard: React.FC = () => {
     fetchKpiMetrics();
   }, [refreshTrigger, filters, dateRange]);
 
-  // Fetch 30-day KPI window for coaching opportunities.
-  // Intentionally independent of the scorecard date filter so that coaching
-  // recommendations reflect true skill gaps, not just one good/bad week.
-  useEffect(() => {
-    if (!isPowerUser || !userId) {
-      setCoachingKpiPercentages({});
-      return;
-    }
-    let cancelled = false;
-    const fetchCoachingWindow = async () => {
-      setCoachingWindowLoading(true);
-      try {
-        const thirtyDaysAgo = new Date();
-        thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-        const coachingStart = thirtyDaysAgo.toISOString().split('T')[0];
-        const coachingEnd = new Date().toISOString().split('T')[0];
-        const numWeeks = 30 / 7;
-
-        const kpiDefsQuery = orgId
-          ? supabase
-              .from('kpi_org_configs')
-              .select('goal, kpi_metrics!inner(key, direction)')
-              .eq('organization_id', orgId)
-              .eq('is_active', true)
-              .eq('show_on_scorecard', true)
-          : supabase
-              .from('kpi_metrics')
-              .select('key, goal, direction')
-              .eq('is_active', true)
-              .eq('show_on_scorecard', true);
-
-        const [kpiDefsResult, { data: values }] = await Promise.all([
-          kpiDefsQuery,
-          supabase
-            .from('kpi_values')
-            .select('value, kpi_metrics!inner(key)')
-            .eq('profile_id', userId)
-            .lte('period_start', coachingEnd)
-            .gte('period_end', coachingStart)
-            .limit(10000),
-        ]);
-
-        // Map org-scoped result to flat shape
-        const kpiDefs = orgId
-          ? (kpiDefsResult.data || []).map((c: any) => ({
-              key: (c.kpi_metrics as any).key,
-              goal: c.goal,
-              direction: (c.kpi_metrics as any).direction,
-            }))
-          : (kpiDefsResult.data || []);
-
-        if (cancelled || !kpiDefs.length || !values) return;
-
-        const sums: Record<string, number> = {};
-        values.forEach((v: any) => {
-          const key = (v.kpi_metrics as any)?.key;
-          if (key) sums[key] = (sums[key] || 0) + (v.value || 0);
-        });
-
-        const pcts: Record<string, number> = {};
-        kpiDefs.forEach((metric: any) => {
-          const weeklyValue = (sums[metric.key] || 0) / numWeeks;
-          const dir = metric.direction || 'higher';
-          pcts[metric.key] = metric.goal > 0
-            ? (dir === 'lower' ? (weeklyValue > 0 ? (metric.goal / weeklyValue) * 100 : 200) : (weeklyValue / metric.goal) * 100)
-            : 0;
-        });
-
-        if (!cancelled) setCoachingKpiPercentages(pcts);
-      } catch (err) {
-        console.error('Error fetching coaching window data:', err);
-      } finally {
-        if (!cancelled) setCoachingWindowLoading(false);
-      }
-    };
-    fetchCoachingWindow();
-    return () => { cancelled = true; };
-  }, [isPowerUser, userId, refreshTrigger]);
-
   const orgId = (profile as any)?.organization_id || null;
 
   const { data, loading, error } = useScorecardData(
@@ -442,20 +347,6 @@ const ApptiviaScorecard: React.FC = () => {
     dateRange,
     filters.dateRange,
     refreshTrigger
-  );
-
-  const shouldLoadCoach = isPowerUser && !!userId;
-  const coachDepartments = useMemo(() => [] as string[], []);
-  const coachTeams = useMemo(() => [] as string[], []);
-  const coachMembers = useMemo(
-    () => (shouldLoadCoach && userId ? [String(userId)] : [] as string[]),
-    [shouldLoadCoach, userId]
-  );
-  const { data: coachData, loading: coachLoading, error: coachError } = useCoachData(
-    coachDepartments,
-    coachTeams,
-    coachMembers,
-    { enabled: shouldLoadCoach, mode: 'summary', organizationId: (profile as any)?.organization_id }
   );
 
   const applyScopedFilters = (nextFilters: typeof filters) => {
@@ -589,76 +480,6 @@ const ApptiviaScorecard: React.FC = () => {
     });
     return result;
   }, [userRow, kpiMetrics, kpiLabels]);
-
-  const coachSkillsetsByName = useMemo(() => {
-    const map = new Map<string, any>();
-    (coachData?.skillsets || []).forEach((skillset: any) => {
-      const key = skillset.skillset_name?.toLowerCase?.() || '';
-      if (key) map.set(key, skillset);
-    });
-    return map;
-  }, [coachData?.skillsets]);
-
-  // Coaching opportunities derived from the 30-day fixed window — NOT the
-  // scorecard date filter — so they reflect genuine skill gaps, not one-off weeks.
-  // Enriched with trend data (compare current scorecard period vs 30-day avg) and coaching tips.
-  const coachingOpportunities = useMemo(() => {
-    if (!isPowerUser) return [] as any[];
-    if (Object.keys(coachingKpiPercentages).length === 0) return [] as any[];
-
-    // Get current scorecard KPI percentages for trend comparison
-    const currentKpiPcts: Record<string, number> = {};
-    if (userRow?.kpis) {
-      Object.entries(userRow.kpis as Record<string, any>).forEach(([key, kpi]) => {
-        currentKpiPcts[key] = Math.round(kpi?.percentage || 0);
-      });
-    }
-
-    return kpiMetrics
-      .map((metric) => {
-        const pct = Number(coachingKpiPercentages[metric.key] ?? -1);
-        if (pct < 0 || pct >= 80) return null;
-        const skillsetKey = KPI_SKILLSET_MAP[metric.key];
-        const skillset = skillsetKey ? coachSkillsetsByName.get(skillsetKey) : null;
-        const guidance = KPI_GUIDANCE[metric.key];
-        const currentPct = currentKpiPcts[metric.key] ?? null;
-        const trendDelta = currentPct !== null ? currentPct - Math.round(pct) : null;
-        const gapTo80 = 80 - Math.round(pct);
-        return {
-          kpiKey: metric.key,
-          kpiLabel: kpiLabels[metric.key] || metric.name || metric.key,
-          percentage: Math.round(pct),
-          currentPct,
-          trendDelta,
-          gapTo80,
-          skillsetId: skillset?.skillset_id || null,
-          skillsetName: skillset?.skillset_name || skillsetKey || 'Coaching Focus',
-          skillsetColor: skillset?.color || '#3b82f6',
-          nextAchievement: skillset?.next_achievement || 'Review coach recommendations',
-          diagnosis: guidance?.diagnosis || null,
-          tips: guidance?.tips?.slice(0, 3) || [],
-          coachingQuestion: guidance?.coachingQuestion || null,
-        };
-      })
-      .filter(Boolean) as any[];
-  }, [isPowerUser, coachingKpiPercentages, kpiMetrics, kpiLabels, coachSkillsetsByName, userRow]);
-
-  const buildCoachLink = (skillset: any, achievement?: string | null, kpiKey?: string) => {
-    const params = new URLSearchParams();
-    if (skillset?.skillset_id) params.set('skillsetId', String(skillset.skillset_id));
-    else if (skillset?.skillset_name) params.set('skillset', skillset.skillset_name);
-    if (achievement) params.set('achievement', achievement);
-    if (kpiKey) params.set('kpi', kpiKey);
-    const query = params.toString();
-    return query ? `/coach?${query}` : '/coach';
-  };
-
-  const openCoachForKpi = (kpiKey: string, achievement?: string | null) => {
-    if (!canViewCoach) return;
-    const skillsetKey = KPI_SKILLSET_MAP[kpiKey];
-    const skillset = skillsetKey ? coachSkillsetsByName.get(skillsetKey) : null;
-    navigate(buildCoachLink(skillset, achievement, kpiKey));
-  };
 
   const [showExportModal, setShowExportModal] = useState(false);
   const [showScheduleReportModal, setShowScheduleReportModal] = useState(false);
@@ -1010,10 +831,9 @@ const ApptiviaScorecard: React.FC = () => {
       if (orgId) contestsSearchQ = contestsSearchQ.eq('organization_id', orgId);
       let achievementsSearchQ = supabase.from('achievements').select('id, name, description')
         .ilike('name', `%${searchTerm}%`).limit(5);
-      if (orgId) achievementsSearchQ = achievementsSearchQ.eq('organization_id', orgId);
+      // Achievements and badge_definitions are global structural definitions (migration 157)
       let badgesSearchQ = supabase.from('badge_definitions').select('id, badge_name, badge_description')
         .ilike('badge_name', `%${searchTerm}%`).limit(5);
-      if (orgId) badgesSearchQ = badgesSearchQ.eq('organization_id', orgId);
       const [profilesRes, achievementsRes, badgesRes, contestsRes] = await Promise.all([
         profilesSearchQ,
         achievementsSearchQ,
@@ -1102,7 +922,7 @@ const ApptiviaScorecard: React.FC = () => {
                 {isPowerUser ? 'Your personalized productivity scorecard and progress' : 'Real-time productivity scoring for your sales team'}
               </p>
               {(isManager || isAdmin) && (
-                <span className="text-[10px] text-gray-400 bg-gray-50 border border-gray-200 rounded-full px-2 py-0.5">
+                <span className="text-[10px] text-gray-400 bg-apptivia-paper border border-gray-200 rounded-full px-2 py-0.5">
                   Scoring alerts: Mon 8am
                 </span>
               )}
@@ -1144,14 +964,14 @@ const ApptiviaScorecard: React.FC = () => {
                         setSearchResults([]);
                         setShowSearchResults(false);
                       }}
-                      className="w-full text-left px-4 py-3 hover:bg-gray-50 border-b last:border-b-0 transition-colors"
+                      className="w-full text-left px-4 py-3 hover:bg-apptivia-paper border-b last:border-b-0 transition-colors"
                     >
                       <div className="flex items-start gap-3">
                         <span className="text-xl">{result.icon}</span>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2">
                             <span className="text-xs font-semibold text-gray-900">{result.title}</span>
-                            <span className="text-[10px] px-1.5 py-0.5 rounded bg-gray-100 text-gray-600">{result.type}</span>
+                            <span className="text-[10px] px-1.5 py-0.5 rounded bg-apptivia-carbon-100 text-gray-600">{result.type}</span>
                           </div>
                           {result.subtitle && (
                             <div className="text-[11px] text-gray-500 mt-0.5 truncate">{result.subtitle}</div>
@@ -1177,7 +997,7 @@ const ApptiviaScorecard: React.FC = () => {
             <button
               onClick={handleRefreshAchievements}
               disabled={isRefreshing}
-              className={`relative p-2 rounded-lg font-semibold text-sm bg-white text-gray-700 border border-gray-200 hover:bg-gray-50 group ${
+              className={`relative p-2 rounded-lg font-semibold text-sm bg-white text-gray-700 border border-gray-200 hover:bg-apptivia-paper group ${
                 isRefreshing ? 'opacity-50 cursor-not-allowed' : 'transition-all duration-200 hover:scale-105 hover:shadow-md'
               }`}
               title="Refresh dashboard data and check for new achievements"
@@ -1195,7 +1015,7 @@ const ApptiviaScorecard: React.FC = () => {
                   d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" 
                 />
               </svg>
-              <span className="absolute top-full left-1/2 -translate-x-1/2 mt-2 px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 pointer-events-none group-hover:opacity-100 whitespace-nowrap transition-opacity z-50">
+              <span className="absolute top-full left-1/2 -translate-x-1/2 mt-2 px-2 py-1 bg-apptivia-ink text-white text-xs rounded opacity-0 pointer-events-none group-hover:opacity-100 whitespace-nowrap transition-opacity z-50">
                 {isRefreshing ? 'Refreshing...' : 'Refresh'}
               </span>
             </button>
@@ -1235,11 +1055,11 @@ const ApptiviaScorecard: React.FC = () => {
               <StatCardSkeleton />
             </div>
             <div className="bg-white rounded-xl p-4 shadow-sm">
-              <div className="h-6 w-64 bg-gray-200 rounded animate-pulse mb-4" />
+              <div className="h-6 w-64 bg-apptivia-carbon-200 rounded animate-pulse mb-4" />
               <div className="overflow-x-auto">
                 <table className="min-w-full text-xs text-left table-fixed">
                   <thead>
-                    <tr className="bg-gray-50">
+                    <tr className="bg-apptivia-paper">
                       <th className="px-2 py-1 font-semibold w-40">Rep Name</th>
                       {kpiKeys.map(key => (
                         <th key={key} className="px-2 py-1 font-semibold text-center w-24">{kpiLabels[key]}</th>
@@ -1268,7 +1088,7 @@ const ApptiviaScorecard: React.FC = () => {
                 if (canConfigureScorecard) setShowConfigModal(true);
               }}
               disabled={!canConfigureScorecard}
-              className={`px-6 py-2 rounded-lg font-semibold transition-all duration-200 ${canConfigureScorecard ? 'bg-yellow-500 text-white hover:bg-yellow-600' : 'bg-gray-200 text-gray-500 cursor-not-allowed'}`}
+              className={`px-6 py-2 rounded-lg font-semibold transition-all duration-200 ${canConfigureScorecard ? 'bg-yellow-500 text-white hover:bg-yellow-600' : 'bg-apptivia-carbon-200 text-gray-500 cursor-not-allowed'}`}
             >
               Select Scorecard KPIs
             </button>
@@ -1276,7 +1096,7 @@ const ApptiviaScorecard: React.FC = () => {
         )}
 
         {!loading && !error && !loadingKpis && kpiKeys.length > 0 && kpiKeys.length < 5 && (
-          <div className="bg-blue-50 border border-blue-300 rounded-xl p-4 mb-4 flex items-start gap-3">
+          <div className="bg-apptivia-coral-tone-50 border border-blue-300 rounded-xl p-4 mb-4 flex items-start gap-3">
             <span className="text-blue-600 text-xl">ℹ️</span>
             <div>
               <p className="text-blue-800 font-semibold">Scorecard Incomplete</p>
@@ -1430,7 +1250,7 @@ const ApptiviaScorecard: React.FC = () => {
                           <span className="w-6 text-right font-bold text-gray-400 shrink-0">{trendIcon}</span>
                           <span className="font-medium text-gray-900 w-36 truncate shrink-0">{team.name}</span>
                           <span className="text-gray-400 shrink-0">{team.count} reps</span>
-                          <div className="flex-1 bg-gray-100 rounded-full h-1.5">
+                          <div className="flex-1 bg-apptivia-carbon-100 rounded-full h-1.5">
                             <div className={`h-1.5 rounded-full ${barBg}`} style={{ width: `${Math.min(100, team.avg)}%` }} />
                           </div>
                           <span className={`font-bold ${color} w-10 text-right shrink-0`}>{team.avg}%</span>
@@ -1525,7 +1345,7 @@ const ApptiviaScorecard: React.FC = () => {
                     {canViewAnalytics && (
                       <button
                         onClick={() => navigate('/analytics', { state: { filters: { dateRange: filters.dateRange, departments: filters.departments, teams: filters.teams, members: filters.members } } })}
-                        className="px-3 py-1.5 rounded-md text-xs font-semibold bg-blue-50 text-blue-700 hover:bg-blue-100"
+                        className="px-3 py-1.5 rounded-md text-xs font-semibold bg-apptivia-coral-tone-50 text-blue-700 hover:bg-apptivia-coral-tone-50"
                       >
                         View Analytics
                       </button>
@@ -1573,16 +1393,16 @@ const ApptiviaScorecard: React.FC = () => {
                 {data.rows.length === 0 ? (
                   <div className="text-center py-8 text-gray-500">No data available for selected filters</div>
                 ) : (
-                  <table className="w-full text-xs text-left">
+                  <table className="w-full text-xs text-left table-fixed">
                     <thead>
-                      <tr className="bg-gray-50">
-                        <th className="px-2 py-1 font-semibold cursor-pointer select-none hover:bg-gray-100" onClick={() => handleSortColumn('name')}>
+                      <tr className="bg-apptivia-paper">
+                        <th className="px-2 py-1 font-semibold cursor-pointer select-none hover:bg-apptivia-carbon-100" onClick={() => handleSortColumn('name')}>
                           {isPowerUser ? 'Your Performance' : 'Rep Name'} {sortColumn === 'name' && (sortDirection === 'desc' ? '▼' : '▲')}
                         </th>
                         {kpiKeys.map(key => (
                           <th
                             key={key}
-                            className="px-2 py-1 font-semibold text-center cursor-pointer select-none hover:bg-gray-100"
+                            className="px-2 py-1 font-semibold text-center cursor-pointer select-none hover:bg-apptivia-carbon-100"
                             onClick={() => handleSortColumn(key)}
                           >
                             {kpiLabels[key]} {sortColumn === key && (sortDirection === 'desc' ? '▼' : '▲')}
@@ -1590,7 +1410,7 @@ const ApptiviaScorecard: React.FC = () => {
                           </th>
                         ))}
                         <th
-                          className="px-2 py-1 font-semibold text-center cursor-pointer select-none hover:bg-gray-100"
+                          className="px-2 py-1 font-semibold text-center cursor-pointer select-none hover:bg-apptivia-carbon-100"
                           onClick={() => handleSortColumn('apptivityScore')}
                         >
                           <Tooltip text="Weighted composite of all KPI attainment percentages. 100% = meeting all goals." position="bottom" wide>
@@ -1598,13 +1418,13 @@ const ApptiviaScorecard: React.FC = () => {
                           </Tooltip> {sortColumn === 'apptivityScore' && (sortDirection === 'desc' ? '▼' : '▲')}
                         </th>
                       </tr>
-                      <tr className="bg-gray-50 border-b border-gray-200">
+                      <tr className="bg-apptivia-paper border-b border-gray-200">
                         <td className="px-2 py-0.5 text-[10px] text-gray-400 font-medium">Goal | Weight</td>
                         {kpiKeys.map(key => {
                           const metric = kpiMetrics.find(m => m.key === key);
                           const hist = data.histGoalMap?.[key];
-                          const goal = hist?.goal ?? metric?.goal ?? 0;
-                          const weight = hist?.weight ?? metric?.weight ?? 0;
+                          const goal = metric?.goal ?? hist?.goal ?? 0;
+                          const weight = metric?.weight ?? hist?.weight ?? 0;
                           return (
                             <td key={key} className="px-2 py-0.5 text-center text-[10px] text-gray-400 font-medium">
                               {goal} | {Math.round(weight * 100)}%
@@ -1620,46 +1440,48 @@ const ApptiviaScorecard: React.FC = () => {
                           ? (idx === 0 ? '🏆' : idx === 1 ? '🥈' : idx === 2 ? '🥉' : '')
                           : '';
                         const isFocused = focusedRowIdx === idx;
-                        const rowClass = isFocused ? 'bg-blue-50 ring-1 ring-blue-300' : scoreRowBg(row.apptivityScore);
+                        const rowClass = isFocused ? 'bg-apptivia-coral-tone-50 ring-1 ring-blue-300' : scoreRowBg(row.apptivityScore);
                         const scoreColor = scoreTextColor(row.apptivityScore);
                         return (
-                          <tr key={row.profile_id} className={`${rowClass} transition-all duration-200 hover:bg-gray-50 hover:shadow-sm`}>
-                            <td className="px-2 py-1 font-medium flex items-center gap-1">
-                              {medal && <span className="text-yellow-500">{medal}</span>}
-                              <button
-                                type="button"
-                                onClick={() => setRepDetailModal({ profileId: row.profile_id, name: row.name })}
-                                className="text-left hover:text-blue-700 hover:underline"
-                              >
-                                {row.name}
-                              </button>
-                              {!isPowerUser && (
-                                <Tooltip text={overlayRepIds.includes(row.profile_id) ? 'Remove from chart' : 'Show on chart'} position="left">
-                                  <button
-                                    type="button"
-                                    onClick={() => setOverlayRepIds(prev =>
-                                      prev.includes(row.profile_id)
-                                        ? prev.filter(id => id !== row.profile_id)
-                                        : [...prev, row.profile_id]
-                                    )}
-                                    className={`ml-auto text-[10px] leading-none ${overlayRepIds.includes(row.profile_id) ? 'text-blue-600' : 'text-gray-300 hover:text-gray-500'}`}
-                                  >
-                                    {'📈'}
-                                  </button>
-                                </Tooltip>
-                              )}
+                          <tr key={row.profile_id} className={`${rowClass} transition-all duration-200 hover:bg-apptivia-paper hover:shadow-sm`}>
+                            <td className="px-2 py-1 font-medium align-top">
+                              <div className="flex items-center gap-1">
+                                {medal && <span className="text-yellow-500">{medal}</span>}
+                                <button
+                                  type="button"
+                                  onClick={() => setRepDetailModal({ profileId: row.profile_id, name: row.name })}
+                                  className="text-left hover:text-blue-700 hover:underline truncate"
+                                >
+                                  {row.name}
+                                </button>
+                                {!isPowerUser && (
+                                  <Tooltip text={overlayRepIds.includes(row.profile_id) ? 'Remove from chart' : 'Show on chart'} position="left">
+                                    <button
+                                      type="button"
+                                      onClick={() => setOverlayRepIds(prev =>
+                                        prev.includes(row.profile_id)
+                                          ? prev.filter(id => id !== row.profile_id)
+                                          : [...prev, row.profile_id]
+                                      )}
+                                      className={`ml-auto text-[10px] leading-none ${overlayRepIds.includes(row.profile_id) ? 'text-blue-600' : 'text-gray-300 hover:text-gray-500'}`}
+                                    >
+                                      {'📈'}
+                                    </button>
+                                  </Tooltip>
+                                )}
+                              </div>
                             </td>
                             {kpiKeys.map(key => {
                               const kpi = row.kpis[key] || { value: 0, percentage: 0 };
                               const pct = Math.round(kpi.percentage);
                               const color = scoreTextColor(pct);
                               return (
-                                <td key={key} className="px-2 py-1 text-center">
+                                <td key={key} className="px-2 py-1 text-center align-top">
                                   <span className={`font-semibold ${color}`}>{pct}%</span>
                                 </td>
                               );
                             })}
-                            <td className="px-2 py-1 text-center">
+                            <td className="px-2 py-1 text-center align-top">
                               <Tooltip text={`Apptivia Score: ${row.apptivityScore}% — Weighted composite of all KPI attainment${trendMap[row.profile_id] ? `. ${trendMap[row.profile_id].direction === 'up' ? 'Up' : trendMap[row.profile_id].direction === 'down' ? 'Down' : 'Flat'} ${Math.abs(trendMap[row.profile_id].delta)} pts vs last week` : ''}`} wide>
                               <div className="flex flex-col items-center cursor-help">
                                 <div className="flex items-center gap-1">
@@ -1693,7 +1515,7 @@ const ApptiviaScorecard: React.FC = () => {
                       const avgDirection = avgDelta > 0 ? 'up' : avgDelta < 0 ? 'down' : 'flat';
                       return (
                         <tfoot>
-                          <tr className="bg-blue-50 border-t-2 border-blue-300">
+                          <tr className="bg-apptivia-coral-tone-50 border-t-2 border-blue-300">
                             <td className="px-2 py-2 font-bold text-gray-900">Team Average</td>
                             {kpiKeys.map(key => {
                               const avgPct = Math.round(tableSortedRows.reduce((sum, r) => sum + (r.kpis[key]?.percentage || 0), 0) / tableSortedRows.length);
@@ -1727,158 +1549,6 @@ const ApptiviaScorecard: React.FC = () => {
               </div>
             </div>
 
-            {isPowerUser && (
-              <div id="coaching-opportunities" className="bg-white rounded-lg p-4 shadow-sm mb-4">
-                <div className="mb-3">
-                  <div className="flex items-center gap-2">
-                    <h2 className="text-base font-semibold">Coaching Opportunities</h2>
-                    <InfoTooltip text="Highlights KPIs below 80% over the last 30 days. This window is fixed and does not change when you adjust the scorecard date filter." />
-                  </div>
-                  <p className="text-xs text-gray-500">
-                    Based on last 30 days — independent of your scorecard date filter.
-                  </p>
-                </div>
-
-                {(coachLoading || coachingWindowLoading) ? (
-                  <div className="text-xs text-gray-500">Loading coaching insights...</div>
-                ) : coachError ? (
-                  <div className="text-xs text-red-600 bg-red-50 border border-red-100 rounded-lg p-3">
-                    Coaching insights are taking longer than expected. You can still open Coach to explore skillsets.
-                  </div>
-                ) : coachingOpportunities.length === 0 ? (
-                  <div className="text-xs text-emerald-600 bg-emerald-50 border border-emerald-100 rounded-lg p-3">
-                    All KPIs are on track over the last 30 days. Keep up the momentum!
-                  </div>
-                ) : (() => {
-                  // Sort by impact (weight × gap to 80%)
-                  const sorted = [...coachingOpportunities].sort((a, b) => {
-                    const aMetric = kpiMetrics.find((m: any) => m.key === a.kpiKey);
-                    const bMetric = kpiMetrics.find((m: any) => m.key === b.kpiKey);
-                    return ((bMetric?.weight || 0) * (100 - b.percentage)) - ((aMetric?.weight || 0) * (100 - a.percentage));
-                  });
-                  const biggest = sorted[0];
-                  // Quick Win: KPI closest to 80% (smallest gap)
-                  const quickWin = [...coachingOpportunities].sort((a, b) => a.gapTo80 - b.gapTo80)[0];
-                  const biggestMetric = biggest ? kpiMetrics.find((m: any) => m.key === biggest.kpiKey) : null;
-                  const biggestWeightPct = biggestMetric ? Math.round((biggestMetric as any).weight * 100) : 0;
-
-                  return (
-                    <>
-                      {/* Biggest Opportunity callout */}
-                      {biggest && (
-                        <div className="mb-3 bg-gradient-to-r from-orange-50 to-amber-50 border border-orange-200 rounded-lg p-4">
-                          <div className="flex items-center gap-2 mb-1">
-                            <span className="text-orange-500 text-sm font-bold">★</span>
-                            <span className="text-xs font-semibold text-orange-700">Biggest Opportunity</span>
-                            {biggest.trendDelta !== null && (
-                              <span className={`text-[10px] font-semibold ml-auto ${biggest.trendDelta > 0 ? 'text-emerald-600' : biggest.trendDelta < 0 ? 'text-rose-600' : 'text-gray-400'}`}>
-                                {biggest.trendDelta > 0 ? '▲' : biggest.trendDelta < 0 ? '▼' : '—'}{biggest.trendDelta !== 0 ? ` ${Math.abs(biggest.trendDelta)}% vs this period` : ' Flat'}
-                              </span>
-                            )}
-                          </div>
-                          <div className="text-sm font-semibold text-gray-900 mb-1">
-                            {biggest.kpiLabel} — {biggest.percentage}% attainment
-                            <span className="text-xs font-normal text-gray-500 ml-2">({biggest.gapTo80} pts below target)</span>
-                          </div>
-                          <div className="text-xs text-gray-600 mb-2">
-                            This KPI carries {biggestWeightPct}% weight on your scorecard. Improving it will have the most impact on your overall score.
-                          </div>
-                          {biggest.diagnosis && (
-                            <div className="text-[11px] text-amber-800 bg-amber-50 border border-amber-100 rounded px-2.5 py-1.5 mb-2 italic">
-                              {biggest.diagnosis}
-                            </div>
-                          )}
-                          {biggest.tips.length > 0 && (
-                            <div className="space-y-1">
-                              {biggest.tips.map((tip: string, i: number) => (
-                                <div key={i} className="flex items-start gap-2 text-[11px] text-gray-700">
-                                  <span className="text-orange-400 mt-0.5 shrink-0">•</span>
-                                  <span>{tip}</span>
-                                </div>
-                              ))}
-                            </div>
-                          )}
-                          <div className="mt-2 flex justify-end">
-                            <FeedbackThumb featureArea="coaching_opportunity" contentKey={biggest.kpiKey} context={{ kpi: biggest.kpiKey, type: 'biggest_opportunity' }} />
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Quick Win callout (only if different from biggest) */}
-                      {quickWin && quickWin.kpiKey !== biggest?.kpiKey && (
-                        <div className="mb-3 bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-200 rounded-lg p-3">
-                          <div className="flex items-center gap-2 mb-1">
-                            <span className="text-emerald-500 text-sm font-bold">⚡</span>
-                            <span className="text-xs font-semibold text-emerald-700">Quick Win — Closest to Target</span>
-                            {quickWin.trendDelta !== null && (
-                              <span className={`text-[10px] font-semibold ml-auto ${quickWin.trendDelta > 0 ? 'text-emerald-600' : quickWin.trendDelta < 0 ? 'text-rose-600' : 'text-gray-400'}`}>
-                                {quickWin.trendDelta > 0 ? '▲' : quickWin.trendDelta < 0 ? '▼' : '—'}{quickWin.trendDelta !== 0 ? ` ${Math.abs(quickWin.trendDelta)}%` : ''}
-                              </span>
-                            )}
-                          </div>
-                          <div className="text-sm font-semibold text-gray-900">
-                            {quickWin.kpiLabel} — {quickWin.percentage}%
-                            <span className="text-xs font-normal text-gray-500 ml-2">(only {quickWin.gapTo80} pts to reach 80%)</span>
-                          </div>
-                          {quickWin.tips.length > 0 && (
-                            <div className="mt-1.5 text-[11px] text-gray-700">
-                              <span className="text-emerald-400 mr-1">•</span> {quickWin.tips[0]}
-                            </div>
-                          )}
-                          <div className="mt-2 flex justify-end">
-                            <FeedbackThumb featureArea="coaching_opportunity" contentKey={`${quickWin.kpiKey}_quickwin`} context={{ kpi: quickWin.kpiKey, type: 'quick_win' }} />
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Remaining coaching opportunities with tips */}
-                      <div className="space-y-2">
-                        {sorted.slice(1).filter(item => item.kpiKey !== quickWin?.kpiKey || quickWin?.kpiKey === biggest?.kpiKey).map((item, idx) => {
-                          const isQuickWinItem = item.kpiKey === quickWin?.kpiKey;
-                          return (
-                            <div
-                              key={item.kpiKey}
-                              className="border border-gray-100 rounded-lg p-3 hover:shadow-sm transition-all"
-                            >
-                              <div className="flex items-center gap-2 mb-1">
-                                <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-gray-100 text-[10px] font-bold text-gray-500 shrink-0">
-                                  #{idx + 2}
-                                </span>
-                                <span className="font-semibold text-xs text-gray-900">{item.kpiLabel}</span>
-                                {isQuickWinItem && (
-                                  <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-emerald-100 text-emerald-700 font-semibold">Quick Win</span>
-                                )}
-                                <div className="ml-auto flex items-center gap-2">
-                                  {item.trendDelta !== null && (
-                                    <span className={`text-[10px] font-semibold ${item.trendDelta > 0 ? 'text-emerald-600' : item.trendDelta < 0 ? 'text-rose-600' : 'text-gray-400'}`}>
-                                      {item.trendDelta > 0 ? '▲' : item.trendDelta < 0 ? '▼' : '—'}{item.trendDelta !== 0 ? Math.abs(item.trendDelta) + '%' : ''}
-                                    </span>
-                                  )}
-                                  <span className="text-xs font-semibold text-red-600">{item.percentage}%</span>
-                                </div>
-                              </div>
-                              {item.tips.length > 0 && (
-                                <div className="ml-7 space-y-0.5 mt-1">
-                                  {item.tips.slice(0, 2).map((tip: string, i: number) => (
-                                    <div key={i} className="flex items-start gap-1.5 text-[11px] text-gray-600">
-                                      <span className="text-gray-300 mt-0.5 shrink-0">•</span>
-                                      <span>{tip}</span>
-                                    </div>
-                                  ))}
-                                  <div className="mt-1.5 flex justify-end">
-                                    <FeedbackThumb featureArea="coaching_opportunity" contentKey={item.kpiKey} context={{ kpi: item.kpiKey, type: 'remaining' }} />
-                                  </div>
-                                </div>
-                              )}
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </>
-                  );
-                })()}
-              </div>
-            )}
 
           </>
         )}
@@ -1917,7 +1587,7 @@ const ApptiviaScorecard: React.FC = () => {
                 setFilters(next);
                 setFiltersResetSignal(prev => prev + 1);
               }}
-              className="px-3 py-1 text-xs rounded-full bg-blue-50 text-blue-700 hover:bg-blue-100 font-medium transition-colors"
+              className="px-3 py-1 text-xs rounded-full bg-apptivia-coral-tone-50 text-blue-700 hover:bg-apptivia-coral-tone-50 font-medium transition-colors"
             >
               My Team
             </button>
@@ -1929,7 +1599,7 @@ const ApptiviaScorecard: React.FC = () => {
                 setFilters({ dateRange: 'This Week', departments: [], teams: [], members: [] });
                 setFiltersResetSignal(prev => prev + 1);
               }}
-              className="px-3 py-1 text-xs rounded-full bg-indigo-50 text-indigo-700 hover:bg-indigo-100 font-medium transition-colors"
+              className="px-3 py-1 text-xs rounded-full bg-apptivia-carbon-100 text-indigo-700 hover:bg-apptivia-carbon-100 font-medium transition-colors"
             >
               All Teams
             </button>

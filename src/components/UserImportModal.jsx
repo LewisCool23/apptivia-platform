@@ -225,7 +225,7 @@ Mike,Johnson,mike.johnson@company.com,power_user,Marketing Team,Marketing,Market
           </div>
           <button
             onClick={handleClose}
-            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+            className="p-2 hover:bg-apptivia-carbon-100 rounded-lg transition-colors"
           >
             <X size={20} className="text-gray-500" />
           </button>
@@ -258,13 +258,13 @@ Mike,Johnson,mike.johnson@company.com,power_user,Marketing Team,Marketing,Market
                 </p>
                 <button
                   onClick={() => fileInputRef.current?.click()}
-                  className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                  className="px-6 py-2 bg-apptivia-coral text-white rounded-lg hover:bg-apptivia-coral"
                 >
                   Choose File
                 </button>
               </div>
 
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+              <div className="bg-apptivia-coral-tone-50 border border-blue-200 rounded-lg p-4">
                 <div className="flex items-start gap-3">
                   <FileText size={20} className="text-blue-600 flex-shrink-0 mt-0.5" />
                   <div>
@@ -291,7 +291,7 @@ Mike,Johnson,mike.johnson@company.com,power_user,Marketing Team,Marketing,Market
           {/* Step 2: Review */}
           {step === 2 && (
             <div className="space-y-4">
-              <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+              <div className="flex items-center justify-between p-3 bg-apptivia-paper rounded-lg">
                 <div>
                   <div className="font-semibold">Ready to import {parsedData.length} users</div>
                   <div className="text-sm text-gray-600">Review the data below before proceeding</div>
@@ -300,7 +300,7 @@ Mike,Johnson,mike.johnson@company.com,power_user,Marketing Team,Marketing,Market
 
               <div className="overflow-x-auto border rounded-lg">
                 <table className="w-full text-sm">
-                  <thead className="bg-gray-50 border-b">
+                  <thead className="bg-apptivia-paper border-b">
                     <tr>
                       <th className="px-3 py-2 text-left font-semibold">#</th>
                       <th className="px-3 py-2 text-left font-semibold">First Name</th>
@@ -312,13 +312,13 @@ Mike,Johnson,mike.johnson@company.com,power_user,Marketing Team,Marketing,Market
                   </thead>
                   <tbody>
                     {parsedData.map((row, index) => (
-                      <tr key={index} className="border-b hover:bg-gray-50">
+                      <tr key={index} className="border-b hover:bg-apptivia-paper">
                         <td className="px-3 py-2 text-gray-500">{index + 1}</td>
                         <td className="px-3 py-2">{row.first_name}</td>
                         <td className="px-3 py-2">{row.last_name}</td>
                         <td className="px-3 py-2">{row.email}</td>
                         <td className="px-3 py-2">
-                          <span className="px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs">
+                          <span className="px-2 py-1 bg-apptivia-coral-tone-50 text-blue-700 rounded text-xs">
                             {row.role || 'power_user'}
                           </span>
                         </td>
@@ -353,7 +353,7 @@ Mike,Johnson,mike.johnson@company.com,power_user,Marketing Team,Marketing,Market
                   <div className="text-3xl font-bold text-green-600">{importResults.created}</div>
                   <div className="text-sm text-green-700">Users Created</div>
                 </div>
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-center">
+                <div className="bg-apptivia-coral-tone-50 border border-blue-200 rounded-lg p-4 text-center">
                   <div className="text-3xl font-bold text-blue-600">{importResults.updated}</div>
                   <div className="text-sm text-blue-700">Users Updated</div>
                 </div>
@@ -380,7 +380,7 @@ Mike,Johnson,mike.johnson@company.com,power_user,Marketing Team,Marketing,Market
         </div>
 
         {/* Footer */}
-        <div className="p-6 border-t bg-gray-50 flex items-center justify-between">
+        <div className="p-6 border-t bg-apptivia-paper flex items-center justify-between">
           <button
             onClick={handleClose}
             className="px-4 py-2 text-gray-600 hover:text-gray-800"
@@ -391,7 +391,7 @@ Mike,Johnson,mike.johnson@company.com,power_user,Marketing Team,Marketing,Market
           {step === 2 && (
             <button
               onClick={handleImport}
-              className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+              className="px-6 py-2 bg-apptivia-coral text-white rounded-lg hover:bg-apptivia-coral"
             >
               Import {parsedData.length} Users
             </button>
@@ -405,7 +405,7 @@ Mike,Johnson,mike.johnson@company.com,power_user,Marketing Team,Marketing,Market
                 setParsedData([]);
                 setImportResults(null);
               }}
-              className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+              className="px-6 py-2 bg-apptivia-coral text-white rounded-lg hover:bg-apptivia-coral"
             >
               Import More Users
             </button>

@@ -33,7 +33,7 @@ export default function IdpBuilderForm({
     <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6 relative">
       {autoGenerating && (
         <div className="absolute inset-0 bg-white/70 z-10 flex items-center justify-center rounded-lg">
-          <div className="flex items-center gap-2 text-purple-700 bg-purple-50 px-4 py-3 rounded-lg shadow-sm border border-purple-200">
+          <div className="flex items-center gap-2 text-purple-700 bg-apptivia-carbon-100 px-4 py-3 rounded-lg shadow-sm border border-purple-200">
             <Sparkles size={16} className="animate-spin" />
             <span className="text-sm font-semibold">Generating AI development plan...</span>
           </div>
@@ -46,7 +46,7 @@ export default function IdpBuilderForm({
           </h3>
           <p className="text-xs text-gray-500">Define a long-term growth plan with milestones and success criteria</p>
         </div>
-        <button onClick={onCancel} className="px-3 py-1.5 text-xs font-semibold text-gray-600 border border-gray-300 rounded-md hover:bg-gray-50">
+        <button onClick={onCancel} className="px-3 py-1.5 text-xs font-semibold text-gray-600 border border-gray-300 rounded-md hover:bg-apptivia-paper">
           Cancel
         </button>
       </div>
@@ -72,7 +72,7 @@ export default function IdpBuilderForm({
                   type="button"
                   onClick={() => onAutoGenerate(form.profile_id)}
                   disabled={autoGenerating}
-                  className="flex items-center gap-1.5 px-3 py-2 text-sm font-semibold text-purple-700 bg-purple-50 border border-purple-200 rounded-md hover:bg-purple-100 disabled:opacity-50 whitespace-nowrap"
+                  className="flex items-center gap-1.5 px-3 py-2 text-sm font-semibold text-purple-700 bg-apptivia-carbon-100 border border-purple-200 rounded-md hover:bg-apptivia-carbon-100 disabled:opacity-50 whitespace-nowrap"
                 >
                   <Sparkles size={14} className={autoGenerating ? 'animate-spin' : ''} />
                   {autoGenerating ? 'Generating...' : 'Generate with AI'}
@@ -150,7 +150,7 @@ export default function IdpBuilderForm({
                     else updateField('focus_kpis', [...(form.focus_kpis || []), key]);
                   }}
                   className={`px-2 py-1 rounded text-xs border transition-all ${
-                    selected ? 'bg-blue-100 text-blue-700 border-blue-300' : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'
+                    selected ? 'bg-apptivia-coral-tone-50 text-blue-700 border-blue-300' : 'bg-white text-gray-600 border-gray-200 hover:bg-apptivia-paper'
                   }`}
                 >
                   {buildLabel(key)}
@@ -294,9 +294,9 @@ export default function IdpBuilderForm({
 
         {/* Save */}
         <div className="flex justify-end gap-3 pt-2">
-          <button onClick={onCancel} className="px-4 py-2 text-sm text-gray-600 border border-gray-300 rounded-md hover:bg-gray-50">Cancel</button>
+          <button onClick={onCancel} className="px-4 py-2 text-sm text-gray-600 border border-gray-300 rounded-md hover:bg-apptivia-paper">Cancel</button>
           <button onClick={onSave} disabled={saving || !form.name}
-            className="px-4 py-2 text-sm font-semibold text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:opacity-50">
+            className="px-4 py-2 text-sm font-semibold text-white bg-apptivia-coral rounded-md hover:bg-apptivia-coral disabled:opacity-50">
             {saving ? 'Saving...' : (editingIdp ? 'Update Plan' : 'Create Plan')}
           </button>
         </div>

@@ -49,7 +49,7 @@ export default function PlanDetailModal({
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-blue-100 rounded-lg">
+            <div className="p-2 bg-apptivia-coral-tone-50 rounded-lg">
               <Target className="w-5 h-5 text-blue-600" />
             </div>
             <div>
@@ -61,7 +61,7 @@ export default function PlanDetailModal({
               )}
             </div>
           </div>
-          <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
+          <button onClick={onClose} className="p-2 hover:bg-apptivia-carbon-100 rounded-lg transition-colors">
             <X size={20} className="text-gray-400" />
           </button>
         </div>
@@ -70,7 +70,7 @@ export default function PlanDetailModal({
         <div className="flex-1 overflow-y-auto p-6">
           {/* Goals */}
           {plan.goals?.length > 0 && (
-            <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+            <div className="mb-4 p-4 bg-apptivia-coral-tone-50 border border-blue-200 rounded-lg">
               <h4 className="font-semibold text-gray-900 mb-2 flex items-center gap-2">
                 <Target size={16} className="text-blue-600" />
                 Goals
@@ -78,7 +78,7 @@ export default function PlanDetailModal({
               <ul className="space-y-1.5">
                 {plan.goals.map((goal, idx) => (
                   <li key={idx} className="flex items-start gap-2 text-sm text-gray-700">
-                    <span className="mt-0.5 w-5 h-5 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-xs font-bold flex-shrink-0">{idx + 1}</span>
+                    <span className="mt-0.5 w-5 h-5 rounded-full bg-apptivia-coral-tone-50 text-blue-600 flex items-center justify-center text-xs font-bold flex-shrink-0">{idx + 1}</span>
                     {goal}
                   </li>
                 ))}
@@ -88,7 +88,7 @@ export default function PlanDetailModal({
 
           {/* Focus KPIs */}
           {plan.focus_kpis?.length > 0 && (
-            <div className="mb-4 p-4 bg-indigo-50 border border-indigo-200 rounded-lg">
+            <div className="mb-4 p-4 bg-apptivia-carbon-100 border border-indigo-200 rounded-lg">
               <h4 className="font-semibold text-gray-900 mb-2 flex items-center gap-2">
                 <BarChart3 size={16} className="text-indigo-600" />
                 Focus KPIs
@@ -123,7 +123,7 @@ export default function PlanDetailModal({
 
           {/* Success Metrics */}
           {plan.success_metrics?.length > 0 && (
-            <div className="mb-4 p-4 bg-purple-50 border border-purple-200 rounded-lg">
+            <div className="mb-4 p-4 bg-apptivia-carbon-100 border border-purple-200 rounded-lg">
               <h4 className="font-semibold text-gray-900 mb-2 flex items-center gap-2">
                 <TrendingUp size={16} className="text-purple-600" />
                 Success Metrics
@@ -131,7 +131,7 @@ export default function PlanDetailModal({
               <ul className="space-y-1.5">
                 {plan.success_metrics.map((metric, idx) => (
                   <li key={idx} className="flex items-start gap-2 text-sm text-gray-700">
-                    <span className="mt-1 w-1.5 h-1.5 rounded-full bg-purple-400 flex-shrink-0" />
+                    <span className="mt-1 w-1.5 h-1.5 rounded-full bg-apptivia-ink flex-shrink-0" />
                     {metric}
                   </li>
                 ))}
@@ -141,7 +141,7 @@ export default function PlanDetailModal({
 
           {/* Notes */}
           {plan.notes && (
-            <div className="mb-4 p-4 bg-gray-50 border border-gray-200 rounded-lg">
+            <div className="mb-4 p-4 bg-apptivia-paper border border-gray-200 rounded-lg">
               <h4 className="font-semibold text-gray-900 mb-2 flex items-center gap-2">
                 <MessageSquare size={16} className="text-gray-500" />
                 Notes
@@ -161,7 +161,7 @@ export default function PlanDetailModal({
             if (isPowerUser && plan.visibility === 'team') return null;
             const ctx = enriched.context;
             return (
-              <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+              <div className="mb-4 p-4 bg-apptivia-coral-tone-50 border border-blue-200 rounded-lg">
                 <h4 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
                   <BarChart3 size={16} className="text-blue-600" />
                   Coaching Context (at time of creation)
@@ -227,7 +227,7 @@ export default function PlanDetailModal({
             const impact = enriched?.context?.skillsetImpact;
             if (!impact?.projected?.length) return null;
             return (
-              <div className="mb-4 p-4 bg-indigo-50 border border-indigo-200 rounded-lg">
+              <div className="mb-4 p-4 bg-apptivia-carbon-100 border border-indigo-200 rounded-lg">
                 <h4 className="font-semibold text-indigo-800 mb-3 flex items-center gap-2">
                   <Zap size={16} className="text-indigo-600" />
                   Skillset Impact Review
@@ -238,7 +238,7 @@ export default function PlanDetailModal({
                     const currentXp = current?.current_xp || 0;
                     return (
                       <div key={s.skillset} className="flex items-center gap-2 text-xs bg-white rounded-md px-3 py-2 border border-indigo-100">
-                        <span className={`w-2 h-2 rounded-full ${s.color || 'bg-indigo-400'}`} />
+                        <span className={`w-2 h-2 rounded-full ${s.color || 'bg-apptivia-ink'}`} />
                         <span className="font-medium text-gray-800">{s.skillset}</span>
                         <span className="text-gray-400 ml-auto">{currentXp} XP</span>
                         <span className="text-indigo-600 font-semibold">+{s.estimatedXp}</span>
@@ -253,7 +253,7 @@ export default function PlanDetailModal({
 
           {/* Assignment status for power_users */}
           {isPowerUser && plan.assigned_to?.includes(user?.id) && (
-            <div className="mb-4 p-4 bg-indigo-50 border border-indigo-200 rounded-lg">
+            <div className="mb-4 p-4 bg-apptivia-carbon-100 border border-indigo-200 rounded-lg">
               <h4 className="font-semibold text-indigo-900 mb-2 flex items-center gap-2">
                 <UserPlus size={16} />
                 Your Assignment Status
@@ -290,7 +290,7 @@ export default function PlanDetailModal({
 
           {/* Manager assignment overview */}
           {canManagePlans && plan.assigned_to?.length > 0 && (
-            <div className="mb-4 p-4 bg-gray-50 border border-gray-200 rounded-lg">
+            <div className="mb-4 p-4 bg-apptivia-paper border border-gray-200 rounded-lg">
               <h4 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
                 <Users size={16} />
                 Assignment Overview
@@ -307,7 +307,7 @@ export default function PlanDetailModal({
                   const cfg = statusConfig[displayStatus] || statusConfig.active;
                   const StatusIcon = cfg.icon;
                   return (
-                    <div key={memberId} className="flex items-center justify-between py-1.5 px-2 rounded-md hover:bg-gray-100">
+                    <div key={memberId} className="flex items-center justify-between py-1.5 px-2 rounded-md hover:bg-apptivia-carbon-100">
                       <span className="text-sm text-gray-800">{memberName}</span>
                       <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${cfg.color}`}>
                         <StatusIcon size={11} />
@@ -383,7 +383,7 @@ export default function PlanDetailModal({
           {canCreatePlans && (
             <button
               onClick={() => { onClose(); onEdit(plan); }}
-              className="px-4 py-2 text-sm font-semibold border border-blue-600 text-blue-600 rounded-md hover:bg-blue-50"
+              className="px-4 py-2 text-sm font-semibold border border-blue-600 text-blue-600 rounded-md hover:bg-apptivia-coral-tone-50"
             >
               Edit Plan
             </button>
@@ -400,21 +400,21 @@ export default function PlanDetailModal({
             <>
               <button
                 onClick={() => { onClose(); onSnapshot && onSnapshot(plan); }}
-                className="flex items-center gap-1.5 px-4 py-2 text-sm font-semibold border border-indigo-400 text-indigo-500 rounded-md hover:bg-indigo-50"
+                className="flex items-center gap-1.5 px-4 py-2 text-sm font-semibold border border-indigo-400 text-indigo-500 rounded-md hover:bg-apptivia-carbon-100"
               >
                 <Share2 size={14} />
                 Snapshot
               </button>
               <button
                 onClick={() => { onClose(); onShare(plan); }}
-                className="flex items-center gap-1.5 px-4 py-2 text-sm font-semibold border border-blue-400 text-blue-500 rounded-md hover:bg-blue-50"
+                className="flex items-center gap-1.5 px-4 py-2 text-sm font-semibold border border-blue-400 text-blue-500 rounded-md hover:bg-apptivia-coral-tone-50"
               >
                 <Mail size={14} />
                 Email
               </button>
             </>
           )}
-          <button onClick={onClose} className="px-4 py-2 text-sm font-semibold border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50">
+          <button onClick={onClose} className="px-4 py-2 text-sm font-semibold border border-gray-300 text-gray-700 rounded-md hover:bg-apptivia-paper">
             Close
           </button>
         </div>

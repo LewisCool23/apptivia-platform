@@ -12,23 +12,23 @@ export default function NotificationPanel() {
         case 'performance': case 'top_performer': case 'scorecard_perfect': case 'scorecard_high':
           return { icon: Trophy, bg: 'bg-yellow-100', fg: 'text-yellow-700' };
         case 'badge': case 'badge_earned': case 'rare_badge_earned': case 'badge_milestone':
-          return { icon: Award, bg: 'bg-blue-100', fg: 'text-blue-700' };
+          return { icon: Award, bg: 'bg-apptivia-coral-tone-50', fg: 'text-blue-700' };
         case 'achievement': case 'achievement_earned': case 'achievement_milestone': case 'level_up': case 'skill_progress':
-          return { icon: Star, bg: 'bg-purple-100', fg: 'text-purple-700' };
+          return { icon: Star, bg: 'bg-apptivia-carbon-100', fg: 'text-purple-700' };
         case 'contest': case 'contest_started': case 'contest_ending_soon': case 'contest_winner': case 'contest_top_3': case 'contest_participation':
           return { icon: Trophy, bg: 'bg-green-100', fg: 'text-green-700' };
         case 'trend': case 'momentum_gained': case 'peer_surpassed':
-          return { icon: TrendingUp, bg: 'bg-indigo-100', fg: 'text-indigo-700' };
+          return { icon: TrendingUp, bg: 'bg-apptivia-carbon-100', fg: 'text-indigo-700' };
         case 'streak': case 'streak_started': case 'streak_milestone': case 'streak_lost':
           return { icon: Flame, bg: 'bg-orange-100', fg: 'text-orange-700' };
         case 'integration': case 'integration_sync': case 'system_update':
-          return { icon: Plug, bg: 'bg-gray-100', fg: 'text-gray-700' };
+          return { icon: Plug, bg: 'bg-apptivia-carbon-100', fg: 'text-gray-700' };
         case 'coaching': case 'coaching_suggestion': case 'improvement_opportunity': case 'scorecard_low':
           return { icon: AlertTriangle, bg: 'bg-red-100', fg: 'text-red-700' };
         case 'team_achievement': case 'team_contest_win':
           return { icon: Trophy, bg: 'bg-emerald-100', fg: 'text-emerald-700' };
         default:
-          return { icon: Bell, bg: 'bg-slate-100', fg: 'text-slate-700' };
+          return { icon: Bell, bg: 'bg-apptivia-carbon-100', fg: 'text-slate-700' };
       }
     };
 
@@ -101,7 +101,7 @@ export default function NotificationPanel() {
             </div>
             <button
               onClick={closePanel}
-              className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-all duration-200"
+              className="p-2 text-gray-600 hover:bg-apptivia-carbon-100 rounded-lg transition-all duration-200"
               aria-label="Close notifications"
             >
               <X size={18} />
@@ -129,7 +129,7 @@ export default function NotificationPanel() {
                 return (
                 <div
                   key={n.id}
-                  className={`border rounded-lg p-2 transition-all ${n.read ? 'bg-white' : 'bg-blue-50 border-blue-100'}`}
+                  className={`border rounded-lg p-2 transition-all ${n.read ? 'bg-white' : 'bg-apptivia-coral-tone-50 border-blue-100'}`}
                 >
                   <div className="flex items-start gap-2">
                     <div className={`w-7 h-7 rounded-lg flex items-center justify-center ${meta.bg} ${meta.fg} shrink-0`}>

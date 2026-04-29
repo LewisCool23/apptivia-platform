@@ -53,7 +53,7 @@ export default function UpgradePrompt({ feature, context = 'inline', variant = '
   // Banner variant — top-of-page strip
   if (context === 'banner') {
     return (
-      <div className="bg-purple-50 border border-purple-200 rounded-lg p-4 mb-4 flex items-center justify-between">
+      <div className="bg-apptivia-carbon-100 border border-purple-200 rounded-lg p-4 mb-4 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <span className="text-2xl">{config.icon}</span>
           <div>
@@ -63,7 +63,7 @@ export default function UpgradePrompt({ feature, context = 'inline', variant = '
         </div>
         <button
           onClick={handleUpgrade}
-          className="px-4 py-2 bg-purple-600 text-white text-sm font-semibold rounded-lg hover:bg-purple-700 transition-colors whitespace-nowrap"
+          className="px-4 py-2 bg-apptivia-ink text-white text-sm font-semibold rounded-lg hover:bg-apptivia-ink transition-colors whitespace-nowrap"
         >
           Upgrade to Pro
         </button>
@@ -101,7 +101,7 @@ export default function UpgradePrompt({ feature, context = 'inline', variant = '
             <div className="flex gap-3">
               <button
                 onClick={handleUpgrade}
-                className="flex-1 bg-indigo-600 text-white text-sm font-medium py-2.5 rounded-lg hover:bg-indigo-700 transition-colors"
+                className="flex-1 bg-apptivia-ink text-white text-sm font-medium py-2.5 rounded-lg hover:bg-apptivia-ink transition-colors"
               >
                 Upgrade to Pro — $49/seat/mo
               </button>
@@ -120,7 +120,7 @@ export default function UpgradePrompt({ feature, context = 'inline', variant = '
 
   // Inline variant (default) — compact card
   return (
-    <div className="bg-purple-50 border border-purple-200 rounded-lg p-3 mt-2">
+    <div className="bg-apptivia-carbon-100 border border-purple-200 rounded-lg p-3 mt-2">
       <div className="flex items-start gap-2">
         <span className="text-lg">{config.icon}</span>
         <div className="flex-1 min-w-0">
@@ -128,7 +128,7 @@ export default function UpgradePrompt({ feature, context = 'inline', variant = '
           <p className="text-xs text-purple-600 mt-0.5">{config.message}</p>
           <button
             onClick={handleUpgrade}
-            className="mt-2 px-3 py-1.5 bg-purple-600 text-white text-xs font-semibold rounded-md hover:bg-purple-700 transition-colors"
+            className="mt-2 px-3 py-1.5 bg-apptivia-ink text-white text-xs font-semibold rounded-md hover:bg-apptivia-ink transition-colors"
           >
             Upgrade to Pro
           </button>

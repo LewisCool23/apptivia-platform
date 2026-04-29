@@ -67,7 +67,7 @@ function TrialBanner({ billing }) {
         <span>Your Pro trial has ended. Upgrade to unlock Engage, Contests, Coaching Plans, and more.</span>
         <button
           onClick={() => navigate('/organization-settings')}
-          className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-xs font-semibold transition-colors"
+          className="bg-apptivia-coral hover:bg-apptivia-coral text-white px-3 py-1 rounded text-xs font-semibold transition-colors"
         >
           Upgrade to Pro
         </button>
@@ -163,14 +163,12 @@ function DashboardLayout({ children }) {
         });
       }
 
-      // Search achievements (org-scoped)
-      let achievementsSearch = supabase
+      // Search achievements (global structural definitions)
+      const { data: achievements } = await supabase
         .from('achievements')
         .select('id, name, description')
         .ilike('name', `%${searchTerm}%`)
         .limit(5);
-      if (searchOrgId) achievementsSearch = achievementsSearch.eq('organization_id', searchOrgId);
-      const { data: achievements } = await achievementsSearch;
 
       if (achievements) {
         achievements.forEach(achievement => {
@@ -184,14 +182,12 @@ function DashboardLayout({ children }) {
         });
       }
 
-      // Search badges (org-scoped)
-      let badgesSearch = supabase
+      // Search badges (global structural definitions)
+      const { data: badges } = await supabase
         .from('badge_definitions')
         .select('id, badge_name, badge_description')
         .ilike('badge_name', `%${searchTerm}%`)
         .limit(5);
-      if (searchOrgId) badgesSearch = badgesSearch.eq('organization_id', searchOrgId);
-      const { data: badges } = await badgesSearch;
 
       if (badges) {
         badges.forEach(badge => {
@@ -360,12 +356,12 @@ function DashboardLayout({ children }) {
   });
 
   return (
-    <div className="flex min-h-screen bg-gray-50 relative">
+    <div className="flex min-h-screen bg-apptivia-paper relative">
       {/* Mobile Header */}
       <div className="lg:hidden fixed top-0 left-0 right-0 bg-white shadow-md z-40 px-4 py-3 flex items-center justify-between">
         <button
           onClick={() => setMobileMenuOpen(true)}
-          className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-all duration-200 hover:scale-105"
+          className="p-2 text-gray-600 hover:bg-apptivia-carbon-100 rounded-lg transition-all duration-200 hover:scale-105"
           aria-label="Open menu"
         >
           <Menu size={24} />
@@ -376,7 +372,7 @@ function DashboardLayout({ children }) {
           </div>
           <h1 className="font-bold text-lg text-gray-900">Apptivia</h1>
         </div>
-        <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
+        <div className="w-8 h-8 bg-apptivia-coral rounded-full flex items-center justify-center">
           <span className="text-white font-bold text-xs">{getProfileInitials()}</span>
         </div>
       </div>
@@ -422,7 +418,7 @@ function DashboardLayout({ children }) {
             {sidebarOpen && (
               <button
                 onClick={() => setSidebarOpen(false)}
-                className="absolute right-0 top-1/2 -translate-y-1/2 p-1 text-gray-600 hover:bg-gray-100 rounded transition-all duration-200"
+                className="absolute right-0 top-1/2 -translate-y-1/2 p-1 text-gray-600 hover:bg-apptivia-carbon-100 rounded transition-all duration-200"
                 title="Collapse sidebar"
               >
                 <Menu size={16} />
@@ -431,7 +427,7 @@ function DashboardLayout({ children }) {
           </div>
           {/* User Info Section */}
           <div className="flex items-center gap-2 mt-1 mb-1">
-            <div className="w-7 h-7 bg-blue-500 rounded-full flex items-center justify-center">
+            <div className="w-7 h-7 bg-apptivia-coral rounded-full flex items-center justify-center">
               <span className="text-white font-bold text-xs">{getProfileInitials()}</span>
             </div>
             {sidebarOpen && (
@@ -453,8 +449,8 @@ function DashboardLayout({ children }) {
                       onClick={() => sidebarOpen ? toggleSubmenu(item.id) : navigate(item.route)}
                       className={`w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-left text-xs transition-all duration-200 hover:scale-[1.02] ${
                         activeRoute === item.route
-                          ? 'bg-blue-500 text-white shadow-md'
-                          : 'text-gray-700 hover:bg-gray-100'
+                          ? 'bg-apptivia-coral text-white shadow-md'
+                          : 'text-gray-700 hover:bg-apptivia-carbon-100'
                       }`}
                     >
                       <item.icon size={18} />
@@ -477,8 +473,8 @@ function DashboardLayout({ children }) {
                             onClick={() => navigate(subItem.route)}
                             className={`w-full flex items-center gap-2 px-2.5 py-1 rounded-lg text-left text-xs transition-all duration-200 hover:scale-[1.02] ${
                               activeRoute === subItem.route
-                                ? 'bg-blue-100 text-blue-700 font-medium'
-                                : 'text-gray-600 hover:bg-gray-50'
+                                ? 'bg-apptivia-coral-tone-50 text-blue-700 font-medium'
+                                : 'text-gray-600 hover:bg-apptivia-paper'
                             }`}
                           >
                             <subItem.icon size={14} />
@@ -494,8 +490,8 @@ function DashboardLayout({ children }) {
                     onClick={() => navigate(item.route)}
                     className={`w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-left text-xs transition-all duration-200 hover:scale-[1.02] ${
                       activeRoute === item.route
-                        ? 'bg-blue-500 text-white shadow-md'
-                        : 'text-gray-700 hover:bg-gray-100'
+                        ? 'bg-apptivia-coral text-white shadow-md'
+                        : 'text-gray-700 hover:bg-apptivia-carbon-100'
                     }`}
                   >
                     <item.icon size={18} />
@@ -542,7 +538,7 @@ function DashboardLayout({ children }) {
             </div>
             <button
               onClick={() => setMobileMenuOpen(false)}
-              className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-all duration-200 hover:scale-105"
+              className="p-2 text-gray-600 hover:bg-apptivia-carbon-100 rounded-lg transition-all duration-200 hover:scale-105"
               aria-label="Close menu"
             >
               <X size={20} />
@@ -550,7 +546,7 @@ function DashboardLayout({ children }) {
           </div>
           {/* User Info Section */}
           <div className="flex items-center gap-2 mt-2 mb-2">
-            <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
+            <div className="w-8 h-8 bg-apptivia-coral rounded-full flex items-center justify-center">
               <span className="text-white font-bold text-sm">{getProfileInitials()}</span>
             </div>
             <div>
@@ -597,14 +593,14 @@ function DashboardLayout({ children }) {
                     setShowSearchResults(false);
                     setMobileMenuOpen(false);
                   }}
-                  className="w-full text-left px-4 py-3 hover:bg-gray-50 border-b last:border-b-0 transition-colors"
+                  className="w-full text-left px-4 py-3 hover:bg-apptivia-paper border-b last:border-b-0 transition-colors"
                 >
                   <div className="flex items-start gap-3">
                     <span className="text-xl">{result.icon}</span>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
                         <span className="text-xs font-semibold text-gray-900">{result.title}</span>
-                        <span className="text-[10px] px-1.5 py-0.5 rounded bg-gray-100 text-gray-600">{result.type}</span>
+                        <span className="text-[10px] px-1.5 py-0.5 rounded bg-apptivia-carbon-100 text-gray-600">{result.type}</span>
                       </div>
                       {result.subtitle && (
                         <div className="text-[11px] text-gray-500 mt-0.5 truncate">{result.subtitle}</div>
@@ -627,8 +623,8 @@ function DashboardLayout({ children }) {
                       onClick={() => toggleSubmenu(item.id)}
                       className={`w-full flex items-center gap-3 px-3 py-3 rounded-lg text-left text-sm transition-all duration-200 hover:scale-[1.02] ${
                         activeRoute === item.route
-                          ? 'bg-blue-500 text-white shadow-md'
-                          : 'text-gray-700 hover:bg-gray-100'
+                          ? 'bg-apptivia-coral text-white shadow-md'
+                          : 'text-gray-700 hover:bg-apptivia-carbon-100'
                       }`}
                     >
                       <item.icon size={22} />
@@ -647,8 +643,8 @@ function DashboardLayout({ children }) {
                             onClick={() => navigate(subItem.route)}
                             className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-left text-sm transition-all duration-200 hover:scale-[1.02] ${
                               activeRoute === subItem.route
-                                ? 'bg-blue-100 text-blue-700 font-medium'
-                                : 'text-gray-600 hover:bg-gray-50'
+                                ? 'bg-apptivia-coral-tone-50 text-blue-700 font-medium'
+                                : 'text-gray-600 hover:bg-apptivia-paper'
                             }`}
                           >
                             <subItem.icon size={16} />
@@ -664,8 +660,8 @@ function DashboardLayout({ children }) {
                     onClick={() => navigate(item.route)}
                     className={`w-full flex items-center gap-3 px-3 py-3 rounded-lg text-left text-sm transition-all duration-200 hover:scale-[1.02] ${
                       activeRoute === item.route
-                        ? 'bg-blue-500 text-white shadow-md'
-                        : 'text-gray-700 hover:bg-gray-100'
+                        ? 'bg-apptivia-coral text-white shadow-md'
+                        : 'text-gray-700 hover:bg-apptivia-carbon-100'
                     }`}
                   >
                     <item.icon size={22} />
@@ -691,7 +687,7 @@ function DashboardLayout({ children }) {
       </div>
 
       {/* Main Content */}
-      <div className={`flex-1 lg:pt-0 pt-16 text-sm min-w-0 overflow-x-hidden layout-root ${
+      <div className={`flex-1 lg:pt-0 pt-16 pb-24 text-sm min-w-0 overflow-x-hidden layout-root ${
         sidebarOpen ? 'lg:ml-64' : 'lg:ml-16'
       } transition-all duration-300`}>
         <TrialBanner billing={billing} />

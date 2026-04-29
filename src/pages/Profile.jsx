@@ -340,10 +340,10 @@ export default function Profile() {
       payload.secondary_role = profileForm.secondary_role || null;
       payload.team_id = profileForm.team_id || null;
       payload.segment = profileForm.segment || null;
-      // Resolve title_id from selected title label
+      // Resolve title_id from selected title label (use UUID, not key)
       const matchedTitle = titles.find(t => t.label === profileForm.title);
-      if (matchedTitle) {
-        payload.title_id = matchedTitle.key;
+      if (matchedTitle?.id) {
+        payload.title_id = matchedTitle.id;
       }
       // Auto-resolve department from team's department_id
       if (profileForm.team_id) {
@@ -451,12 +451,8 @@ export default function Profile() {
           .from('profile_skillsets')
           .select(`*, skillset:skillsets(id, name, description, color, icon)`)
           .in('profile_id', targetProfileIds),
-        orgId
-          ? supabase.from('skillsets').select('id, name, description, color, icon').eq('organization_id', orgId).order('name')
-          : supabase.from('skillsets').select('id, name, description, color, icon').order('name'),
-        orgId
-          ? supabase.from('achievements').select('id, skillset_id, points').eq('organization_id', orgId)
-          : supabase.from('achievements').select('id, skillset_id, points'),
+        supabase.from('skillsets').select('id, name, description, color, icon').order('name'),
+        supabase.from('achievements').select('id, skillset_id, points'),
         supabase
           .from('profile_achievements')
           .select('achievement_id, profile_id')
@@ -658,7 +654,7 @@ export default function Profile() {
     setAwardingBadge(true);
     try {
       const badgeDef = availableBadgeDefs.find(b => b.badge_name === awardBadgeForm.badge_name);
-      const { error } = await supabase.from('profile_badges').insert([{
+      const { error } = await supabase.from('profile_badges').upsert([{
         profile_id: awardBadgeForm.profile_id,
         badge_name: awardBadgeForm.badge_name,
         badge_description: badgeDef?.badge_description || '',
@@ -668,7 +664,7 @@ export default function Profile() {
         points: badgeDef?.points || 0,
         earned_at: new Date().toISOString(),
         organization_id: orgId,
-      }]);
+      }], { onConflict: 'profile_id,badge_name', ignoreDuplicates: true });
       if (error) throw error;
       const member = editableProfiles.find(p => String(p.id) === String(awardBadgeForm.profile_id));
       toast.success(`Badge "${awardBadgeForm.badge_name}" awarded to ${formatProfileName(member)}`);
@@ -685,8 +681,7 @@ export default function Profile() {
 
   const loadBadgeDefinitions = async () => {
     try {
-      let bdQuery = supabase.from('badge_definitions').select('badge_name, badge_description, icon, color, badge_type, points').order('badge_name');
-      if (orgId) bdQuery = bdQuery.eq('organization_id', orgId);
+      const bdQuery = supabase.from('badge_definitions').select('badge_name, badge_description, icon, color, badge_type, points').order('badge_name');
       const { data } = await bdQuery;
       setAvailableBadgeDefs(data || []);
     } catch (e) {
@@ -795,14 +790,14 @@ export default function Profile() {
                         setSearchResults([]);
                         setShowSearchResults(false);
                       }}
-                      className="w-full text-left px-4 py-3 hover:bg-gray-50 border-b last:border-b-0 transition-colors"
+                      className="w-full text-left px-4 py-3 hover:bg-apptivia-paper border-b last:border-b-0 transition-colors"
                     >
                       <div className="flex items-start gap-3">
                         <span className="text-xl">{result.icon}</span>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2">
                             <span className="text-xs font-semibold text-gray-900">{result.title}</span>
-                            <span className="text-[10px] px-1.5 py-0.5 rounded bg-gray-100 text-gray-600">{result.type}</span>
+                            <span className="text-[10px] px-1.5 py-0.5 rounded bg-apptivia-carbon-100 text-gray-600">{result.type}</span>
                           </div>
                           {result.subtitle && (
                             <div className="text-[11px] text-gray-500 mt-0.5 truncate">{result.subtitle}</div>
@@ -828,7 +823,7 @@ export default function Profile() {
             <button
               onClick={handleRefresh}
               disabled={isRefreshing}
-              className={`relative p-2 rounded-lg font-semibold text-sm bg-white text-gray-700 border border-gray-200 hover:bg-gray-50 group ${
+              className={`relative p-2 rounded-lg font-semibold text-sm bg-white text-gray-700 border border-gray-200 hover:bg-apptivia-paper group ${
                 isRefreshing ? 'opacity-50 cursor-not-allowed' : 'transition-all duration-200 hover:scale-105 hover:shadow-md'
               }`}
             >
@@ -845,7 +840,7 @@ export default function Profile() {
                   d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" 
                 />
               </svg>
-              <span className="absolute top-full left-1/2 -translate-x-1/2 mt-2 px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 pointer-events-none group-hover:opacity-100 whitespace-nowrap transition-opacity z-50">
+              <span className="absolute top-full left-1/2 -translate-x-1/2 mt-2 px-2 py-1 bg-apptivia-ink text-white text-xs rounded opacity-0 pointer-events-none group-hover:opacity-100 whitespace-nowrap transition-opacity z-50">
                 {isRefreshing ? 'Refreshing...' : 'Refresh'}
               </span>
             </button>
@@ -884,8 +879,8 @@ export default function Profile() {
                   onClick={() => setActiveTab(tab.id)}
                   className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-all ${
                     activeTab === tab.id
-                      ? 'bg-blue-600 text-white shadow-sm'
-                      : 'text-gray-600 hover:bg-gray-100'
+                      ? 'bg-apptivia-coral text-white shadow-sm'
+                      : 'text-gray-600 hover:bg-apptivia-carbon-100'
                   }`}
                 >
                   {tab.label}
@@ -937,14 +932,14 @@ export default function Profile() {
                 {String(activeProfile.id) === String(user?.id) && (
                   <div className="md:col-span-2 flex items-center gap-4 pb-3 border-b border-gray-100 mb-1">
                     <div className="relative">
-                      <div className="w-16 h-16 rounded-full bg-blue-100 flex items-center justify-center text-xl font-bold text-blue-600 overflow-hidden">
+                      <div className="w-16 h-16 rounded-full bg-apptivia-coral-tone-50 flex items-center justify-center text-xl font-bold text-blue-600 overflow-hidden">
                         {profile?.profile_picture ? (
                           <img src={profile.profile_picture} alt="Profile" className="w-full h-full object-cover" />
                         ) : (
                           getInitials(repName)
                         )}
                       </div>
-                      <label className="absolute -bottom-1 -right-1 w-7 h-7 bg-blue-600 rounded-full flex items-center justify-center cursor-pointer hover:bg-blue-700 transition-colors shadow-sm">
+                      <label className="absolute -bottom-1 -right-1 w-7 h-7 bg-apptivia-coral rounded-full flex items-center justify-center cursor-pointer hover:bg-apptivia-coral transition-colors shadow-sm">
                         <Camera size={14} className="text-white" />
                         <input type="file" accept="image/*" className="hidden" onChange={handlePhotoUpload} disabled={uploadingPhoto} />
                       </label>
@@ -977,7 +972,7 @@ export default function Profile() {
                   <label className="block text-xs text-gray-500 mb-1">Email</label>
                   <input
                     value={profileForm.email}
-                    className="w-full border rounded px-3 py-2 text-sm bg-gray-50 text-gray-500"
+                    className="w-full border rounded px-3 py-2 text-sm bg-apptivia-paper text-gray-500"
                     disabled
                   />
                 </div>
@@ -986,7 +981,7 @@ export default function Profile() {
                   <select
                     value={profileForm.title}
                     onChange={(e) => handleProfileFieldChange('title', e.target.value)}
-                    className={`w-full border rounded px-3 py-2 text-sm ${!canEditAnyProfile ? 'bg-gray-50 text-gray-500' : ''}`}
+                    className={`w-full border rounded px-3 py-2 text-sm ${!canEditAnyProfile ? 'bg-apptivia-paper text-gray-500' : ''}`}
                     disabled={profileSaving || !canEditAnyProfile}
                   >
                     <option value="">Select title...</option>
@@ -1000,7 +995,7 @@ export default function Profile() {
                   <select
                     value={profileForm.department}
                     onChange={(e) => handleProfileFieldChange('department', e.target.value)}
-                    className={`w-full border rounded px-3 py-2 text-sm ${!canEditAnyProfile ? 'bg-gray-50 text-gray-500' : ''}`}
+                    className={`w-full border rounded px-3 py-2 text-sm ${!canEditAnyProfile ? 'bg-apptivia-paper text-gray-500' : ''}`}
                     disabled={profileSaving || !canEditAnyProfile}
                   >
                     <option value="">Select department...</option>
@@ -1077,7 +1072,7 @@ export default function Profile() {
                     <label className="block text-xs text-gray-500 mb-1">Team</label>
                     <input
                       value={teams.find(t => String(t.id) === String(activeProfile.team_id))?.name || 'Unassigned'}
-                      className="w-full border rounded px-3 py-2 text-sm bg-gray-50 text-gray-500"
+                      className="w-full border rounded px-3 py-2 text-sm bg-apptivia-paper text-gray-500"
                       disabled
                     />
                   </div>
@@ -1097,7 +1092,7 @@ export default function Profile() {
                     </button>
                     <button
                       onClick={handleProfileSave}
-                      className="px-3 py-1.5 text-xs rounded bg-blue-600 text-white disabled:opacity-60"
+                      className="px-3 py-1.5 text-xs rounded bg-apptivia-coral text-white disabled:opacity-60"
                       disabled={profileSaving}
                     >
                       {profileSaving ? 'Saving...' : 'Save changes'}
@@ -1122,7 +1117,7 @@ export default function Profile() {
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => setShareSnapshotModal(true)}
-                  className="flex items-center gap-1 px-3 py-1.5 bg-blue-50 text-blue-600 rounded-lg text-sm font-medium hover:bg-blue-100 transition-colors"
+                  className="flex items-center gap-1 px-3 py-1.5 bg-apptivia-coral-tone-50 text-blue-600 rounded-lg text-sm font-medium hover:bg-apptivia-coral-tone-50 transition-colors"
                 >
                   <span>📸</span>
                   Share Snapshot
@@ -1147,7 +1142,7 @@ export default function Profile() {
                 )}
                 <button
                   onClick={() => setViewAllBadgesModal(true)}
-                  className="flex items-center gap-1 px-3 py-1.5 bg-indigo-50 text-indigo-600 rounded-lg text-sm font-medium hover:bg-indigo-100 transition-colors"
+                  className="flex items-center gap-1 px-3 py-1.5 bg-apptivia-carbon-100 text-indigo-600 rounded-lg text-sm font-medium hover:bg-apptivia-carbon-100 transition-colors"
                 >
                   <span>🎖️</span>
                   View All Badges
@@ -1158,7 +1153,7 @@ export default function Profile() {
             {loadingBadges ? (
               <div className="text-center py-8 text-gray-500">Loading badges...</div>
             ) : badges.length === 0 ? (
-              <div className="text-center py-8 bg-gray-50 rounded-lg">
+              <div className="text-center py-8 bg-apptivia-paper rounded-lg">
                 <div className="text-gray-400 text-lg mb-2">No badges earned yet</div>
                 <p className="text-gray-500 text-sm">Complete activities to earn badges.</p>
               </div>
@@ -1263,7 +1258,7 @@ export default function Profile() {
               {loadingAchievements ? (
                 <div className="text-center py-8 text-gray-500">Loading achievements...</div>
               ) : achievements.length === 0 ? (
-                <div className="text-center py-8 bg-gray-50 rounded-lg">
+                <div className="text-center py-8 bg-apptivia-paper rounded-lg">
                   <div className="text-gray-400 text-lg mb-2">No achievements tracked yet</div>
                   <p className="text-gray-500 text-sm">Start completing achievements to unlock rewards!</p>
                 </div>
@@ -1304,7 +1299,7 @@ export default function Profile() {
                             </Tooltip>
                           </div>
                         </div>
-                        <div className="w-full bg-gray-200 rounded-full h-1.5">
+                        <div className="w-full bg-apptivia-carbon-200 rounded-full h-1.5">
                           <div
                             className="h-1.5 rounded-full transition-all duration-300"
                             style={{ width: `${pct}%`, backgroundColor: color }}
@@ -1371,7 +1366,7 @@ export default function Profile() {
               <button
                 onClick={handleSaveNudgePrefs}
                 disabled={savingNudgePrefs}
-                className="px-4 py-2 bg-blue-600 text-white text-sm font-semibold rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors"
+                className="px-4 py-2 bg-apptivia-coral text-white text-sm font-semibold rounded-lg hover:bg-apptivia-coral disabled:opacity-50 transition-colors"
               >
                 {savingNudgePrefs ? 'Saving...' : 'Save Preferences'}
               </button>
@@ -1397,7 +1392,7 @@ export default function Profile() {
                 const template = SUPPORTED_INTEGRATIONS.find(t => t.integration_type === integration.integration_type);
                 if (!template) return null;
                 return (
-                  <div key={integration.id} className="bg-gray-50 rounded-xl p-5 border border-gray-100 flex flex-col">
+                  <div key={integration.id} className="bg-apptivia-paper rounded-xl p-5 border border-gray-100 flex flex-col">
                     <div className="flex items-center gap-3 mb-3">
                       <div className={`w-11 h-11 bg-gradient-to-br ${template.color} rounded-lg flex items-center justify-center text-xs font-bold text-white shadow-sm`}>
                         {template.icon}
@@ -1409,7 +1404,7 @@ export default function Profile() {
                       <div className="w-2.5 h-2.5 rounded-full bg-green-500 shrink-0" title="Connected" />
                     </div>
                     <div className="mb-3">
-                      <span className="inline-flex items-center gap-1 text-xs bg-blue-50 text-blue-700 px-2.5 py-1 rounded-full font-medium">
+                      <span className="inline-flex items-center gap-1 text-xs bg-apptivia-coral-tone-50 text-blue-700 px-2.5 py-1 rounded-full font-medium">
                         <Building2 size={11} /> Org-wide
                       </span>
                     </div>
@@ -1433,7 +1428,7 @@ export default function Profile() {
                 <h2 className="text-lg font-semibold text-gray-900">Personal Integrations</h2>
                 <p className="text-xs text-gray-500">Connect your personal accounts to sync data</p>
               </div>
-              <button onClick={refreshIntegrations} className="p-2 rounded-lg text-gray-500 hover:bg-gray-100 transition-colors" title="Refresh">
+              <button onClick={refreshIntegrations} className="p-2 rounded-lg text-gray-500 hover:bg-apptivia-carbon-100 transition-colors" title="Refresh">
                 <RefreshCw size={16} />
               </button>
             </div>
@@ -1483,7 +1478,7 @@ export default function Profile() {
                           </span>
                         )}
                         {!integration && (
-                          <span className="inline-flex items-center gap-1 text-xs bg-gray-50 text-gray-500 px-2.5 py-1 rounded-full font-medium">
+                          <span className="inline-flex items-center gap-1 text-xs bg-apptivia-paper text-gray-500 px-2.5 py-1 rounded-full font-medium">
                             Available
                           </span>
                         )}
@@ -1507,14 +1502,14 @@ export default function Profile() {
                         ) : API_KEY_PROVIDERS[template.integration_type] ? (
                           <button
                             onClick={() => setCredentialsModal(template.integration_type)}
-                            className="w-full flex items-center justify-center gap-1.5 bg-blue-600 text-white py-2 rounded-md text-sm font-medium hover:bg-blue-700 transition-colors"
+                            className="w-full flex items-center justify-center gap-1.5 bg-apptivia-coral text-white py-2 rounded-md text-sm font-medium hover:bg-apptivia-coral transition-colors"
                           >
                             <Key size={14} /> Connect with API Key
                           </button>
                         ) : (
                           <button
                             onClick={() => connectOAuth(template.integration_type)}
-                            className="w-full bg-blue-600 text-white py-2 rounded-md text-sm font-medium hover:bg-blue-700 transition-colors"
+                            className="w-full bg-apptivia-coral text-white py-2 rounded-md text-sm font-medium hover:bg-apptivia-coral transition-colors"
                           >
                             Connect
                           </button>
@@ -1554,7 +1549,7 @@ export default function Profile() {
                 </button>
               </div>
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-                <div className="bg-gray-50 rounded-xl p-3 border">
+                <div className="bg-apptivia-paper rounded-xl p-3 border">
                   <div className="flex items-center justify-between mb-2">
                     <div className="text-xs font-semibold text-gray-600">Teams</div>
                     <span className="text-[10px] text-gray-400">Manage in Systems</span>
@@ -1567,7 +1562,7 @@ export default function Profile() {
                         <button
                           key={team.id}
                           onClick={() => setSelectedTeamId(String(team.id))}
-                          className={`w-full text-left px-3 py-2 rounded-lg text-xs font-medium transition-all ${String(team.id) === String(selectedTeamId) ? 'bg-blue-600 text-white' : 'bg-white text-gray-700 hover:bg-gray-100'}`}
+                          className={`w-full text-left px-3 py-2 rounded-lg text-xs font-medium transition-all ${String(team.id) === String(selectedTeamId) ? 'bg-apptivia-coral text-white' : 'bg-white text-gray-700 hover:bg-apptivia-carbon-100'}`}
                         >
                           <div>{team.name}</div>
                           <div className={`${String(team.id) === String(selectedTeamId) ? 'text-blue-100' : 'text-gray-400'} text-[10px]`}>{team.department || 'No department'}</div>
@@ -1755,7 +1750,7 @@ export default function Profile() {
                 <Gift size={20} className="text-amber-500" />
                 <h3 className="text-lg font-bold text-gray-900">Award Badge</h3>
               </div>
-              <button onClick={() => setShowAwardBadgeModal(false)} className="p-2 hover:bg-gray-100 rounded-lg">
+              <button onClick={() => setShowAwardBadgeModal(false)} className="p-2 hover:bg-apptivia-carbon-100 rounded-lg">
                 <X size={18} className="text-gray-400" />
               </button>
             </div>
@@ -1809,7 +1804,7 @@ export default function Profile() {
                 </button>
                 <button
                   onClick={() => setShowAwardBadgeModal(false)}
-                  className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-300 transition-colors"
+                  className="px-4 py-2 bg-apptivia-carbon-200 text-gray-700 rounded-lg text-sm font-medium hover:bg-apptivia-carbon-300 transition-colors"
                 >
                   Cancel
                 </button>

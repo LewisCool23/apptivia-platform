@@ -66,16 +66,20 @@ export function useIntegrations({ personal = false }: UseIntegrationsOptions = {
   const [templates, setTemplates] = useState<IntegrationTemplate[]>([]);
   const [loading, setLoading] = useState(true);
   const [syncing, setSyncing] = useState<string | null>(null);
+  const [connecting, setConnecting] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const loadIntegrations = useCallback(async () => {
+  const loadIntegrations = useCallback(async (): Promise<Integration[]> => {
     try {
       setError(null);
       const data = await backendFetch<{ integrations: Integration[] }>(basePath, undefined, 'GET');
-      setIntegrations(data.integrations || []);
+      const list = data.integrations || [];
+      setIntegrations(list);
+      return list;
     } catch (err: any) {
       console.error('[useIntegrations] load error:', err);
       setError(err.message);
+      return [];
     }
   }, [basePath]);
 
@@ -102,6 +106,8 @@ export function useIntegrations({ personal = false }: UseIntegrationsOptions = {
       return;
     }
 
+    setConnecting(provider);
+
     // Open OAuth flow in a popup window
     const width = 600;
     const height = 700;
@@ -121,7 +127,7 @@ export function useIntegrations({ personal = false }: UseIntegrationsOptions = {
     const handleMessage = (event: MessageEvent) => {
       if (event.data?.type === 'oauth-success') {
         window.removeEventListener('message', handleMessage);
-        loadIntegrations();
+        loadIntegrations().then(() => setConnecting(null));
       }
     };
     window.addEventListener('message', handleMessage);
@@ -131,7 +137,7 @@ export function useIntegrations({ personal = false }: UseIntegrationsOptions = {
       if (!popup || popup.closed) {
         clearInterval(interval);
         window.removeEventListener('message', handleMessage);
-        loadIntegrations();
+        loadIntegrations().then(() => setConnecting(null));
       }
     }, 1000);
   }, [loadIntegrations]);
@@ -169,8 +175,8 @@ export function useIntegrations({ personal = false }: UseIntegrationsOptions = {
       // Poll for sync completion — check every 2s, max 60s
       const startTime = Date.now();
       const poll = async () => {
-        await loadIntegrations();
-        const updated = integrations.find(i => i.id === id);
+        const freshList = await loadIntegrations();
+        const updated = freshList.find(i => i.id === id);
         if (updated?.status === 'syncing' && Date.now() - startTime < 60000) {
           setTimeout(poll, 2000);
         } else {
@@ -182,7 +188,7 @@ export function useIntegrations({ personal = false }: UseIntegrationsOptions = {
       setSyncing(null);
       setError(err.message);
     }
-  }, [loadIntegrations, integrations]);
+  }, [loadIntegrations]);
 
   const updateConfig = useCallback(async (id: string, config: {
     field_mappings?: Record<string, any>;
@@ -216,6 +222,7 @@ export function useIntegrations({ personal = false }: UseIntegrationsOptions = {
     templates,
     loading,
     syncing,
+    connecting,
     error,
     connectOAuth,
     connectCredentials,

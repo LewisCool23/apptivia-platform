@@ -183,7 +183,12 @@ export async function updateContestLeaderboard(contestId: string): Promise<Leade
     }
 
     // Sort by score descending and assign ranks (standard competition ranking — ties share rank)
-    scores.sort((a: any, b: any) => b.score - a.score);
+    // F7: deterministic tiebreaker — earliest created_at wins ties
+    scores.sort((a: any, b: any) => {
+      const diff = b.score - a.score;
+      if (diff !== 0) return diff;
+      return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+    });
     let currentRank = 1;
     const rankedScores = scores.map((entry: any, index: number, arr: any[]) => {
       if (index > 0 && entry.score < arr[index - 1].score) {
@@ -294,7 +299,7 @@ export async function completeContest(contestId: string): Promise<{ success: boo
 
       const { error: badgesError } = await supabase
         .from('profile_badges')
-        .insert(badges);
+        .upsert(badges, { onConflict: 'profile_id,badge_name', ignoreDuplicates: true });
 
       if (badgesError) {
         console.error('Error awarding badges:', badgesError);
@@ -334,7 +339,7 @@ export async function awardAchievementBadge(
   organizationId?: string
 ): Promise<{ success: boolean; error?: string }> {
   try {
-    const { error } = await supabase.from('profile_badges').insert({
+    const { error } = await supabase.from('profile_badges').upsert({
       profile_id: profileId,
       badge_type: 'achievement',
       badge_name: achievementName,
@@ -344,7 +349,7 @@ export async function awardAchievementBadge(
       achievement_id: achievementId,
       is_featured: false,
       ...(organizationId && { organization_id: organizationId }),
-    });
+    }, { onConflict: 'profile_id,badge_name', ignoreDuplicates: true });
 
     if (error) throw error;
     return { success: true };
@@ -369,7 +374,7 @@ export async function awardMilestoneBadge(
   organizationId?: string
 ): Promise<{ success: boolean; error?: string }> {
   try {
-    const { error } = await supabase.from('profile_badges').insert({
+    const { error } = await supabase.from('profile_badges').upsert({
       profile_id: profileId,
       badge_type: 'milestone',
       badge_name: milestoneName,
@@ -378,7 +383,7 @@ export async function awardMilestoneBadge(
       color,
       is_featured: false,
       ...(organizationId && { organization_id: organizationId }),
-    });
+    }, { onConflict: 'profile_id,badge_name', ignoreDuplicates: true });
 
     if (error) throw error;
     return { success: true };

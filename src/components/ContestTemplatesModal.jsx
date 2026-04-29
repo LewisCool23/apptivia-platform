@@ -129,7 +129,7 @@ export default function ContestTemplatesModal({ isOpen, onClose, onTemplateSelec
               onClick={() => handleTemplateClick(template)}
               className={`p-4 border-2 rounded-lg cursor-pointer transition-all hover:shadow-md ${
                 selectedTemplate?.id === template.id
-                  ? 'border-blue-500 bg-blue-50'
+                  ? 'border-blue-500 bg-apptivia-coral-tone-50'
                   : 'border-gray-200 hover:border-blue-300'
               }`}
             >
@@ -210,13 +210,13 @@ export default function ContestTemplatesModal({ isOpen, onClose, onTemplateSelec
               </p>
               <button
                 onClick={() => setSelectedTemplate(null)}
-                className="px-4 py-2 text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 transition-colors"
+                className="px-4 py-2 text-gray-700 bg-apptivia-carbon-100 rounded-md hover:bg-apptivia-carbon-200 transition-colors"
               >
                 Back to Templates
               </button>
               <button
                 onClick={handleUseTemplate}
-                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+                className="px-4 py-2 bg-apptivia-coral text-white rounded-md hover:bg-apptivia-coral transition-colors"
               >
                 Use This Template
               </button>

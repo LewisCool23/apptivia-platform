@@ -44,11 +44,11 @@ export default function BadgeAssignmentModal({ isOpen, onClose, badge }) {
           email,
           first_name,
           last_name,
+          organization_id,
           department_id,
           departments (name),
-          profile_badges!left (badge_id)
+          profile_badges!left (badge_name)
         `)
-        .eq('is_active', true)
         .order('first_name');
 
       const { data, error } = await query;
@@ -57,7 +57,7 @@ export default function BadgeAssignmentModal({ isOpen, onClose, badge }) {
 
       // Filter out profiles who already have this badge
       const filtered = (data || []).filter(profile => {
-        const hasBadge = profile.profile_badges?.some(pb => pb.badge_id === badge?.id);
+        const hasBadge = profile.profile_badges?.some(pb => pb.badge_name === badge?.badge_name);
         return !hasBadge;
       });
 
@@ -97,16 +97,24 @@ export default function BadgeAssignmentModal({ isOpen, onClose, badge }) {
 
     setSubmitting(true);
     try {
-      // Create profile_badges records
-      const records = selectedProfiles.map(profileId => ({
-        profile_id: profileId,
-        badge_id: badge.id,
-        awarded_at: new Date().toISOString(),
-      }));
+      // Create profile_badges records with denormalized badge metadata
+      const records = selectedProfiles.map(profileId => {
+        const profile = profiles.find(p => p.id === profileId);
+        return {
+          profile_id: profileId,
+          badge_type: badge.badge_type || 'special',
+          badge_name: badge.badge_name,
+          badge_description: badge.badge_description || '',
+          icon: badge.icon || '🏆',
+          color: badge.color || '#3B82F6',
+          earned_at: new Date().toISOString(),
+          organization_id: profile?.organization_id,
+        };
+      });
 
       const { error } = await supabase
         .from('profile_badges')
-        .insert(records);
+        .upsert(records, { onConflict: 'profile_id,badge_name', ignoreDuplicates: true });
 
       if (error) throw error;
 
@@ -160,14 +168,14 @@ export default function BadgeAssignmentModal({ isOpen, onClose, badge }) {
           </div>
           <button
             onClick={onClose}
-            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+            className="p-2 hover:bg-apptivia-carbon-100 rounded-lg transition-colors"
           >
             <X className="w-5 h-5 text-gray-400" />
           </button>
         </div>
 
         {/* Filters */}
-        <div className="px-6 py-4 bg-gray-50 border-b border-gray-200 space-y-3">
+        <div className="px-6 py-4 bg-apptivia-paper border-b border-gray-200 space-y-3">
           <div className="flex gap-3">
             {/* Search */}
             <div className="flex-1 relative">
@@ -236,7 +244,7 @@ export default function BadgeAssignmentModal({ isOpen, onClose, badge }) {
                     key={profile.id}
                     className={`flex items-center gap-3 p-3 rounded-lg border-2 cursor-pointer transition-all ${
                       isSelected
-                        ? 'border-indigo-500 bg-indigo-50'
+                        ? 'border-indigo-500 bg-apptivia-carbon-100'
                         : 'border-gray-200 hover:border-gray-300 bg-white'
                     }`}
                   >
@@ -266,7 +274,7 @@ export default function BadgeAssignmentModal({ isOpen, onClose, badge }) {
         </div>
 
         {/* Footer */}
-        <div className="border-t border-gray-200 px-6 py-4 flex items-center justify-between bg-gray-50">
+        <div className="border-t border-gray-200 px-6 py-4 flex items-center justify-between bg-apptivia-paper">
           <p className="text-sm text-gray-600">
             {selectedProfiles.length > 0 && (
               <span className="font-medium text-indigo-600">
@@ -278,7 +286,7 @@ export default function BadgeAssignmentModal({ isOpen, onClose, badge }) {
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 text-gray-700 hover:bg-gray-200 rounded-lg transition-colors"
+              className="px-4 py-2 text-gray-700 hover:bg-apptivia-carbon-200 rounded-lg transition-colors"
               disabled={submitting}
             >
               Cancel
@@ -286,7 +294,7 @@ export default function BadgeAssignmentModal({ isOpen, onClose, badge }) {
             <button
               onClick={handleAssignBadge}
               disabled={submitting || selectedProfiles.length === 0}
-              className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
+              className="px-4 py-2 bg-apptivia-ink text-white rounded-lg hover:bg-apptivia-ink disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
             >
               <Award className="w-4 h-4" />
               {submitting ? 'Assigning...' : `Assign Badge${selectedProfiles.length > 1 ? 's' : ''}`}

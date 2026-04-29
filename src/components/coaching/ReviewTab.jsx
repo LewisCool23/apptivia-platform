@@ -259,7 +259,7 @@ export default function ReviewTab({ teamMembers, startForRepId }) {
         </div>
         {isManager && (
           <button onClick={() => { setEditingReview(null); setForm(emptyForm()); setShowBuilder(true); }}
-            className="flex items-center gap-1.5 px-3 py-2 text-sm font-semibold text-white bg-blue-600 rounded-lg hover:bg-blue-700">
+            className="flex items-center gap-1.5 px-3 py-2 text-sm font-semibold text-white bg-apptivia-coral rounded-lg hover:bg-apptivia-coral">
             <Plus size={14} /> Create Review
           </button>
         )}
@@ -279,7 +279,7 @@ export default function ReviewTab({ teamMembers, startForRepId }) {
           ].map(tab => (
             <button key={tab.id} onClick={() => setStatusFilter(tab.id)}
               className={`px-3 py-1 rounded-full text-xs font-medium transition-all ${
-                statusFilter === tab.id ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                statusFilter === tab.id ? 'bg-apptivia-coral text-white' : 'bg-apptivia-carbon-100 text-gray-600 hover:bg-apptivia-carbon-200'
               }`}>
               {tab.label}
             </button>
@@ -293,7 +293,7 @@ export default function ReviewTab({ teamMembers, startForRepId }) {
           ].map(tab => (
             <button key={tab.id} onClick={() => setTypeFilter(tab.id)}
               className={`px-3 py-1 rounded-full text-xs font-medium transition-all ${
-                typeFilter === tab.id ? 'bg-purple-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                typeFilter === tab.id ? 'bg-apptivia-ink text-white' : 'bg-apptivia-carbon-100 text-gray-600 hover:bg-apptivia-carbon-200'
               }`}>
               {tab.label}
             </button>
@@ -322,7 +322,7 @@ export default function ReviewTab({ teamMembers, startForRepId }) {
           <p className="text-sm text-gray-500 mb-2">{isPowerUser ? 'No performance reviews for you yet' : 'No performance reviews yet'}</p>
           {isManager && !showBuilder && (
             <button onClick={() => { setForm(emptyForm()); setShowBuilder(true); }}
-              className="px-4 py-2 text-sm font-semibold text-blue-600 border border-blue-600 rounded-lg hover:bg-blue-50">
+              className="px-4 py-2 text-sm font-semibold text-blue-600 border border-blue-600 rounded-lg hover:bg-apptivia-coral-tone-50">
               Create Your First Review
             </button>
           )}

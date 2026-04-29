@@ -102,39 +102,39 @@ function useIcpConfig(organizationId) {
 // ── Constants ─────────────────────────────────────────────
 
 const TIER_STYLES = {
-  tier_1: { bg: 'bg-purple-100', text: 'text-purple-700', label: 'Tier 1', icon: Crown },
-  tier_2: { bg: 'bg-blue-100', text: 'text-blue-700', label: 'Tier 2', icon: Star },
-  tier_3: { bg: 'bg-gray-100', text: 'text-gray-600', label: 'Tier 3', icon: Target },
-  untiered: { bg: 'bg-gray-50', text: 'text-gray-400', label: 'Untiered', icon: Target },
+  tier_1: { bg: 'bg-apptivia-carbon-100', text: 'text-purple-700', label: 'Tier 1', icon: Crown },
+  tier_2: { bg: 'bg-apptivia-coral-tone-50', text: 'text-blue-700', label: 'Tier 2', icon: Star },
+  tier_3: { bg: 'bg-apptivia-carbon-100', text: 'text-gray-600', label: 'Tier 3', icon: Target },
+  untiered: { bg: 'bg-apptivia-paper', text: 'text-gray-400', label: 'Untiered', icon: Target },
 };
 
 const STATUS_STYLES = {
-  active: { bg: 'bg-blue-50', text: 'text-blue-700', label: 'Active' },
+  active: { bg: 'bg-apptivia-coral-tone-50', text: 'text-blue-700', label: 'Active' },
   nurture: { bg: 'bg-amber-50', text: 'text-amber-700', label: 'Nurture' },
   engaged: { bg: 'bg-emerald-50', text: 'text-emerald-700', label: 'Engaged' },
-  opportunity: { bg: 'bg-purple-50', text: 'text-purple-700', label: 'Opportunity' },
+  opportunity: { bg: 'bg-apptivia-carbon-100', text: 'text-purple-700', label: 'Opportunity' },
   customer: { bg: 'bg-green-50', text: 'text-green-700', label: 'Customer' },
   churned: { bg: 'bg-red-50', text: 'text-red-600', label: 'Churned' },
 };
 
 const COMMITTEE_ROLES = {
-  decision_maker: { label: 'Decision Maker', color: 'bg-purple-100 text-purple-700', icon: Crown },
+  decision_maker: { label: 'Decision Maker', color: 'bg-apptivia-carbon-100 text-purple-700', icon: Crown },
   champion: { label: 'Champion', color: 'bg-emerald-100 text-emerald-700', icon: Star },
-  influencer: { label: 'Influencer', color: 'bg-blue-100 text-blue-700', icon: TrendingUp },
+  influencer: { label: 'Influencer', color: 'bg-apptivia-coral-tone-50 text-blue-700', icon: TrendingUp },
   blocker: { label: 'Blocker', color: 'bg-red-100 text-red-700', icon: Shield },
-  user: { label: 'End User', color: 'bg-gray-100 text-gray-600', icon: User },
+  user: { label: 'End User', color: 'bg-apptivia-carbon-100 text-gray-600', icon: User },
 };
 
 function ScoreBadge({ score, size = 'sm' }) {
   if (score == null || score === 0) {
     return (
-      <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full font-bold bg-gray-50 text-gray-400 ${size === 'sm' ? 'text-[10px]' : 'text-xs'}`}>
+      <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full font-bold bg-apptivia-paper text-gray-400 ${size === 'sm' ? 'text-[10px]' : 'text-xs'}`}>
         —
       </span>
     );
   }
   const color = score >= 80 ? 'bg-emerald-100 text-emerald-700' :
-    score >= 60 ? 'bg-blue-100 text-blue-700' :
+    score >= 60 ? 'bg-apptivia-coral-tone-50 text-blue-700' :
     score >= 40 ? 'bg-amber-100 text-amber-700' :
     'bg-red-100 text-red-700';
   return (
@@ -148,8 +148,8 @@ function ScoreBadge({ score, size = 'sm' }) {
 
 function SummaryCards({ summary }) {
   const cards = [
-    { label: 'Total Accounts', value: summary.totalAccounts, icon: Building2, color: 'text-blue-600 bg-blue-50' },
-    { label: 'Tier 1', value: summary.tier1Count, icon: Crown, color: 'text-purple-600 bg-purple-50' },
+    { label: 'Total Accounts', value: summary.totalAccounts, icon: Building2, color: 'text-blue-600 bg-apptivia-coral-tone-50' },
+    { label: 'Tier 1', value: summary.tier1Count, icon: Crown, color: 'text-purple-600 bg-apptivia-carbon-100' },
     { label: 'High Intent', value: summary.highIntentCount, icon: Zap, color: 'text-amber-600 bg-amber-50' },
     { label: 'Avg Score', value: summary.avgAccountScore, icon: BarChart3, color: 'text-emerald-600 bg-emerald-50' },
   ];
@@ -190,14 +190,14 @@ function BuyingCommitteePanel({ committee, onUpdate }) {
 
   return (
     <div className="bg-white rounded-xl border border-gray-100 overflow-hidden">
-      <div className="px-5 py-3 border-b border-gray-100 flex items-center justify-between bg-gray-50/50">
+      <div className="px-5 py-3 border-b border-gray-100 flex items-center justify-between bg-apptivia-paper/50">
         <div className="flex items-center gap-2">
           <Users size={14} className="text-gray-500" />
           <span className="text-sm font-bold text-gray-900">Buying Committee</span>
           <span className="text-[10px] text-gray-400">({committee.length})</span>
         </div>
         <button onClick={() => setAdding(true)}
-          className="flex items-center gap-1 px-2.5 py-1 bg-blue-500 text-white rounded-lg text-[10px] font-medium hover:bg-blue-600 transition-colors">
+          className="flex items-center gap-1 px-2.5 py-1 bg-apptivia-coral text-white rounded-lg text-[10px] font-medium hover:bg-apptivia-coral transition-colors">
           <Plus size={10} /> Add
         </button>
       </div>
@@ -213,7 +213,7 @@ function BuyingCommitteePanel({ committee, onUpdate }) {
         {committee.map((member, i) => {
           const r = COMMITTEE_ROLES[member.role] || COMMITTEE_ROLES.user;
           return (
-            <div key={i} className="px-5 py-3 flex items-center justify-between hover:bg-gray-50 transition-colors">
+            <div key={i} className="px-5 py-3 flex items-center justify-between hover:bg-apptivia-paper transition-colors">
               <div className="flex items-center gap-3">
                 <div className={`w-8 h-8 rounded-full flex items-center justify-center ${r.color}`}>
                   <r.icon size={14} />
@@ -240,7 +240,7 @@ function BuyingCommitteePanel({ committee, onUpdate }) {
         })}
 
         {adding && (
-          <div className="p-4 space-y-3 bg-blue-50/30">
+          <div className="p-4 space-y-3 bg-apptivia-coral-tone-50/30">
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className="text-[10px] font-semibold text-gray-500 block mb-1">NAME</label>
@@ -274,7 +274,7 @@ function BuyingCommitteePanel({ committee, onUpdate }) {
             <div className="flex justify-end gap-2">
               <button onClick={() => setAdding(false)} className="px-3 py-1 text-xs text-gray-500 hover:text-gray-700">Cancel</button>
               <button onClick={handleAdd} disabled={!newMember.name.trim()}
-                className="px-3 py-1.5 bg-blue-600 text-white rounded-lg text-xs font-medium hover:bg-blue-700 disabled:opacity-50">
+                className="px-3 py-1.5 bg-apptivia-coral text-white rounded-lg text-xs font-medium hover:bg-apptivia-coral disabled:opacity-50">
                 Add Member
               </button>
             </div>
@@ -432,7 +432,7 @@ function AccountDetail({ account, onBack, onUpdate, onAnalyze, analyzing, onUpda
           <div key={s.label} className="bg-white rounded-xl border border-gray-100 p-4 text-center">
             <span className="text-[10px] text-gray-400 block mb-1">{s.label}</span>
             <div className={`text-2xl font-bold bg-gradient-to-r ${s.color} bg-clip-text text-transparent`}>{s.value}</div>
-            <div className="w-full bg-gray-100 rounded-full h-1.5 mt-2">
+            <div className="w-full bg-apptivia-carbon-100 rounded-full h-1.5 mt-2">
               <div className={`h-1.5 rounded-full bg-gradient-to-r ${s.color}`} style={{ width: `${s.value}%` }} />
             </div>
           </div>
@@ -441,7 +441,7 @@ function AccountDetail({ account, onBack, onUpdate, onAnalyze, analyzing, onUpda
           <div className="bg-white rounded-xl border border-gray-100 p-4 text-center">
             <span className="text-[10px] text-gray-400 block mb-1">ICP Fit Score</span>
             <div className={`text-2xl font-bold ${icpScore >= 75 ? 'text-emerald-600' : icpScore >= 50 ? 'text-amber-600' : 'text-red-500'}`}>{icpScore}</div>
-            <div className="w-full bg-gray-100 rounded-full h-1.5 mt-2">
+            <div className="w-full bg-apptivia-carbon-100 rounded-full h-1.5 mt-2">
               <div className={`h-1.5 rounded-full ${icpScore >= 75 ? 'bg-emerald-500' : icpScore >= 50 ? 'bg-amber-500' : 'bg-red-400'}`} style={{ width: `${icpScore}%` }} />
             </div>
             <span className="text-[9px] text-gray-400">
@@ -459,8 +459,8 @@ function AccountDetail({ account, onBack, onUpdate, onAnalyze, analyzing, onUpda
           <div className={`text-2xl font-bold ${account.readiness_score >= 70 ? 'text-emerald-600' : account.readiness_score >= 40 ? 'text-amber-600' : 'text-gray-400'}`}>
             {account.readiness_score ?? '—'}
           </div>
-          <div className="w-full bg-gray-100 rounded-full h-1.5 mt-2">
-            <div className={`h-1.5 rounded-full ${account.readiness_score >= 70 ? 'bg-emerald-500' : account.readiness_score >= 40 ? 'bg-amber-500' : 'bg-gray-300'}`} style={{ width: `${account.readiness_score || 0}%` }} />
+          <div className="w-full bg-apptivia-carbon-100 rounded-full h-1.5 mt-2">
+            <div className={`h-1.5 rounded-full ${account.readiness_score >= 70 ? 'bg-emerald-500' : account.readiness_score >= 40 ? 'bg-amber-500' : 'bg-apptivia-carbon-300'}`} style={{ width: `${account.readiness_score || 0}%` }} />
           </div>
         </div>
 
@@ -541,7 +541,7 @@ function AccountDetail({ account, onBack, onUpdate, onAnalyze, analyzing, onUpda
               className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium transition-all ${
                 account.tier === key
                   ? `${style.bg} ${style.text} ring-2 ring-offset-1 ring-current`
-                  : 'bg-gray-50 text-gray-500 hover:bg-gray-100'
+                  : 'bg-apptivia-paper text-gray-500 hover:bg-apptivia-carbon-100'
               }`}>
               <style.icon size={12} /> {style.label}
             </button>
@@ -583,7 +583,7 @@ function AccountDetail({ account, onBack, onUpdate, onAnalyze, analyzing, onUpda
                   <div className="flex items-center gap-1.5 opacity-50 group-hover:opacity-100 transition-opacity">
                     {person.email && (
                       <button onClick={() => navigator.clipboard.writeText(person.email)}
-                        className="p-1 rounded text-blue-400 hover:text-blue-600 hover:bg-blue-50 transition-colors"
+                        className="p-1 rounded text-blue-400 hover:text-blue-600 hover:bg-apptivia-coral-tone-50 transition-colors"
                         title={person.email}><Mail size={12} /></button>
                     )}
                     {person.phone && (
@@ -593,7 +593,7 @@ function AccountDetail({ account, onBack, onUpdate, onAnalyze, analyzing, onUpda
                     )}
                     {person.linkedin_url && (
                       <a href={person.linkedin_url} target="_blank" rel="noreferrer"
-                        className="p-1 rounded text-blue-400 hover:text-blue-600 hover:bg-blue-50 transition-colors"
+                        className="p-1 rounded text-blue-400 hover:text-blue-600 hover:bg-apptivia-coral-tone-50 transition-colors"
                         title="LinkedIn"><Linkedin size={12} /></a>
                     )}
                   </div>
@@ -708,14 +708,14 @@ function CreateDealModal({ isOpen, onClose, account, organizationId, userId }) {
                 />
               </div>
             </div>
-            <div className="flex items-center gap-2 px-3 py-2 bg-blue-50 rounded-lg">
+            <div className="flex items-center gap-2 px-3 py-2 bg-apptivia-coral-tone-50 rounded-lg">
               <DollarSign size={12} className="text-blue-500 flex-shrink-0" />
               <span className="text-[11px] text-blue-600">Stage locked to <strong>Discovery</strong> until you validate the opportunity.</span>
             </div>
             {error && <p className="text-xs text-red-600">{error}</p>}
             <div className="flex gap-2 pt-1">
               <button type="button" onClick={onClose}
-                className="flex-1 py-2 text-sm text-gray-500 border border-gray-200 rounded-lg hover:bg-gray-50">
+                className="flex-1 py-2 text-sm text-gray-500 border border-gray-200 rounded-lg hover:bg-apptivia-paper">
                 Cancel
               </button>
               <button type="submit" disabled={saving}
@@ -809,7 +809,7 @@ function NewAccountModal({ isOpen, onClose, onCreate }) {
                   type="button"
                   onClick={() => setForm(p => ({ ...p, tier: key }))}
                   className={`flex items-center gap-1 px-3 py-1.5 rounded-md text-xs font-medium transition-all ${
-                    form.tier === key ? `${style.bg} ${style.text} ring-1 ring-current` : 'bg-gray-50 text-gray-500 hover:bg-gray-100'
+                    form.tier === key ? `${style.bg} ${style.text} ring-1 ring-current` : 'bg-apptivia-paper text-gray-500 hover:bg-apptivia-carbon-100'
                   }`}
                 >
                   <style.icon size={10} /> {style.label}
@@ -821,14 +821,14 @@ function NewAccountModal({ isOpen, onClose, onCreate }) {
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 transition-colors"
+              className="px-4 py-2 text-sm font-medium text-gray-700 bg-apptivia-carbon-100 rounded-md hover:bg-apptivia-carbon-200 transition-colors"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={!form.account_name.trim() || saving}
-              className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="px-4 py-2 text-sm font-medium text-white bg-apptivia-coral rounded-md hover:bg-apptivia-coral disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               {saving ? 'Creating...' : 'Create Account'}
             </button>
@@ -937,12 +937,12 @@ export default function AccountIntelligence({ organizationId, userId, initialAcc
           />
           <div className="flex items-center gap-1">
             <button onClick={() => setFilterTier('all')}
-              className={`px-2.5 py-1.5 rounded-lg text-[10px] font-medium ${filterTier === 'all' ? 'bg-blue-500 text-white' : 'bg-gray-50 text-gray-500 hover:bg-gray-100'}`}>
+              className={`px-2.5 py-1.5 rounded-lg text-[10px] font-medium ${filterTier === 'all' ? 'bg-apptivia-coral text-white' : 'bg-apptivia-paper text-gray-500 hover:bg-apptivia-carbon-100'}`}>
               All
             </button>
             {Object.entries(TIER_STYLES).filter(([k]) => k !== 'untiered').map(([key, style]) => (
               <button key={key} onClick={() => setFilterTier(key)}
-                className={`px-2.5 py-1.5 rounded-lg text-[10px] font-medium ${filterTier === key ? `${style.bg} ${style.text}` : 'bg-gray-50 text-gray-500 hover:bg-gray-100'}`}>
+                className={`px-2.5 py-1.5 rounded-lg text-[10px] font-medium ${filterTier === key ? `${style.bg} ${style.text}` : 'bg-apptivia-paper text-gray-500 hover:bg-apptivia-carbon-100'}`}>
                 {style.label}
               </button>
             ))}
@@ -950,7 +950,7 @@ export default function AccountIntelligence({ organizationId, userId, initialAcc
         </div>
         <div className="flex items-center gap-2">
           <button onClick={importFromCompanies}
-            className="flex items-center gap-1.5 px-3 py-2 bg-gray-100 text-gray-600 rounded-lg text-xs font-medium hover:bg-gray-200 transition-colors">
+            className="flex items-center gap-1.5 px-3 py-2 bg-apptivia-carbon-100 text-gray-600 rounded-lg text-xs font-medium hover:bg-apptivia-carbon-200 transition-colors">
             <ArrowRight size={12} /> Import Companies
           </button>
           <button onClick={scoreAllAccounts} disabled={analyzing}
@@ -967,7 +967,7 @@ export default function AccountIntelligence({ organizationId, userId, initialAcc
       {/* Account List */}
       {filteredAccounts.length === 0 ? (
         <div className="bg-white rounded-2xl border border-gray-100 p-12 text-center">
-          <div className="w-16 h-16 bg-blue-50 rounded-2xl flex items-center justify-center mx-auto mb-4">
+          <div className="w-16 h-16 bg-apptivia-coral-tone-50 rounded-2xl flex items-center justify-center mx-auto mb-4">
             <Building2 size={28} className="text-blue-500" />
           </div>
           <h3 className="text-base font-bold text-gray-900 mb-1">
@@ -981,11 +981,11 @@ export default function AccountIntelligence({ organizationId, userId, initialAcc
           {accounts.length === 0 && (
             <div className="flex justify-center gap-3">
               <button onClick={() => setShowNew(true)}
-                className="px-5 py-2.5 bg-blue-600 text-white rounded-lg text-xs font-semibold hover:bg-blue-700 transition-colors">
+                className="px-5 py-2.5 bg-apptivia-coral text-white rounded-lg text-xs font-semibold hover:bg-apptivia-coral transition-colors">
                 Create Account
               </button>
               <button onClick={importFromCompanies}
-                className="px-5 py-2.5 bg-gray-100 text-gray-700 rounded-lg text-xs font-semibold hover:bg-gray-200 transition-colors">
+                className="px-5 py-2.5 bg-apptivia-carbon-100 text-gray-700 rounded-lg text-xs font-semibold hover:bg-apptivia-carbon-200 transition-colors">
                 Import from Companies
               </button>
             </div>

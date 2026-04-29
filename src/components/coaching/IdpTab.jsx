@@ -361,11 +361,11 @@ export default function IdpTab({ teamMembers }) {
         </div>
         {canManage && (
           <div className="flex items-center gap-2">
-            <button onClick={() => setShowTemplates(true)} className="flex items-center gap-1.5 px-3 py-2 text-sm font-semibold text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50">
+            <button onClick={() => setShowTemplates(true)} className="flex items-center gap-1.5 px-3 py-2 text-sm font-semibold text-gray-700 border border-gray-300 rounded-lg hover:bg-apptivia-paper">
               <LayoutTemplate size={14} /> Templates
             </button>
             <button onClick={() => { setEditingIdp(null); setForm(emptyForm()); setShowBuilder(true); }}
-              className="flex items-center gap-1.5 px-3 py-2 text-sm font-semibold text-white bg-blue-600 rounded-lg hover:bg-blue-700">
+              className="flex items-center gap-1.5 px-3 py-2 text-sm font-semibold text-white bg-apptivia-coral rounded-lg hover:bg-apptivia-coral">
               <Plus size={14} /> Create IDP
             </button>
           </div>
@@ -386,7 +386,7 @@ export default function IdpTab({ teamMembers }) {
             key={tab.id}
             onClick={() => setStatusFilter(tab.id)}
             className={`px-3 py-1 rounded-full text-xs font-medium transition-all ${
-              statusFilter === tab.id ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+              statusFilter === tab.id ? 'bg-apptivia-coral text-white' : 'bg-apptivia-carbon-100 text-gray-600 hover:bg-apptivia-carbon-200'
             }`}
           >
             {tab.label}
@@ -418,7 +418,7 @@ export default function IdpTab({ teamMembers }) {
           <p className="text-sm text-gray-500 mb-2">{isPowerUser ? 'No development plans assigned to you yet' : 'No development plans yet'}</p>
           {canManage && !showBuilder && (
             <button onClick={() => setShowTemplates(true)}
-              className="px-4 py-2 text-sm font-semibold text-blue-600 border border-blue-600 rounded-lg hover:bg-blue-50">
+              className="px-4 py-2 text-sm font-semibold text-blue-600 border border-blue-600 rounded-lg hover:bg-apptivia-coral-tone-50">
               Create Your First IDP
             </button>
           )}

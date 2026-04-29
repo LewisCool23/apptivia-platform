@@ -846,14 +846,14 @@ export default function Analytics() {
                         setSearchResults([]);
                         setShowSearchResults(false);
                       }}
-                      className="w-full text-left px-4 py-3 hover:bg-gray-50 border-b last:border-b-0 transition-colors"
+                      className="w-full text-left px-4 py-3 hover:bg-apptivia-paper border-b last:border-b-0 transition-colors"
                     >
                       <div className="flex items-start gap-3">
                         <span className="text-xl">{result.icon}</span>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2">
                             <span className="text-xs font-semibold text-gray-900">{result.title}</span>
-                            <span className="text-[10px] px-1.5 py-0.5 rounded bg-gray-100 text-gray-600">{result.type}</span>
+                            <span className="text-[10px] px-1.5 py-0.5 rounded bg-apptivia-carbon-100 text-gray-600">{result.type}</span>
                           </div>
                           {result.subtitle && (
                             <div className="text-[11px] text-gray-500 mt-0.5 truncate">{result.subtitle}</div>
@@ -879,7 +879,7 @@ export default function Analytics() {
             <button
               onClick={handleRefresh}
               disabled={isRefreshing}
-              className={`relative p-2 rounded-lg font-semibold text-sm bg-white text-gray-700 border border-gray-200 hover:bg-gray-50 group ${
+              className={`relative p-2 rounded-lg font-semibold text-sm bg-white text-gray-700 border border-gray-200 hover:bg-apptivia-paper group ${
                 isRefreshing ? 'opacity-50 cursor-not-allowed' : 'transition-all duration-200 hover:scale-105 hover:shadow-md'
               }`}
             >
@@ -896,7 +896,7 @@ export default function Analytics() {
                   d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" 
                 />
               </svg>
-              <span className="absolute top-full left-1/2 -translate-x-1/2 mt-2 px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 pointer-events-none group-hover:opacity-100 whitespace-nowrap transition-opacity z-50">
+              <span className="absolute top-full left-1/2 -translate-x-1/2 mt-2 px-2 py-1 bg-apptivia-ink text-white text-xs rounded opacity-0 pointer-events-none group-hover:opacity-100 whitespace-nowrap transition-opacity z-50">
                 {isRefreshing ? 'Refreshing...' : 'Refresh'}
               </span>
             </button>
@@ -934,8 +934,8 @@ export default function Analytics() {
                     onClick={() => setActiveTab(tab.id)}
                     className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-all ${
                       activeTab === tab.id
-                        ? 'bg-blue-600 text-white shadow-sm'
-                        : 'text-gray-600 hover:bg-gray-100'
+                        ? 'bg-apptivia-coral text-white shadow-sm'
+                        : 'text-gray-600 hover:bg-apptivia-carbon-100'
                     }`}
                   >
                     {tab.label}
@@ -948,7 +948,7 @@ export default function Analytics() {
                 <div className="flex items-center gap-2 mb-1">
                   <div className="text-xs text-gray-500">Quick date presets</div>
                   {weeklyAverage && (
-                    <span className="text-[10px] bg-blue-50 text-blue-600 px-1.5 py-0.5 rounded-full font-semibold">avg/wk</span>
+                    <span className="text-[10px] bg-apptivia-coral-tone-50 text-blue-600 px-1.5 py-0.5 rounded-full font-semibold">avg/wk</span>
                   )}
                   {formatPresetDateRange(filters.dateRange || 'This Week') && (
                     <span className="text-xs font-medium text-gray-700">
@@ -963,8 +963,8 @@ export default function Analytics() {
                       onClick={() => applyQuickRange(range)}
                       className={`px-3 py-1 rounded-full text-xs font-semibold transition-all ${
                         filters.dateRange === range
-                          ? 'bg-blue-600 text-white'
-                          : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                          ? 'bg-apptivia-coral text-white'
+                          : 'bg-apptivia-carbon-100 text-gray-600 hover:bg-apptivia-carbon-200'
                       }`}
                     >
                       {range}
@@ -991,14 +991,14 @@ export default function Analytics() {
               </div>
               <button
                 onClick={() => setFiltersOpen(true)}
-                className="px-3 py-1.5 rounded-md text-xs font-semibold bg-white border border-gray-200 text-gray-700 hover:bg-gray-50"
+                className="px-3 py-1.5 rounded-md text-xs font-semibold bg-white border border-gray-200 text-gray-700 hover:bg-apptivia-paper"
               >
                 More Filters
               </button>
             </div>
 
             {data.rows.length === 0 && (
-              <div className="bg-gray-50 border border-gray-200 rounded-lg p-6 text-center">
+              <div className="bg-apptivia-paper border border-gray-200 rounded-lg p-6 text-center">
                 <div className="text-gray-500 text-sm">No data for the selected filters.</div>
                 <div className="text-xs text-gray-400 mt-1">Try expanding the date range or teams.</div>
               </div>
@@ -1111,7 +1111,7 @@ export default function Analytics() {
                   <div className="flex items-center gap-2 mb-4">
                     <h3 className="text-sm font-semibold text-gray-900">All KPI Details</h3>
                     <InfoTooltip text="Detailed view of every active KPI metric — including those not shown on the scorecard." />
-                    <span className="text-[10px] bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full font-medium">{allKpiMetrics.length} KPIs</span>
+                    <span className="text-[10px] bg-apptivia-coral-tone-50 text-blue-700 px-2 py-0.5 rounded-full font-medium">{allKpiMetrics.length} KPIs</span>
                   </div>
                   <div className="overflow-x-auto">
                     <table className="w-full text-left text-xs">
@@ -1134,7 +1134,7 @@ export default function Analytics() {
                             ? Math.round(data.rows.reduce((sum, row) => sum + (row.kpis[metric.key]?.value || 0), 0) / data.rows.length * 10) / 10
                             : 0;
                           return (
-                            <tr key={metric.key} className="border-b border-gray-50 hover:bg-gray-50/50">
+                            <tr key={metric.key} className="border-b border-gray-50 hover:bg-apptivia-paper/50">
                               <td className="py-2.5 px-3">
                                 <div className="font-medium text-gray-900">{metric.name}</div>
                                 {metric.description && <div className="text-[10px] text-gray-400 mt-0.5 truncate max-w-[200px]">{metric.description}</div>}
@@ -1154,7 +1154,7 @@ export default function Analytics() {
                               <td className="py-2.5 px-3 font-medium text-gray-700">{avgValue}</td>
                               <td className="py-2.5 px-3">
                                 <div className="flex items-center gap-2">
-                                  <div className="w-16 bg-gray-100 rounded-full h-1.5">
+                                  <div className="w-16 bg-apptivia-carbon-100 rounded-full h-1.5">
                                     <div
                                       className={`h-full rounded-full transition-all ${scoreBgColor(avgPct)}`}
                                       style={{ width: `${Math.min(avgPct, 100)}%` }}
@@ -1169,7 +1169,7 @@ export default function Analytics() {
                                 {metric.show_on_scorecard ? (
                                   <span className="text-[10px] bg-emerald-50 text-emerald-700 px-1.5 py-0.5 rounded-full font-medium">Yes</span>
                                 ) : (
-                                  <span className="text-[10px] bg-gray-50 text-gray-400 px-1.5 py-0.5 rounded-full font-medium">No</span>
+                                  <span className="text-[10px] bg-apptivia-paper text-gray-400 px-1.5 py-0.5 rounded-full font-medium">No</span>
                                 )}
                               </td>
                               <td className="py-2.5 px-3">
@@ -1178,7 +1178,7 @@ export default function Analytics() {
                                   avgPct >= 80 ? 'bg-yellow-50 text-yellow-700' :
                                   avgPct >= 60 ? 'bg-orange-50 text-orange-700' :
                                   avgPct > 0 ? 'bg-red-50 text-red-600' :
-                                  'bg-gray-50 text-gray-400'
+                                  'bg-apptivia-paper text-gray-400'
                                 }`}>
                                   {avgPct >= 90 ? 'On Track' : avgPct >= 80 ? 'Acceptable' : avgPct >= 60 ? 'Needs Focus' : avgPct > 0 ? 'Critical' : 'No Data'}
                                 </span>
@@ -1236,7 +1236,7 @@ export default function Analytics() {
                           : pctOfIndustry >= 100 ? 'text-emerald-600'
                           : pctOfIndustry >= 75 ? 'text-amber-600'
                           : 'text-red-500';
-                        const bg = pctOfIndustry == null ? 'bg-gray-50'
+                        const bg = pctOfIndustry == null ? 'bg-apptivia-paper'
                           : pctOfIndustry >= 100 ? 'bg-emerald-50'
                           : pctOfIndustry >= 75 ? 'bg-amber-50'
                           : 'bg-red-50';
@@ -1287,7 +1287,7 @@ export default function Analytics() {
                 </div>
                 {engageLoading && <div className="text-center py-8 text-sm text-gray-500">Loading Engage data...</div>}
                 {!engageLoading && !engageStats && (
-                  <div className="bg-gray-50 border border-gray-200 rounded-lg p-6 text-center">
+                  <div className="bg-apptivia-paper border border-gray-200 rounded-lg p-6 text-center">
                     <div className="text-gray-500 text-sm">No Engage data found.</div>
                     <div className="text-xs text-gray-400 mt-1">Start using Engage to see analytics here.</div>
                     <button
@@ -1345,8 +1345,8 @@ export default function Analytics() {
                       <div className="text-xs font-semibold text-gray-700 mb-2">Quick Links</div>
                       <div className="flex flex-wrap gap-2">
                         <button onClick={() => navigate('/engage')} className="px-3 py-1.5 bg-white text-xs font-medium text-cyan-700 rounded-lg border border-cyan-200 hover:bg-cyan-50 transition-colors">Pipeline Operator</button>
-                        <button onClick={() => navigate('/engage')} className="px-3 py-1.5 bg-white text-xs font-medium text-blue-700 rounded-lg border border-blue-200 hover:bg-blue-50 transition-colors">Signal Prospecting</button>
-                        <button onClick={() => navigate('/engage')} className="px-3 py-1.5 bg-white text-xs font-medium text-purple-700 rounded-lg border border-purple-200 hover:bg-purple-50 transition-colors">Accounts</button>
+                        <button onClick={() => navigate('/engage')} className="px-3 py-1.5 bg-white text-xs font-medium text-blue-700 rounded-lg border border-blue-200 hover:bg-apptivia-coral-tone-50 transition-colors">Signal Prospecting</button>
+                        <button onClick={() => navigate('/engage')} className="px-3 py-1.5 bg-white text-xs font-medium text-purple-700 rounded-lg border border-purple-200 hover:bg-apptivia-carbon-100 transition-colors">Accounts</button>
                       </div>
                     </div>
                   </>
@@ -1368,7 +1368,7 @@ export default function Analytics() {
                     {/* Blurred placeholder rows */}
                     <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
                       <table className="w-full text-sm">
-                        <thead className="bg-gray-50">
+                        <thead className="bg-apptivia-paper">
                           <tr><th className="px-4 py-2 text-left text-xs font-semibold text-gray-600">Metric</th><th className="px-4 py-2 text-center text-xs font-semibold text-gray-600">Your Avg</th><th className="px-4 py-2 text-center text-xs font-semibold text-gray-600">Peer Avg</th><th className="px-4 py-2 text-center text-xs font-semibold text-gray-600">Percentile</th></tr>
                         </thead>
                         <tbody className="blur-[3px] pointer-events-none select-none">
@@ -1422,13 +1422,13 @@ export default function Analytics() {
                     )}
                   </div>
                 ) : benchmarksError ? (
-                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-center">
+                  <div className="bg-apptivia-coral-tone-50 border border-blue-200 rounded-lg p-4 text-center">
                     <p className="text-sm text-blue-700">Benchmarks activate once more Apptivia organizations join your segment. Check back soon.</p>
                   </div>
                 ) : benchmarks.length > 0 ? (
                   <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
                     <table className="w-full text-sm">
-                      <thead className="bg-gray-50">
+                      <thead className="bg-apptivia-paper">
                         <tr>
                           <th className="px-4 py-2 text-left text-xs font-semibold text-gray-600">Metric</th>
                           <th className="px-4 py-2 text-center text-xs font-semibold text-gray-600">Your Avg</th>
@@ -1438,11 +1438,11 @@ export default function Analytics() {
                       </thead>
                       <tbody>
                         {benchmarks.map(b => {
-                          const pctColor = b.percentile >= 75 ? 'bg-green-100 text-green-700' : b.percentile >= 50 ? 'bg-blue-100 text-blue-700' : 'bg-amber-100 text-amber-700';
+                          const pctColor = b.percentile >= 75 ? 'bg-green-100 text-green-700' : b.percentile >= 50 ? 'bg-apptivia-coral-tone-50 text-blue-700' : 'bg-amber-100 text-amber-700';
                           const trendIcon = b.trend === 'improving' ? '↑' : b.trend === 'declining' ? '↓' : '→';
                           const trendColor = b.trend === 'improving' ? 'text-green-600' : b.trend === 'declining' ? 'text-red-600' : 'text-gray-400';
                           return (
-                            <tr key={b.metric_name} className="border-t hover:bg-gray-50">
+                            <tr key={b.metric_name} className="border-t hover:bg-apptivia-paper">
                               <td className="px-4 py-3 text-gray-700 font-medium">{b.metric_name}</td>
                               <td className="px-4 py-3 text-center">
                                 {b.org_avg}% <span className={`ml-1 ${trendColor}`}>{trendIcon}</span>
@@ -1552,9 +1552,9 @@ export default function Analytics() {
                         <div className="flex items-center gap-4">
                           <div className={`w-9 h-9 rounded-full flex items-center justify-center text-base font-bold ${
                             i === 0 ? 'bg-yellow-100 text-yellow-600' :
-                            i === 1 ? 'bg-gray-100 text-gray-600' :
+                            i === 1 ? 'bg-apptivia-carbon-100 text-gray-600' :
                             i === 2 ? 'bg-orange-100 text-orange-600' :
-                            'bg-blue-100 text-blue-600'
+                            'bg-apptivia-coral-tone-50 text-blue-600'
                           }`}>
                             {i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : i + 1}
                           </div>
@@ -1602,6 +1602,7 @@ export default function Analytics() {
       >
             <ScorecardFilters
               showDate={true}
+              organizationId={orgId}
               onFilterChange={handleFiltersChange}
               initialFilters={defaultFilters}
               resetSignal={filtersResetSignal}

@@ -1,10 +1,10 @@
 import { FileEdit, Send, CheckCircle, ClipboardCheck, Eye, RotateCcw, Clock } from 'lucide-react';
 
 export const reviewStatusConfig = {
-  draft:                      { label: 'Draft',                color: 'bg-gray-100 text-gray-700',     icon: FileEdit,       borderColor: 'border-l-gray-400' },
+  draft:                      { label: 'Draft',                color: 'bg-apptivia-carbon-100 text-gray-700',     icon: FileEdit,       borderColor: 'border-l-gray-400' },
   pending_self_assessment:    { label: 'Awaiting Self-Assessment', color: 'bg-amber-100 text-amber-700', icon: Send,        borderColor: 'border-l-amber-500' },
-  self_assessment_submitted:  { label: 'Self-Assessment Done', color: 'bg-blue-100 text-blue-700',     icon: CheckCircle,    borderColor: 'border-l-blue-500' },
-  manager_review:             { label: 'Manager Review',       color: 'bg-purple-100 text-purple-700', icon: ClipboardCheck, borderColor: 'border-l-purple-500' },
+  self_assessment_submitted:  { label: 'Self-Assessment Done', color: 'bg-apptivia-coral-tone-50 text-blue-700',     icon: CheckCircle,    borderColor: 'border-l-blue-500' },
+  manager_review:             { label: 'Manager Review',       color: 'bg-apptivia-carbon-100 text-purple-700', icon: ClipboardCheck, borderColor: 'border-l-purple-500' },
   finalized:                  { label: 'Finalized',            color: 'bg-green-100 text-green-700',   icon: Eye,            borderColor: 'border-l-green-500' },
   acknowledged:               { label: 'Acknowledged',         color: 'bg-emerald-100 text-emerald-700', icon: CheckCircle, borderColor: 'border-l-emerald-500' },
   reopened:                   { label: 'Reopened',             color: 'bg-orange-100 text-orange-700', icon: RotateCcw,      borderColor: 'border-l-orange-500' },

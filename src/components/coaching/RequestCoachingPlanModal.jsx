@@ -204,7 +204,7 @@ export default function RequestCoachingPlanModal({ isOpen, onClose }) {
             <h3 className="text-base font-semibold text-gray-900">Request Coaching Plan</h3>
             <p className="text-xs text-gray-500 mt-0.5">Your manager will be notified and can create a personalized plan for you.</p>
           </div>
-          <button onClick={onClose} className="p-1 text-gray-400 hover:text-gray-600 rounded-md hover:bg-gray-100">
+          <button onClick={onClose} className="p-1 text-gray-400 hover:text-gray-600 rounded-md hover:bg-apptivia-carbon-100">
             <X size={18} />
           </button>
         </div>
@@ -219,7 +219,7 @@ export default function RequestCoachingPlanModal({ isOpen, onClose }) {
             <>
               {/* 5-week performance snapshot */}
               {avgScore !== null && (
-                <div className="bg-gray-50 rounded-lg p-3">
+                <div className="bg-apptivia-paper rounded-lg p-3">
                   <div className="flex items-center justify-between mb-2">
                     <span className="text-xs font-medium text-gray-600">5-Week Avg Score</span>
                     <div className="flex items-center gap-1.5">
@@ -276,17 +276,17 @@ export default function RequestCoachingPlanModal({ isOpen, onClose }) {
         </div>
 
         {/* Footer */}
-        <div className="flex justify-end gap-2 px-6 py-3 border-t border-gray-100 bg-gray-50">
+        <div className="flex justify-end gap-2 px-6 py-3 border-t border-gray-100 bg-apptivia-paper">
           <button
             onClick={onClose}
-            className="px-4 py-2 text-sm font-medium text-gray-600 border border-gray-300 rounded-md hover:bg-gray-100"
+            className="px-4 py-2 text-sm font-medium text-gray-600 border border-gray-300 rounded-md hover:bg-apptivia-carbon-100"
           >
             Cancel
           </button>
           <button
             onClick={handleSubmit}
             disabled={submitting || loading}
-            className="flex items-center gap-1.5 px-4 py-2 text-sm font-semibold bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-60"
+            className="flex items-center gap-1.5 px-4 py-2 text-sm font-semibold bg-apptivia-coral text-white rounded-md hover:bg-apptivia-coral disabled:opacity-60"
           >
             {submitting ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />}
             {submitting ? 'Sending...' : 'Send Request'}

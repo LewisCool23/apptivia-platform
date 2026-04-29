@@ -272,8 +272,8 @@ export default function Systems() {
               {showSearchResults && searchResults.length > 0 && (
                 <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-96 overflow-y-auto z-50">
                   {searchResults.map((result, idx) => (
-                    <button key={idx} onClick={() => { navigate(result.link); setSearchQuery(''); setSearchResults([]); setShowSearchResults(false); }} className="w-full text-left px-4 py-3 hover:bg-gray-50 border-b last:border-b-0 transition-colors">
-                      <div className="flex items-start gap-3"><span className="text-xl">{result.icon}</span><div className="flex-1 min-w-0"><div className="flex items-center gap-2"><span className="text-xs font-semibold text-gray-900">{result.title}</span><span className="text-[10px] px-1.5 py-0.5 rounded bg-gray-100 text-gray-600">{result.type}</span></div>{result.subtitle && <div className="text-[11px] text-gray-500 mt-0.5 truncate">{result.subtitle}</div>}</div></div>
+                    <button key={idx} onClick={() => { navigate(result.link); setSearchQuery(''); setSearchResults([]); setShowSearchResults(false); }} className="w-full text-left px-4 py-3 hover:bg-apptivia-paper border-b last:border-b-0 transition-colors">
+                      <div className="flex items-start gap-3"><span className="text-xl">{result.icon}</span><div className="flex-1 min-w-0"><div className="flex items-center gap-2"><span className="text-xs font-semibold text-gray-900">{result.title}</span><span className="text-[10px] px-1.5 py-0.5 rounded bg-apptivia-carbon-100 text-gray-600">{result.type}</span></div>{result.subtitle && <div className="text-[11px] text-gray-500 mt-0.5 truncate">{result.subtitle}</div>}</div></div>
                     </button>
                   ))}
                 </div>
@@ -282,11 +282,11 @@ export default function Systems() {
               {searching && <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg p-4 z-50"><div className="text-sm text-gray-500 text-center">Searching...</div></div>}
             </div>
             {/* Refresh */}
-            <button onClick={handleRefresh} disabled={isRefreshing} className={`relative p-2 rounded-lg font-semibold text-sm bg-white text-gray-700 border border-gray-200 hover:bg-gray-50 group ${isRefreshing ? 'opacity-50 cursor-not-allowed' : 'transition-all duration-200 hover:scale-105 hover:shadow-md'}`} title="Refresh data">
+            <button onClick={handleRefresh} disabled={isRefreshing} className={`relative p-2 rounded-lg font-semibold text-sm bg-white text-gray-700 border border-gray-200 hover:bg-apptivia-paper group ${isRefreshing ? 'opacity-50 cursor-not-allowed' : 'transition-all duration-200 hover:scale-105 hover:shadow-md'}`} title="Refresh data">
               <svg className={`w-[18px] h-[18px] ${isRefreshing ? 'animate-spin' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
               </svg>
-              <span className="absolute top-full left-1/2 -translate-x-1/2 mt-2 px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 pointer-events-none group-hover:opacity-100 whitespace-nowrap transition-opacity z-50">
+              <span className="absolute top-full left-1/2 -translate-x-1/2 mt-2 px-2 py-1 bg-apptivia-ink text-white text-xs rounded opacity-0 pointer-events-none group-hover:opacity-100 whitespace-nowrap transition-opacity z-50">
                 {isRefreshing ? 'Refreshing...' : 'Refresh'}
               </span>
             </button>
@@ -320,7 +320,7 @@ export default function Systems() {
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
                 className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-all ${
-                  activeTab === tab.id ? 'bg-blue-600 text-white shadow-sm' : 'text-gray-600 hover:bg-gray-100'
+                  activeTab === tab.id ? 'bg-apptivia-coral text-white shadow-sm' : 'text-gray-600 hover:bg-apptivia-carbon-100'
                 }`}
               >
                 {tab.label}
@@ -367,10 +367,10 @@ export default function Systems() {
                   </div>
                   <div className="mb-3">
                     {isConnected && !isSyncing && <span className="inline-flex items-center gap-1 text-xs bg-green-50 text-green-700 px-2.5 py-1 rounded-full font-medium"><CheckCircle size={12} /> Connected</span>}
-                    {isSyncing && <span className="inline-flex items-center gap-1 text-xs bg-blue-50 text-blue-700 px-2.5 py-1 rounded-full font-medium"><Loader2 size={12} className="animate-spin" /> Syncing...</span>}
+                    {isSyncing && <span className="inline-flex items-center gap-1 text-xs bg-apptivia-coral-tone-50 text-blue-700 px-2.5 py-1 rounded-full font-medium"><Loader2 size={12} className="animate-spin" /> Syncing...</span>}
                     {isError && <span className="inline-flex items-center gap-1 text-xs bg-red-50 text-red-700 px-2.5 py-1 rounded-full font-medium"><AlertCircle size={12} /> Error</span>}
-                    {!integration && <span className="inline-flex items-center gap-1 text-xs bg-gray-50 text-gray-500 px-2.5 py-1 rounded-full font-medium">Available</span>}
-                    {integration && integration.status === 'disconnected' && <span className="inline-flex items-center gap-1 text-xs bg-gray-50 text-gray-500 px-2.5 py-1 rounded-full font-medium">Disconnected</span>}
+                    {!integration && <span className="inline-flex items-center gap-1 text-xs bg-apptivia-paper text-gray-500 px-2.5 py-1 rounded-full font-medium">Available</span>}
+                    {integration && integration.status === 'disconnected' && <span className="inline-flex items-center gap-1 text-xs bg-apptivia-paper text-gray-500 px-2.5 py-1 rounded-full font-medium">Disconnected</span>}
                   </div>
                   {isConnected && integration && (
                     <div className="text-xs text-gray-400 mb-3 space-y-1">
@@ -382,7 +382,7 @@ export default function Systems() {
                     {isConnected ? (
                       <>
                         <div className="flex gap-2">
-                          <button onClick={() => triggerSync(integration.id)} disabled={isSyncing} className="flex-1 flex items-center justify-center gap-1.5 bg-blue-600 text-white py-2 rounded-md text-sm font-medium hover:bg-blue-700 disabled:opacity-50 transition-colors">
+                          <button onClick={() => triggerSync(integration.id)} disabled={isSyncing} className="flex-1 flex items-center justify-center gap-1.5 bg-apptivia-coral text-white py-2 rounded-md text-sm font-medium hover:bg-apptivia-coral disabled:opacity-50 transition-colors">
                             {isSyncing ? <Loader2 size={14} className="animate-spin" /> : <RefreshCw size={14} />}
                             {isSyncing ? 'Syncing...' : 'Sync Now'}
                           </button>
@@ -394,7 +394,7 @@ export default function Systems() {
                               setSyncHistory(history);
                               setSyncHistoryLoading(false);
                             }}
-                            className="px-3 py-2 bg-gray-100 text-gray-600 rounded-md hover:bg-gray-200 transition-colors"
+                            className="px-3 py-2 bg-apptivia-carbon-100 text-gray-600 rounded-md hover:bg-apptivia-carbon-200 transition-colors"
                             title="Sync History"
                           >
                             <History size={14} />
@@ -407,12 +407,12 @@ export default function Systems() {
                     ) : API_KEY_PROVIDERS[template.integration_type] ? (
                       <button
                         onClick={() => setCredentialsModal(template.integration_type)}
-                        className="w-full bg-blue-600 text-white py-2 rounded-md text-sm font-medium hover:bg-blue-700 transition-colors flex items-center justify-center gap-2"
+                        className="w-full bg-apptivia-coral text-white py-2 rounded-md text-sm font-medium hover:bg-apptivia-coral transition-colors flex items-center justify-center gap-2"
                       >
                         <Key size={14} /> Connect with API Key
                       </button>
                     ) : (
-                      <button onClick={() => connectOAuth(template.integration_type)} className="w-full bg-blue-600 text-white py-2 rounded-md text-sm font-medium hover:bg-blue-700 transition-colors">
+                      <button onClick={() => connectOAuth(template.integration_type)} className="w-full bg-apptivia-coral text-white py-2 rounded-md text-sm font-medium hover:bg-apptivia-coral transition-colors">
                         Connect
                       </button>
                     )}
@@ -495,7 +495,7 @@ export default function Systems() {
               </div>
               <div className="max-h-[75vh] overflow-y-auto pr-1">
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-                  <div className="bg-gray-50 rounded-xl p-3 border">
+                  <div className="bg-apptivia-paper rounded-xl p-3 border">
                     <div className="text-xs font-semibold text-gray-600 mb-2">Users</div>
                     <div className="space-y-2 max-h-[420px] overflow-auto">
                       {usersList.length === 0 ? (
@@ -505,7 +505,7 @@ export default function Systems() {
                           <button
                             key={u.id}
                             onClick={() => setSelectedUserId(String(u.id))}
-                            className={`w-full text-left px-3 py-2 rounded-lg text-xs font-medium transition-all ${String(u.id) === String(selectedUserId) ? 'bg-blue-600 text-white' : 'bg-white text-gray-700 hover:bg-gray-100'}`}
+                            className={`w-full text-left px-3 py-2 rounded-lg text-xs font-medium transition-all ${String(u.id) === String(selectedUserId) ? 'bg-apptivia-coral text-white' : 'bg-white text-gray-700 hover:bg-apptivia-carbon-100'}`}
                           >
                             <div>{`${u.first_name || ''} ${u.last_name || ''}`.trim() || u.email || 'User'}</div>
                             <div className={`${String(u.id) === String(selectedUserId) ? 'text-blue-100' : 'text-gray-400'} text-[10px]`}>{normalizeRole(u.role)}</div>
@@ -534,7 +534,7 @@ export default function Systems() {
                           className="flex items-start gap-3 border rounded-lg p-3 text-left hover:shadow-sm transition-all"
                           disabled={!selectedUserId}
                         >
-                          <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${perm.enabled ? 'bg-green-100 text-green-700' : 'bg-gray-200 text-gray-500'}`}>
+                          <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${perm.enabled ? 'bg-green-100 text-green-700' : 'bg-apptivia-carbon-200 text-gray-500'}`}>
                             {perm.enabled ? '✓' : '—'}
                           </div>
                           <div>
@@ -548,7 +548,7 @@ export default function Systems() {
                       <button onClick={handleDiscardPermissions} className="px-3 py-1.5 text-xs rounded border" disabled={!selectedUserId || !hasPermissionChanges}>
                         Discard
                       </button>
-                      <button onClick={handleSavePermissions} className="px-3 py-1.5 text-xs rounded bg-blue-600 text-white disabled:opacity-60" disabled={!selectedUserId || !hasPermissionChanges}>
+                      <button onClick={handleSavePermissions} className="px-3 py-1.5 text-xs rounded bg-apptivia-coral text-white disabled:opacity-60" disabled={!selectedUserId || !hasPermissionChanges}>
                         Save changes
                       </button>
                     </div>

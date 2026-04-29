@@ -85,7 +85,7 @@ export default function EngageDialpadPanel({ onCall, isDeviceReady, onClose, use
           {number && (
             <button
               onClick={handleBackspace}
-              className="text-gray-400 hover:text-gray-600 transition-colors p-1 rounded-lg hover:bg-gray-100"
+              className="text-gray-400 hover:text-gray-600 transition-colors p-1 rounded-lg hover:bg-apptivia-carbon-100"
             >
               <Delete size={16} />
             </button>
@@ -98,7 +98,7 @@ export default function EngageDialpadPanel({ onCall, isDeviceReady, onClose, use
             <button
               key={key}
               onClick={() => handleKey(key)}
-              className="h-12 rounded-xl bg-gray-50 hover:bg-gray-100 active:bg-gray-200 text-gray-800 font-semibold text-lg transition-colors border border-gray-100"
+              className="h-12 rounded-xl bg-apptivia-paper hover:bg-apptivia-carbon-100 active:bg-apptivia-carbon-200 text-gray-800 font-semibold text-lg transition-colors border border-gray-100"
             >
               {key}
             </button>
@@ -109,7 +109,7 @@ export default function EngageDialpadPanel({ onCall, isDeviceReady, onClose, use
         <button
           onClick={handleCall}
           disabled={!number || !isDeviceReady}
-          className="w-16 h-16 rounded-full bg-emerald-500 hover:bg-emerald-600 active:bg-emerald-700 disabled:bg-gray-200 disabled:cursor-not-allowed text-white flex items-center justify-center shadow-lg transition-colors mt-1"
+          className="w-16 h-16 rounded-full bg-emerald-500 hover:bg-emerald-600 active:bg-emerald-700 disabled:bg-apptivia-carbon-200 disabled:cursor-not-allowed text-white flex items-center justify-center shadow-lg transition-colors mt-1"
           title={isDeviceReady ? 'Call' : 'Dialer initializing...'}
         >
           <Phone size={22} />
@@ -131,7 +131,7 @@ export default function EngageDialpadPanel({ onCall, isDeviceReady, onClose, use
                 <button
                   key={call.id}
                   onClick={() => { setNumber(call.phone_number || ''); setName(call.contact_name || ''); }}
-                  className="w-full flex items-center justify-between px-2 py-1.5 rounded-lg hover:bg-gray-50 transition-colors text-left"
+                  className="w-full flex items-center justify-between px-2 py-1.5 rounded-lg hover:bg-apptivia-paper transition-colors text-left"
                 >
                   <div className="min-w-0">
                     <span className="text-xs font-medium text-gray-700 block truncate">{call.contact_name || 'Unknown'}</span>

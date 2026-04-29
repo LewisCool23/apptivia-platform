@@ -3,13 +3,13 @@ import { Link } from 'react-router-dom';
 
 export default function TermsOfService() {
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-apptivia-paper">
       <header className="bg-white border-b border-gray-200">
         <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
           <Link to="/" className="text-xl font-bold text-blue-600">Apptivia</Link>
           <div className="flex items-center gap-4">
             <Link to="/login" className="text-sm text-gray-600 hover:text-gray-900">Log In</Link>
-            <Link to="/signup" className="bg-blue-600 text-white text-sm px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+            <Link to="/signup" className="bg-apptivia-coral text-white text-sm px-4 py-2 rounded-lg hover:bg-apptivia-coral transition-colors">
               Start Free Trial
             </Link>
           </div>
@@ -159,7 +159,7 @@ export default function TermsOfService() {
         </div>
       </main>
 
-      <footer className="bg-gray-900 text-gray-400 py-8">
+      <footer className="bg-apptivia-ink text-gray-400 py-8">
         <div className="max-w-6xl mx-auto px-6 text-center text-sm">
           <p>&copy; 2026 Apptivia. All rights reserved.</p>
           <div className="mt-2 flex justify-center gap-6">

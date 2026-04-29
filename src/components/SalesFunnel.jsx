@@ -33,7 +33,7 @@ function ConversionArrow({ fromValue, toValue, industryFrom, industryTo }) {
   const industry = conversionRate(industryFrom, industryTo);
   if (actual == null) return (
     <div className="flex items-center justify-center py-1">
-      <div className="w-px h-4 bg-gray-200" />
+      <div className="w-px h-4 bg-apptivia-carbon-200" />
     </div>
   );
   const pct = industry ? parseFloat(actual) / parseFloat(industry) : null;
@@ -66,13 +66,13 @@ export default function SalesFunnel({ kpiValues = {}, benchmarks = {}, goals = {
       <div className="flex items-center justify-between mb-5">
         <div className="flex items-center gap-2">
           <h3 className="text-sm font-semibold text-gray-800">Sales Funnel</h3>
-          <span className="text-xs text-gray-400 bg-gray-50 px-2 py-0.5 rounded-full">
+          <span className="text-xs text-gray-400 bg-apptivia-paper px-2 py-0.5 rounded-full">
             {viewMode === 'team' ? 'Team Total' : 'Per Rep Avg'}
           </span>
         </div>
         <div className="flex items-center gap-3">
           {/* Benchmark type selector */}
-          <div className="flex items-center gap-1 bg-gray-50 rounded-lg p-0.5">
+          <div className="flex items-center gap-1 bg-apptivia-paper rounded-lg p-0.5">
             {['industry', 'team_p75', 'goal'].map(type => (
               <button
                 key={type}
@@ -134,7 +134,7 @@ export default function SalesFunnel({ kpiValues = {}, benchmarks = {}, goals = {
                 }}
               >
                 {/* Background track */}
-                <div className="relative h-14 bg-gray-50 rounded-lg flex items-center px-4 overflow-hidden">
+                <div className="relative h-14 bg-apptivia-paper rounded-lg flex items-center px-4 overflow-hidden">
                   {/* Fill bar */}
                   <div
                     className="absolute left-0 top-0 h-full rounded-lg transition-all duration-700"
@@ -146,7 +146,7 @@ export default function SalesFunnel({ kpiValues = {}, benchmarks = {}, goals = {
                   {/* Goal marker line */}
                   {goal != null && maxValue > 0 && (
                     <div
-                      className="absolute top-1 bottom-1 w-0.5 rounded-full bg-gray-400 opacity-50"
+                      className="absolute top-1 bottom-1 w-0.5 rounded-full bg-apptivia-carbon-400 opacity-50"
                       style={{ left: `${Math.min((goal / maxValue) * 100, 100)}%` }}
                       title={`Goal: ${goal}`}
                     />
@@ -183,7 +183,7 @@ export default function SalesFunnel({ kpiValues = {}, benchmarks = {}, goals = {
       {/* Legend */}
       <div className="mt-5 pt-4 border-t border-gray-50 flex flex-wrap items-center gap-x-5 gap-y-2 text-xs text-gray-500">
         <div className="flex items-center gap-1.5">
-          <div className="w-4 h-0.5 bg-gray-400 opacity-50" />
+          <div className="w-4 h-0.5 bg-apptivia-carbon-400 opacity-50" />
           <span>Goal marker</span>
         </div>
         <div className="flex items-center gap-1.5">

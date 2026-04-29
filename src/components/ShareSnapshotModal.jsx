@@ -112,14 +112,14 @@ export default function ShareSnapshotModal({ isOpen, onClose, userData }) {
           </h2>
           <button
             onClick={onClose}
-            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+            className="p-2 hover:bg-apptivia-carbon-100 rounded-lg transition-colors"
           >
             <X size={20} className="text-gray-500" />
           </button>
         </div>
 
         {/* Snapshot Preview */}
-        <div className="flex-1 overflow-y-auto p-4 bg-gray-50 min-h-0">
+        <div className="flex-1 overflow-y-auto p-4 bg-apptivia-paper min-h-0">
           <div 
             ref={snapshotRef}
             className="bg-gradient-to-br from-blue-500 via-purple-500 to-pink-500 rounded-xl p-6 text-white shadow-2xl"
@@ -225,7 +225,7 @@ export default function ShareSnapshotModal({ isOpen, onClose, userData }) {
                 <button
                   onClick={handleDownload}
                   disabled={downloading}
-                  className="flex items-center gap-1.5 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="flex items-center gap-1.5 px-4 py-2 bg-apptivia-coral text-white rounded-lg text-sm font-medium hover:bg-apptivia-coral transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <Download size={16} />
                   {downloading ? 'Downloading...' : 'Download'}
@@ -233,7 +233,7 @@ export default function ShareSnapshotModal({ isOpen, onClose, userData }) {
                 
                 <button
                   onClick={handleCopyLink}
-                  className="flex items-center gap-1.5 px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 transition-colors"
+                  className="flex items-center gap-1.5 px-4 py-2 bg-apptivia-ink text-white rounded-lg text-sm font-medium hover:bg-apptivia-ink transition-colors"
                 >
                   {copied ? (
                     <>
@@ -306,7 +306,7 @@ export default function ShareSnapshotModal({ isOpen, onClose, userData }) {
                 <button
                   onClick={handleSendEmail}
                   disabled={sending}
-                  className="flex-1 flex items-center justify-center gap-1.5 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="flex-1 flex items-center justify-center gap-1.5 px-4 py-2 bg-apptivia-coral text-white rounded-lg text-sm font-medium hover:bg-apptivia-coral transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <Mail size={16} />
                   {sending ? 'Sending...' : 'Send Email'}
@@ -318,7 +318,7 @@ export default function ShareSnapshotModal({ isOpen, onClose, userData }) {
                     setEmailRecipients('');
                     setEmailSubject('');
                   }}
-                  className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-300 transition-colors"
+                  className="px-4 py-2 bg-apptivia-carbon-200 text-gray-700 rounded-lg text-sm font-medium hover:bg-apptivia-carbon-300 transition-colors"
                 >
                   Cancel
                 </button>

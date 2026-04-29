@@ -37,7 +37,7 @@ export default function StepOptionalSetup({ wizardState, updateState }) {
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-3 mb-2">
-        <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center">
+        <div className="w-10 h-10 bg-apptivia-carbon-100 rounded-lg flex items-center justify-center">
           <Settings size={20} className="text-gray-600" />
         </div>
         <div>
@@ -53,7 +53,7 @@ export default function StepOptionalSetup({ wizardState, updateState }) {
         <button
           type="button"
           onClick={() => toggle('wallboard')}
-          className="w-full flex items-center justify-between px-4 py-3 bg-gray-50 hover:bg-gray-100 transition-colors"
+          className="w-full flex items-center justify-between px-4 py-3 bg-apptivia-paper hover:bg-apptivia-carbon-100 transition-colors"
         >
           <div className="flex items-center gap-2">
             <Monitor size={16} className="text-blue-600" />
@@ -106,13 +106,13 @@ export default function StepOptionalSetup({ wizardState, updateState }) {
         <button
           type="button"
           onClick={() => toggle('reports')}
-          className="w-full flex items-center justify-between px-4 py-3 bg-gray-50 hover:bg-gray-100 transition-colors"
+          className="w-full flex items-center justify-between px-4 py-3 bg-apptivia-paper hover:bg-apptivia-carbon-100 transition-colors"
         >
           <div className="flex items-center gap-2">
             <FileText size={16} className="text-purple-600" />
             <span className="text-sm font-medium text-gray-900">Scheduled Reports</span>
             {!hasReports && (
-              <span className="text-xs bg-gray-200 text-gray-500 px-2 py-0.5 rounded-full">Pro+</span>
+              <span className="text-xs bg-apptivia-carbon-200 text-gray-500 px-2 py-0.5 rounded-full">Pro+</span>
             )}
           </div>
           {expanded.reports ? <ChevronDown size={16} className="text-gray-400" /> : <ChevronRight size={16} className="text-gray-400" />}
@@ -137,7 +137,7 @@ export default function StepOptionalSetup({ wizardState, updateState }) {
         <button
           type="button"
           onClick={() => toggle('notifications')}
-          className="w-full flex items-center justify-between px-4 py-3 bg-gray-50 hover:bg-gray-100 transition-colors"
+          className="w-full flex items-center justify-between px-4 py-3 bg-apptivia-paper hover:bg-apptivia-carbon-100 transition-colors"
         >
           <div className="flex items-center gap-2">
             <Bell size={16} className="text-amber-600" />

@@ -61,6 +61,37 @@ const CONTEST_TEMPLATES = [
     reward_value: 'Team Lunch',
     participant_type: 'team',
   },
+  // F25: New KPI contest templates
+  {
+    id: 'dials-challenge',
+    name: 'Dials Challenge',
+    description: 'Reward the highest outbound dial volume.',
+    kpi_key: 'dials',
+    calculation_type: 'sum',
+    reward_type: 'prize',
+    reward_value: 'Top Dialer Award',
+    participant_type: 'individual',
+  },
+  {
+    id: 'conversations-sprint',
+    name: 'Conversations Sprint',
+    description: 'Drive meaningful conversations with prospects.',
+    kpi_key: 'conversations',
+    calculation_type: 'sum',
+    reward_type: 'gift_card',
+    reward_value: '$75 Gift Card',
+    participant_type: 'individual',
+  },
+  {
+    id: 'discovery-race',
+    name: 'Discovery Race',
+    description: 'Complete the most discovery calls in the contest period.',
+    kpi_key: 'discovery_calls',
+    calculation_type: 'sum',
+    reward_type: 'bonus',
+    reward_value: '$200 Bonus',
+    participant_type: 'individual',
+  },
 ];
 
 export default function ContestCreationModal({ isOpen, onClose, currentUserId, organizationId, contestToEdit }: ContestCreationModalProps) {
@@ -156,6 +187,24 @@ export default function ContestCreationModal({ isOpen, onClose, currentUserId, o
     if (formData.reward_type && formData.reward_type !== 'none' && !formData.reward_value) {
       toast.error('Please enter a reward value');
       return;
+    }
+
+    // F8: Block nonsensical derived KPI + sum combinations
+    const derivedKpis = ['win_rate', 'average_deal_size', 'talk_to_listen_ratio', 'interactivity_score'];
+    if (formData.calculation_type === 'sum' && derivedKpis.includes(formData.kpi_key)) {
+      toast.error('Win Rate, Average Deal Size, and ratio KPIs cannot use "Sum" scoring. Use "Average" or "Max" instead.');
+      return;
+    }
+
+    // F24: Warn if contest dates don't align with Monday-Sunday KPI periods
+    const startDay = new Date(formData.start_date).getUTCDay();
+    const endDay = new Date(formData.end_date).getUTCDay();
+    if (startDay !== 1 || endDay !== 0) { // 1=Monday, 0=Sunday
+      const proceed = window.confirm(
+        'Contest dates do not align with KPI periods (Monday–Sunday). ' +
+        'This may result in incomplete weekly scores for the first/last week. Continue anyway?'
+      );
+      if (!proceed) return;
     }
 
     try {
@@ -327,7 +376,7 @@ export default function ContestCreationModal({ isOpen, onClose, currentUserId, o
                   key={template.id}
                   type="button"
                   onClick={() => applyTemplate(template.id)}
-                  className="px-3 py-1.5 text-xs rounded-full bg-slate-100 text-slate-700 hover:bg-slate-200"
+                  className="px-3 py-1.5 text-xs rounded-full bg-apptivia-carbon-100 text-slate-700 hover:bg-apptivia-carbon-200"
                 >
                   {template.name}
                 </button>
@@ -507,7 +556,7 @@ export default function ContestCreationModal({ isOpen, onClose, currentUserId, o
           )}
 
           {/* Info Box */}
-          <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded">
+          <div className="mt-4 p-3 bg-apptivia-coral-tone-50 border border-blue-200 rounded">
             <div className="text-sm text-blue-800">
               <strong>Note:</strong> All active team members will be automatically enrolled in this contest. 
               You can also add specific members later using the <strong>Add Members</strong> button on the contest card.
@@ -520,7 +569,7 @@ export default function ContestCreationModal({ isOpen, onClose, currentUserId, o
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 px-4 py-2 border border-gray-300 rounded hover:bg-gray-50 font-semibold"
+              className="flex-1 px-4 py-2 border border-gray-300 rounded hover:bg-apptivia-paper font-semibold"
               disabled={saving}
             >
               Cancel

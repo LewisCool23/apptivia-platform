@@ -32,9 +32,9 @@ export default function IconButton({
   };
 
   const variantClasses = {
-    ghost: 'hover:bg-gray-100 text-gray-500 hover:text-gray-700',
-    outline: 'border border-gray-300 hover:bg-gray-50 text-gray-600 hover:text-gray-800',
-    solid: 'bg-blue-500 text-white hover:bg-blue-600',
+    ghost: 'hover:bg-apptivia-carbon-100 text-gray-500 hover:text-gray-700',
+    outline: 'border border-gray-300 hover:bg-apptivia-paper text-gray-600 hover:text-gray-800',
+    solid: 'bg-apptivia-coral text-white hover:bg-apptivia-coral',
   };
 
   return (

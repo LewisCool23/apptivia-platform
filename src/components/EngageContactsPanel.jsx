@@ -48,7 +48,7 @@ export default function EngageContactsPanel({ organizationId, onCallContact, onC
         <div className="flex items-center gap-2">
           <UserPlus size={14} className="text-blue-500" />
           <h3 className="font-semibold text-gray-900 text-sm">Saved Contacts</h3>
-          <span className="text-[10px] bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded-full">{contacts.length}</span>
+          <span className="text-[10px] bg-apptivia-carbon-100 text-gray-500 px-1.5 py-0.5 rounded-full">{contacts.length}</span>
         </div>
         <button onClick={onClose} className="text-gray-400 hover:text-gray-600 transition-colors">
           <X size={15} />
@@ -91,7 +91,7 @@ export default function EngageContactsPanel({ organizationId, onCallContact, onC
               const name = contact.full_name?.trim() || `${contact.first_name || ''} ${contact.last_name || ''}`.trim() || 'Unknown';
               const initial = name[0]?.toUpperCase() || '?';
               return (
-                <div key={contact.id} className="px-4 py-3 hover:bg-gray-50/50 transition-colors group">
+                <div key={contact.id} className="px-4 py-3 hover:bg-apptivia-paper/50 transition-colors group">
                   <div className="flex items-start gap-2.5">
                     <div className="w-7 h-7 rounded-full bg-gradient-to-br from-blue-400 to-cyan-500 flex items-center justify-center text-white text-[10px] font-bold flex-shrink-0 mt-0.5">
                       {initial}

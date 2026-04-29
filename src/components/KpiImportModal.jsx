@@ -246,7 +246,7 @@ export default function KpiImportModal({ isOpen, onClose, onImportComplete, orga
               </p>
             </div>
           </div>
-          <button onClick={handleClose} className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
+          <button onClick={handleClose} className="p-2 hover:bg-apptivia-carbon-100 rounded-lg transition-colors">
             <X size={20} className="text-gray-500" />
           </button>
         </div>
@@ -312,7 +312,7 @@ export default function KpiImportModal({ isOpen, onClose, onImportComplete, orga
           {step === 2 && (
             <div className="space-y-4">
               {/* Summary bar */}
-              <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+              <div className="flex items-center justify-between p-3 bg-apptivia-paper rounded-lg">
                 <div>
                   <div className="font-semibold">{parsedData.length} rows — {uniqueEmails.size} reps, {uniqueWeeks.size} weeks, {kpiColHeaders.length} KPIs</div>
                   <div className="text-sm text-gray-600">Review the data below before importing</div>
@@ -363,7 +363,7 @@ export default function KpiImportModal({ isOpen, onClose, onImportComplete, orga
               {/* Preview table */}
               <div className="overflow-x-auto border rounded-lg max-h-[40vh]">
                 <table className="w-full text-xs">
-                  <thead className="bg-gray-50 border-b sticky top-0">
+                  <thead className="bg-apptivia-paper border-b sticky top-0">
                     <tr>
                       <th className="px-2 py-2 text-left font-semibold">#</th>
                       <th className="px-2 py-2 text-left font-semibold">week_start</th>
@@ -375,7 +375,7 @@ export default function KpiImportModal({ isOpen, onClose, onImportComplete, orga
                   </thead>
                   <tbody>
                     {parsedData.slice(0, 100).map((row, i) => (
-                      <tr key={i} className={`border-b ${errorRows.has(row._rowNumber) ? 'bg-red-50' : 'hover:bg-gray-50'}`}>
+                      <tr key={i} className={`border-b ${errorRows.has(row._rowNumber) ? 'bg-red-50' : 'hover:bg-apptivia-paper'}`}>
                         <td className="px-2 py-1.5 text-gray-400">{i + 1}</td>
                         <td className="px-2 py-1.5 font-mono">{row.week_start}</td>
                         <td className="px-2 py-1.5">{row.rep_email}</td>
@@ -389,7 +389,7 @@ export default function KpiImportModal({ isOpen, onClose, onImportComplete, orga
                   </tbody>
                 </table>
                 {parsedData.length > 100 && (
-                  <div className="text-center text-xs text-gray-400 py-2 bg-gray-50 border-t">
+                  <div className="text-center text-xs text-gray-400 py-2 bg-apptivia-paper border-t">
                     Showing first 100 of {parsedData.length} rows
                   </div>
                 )}
@@ -449,7 +449,7 @@ export default function KpiImportModal({ isOpen, onClose, onImportComplete, orga
         </div>
 
         {/* Footer */}
-        <div className="p-6 border-t bg-gray-50 flex items-center justify-between">
+        <div className="p-6 border-t bg-apptivia-paper flex items-center justify-between">
           <button onClick={handleClose} className="px-4 py-2 text-gray-600 hover:text-gray-800">
             {step === 4 ? 'Close' : 'Cancel'}
           </button>

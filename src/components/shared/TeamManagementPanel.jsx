@@ -63,7 +63,7 @@ export default function TeamManagementPanel({
     <>
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         {/* Teams sidebar */}
-        <div className="bg-gray-50 rounded-xl p-3 border">
+        <div className="bg-apptivia-paper rounded-xl p-3 border">
           <div className="flex items-center justify-between mb-2">
             <div className="text-xs font-semibold text-gray-600">Teams</div>
             <button
@@ -80,7 +80,7 @@ export default function TeamManagementPanel({
                 <button
                   key={team.id}
                   onClick={() => setSelectedTeamId(String(team.id))}
-                  className={`w-full text-left px-3 py-2 rounded-lg text-xs font-medium transition-all ${String(team.id) === String(selectedTeamId) ? 'bg-blue-600 text-white' : 'bg-white text-gray-700 hover:bg-gray-100'}`}
+                  className={`w-full text-left px-3 py-2 rounded-lg text-xs font-medium transition-all ${String(team.id) === String(selectedTeamId) ? 'bg-apptivia-coral text-white' : 'bg-white text-gray-700 hover:bg-apptivia-carbon-100'}`}
                 >
                   <div>{team.name}</div>
                   <div className={`${String(team.id) === String(selectedTeamId) ? 'text-blue-100' : 'text-gray-400'} text-[10px]`}>{team.department || 'No department'}</div>
@@ -183,7 +183,7 @@ export default function TeamManagementPanel({
                 <button
                   onClick={handleAddMember}
                   disabled={memberActionLoading || !selectedAddMemberId}
-                  className="px-3 py-1.5 text-xs rounded bg-blue-600 text-white disabled:opacity-60"
+                  className="px-3 py-1.5 text-xs rounded bg-apptivia-coral text-white disabled:opacity-60"
                 >
                   {memberActionLoading ? 'Adding...' : 'Add Member'}
                 </button>
@@ -276,7 +276,7 @@ export default function TeamManagementPanel({
                 <button
                   onClick={onAddTeam}
                   disabled={addingTeam || !newTeamName.trim()}
-                  className="px-4 py-1.5 text-sm rounded bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-60"
+                  className="px-4 py-1.5 text-sm rounded bg-apptivia-coral text-white hover:bg-apptivia-coral disabled:opacity-60"
                 >
                   {addingTeam ? 'Creating...' : 'Create Team'}
                 </button>

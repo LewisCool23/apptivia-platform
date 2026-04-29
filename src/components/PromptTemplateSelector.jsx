@@ -16,12 +16,12 @@ import { usePromptLibrary } from '../hooks/usePromptLibrary';
  */
 
 const CATEGORY_COLORS = {
-  research:       'bg-blue-50 text-blue-600',
+  research:       'bg-apptivia-coral-tone-50 text-blue-600',
   outreach:       'bg-emerald-50 text-emerald-600',
-  analysis:       'bg-purple-50 text-purple-600',
+  analysis:       'bg-apptivia-carbon-100 text-purple-600',
   follow_up:      'bg-amber-50 text-amber-600',
   deliverability: 'bg-red-50 text-red-600',
-  general:        'bg-gray-50 text-gray-600',
+  general:        'bg-apptivia-paper text-gray-600',
 };
 
 const MODEL_ICONS = {
@@ -124,8 +124,8 @@ export default function PromptTemplateSelector({
           <div className="max-h-60 overflow-y-auto">
             {showNone && (
               <button
-                className={`w-full text-left px-3 py-2 text-xs hover:bg-gray-50 transition-colors ${
-                  !value ? 'bg-violet-50 text-violet-700 font-medium' : 'text-gray-500'
+                className={`w-full text-left px-3 py-2 text-xs hover:bg-apptivia-paper transition-colors ${
+                  !value ? 'bg-apptivia-carbon-100 text-violet-700 font-medium' : 'text-gray-500'
                 }`}
                 onClick={() => { onChange?.(null); setOpen(false); setSearch(''); }}
               >
@@ -139,8 +139,8 @@ export default function PromptTemplateSelector({
             {filtered.map(t => (
               <button
                 key={t.id}
-                className={`w-full text-left px-3 py-2.5 hover:bg-violet-50/50 transition-colors ${
-                  t.id === value ? 'bg-violet-50' : ''
+                className={`w-full text-left px-3 py-2.5 hover:bg-apptivia-carbon-100/50 transition-colors ${
+                  t.id === value ? 'bg-apptivia-carbon-100' : ''
                 }`}
                 onClick={() => { onChange?.(t); setOpen(false); setSearch(''); }}
               >

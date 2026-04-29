@@ -10,27 +10,27 @@ import { usePlaybooks } from '../hooks/usePlaybooks';
 // ── Constants ────────────────────────────────────────────────
 
 const TRIGGER_STYLES = {
-  new_lead: { label: 'New Lead', icon: Users, color: 'bg-blue-50 text-blue-600' },
+  new_lead: { label: 'New Lead', icon: Users, color: 'bg-apptivia-coral-tone-50 text-blue-600' },
   signal_detected: { label: 'Signal Detected', icon: Zap, color: 'bg-amber-50 text-amber-600' },
-  deal_stage_change: { label: 'Deal Stage Change', icon: ArrowRight, color: 'bg-purple-50 text-purple-600' },
+  deal_stage_change: { label: 'Deal Stage Change', icon: ArrowRight, color: 'bg-apptivia-carbon-100 text-purple-600' },
   score_threshold: { label: 'Score Threshold', icon: BarChart3, color: 'bg-emerald-50 text-emerald-600' },
-  manual: { label: 'Manual', icon: Play, color: 'bg-gray-100 text-gray-600' },
+  manual: { label: 'Manual', icon: Play, color: 'bg-apptivia-carbon-100 text-gray-600' },
   time_based: { label: 'Time-Based', icon: Clock, color: 'bg-cyan-50 text-cyan-600' },
   account_tier_change: { label: 'Tier Change', icon: Target, color: 'bg-orange-50 text-orange-600' },
 };
 
 const STATUS_STYLES = {
-  draft: { bg: 'bg-gray-100', text: 'text-gray-600', label: 'Draft' },
+  draft: { bg: 'bg-apptivia-carbon-100', text: 'text-gray-600', label: 'Draft' },
   active: { bg: 'bg-emerald-100', text: 'text-emerald-700', label: 'Active' },
   paused: { bg: 'bg-amber-100', text: 'text-amber-700', label: 'Paused' },
-  archived: { bg: 'bg-gray-100', text: 'text-gray-400', label: 'Archived' },
+  archived: { bg: 'bg-apptivia-carbon-100', text: 'text-gray-400', label: 'Archived' },
 };
 
 const EXEC_STATUS = {
-  running: { bg: 'bg-blue-50', text: 'text-blue-700', label: 'Running' },
+  running: { bg: 'bg-apptivia-coral-tone-50', text: 'text-blue-700', label: 'Running' },
   completed: { bg: 'bg-emerald-50', text: 'text-emerald-700', label: 'Completed' },
   failed: { bg: 'bg-red-50', text: 'text-red-600', label: 'Failed' },
-  abandoned: { bg: 'bg-gray-50', text: 'text-gray-500', label: 'Abandoned' },
+  abandoned: { bg: 'bg-apptivia-paper', text: 'text-gray-500', label: 'Abandoned' },
 };
 
 // ── Playbook Templates ───────────────────────────────────────
@@ -123,9 +123,9 @@ const PLAYBOOK_TEMPLATES = [
 
 function SummaryCards({ summary }) {
   const cards = [
-    { label: 'Total Playbooks', value: summary.totalPlaybooks, icon: BookOpen, color: 'text-blue-600 bg-blue-50' },
+    { label: 'Total Playbooks', value: summary.totalPlaybooks, icon: BookOpen, color: 'text-blue-600 bg-apptivia-coral-tone-50' },
     { label: 'Active', value: summary.activePlaybooks, icon: Play, color: 'text-emerald-600 bg-emerald-50' },
-    { label: 'Total Runs', value: summary.totalExecutions, icon: Layers, color: 'text-purple-600 bg-purple-50' },
+    { label: 'Total Runs', value: summary.totalExecutions, icon: Layers, color: 'text-purple-600 bg-apptivia-carbon-100' },
     { label: 'Success Rate', value: `${summary.avgSuccessRate || 0}%`, icon: CheckCircle, color: 'text-amber-600 bg-amber-50' },
   ];
 
@@ -182,7 +182,7 @@ function PlaybookCard({ playbook, onSelect, onToggleStatus, onDelete }) {
       {playbook.steps?.length > 0 && (
         <div className="flex items-center gap-1 mb-3 flex-wrap">
           {playbook.steps.slice(0, 4).map((step, i) => (
-            <span key={i} className="px-2 py-0.5 bg-gray-50 rounded text-[10px] text-gray-600 font-medium">
+            <span key={i} className="px-2 py-0.5 bg-apptivia-paper rounded text-[10px] text-gray-600 font-medium">
               {i + 1}. {step.action?.substring(0, 20) || 'Step'}
             </span>
           ))}
@@ -290,7 +290,7 @@ function PlaybookDetail({ playbook, executions, onBack, onUpdate, onStartExecuti
         <div className="lg:col-span-2 space-y-3">
           <h3 className="text-sm font-semibold text-gray-900">Playbook Steps ({playbook.steps?.length || 0})</h3>
           {(!playbook.steps || playbook.steps.length === 0) ? (
-            <div className="bg-gray-50 rounded-xl p-8 text-center">
+            <div className="bg-apptivia-paper rounded-xl p-8 text-center">
               <Layers size={24} className="mx-auto mb-2 text-gray-300" />
               <p className="text-xs text-gray-400">No steps defined in this playbook.</p>
             </div>
@@ -310,7 +310,7 @@ function PlaybookDetail({ playbook, executions, onBack, onUpdate, onStartExecuti
                       {step.condition && <span className="text-[10px] text-gray-400 block">If: {step.condition}</span>}
                     </div>
                     {step.tool && (
-                      <span className="px-2 py-0.5 bg-blue-50 text-blue-600 text-[10px] font-medium rounded-full">{step.tool}</span>
+                      <span className="px-2 py-0.5 bg-apptivia-coral-tone-50 text-blue-600 text-[10px] font-medium rounded-full">{step.tool}</span>
                     )}
                     {expandedStep === i ? <ChevronUp size={14} className="text-gray-400" /> : <ChevronDown size={14} className="text-gray-400" />}
                   </div>
@@ -464,14 +464,14 @@ function GeneratePlaybookModal({ isOpen, onClose, onGenerate, generating }) {
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 transition-colors"
+              className="px-4 py-2 text-sm font-medium text-gray-700 bg-apptivia-carbon-100 rounded-md hover:bg-apptivia-carbon-200 transition-colors"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={!scenario.trim() || generating}
-              className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-apptivia-coral rounded-md hover:bg-apptivia-coral disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               {generating ? <RefreshCw size={14} className="animate-spin" /> : <Sparkles size={14} />}
               {generating ? 'Generating...' : 'Generate Playbook'}
@@ -558,7 +558,7 @@ function NewPlaybookModal({ isOpen, onClose, onCreate }) {
                   className={`flex items-center gap-1.5 px-3 py-2 rounded-md text-xs font-medium transition-all ${
                     triggerType === key
                       ? `${cfg.color} ring-1 ring-current`
-                      : 'bg-gray-50 text-gray-500 hover:bg-gray-100'
+                      : 'bg-apptivia-paper text-gray-500 hover:bg-apptivia-carbon-100'
                   }`}
                 >
                   <cfg.icon size={12} /> {cfg.label}
@@ -570,14 +570,14 @@ function NewPlaybookModal({ isOpen, onClose, onCreate }) {
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 transition-colors"
+              className="px-4 py-2 text-sm font-medium text-gray-700 bg-apptivia-carbon-100 rounded-md hover:bg-apptivia-carbon-200 transition-colors"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={!name.trim() || saving}
-              className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="px-4 py-2 text-sm font-medium text-white bg-apptivia-coral rounded-md hover:bg-apptivia-coral disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               {saving ? 'Creating...' : 'Create Playbook'}
             </button>
@@ -606,7 +606,7 @@ function PlaybookTemplateCard({ template, onUse, loading }) {
       <button
         onClick={onUse}
         disabled={loading}
-        className="w-full text-[11px] font-medium px-3 py-1.5 bg-gray-50 text-gray-600 rounded-lg hover:bg-purple-50 hover:text-purple-600 transition-colors disabled:opacity-50"
+        className="w-full text-[11px] font-medium px-3 py-1.5 bg-apptivia-paper text-gray-600 rounded-lg hover:bg-apptivia-carbon-100 hover:text-purple-600 transition-colors disabled:opacity-50"
       >
         {loading ? 'Creating...' : 'Use Template'}
       </button>
@@ -753,7 +753,7 @@ export default function PlaybookBuilder({ organizationId, userId }) {
           </p>
           <div className="flex justify-center gap-3">
             <button onClick={() => setShowNewModal(true)}
-              className="px-5 py-2.5 bg-purple-600 text-white text-sm font-medium rounded-lg hover:bg-purple-700">
+              className="px-5 py-2.5 bg-apptivia-ink text-white text-sm font-medium rounded-lg hover:bg-apptivia-ink">
               Create Manually
             </button>
             <button onClick={() => setShowGenerateModal(true)}

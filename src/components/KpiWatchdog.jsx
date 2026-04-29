@@ -11,7 +11,7 @@ import FeedbackThumb from './shared/FeedbackThumb';
 const SEVERITY_STYLES = {
   critical: { bg: 'bg-red-50', border: 'border-red-200', text: 'text-red-700', badge: 'bg-red-100 text-red-700', icon: AlertTriangle, iconColor: 'text-red-500' },
   warning: { bg: 'bg-amber-50', border: 'border-amber-200', text: 'text-amber-700', badge: 'bg-amber-100 text-amber-700', icon: AlertTriangle, iconColor: 'text-amber-500' },
-  info: { bg: 'bg-blue-50', border: 'border-blue-200', text: 'text-blue-700', badge: 'bg-blue-100 text-blue-700', icon: Activity, iconColor: 'text-blue-500' },
+  info: { bg: 'bg-apptivia-coral-tone-50', border: 'border-blue-200', text: 'text-blue-700', badge: 'bg-apptivia-coral-tone-50 text-blue-700', icon: Activity, iconColor: 'text-blue-500' },
   positive: { bg: 'bg-emerald-50', border: 'border-emerald-200', text: 'text-emerald-700', badge: 'bg-emerald-100 text-emerald-700', icon: TrendingUp, iconColor: 'text-emerald-500' },
 };
 
@@ -27,7 +27,7 @@ const STATUS_STYLES = {
   active: { bg: 'bg-red-50', text: 'text-red-700', label: 'Active' },
   acknowledged: { bg: 'bg-yellow-50', text: 'text-yellow-700', label: 'Acknowledged' },
   resolved: { bg: 'bg-emerald-50', text: 'text-emerald-700', label: 'Resolved' },
-  dismissed: { bg: 'bg-gray-50', text: 'text-gray-500', label: 'Dismissed' },
+  dismissed: { bg: 'bg-apptivia-paper', text: 'text-gray-500', label: 'Dismissed' },
 };
 
 function timeAgo(dateStr) {
@@ -49,25 +49,25 @@ function WatchdogSummary({ summary }) {
       label: 'Active Anomalies',
       value: summary.activeAnomalies,
       icon: Shield,
-      color: summary.activeAnomalies > 0 ? 'text-red-600 bg-red-50' : 'text-gray-500 bg-gray-50',
+      color: summary.activeAnomalies > 0 ? 'text-red-600 bg-red-50' : 'text-gray-500 bg-apptivia-paper',
     },
     {
       label: 'Critical',
       value: summary.criticalCount,
       icon: AlertTriangle,
-      color: summary.criticalCount > 0 ? 'text-red-600 bg-red-50' : 'text-gray-500 bg-gray-50',
+      color: summary.criticalCount > 0 ? 'text-red-600 bg-red-50' : 'text-gray-500 bg-apptivia-paper',
     },
     {
       label: 'Warnings',
       value: summary.warningCount,
       icon: AlertTriangle,
-      color: summary.warningCount > 0 ? 'text-amber-600 bg-amber-50' : 'text-gray-500 bg-gray-50',
+      color: summary.warningCount > 0 ? 'text-amber-600 bg-amber-50' : 'text-gray-500 bg-apptivia-paper',
     },
     {
       label: 'Positive',
       value: summary.positiveCount || 0,
       icon: TrendingUp,
-      color: (summary.positiveCount || 0) > 0 ? 'text-emerald-600 bg-emerald-50' : 'text-gray-500 bg-gray-50',
+      color: (summary.positiveCount || 0) > 0 ? 'text-emerald-600 bg-emerald-50' : 'text-gray-500 bg-apptivia-paper',
     },
   ];
 
@@ -111,7 +111,7 @@ function AnalysisProgress({ steps, isAnalyzing }) {
             <div className={`w-4 h-4 rounded-full flex items-center justify-center flex-shrink-0 ${
               i < steps.length - 1 || !isAnalyzing
                 ? 'bg-emerald-100 text-emerald-600'
-                : 'bg-blue-100 text-blue-600'
+                : 'bg-apptivia-coral-tone-50 text-blue-600'
             }`}>
               {i < steps.length - 1 || !isAnalyzing ? (
                 <CheckCircle size={10} />
@@ -245,7 +245,7 @@ function AnomalyCard({ anomaly, onAcknowledge, onDismiss, onResolve }) {
             {anomaly.status === 'active' && (
               <button
                 onClick={() => onDismiss(anomaly.id)}
-                className="p-1.5 rounded-lg bg-white/80 text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-colors"
+                className="p-1.5 rounded-lg bg-white/80 text-gray-400 hover:bg-apptivia-carbon-100 hover:text-gray-600 transition-colors"
                 title="Dismiss"
               >
                 <XCircle size={14} />
@@ -274,7 +274,7 @@ function KpiBreakdown({ byKpi }) {
             <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${
               count >= 5 ? 'bg-red-100 text-red-700' :
               count >= 2 ? 'bg-amber-100 text-amber-700' :
-              'bg-gray-100 text-gray-600'
+              'bg-apptivia-carbon-100 text-gray-600'
             }`}>{count}</span>
           </div>
         ))}
@@ -363,7 +363,7 @@ export default function KpiWatchdog({ organizationId, userId, filterProfileIds }
         <div>
           <div className="flex items-center gap-2">
             <h2 className="text-base font-semibold text-gray-900">KPI Anomaly Watchdog</h2>
-            <span className="inline-flex items-center gap-1 text-[10px] font-medium px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-100">
+            <span className="inline-flex items-center gap-1 text-[10px] font-medium px-2 py-0.5 rounded-full bg-apptivia-coral-tone-50 text-blue-700 border border-blue-100">
               <Shield size={8} /> Auto-monitored weekly
             </span>
           </div>
@@ -372,7 +372,7 @@ export default function KpiWatchdog({ organizationId, userId, filterProfileIds }
         <button
           onClick={watchdog.runAnalysis}
           disabled={watchdog.isAnalyzing}
-          className="inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg bg-gray-100 text-gray-600 hover:bg-gray-200 disabled:opacity-50 transition-all"
+          className="inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg bg-apptivia-carbon-100 text-gray-600 hover:bg-apptivia-carbon-200 disabled:opacity-50 transition-all"
         >
           {watchdog.isAnalyzing ? <RefreshCw size={11} className="animate-spin" /> : <RefreshCw size={11} />}
           {watchdog.isAnalyzing ? 'Analyzing...' : 'Rerun'}
@@ -447,7 +447,7 @@ export default function KpiWatchdog({ organizationId, userId, filterProfileIds }
                 const isOpen = expandedRep === group.profileId;
                 return (
                   <div key={group.profileId} className={`rounded-xl border transition-colors ${
-                    isOpen ? 'border-red-200 bg-red-50/20' : 'border-gray-100 bg-white hover:bg-gray-50/50'
+                    isOpen ? 'border-red-200 bg-red-50/20' : 'border-gray-100 bg-white hover:bg-apptivia-paper/50'
                   }`}>
                     {/* Accordion header */}
                     <button
@@ -455,7 +455,7 @@ export default function KpiWatchdog({ organizationId, userId, filterProfileIds }
                       onClick={() => setExpandedRep(prev => prev === group.profileId ? null : group.profileId)}
                       className="w-full flex items-center gap-3 px-4 py-3 text-left"
                     >
-                      <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0">
+                      <div className="w-8 h-8 rounded-full bg-apptivia-carbon-100 flex items-center justify-center flex-shrink-0">
                         <Users size={14} className="text-gray-500" />
                       </div>
                       <div className="flex-1 min-w-0">
@@ -477,7 +477,7 @@ export default function KpiWatchdog({ organizationId, userId, filterProfileIds }
                             </span>
                           )}
                           {group.infoCount > 0 && (
-                            <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-blue-100 text-blue-700">
+                            <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-apptivia-coral-tone-50 text-blue-700">
                               {group.infoCount} info
                             </span>
                           )}
@@ -521,25 +521,25 @@ export default function KpiWatchdog({ organizationId, userId, filterProfileIds }
             <h3 className="text-sm font-semibold text-gray-700 mb-3">How It Works</h3>
             <div className="space-y-3">
               <div className="flex items-start gap-2">
-                <div className="w-5 h-5 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0 mt-0.5">
+                <div className="w-5 h-5 rounded-full bg-apptivia-coral-tone-50 flex items-center justify-center flex-shrink-0 mt-0.5">
                   <span className="text-[10px] font-bold text-blue-600">1</span>
                 </div>
                 <p className="text-xs text-gray-600">Compares current week KPI values against 4-week rolling average</p>
               </div>
               <div className="flex items-start gap-2">
-                <div className="w-5 h-5 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0 mt-0.5">
+                <div className="w-5 h-5 rounded-full bg-apptivia-coral-tone-50 flex items-center justify-center flex-shrink-0 mt-0.5">
                   <span className="text-[10px] font-bold text-blue-600">2</span>
                 </div>
                 <p className="text-xs text-gray-600">Flags drops &gt;30% as warnings, &gt;50% as critical anomalies</p>
               </div>
               <div className="flex items-start gap-2">
-                <div className="w-5 h-5 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0 mt-0.5">
+                <div className="w-5 h-5 rounded-full bg-apptivia-coral-tone-50 flex items-center justify-center flex-shrink-0 mt-0.5">
                   <span className="text-[10px] font-bold text-blue-600">3</span>
                 </div>
                 <p className="text-xs text-gray-600">AI generates analysis and coaching recommendations for each anomaly</p>
               </div>
               <div className="flex items-start gap-2">
-                <div className="w-5 h-5 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0 mt-0.5">
+                <div className="w-5 h-5 rounded-full bg-apptivia-coral-tone-50 flex items-center justify-center flex-shrink-0 mt-0.5">
                   <span className="text-[10px] font-bold text-blue-600">4</span>
                 </div>
                 <p className="text-xs text-gray-600">Track, acknowledge, and resolve anomalies to maintain team performance</p>
