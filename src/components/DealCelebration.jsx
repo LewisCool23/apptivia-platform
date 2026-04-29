@@ -161,7 +161,7 @@ export default function DealCelebration() {
             top: '50%',
             left: '50%',
             animation: 'dealCardIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards',
-            background: 'linear-gradient(145deg, #0f172a 0%, #1e1b4b 50%, #0f172a 100%)',
+            background: 'linear-gradient(145deg, #0A0A0B 0%, #27272A 50%, #0A0A0B 100%)',
             border: '2px solid rgba(245, 158, 11, 0.5)',
             borderRadius: 28,
             padding: '52px 72px 44px',
