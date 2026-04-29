@@ -345,7 +345,7 @@ export async function awardAchievementBadge(
       badge_name: achievementName,
       badge_description: `Completed in ${skillsetName}`,
       icon: '⭐',
-      color: '#3B82F6',
+      color: '#FF4D2E',
       achievement_id: achievementId,
       is_featured: false,
       ...(organizationId && { organization_id: organizationId }),
@@ -370,7 +370,7 @@ export async function awardMilestoneBadge(
   milestoneName: string,
   description: string,
   icon: string = '🎖️',
-  color: string = '#8B5CF6',
+  color: string = '#0A0A0B',
   organizationId?: string
 ): Promise<{ success: boolean; error?: string }> {
   try {
