@@ -184,7 +184,7 @@ export default function Integrations() {
                 <div key={template.integration_type} className="bg-white rounded-lg p-5 shadow-sm border border-apptivia-carbon-100 flex flex-col hover:shadow-md transition-shadow">
                   {/* Header */}
                   <div className="flex items-center gap-3 mb-4">
-                    <div className={`w-11 h-11 bg-gradient-to-br ${template.color} rounded-lg flex items-center justify-center text-xs font-bold text-white shadow-sm`}>
+                    <div className={`w-11 h-11 ${template.color} rounded-lg flex items-center justify-center text-xs font-bold text-white shadow-sm`}>
                       {template.icon}
                     </div>
                     <div className="flex-1 min-w-0">
