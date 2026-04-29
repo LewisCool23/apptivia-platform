@@ -3,6 +3,7 @@ import { X, Download, Link as LinkIcon, CheckCircle, Mail } from 'lucide-react';
 import html2canvas from 'html2canvas';
 import { backendFetch } from '../utils/backendFetch';
 import { buildCoachSnapshotEmailHtml, buildCoachSnapshotEmailText } from '../utils/emailTemplates';
+import { ApptiviaLogo } from './ApptiviaLogo';
 
 export default function ShareCoachSnapshotModal({ isOpen, onClose, coachData, scorecardData, filters }) {
   const [copied, setCopied] = useState(false);
@@ -149,7 +150,7 @@ export default function ShareCoachSnapshotModal({ isOpen, onClose, coachData, sc
             <div className="text-center mb-4">
               <div className="text-4xl mb-2">📋</div>
               <h3 className="text-xl font-bold">Coaching Progress Snapshot</h3>
-              <p className="text-white/80 text-sm">Apptivia Platform</p>
+              <ApptiviaLogo dark className="text-base" />
               {totalMembers > 0 && (
                 <p className="text-white/70 text-xs mt-1">Team Members: {totalMembers}</p>
               )}

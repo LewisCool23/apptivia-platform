@@ -3,6 +3,7 @@ import { X, Download, Link as LinkIcon, CheckCircle, Mail } from 'lucide-react';
 import html2canvas from 'html2canvas';
 import { backendFetch } from '../utils/backendFetch';
 import { buildAchievementSnapshotEmailHtml, buildAchievementSnapshotEmailText } from '../utils/emailTemplates';
+import { ApptiviaLogo } from './ApptiviaLogo';
 
 export default function ShareSnapshotModal({ isOpen, onClose, userData }) {
   const [copied, setCopied] = useState(false);
@@ -135,7 +136,7 @@ export default function ShareSnapshotModal({ isOpen, onClose, userData }) {
               </div>
               <div>
                 <h3 className="text-xl font-bold">{name || 'User'}</h3>
-                <p className="text-white/80 text-sm">Apptivia Platform</p>
+                <ApptiviaLogo dark className="text-base" />
               </div>
             </div>
 

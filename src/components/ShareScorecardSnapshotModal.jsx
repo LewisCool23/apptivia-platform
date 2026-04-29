@@ -3,6 +3,7 @@ import { X, Download, Link as LinkIcon, CheckCircle, Mail } from 'lucide-react';
 import html2canvas from 'html2canvas';
 import { backendFetch } from '../utils/backendFetch';
 import { buildScorecardSnapshotEmailHtml, buildScorecardSnapshotEmailText } from '../utils/emailTemplates';
+import { ApptiviaLogo } from './ApptiviaLogo';
 
 export default function ShareScorecardSnapshotModal({ isOpen, onClose, scorecardData, filters, historicalScores, kpiMetrics, periodStart, periodEnd, scorecardRows }) {
   const [copied, setCopied] = useState(false);
@@ -179,7 +180,7 @@ export default function ShareScorecardSnapshotModal({ isOpen, onClose, scorecard
             <div className="text-center mb-4">
               <div className="text-4xl mb-2">📊</div>
               <h3 className="text-xl font-bold">Weekly Scorecard Snapshot</h3>
-              <p className="text-white/80 text-sm">Apptivia Platform</p>
+              <ApptiviaLogo dark className="text-base" />
               <p className="text-white/70 text-xs mt-1">{dateRange} • {totalMembers} Team Members</p>
             </div>
 
