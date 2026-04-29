@@ -10,7 +10,7 @@ export default function BadgeCreationModal({ isOpen, onClose, onBadgeCreated }) 
     badge_description: '',
     badge_type: 'special',
     icon: '🏅',
-    color: '#4F46E5',
+    color: '#FF4D2E',
     points: 50,
     is_rare: false,
     criteria_type: 'manual',
@@ -27,7 +27,7 @@ export default function BadgeCreationModal({ isOpen, onClose, onBadgeCreated }) 
   ];
 
   const colorOptions = [
-    { value: '#4F46E5', label: 'Indigo', preview: 'bg-apptivia-ink' },
+    { value: '#FF4D2E', label: 'Coral', preview: 'bg-apptivia-coral' },
     { value: '#FFD700', label: 'Gold', preview: 'bg-yellow-400' },
     { value: '#10B981', label: 'Green', preview: 'bg-green-500' },
     { value: '#EF4444', label: 'Red', preview: 'bg-red-500' },
@@ -92,7 +92,7 @@ export default function BadgeCreationModal({ isOpen, onClose, onBadgeCreated }) 
           badge_description: '',
           badge_type: 'special',
           icon: '🏅',
-          color: '#4F46E5',
+          color: '#FF4D2E',
           points: 50,
           is_rare: false,
           criteria_type: 'manual',
@@ -109,7 +109,7 @@ export default function BadgeCreationModal({ isOpen, onClose, onBadgeCreated }) 
         badge_description: '',
         badge_type: 'special',
         icon: '🏅',
-        color: '#4F46E5',
+        color: '#FF4D2E',
         points: 50,
         is_rare: false,
         criteria_type: 'manual',
