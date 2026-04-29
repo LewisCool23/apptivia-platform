@@ -3,16 +3,16 @@ import { X, Zap, Award, Target, TrendingUp, Star, ChevronRight, Trophy, BookOpen
 import { SKILLSET_CATEGORIES } from '../constants/skillsets';
 
 const APPTIVIA_LEVELS = [
-  { name: 'Developing', range: '0 – 999 pts', color: 'from-orange-400 to-orange-600', bg: 'bg-orange-50', border: 'border-orange-200', text: 'text-orange-700', icon: '🌱', description: 'Building foundational habits and early KPI consistency.' },
-  { name: 'Intermediate', range: '1,000 – 2,499 pts', color: 'from-blue-400 to-blue-600', bg: 'bg-apptivia-coral-tone-50', border: 'border-apptivia-coral-tone-100', text: 'text-apptivia-coral', icon: '📈', description: 'Demonstrating steady performance and growing skillset mastery.' },
-  { name: 'Proficient', range: '2,500 – 4,999 pts', color: 'from-emerald-400 to-emerald-600', bg: 'bg-emerald-50', border: 'border-emerald-200', text: 'text-emerald-700', icon: '⚡', description: 'Consistently hitting targets with strong multi-skill execution.' },
-  { name: 'Elite', range: '5,000 – 9,999 pts', color: 'from-yellow-400 to-yellow-600', bg: 'bg-yellow-50', border: 'border-yellow-200', text: 'text-yellow-700', icon: '🏅', description: 'Top-tier performance with deep mastery across all skillsets.' },
-  { name: 'Master', range: '10,000+ pts', color: 'from-purple-500 to-pink-500', bg: 'bg-apptivia-carbon-100', border: 'border-apptivia-carbon-300', text: 'text-apptivia-ink', icon: '👑', description: 'Peak sustained excellence — the highest level of achievement.' },
+  { name: 'Developing', range: '0 – 999 pts', color: 'bg-apptivia-carbon-300', bg: 'bg-apptivia-carbon-100', border: 'border-apptivia-carbon-300', text: 'text-apptivia-carbon-700', icon: '🌱', description: 'Building foundational habits and early KPI consistency.' },
+  { name: 'Intermediate', range: '1,000 – 2,499 pts', color: 'bg-apptivia-carbon-500', bg: 'bg-apptivia-coral-tone-50', border: 'border-apptivia-coral-tone-100', text: 'text-apptivia-coral', icon: '📈', description: 'Demonstrating steady performance and growing skillset mastery.' },
+  { name: 'Proficient', range: '2,500 – 4,999 pts', color: 'bg-apptivia-coral-tone-300', bg: 'bg-emerald-50', border: 'border-emerald-200', text: 'text-emerald-700', icon: '⚡', description: 'Consistently hitting targets with strong multi-skill execution.' },
+  { name: 'Elite', range: '5,000 – 9,999 pts', color: 'bg-apptivia-coral', bg: 'bg-yellow-50', border: 'border-yellow-200', text: 'text-yellow-700', icon: '🏅', description: 'Top-tier performance with deep mastery across all skillsets.' },
+  { name: 'Master', range: '10,000+ pts', color: 'bg-apptivia-coral-tone-700', bg: 'bg-apptivia-carbon-100', border: 'border-apptivia-carbon-300', text: 'text-apptivia-ink', icon: '👑', description: 'Peak sustained excellence — the highest level of achievement.' },
 ];
 
 const SKILLSET_LEVELS = [
   { name: 'Beginner', range: '0 – 39%', color: 'bg-apptivia-carbon-200', text: 'text-apptivia-carbon-600' },
-  { name: 'Developing', range: '40 – 59%', color: 'bg-orange-200', text: 'text-orange-700' },
+  { name: 'Developing', range: '40 – 59%', color: 'bg-apptivia-carbon-200', text: 'text-apptivia-carbon-700' },
   { name: 'Intermediate', range: '60 – 79%', color: 'bg-apptivia-coral-tone-100', text: 'text-apptivia-coral' },
   { name: 'Advanced', range: '80 – 99%', color: 'bg-emerald-200', text: 'text-emerald-700' },
   { name: 'Master', range: '100%', color: 'bg-apptivia-ink', text: 'text-apptivia-ink' },
@@ -35,7 +35,7 @@ export default function ApptiviaLevelInfoModal({ isOpen, onClose }) {
       <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} aria-hidden="true" />
       <div className="relative w-full max-w-3xl bg-white rounded-lg shadow-2xl overflow-hidden max-h-[90vh] flex flex-col">
         {/* Header */}
-        <div className="bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 px-6 py-5">
+        <div className="bg-apptivia-ink px-6 py-5">
           <div className="flex items-start justify-between">
             <div>
               <h2 className="text-lg font-bold text-white">How Apptivia Levels Work</h2>
@@ -82,7 +82,7 @@ export default function ApptiviaLevelInfoModal({ isOpen, onClose }) {
                     { icon: Target, label: 'Scorecard', sub: 'KPI attainment', color: 'bg-green-100 text-green-600' },
                     { icon: Award, label: 'Achievements', sub: 'Milestones earned', color: 'bg-yellow-100 text-yellow-600' },
                     { icon: Star, label: 'Skillsets', sub: 'Mastery progress', color: 'bg-apptivia-carbon-100 text-apptivia-ink' },
-                    { icon: Trophy, label: 'Level Up', sub: 'Apptivia Level', color: 'bg-pink-100 text-pink-600' },
+                    { icon: Trophy, label: 'Level Up', sub: 'Apptivia Level', color: 'bg-apptivia-coral-tone-50 text-apptivia-coral' },
                   ].map((step, i) => (
                     <React.Fragment key={step.label}>
                       <div className="flex flex-col items-center text-center min-w-[90px]">
@@ -131,7 +131,7 @@ export default function ApptiviaLevelInfoModal({ isOpen, onClose }) {
                 </div>
                 <div className="bg-white border border-apptivia-carbon-200 rounded-lg p-4">
                   <div className="flex items-center gap-2 mb-2">
-                    <div className="w-7 h-7 rounded-lg bg-pink-100 text-pink-600 flex items-center justify-center"><Trophy size={16} /></div>
+                    <div className="w-7 h-7 rounded-lg bg-apptivia-coral-tone-50 text-apptivia-coral flex items-center justify-center"><Trophy size={16} /></div>
                     <h4 className="text-sm font-semibold text-apptivia-ink">4. Mastery → Apptivia Level</h4>
                   </div>
                   <p className="text-xs text-apptivia-carbon-600 leading-relaxed">
@@ -161,7 +161,7 @@ export default function ApptiviaLevelInfoModal({ isOpen, onClose }) {
                 <div className="space-y-3">
                   {APPTIVIA_LEVELS.map((level, i) => (
                     <div key={level.name} className={`relative flex items-start gap-4 ${level.bg} ${level.border} border rounded-lg p-4 transition-all hover:shadow-md`}>
-                      <div className={`w-12 h-12 rounded-lg bg-gradient-to-br ${level.color} flex items-center justify-center text-2xl shrink-0 shadow-sm z-10`}>
+                      <div className={`w-12 h-12 rounded-lg ${level.color} flex items-center justify-center text-2xl shrink-0 shadow-sm z-10`}>
                         {level.icon}
                       </div>
                       <div className="flex-1 min-w-0">
