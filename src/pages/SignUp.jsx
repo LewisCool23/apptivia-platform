@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../AuthContext';
 import { supabase } from '../supabaseClient';
 import { backendFetch } from '../utils/backendFetch';
+import { ApptiviaLogo } from '../components/ApptiviaLogo';
 
 export default function SignUp() {
   const navigate = useNavigate();
@@ -84,7 +85,7 @@ export default function SignUp() {
         className="bg-white p-8 rounded-lg shadow-xl w-full max-w-md flex flex-col items-center"
       >
         <div className="text-center mb-6">
-          <span className="font-display font-black text-3xl tracking-tight text-apptivia-ink">app</span><span className="font-display font-medium text-3xl tracking-tight text-apptivia-coral">tivia</span>
+          <ApptiviaLogo className="text-3xl" />
         </div>
         <h1 className="text-2xl font-bold text-apptivia-coral mb-1 text-center">Create Your Account</h1>
         <p className="text-apptivia-carbon-500 mb-4 text-center text-sm">Start your 14-day free Pro trial — no credit card required</p>

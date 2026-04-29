@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../AuthContext';
 import { supabase } from '../supabaseClient';
 import { Eye, EyeOff, Loader } from 'lucide-react';
+import { ApptiviaLogo } from '../components/ApptiviaLogo';
 
 export default function AccountSetup() {
   const navigate = useNavigate();
@@ -173,7 +174,7 @@ export default function AccountSetup() {
       >
         {/* Brand logo */}
         <div className="text-center mb-6">
-          <span className="font-display font-black text-3xl tracking-tight text-apptivia-ink">app</span><span className="font-display font-medium text-3xl tracking-tight text-apptivia-coral">tivia</span>
+          <ApptiviaLogo className="text-3xl" />
         </div>
 
         <h1 className="text-2xl font-bold text-apptivia-coral mb-2 text-center">

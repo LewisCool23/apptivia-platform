@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { supabase } from '../supabaseClient';
+import { ApptiviaLogo } from '../components/ApptiviaLogo';
 
 export default function ForgotPassword() {
   const [email, setEmail] = useState('');
@@ -36,7 +37,7 @@ export default function ForgotPassword() {
         className="bg-white p-8 rounded-lg shadow-xl w-full max-w-md flex flex-col items-center"
       >
         <div className="text-center mb-6">
-          <span className="font-display font-black text-3xl tracking-tight text-apptivia-ink">app</span><span className="font-display font-medium text-3xl tracking-tight text-apptivia-coral">tivia</span>
+          <ApptiviaLogo className="text-3xl" />
         </div>
         <h1 className="text-2xl font-bold text-apptivia-coral mb-2 text-center">Forgot your password?</h1>
         <p className="text-apptivia-carbon-500 mb-4 text-center text-sm">Enter your email address and we'll send you a link to reset your password.</p>

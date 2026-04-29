@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Activity, Trophy, CheckCircle, ArrowRight, Star, BarChart3, Brain, Target, TrendingUp, X } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import AskAIFooter from '../components/AskAIFooter';
+import { ApptiviaLogo } from '../components/ApptiviaLogo';
 
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || '';
 
@@ -161,7 +162,7 @@ export default function LandingPage() {
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center gap-2">
               <Activity size={32} className="text-apptivia-coral" />
-              <span className="text-2xl font-bold text-apptivia-ink">Apptivia</span>
+              <ApptiviaLogo className="text-2xl" />
             </div>
             <div className="hidden md:flex items-center gap-6">
               <a href="#features" className="text-apptivia-carbon-600 hover:text-apptivia-ink text-sm font-medium">Platform</a>
@@ -551,7 +552,7 @@ export default function LandingPage() {
             <div className="col-span-2 md:col-span-1">
               <div className="flex items-center gap-2 mb-4">
                 <Activity size={24} className="text-apptivia-coral" />
-                <span className="text-xl font-bold text-white">Apptivia</span>
+                <ApptiviaLogo className="text-xl" dark />
               </div>
               <p className="text-sm leading-relaxed">Sales performance intelligence for teams that want to win.</p>
             </div>

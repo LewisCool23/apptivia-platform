@@ -7,6 +7,8 @@ import NotificationPanel from './components/NotificationPanel';
 import AaronChatbot from './AaronChatbot';
 import SetupChecklist from './components/onboarding/SetupChecklist';
 import { useBilling } from './hooks/useBilling';
+import { ApptiviaLogo } from './components/ApptiviaLogo';
+import { ApptiviaMark } from './components/ApptiviaMark';
 
 const navigation = [
   { id: 'dashboard', name: 'Apptivia Scorecard', icon: Home, route: '/dashboard', description: 'Performance dashboard' },
@@ -367,10 +369,8 @@ function DashboardLayout({ children }) {
           <Menu size={24} />
         </button>
         <div className="flex items-center gap-2">
-          <div className="w-8 h-8 bg-apptivia-ink rounded-lg flex items-center justify-center">
-            <span className="text-white font-bold text-sm">A</span>
-          </div>
-          <h1 className="font-bold text-lg text-apptivia-ink">Apptivia</h1>
+          <ApptiviaMark className="rounded-lg" />
+          <h1 className="text-lg"><ApptiviaLogo /></h1>
         </div>
         <div className="w-8 h-8 bg-apptivia-coral rounded-full flex items-center justify-center">
           <span className="text-white font-bold text-xs">{getProfileInitials()}</span>
@@ -395,11 +395,9 @@ function DashboardLayout({ children }) {
           <div className="relative flex items-center mb-2">
             {sidebarOpen ? (
               <div className="flex items-center gap-2">
-                <div className="w-7 h-7 bg-apptivia-ink rounded-lg flex items-center justify-center">
-                  <span className="text-white font-bold text-xs">A</span>
-                </div>
+                <ApptiviaMark className="w-7 h-7 rounded-lg" />
                 <div>
-                  <h1 className="font-semibold text-xs text-apptivia-ink">Apptivia</h1>
+                  <h1 className="text-xs"><ApptiviaLogo /></h1>
                   <p className="text-[10px] text-apptivia-carbon-500">Sales Productivity Platform</p>
                 </div>
               </div>
@@ -528,11 +526,9 @@ function DashboardLayout({ children }) {
         <div className="p-4 border-b">
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-3">
-              <div className="w-8 h-8 bg-apptivia-ink rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-sm">A</span>
-              </div>
+              <ApptiviaMark className="rounded-lg" />
               <div>
-                <h1 className="font-semibold text-sm text-apptivia-ink">Apptivia</h1>
+                <h1 className="text-sm"><ApptiviaLogo /></h1>
                 <p className="text-[11px] text-apptivia-carbon-500">Sales Productivity</p>
               </div>
             </div>
