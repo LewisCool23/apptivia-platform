@@ -28,6 +28,7 @@ import { supabase } from '../supabaseClient';
 import { Maximize2, Minimize2, Trophy, TrendingUp, Zap, Users, Star, Flame, Award, ArrowLeft, Target } from 'lucide-react';
 import { getMonday } from '../utils/dateUtils';
 import { LEADERSHIP_ROLE_FILTER } from '../constants/roles';
+import { ApptiviaLogo } from '../components/ApptiviaLogo';
 
 // ── Constants ────────────────────────────────────────────────────────────────
 
@@ -1008,7 +1009,7 @@ export default function Wallboard() {
           <div className="w-9 h-9 bg-apptivia-ink rounded-lg flex items-center justify-center">
             <Trophy size={18} className="text-white" />
           </div>
-          <span className="text-white font-bold text-xl tracking-tight">Apptivia</span>
+          <ApptiviaLogo dark className="text-xl" />
           <span className="text-white/30 text-sm">Sales Floor</span>
         </div>
 
