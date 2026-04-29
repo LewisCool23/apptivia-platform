@@ -306,8 +306,8 @@ export default function ApptiviaLevelInfoModal({ isOpen, onClose }) {
                 <div className="grid grid-cols-4 gap-2">
                   {[
                     { label: 'Easy', pts: '10 pts', color: 'bg-green-100 text-green-700 border-green-200' },
-                    { label: 'Medium', pts: '25 pts', color: 'bg-apptivia-coral-tone-50 text-apptivia-coral border-apptivia-coral-tone-100' },
-                    { label: 'Hard', pts: '50 pts', color: 'bg-orange-100 text-orange-700 border-orange-200' },
+                    { label: 'Medium', pts: '25 pts', color: 'bg-yellow-100 text-yellow-700 border-yellow-200' },
+                    { label: 'Hard', pts: '50 pts', color: 'bg-amber-100 text-amber-700 border-amber-200' },
                     { label: 'Expert', pts: '100 pts', color: 'bg-red-100 text-red-700 border-red-200' },
                   ].map(d => (
                     <div key={d.label} className={`text-center p-3 rounded-lg border ${d.color}`}>
