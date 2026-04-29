@@ -15,20 +15,20 @@ export const TrendChart = ({ data, dataKeys, colors, title, infoText }) => {
       </div>
       <ResponsiveContainer width="100%" height={300}>
         <LineChart data={data}>
-          <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+          <CartesianGrid strokeDasharray="3 3" stroke="#E4E4E7" />
           <XAxis 
             dataKey="name" 
-            stroke="#6b7280"
+            stroke="#71717A"
             style={{ fontSize: '12px' }}
           />
           <YAxis 
-            stroke="#6b7280"
+            stroke="#71717A"
             style={{ fontSize: '12px' }}
           />
           <Tooltip 
             contentStyle={{
               backgroundColor: '#fff',
-              border: '1px solid #e5e7eb',
+              border: '1px solid #E4E4E7',
               borderRadius: '8px',
               boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
             }}
@@ -61,27 +61,27 @@ export const KPIBarChart = ({ data, title, infoText }) => {
       </div>
       <ResponsiveContainer width="100%" height={300}>
         <BarChart data={data}>
-          <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+          <CartesianGrid strokeDasharray="3 3" stroke="#E4E4E7" />
           <XAxis 
             dataKey="name" 
-            stroke="#6b7280"
+            stroke="#71717A"
             style={{ fontSize: '12px' }}
           />
           <YAxis 
-            stroke="#6b7280"
+            stroke="#71717A"
             style={{ fontSize: '12px' }}
           />
           <Tooltip 
             contentStyle={{
               backgroundColor: '#fff',
-              border: '1px solid #e5e7eb',
+              border: '1px solid #E4E4E7',
               borderRadius: '8px',
               boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
             }}
           />
           <Legend />
-          <Bar dataKey="value" fill="#3b82f6" radius={[8, 8, 0, 0]} />
-          <Bar dataKey="target" fill="#e5e7eb" radius={[8, 8, 0, 0]} />
+          <Bar dataKey="value" fill="#FF4D2E" radius={[8, 8, 0, 0]} />
+          <Bar dataKey="target" fill="#E4E4E7" radius={[8, 8, 0, 0]} />
         </BarChart>
       </ResponsiveContainer>
     </div>
@@ -90,7 +90,7 @@ export const KPIBarChart = ({ data, title, infoText }) => {
 
 // Donut Chart for score distribution
 export const ScoreDistributionChart = ({ data, title, infoText, footer = null }) => {
-  const COLORS = ['#22c55e', '#eab308', '#ef4444', '#6b7280'];
+  const COLORS = ['#16A34A', '#F59E0B', '#C8341B', '#71717A'];
   const RADIAN = Math.PI / 180;
   const innerRadius = 50;
   const outerRadius = 70;
@@ -132,7 +132,7 @@ export const ScoreDistributionChart = ({ data, title, infoText, footer = null })
       <text
         x={x}
         y={y}
-        fill="#111827"
+        fill="#0A0A0B"
         textAnchor={anchor}
         dominantBaseline="central"
         style={{ fontSize: '10px', fontWeight: 700 }}
@@ -158,11 +158,11 @@ export const ScoreDistributionChart = ({ data, title, infoText, footer = null })
             cy="50%"
             innerRadius={innerRadius}
             outerRadius={outerRadius}
-            fill="#8884d8"
+            fill="#71717A"
             paddingAngle={2}
             dataKey="value"
             label={renderLabel}
-            labelLine={{ stroke: '#d1d5db', strokeWidth: 1 }}
+            labelLine={{ stroke: '#A1A1AA', strokeWidth: 1 }}
           >
             {data.map((entry, index) => (
               <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
@@ -171,7 +171,7 @@ export const ScoreDistributionChart = ({ data, title, infoText, footer = null })
           <Tooltip
             contentStyle={{
               backgroundColor: '#fff',
-              border: '1px solid #e5e7eb',
+              border: '1px solid #E4E4E7',
               borderRadius: '8px',
               boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
             }}
@@ -197,7 +197,7 @@ export const ScoreDistributionChart = ({ data, title, infoText, footer = null })
 };
 
 // Historical Apptivia Scores Line Chart
-const REP_OVERLAY_COLORS = ['#f59e0b', '#10b981', '#ef4444', '#8b5cf6', '#ec4899', '#06b6d4', '#f97316'];
+const REP_OVERLAY_COLORS = ['#FF4D2E', '#16A34A', '#F59E0B', '#71717A', '#3F3F46', '#FF8A6B', '#C8341B'];
 
 export const HistoricalScoresChart = ({ data, title, infoText, overlayRepIds = [], repNames = {}, lineName = 'Team Avg', chartHeight = 220 }) => {
   return (
@@ -208,21 +208,21 @@ export const HistoricalScoresChart = ({ data, title, infoText, overlayRepIds = [
       </div>
       <ResponsiveContainer width="100%" height={chartHeight || 220}>
         <LineChart data={data} margin={{ top: 8, right: 16, bottom: 0, left: 0 }}>
-          <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+          <CartesianGrid strokeDasharray="3 3" stroke="#E4E4E7" />
           <XAxis
             dataKey="week"
-            stroke="#6b7280"
+            stroke="#71717A"
             style={{ fontSize: '10px' }}
           />
           <YAxis
-            stroke="#6b7280"
+            stroke="#71717A"
             style={{ fontSize: '10px' }}
             domain={[0, 'auto']}
           />
           <Tooltip
             contentStyle={{
               backgroundColor: '#fff',
-              border: '1px solid #e5e7eb',
+              border: '1px solid #E4E4E7',
               borderRadius: '6px',
               boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
               fontSize: '11px'
@@ -237,9 +237,9 @@ export const HistoricalScoresChart = ({ data, title, infoText, overlayRepIds = [
           <Line
             type="monotone"
             dataKey="score"
-            stroke="#3b82f6"
+            stroke="#FF4D2E"
             strokeWidth={2}
-            dot={{ fill: '#3b82f6', r: 3 }}
+            dot={{ fill: '#FF4D2E', r: 3 }}
             activeDot={{ r: 5 }}
             name={lineName}
           />
@@ -282,10 +282,10 @@ export const TeamPerformanceChart = ({
       <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden">
       <ResponsiveContainer width="100%" height={chartHeight}>
         <BarChart data={data} layout="vertical" margin={{ top: 8, right: 24, bottom: 8, left: 8 }}>
-          <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+          <CartesianGrid strokeDasharray="3 3" stroke="#E4E4E7" />
           <XAxis
             type="number"
-            stroke="#6b7280"
+            stroke="#71717A"
             style={{ fontSize: '12px' }}
             domain={domain}
             tickFormatter={xTickFormatter}
@@ -295,25 +295,25 @@ export const TeamPerformanceChart = ({
             type="category"
             width={140}
             interval={0}
-            stroke="#6b7280"
+            stroke="#71717A"
             style={{ fontSize: '11px' }}
           />
           <Tooltip
             formatter={(value) => xTickFormatter ? xTickFormatter(value) : value}
             contentStyle={{
               backgroundColor: '#fff',
-              border: '1px solid #e5e7eb',
+              border: '1px solid #E4E4E7',
               borderRadius: '8px',
               boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
             }}
           />
           <Legend />
-          <Bar dataKey={dataKey} fill="#3b82f6" radius={[0, 8, 8, 0]} name={barLabel}>
+          <Bar dataKey={dataKey} fill="#FF4D2E" radius={[0, 8, 8, 0]} name={barLabel}>
             <LabelList
               dataKey={dataKey}
               position="right"
               formatter={(value) => xTickFormatter ? xTickFormatter(value) : value}
-              style={{ fill: '#111827', fontSize: '11px', fontWeight: 600 }}
+              style={{ fill: '#0A0A0B', fontSize: '11px', fontWeight: 600 }}
             />
           </Bar>
         </BarChart>
