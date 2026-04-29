@@ -6,25 +6,25 @@ const VARIANT_CONFIG = {
     title: 'Unlock Unlimited Aaron AI',
     message: "You've used all 10 daily Aaron messages. Pro gives you unlimited coaching conversations, persistent threads, and deeper insights.",
     icon: '🤖',
-    color: '#7c3aed',
+    color: '#FF4D2E',
   },
   feature_gate: {
     title: 'This Feature Requires Pro',
     message: 'Upgrade to unlock coaching plans, IDPs, performance reviews, advanced analytics, and more.',
     icon: '🔒',
-    color: '#7c3aed',
+    color: '#FF4D2E',
   },
   team_size: {
     title: 'Your Team is Growing',
     message: 'Teams with 4+ reps get the most from Pro — unlimited contests, coaching plans, and team benchmarks.',
     icon: '👥',
-    color: '#7c3aed',
+    color: '#FF4D2E',
   },
   generic: {
     title: 'Upgrade to Apptivia Pro',
     message: 'Get unlimited Aaron AI, coaching plans, contests, advanced analytics, and cross-org benchmarks.',
     icon: '🚀',
-    color: '#7c3aed',
+    color: '#FF4D2E',
   },
 };
 
