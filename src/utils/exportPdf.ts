@@ -33,7 +33,7 @@ const today = () => new Date().toISOString().split('T')[0];
 function brandedHeader(title: string, subtitle?: string): string {
   return `
     <div style="background:${HEADER_BG};color:white;padding:28px 32px;border-radius:12px 12px 0 0;text-align:center;">
-      <div style="font-size:28px;font-weight:800;letter-spacing:-0.5px;margin-bottom:2px;">Apptivia</div>
+      <div style="font-size:28px;letter-spacing:-0.5px;margin-bottom:2px;"><span style="font-family:'Geist',-apple-system,BlinkMacSystemFont,sans-serif;font-weight:900;color:#F7F5F2;letter-spacing:-0.05em;">app</span><span style="font-family:'Geist',-apple-system,BlinkMacSystemFont,sans-serif;font-weight:500;color:#F7F5F2;letter-spacing:-0.05em;">tivia</span></div>
       <div style="font-size:11px;opacity:0.85;letter-spacing:1px;text-transform:uppercase;margin-bottom:12px;">Sales Performance Intelligence</div>
       <div style="font-size:18px;font-weight:700;">${title}</div>
       ${subtitle ? `<div style="font-size:12px;opacity:0.9;margin-top:4px;">${subtitle}</div>` : ''}
