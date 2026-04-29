@@ -181,7 +181,9 @@ app.use('/api', (req, res, next) => {
     (req.method === 'GET' && req.path.startsWith('/integrations/oauth/') && req.path.endsWith('/callback')) ||
     (req.method === 'POST' && req.path.startsWith('/webhooks/')) ||
     (req.method === 'POST' && req.path === '/auth/signup') ||
-    (req.method === 'POST' && req.path === '/contact/demo-request');
+    (req.method === 'POST' && req.path === '/contact/demo-request') ||
+    (req.method === 'POST' && req.path === '/contact/pilot-apply') ||
+    (req.method === 'GET' && req.path === '/public/aeo-brief');
   return isPublic ? next() : requireAuth(req, res, next);
 });
 
@@ -337,13 +339,20 @@ const aaronService = require('./aaronService');
 aaronService.init({ getSupabaseAdmin, getAnthropic });
 const {
   getSalesDnaContext, AI_STYLE_RULE, AARON_FRAMEWORKS, PRESET_FRAMEWORK_MAP,
-  PAGE_CATEGORY_BOOSTS, detectFrameworks, buildFrameworkSystemPrompt,
-  _aaronDailyLimits, _aaronLiveCache, _aaronOrgCache,
+  PAGE_CATEGORY_BOOSTS, detectFrameworks, buildFrameworkSystemPrompt, classifyAaronIntent,
+  classifyAaronModelTier, selectAaronModel, SONNET_MODEL, HAIKU_MODEL,
+  _aaronDailyLimits, _aaronLiveCache, _aaronOrgCache, _aaronDataCache,
   fetchAaronLiveContext, fetchAaronOrgContext, fetchAaronRepMemory, updateAaronRepMemory,
+  fetchScorecardContext, fetchTeamComparisonContext, fetchContestContext,
+  fetchProgressionContext, fetchCoachingContext, fetchPipelineContext, fetchAnalyticsSummaryContext,
+  fetchAaronOutcomeContext,
+  fetchRepDetailContext,
+  fetchCalendarContext,
+  detectStructuredOutputMode,
 } = aaronService;
 
 // GET Aaron rep memory — fetch current memory for the authenticated user
-app.get('/api/aaron/memory', loadProfile, async (req, res) => {
+app.get('/api/aaron/memory', loadProfile, requireFeature('coach'), async (req, res) => {
   try {
     const sb = getSupabaseAdmin();
     if (!sb) return res.status(503).json({ error: 'Service unavailable' });
@@ -365,7 +374,7 @@ app.get('/api/aaron/memory', loadProfile, async (req, res) => {
 });
 
 // Clear Aaron's per-rep memory
-app.delete('/api/aaron/memory', loadProfile, async (req, res) => {
+app.delete('/api/aaron/memory', loadProfile, requireFeature('coach'), async (req, res) => {
   try {
     const sb = getSupabaseAdmin();
     if (!sb) return res.status(503).json({ error: 'Service unavailable' });
@@ -381,8 +390,48 @@ app.delete('/api/aaron/memory', loadProfile, async (req, res) => {
   }
 });
 
+// ── Spec 04: infer target KPI from coaching framework or action label ────────
+const FRAMEWORK_KPI_MAP = {
+  jbarrows: 'calls_made',
+  sandler: 'meetings_booked',
+  meddpicc: 'pipeline_value',
+  spin: 'meetings_booked',
+  challenger: 'demos_completed',
+  gapSelling: 'demos_completed',
+  valueFramework: 'pipeline_value',
+  objectionHandling: 'connect_rate',
+  coaching: null, // too generic
+  forecastAccuracy: 'pipeline_value',
+  timeManagement: 'calls_made',
+  socialSelling: 'emails_sent',
+  accountPlanning: 'pipeline_value',
+  closingTechniques: 'deals_closed',
+};
+const KPI_LABEL_PATTERNS = [
+  { pattern: /dial|call|cold call|phone/i, kpi: 'calls_made' },
+  { pattern: /email|outreach|cadence|sequence/i, kpi: 'emails_sent' },
+  { pattern: /meeting|booked|scheduled/i, kpi: 'meetings_booked' },
+  { pattern: /demo|discovery|presentation/i, kpi: 'demos_completed' },
+  { pattern: /pipeline|deal|opportunity|close|won/i, kpi: 'pipeline_value' },
+  { pattern: /connect|conversion|rate/i, kpi: 'connect_rate' },
+];
+function inferTargetKpi(framework, actionLabel, actionType) {
+  // 1. Framework mapping takes priority
+  if (framework && FRAMEWORK_KPI_MAP[framework]) return FRAMEWORK_KPI_MAP[framework];
+  // 2. Label pattern matching
+  const label = (actionLabel || '').toLowerCase();
+  for (const { pattern, kpi } of KPI_LABEL_PATTERNS) {
+    if (pattern.test(label)) return kpi;
+  }
+  // 3. Action type fallback
+  if (actionType === 'call_logged') return 'calls_made';
+  if (actionType === 'meeting_scheduled') return 'meetings_booked';
+  // 4. Default to calls_made (most common activity KPI)
+  return 'calls_made';
+}
+
 // [FEATURE 5] Log a coaching action from Aaron conversation
-app.post('/api/aaron/coaching-action', loadProfile, async (req, res) => {
+app.post('/api/aaron/coaching-action', loadProfile, requireFeature('coach'), async (req, res) => {
   try {
     const sb = getSupabaseAdmin();
     if (!sb) return res.status(503).json({ error: 'Service unavailable' });
@@ -390,7 +439,24 @@ app.post('/api/aaron/coaching-action', loadProfile, async (req, res) => {
     const orgId  = req.userProfile?.organization_id;
     if (!userId || !orgId) return res.status(400).json({ error: 'Missing user/org' });
 
-    let { action_type, action_label, source_framework, thread_id, metadata } = req.body || {};
+    let { action_type, action_label, source_framework, thread_id, target_rep_id, metadata } = req.body || {};
+    const isManager = ['admin', 'manager', 'coach'].includes(req.userProfile?.role);
+
+    // Resolve target rep — managers can assign to a specific rep, otherwise self
+    let repUserId = userId;
+    let repProfile = req.userProfile;
+    if (target_rep_id && isManager && target_rep_id !== userId) {
+      const { data: targetProf } = await sb
+        .from('profiles')
+        .select('id, first_name, last_name, role, organization_id')
+        .eq('id', target_rep_id)
+        .eq('organization_id', orgId)
+        .single();
+      if (targetProf) {
+        repUserId = targetProf.id;
+        repProfile = targetProf;
+      }
+    }
 
     // Auto-extract action label via Haiku if not provided
     if (!action_label && metadata?.aaron_message) {
@@ -414,6 +480,7 @@ app.post('/api/aaron/coaching-action', loadProfile, async (req, res) => {
       return res.status(400).json({ error: 'action_type and action_label are required' });
     }
 
+    // Store the coaching action — user_id = who logged it, metadata.target_rep_id = who it's for
     const { data: newAction, error } = await sb
       .from('aaron_coaching_actions')
       .insert({
@@ -423,14 +490,60 @@ app.post('/api/aaron/coaching-action', loadProfile, async (req, res) => {
         action_type,
         action_label,
         source_framework:  source_framework || null,
-        metadata:          metadata || {},
+        metadata:          { ...(metadata || {}), ...(repUserId !== userId ? { target_rep_id: repUserId } : {}) },
       })
       .select('id')
       .single();
 
     if (error) return res.status(500).json({ error: error.message });
 
-    // CRM push if org has a connected CRM
+    // Outcome tracking — create baseline measurement row for KPI lift attribution (Spec 04)
+    // Key fix: track the TARGET REP's KPI, not the manager's
+    try {
+      const targetKpiKey = inferTargetKpi(source_framework, action_label, action_type);
+      if (targetKpiKey) {
+        const fourWeeksAgo = new Date(Date.now() - 28 * 24 * 60 * 60 * 1000).toISOString();
+        const { data: kpiDef } = await sb
+          .from('kpis')
+          .select('id')
+          .eq('organization_id', orgId)
+          .eq('kpi_key', targetKpiKey)
+          .maybeSingle();
+
+        let baselineValue = null;
+        if (kpiDef) {
+          const { data: baselineRows } = await sb
+            .from('kpi_values')
+            .select('value')
+            .eq('profile_id', repUserId)
+            .eq('kpi_id', kpiDef.id)
+            .gte('period_start', fourWeeksAgo)
+            .order('period_start', { ascending: false });
+
+          if (baselineRows && baselineRows.length > 0) {
+            baselineValue = baselineRows.reduce((s, r) => s + (r.value || 0), 0) / baselineRows.length;
+          }
+        }
+
+        await sb.from('aaron_recommendation_outcomes').insert({
+          organization_id: orgId,
+          coaching_action_id: newAction.id,
+          rep_profile_id: repUserId,
+          manager_profile_id: isManager ? userId : null,
+          kpi_key: targetKpiKey,
+          baseline_value: baselineValue,
+          baseline_period_start: fourWeeksAgo,
+          baseline_period_end: new Date().toISOString(),
+          recommendation_text: action_label,
+          recommendation_framework: source_framework || null,
+          was_acted_on: false,
+        });
+      }
+    } catch (outcomeErr) {
+      console.error('[coaching-action] Outcome tracking error (non-fatal):', outcomeErr.message);
+    }
+
+    // CRM push if org has a connected CRM — enriched payload
     let crm_push_status = 'skipped';
     try {
       const { data: crmConn } = await sb
@@ -443,17 +556,37 @@ app.post('/api/aaron/coaching-action', loadProfile, async (req, res) => {
         .single();
 
       if (crmConn) {
-        const repName = `${req.userProfile?.first_name || ''} ${req.userProfile?.last_name || ''}`.trim();
+        const repName = `${repProfile?.first_name || ''} ${repProfile?.last_name || ''}`.trim();
+        const managerName = (repUserId !== userId)
+          ? `${req.userProfile?.first_name || ''} ${req.userProfile?.last_name || ''}`.trim()
+          : null;
+
+        // Build rich CRM description
+        const descParts = [
+          `Coaching action logged via Aaron AI.`,
+          `Framework: ${source_framework || 'General'}`,
+          `Rep: ${repName}`,
+        ];
+        if (managerName) descParts.push(`Assigned by: ${managerName}`);
+        if (metadata?.aaron_message) {
+          descParts.push(`\nAaron Coaching Context:\n${metadata.aaron_message.slice(0, 1000)}`);
+        }
+
+        // Smart due date: meetings = 3 days, follow-ups = 7 days, default = 1 day
+        let dueDays = 1;
+        if (action_type === 'meeting_scheduled') dueDays = 3;
+        else if (action_type === 'follow_up_set') dueDays = 7;
+
         await integrations.enqueuePush(sb, {
           organizationId: orgId,
           integrationId:  crmConn.id,
           entityType:     'task',
           entityId:       newAction.id,
-          action:         'create',
+          action:         'log_activity',
           payload: {
             subject:     `[Apptivia Coaching] ${action_label}`,
-            description: `Coaching action logged via Aaron AI. Framework: ${source_framework || 'General'}. Rep: ${repName}.`,
-            due_date:    new Date(Date.now() + 86400000).toISOString(),
+            description: descParts.join('\n'),
+            due_date:    new Date(Date.now() + dueDays * 86400000).toISOString(),
             owner_id:    null,
           },
           triggeredBy:  userId,
@@ -468,7 +601,7 @@ app.post('/api/aaron/coaching-action', loadProfile, async (req, res) => {
       console.error('[coaching-action] CRM push error:', crmErr.message);
     }
 
-    return res.json({ id: newAction.id, crm_push_status });
+    return res.json({ id: newAction.id, crm_push_status, target_rep_id: repUserId });
   } catch (err) {
     console.error('POST /api/aaron/coaching-action error:', err.message);
     return res.status(500).json({ error: 'Internal error' });
@@ -476,7 +609,7 @@ app.post('/api/aaron/coaching-action', loadProfile, async (req, res) => {
 });
 
 // [FEATURE 5] List coaching actions for current user (or team for managers)
-app.get('/api/aaron/coaching-actions', loadProfile, async (req, res) => {
+app.get('/api/aaron/coaching-actions', loadProfile, requireFeature('coach'), async (req, res) => {
   try {
     const sb = getSupabaseAdmin();
     if (!sb) return res.status(503).json({ error: 'Service unavailable' });
@@ -509,8 +642,163 @@ app.get('/api/aaron/coaching-actions', loadProfile, async (req, res) => {
   }
 });
 
+// POST /api/aaron/save-structured-plan — Save Aaron structured output to coaching_plans
+app.post('/api/aaron/save-structured-plan', loadProfile, requireFeature('coach'), async (req, res) => {
+  try {
+    const sb = getSupabaseAdmin();
+    if (!sb) return res.status(503).json({ error: 'Service unavailable' });
+    const userId = req.user?.id;
+    const orgId = req.userProfile?.organization_id;
+    if (!userId || !orgId) return res.status(400).json({ error: 'Missing user/org' });
+
+    const { structuredData, structuredType } = req.body;
+    if (!structuredData || !structuredType) return res.status(400).json({ error: 'Missing structuredData or structuredType' });
+
+    // Resolve target rep by name
+    const repName = structuredData.rep_name || structuredData.team_or_rep_name || null;
+    let matchedRepId = null;
+    if (repName) {
+      const { data: allReps } = await sb.from('profiles')
+        .select('id, first_name, last_name, team_id')
+        .eq('organization_id', orgId);
+      if (allReps?.length) {
+        const lower = repName.toLowerCase();
+        const match = allReps.find(r => {
+          const full = `${r.first_name || ''} ${r.last_name || ''}`.toLowerCase().trim();
+          const first = (r.first_name || '').toLowerCase();
+          return full === lower || first === lower || full.startsWith(lower);
+        });
+        if (match) matchedRepId = match.id;
+      }
+    }
+
+    // Map structured data to coaching_plans columns by type
+    let planRecord;
+    if (structuredType === 'coaching_plan') {
+      const d = structuredData;
+      const contentParts = [];
+      if (d.rep_name) contentParts.push(`Coaching Plan: ${d.rep_name}\n`);
+      if (d.diagnosis?.primary_kpi_gap) contentParts.push(`Diagnosis: ${d.diagnosis.primary_kpi_gap}`);
+      if (d.diagnosis?.evidence?.length) contentParts.push(`Evidence:\n${d.diagnosis.evidence.map(e => `  - ${e}`).join('\n')}`);
+      if (d.diagnosis?.underlying_belief) contentParts.push(`Underlying belief: ${d.diagnosis.underlying_belief}`);
+      if (d.coaching_plan?.week_1_focus) contentParts.push(`\nWeek 1: ${d.coaching_plan.week_1_focus}`);
+      if (d.coaching_plan?.week_1_actions?.length) contentParts.push(d.coaching_plan.week_1_actions.map(a => `  - ${a}`).join('\n'));
+      if (d.coaching_plan?.week_2_focus) contentParts.push(`\nWeek 2: ${d.coaching_plan.week_2_focus}`);
+      if (d.coaching_plan?.week_2_actions?.length) contentParts.push(d.coaching_plan.week_2_actions.map(a => `  - ${a}`).join('\n'));
+      if (d.coaching_plan?.week_4_checkpoint) contentParts.push(`\nWeek 4 Checkpoint: ${d.coaching_plan.week_4_checkpoint}`);
+      if (d.manager_talk_track) contentParts.push(`\nManager Talk Track:\n${d.manager_talk_track}`);
+      if (d.rep_facing_message) contentParts.push(`\nRep-Facing Message:\n${d.rep_facing_message}`);
+
+      planRecord = {
+        name: `Coaching Plan: ${d.rep_name || 'Unknown'}`,
+        plan_type: 'auto',
+        content: contentParts.join('\n'),
+        goals: [d.coaching_plan?.week_1_focus, d.coaching_plan?.week_2_focus].filter(Boolean),
+        focus_kpis: [d.diagnosis?.primary_kpi_gap].filter(Boolean),
+        action_items: [...(d.coaching_plan?.week_1_actions || []), ...(d.coaching_plan?.week_2_actions || [])],
+        success_metrics: [d.coaching_plan?.week_4_checkpoint].filter(Boolean),
+        notes: [d.diagnosis?.evidence?.join('; '), d.manager_talk_track, d.rep_facing_message].filter(Boolean).join('\n\n'),
+        visibility: 'individual',
+      };
+    } else if (structuredType === 'one_on_one_prep') {
+      const d = structuredData;
+      const contentParts = [];
+      if (d.rep_name) contentParts.push(`1:1 Prep: ${d.rep_name}\n`);
+      if (d.meeting_context?.kpi_movement_summary) contentParts.push(`Context: ${d.meeting_context.kpi_movement_summary}`);
+      if (d.agenda?.length) {
+        contentParts.push('\nAgenda:');
+        d.agenda.forEach(a => {
+          contentParts.push(`  ${a.topic} (${a.minutes || '?'} min)`);
+          a.talking_points?.forEach(tp => contentParts.push(`    - ${tp}`));
+        });
+      }
+      if (d.celebrate?.length) contentParts.push(`\nCelebrate:\n${d.celebrate.map(c => `  + ${c}`).join('\n')}`);
+      if (d.investigate?.length) contentParts.push(`\nInvestigate:\n${d.investigate.map(v => `  ? ${v}`).join('\n')}`);
+      if (d.decide?.length) contentParts.push(`\nDecide:\n${d.decide.map(x => `  > ${x}`).join('\n')}`);
+      if (d.rep_facing_pre_read) contentParts.push(`\nPre-Read for Rep:\n${d.rep_facing_pre_read}`);
+
+      planRecord = {
+        name: `1:1 Prep: ${d.rep_name || 'Unknown'}`,
+        plan_type: 'auto',
+        content: contentParts.join('\n'),
+        goals: (d.agenda || []).map(a => a.topic).filter(Boolean),
+        focus_kpis: [],
+        action_items: [...(d.investigate || []), ...(d.decide || [])],
+        success_metrics: [],
+        notes: [...(d.celebrate || []).map(c => `Celebrate: ${c}`), d.meeting_context?.kpi_movement_summary, d.rep_facing_pre_read].filter(Boolean).join('\n\n'),
+        visibility: 'individual',
+      };
+    } else if (structuredType === 'pipeline_diagnosis') {
+      const d = structuredData;
+      const contentParts = [];
+      contentParts.push(`Pipeline Diagnosis: ${d.team_or_rep_name || 'Unknown'} (${d.scope || 'unknown'})\n`);
+      if (d.diagnosis_summary) contentParts.push(d.diagnosis_summary);
+      if (d.stage_health?.length) {
+        contentParts.push('\nStage Health:');
+        d.stage_health.forEach(s => contentParts.push(`  ${s.health?.toUpperCase() || '?'} ${s.stage}: ${s.deal_count || 0} deals${s.value ? ` ($${Math.round(s.value / 1000)}K)` : ''}${s.issue ? ` — ${s.issue}` : ''}`));
+      }
+      if (d.stalled_deals?.length) {
+        contentParts.push('\nStalled Deals:');
+        d.stalled_deals.forEach(x => contentParts.push(`  ${x.deal_name}${x.value ? ` ($${Math.round(x.value / 1000)}K)` : ''}${x.days_in_stage ? ` — ${x.days_in_stage}d` : ''}: ${x.recommended_action || ''}`));
+      }
+      if (d.missing_pipeline_value != null) contentParts.push(`\nPipeline gap: $${Math.round(d.missing_pipeline_value / 1000)}K`);
+      if (d.actions_this_week?.length) {
+        contentParts.push('\nActions This Week:');
+        d.actions_this_week.forEach(a => contentParts.push(`  [ ] ${a.action}${a.owner ? ` (${a.owner})` : ''}${a.deadline ? ` by ${a.deadline}` : ''}`));
+      }
+
+      planRecord = {
+        name: `Pipeline Diagnosis: ${d.team_or_rep_name || 'Unknown'}`,
+        plan_type: 'auto',
+        content: contentParts.join('\n'),
+        goals: (d.actions_this_week || []).map(a => a.action).filter(Boolean),
+        focus_kpis: [],
+        action_items: (d.actions_this_week || []).map(a => `${a.action}${a.owner ? ` (${a.owner})` : ''}${a.deadline ? ` by ${a.deadline}` : ''}`),
+        success_metrics: [],
+        notes: [d.diagnosis_summary, ...(d.stalled_deals || []).map(x => `Stalled: ${x.deal_name} — ${x.recommended_action}`)].filter(Boolean).join('\n\n'),
+        visibility: d.scope === 'team' ? 'team' : 'individual',
+      };
+    } else {
+      return res.status(400).json({ error: `Unknown structuredType: ${structuredType}` });
+    }
+
+    // Add common fields
+    planRecord.created_by = userId;
+    planRecord.organization_id = orgId;
+    planRecord.member_ids = matchedRepId ? [matchedRepId] : [];
+    planRecord.assigned_to = matchedRepId ? [matchedRepId] : [];
+    planRecord.team_id = req.userProfile?.team_id || null;
+    planRecord.status = 'draft';
+
+    // Insert coaching plan
+    const { data: savedPlan, error: planErr } = await sb.from('coaching_plans').insert(planRecord).select('id, name').single();
+    if (planErr) {
+      console.error('[save-structured-plan] Insert error:', planErr.message);
+      return res.status(500).json({ error: planErr.message });
+    }
+
+    // Create assignment if rep matched
+    if (matchedRepId) {
+      const { error: assignErr } = await sb.from('coaching_plan_assignments').insert({
+        plan_id: savedPlan.id,
+        assigned_to: matchedRepId,
+        assigned_by: userId,
+        organization_id: orgId,
+        status: 'active',
+      });
+      if (assignErr) console.error('[save-structured-plan] Assignment error:', assignErr.message);
+    }
+
+    console.log(`[save-structured-plan] Saved ${structuredType}: ${savedPlan.name} (${savedPlan.id})${matchedRepId ? ` → assigned to ${matchedRepId}` : ''}`);
+    return res.json({ id: savedPlan.id, name: savedPlan.name });
+  } catch (err) {
+    console.error('POST /api/aaron/save-structured-plan error:', err.message);
+    return res.status(500).json({ error: 'Internal error' });
+  }
+});
+
 // GET /api/aaron/coaching-actions/summary — ROI attribution summary for managers
-app.get('/api/aaron/coaching-actions/summary', loadProfile, requireMinRole('manager'), async (req, res) => {
+app.get('/api/aaron/coaching-actions/summary', loadProfile, requireMinRole('manager'), requireFeature('coach'), async (req, res) => {
   try {
     const sb = getSupabaseAdmin();
     if (!sb) return res.status(503).json({ error: 'Service unavailable' });
@@ -554,10 +842,84 @@ app.get('/api/aaron/coaching-actions/summary', loadProfile, requireMinRole('mana
   }
 });
 
+// ── Spec 04: Aaron outcome summary (org-wide coaching ROI) ──────────────
+app.get('/api/aaron/outcomes/summary', loadProfile, requireMinRole('manager'), async (req, res) => {
+  try {
+    const sb = getSupabaseAdmin();
+    if (!sb) return res.status(503).json({ error: 'Service unavailable' });
+
+    const orgId = req.userProfile?.organization_id;
+    const ninetyDaysAgo = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString();
+
+    const { data: outcomes } = await sb
+      .from('aaron_recommendation_outcomes')
+      .select('was_acted_on, lift_pct_14d, lift_pct_30d, lift_pct_60d, kpi_key, recommendation_framework')
+      .eq('organization_id', orgId)
+      .gte('recommendation_at', ninetyDaysAgo);
+
+    if (!outcomes || outcomes.length === 0) return res.json({ total: 0, summary: null });
+
+    const total = outcomes.length;
+    const acted = outcomes.filter(o => o.was_acted_on).length;
+    const measured30 = outcomes.filter(o => o.lift_pct_30d !== null);
+    const positive30 = measured30.filter(o => o.lift_pct_30d > 0);
+    const avgLift30 = measured30.length > 0
+      ? measured30.reduce((s, o) => s + o.lift_pct_30d, 0) / measured30.length
+      : null;
+
+    // By framework
+    const byFramework = {};
+    for (const o of outcomes) {
+      const fw = o.recommendation_framework || 'unspecified';
+      if (!byFramework[fw]) byFramework[fw] = { count: 0, lift_sum: 0, lift_count: 0 };
+      byFramework[fw].count++;
+      if (o.lift_pct_30d !== null) {
+        byFramework[fw].lift_sum += o.lift_pct_30d;
+        byFramework[fw].lift_count++;
+      }
+    }
+    const frameworkPerformance = Object.entries(byFramework).map(([fw, stats]) => ({
+      framework: fw,
+      count: stats.count,
+      avg_lift_30d: stats.lift_count > 0 ? +(stats.lift_sum / stats.lift_count).toFixed(1) : null,
+    }));
+
+    // By KPI
+    const byKpi = {};
+    for (const o of outcomes) {
+      if (!byKpi[o.kpi_key]) byKpi[o.kpi_key] = { count: 0, lift_sum: 0, lift_count: 0 };
+      byKpi[o.kpi_key].count++;
+      if (o.lift_pct_30d !== null) {
+        byKpi[o.kpi_key].lift_sum += o.lift_pct_30d;
+        byKpi[o.kpi_key].lift_count++;
+      }
+    }
+    const kpiPerformance = Object.entries(byKpi).map(([kpi, stats]) => ({
+      kpi_key: kpi,
+      count: stats.count,
+      avg_lift_30d: stats.lift_count > 0 ? +(stats.lift_sum / stats.lift_count).toFixed(1) : null,
+    }));
+
+    return res.json({
+      total,
+      acted_on_count: acted,
+      acted_on_rate: total > 0 ? +(acted / total).toFixed(2) : 0,
+      measured_30d_count: measured30.length,
+      positive_lift_30d_count: positive30.length,
+      avg_lift_30d_pct: avgLift30 !== null ? +avgLift30.toFixed(1) : null,
+      framework_performance: frameworkPerformance,
+      kpi_performance: kpiPerformance,
+    });
+  } catch (err) {
+    console.error('[aaron/outcomes/summary] Error:', err.message);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 // ── [FEATURE 1] Aaron Conversation Thread Endpoints ──────────────────────
 
 // List threads for current user (last 10, ordered by last_active_at desc)
-app.get('/api/aaron/threads', loadProfile, async (req, res) => {
+app.get('/api/aaron/threads', loadProfile, requireFeature('coach'), async (req, res) => {
   try {
     const sb = getSupabaseAdmin();
     if (!sb) return res.status(503).json({ error: 'Service unavailable' });
@@ -582,7 +944,7 @@ app.get('/api/aaron/threads', loadProfile, async (req, res) => {
 });
 
 // Create a new thread
-app.post('/api/aaron/threads', loadProfile, async (req, res) => {
+app.post('/api/aaron/threads', loadProfile, requireFeature('coach'), async (req, res) => {
   try {
     const sb = getSupabaseAdmin();
     if (!sb) return res.status(503).json({ error: 'Service unavailable' });
@@ -612,7 +974,7 @@ app.post('/api/aaron/threads', loadProfile, async (req, res) => {
 });
 
 // Fetch messages for a specific thread
-app.get('/api/aaron/threads/:id', loadProfile, async (req, res) => {
+app.get('/api/aaron/threads/:id', loadProfile, requireFeature('coach'), async (req, res) => {
   try {
     const sb = getSupabaseAdmin();
     if (!sb) return res.status(503).json({ error: 'Service unavailable' });
@@ -637,7 +999,7 @@ app.get('/api/aaron/threads/:id', loadProfile, async (req, res) => {
 });
 
 // Delete a thread
-app.delete('/api/aaron/threads/:id', loadProfile, async (req, res) => {
+app.delete('/api/aaron/threads/:id', loadProfile, requireFeature('coach'), async (req, res) => {
   try {
     const sb = getSupabaseAdmin();
     if (!sb) return res.status(503).json({ error: 'Service unavailable' });
@@ -658,7 +1020,7 @@ app.delete('/api/aaron/threads/:id', loadProfile, async (req, res) => {
 });
 
 // Rename a thread
-app.patch('/api/aaron/threads/:id/name', loadProfile, async (req, res) => {
+app.patch('/api/aaron/threads/:id/name', loadProfile, requireFeature('coach'), async (req, res) => {
   try {
     const sb = getSupabaseAdmin();
     if (!sb) return res.status(503).json({ error: 'Service unavailable' });
@@ -684,7 +1046,7 @@ app.patch('/api/aaron/threads/:id/name', loadProfile, async (req, res) => {
 });
 
 // POST /api/aaron/threads/:id/outcome — tag a conversation thread with an outcome
-app.post('/api/aaron/threads/:id/outcome', loadProfile, async (req, res) => {
+app.post('/api/aaron/threads/:id/outcome', loadProfile, requireFeature('coach'), async (req, res) => {
   try {
     const sb = getSupabaseAdmin();
     if (!sb) return res.status(503).json({ error: 'Service unavailable' });
@@ -712,6 +1074,267 @@ app.post('/api/aaron/threads/:id/outcome', loadProfile, async (req, res) => {
     return res.json({ ok: true, ...data });
   } catch (err) {
     console.error('POST /api/aaron/threads/:id/outcome error:', err.message);
+    return res.status(500).json({ error: 'Internal error' });
+  }
+});
+
+// ── Aaron Pre-Call Prep Cards (Spec 11 Mode 2) ──────────────────────────────
+app.get('/api/aaron/prep-cards', loadProfile, requireFeature('coach'), async (req, res) => {
+  try {
+    const sb = getSupabaseAdmin();
+    if (!sb) return res.status(503).json({ error: 'Service unavailable' });
+    const userId = req.user?.id;
+    const orgId = req.userProfile?.organization_id;
+    if (!userId || !orgId) return res.status(400).json({ error: 'Missing user/org' });
+
+    const now = new Date().toISOString();
+    const { data: cards, error } = await sb
+      .from('aaron_pre_call_prep_cards')
+      .select('*')
+      .eq('rep_profile_id', userId)
+      .eq('organization_id', orgId)
+      .gte('meeting_start_at', now)
+      .order('meeting_start_at', { ascending: true })
+      .limit(5);
+
+    if (error) return res.status(500).json({ error: error.message });
+
+    // Fire-and-forget: mark as viewed
+    if (cards?.length) {
+      const ids = cards.filter(c => !c.viewed_at).map(c => c.id);
+      if (ids.length) {
+        sb.from('aaron_pre_call_prep_cards')
+          .update({ viewed_at: now, viewed_count: 1 })
+          .in('id', ids)
+          .then(() => {})
+          .catch(() => {});
+      }
+    }
+
+    return res.json({ cards: cards || [] });
+  } catch (err) {
+    console.error('GET /api/aaron/prep-cards error:', err.message);
+    return res.status(500).json({ error: 'Internal error' });
+  }
+});
+
+// ── Aaron Skill Practice (Spec 11 Mode 4) ───────────────────────────────────
+app.post('/api/aaron/skill-practice', aiLimiter, loadProfile, requireFeature('coach'), async (req, res) => {
+  try {
+    const sb = getSupabaseAdmin();
+    if (!sb) return res.status(503).json({ error: 'Service unavailable' });
+    const userId = req.user?.id;
+    const orgId = req.userProfile?.organization_id;
+    if (!userId || !orgId) return res.status(400).json({ error: 'Missing user/org' });
+
+    const { action, skill_dimension, scenario_id, rep_response } = req.body || {};
+
+    const VALID_SKILLS = ['discovery', 'qualification', 'objection_handling', 'closing', 'negotiation', 'expansion', 'prospecting', 'demo_delivery'];
+
+    if (action === 'start') {
+      if (!skill_dimension || !VALID_SKILLS.includes(skill_dimension)) {
+        return res.status(400).json({ error: `skill_dimension must be one of: ${VALID_SKILLS.join(', ')}` });
+      }
+
+      // Fetch org context for realistic scenarios
+      const salesDnaCtx = await getSalesDnaContext(orgId);
+      const client = getAnthropic();
+
+      const scenarioResp = await client.messages.create({
+        model: HAIKU_MODEL,
+        max_tokens: 400,
+        system: `You are a sales training coach. Generate a realistic practice scenario for a sales rep to practice their "${skill_dimension.replace(/_/g, ' ')}" skills. ${salesDnaCtx ? `\nOrg context: ${salesDnaCtx}` : ''}
+Output JSON: {"scenario_prompt": string (the situation description, 2-3 sentences), "context_hint": string (a brief hint about what good looks like, 1 sentence)}
+Return ONLY valid JSON.`,
+        messages: [{ role: 'user', content: `Generate a ${skill_dimension.replace(/_/g, ' ')} practice scenario.` }],
+      });
+
+      let scenario;
+      try {
+        const text = scenarioResp.content[0]?.text || '';
+        scenario = JSON.parse(text.replace(/```json?\n?/g, '').replace(/```/g, '').trim());
+      } catch {
+        scenario = { scenario_prompt: 'A prospect says they are already working with a competitor. How do you handle this?', context_hint: 'Focus on understanding their current pain points.' };
+      }
+
+      // Insert placeholder log row
+      const { data: logRow, error: insertErr } = await sb
+        .from('aaron_skill_practice_logs')
+        .insert({
+          organization_id: orgId,
+          rep_profile_id: userId,
+          skill_dimension,
+          scenario_prompt: scenario.scenario_prompt,
+        })
+        .select('id')
+        .single();
+
+      if (insertErr) return res.status(500).json({ error: insertErr.message });
+
+      return res.json({
+        scenario_id: logRow.id,
+        scenario_prompt: scenario.scenario_prompt,
+        skill_dimension,
+        context_hint: scenario.context_hint,
+      });
+    }
+
+    if (action === 'submit') {
+      if (!scenario_id || !rep_response || rep_response.trim().length < 10) {
+        return res.status(400).json({ error: 'scenario_id and rep_response (min 10 chars) required' });
+      }
+
+      // Fetch the scenario
+      const { data: logRow, error: fetchErr } = await sb
+        .from('aaron_skill_practice_logs')
+        .select('*')
+        .eq('id', scenario_id)
+        .eq('rep_profile_id', userId)
+        .is('completed_at', null)
+        .single();
+
+      if (fetchErr || !logRow) return res.status(404).json({ error: 'Scenario not found or already completed' });
+
+      const salesDnaCtx = await getSalesDnaContext(orgId);
+      const client = getAnthropic();
+
+      // Grade with Sonnet (coaching judgment needed)
+      const gradingResp = await client.messages.create({
+        model: SONNET_MODEL,
+        max_tokens: 600,
+        system: `You are an expert sales coach grading a rep's practice response. ${salesDnaCtx ? `\nOrg context: ${salesDnaCtx}` : ''}
+Grade on 4 rubric dimensions (each 0-25 points, total 0-100):
+- relevance: Does the response address the scenario appropriately?
+- technique: Does the rep use proper sales techniques?
+- specificity: Are the responses specific rather than generic?
+- professionalism: Is the tone and approach professional?
+
+Output JSON:
+{
+  "rubric_scores": {"relevance": number, "technique": number, "specificity": number, "professionalism": number},
+  "total_score": number,
+  "strengths": [string, string],
+  "improvements": [string, string],
+  "example_better_response": string
+}
+Return ONLY valid JSON. Be honest but encouraging.`,
+        messages: [{ role: 'user', content: `Scenario: ${logRow.scenario_prompt}\n\nRep's response: ${rep_response}` }],
+      });
+
+      let grading;
+      try {
+        const text = gradingResp.content[0]?.text || '';
+        grading = JSON.parse(text.replace(/```json?\n?/g, '').replace(/```/g, '').trim());
+      } catch {
+        grading = {
+          rubric_scores: { relevance: 15, technique: 15, specificity: 15, professionalism: 15 },
+          total_score: 60, strengths: ['Good effort'], improvements: ['Be more specific'],
+          example_better_response: 'Try referencing specific customer pain points.',
+        };
+      }
+
+      // Update log row
+      await sb.from('aaron_skill_practice_logs').update({
+        rep_response,
+        rubric_scores: grading.rubric_scores,
+        total_score: grading.total_score,
+        strengths: grading.strengths || [],
+        improvements: grading.improvements || [],
+        example_better_response: grading.example_better_response || null,
+        completed_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      }).eq('id', scenario_id);
+
+      return res.json(grading);
+    }
+
+    return res.status(400).json({ error: 'action must be "start" or "submit"' });
+  } catch (err) {
+    console.error('POST /api/aaron/skill-practice error:', err.message);
+    return res.status(500).json({ error: 'Internal error' });
+  }
+});
+
+app.get('/api/aaron/skill-practice', loadProfile, requireFeature('coach'), async (req, res) => {
+  try {
+    const sb = getSupabaseAdmin();
+    if (!sb) return res.status(503).json({ error: 'Service unavailable' });
+    const userId = req.user?.id;
+    const orgId = req.userProfile?.organization_id;
+    if (!userId || !orgId) return res.status(400).json({ error: 'Missing user/org' });
+
+    const { data, error } = await sb
+      .from('aaron_skill_practice_logs')
+      .select('*')
+      .eq('rep_profile_id', userId)
+      .eq('organization_id', orgId)
+      .not('completed_at', 'is', null)
+      .order('created_at', { ascending: false })
+      .limit(20);
+
+    if (error) return res.status(500).json({ error: error.message });
+    return res.json({ sessions: data || [] });
+  } catch (err) {
+    console.error('GET /api/aaron/skill-practice error:', err.message);
+    return res.status(500).json({ error: 'Internal error' });
+  }
+});
+
+// ── Aaron Daily Briefing (Spec 11 Mode 1) ───────────────────────────────────
+app.get('/api/aaron/daily-briefing', loadProfile, requireFeature('coach'), async (req, res) => {
+  try {
+    const sb = getSupabaseAdmin();
+    if (!sb) return res.status(503).json({ error: 'Service unavailable' });
+    const userId = req.user?.id;
+    const orgId = req.userProfile?.organization_id;
+    if (!userId || !orgId) return res.status(400).json({ error: 'Missing user/org' });
+
+    // Determine mode by hour: before 2pm = morning, after = EOD
+    const hour = new Date().getHours();
+    const mode = hour < 14 ? 'morning' : 'eod';
+
+    // Gather context in parallel
+    const [liveData, calendarData, salesDna, repMemoryResult] = await Promise.all([
+      fetchAaronLiveContext(userId, orgId),
+      fetchCalendarContext(userId, orgId),
+      getSalesDnaContext(orgId),
+      fetchAaronRepMemory(userId, orgId),
+    ]);
+    const repMemory = repMemoryResult?.block || '';
+
+    const client = getAnthropic();
+
+    const promptKey = mode === 'morning' ? 'daily_briefing_morning' : 'daily_briefing_eod';
+    const structuredPrompt = aaronService.STRUCTURED_OUTPUT_PROMPTS[promptKey];
+
+    const systemPrompt = `You are Aaron, an AI sales coach. Generate a ${mode === 'morning' ? 'morning briefing' : 'end-of-day reflection'} for this sales rep.
+${salesDna ? `\nOrg Context: ${salesDna}` : ''}
+${liveData ? `\n${liveData}` : ''}
+${calendarData ? `\n${calendarData}` : ''}
+${repMemory ? `\n${repMemory}` : ''}
+
+${structuredPrompt}`;
+
+    const briefingResp = await client.messages.create({
+      model: HAIKU_MODEL,
+      max_tokens: 500,
+      system: systemPrompt,
+      messages: [{ role: 'user', content: `Generate my ${mode === 'morning' ? 'morning briefing' : 'end-of-day reflection'} for today.` }],
+    });
+
+    let briefing;
+    try {
+      const text = briefingResp.content[0]?.text || '';
+      briefing = JSON.parse(text.replace(/```json?\n?/g, '').replace(/```/g, '').trim());
+    } catch {
+      briefing = mode === 'morning'
+        ? { type: 'daily_briefing_morning', greeting: 'Good morning!', priorities: ['Review pipeline', 'Follow up on pending deals', 'Prepare for meetings'], kpi_watch: [], todays_meetings: [], one_thing_to_watch: 'Check your pipeline for stalled deals', yesterdays_commitments: null }
+        : { type: 'daily_briefing_eod', what_moved: ['Made progress on pipeline'], what_stalled: ['No critical stalls'], reflection_question: 'What was the most valuable conversation you had today?', tomorrows_commitment: 'Follow up on today\'s meetings' };
+    }
+
+    return res.json({ mode, briefing });
+  } catch (err) {
+    console.error('GET /api/aaron/daily-briefing error:', err.message);
     return res.status(500).json({ error: 'Internal error' });
   }
 });
@@ -968,6 +1591,72 @@ app.post('/api/contact/demo-request', demoRequestLimiter, async (req, res) => {
   }
 });
 
+// ─── Pilot Application (public, no auth) ──────────────────────────────────────
+const pilotApplyLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 5, keyGenerator: ipKeyGenerator, message: { error: 'Too many requests — try again later' } });
+app.post('/api/contact/pilot-apply', pilotApplyLimiter, async (req, res) => {
+  try {
+    const { name, email, company, teamSize, crm, biggestPain, currentTools } = req.body || {};
+    if (!name || !email) return res.status(400).json({ error: 'Name and email are required' });
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return res.status(400).json({ error: 'Invalid email address' });
+
+    try {
+      await sendEmail({
+        recipients: ['sean@apptivia.app'],
+        subject: `Founding Pilot Application — ${name}${company ? ` (${company})` : ''}`,
+        html: `
+          <h2>New Founding Pilot Application</h2>
+          <p><strong>Name:</strong> ${name}</p>
+          <p><strong>Email:</strong> ${email}</p>
+          ${company ? `<p><strong>Company:</strong> ${company}</p>` : ''}
+          ${teamSize ? `<p><strong>Team Size:</strong> ${teamSize}</p>` : ''}
+          ${crm ? `<p><strong>CRM:</strong> ${crm}</p>` : ''}
+          ${biggestPain ? `<p><strong>Biggest Challenge:</strong> ${biggestPain}</p>` : ''}
+          ${currentTools ? `<p><strong>Current Tools:</strong> ${currentTools}</p>` : ''}
+          <hr><p style="color:#999;font-size:12px;">Sent from apptivia.app/pilot application form</p>
+        `,
+        text: `Founding Pilot Application\nName: ${name}\nEmail: ${email}${company ? `\nCompany: ${company}` : ''}${teamSize ? `\nTeam Size: ${teamSize}` : ''}${crm ? `\nCRM: ${crm}` : ''}${biggestPain ? `\nBiggest Challenge: ${biggestPain}` : ''}${currentTools ? `\nCurrent Tools: ${currentTools}` : ''}`,
+      });
+    } catch (emailErr) {
+      console.error('Pilot application email failed (storing anyway):', emailErr.message);
+    }
+
+    const sb = getSupabaseAdmin();
+    if (sb) {
+      await sb.from('demo_requests').insert({
+        name, email, company: company || null, team_size: teamSize || null,
+        message: `[PILOT APPLICATION] CRM: ${crm || 'N/A'} | Pain: ${biggestPain || 'N/A'} | Tools: ${currentTools || 'N/A'}`,
+      }).catch(() => {});
+    }
+
+    console.log(`[Pilot Apply] ${name} <${email}>${company ? ` — ${company}` : ''} (${teamSize || '?'} reps, ${crm || 'no CRM'})`);
+    return res.json({ ok: true });
+  } catch (err) {
+    console.error('Pilot application error:', err.message);
+    return res.status(500).json({ error: 'Failed to submit application' });
+  }
+});
+
+// ─── AEO Brief (public, no auth) ─────────────────────────────────────────────
+// Returns the canonical Apptivia brief for AI crawlers and "Ask AI" footer buttons.
+app.get('/api/public/aeo-brief', (req, res) => {
+  try {
+    const fs = require('fs');
+    const path = require('path');
+    const brief = fs.readFileSync(path.join(__dirname, 'apptivia_aeo_brief.md'), 'utf8');
+
+    res.set('Cache-Control', 'public, max-age=3600');
+    res.set('Access-Control-Allow-Origin', '*');
+
+    if (req.query.format === 'json') {
+      return res.json({ brief, version: '1.0', updated: '2026-04-27' });
+    }
+    return res.type('text/markdown').send(brief);
+  } catch (err) {
+    console.error('[aeo-brief] Error:', err.message);
+    return res.status(500).json({ error: 'Brief unavailable' });
+  }
+});
+
 // ─── Self-Service Sign Up (public, no auth) ──────────────────────────────────
 const signupLimiter = rateLimit({ windowMs: 60 * 60 * 1000, max: 5, keyGenerator: ipKeyGenerator, handler: (req, res) => res.status(429).json({ error: 'Too many signup attempts. Try again later.' }) });
 app.post('/api/auth/signup', signupLimiter, async (req, res) => {
@@ -1092,6 +1781,67 @@ app.post('/api/auth/ensure-profile', requireAuth, async (req, res) => {
   } catch (err) {
     console.error('[EnsureProfile] Error:', err.message);
     return res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// ─── Onboarding: Create organization (F3 fix: server-side trial abuse prevention) ───
+app.post('/api/onboarding/create-org', requireAuth, async (req, res) => {
+  try {
+    const sb = getSupabaseAdmin();
+    if (!sb) return res.status(503).json({ error: 'Service unavailable' });
+    const authUserId = req.user.id;
+    const authEmail = req.user.email;
+
+    // Check if this user already has an org (idempotency)
+    const { data: existingProfile } = await sb.from('profiles')
+      .select('organization_id').eq('id', authUserId).single();
+    if (existingProfile?.organization_id) {
+      return res.json({ id: existingProfile.organization_id, already_exists: true });
+    }
+
+    // F3: Check if this user already created an active/trialing org
+    const { data: existingOrg } = await sb.from('organizations')
+      .select('id, subscription_status')
+      .eq('created_by_user_id', authUserId)
+      .in('subscription_status', ['trialing', 'active'])
+      .maybeSingle();
+    if (existingOrg) {
+      return res.status(409).json({
+        error: 'You already have an active organization. Only one trial per account is allowed.',
+        existing_org_id: existingOrg.id,
+      });
+    }
+
+    const { name, industry, primary_contact_name, primary_contact_email } = req.body;
+    if (!name || !name.trim()) return res.status(400).json({ error: 'Organization name is required' });
+
+    const { data: newOrg, error: insertErr } = await sb.from('organizations').insert({
+      name: name.trim(),
+      industry: industry || null,
+      subscription_plan: 'Pro',
+      subscription_status: 'trialing',
+      trial_ends_at: new Date(Date.now() + 14 * 86400000).toISOString(),
+      primary_contact_name: (primary_contact_name || '').trim() || null,
+      primary_contact_email: (primary_contact_email || authEmail || '').trim() || null,
+      onboarding_status: 'in_progress',
+      onboarding_step: 1,
+      created_by_user_id: authUserId,
+    }).select().single();
+
+    if (insertErr) {
+      // Unique index violation = duplicate trial attempt
+      if (insertErr.code === '23505') {
+        return res.status(409).json({ error: 'You already have an active organization.' });
+      }
+      throw insertErr;
+    }
+
+    console.log(`[onboarding/create-org] Org ${newOrg.id} created by user ${authUserId} (${authEmail})`);
+
+    return res.json({ id: newOrg.id });
+  } catch (err) {
+    console.error('[onboarding/create-org] Error:', err);
+    return res.status(500).json({ error: 'Failed to create organization' });
   }
 });
 
@@ -1237,7 +1987,7 @@ app.post('/api/kpi/import',
 
       const { data: orgProfiles } = await sb.from('profiles')
         .select('id, email, team_id, role, carries_quota').eq('organization_id', orgId)
-        .or('role.eq.power_user,carries_quota.eq.true');
+        .or('role.eq.power user,carries_quota.eq.true');
       const emailToProfile = {};
       (orgProfiles || []).forEach(p => {
         if (p.email) emailToProfile[p.email.toLowerCase()] = p;
@@ -1449,7 +2199,7 @@ app.patch('/api/org/slack-webhook', loadProfile, requireMinRole('admin'), async 
 });
 
 // AI Draft endpoint for coaching plan fields (coach+ access, AI rate limited)
-app.post('/api/ai-draft', aiLimiter, loadProfile, requireMinRole('coach'), async (req, res) => {
+app.post('/api/ai-draft', aiLimiter, loadProfile, requireMinRole('coach'), requireFeature('coaching_plans'), async (req, res) => {
   try {
     const { field, planName, focusKpis, existingGoals, existingActions, existingMetrics, notes } = req.body || {};
     if (!field) return res.status(400).json({ error: 'field is required' });
@@ -1517,7 +2267,7 @@ app.post('/api/ai-draft', aiLimiter, loadProfile, requireMinRole('coach'), async
 });
 
 // AI Coaching Plan Generation endpoint
-app.post('/api/ai/coaching-plan', aiLimiter, loadProfile, requireMinRole('power_user'), async (req, res) => {
+app.post('/api/ai/coaching-plan', aiLimiter, loadProfile, requireMinRole('power_user'), requireFeature('coaching_plans'), async (req, res) => {
   try {
     const { audienceLabel, currentScore, laggingKpis, onTrackCount, exceedingCount, prioritySkillsets, playbookInsights, mode } = req.body || {};
     const isRepMode = mode === 'rep_self_coaching';
@@ -1712,7 +2462,7 @@ app.post('/api/ai/coaching-plan', aiLimiter, loadProfile, requireMinRole('power_
 });
 
 // ── AI: Generate IDP (Individual Development Plan) ──
-app.post('/api/ai/idp-plan', aiLimiter, loadProfile, requireMinRole('power_user'), async (req, res) => {
+app.post('/api/ai/idp-plan', aiLimiter, loadProfile, requireMinRole('power_user'), requireFeature('idps'), async (req, res) => {
   try {
     const { repName, repScore, laggingKpis, onTrackCount, exceedingCount, skillsets, planType, periodStart, periodEnd, trendData } = req.body || {};
 
@@ -1842,7 +2592,7 @@ app.post('/api/ai/idp-plan', aiLimiter, loadProfile, requireMinRole('power_user'
 });
 
 // ── AI: Generate Performance Review Manager Draft ──
-app.post('/api/ai/review-draft', aiLimiter, loadProfile, requireMinRole('power_user'), async (req, res) => {
+app.post('/api/ai/review-draft', aiLimiter, loadProfile, requireMinRole('power_user'), requireFeature('performance_reviews'), async (req, res) => {
   try {
     const { repName, reviewType, periodStart, periodEnd, scorecardSummary, kpiAttainment, skillsetProgress, achievementsEarned, badgesEarned, coachingPlansSummary, idpsSummary, selfAssessment, trendData } = req.body || {};
 
@@ -2007,7 +2757,7 @@ app.post('/api/ai/review-draft', aiLimiter, loadProfile, requireMinRole('power_u
 
 // ── Performance Review — state machine transition ──────────────────────
 // Validates the transition, sets timestamps, returns updated review.
-app.post('/api/reviews/:id/transition', loadProfile, requireMinRole('power_user'), async (req, res) => {
+app.post('/api/reviews/:id/transition', loadProfile, requireMinRole('power_user'), requireFeature('performance_reviews'), async (req, res) => {
   try {
     const { id } = req.params;
     const { newStatus, extraData = {} } = req.body || {};
@@ -2157,7 +2907,7 @@ app.get('/', (req, res) => {
   res.send('Apptivia Backend Running');
 });
 
-app.post('/api/send-coaching-plan', loadProfile, requireMinRole('manager'), async (req, res) => {
+app.post('/api/send-coaching-plan', loadProfile, requireMinRole('manager'), requireFeature('coaching_plans'), async (req, res) => {
   try {
     const { recipients, subject, body, html, text } = req.body || {};
     if (!Array.isArray(recipients) || recipients.length === 0) {
@@ -2199,7 +2949,7 @@ app.post('/api/send-coaching-plan', loadProfile, requireMinRole('manager'), asyn
   }
 });
 
-app.post('/api/send-contest-results', loadProfile, requireMinRole('manager'), async (req, res) => {
+app.post('/api/send-contest-results', loadProfile, requireMinRole('manager'), requireFeature('contests'), async (req, res) => {
   try {
     const { recipients, subject, body } = req.body || {};
     if (!Array.isArray(recipients) || recipients.length === 0) {
@@ -2223,7 +2973,7 @@ app.post('/api/send-contest-results', loadProfile, requireMinRole('manager'), as
   }
 });
 
-app.post('/api/contests/refresh-leaderboards', loadProfile, requireMinRole('manager'), async (req, res) => {
+app.post('/api/contests/refresh-leaderboards', loadProfile, requireMinRole('manager'), requireFeature('contests'), async (req, res) => {
   try {
     const result = await runLeaderboardRefresh();
     return res.json({ ok: true, ...result });
@@ -2239,6 +2989,12 @@ app.post('/api/send-snapshot', loadProfile, requireMinRole('manager'), async (re
       return res.status(400).json({ error: 'Recipients are required.' });
     }
     if (recipients.length > 50) return res.status(400).json({ error: 'Maximum 50 recipients per email.' });
+    // F21: Validate email format for all recipients
+    const emailRx = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const invalidRecips = recipients.filter(e => !emailRx.test(e));
+    if (invalidRecips.length > 0) {
+      return res.status(400).json({ error: `Invalid email${invalidRecips.length > 1 ? 's' : ''}: ${invalidRecips.join(', ')}` });
+    }
     if (!subject || (!html && !text)) {
       return res.status(400).json({ error: 'Subject and content are required.' });
     }
@@ -3511,7 +4267,7 @@ app.get('/api/analytics/cross-org-benchmarks', loadProfile, requireMinRole('mana
 });
 
 // GET /api/analytics/coaching-cohorts — coached vs uncoached KPI split
-app.get('/api/analytics/coaching-cohorts', loadProfile, requireMinRole('manager'), async (req, res) => {
+app.get('/api/analytics/coaching-cohorts', loadProfile, requireMinRole('manager'), requireFeature('advanced_analytics'), async (req, res) => {
   try {
     const sb = getSupabaseAdmin();
     if (!sb) return res.status(503).json({ error: 'Service unavailable' });
@@ -3534,7 +4290,7 @@ app.get('/api/analytics/coaching-cohorts', loadProfile, requireMinRole('manager'
       .from('profiles')
       .select('id')
       .eq('organization_id', orgId)
-      .or('role.eq.power_user,carries_quota.eq.true');
+      .or('role.eq.power user,carries_quota.eq.true');
 
     const allIds = (profiles || []).map(p => p.id);
     if (allIds.length === 0) return res.json({ coached: { count: 0, avg_attainment: null }, uncoached: { count: 0, avg_attainment: null }, period_weeks: weeks });
@@ -4126,6 +4882,32 @@ async function runActionQueueBuilder(orgId) {
     // Fetch org's Sales DNA for methodology-aware outreach drafting
     const salesDnaCtxOutreach = await getSalesDnaContext(orgId);
 
+    // Fetch org-wide style memory (aggregated across reps with 5+ actions)
+    let styleConstraints = '';
+    try {
+      const { data: styleRows } = await sb
+        .from('outreach_style_memory')
+        .select('preferred_length, avoided_phrases, preferred_phrases')
+        .eq('organization_id', orgId)
+        .gte('total_drafts_sent', 5)
+        .limit(5);
+      if (styleRows && styleRows.length > 0) {
+        // Merge avoided/preferred across reps for org-level patterns
+        const allAvoided = [...new Set(styleRows.flatMap(r => r.avoided_phrases || []))].slice(0, 10);
+        const allPreferred = [...new Set(styleRows.flatMap(r => r.preferred_phrases || []))].slice(0, 10);
+        const lengths = styleRows.map(r => r.preferred_length).filter(Boolean);
+        const orgLength = lengths.length > 0 ? lengths[0] : 'medium';
+        if (allAvoided.length > 0 || allPreferred.length > 0) {
+          styleConstraints = `\n\nORG OUTREACH STYLE (learned from past edits):
+- Preferred length: ${orgLength}
+${allAvoided.length > 0 ? `- Phrases this team removes (avoid these): ${allAvoided.join('; ')}\n` : ''}${allPreferred.length > 0 ? `- Phrases this team adds (mirror this voice): ${allPreferred.join('; ')}\n` : ''}`;
+        }
+      }
+    } catch (styleErr) {
+      // Non-blocking — style memory is a nice-to-have
+      console.error('[action-queue] Style memory fetch failed:', styleErr.message);
+    }
+
     // Get existing action queue entries to avoid duplicates
     const signalIds = signals.map(s => s.id);
     const { data: existing } = await sb
@@ -4215,6 +4997,99 @@ ${signal.signal_tier === 'tier1' ? 'URGENCY NOTE: This is a Tier 1 high-intent s
   } catch (err) {
     console.error(`[action-queue:${orgId}] Error:`, err.message);
     return { queued: 0 };
+  }
+}
+
+// ── [SPEC 09] Autopilot: Play Step Execution ───────────────────────────────
+// Hourly. Processes due play steps. Email steps are marked sent (manual delivery
+// for Pilot #1). LinkedIn/call/task steps create a notification for the rep.
+async function runPlayStepExecution() {
+  const sb = getSupabaseAdmin();
+  if (!sb) return { processed: 0, sent: 0, skipped: 0, notified: 0 };
+
+  try {
+    // Find pending steps whose scheduled_for has passed
+    const { data: dueSteps, error: fetchErr } = await sb
+      .from('engage_action_steps')
+      .select(`
+        *,
+        action:action_id (
+          id, organization_id, profile_id, status, play_type,
+          signal:signal_id (company_name, signal_type, title)
+        )
+      `)
+      .eq('status', 'pending')
+      .lte('scheduled_for', new Date().toISOString())
+      .order('scheduled_for', { ascending: true })
+      .limit(200);
+
+    if (fetchErr || !dueSteps || dueSteps.length === 0) {
+      return { processed: 0, sent: 0, skipped: 0, notified: 0 };
+    }
+
+    let sent = 0, skipped = 0, notified = 0;
+
+    for (const step of dueSteps) {
+      const action = step.action;
+      if (!action || action.status === 'dismissed') {
+        // Parent action was dismissed — cancel this step
+        await sb.from('engage_action_steps')
+          .update({ status: 'cancelled', updated_at: new Date().toISOString() })
+          .eq('id', step.id);
+        skipped++;
+        continue;
+      }
+
+      // Check skip_if_replied: look for earlier step with status 'replied'
+      if (step.skip_if_replied) {
+        const { count: replyCount } = await sb
+          .from('engage_action_steps')
+          .select('id', { count: 'exact', head: true })
+          .eq('action_id', step.action_id)
+          .eq('status', 'replied')
+          .lt('step_order', step.step_order);
+
+        if (replyCount > 0) {
+          await sb.from('engage_action_steps')
+            .update({ status: 'skipped_replied_earlier', updated_at: new Date().toISOString() })
+            .eq('id', step.id);
+          skipped++;
+          continue;
+        }
+      }
+
+      const companyName = action.signal?.company_name || 'Unknown Company';
+      const channelLabel = step.channel.replace(/_/g, ' ');
+
+      // Non-email channels: create notification for the rep
+      if (step.channel !== 'email' && action.profile_id) {
+        await sb.from('notifications').insert({
+          profile_id:      action.profile_id,
+          organization_id: action.organization_id,
+          type:            'general_info',
+          title:           `Play Step Due: ${channelLabel}`,
+          message:         `Step ${step.step_order} for ${companyName} — ${(step.draft_body || channelLabel).slice(0, 120)}`,
+          icon:            step.channel === 'phone_call' ? '📞' : step.channel.startsWith('linkedin') ? '💼' : '📋',
+          color:           '#7c3aed',
+          action_url:      '/engage?tab=signals',
+          priority:        7,
+          dedupe_key:      `play-step:${step.id}`,
+          expires_at:      new Date(Date.now() + 3 * 86400000).toISOString(),
+        });
+        notified++;
+      }
+
+      // Mark step as sent (for Pilot #1, email "send" is a DB status update only)
+      await sb.from('engage_action_steps')
+        .update({ status: 'sent', sent_at: new Date().toISOString(), updated_at: new Date().toISOString() })
+        .eq('id', step.id);
+      sent++;
+    }
+
+    return { processed: dueSteps.length, sent, skipped, notified };
+  } catch (err) {
+    console.error('[play-step-exec] Error:', err.message);
+    return { processed: 0, sent: 0, skipped: 0, notified: 0 };
   }
 }
 
@@ -4345,7 +5220,7 @@ async function runScorecardAlerts() {
     const { data: reps } = await sb
       .from('profiles')
       .select('id, first_name, last_name, team_id, organization_id')
-      .or('role.eq.power_user,carries_quota.eq.true');
+      .or('role.eq.power user,carries_quota.eq.true');
 
     if (!reps || reps.length === 0) return { orgs: 0, notified: 0 };
 
@@ -4451,6 +5326,28 @@ async function runScorecardAlerts() {
         });
       }
 
+      // F11: Scorecard milestone notifications (scorecard_high + scorecard_low)
+      if (currentScore >= 90 && currentScore < 100) {
+        notifications.push({
+          profile_id: rep.id, organization_id: rep.organization_id,
+          type: 'scorecard_high', title: `Strong Week, ${rep.first_name || 'Rep'}! 🌟`,
+          message: `Your Apptivia Score hit ${currentScore} — you're at ${currentScore}% of goal. Almost perfect!`,
+          icon: '🌟', color: '#8b5cf6', action_url: '/scorecard', priority: 5,
+          dedupe_key: `scorecard-alert:${rep.id}:${weekKey}:high`,
+          expires_at: new Date(Date.now() + 7 * 86400000).toISOString(),
+        });
+      }
+      if (currentScore < 70) {
+        notifications.push({
+          profile_id: rep.id, organization_id: rep.organization_id,
+          type: 'scorecard_low', title: `Scorecard Below Target`,
+          message: `Your Apptivia Score is ${currentScore} this week (below the 70-point threshold). Review your KPIs and focus on your top 2-3 areas for improvement.`,
+          icon: '📊', color: '#ef4444', action_url: '/scorecard', priority: 5,
+          dedupe_key: `scorecard-alert:${rep.id}:${weekKey}:low`,
+          expires_at: new Date(Date.now() + 7 * 86400000).toISOString(),
+        });
+      }
+
       for (const notif of notifications) {
         const { error } = await sb.from('notifications').insert(notif);
         if (!error) notified++;
@@ -4488,6 +5385,43 @@ async function runContestAutoComplete() {
         .in('id', ids);
       activated = ids.length;
       console.log(`[contest-complete] Activated ${activated} upcoming contest(s)`);
+
+      // F11: Send contest_started notifications to all participants
+      const { data: activatedContests } = await sb.from('active_contests')
+        .select('id, name, organization_id').in('id', ids);
+      for (const ac of (activatedContests || [])) {
+        const { data: participants } = await sb.from('contest_participants')
+          .select('profile_id').eq('contest_id', ac.id);
+        const notifs = (participants || []).map(p => ({
+          profile_id: p.profile_id, organization_id: ac.organization_id,
+          type: 'contest_started', title: `Contest Started: ${ac.name}`,
+          message: `The contest "${ac.name}" is now live! Check the leaderboard and start competing.`,
+          icon: '🏁', color: '#6366f1', action_url: '/contests', priority: 6,
+          dedupe_key: `contest-started:${ac.id}:${p.profile_id}`,
+          expires_at: new Date(Date.now() + 7 * 86400000).toISOString(),
+        }));
+        if (notifs.length > 0) await sb.from('notifications').insert(notifs);
+      }
+    }
+
+    // F11: contest_ending_soon — active contests ending within 48 hours
+    const soonCutoff = new Date(Date.now() + 48 * 3600000).toISOString();
+    const { data: endingSoon } = await sb.from('active_contests')
+      .select('id, name, organization_id, end_date')
+      .eq('status', 'active').gt('end_date', new Date().toISOString()).lte('end_date', soonCutoff);
+    for (const c of (endingSoon || [])) {
+      const { data: participants } = await sb.from('contest_participants')
+        .select('profile_id').eq('contest_id', c.id);
+      const hoursLeft = Math.round((new Date(c.end_date).getTime() - Date.now()) / 3600000);
+      const notifs = (participants || []).map(p => ({
+        profile_id: p.profile_id, organization_id: c.organization_id,
+        type: 'contest_ending_soon', title: `Contest Ending Soon: ${c.name}`,
+        message: `"${c.name}" ends in ~${hoursLeft} hours! Make your final push on the leaderboard.`,
+        icon: '⏰', color: '#f59e0b', action_url: '/contests', priority: 7,
+        dedupe_key: `contest-ending:${c.id}:${p.profile_id}`,
+        expires_at: new Date(new Date(c.end_date).getTime() + 86400000).toISOString(),
+      }));
+      if (notifs.length > 0) await sb.from('notifications').insert(notifs);
     }
 
     // Transition active → completed when end_date has passed
@@ -4510,11 +5444,13 @@ async function runContestAutoComplete() {
         const dedupeKey = `contest-complete:${contest.id}`;
 
         // Get rank-1 leaderboard entry
+        // F7: deterministic tiebreaker — earliest participant wins ties
         const { data: leaderboard } = await sb
           .from('contest_leaderboards')
           .select('profile_id, score, rank')
           .eq('contest_id', contest.id)
           .order('rank', { ascending: true })
+          .order('created_at', { ascending: true })
           .limit(1);
 
         const winner = leaderboard?.[0];
@@ -4527,7 +5463,7 @@ async function runContestAutoComplete() {
           .eq('id', contest.id);
 
         // Award winner badge (DB trigger handles contest_winner notification)
-        await sb.from('profile_badges').insert({
+        await sb.from('profile_badges').upsert({
           profile_id:        winner.profile_id,
           organization_id:   contest.organization_id,
           badge_type:        'contest_winner',
@@ -4536,7 +5472,7 @@ async function runContestAutoComplete() {
           icon:              '🏆',
           color:             '#FFD700',
           contest_id:        contest.id,
-        });
+        }, { onConflict: 'profile_id,badge_name', ignoreDuplicates: true });
 
         // Insert dedup sentinel so this contest isn't re-processed
         await sb.from('notifications').insert({
@@ -4573,7 +5509,12 @@ async function runLeaderboardRefresh() {
   if (!sb) return { updated: 0 };
 
   try {
-    const { error } = await sb.rpc('update_contest_leaderboards');
+    // F29: Wrap RPC in timeout to prevent stalls with 100+ contests
+    const rpcPromise = sb.rpc('update_contest_leaderboards');
+    const timeoutPromise = new Promise((_, reject) =>
+      setTimeout(() => reject(new Error('Leaderboard refresh timed out after 5 minutes')), 300_000)
+    );
+    const { error } = await Promise.race([rpcPromise, timeoutPromise]);
     if (error) throw error;
 
     const { data: activeContests } = await sb
@@ -4633,7 +5574,7 @@ async function runKpiAnomalyAlerts() {
     const { data: reps } = await sb
       .from('profiles')
       .select('id, first_name, last_name, team_id, organization_id')
-      .or('role.eq.power_user,carries_quota.eq.true');
+      .or('role.eq.power user,carries_quota.eq.true');
 
     if (!reps || reps.length === 0) return { alerts: 0 };
 
@@ -4819,7 +5760,7 @@ async function runBadgeAutoAward() {
     const { data: reps } = await sb
       .from('profiles')
       .select('id, first_name, last_name, total_points, created_at, organization_id')
-      .or('role.eq.power_user,carries_quota.eq.true');
+      .or('role.eq.power user,carries_quota.eq.true');
     if (!reps || reps.length === 0) return { awarded: 0, notified: 0 };
     const repIds = reps.map(r => r.id);
 
@@ -4853,7 +5794,8 @@ async function runBadgeAutoAward() {
     }
 
     // ── A. Volume Badges ──────────────────────────────────────────────────
-    const volKpiKeys = ['call_connects', 'emails_sent', 'meetings', 'sourced_opps'];
+    // F10: expanded volume badge KPIs (added dials, conversations, demos_completed, follow_ups, tasks_completed, discovery_calls)
+    const volKpiKeys = ['call_connects', 'emails_sent', 'meetings', 'sourced_opps', 'dials', 'conversations', 'demos_completed', 'follow_ups', 'tasks_completed', 'discovery_calls'];
     const { data: kpiMetricsVol } = await sb
       .from('kpi_metrics').select('id, key').in('key', volKpiKeys);
     const volKpiKeyToId = Object.fromEntries((kpiMetricsVol || []).map(m => [m.key, m.id]));
@@ -4887,6 +5829,31 @@ async function runBadgeAutoAward() {
       { kpi: 'sourced_opps',  threshold: 25,   badge: 'Pipeline Architect' },
       { kpi: 'sourced_opps',  threshold: 50,   badge: 'Pipeline Master' },
       { kpi: 'sourced_opps',  threshold: 100,  badge: 'Pipeline Titan' },
+      // F10: Volume badges for 6 new KPIs
+      { kpi: 'dials',            threshold: 100,  badge: 'Dial Starter' },
+      { kpi: 'dials',            threshold: 500,  badge: 'Dial Pro' },
+      { kpi: 'dials',            threshold: 1000, badge: 'Dial Champion' },
+      { kpi: 'dials',            threshold: 5000, badge: 'Dial Legend' },
+      { kpi: 'conversations',    threshold: 50,   badge: 'Conversation Starter' },
+      { kpi: 'conversations',    threshold: 150,  badge: 'Conversation Pro' },
+      { kpi: 'conversations',    threshold: 500,  badge: 'Conversation Champion' },
+      { kpi: 'conversations',    threshold: 1000, badge: 'Conversation Legend' },
+      { kpi: 'demos_completed',  threshold: 10,   badge: 'Demo Starter' },
+      { kpi: 'demos_completed',  threshold: 25,   badge: 'Demo Pro' },
+      { kpi: 'demos_completed',  threshold: 50,   badge: 'Demo Champion' },
+      { kpi: 'demos_completed',  threshold: 100,  badge: 'Demo Legend' },
+      { kpi: 'follow_ups',       threshold: 50,   badge: 'Follow-Up Starter' },
+      { kpi: 'follow_ups',       threshold: 150,  badge: 'Follow-Up Pro' },
+      { kpi: 'follow_ups',       threshold: 500,  badge: 'Follow-Up Champion' },
+      { kpi: 'follow_ups',       threshold: 1000, badge: 'Follow-Up Legend' },
+      { kpi: 'tasks_completed',  threshold: 50,   badge: 'Task Starter' },
+      { kpi: 'tasks_completed',  threshold: 150,  badge: 'Task Pro' },
+      { kpi: 'tasks_completed',  threshold: 500,  badge: 'Task Champion' },
+      { kpi: 'tasks_completed',  threshold: 1000, badge: 'Task Legend' },
+      { kpi: 'discovery_calls',  threshold: 10,   badge: 'Discovery Starter' },
+      { kpi: 'discovery_calls',  threshold: 25,   badge: 'Discovery Pro' },
+      { kpi: 'discovery_calls',  threshold: 50,   badge: 'Discovery Champion' },
+      { kpi: 'discovery_calls',  threshold: 100,  badge: 'Discovery Legend' },
     ];
 
     for (const rep of reps) {
@@ -5182,29 +6149,10 @@ async function runBadgeAutoAward() {
         icon:              def.icon,
         color:             def.color,
       }));
-      const { error: batchBadgeErr } = await sb.from('profile_badges').insert(badgeRows);
+      const { error: batchBadgeErr } = await sb.from('profile_badges').upsert(badgeRows, { onConflict: 'profile_id,badge_name', ignoreDuplicates: true });
       if (!batchBadgeErr) {
         awarded += pendingBadges.length;
-        // Batch insert notifications
-        const notifRows = pendingBadges.map(({ profileId, orgId, def }) => {
-          const isRare = def.rarity === 'epic' || def.rarity === 'legendary';
-          const priority = def.rarity === 'legendary' ? 9 : def.rarity === 'epic' ? 8 : def.rarity === 'rare' ? 7 : 6;
-          return {
-            profile_id:      profileId,
-            organization_id: orgId,
-            type:            isRare ? 'rare_badge_earned' : 'badge_earned',
-            title:           `Badge Earned: ${def.badge_name}`,
-            message:         `${def.badge_description}${def.points ? ` (+${def.points} pts)` : ''}`,
-            icon:            def.icon,
-            color:           def.color,
-            action_url:      '/scorecard',
-            priority,
-            dedupe_key:      `badge-earned:${profileId}:${def.badge_name}`,
-            expires_at:      new Date(Date.now() + 30 * 86400000).toISOString(),
-          };
-        });
-        await sb.from('notifications').insert(notifRows);
-        notified += notifRows.length;
+        // F6: badge notifications handled by DB trigger on profile_badges INSERT
       } else {
         console.error('[badge-check] Batch badge insert error:', batchBadgeErr.message);
       }
@@ -5237,7 +6185,7 @@ async function syncEngageKpiValues() {
     // 2. Fetch all rep profiles (+ player-coaches with carries_quota)
     const { data: reps } = await sb
       .from('profiles').select('id, organization_id')
-      .or('role.eq.power_user,carries_quota.eq.true');
+      .or('role.eq.power user,carries_quota.eq.true');
     if (!reps || reps.length === 0) return;
     const repIds = reps.map(r => r.id);
     const repOrgMap = Object.fromEntries(reps.map(r => [r.id, r.organization_id]));
@@ -5477,7 +6425,7 @@ async function runAchievementCheck() {
     const { data: reps } = await sb
       .from('profiles')
       .select('id, first_name, last_name, team_id, apptivia_level, organization_id, role, carries_quota')
-      .or('role.eq.power_user,carries_quota.eq.true');
+      .eq('role', 'power user');  // F17: only reps earn achievements (excludes admin/manager/coach)
     if (!reps || reps.length === 0) return { reps: 0, achieved: 0, notified: 0 };
     const repIds = reps.map(r => r.id);
 
@@ -5506,8 +6454,9 @@ async function runAchievementCheck() {
     const earnedSet = new Set((earned || []).map(e => `${e.profile_id}:${e.achievement_id}`));
 
     // 6. Cumulative (all-time) KPI totals per profile (period_start also fetched for scorecard stats)
+    // F27: safety limit to prevent unbounded queries
     const { data: allTimeVals } = await sb
-      .from('kpi_values').select('profile_id, kpi_id, value, period_start').in('profile_id', repIds);
+      .from('kpi_values').select('profile_id, kpi_id, value, period_start').in('profile_id', repIds).limit(50000);
     const cumTotals = {};
     for (const v of (allTimeVals || [])) {
       if (!cumTotals[v.profile_id]) cumTotals[v.profile_id] = {};
@@ -5646,21 +6595,7 @@ async function runAchievementCheck() {
           if (awardErr || !awardResult) continue;
           earnedSet.add(achKey);
           totalAchieved++;
-          const ss = skillsetMap[ach.skillset_id];
-          await sb.from('notifications').insert({
-            profile_id:  rep.id,
-            organization_id: rep.organization_id,
-            type:        'achievement_earned',
-            title:       `Achievement Unlocked: ${ach.name}`,
-            message:     `${ach.description || ach.name}${ach.points ? ` (+${ach.points} pts)` : ''}`,
-            icon:        '🎯',
-            color:       ss?.color || '#10b981',
-            action_url:  '/scorecard',
-            priority:    6,
-            dedupe_key:  `achievement-earned:${rep.id}:${ach.id}`,
-            expires_at:  new Date(Date.now() + 30 * 86400000).toISOString(),
-          });
-          totalNotified++;
+          // F6: notification handled by DB trigger on profile_achievements INSERT
           continue;
         }
 
@@ -5679,22 +6614,7 @@ async function runAchievementCheck() {
 
         earnedSet.add(achKey);
         totalAchieved++;
-
-        const ss = skillsetMap[ach.skillset_id];
-        await sb.from('notifications').insert({
-          profile_id:  rep.id,
-          organization_id: rep.organization_id,
-          type:        'achievement_earned',
-          title:       `Achievement Unlocked: ${ach.name}`,
-          message:     `${ach.description || ach.name}${ach.points ? ` (+${ach.points} pts)` : ''}`,
-          icon:        '🎯',
-          color:       ss?.color || '#10b981',
-          action_url:  '/scorecard',
-          priority:    6,
-          dedupe_key:  `achievement-earned:${rep.id}:${ach.id}`,
-          expires_at:  new Date(Date.now() + 30 * 86400000).toISOString(),
-        });
-        totalNotified++;
+        // F6: notification handled by DB trigger on profile_achievements INSERT
 
         // Enqueue CRM push — log achievement in connected CRM
         enqueueCrmPush(sb, rep.organization_id, {
@@ -5938,7 +6858,7 @@ async function runCoachingNudges() {
     const { data: reps } = await sb
       .from('profiles')
       .select('id, first_name, last_name, team_id, organization_id')
-      .or('role.eq.power_user,carries_quota.eq.true');
+      .or('role.eq.power user,carries_quota.eq.true');
 
     if (!reps || reps.length === 0) return { reps: 0, nudges: 0 };
 
@@ -6349,6 +7269,137 @@ Return ONLY valid JSON with exactly these keys:
   } catch (err) {
     console.error('[comp-intel] Error:', err.message);
     return { orgs: 0, briefs: 0 };
+  }
+}
+
+// ── Spec 05: Competitor Takedown Signal Scan ──────────────────────────────
+// Daily cron. For each org with configured competitors, searches Tavily for
+// material events (layoffs, acquisitions, price hikes, outages) and fires
+// competitor_takedown signals for prospects whose tech_stack includes that competitor.
+const COMPETITOR_EVENT_QUERIES = {
+  layoff:            '"laid off" OR "layoffs" OR "workforce reduction" OR "cutting staff"',
+  price_increase:    '"price increase" OR "raising prices" OR "pricing change"',
+  acquisition:       '"acquired by" OR "acquisition of" OR "merger"',
+  shutdown:          '"shutting down" OR "winding down" OR "going out of business"',
+  data_breach:       '"data breach" OR "security incident" OR "data leak"',
+  leadership_change: '"CEO steps down" OR "CEO departure" OR "new CEO" OR "founder leaves"',
+  outage:            '"outage" OR "downtime" OR "service disruption"',
+  product_changes:   '"deprecating" OR "sunsetting" OR "end of life"',
+};
+
+function detectCompetitorEventType(text) {
+  const t = (text || '').toLowerCase();
+  if (/laid off|layoff|workforce reduction|cutting staff/i.test(t)) return 'layoff';
+  if (/acquired by|acquisition|merger/i.test(t)) return 'acquisition';
+  if (/shutting down|wind(ing)? down|out of business/i.test(t)) return 'shutdown';
+  if (/data breach|security incident|data leak/i.test(t)) return 'data_breach';
+  if (/ceo.*(steps? down|depart|leaves)|new ceo|founder (leaves|depart)/i.test(t)) return 'leadership_change';
+  if (/outage|downtime|service disruption/i.test(t)) return 'outage';
+  if (/deprecat|sunset|end.of.life/i.test(t)) return 'product_changes';
+  if (/price increase|raising prices|pricing change/i.test(t)) return 'price_increase';
+  return 'other';
+}
+
+async function runCompetitorTakedownScan() {
+  const sb = getSupabaseAdmin();
+  if (!sb) return { orgs: 0, events: 0, signals: 0 };
+
+  try {
+    const { data: orgs } = await sb
+      .from('organizations')
+      .select('id, name, signal_config')
+      .not('signal_config', 'is', null);
+
+    if (!orgs || orgs.length === 0) return { orgs: 0, events: 0, signals: 0 };
+
+    let totalEvents = 0;
+    let totalSignals = 0;
+
+    for (const org of orgs) {
+      const competitors = (org.signal_config?.competitors || [])
+        .map(c => String(c).trim())
+        .filter(Boolean)
+        .slice(0, 8);
+      if (competitors.length === 0) continue;
+
+      for (const competitorName of competitors) {
+        // Search Tavily for material events in the last 7 days
+        let searchResults = [];
+        try {
+          const eventQueryParts = Object.values(COMPETITOR_EVENT_QUERIES).slice(0, 4);
+          const query = `"${competitorName}" (${eventQueryParts.join(' OR ')})`;
+          const data = await engage.tavilySearch(query, { max_results: 5, depth: 'basic' });
+          searchResults = data?.results || [];
+        } catch (err) {
+          console.warn(`[competitor-takedown:${org.id}] Tavily search failed for ${competitorName}:`, err.message);
+          continue;
+        }
+
+        for (const result of searchResults) {
+          const eventType = detectCompetitorEventType(result.title + ' ' + (result.content || ''));
+          if (eventType === 'other') continue; // Skip generic news
+
+          // Insert into cache (idempotent via UNIQUE constraint)
+          const { data: cached, error: insertErr } = await sb
+            .from('competitor_news_cache')
+            .insert({
+              organization_id: org.id,
+              competitor_name: competitorName,
+              event_type: eventType,
+              event_summary: (result.title || '').slice(0, 500),
+              source_url: result.url || null,
+              source_title: result.title || null,
+              raw_payload: result,
+            })
+            .select('id')
+            .maybeSingle();
+
+          if (insertErr || !cached) continue; // Duplicate or error — skip
+          totalEvents++;
+
+          // Find prospects in this org whose tech_stack contains the competitor
+          const { data: companies } = await sb
+            .from('engage_companies')
+            .select('id, name, domain')
+            .eq('organization_id', org.id)
+            .contains('tech_stack', [competitorName]);
+
+          if (!companies || companies.length === 0) continue;
+
+          // Fire competitor_takedown signal for each matching company
+          for (const company of companies) {
+            const eventLabel = eventType.replace(/_/g, ' ');
+            await sb.from('engage_intent_signals').insert({
+              organization_id: org.id,
+              company_id: company.id,
+              company_name: company.name,
+              signal_type: 'competitor_takedown',
+              signal_score: 85,
+              signal_strength: 'very_high',
+              title: `${company.name} uses ${competitorName} — ${eventLabel} detected`,
+              description: result.title || '',
+              source_url: result.url || null,
+              source_platform: 'tavily',
+              ai_summary: `${company.name} uses ${competitorName} in their tech stack. ${competitorName} just had a ${eventLabel} event: "${(result.title || '').slice(0, 200)}". This is a window to reach out.`,
+              ai_recommended_action: `Reach out within 48 hours while the ${eventLabel} is fresh. They may be evaluating alternatives.`,
+              ai_outreach_angle: `Reference the ${competitorName} ${eventLabel} as timing context. Lead with empathy, not a sales pitch.`,
+              raw_data: { competitor: competitorName, event_type: eventType, source: result },
+            });
+            totalSignals++;
+          }
+
+          // Update fired count on cache row
+          await sb.from('competitor_news_cache')
+            .update({ fired_signals_count: companies.length })
+            .eq('id', cached.id);
+        }
+      }
+    }
+
+    return { orgs: orgs.length, events: totalEvents, signals: totalSignals };
+  } catch (err) {
+    console.error('[competitor-takedown] Error:', err.message);
+    return { orgs: 0, events: 0, signals: 0 };
   }
 }
 
@@ -6840,6 +7891,439 @@ async function checkUpgradeTriggers() {
   }
 }
 
+// ── F12: Cleanup old notifications (daily) ──────────────────────────────────
+async function cleanupOldNotifications() {
+  const sb = getSupabaseAdmin();
+  if (!sb) return { deleted: 0 };
+  try {
+    const cutoff = new Date(Date.now() - 30 * 86400000).toISOString();
+    const { count, error } = await sb.from('notifications')
+      .delete({ count: 'exact' })
+      .lt('created_at', cutoff)
+      .eq('is_read', true);
+    const deleted = count || 0;
+    if (error) console.error('[cleanup-notifications] Error:', error.message);
+    else if (deleted > 0) console.log(`[cleanup-notifications] Deleted ${deleted} read notifications older than 30 days`);
+    return { deleted };
+  } catch (err) {
+    console.error('[cleanup-notifications] Error:', err.message);
+    return { deleted: 0 };
+  }
+}
+
+// ── F18: Trial expiry email notifications (daily) ──────────────────────────
+async function checkTrialExpiryNotifications() {
+  const sb = getSupabaseAdmin();
+  if (!sb) return { warned: 0, expired: 0 };
+  try {
+    let warned = 0, expired = 0;
+    const now = new Date();
+    const threeDaysFromNow = new Date(now.getTime() + 3 * 86400000).toISOString();
+
+    // 1. Warn orgs whose trial expires within 3 days (but not yet expired)
+    const { data: warningOrgs } = await sb.from('organizations')
+      .select('id, name, primary_contact_email, trial_ends_at')
+      .eq('subscription_status', 'trialing')
+      .gt('trial_ends_at', now.toISOString())
+      .lte('trial_ends_at', threeDaysFromNow);
+
+    for (const org of (warningOrgs || [])) {
+      if (!org.primary_contact_email) continue;
+      const daysLeft = Math.ceil((new Date(org.trial_ends_at).getTime() - now.getTime()) / 86400000);
+      // Get admin for notification
+      const { data: admin } = await sb.from('profiles')
+        .select('id').eq('organization_id', org.id).eq('role', 'admin').limit(1).maybeSingle();
+      if (admin) {
+        await sb.from('notifications').insert({
+          profile_id: admin.id, organization_id: org.id,
+          type: 'trial_ending_soon',
+          title: `Your trial ends in ${daysLeft} day${daysLeft !== 1 ? 's' : ''}`,
+          message: `Your Apptivia Pro trial for "${org.name}" expires soon. Upgrade now to keep all your data and features.`,
+          icon: '⏳', color: '#f59e0b', action_url: '/settings?tab=billing', priority: 8,
+          dedupe_key: `trial-warning:${org.id}:${daysLeft}d`,
+          expires_at: org.trial_ends_at,
+        });
+        warned++;
+      }
+      // Send email via emailService if available
+      try {
+        const emailService = require('./emailService');
+        if (emailService?.sendEmail) {
+          await emailService.sendEmail({
+            recipients: [org.primary_contact_email],
+            subject: `Your Apptivia trial ends in ${daysLeft} day${daysLeft !== 1 ? 's' : ''}`,
+            html: `<div style="font-family:sans-serif;max-width:600px;margin:0 auto;padding:24px;">
+              <h2 style="color:#1e293b;">Your Apptivia Pro Trial is Ending Soon</h2>
+              <p>Hi there,</p>
+              <p>Your 14-day Pro trial for <strong>${org.name}</strong> expires in <strong>${daysLeft} day${daysLeft !== 1 ? 's' : ''}</strong>.</p>
+              <p>To keep access to coaching plans, AI-powered Aaron, advanced analytics, and all Pro features, upgrade your subscription before your trial ends.</p>
+              <p style="margin:24px 0;"><a href="https://apptivia.app/settings?tab=billing" style="background:#6366f1;color:white;padding:12px 24px;text-decoration:none;border-radius:8px;font-weight:600;">Upgrade Now</a></p>
+              <p style="color:#64748b;font-size:14px;">If you don't upgrade, your org will automatically move to the Starter plan with limited features.</p>
+              <p>— The Apptivia Team</p>
+            </div>`,
+          });
+        }
+      } catch (emailErr) {
+        console.warn(`[trial-expiry] Email send failed for org ${org.id}:`, emailErr.message);
+      }
+    }
+
+    // 2. Notify orgs whose trial has expired (downgraded silently by checkTrialExpiry)
+    const { data: expiredOrgs } = await sb.from('organizations')
+      .select('id, name, primary_contact_email')
+      .eq('subscription_status', 'expired')
+      .is('trial_expiry_notified_at', null);
+
+    for (const org of (expiredOrgs || [])) {
+      // Get admin for notification
+      const { data: admin } = await sb.from('profiles')
+        .select('id').eq('organization_id', org.id).eq('role', 'admin').limit(1).maybeSingle();
+      if (admin) {
+        await sb.from('notifications').insert({
+          profile_id: admin.id, organization_id: org.id,
+          type: 'trial_expired',
+          title: 'Your Pro trial has ended',
+          message: `Your Apptivia Pro trial for "${org.name}" has expired. You're now on the Starter plan. Upgrade anytime to restore Pro features.`,
+          icon: '⚠️', color: '#ef4444', action_url: '/settings?tab=billing', priority: 9,
+          dedupe_key: `trial-expired:${org.id}`,
+          expires_at: new Date(Date.now() + 30 * 86400000).toISOString(),
+        });
+      }
+      // Mark as notified to avoid repeat notifications
+      await sb.from('organizations').update({ trial_expiry_notified_at: now.toISOString() }).eq('id', org.id);
+      expired++;
+    }
+
+    if (warned > 0 || expired > 0) console.log(`[trial-expiry] Warned: ${warned}, expired: ${expired}`);
+    return { warned, expired };
+  } catch (err) {
+    console.error('[trial-expiry] Error:', err.message);
+    return { warned: 0, expired: 0 };
+  }
+}
+
+// ── Outreach Style Memory Recomputation (Spec 02) ────────────────────────
+// Weekly cron: aggregates edit_diff data from sent/dismissed actions into
+// per-rep style preferences. Read by Engage drafting code.
+async function recomputeOutreachStyleMemory() {
+  const sb = getSupabaseAdmin();
+  if (!sb) return { updated: 0 };
+
+  try {
+    const ninetyDaysAgo = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString();
+    const { data: actions } = await sb
+      .from('engage_signal_actions')
+      .select('organization_id, actioned_by, status, dismissal_category, edit_diff, draft_email_body, sent_body')
+      .gte('actioned_at', ninetyDaysAgo)
+      .in('status', ['sent', 'dismissed'])
+      .not('actioned_by', 'is', null);
+
+    if (!actions || actions.length === 0) return { updated: 0 };
+
+    // Group by (org, rep)
+    const grouped = {};
+    for (const a of actions) {
+      const key = `${a.organization_id}::${a.actioned_by}`;
+      if (!grouped[key]) grouped[key] = { org: a.organization_id, rep: a.actioned_by, items: [] };
+      grouped[key].items.push(a);
+    }
+
+    let updated = 0;
+    for (const { org, rep, items } of Object.values(grouped)) {
+      if (items.length < 5) continue;
+
+      const sent = items.filter(i => i.status === 'sent');
+      const dismissed = items.filter(i => i.status === 'dismissed');
+      const edited = sent.filter(i => i.edit_diff && (i.edit_diff.added?.length > 0 || i.edit_diff.removed?.length > 0));
+
+      // Length preference: median of sent body word counts
+      const lengths = sent.map(s => (s.sent_body || '').split(/\s+/).length).sort((a, b) => a - b);
+      const median = lengths[Math.floor(lengths.length / 2)] || 0;
+      const preferred_length = median < 80 ? 'short' : median < 150 ? 'medium' : 'long';
+
+      // Avoided phrases: lines removed in 3+ edits
+      const removalCounts = {};
+      for (const e of edited) {
+        for (const line of (e.edit_diff.removed || [])) {
+          const trimmed = line.trim().toLowerCase();
+          if (trimmed.length < 8) continue;
+          removalCounts[trimmed] = (removalCounts[trimmed] || 0) + 1;
+        }
+      }
+      const avoided_phrases = Object.entries(removalCounts)
+        .filter(([_, count]) => count >= 3)
+        .map(([phrase]) => phrase)
+        .slice(0, 20);
+
+      // Preferred phrases: lines added in 3+ edits
+      const additionCounts = {};
+      for (const e of edited) {
+        for (const line of (e.edit_diff.added || [])) {
+          const trimmed = line.trim().toLowerCase();
+          if (trimmed.length < 8) continue;
+          additionCounts[trimmed] = (additionCounts[trimmed] || 0) + 1;
+        }
+      }
+      const preferred_phrases = Object.entries(additionCounts)
+        .filter(([_, count]) => count >= 3)
+        .map(([phrase]) => phrase)
+        .slice(0, 20);
+
+      await sb.from('outreach_style_memory').upsert({
+        organization_id: org,
+        profile_id: rep,
+        preferred_length,
+        avoided_phrases,
+        preferred_phrases,
+        total_drafts_sent: sent.length,
+        total_drafts_dismissed: dismissed.length,
+        total_drafts_edited: edited.length,
+        last_recomputed_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      }, { onConflict: 'organization_id,profile_id' });
+
+      updated++;
+    }
+
+    console.log(`[outreach-style-memory] Recomputed for ${updated} reps`);
+    return { updated };
+  } catch (err) {
+    console.error('[outreach-style-memory] Error:', err.message);
+    return { updated: 0 };
+  }
+}
+
+// ── Spec 04: Aaron outcome attribution cron ─────────────────────────────
+async function runAaronOutcomeAttribution() {
+  const sb = getSupabaseAdmin();
+  if (!sb) return { measured: 0 };
+
+  // Get all outcomes still missing 60-day measurement
+  const { data: pending } = await sb
+    .from('aaron_recommendation_outcomes')
+    .select('id, organization_id, rep_profile_id, kpi_key, baseline_value, recommendation_at, value_at_14d, value_at_30d, value_at_60d')
+    .is('value_at_60d', null)
+    .limit(500);
+
+  if (!pending || pending.length === 0) return { measured: 0 };
+
+  const now = Date.now();
+  let measured = 0;
+
+  for (const row of pending) {
+    const recAt = new Date(row.recommendation_at).getTime();
+    const ageDays = Math.floor((now - recAt) / (24 * 60 * 60 * 1000));
+
+    // Determine which window to measure
+    let measureField = null;
+    if (ageDays >= 60 && row.value_at_60d === null) measureField = 'value_at_60d';
+    else if (ageDays >= 30 && row.value_at_30d === null) measureField = 'value_at_30d';
+    else if (ageDays >= 14 && row.value_at_14d === null) measureField = 'value_at_14d';
+    else continue;
+
+    // Measure: 4-week trailing avg ending today
+    const fourWeeksAgo = new Date(now - 28 * 24 * 60 * 60 * 1000).toISOString();
+
+    // Resolve kpi_id from kpi_key + org
+    const { data: kpiDef } = await sb
+      .from('kpis')
+      .select('id')
+      .eq('organization_id', row.organization_id)
+      .eq('kpi_key', row.kpi_key)
+      .maybeSingle();
+
+    if (!kpiDef) continue;
+
+    const { data: kpiRows } = await sb
+      .from('kpi_values')
+      .select('value')
+      .eq('profile_id', row.rep_profile_id)
+      .eq('kpi_id', kpiDef.id)
+      .gte('period_start', fourWeeksAgo);
+
+    const currentValue = kpiRows && kpiRows.length > 0
+      ? kpiRows.reduce((s, r) => s + (r.value || 0), 0) / kpiRows.length
+      : null;
+
+    if (currentValue === null) continue;
+
+    const update = {
+      [measureField]: currentValue,
+      last_measured_at: new Date().toISOString(),
+    };
+
+    // Compute lift percentage if we have a nonzero baseline
+    if (row.baseline_value && row.baseline_value > 0) {
+      const liftField = measureField.replace('value_at_', 'lift_pct_');
+      update[liftField] = ((currentValue - row.baseline_value) / row.baseline_value) * 100;
+    }
+
+    await sb.from('aaron_recommendation_outcomes').update(update).eq('id', row.id);
+    measured++;
+  }
+
+  console.log(`[aaron-outcome-attribution] Measured ${measured} of ${pending.length} pending outcomes`);
+  return { measured, pending: pending.length };
+}
+
+// ── Spec 11: Pre-Call Prep Card Generation (hourly) ─────────────────────────
+async function runPreCallPrepGeneration() {
+  const sb = getSupabaseAdmin();
+  if (!sb) return { generated: 0 };
+
+  try {
+    const now = new Date();
+    const twoHoursFromNow = new Date(now.getTime() + 2 * 60 * 60 * 1000).toISOString();
+    const sixHoursFromNow = new Date(now.getTime() + 6 * 60 * 60 * 1000).toISOString();
+
+    // Find upcoming meetings for Pro org reps (power_user role) without existing prep cards
+    const { data: meetings, error: meetErr } = await sb
+      .from('integration_calendar_events')
+      .select(`
+        id, title, start_time, end_time, attendees, location, profile_id, organization_id,
+        profiles!inner(id, role, first_name, last_name),
+        organizations!inner(id, subscription_plan)
+      `)
+      .gte('start_time', twoHoursFromNow)
+      .lte('start_time', sixHoursFromNow)
+      .eq('profiles.role', 'power_user')
+      .eq('organizations.subscription_plan', 'Pro');
+
+    if (meetErr || !meetings?.length) {
+      console.log(`[cron:pre-call-prep] No eligible meetings in 2-6h window`);
+      return { generated: 0 };
+    }
+
+    // Filter out meetings that already have prep cards
+    const eventIds = meetings.map(m => m.id);
+    const { data: existing } = await sb
+      .from('aaron_pre_call_prep_cards')
+      .select('calendar_event_id')
+      .in('calendar_event_id', eventIds);
+    const existingSet = new Set((existing || []).map(e => e.calendar_event_id));
+    const needsPrep = meetings.filter(m => !existingSet.has(m.id));
+
+    if (!needsPrep.length) {
+      console.log(`[cron:pre-call-prep] All ${meetings.length} meetings already have prep cards`);
+      return { generated: 0 };
+    }
+
+    const client = getAnthropic();
+    let generated = 0;
+
+    for (const meeting of needsPrep.slice(0, 10)) {
+      try {
+        const salesDna = await getSalesDnaContext(meeting.organization_id);
+        const attendeeList = (meeting.attendees || []).map(a => a.name || a.email).filter(Boolean).join(', ');
+
+        const resp = await client.messages.create({
+          model: HAIKU_MODEL,
+          max_tokens: 800,
+          system: `You are Aaron, an AI sales coach. Generate a pre-call prep card for an upcoming meeting.
+${salesDna ? `\nOrg Context: ${salesDna}` : ''}
+
+Output JSON:
+{
+  "who": {"attendees": [string], "key_person": string, "relationship_notes": string | null},
+  "likely_topics": [string, string, string],
+  "questions_to_ask": [{"question": string, "why": string}, {"question": string, "why": string}, {"question": string, "why": string}],
+  "objection_prep": {"objection": string, "response_framework": string},
+  "next_step_goal": string
+}
+Return ONLY valid JSON. No markdown fences.`,
+          messages: [{ role: 'user', content: `Meeting: "${meeting.title}" at ${new Date(meeting.start_time).toLocaleString('en-US')}${attendeeList ? `. Attendees: ${attendeeList}` : ''}. Generate a prep card.` }],
+        });
+
+        let card;
+        try {
+          const text = resp.content[0]?.text || '';
+          card = JSON.parse(text.replace(/```json?\n?/g, '').replace(/```/g, '').trim());
+        } catch {
+          continue; // Skip if can't parse
+        }
+
+        await sb.from('aaron_pre_call_prep_cards').insert({
+          organization_id: meeting.organization_id,
+          rep_profile_id: meeting.profile_id,
+          calendar_event_id: meeting.id,
+          meeting_start_at: meeting.start_time,
+          meeting_title: meeting.title || '(No title)',
+          card_json: card,
+          generated_at: now.toISOString(),
+        });
+
+        // Send notification
+        await sb.from('notifications').insert({
+          profile_id: meeting.profile_id,
+          organization_id: meeting.organization_id,
+          type: 'coaching_suggestion',
+          title: 'Pre-Call Prep Ready',
+          message: `Your prep card for "${meeting.title}" is ready. Open Aaron to review.`,
+          icon: '📋', color: '#3b82f6', priority: 5,
+          dedupe_key: `prep-card-${meeting.id}`,
+          expires_at: meeting.start_time,
+        });
+
+        generated++;
+      } catch (err) {
+        console.error(`[cron:pre-call-prep] Error for meeting ${meeting.id}:`, err.message);
+      }
+    }
+
+    console.log(`[cron:pre-call-prep] Generated ${generated} prep cards from ${needsPrep.length} eligible meetings`);
+    return { generated };
+  } catch (err) {
+    console.error('[cron:pre-call-prep] Error:', err.message);
+    return { generated: 0 };
+  }
+}
+
+// ── Spec 11: Daily Briefing Notification (daily, 7-9am window) ──────────────
+async function runDailyBriefingNotification() {
+  const sb = getSupabaseAdmin();
+  if (!sb) return { notified: 0 };
+
+  try {
+    // Only fire in 7-9am UTC window
+    const hour = new Date().getUTCHours();
+    if (hour < 7 || hour > 9) {
+      return { notified: 0, reason: 'outside 7-9am UTC window' };
+    }
+
+    // Find Pro org reps (power_user role)
+    const { data: reps, error } = await sb
+      .from('profiles')
+      .select('id, organization_id, first_name, organizations!inner(subscription_plan)')
+      .eq('role', 'power_user')
+      .eq('organizations.subscription_plan', 'Pro');
+
+    if (error || !reps?.length) return { notified: 0 };
+
+    let notified = 0;
+    const today = new Date().toISOString().slice(0, 10);
+
+    for (const rep of reps.slice(0, 50)) {
+      await sb.from('notifications').insert({
+        profile_id: rep.id,
+        organization_id: rep.organization_id,
+        type: 'coaching_suggestion',
+        title: 'Your Morning Briefing is Ready',
+        message: `Good morning${rep.first_name ? `, ${rep.first_name}` : ''}! Open Aaron for your daily briefing.`,
+        icon: '☀️', color: '#f59e0b', priority: 3,
+        dedupe_key: `daily-briefing-${rep.id}-${today}`,
+        expires_at: new Date(Date.now() + 12 * 60 * 60 * 1000).toISOString(),
+      });
+      notified++;
+    }
+
+    console.log(`[cron:daily-briefing-notify] Sent ${notified} morning notifications`);
+    return { notified };
+  } catch (err) {
+    console.error('[cron:daily-briefing-notify] Error:', err.message);
+    return { notified: 0 };
+  }
+}
+
 // ── Cron interval constants ───────────────────────────────────────────────
 const THIRTY_MIN = 30 * 60 * 1000;
 const ONE_HOUR   = 60 * 60 * 1000;
@@ -6866,6 +8350,18 @@ CronManager.register('competitive-intel',  runCompetitiveIntelligence, ONE_WEEK,
 CronManager.register('integration-push',  async () => { const sb = getSupabaseAdmin(); return integrations.processPushQueue(sb); }, 15 * 60_000, 330_000);
 CronManager.register('sequence-execution', runSequenceExecution, 60 * 60_000, 360_000);
 CronManager.register('upgrade-triggers',  checkUpgradeTriggers, ONE_DAY, 270_000);
+// F12: Daily cleanup of read notifications older than 30 days
+CronManager.register('notification-cleanup', cleanupOldNotifications, ONE_DAY, 420_000);
+// F18: Daily trial expiry check — warns 3 days before, notifies on expiry
+CronManager.register('trial-expiry',     checkTrialExpiryNotifications, ONE_DAY, 450_000);
+CronManager.register('outreach-style-memory', recomputeOutreachStyleMemory, ONE_WEEK, 480_000);
+CronManager.register('aaron-outcome-attribution', runAaronOutcomeAttribution, ONE_DAY, 510_000);
+CronManager.register('competitor-takedown-scan', runCompetitorTakedownScan, ONE_DAY, 540_000);
+CronManager.register('play-step-execution', runPlayStepExecution, ONE_HOUR, 570_000);
+// Spec 11: Pre-call prep card generation (hourly, 2-6h lookahead)
+CronManager.register('pre-call-prep', runPreCallPrepGeneration, ONE_HOUR, 600_000);
+// Spec 11: Daily briefing morning notification
+CronManager.register('daily-briefing-notify', runDailyBriefingNotification, ONE_DAY, 630_000);
 CronManager.start();
 
 // ── Conversation Intelligence ──────────────────────────────────────────────
@@ -7011,22 +8507,30 @@ io.on('connection', (socket) => {
     }
 
     try {
-      // ── Aaron tier check ──────────────────────────────────
-      const orgId = context?.organizationId;
+      // ── Aaron tier check (F2 fix: derive orgId from server-verified auth, not client context) ──
+      const verifiedAuthId = socket.authUser?.id;
+      let orgId = context?.organizationId; // fallback
       let isStarterAaron = false;
-      if (orgId) {
-        const sb = getSupabaseAdmin();
-        if (sb) {
-          const { data: orgRow } = await sb.from('organizations')
-            .select('subscription_plan, subscription_status, trial_ends_at')
-            .eq('id', orgId).single();
-          const plan = orgRow?.subscription_plan || 'Basic';
-          const status = orgRow?.subscription_status || 'active';
-          if (status === 'trialing' && orgRow?.trial_ends_at && new Date(orgRow.trial_ends_at) >= new Date()) {
-            isStarterAaron = false; // Active trial = Pro access
-          } else {
-            isStarterAaron = plan === 'Basic';
-          }
+      const sb = getSupabaseAdmin();
+      if (sb && verifiedAuthId) {
+        // Server-authoritative: look up org from profiles table using verified user ID
+        const { data: profileRow } = await sb.from('profiles')
+          .select('organization_id')
+          .eq('id', verifiedAuthId).single();
+        if (profileRow?.organization_id) {
+          orgId = profileRow.organization_id; // override client-supplied value
+        }
+      }
+      if (orgId && sb) {
+        const { data: orgRow } = await sb.from('organizations')
+          .select('subscription_plan, subscription_status, trial_ends_at')
+          .eq('id', orgId).single();
+        const plan = orgRow?.subscription_plan || 'Basic';
+        const status = orgRow?.subscription_status || 'active';
+        if (status === 'trialing' && orgRow?.trial_ends_at && new Date(orgRow.trial_ends_at) >= new Date()) {
+          isStarterAaron = false; // Active trial = Pro access
+        } else {
+          isStarterAaron = plan === 'Basic';
         }
       }
 
@@ -7071,33 +8575,105 @@ io.on('connection', (socket) => {
       // 1. Detect which coaching frameworks to activate (Starter: none)
       const frameworkKeys = isStarterAaron ? [] : detectFrameworks(message, rolePreset, context?.page, socket.chatHistory);
 
-      // 2. Fetch org's Sales DNA for methodology-aware coaching (Starter: skip)
-      const salesDnaCtx = isStarterAaron ? '' : await getSalesDnaContext(orgId || null);
+      // 2. Classify message intent for query routing (Starter: skip)
+      const intents = isStarterAaron ? [] : classifyAaronIntent(message, context?.page);
 
-      // 3. Fetch live KPI data for context injection (Starter: skip)
-      const liveDataBlock = isStarterAaron ? '' : await fetchAaronLiveContext(userId, orgId);
+      // 3. Fetch base context in parallel (Starter: skip all)
+      const [salesDnaCtx, liveDataBlock, orgContextBlock, repMemoryResult, outcomeCtx] = isStarterAaron
+        ? ['', '', '', { block: '' }, '']
+        : await Promise.all([
+            getSalesDnaContext(orgId || null),
+            fetchAaronLiveContext(userId, orgId),
+            fetchAaronOrgContext(orgId, userId),
+            fetchAaronRepMemory(userId, orgId),
+            fetchAaronOutcomeContext(userId, orgId),
+          ]);
+      const repMemoryBlock = repMemoryResult?.block || '';
 
-      // 4. Fetch org context (name, ICP, CEP pipeline, user title) (Starter: skip)
-      const orgContextBlock = isStarterAaron ? '' : await fetchAaronOrgContext(orgId, userId);
+      // 3b. Detect structured output mode early (Spec 07) — needed to inject required data intents
+      const structuredMode = detectStructuredOutputMode(rolePreset, message, context?.page);
 
-      // 5. Fetch rep memory (persistent coaching context) (Starter: skip)
-      const { block: repMemoryBlock } = isStarterAaron ? { block: '' } : await fetchAaronRepMemory(userId, orgId);
+      // 4. Fetch intent-specific data in parallel (query router)
+      // Structured outputs auto-inject required intents so Aaron always has the data it needs
+      if (structuredMode) {
+        const requiredIntents = {
+          coaching_plan: ['scorecard', 'coaching'],
+          one_on_one_prep: ['scorecard', 'coaching', 'pipeline'],
+          pipeline_diagnosis: ['scorecard', 'pipeline'],
+          pre_call_prep: ['scorecard', 'calendar', 'pipeline'],
+          skill_builder: ['scorecard', 'coaching'],
+          daily_briefing_morning: ['scorecard', 'calendar'],
+          daily_briefing_eod: ['scorecard'],
+        };
+        const needed = requiredIntents[structuredMode.key] || [];
+        for (const intent of needed) {
+          if (!intents.includes(intent)) intents.push(intent);
+        }
+      }
 
-      // 6. Build framework-aware system prompt
-      const systemPrompt = buildFrameworkSystemPrompt(
+      let extraDataBlock = '';
+      const dataFnKeys = [];
+      if (!isStarterAaron && intents.length > 0) {
+        const sb = getSupabaseAdmin();
+        const dataPromises = {};
+        if (intents.includes('scorecard')) { dataPromises.scorecard = fetchScorecardContext(sb, userId, orgId, role); dataFnKeys.push('scorecard'); }
+        if (intents.includes('team_comparison')) { dataPromises.team = fetchTeamComparisonContext(sb, orgId); dataFnKeys.push('team'); }
+        if (intents.includes('contests')) { dataPromises.contests = fetchContestContext(sb, userId, orgId); dataFnKeys.push('contests'); }
+        if (intents.includes('progression')) { dataPromises.progression = fetchProgressionContext(sb, userId, orgId, role); dataFnKeys.push('progression'); }
+        if (intents.includes('coaching')) { dataPromises.coaching = fetchCoachingContext(sb, userId, orgId, role); dataFnKeys.push('coaching'); }
+        if (intents.includes('pipeline')) { dataPromises.pipeline = fetchPipelineContext(sb, userId, orgId, role); dataFnKeys.push('pipeline'); }
+        if (intents.includes('calendar')) { dataPromises.calendar = fetchCalendarContext(userId, orgId); dataFnKeys.push('calendar'); }
+
+        // Analytics summary auto-included for admin team comparison
+        if (intents.includes('team_comparison') && (role === 'admin' || role === 'manager')) {
+          dataPromises.analytics = fetchAnalyticsSummaryContext(sb, orgId);
+          dataFnKeys.push('analytics');
+        }
+
+        // Rep detail — auto-fetch when structured mode mentions a specific rep name
+        if (structuredMode) {
+          dataPromises.repDetail = fetchRepDetailContext(sb, message, orgId, role);
+          dataFnKeys.push('repDetail');
+        }
+
+        const results = await Promise.allSettled(Object.values(dataPromises));
+        results.forEach((result) => {
+          if (result.status === 'fulfilled' && result.value) extraDataBlock += result.value;
+        });
+      }
+
+      // 5. Append outcome context (Spec 04 — Aaron track record)
+      if (outcomeCtx) extraDataBlock += outcomeCtx;
+
+      // 5b. Build framework-aware system prompt with extra data
+      let systemPrompt = buildFrameworkSystemPrompt(
         frameworkKeys,
         salesDnaCtx,
         { userName: context?.userName, role, page: context?.page },
         liveDataBlock,
         orgContextBlock,
-        repMemoryBlock
+        repMemoryBlock,
+        extraDataBlock
       );
+
+      // 5c. Append structured output prompt (Spec 07)
+      if (structuredMode) {
+        systemPrompt += '\n\n' + structuredMode.prompt;
+      }
+
+      // 6. Tiered model routing — Haiku for lookups/format, Sonnet for coaching/complex
+      const AARON_TIERED_ROUTING = process.env.AARON_TIERED_ROUTING !== 'false'; // default ON
+      const modelTier = classifyAaronModelTier(message, frameworkKeys, rolePreset);
+      // Structured outputs always use Sonnet (override tiered routing)
+      const selectedModel = structuredMode
+        ? SONNET_MODEL
+        : (AARON_TIERED_ROUTING ? selectAaronModel(modelTier) : SONNET_MODEL);
 
       // Build messages array with conversation history (max last 30 messages = 15 exchanges)
       const historyWindow = socket.chatHistory.slice(-30);
       const response = await client.messages.create({
-        model: 'claude-sonnet-4-20250514',
-        max_tokens: 800,
+        model: selectedModel,
+        max_tokens: structuredMode ? 2000 : 1200,
         system: systemPrompt,
         messages: [
           ...historyWindow,
@@ -7105,7 +8681,45 @@ io.on('connection', (socket) => {
         ]
       });
 
-      const responseText = response.content[0]?.text || "I'm sorry, I couldn't process that. Could you try rephrasing?";
+      let responseText = response.content[0]?.text || "I'm sorry, I couldn't process that. Could you try rephrasing?";
+
+      // Parse structured JSON output if in structured mode
+      let structuredData = null;
+      if (structuredMode) {
+        try {
+          // Strip markdown fences if LLM added them despite instructions
+          let jsonText = responseText.trim();
+          if (jsonText.startsWith('```')) {
+            jsonText = jsonText.replace(/^```(?:json)?\n?/, '').replace(/\n?```$/, '').trim();
+          }
+          structuredData = JSON.parse(jsonText);
+          structuredData.type = structuredData.type || structuredMode.key;
+          console.log(JSON.stringify({ event: 'aaron_structured_output', type: structuredMode.key, ts: new Date().toISOString(), userId, orgId }));
+        } catch (parseErr) {
+          // JSON parse failed — fall back to rendering as markdown
+          console.warn(`[aaron] Structured output parse failed for ${structuredMode.key}:`, parseErr.message);
+          structuredData = null;
+        }
+      }
+
+      // Token + routing logging for cost analysis
+      const usage = response.usage || {};
+      console.log(JSON.stringify({
+        event: 'aaron_token_usage',
+        ts: new Date().toISOString(),
+        userId,
+        orgId,
+        role,
+        model: selectedModel,
+        model_tier: structuredMode ? `structured_${structuredMode.key}` : modelTier,
+        tiered_routing_enabled: AARON_TIERED_ROUTING,
+        input_tokens: usage.input_tokens || 0,
+        output_tokens: usage.output_tokens || 0,
+        intents: intents.join(',') || 'none',
+        data_functions: dataFnKeys.join(',') || 'none',
+        page: context?.page || 'unknown',
+        is_starter: isStarterAaron,
+      }));
 
       // Resolve framework names for frontend badge display
       const activeFrameworkNames = frameworkKeys
@@ -7118,7 +8732,8 @@ io.on('connection', (socket) => {
       if (socket.chatHistory.length > 60) socket.chatHistory = socket.chatHistory.slice(-60);
 
       socket.emit('aaron_message', {
-        message: responseText,
+        message: structuredData ? JSON.stringify(structuredData) : responseText,
+        ...(structuredData ? { structuredData } : {}),
         ...(activeFrameworkNames.length > 0 ? { frameworks: activeFrameworkNames } : {}),
       });
 
@@ -7485,7 +9100,7 @@ app.get('/api/engage/action-queue', loadProfile, async (req, res) => {
         )
       `)
       .eq('organization_id', orgId)
-      .eq('status', 'pending')
+      .in('status', ['pending', 'approved'])
       .order('created_at', { ascending: false })
       .limit(50);
 
@@ -7520,7 +9135,7 @@ app.post('/api/engage/action-queue/:id/approve', loadProfile, requireMinRole('ma
   }
 });
 
-// POST /api/engage/action-queue/:id/dismiss — dismiss a queued action
+// POST /api/engage/action-queue/:id/dismiss — dismiss with reason + category
 app.post('/api/engage/action-queue/:id/dismiss', loadProfile, requireMinRole('manager'), async (req, res) => {
   try {
     const sb = getSupabaseAdmin();
@@ -7528,10 +9143,22 @@ app.post('/api/engage/action-queue/:id/dismiss', loadProfile, requireMinRole('ma
 
     const orgId = req.userProfile?.organization_id;
     const { id } = req.params;
+    const { dismissal_reason, dismissal_category } = req.body || {};
+
+    const validCategories = ['wrong_target', 'wrong_timing', 'wrong_message', 'already_handled', 'low_priority', 'other'];
+    if (dismissal_category && !validCategories.includes(dismissal_category)) {
+      return res.status(400).json({ error: 'Invalid dismissal_category' });
+    }
 
     const { error } = await sb
       .from('engage_signal_actions')
-      .update({ status: 'dismissed', actioned_at: new Date().toISOString(), actioned_by: req.user.id })
+      .update({
+        status: 'dismissed',
+        actioned_at: new Date().toISOString(),
+        actioned_by: req.user.id,
+        dismissal_reason: dismissal_reason || null,
+        dismissal_category: dismissal_category || null,
+      })
       .eq('id', id)
       .eq('organization_id', orgId);
 
@@ -7542,6 +9169,349 @@ app.post('/api/engage/action-queue/:id/dismiss', loadProfile, requireMinRole('ma
     return res.status(500).json({ error: 'Internal server error' });
   }
 });
+
+// POST /api/engage/action-queue/:id/send — send with edits, capture diff
+app.post('/api/engage/action-queue/:id/send', loadProfile, async (req, res) => {
+  try {
+    const sb = getSupabaseAdmin();
+    if (!sb) return res.status(503).json({ error: 'Service unavailable' });
+
+    const orgId = req.userProfile?.organization_id;
+    const { id } = req.params;
+    const { sent_subject, sent_body } = req.body || {};
+
+    if (!sent_body) return res.status(400).json({ error: 'sent_body required' });
+
+    // Fetch original draft to compute diff
+    const { data: action, error: fetchErr } = await sb
+      .from('engage_signal_actions')
+      .select('draft_email_subject, draft_email_body')
+      .eq('id', id)
+      .eq('organization_id', orgId)
+      .single();
+    if (fetchErr || !action) return res.status(404).json({ error: 'Action not found' });
+
+    // Compute structural diff
+    const edit_diff = computeEditDiff(action.draft_email_body, sent_body);
+
+    const { error } = await sb
+      .from('engage_signal_actions')
+      .update({
+        status: 'sent',
+        sent_subject: sent_subject || action.draft_email_subject,
+        sent_body,
+        edit_diff,
+        sent_at: new Date().toISOString(),
+        actioned_at: new Date().toISOString(),
+        actioned_by: req.user.id,
+      })
+      .eq('id', id)
+      .eq('organization_id', orgId);
+
+    if (error) return res.status(500).json({ error: error.message });
+    return res.json({ ok: true, edit_diff });
+  } catch (err) {
+    console.error('[action-queue/send] Unhandled error:', err.message);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// [SPEC 09] POST /api/engage/action-queue/:id/expand-to-play — convert single action to multi-step play
+app.post('/api/engage/action-queue/:id/expand-to-play', aiLimiter, loadProfile, requireMinRole('manager'), async (req, res) => {
+  try {
+    const sb = getSupabaseAdmin();
+    if (!sb) return res.status(503).json({ error: 'Service unavailable' });
+
+    const orgId = req.userProfile?.organization_id;
+    const { id } = req.params;
+    const { play_type } = req.body || {};
+
+    if (!play_type || !PLAY_TEMPLATES[play_type]) {
+      return res.status(400).json({ error: 'Invalid play_type', valid_types: Object.keys(PLAY_TEMPLATES) });
+    }
+
+    // Verify action exists, belongs to org, and is approved
+    const { data: action, error: fetchErr } = await sb
+      .from('engage_signal_actions')
+      .select('id, status, play_type')
+      .eq('id', id)
+      .eq('organization_id', orgId)
+      .single();
+
+    if (fetchErr || !action) return res.status(404).json({ error: 'Action not found' });
+    if (action.status !== 'approved') {
+      return res.status(400).json({ error: 'Action must be approved before expanding to a play' });
+    }
+    if (action.play_type && action.play_type !== 'single_action') {
+      return res.status(400).json({ error: 'Action already expanded to a play' });
+    }
+
+    const steps = await generatePlaySteps(id, play_type, orgId);
+    return res.json({ ok: true, play_type, steps });
+  } catch (err) {
+    console.error('[action-queue/expand-to-play] Error:', err.message);
+    return res.status(500).json({ error: err.message || 'Internal server error' });
+  }
+});
+
+// [SPEC 09] GET /api/engage/action-queue/:id/steps — fetch steps for a play
+app.get('/api/engage/action-queue/:id/steps', loadProfile, async (req, res) => {
+  try {
+    const sb = getSupabaseAdmin();
+    if (!sb) return res.status(503).json({ error: 'Service unavailable' });
+
+    const orgId = req.userProfile?.organization_id;
+    const { id } = req.params;
+
+    const { data: steps, error } = await sb
+      .from('engage_action_steps')
+      .select('*')
+      .eq('action_id', id)
+      .eq('organization_id', orgId)
+      .order('step_order', { ascending: true });
+
+    if (error) return res.status(500).json({ error: error.message });
+    return res.json({ ok: true, steps: steps || [] });
+  } catch (err) {
+    console.error('[action-queue/steps] Error:', err.message);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// [SPEC 09] PATCH /api/engage/action-steps/:id — update or cancel a pending step
+app.patch('/api/engage/action-steps/:id', loadProfile, async (req, res) => {
+  try {
+    const sb = getSupabaseAdmin();
+    if (!sb) return res.status(503).json({ error: 'Service unavailable' });
+
+    const orgId = req.userProfile?.organization_id;
+    const { id } = req.params;
+    const { draft_subject, draft_body, status, scheduled_for } = req.body || {};
+
+    const updates = { updated_at: new Date().toISOString() };
+    if (draft_subject !== undefined) updates.draft_subject = draft_subject;
+    if (draft_body !== undefined) updates.draft_body = draft_body;
+    if (scheduled_for !== undefined) updates.scheduled_for = scheduled_for;
+    if (status === 'cancelled') updates.status = 'cancelled';
+    if (status === 'replied') {
+      updates.status = 'replied';
+      updates.reply_at = new Date().toISOString();
+    }
+
+    if (Object.keys(updates).length <= 1) {
+      return res.status(400).json({ error: 'No valid fields to update' });
+    }
+
+    const { error } = await sb
+      .from('engage_action_steps')
+      .update(updates)
+      .eq('id', id)
+      .eq('organization_id', orgId)
+      .in('status', ['pending', 'sent']); // Only update pending or sent steps
+
+    if (error) return res.status(500).json({ error: error.message });
+    return res.json({ ok: true });
+  } catch (err) {
+    console.error('[action-steps/update] Error:', err.message);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Compute structural diff between original draft and rep-edited version
+function computeEditDiff(original, edited) {
+  const origLines = (original || '').split('\n');
+  const editLines = (edited || '').split('\n');
+  const origSet = new Set(origLines);
+  const editSet = new Set(editLines);
+
+  const removed = origLines.filter(line => !editSet.has(line) && line.trim().length > 0);
+  const added   = editLines.filter(line => !origSet.has(line) && line.trim().length > 0);
+  const length_delta = (edited || '').length - (original || '').length;
+
+  return {
+    added,
+    removed,
+    length_delta,
+    edit_ratio: original ? Math.round(Math.abs(length_delta) / original.length * 100) / 100 : 0,
+  };
+}
+
+// ── [SPEC 09] Multi-step play templates ────────────────────────────────────
+const PLAY_TEMPLATES = {
+  pre_call_nurture: {
+    label: 'Pre-Call Nurture',
+    description: 'Warm the prospect before a discovery call',
+    steps: [
+      { step_order: 1, channel: 'linkedin_connection', step_type: 'connection_requester', delay_hours: 0 },
+      { step_order: 2, channel: 'email',               step_type: 'lead_evaluator',       delay_hours: 24 },
+      { step_order: 3, channel: 'linkedin_dm',          step_type: 'comment_engine',       delay_hours: 48 },
+      { step_order: 4, channel: 'phone_call',           step_type: 'follow_up_sequencer',  delay_hours: 72 },
+    ],
+  },
+  post_call_follow_up: {
+    label: 'Post-Call Follow-Up',
+    description: 'Reinforce after a discovery or demo call',
+    steps: [
+      { step_order: 1, channel: 'email',       step_type: 'follow_up_sequencer',  delay_hours: 2 },
+      { step_order: 2, channel: 'linkedin_dm', step_type: 'dm_sequencer',         delay_hours: 48 },
+      { step_order: 3, channel: 'email',       step_type: 'follow_up_sequencer',  delay_hours: 120 },
+    ],
+  },
+  no_show_recovery: {
+    label: 'No-Show Recovery',
+    description: 'Re-engage after a missed meeting',
+    steps: [
+      { step_order: 1, channel: 'email',       step_type: 'follow_up_sequencer',  delay_hours: 1 },
+      { step_order: 2, channel: 'phone_call',  step_type: 'follow_up_sequencer',  delay_hours: 24 },
+      { step_order: 3, channel: 'linkedin_dm', step_type: 'dm_sequencer',         delay_hours: 72 },
+      { step_order: 4, channel: 'email',       step_type: 'follow_up_sequencer',  delay_hours: 168 },
+    ],
+  },
+  lead_reactivation: {
+    label: 'Lead Reactivation',
+    description: 'Re-warm a cold or stale lead',
+    steps: [
+      { step_order: 1, channel: 'linkedin_connection', step_type: 'connection_requester', delay_hours: 0 },
+      { step_order: 2, channel: 'email',               step_type: 'lead_evaluator',       delay_hours: 48 },
+      { step_order: 3, channel: 'linkedin_dm',          step_type: 'comment_engine',       delay_hours: 120 },
+      { step_order: 4, channel: 'phone_call',           step_type: 'follow_up_sequencer',  delay_hours: 168 },
+      { step_order: 5, channel: 'email',               step_type: 'follow_up_sequencer',  delay_hours: 240 },
+    ],
+  },
+  social_to_pipeline: {
+    label: 'Social to Pipeline',
+    description: 'Convert LinkedIn engagement into a meeting',
+    steps: [
+      { step_order: 1, channel: 'linkedin_connection', step_type: 'connection_requester', delay_hours: 0 },
+      { step_order: 2, channel: 'linkedin_dm',          step_type: 'comment_engine',       delay_hours: 24 },
+      { step_order: 3, channel: 'linkedin_dm',          step_type: 'dm_sequencer',         delay_hours: 72 },
+      { step_order: 4, channel: 'email',               step_type: 'follow_up_sequencer',  delay_hours: 120 },
+      { step_order: 5, channel: 'phone_call',           step_type: 'follow_up_sequencer',  delay_hours: 168 },
+    ],
+  },
+};
+
+// [SPEC 09] Generate AI-drafted steps for a multi-step play
+async function generatePlaySteps(actionId, playType, orgId) {
+  const sb = getSupabaseAdmin();
+  const client = getAnthropic();
+  if (!sb || !client) throw new Error('Service unavailable');
+
+  const template = PLAY_TEMPLATES[playType];
+  if (!template) throw new Error(`Unknown play type: ${playType}`);
+
+  // Fetch parent action + signal context
+  const { data: action, error: actionErr } = await sb
+    .from('engage_signal_actions')
+    .select(`
+      *,
+      signal:signal_id (
+        id, company_name, signal_type, signal_score,
+        buying_stage_indicator, title, description,
+        ai_recommended_action, ai_outreach_angle
+      )
+    `)
+    .eq('id', actionId)
+    .eq('organization_id', orgId)
+    .single();
+
+  if (actionErr || !action) throw new Error('Action not found');
+
+  const signal = action.signal;
+  const salesDnaCtx = await getSalesDnaContext(orgId);
+
+  const stepsDescription = template.steps.map(s =>
+    `Step ${s.step_order}: ${s.channel.replace(/_/g, ' ')} (${s.step_type.replace(/_/g, ' ')})`
+  ).join('\n');
+
+  const context = [
+    `Company: ${signal?.company_name || 'Unknown'}`,
+    `Signal: ${(signal?.signal_type || '').replace(/_/g, ' ')} — ${signal?.title || ''}`,
+    `Intent Level: ${signal?.buying_stage_indicator || 'unknown'} (score: ${signal?.signal_score || 0}/100)`,
+    signal?.description ? `Detail: ${signal.description}` : '',
+    signal?.ai_outreach_angle ? `Outreach Angle: ${signal.ai_outreach_angle}` : '',
+    action.draft_email_subject ? `Original Email Subject: ${action.draft_email_subject}` : '',
+    action.draft_email_body ? `Original Email Draft:\n${action.draft_email_body}` : '',
+    action.draft_linkedin_message ? `Original LinkedIn Message: ${action.draft_linkedin_message}` : '',
+  ].filter(Boolean).join('\n');
+
+  const systemPrompt = `You are a B2B multi-step outreach specialist. Generate content for a "${template.label}" play.
+
+PLAY GOAL: ${template.description}
+
+STEPS TO DRAFT:
+${stepsDescription}
+
+CHANNEL RULES:
+- email: Include "subject" and "body". Body under 150 words. Reference the trigger event.
+- linkedin_connection: Connection request note under 280 chars. Reference something specific about the prospect or company.
+- linkedin_dm: Direct message under 300 chars. Must feel personal, not templated.
+- phone_call: Call script talking points (3-5 bullet points). Include opener, value prop, and ask.
+- task: Action item description for the rep.
+
+SEQUENCE RULES:
+- Each step must build on the previous (reference prior touchpoints subtly).
+- Never repeat the same value prop verbatim across steps.
+- Escalate urgency and specificity as steps progress.
+- Final step should be the strongest call to action.
+${salesDnaCtx ? `\n${salesDnaCtx}\nAlign outreach tone with this organization's sales methodology.\n` : ''}
+Return ONLY a valid JSON array. Each element: {"step_order": number, "subject": "..." or null, "body": "..."}` + AI_STYLE_RULE;
+
+  const response = await client.messages.create({
+    model: 'claude-haiku-4-5-20251001',
+    max_tokens: 1500,
+    system: systemPrompt,
+    messages: [{ role: 'user', content: context }],
+  });
+
+  const raw = (response.content[0]?.text || '[]').trim();
+  let drafts;
+  try {
+    drafts = JSON.parse(raw);
+  } catch (_) {
+    const cleaned = raw.replace(/```json?\n?/gi, '').replace(/```/g, '').trim();
+    try { drafts = JSON.parse(cleaned); } catch (__) {
+      const jsonMatch = cleaned.match(/\[[\s\S]*\]/);
+      if (jsonMatch) drafts = JSON.parse(jsonMatch[0]);
+      else throw new Error('Failed to parse AI step drafts');
+    }
+  }
+
+  // Build step rows with scheduled_for timestamps
+  const now = Date.now();
+  const stepRows = template.steps.map((tmpl, idx) => {
+    const draft = drafts.find(d => d.step_order === tmpl.step_order) || drafts[idx] || {};
+    return {
+      organization_id: orgId,
+      action_id:       actionId,
+      step_order:      tmpl.step_order,
+      channel:         tmpl.channel,
+      step_type:       tmpl.step_type,
+      draft_subject:   draft.subject || null,
+      draft_body:      draft.body || `[Draft needed for ${tmpl.channel.replace(/_/g, ' ')}]`,
+      scheduled_for:   new Date(now + tmpl.delay_hours * 3600000).toISOString(),
+      status:          'pending',
+      skip_if_replied: true,
+      skip_if_meeting_booked: false,
+    };
+  });
+
+  const { data: insertedSteps, error: insertErr } = await sb
+    .from('engage_action_steps')
+    .insert(stepRows)
+    .select();
+
+  if (insertErr) throw new Error(insertErr.message);
+
+  // Update parent action with play_type
+  await sb.from('engage_signal_actions')
+    .update({ play_type: playType })
+    .eq('id', actionId)
+    .eq('organization_id', orgId);
+
+  console.log(`[play-steps] Generated ${stepRows.length} steps for action ${actionId} (${playType})`);
+  return insertedSteps;
+}
 
 // POST /api/engage/signals/:id/outcome — record outcome on an actioned signal
 // M7 fix: single code path — updates signal AND writes to engage_signal_outcomes
@@ -8137,6 +10107,29 @@ app.get('/api/integrations/oauth/:provider/callback', async (req, res) => {
 });
 
 // Trigger on-demand sync
+// Sync ALL connected integrations across the org (org-level + all reps' personal)
+app.post('/api/integrations/sync-all', loadProfile, requireMinRole('admin'), async (req, res) => {
+  try {
+    const sb = getSupabaseAdmin();
+    if (!sb) return res.status(503).json({ error: 'Service unavailable' });
+    const orgId = req.userProfile.organization_id;
+    const { data: allIntegrations } = await sb.from('integrations')
+      .select('id')
+      .eq('organization_id', orgId)
+      .eq('status', 'connected')
+      .eq('is_enabled', true);
+    const list = allIntegrations || [];
+    res.json({ ok: true, message: `Sync started for ${list.length} integrations` });
+    for (const integ of list) {
+      integrations.runIntegrationSync(sb, integ.id).catch(err => {
+        console.error(`[sync-all] Background sync error for ${integ.id}:`, err.message);
+      });
+    }
+  } catch (err) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
 app.post('/api/integrations/:id/sync', loadProfile, requireMinRole('admin'), async (req, res) => {
   try {
     const sb = getSupabaseAdmin();
@@ -8180,6 +10173,85 @@ app.post('/api/integrations/:id/backfill', loadProfile, requireMinRole('admin'),
     });
   } catch (err) {
     return res.status(500).json({ error: err.message });
+  }
+});
+
+// ── Spec 05: RB2B Webhook — Website Visitor Activation Signal ─────────────
+// Receives identified visitor data from RB2B. Fires website_visitor_activation signal.
+// Configure webhook URL: https://api.apptivia.app:3000/api/webhooks/rb2b
+// Set RB2B_WEBHOOK_SECRET in .env to match RB2B dashboard config.
+app.post('/api/webhooks/rb2b', async (req, res) => {
+  try {
+    const sb = getSupabaseAdmin();
+    if (!sb) return res.status(503).end();
+
+    // Validate webhook secret
+    const signature = req.headers['x-rb2b-signature'] || req.headers['x-webhook-secret'];
+    const expectedSecret = process.env.RB2B_WEBHOOK_SECRET;
+    if (expectedSecret && signature !== expectedSecret) {
+      return res.status(401).json({ error: 'Invalid signature' });
+    }
+
+    const { organization_id, visitor_email, visitor_name, company_name, company_domain, page_url, visit_count } = req.body || {};
+    if (!organization_id || !visitor_email) {
+      return res.status(400).json({ error: 'organization_id and visitor_email required' });
+    }
+
+    // Verify org exists
+    const { data: org } = await sb.from('organizations').select('id').eq('id', organization_id).maybeSingle();
+    if (!org) return res.status(404).json({ error: 'Organization not found' });
+
+    // Check for existing prospect match
+    const { data: existingProspect } = await sb
+      .from('engage_prospects')
+      .select('id, company_id')
+      .eq('organization_id', organization_id)
+      .eq('email', visitor_email)
+      .maybeSingle();
+
+    // Dedup: skip if same visitor signaled today
+    const today = new Date().toISOString().split('T')[0];
+    const { data: existingSignal } = await sb
+      .from('engage_intent_signals')
+      .select('id')
+      .eq('organization_id', organization_id)
+      .eq('signal_type', 'website_visitor_activation')
+      .eq('company_name', company_name || visitor_email)
+      .gte('detected_at', today)
+      .maybeSingle();
+    if (existingSignal) return res.status(200).json({ ok: true, deduped: true });
+
+    // Fire signal
+    await sb.from('engage_intent_signals').insert({
+      organization_id,
+      prospect_id: existingProspect?.id || null,
+      company_id: existingProspect?.company_id || null,
+      company_name: company_name || null,
+      prospect_name: visitor_name || null,
+      signal_type: 'website_visitor_activation',
+      signal_score: 75,
+      signal_strength: 'high',
+      title: existingProspect
+        ? `Known prospect ${visitor_name || visitor_email} visited your site`
+        : `New visitor identified: ${visitor_name || visitor_email}`,
+      description: `Visited ${page_url || 'your website'}${visit_count > 1 ? ` (${visit_count} visits)` : ''}. Company: ${company_name || company_domain || 'unknown'}.`,
+      source_url: page_url || null,
+      source_platform: 'rb2b',
+      ai_summary: existingProspect
+        ? `Known prospect ${visitor_name || visitor_email} from ${company_name || 'unknown'} is actively browsing your site. They visited ${page_url || 'your website'}${visit_count > 1 ? ` ${visit_count} times` : ''}.`
+        : `New visitor identified: ${visitor_name || visitor_email} from ${company_name || company_domain || 'unknown'}. Visited ${page_url || 'your website'}.`,
+      ai_recommended_action: 'Reach out within 24 hours while interest is fresh.',
+      ai_outreach_angle: page_url?.includes('pricing')
+        ? 'They visited your pricing page — they are evaluating. Lead with a value conversation.'
+        : 'Reference the content they viewed. Ask what prompted their research.',
+      raw_data: req.body,
+    });
+
+    console.log(`[webhooks/rb2b] Signal fired for ${visitor_email} in org ${organization_id}`);
+    return res.status(200).json({ ok: true });
+  } catch (err) {
+    console.error('[webhooks/rb2b] Error:', err.message);
+    return res.status(500).json({ error: 'Internal error' });
   }
 });
 
@@ -8387,6 +10459,29 @@ app.post('/api/users/invite', loadProfile, requireMinRole('admin'), async (req, 
         maxUsers: limits.maxUsers,
         tier,
       });
+    }
+
+    // F4: Stripe subscription quantity check — enforce paid seat limit
+    if (stripe) {
+      const { data: orgSub } = await sb.from('organizations')
+        .select('stripe_subscription_id, subscription_status')
+        .eq('id', orgId).single();
+      if (orgSub?.stripe_subscription_id && orgSub.subscription_status !== 'trialing') {
+        try {
+          const sub = await stripe.subscriptions.retrieve(orgSub.stripe_subscription_id);
+          const paidSeats = sub.items?.data?.[0]?.quantity || 0;
+          if (paidSeats > 0 && (currentCount || 0) + emails.length > paidSeats) {
+            return res.status(403).json({
+              error: `Seat limit reached. Your subscription covers ${paidSeats} seats. You have ${currentCount} members and are trying to add ${emails.length}. Please update your subscription to add more seats.`,
+              currentUsers: currentCount,
+              paidSeats,
+              tier,
+            });
+          }
+        } catch (stripeErr) {
+          console.warn('[invite] Stripe seat check failed, allowing invite:', stripeErr.message);
+        }
+      }
     }
 
     // Validate team_id exists (if provided) and auto-resolve department from team.

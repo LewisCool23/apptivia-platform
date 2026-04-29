@@ -76,7 +76,7 @@ module.exports = {
       const params = new URLSearchParams({
         startDateTime: since,
         endDateTime: until,
-        $select: 'id,subject,start,end,organizer,attendees',
+        $select: 'id,subject,start,end,organizer,attendees,location,isAllDay,webLink',
         $top: '100',
       });
 
@@ -104,7 +104,25 @@ module.exports = {
         if (meetingMapping) kpiMappings.push(meetingMapping);
       }
 
-      return { records: events, nextCursor: new Date().toISOString(), kpiMappings };
+      // Build calendarEvents for integration_calendar_events storage
+      const calendarEvents = events.map(evt => ({
+        profileId,
+        externalEventId: evt.id,
+        title: evt.subject || '(No title)',
+        startTime: evt.start?.dateTime || null,
+        endTime: evt.end?.dateTime || null,
+        location: evt.location?.displayName || null,
+        attendees: (evt.attendees || []).map(a => ({
+          email: a.emailAddress?.address, name: a.emailAddress?.name || null, status: a.status?.response || null,
+        })),
+        isAllDay: evt.isAllDay || false,
+        organizerEmail: evt.organizer?.emailAddress?.address || null,
+        eventType: 'meeting',
+        externalLink: evt.webLink || null,
+        rawData: evt,
+      }));
+
+      return { records: events, nextCursor: new Date().toISOString(), kpiMappings, calendarEvents };
     },
 
     emails: async (freshIntegration, cursor, sb) => {

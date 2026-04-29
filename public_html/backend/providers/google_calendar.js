@@ -105,7 +105,25 @@ module.exports = {
         if (meetingMapping) kpiMappings.push(meetingMapping);
       }
 
-      return { records: events, nextCursor: new Date().toISOString(), kpiMappings };
+      // Build calendarEvents for integration_calendar_events storage
+      const calendarEvents = events.map(evt => ({
+        profileId,
+        externalEventId: evt.id,
+        title: evt.summary || '(No title)',
+        startTime: evt.start?.dateTime || evt.start?.date || null,
+        endTime: evt.end?.dateTime || evt.end?.date || null,
+        location: evt.location || null,
+        attendees: (evt.attendees || []).map(a => ({
+          email: a.email, name: a.displayName || null, status: a.responseStatus || null,
+        })),
+        isAllDay: !evt.start?.dateTime,
+        organizerEmail: evt.organizer?.email || null,
+        eventType: 'meeting',
+        externalLink: evt.htmlLink || null,
+        rawData: evt,
+      }));
+
+      return { records: events, nextCursor: new Date().toISOString(), kpiMappings, calendarEvents };
     },
   },
 };

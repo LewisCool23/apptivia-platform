@@ -1,6 +1,6 @@
 # Apptivia Platform Bible
 > Comprehensive reference for the Apptivia sales performance intelligence platform.
-> Last updated: April 15, 2026 (provider build spec — 10 provider modules with KPI mapping, weekStart/source fields, resolveProfileByEmail(sb) passthrough, personal integrations for Apollo/Google Calendar/Microsoft Outlook)
+> Last updated: April 26, 2026 (Aaron Tier 2 modes 1/2/4 shipped, Pipeline Operator CRM deal sync, BP v3.2, 47 signals, 23 crons, 167 migrations, ~110 API endpoints)
 
 ---
 
@@ -39,9 +39,9 @@ Apptivia replaces a $180K-$250K RevOps hire with a productized system covering 1
 
 ### Backend
 - **Runtime:** Node.js / Express
-- **File:** `public_html/backend/server.js` (~7,520 lines — monolith)
+- **File:** `public_html/backend/server.js` (~8,665 lines — monolith)
 - **Supporting files:** emailService.js, engageService.js, integrationService.js, reportTemplates.js
-- **Provider modules:** `providers/` directory — 10 provider modules auto-loaded at startup (see Section 3.7)
+- **Provider modules:** `providers/` directory — 10 provider modules auto-loaded at startup (see Section 3.7). Canonical KPI layer in `providers/kpiCanonical.js`
 - **AI:** Anthropic Claude SDK — model IDs: `claude-sonnet-4-20250514` (Aaron, coaching plans, signal classification), `claude-haiku-4-5-20251001` (outreach drafts, follow-up nudges, competitive briefs, IDP auto-drafts)
 - **Database:** Supabase (PostgreSQL with RLS)
 - **Real-time:** Socket.IO server
@@ -307,18 +307,52 @@ Org-level providers use `resolveProfileByEmail(sb, orgId, email)` to map externa
 
 | Provider | Auth | Sync Entities | KPIs Mapped |
 |----------|------|---------------|-------------|
-| `salesforce.js` | OAuth 2.0 | Activities (calls), Meetings, Deals, Contacts | call_connects, talk_time_minutes, emails_sent, meetings, sourced_opps, stage2_opps, closed_won, revenue_generated |
-| `hubspot.js` | OAuth 2.0 | Activities (calls), Meetings, Deals | call_connects, talk_time_minutes, meetings, sourced_opps, closed_won, revenue_generated |
+| `salesforce.js` | OAuth 2.0 | Activities (calls + follow-ups), Meetings, Deals, Contacts | call_connects, dials, talk_time_minutes, emails_sent, meetings, demos_completed, discovery_calls, follow_ups, sourced_opps, stage2_opps, closed_won, revenue_generated, pipeline_created, sales_cycle_days |
+| `hubspot.js` | OAuth 2.0 | Activities (calls), Meetings, Deals | call_connects, dials, talk_time_minutes, meetings, demos_completed, sourced_opps, closed_won, revenue_generated, pipeline_created, sales_cycle_days |
 | `gong.js` | OAuth 2.0 | Activities (calls), Meetings, Call Intelligence | call_connects, talk_time_minutes, meetings, talk_to_listen_ratio, longest_monologue_sec, questions_asked, next_steps_mentioned, interactivity_score |
 | `salesloft.js` | OAuth 2.0 | Activities (calls), Meetings, Emails | call_connects, talk_time_minutes, meetings, emails_sent, sequence_replies |
 | `outreach.js` | OAuth 2.0 | Activities (calls), Meetings, Emails, Sequences | call_connects, talk_time_minutes, meetings, emails_sent, sequence_replies |
 | `marketo.js` | OAuth 2.0 (client credentials) | Activities, Campaigns | emails_sent, form_submissions, campaign_responses |
 | `sendoso.js` | OAuth 2.0 | Gifts (sends) | sends_sent, gifts_accepted, gift_influenced_meetings |
-| `apollo.js` | API Key (personal) | Activities (calls) | call_connects, talk_time_minutes |
+| `apollo.js` | API Key (personal) | Calls, Emails, Opportunities, Conversations, Sequences, Tasks | call_connects, dials, conversations, talk_time_minutes, meetings, emails_sent, sequence_replies, sequences_started, sourced_opps, stage2_opps, closed_won, revenue_generated, pipeline_created, sales_cycle_days, talk_to_listen_ratio, longest_monologue_sec, questions_asked, next_steps_mentioned, interactivity_score |
 | `google_calendar.js` | OAuth 2.0 (personal) | Calendar Events | meetings |
 | `microsoft_outlook.js` | OAuth 2.0 (personal) | Calendar Events, Emails | meetings, emails_sent |
 
 **Personal integrations** (Apollo, Google Calendar, Microsoft Outlook): scoped to `integration.profile_id`, no org-wide email resolution needed. These are connected from the user's Profile → Integrations tab (requires `connect_own_integrations` permission).
+
+### 3.4 KPI Canonical Translation Layer
+
+All providers use the canonical KPI registry (`providers/kpiCanonical.js`) for unit transformation and aggregation rules. This prevents drift where different providers convert the same concept differently (e.g. Apollo `duration/60` vs Outreach `Math.round(duration/60)` vs HubSpot `ms/60000`).
+
+**Aggregation Types:**
+- `sum` — Add values (call_connects, dials, talk_time_minutes, revenue_generated, emails_sent, pipeline_created, etc.)
+- `avg` — Rolling average with `sample_count` (talk_to_listen_ratio, interactivity_score, sales_cycle_days)
+- `max` — Keep maximum value per week (longest_monologue_sec)
+- `set` — Direct value upsert for derived/computed KPIs (win_rate, average_deal_size)
+
+**Unit Transformers (used via `buildKpiMapping({ fromUnit })`):**
+- `fromSeconds` → minutes with 2 decimal precision
+- `fromMilliseconds` → minutes with 2 decimal precision
+- `fromRatio` → percentage with 1 decimal precision (0.65 → 65.0%)
+- `fromPercent` → percentage with 1 decimal precision
+- `fromCount` → integer count
+- `fromBoolean` → 0/1 count
+- `fromDollars` → USD with 2 decimal precision
+- `fromCents` → dollars with 2 decimal precision
+- `fromDays` → days with 1 decimal precision
+- `fromScore` → score 0-100 with 1 decimal precision
+- `fromMinutes` → minutes with 2 decimal precision
+
+**35 canonical KPIs defined** across 6 categories: Call Activity (8), Email/Sequence (5), Pipeline (6), Efficiency/Derived (3), Call Intelligence (5), Marketing/Gift (5). Contract tests in `providers/__tests__/kpiContract.test.js` verify all providers generate identical KPI formats for the same logical data.
+
+**Derived KPIs Engine:**
+`computeDerivedKpis()` in `integrationService.js` runs after each sync. For each synced profile, queries `kpi_values` for `closed_won`, `sourced_opps`, and `revenue_generated`, then computes:
+- `win_rate` = (closed_won / sourced_opps) * 100 (set aggregation)
+- `average_deal_size` = revenue_generated / closed_won (set aggregation)
+Uses deterministic event IDs (`derived:{profileId}:{weekStart}:{kpiKey}`) for idempotent re-computation.
+
+**Sum-Mode Dedup (Migrations 149-150):**
+`processed_event_ids` JSONB array on `kpi_values` tracks ALL event IDs aggregated into each sum row. `upsert_kpi_sum()` RPC checks this array before incrementing, making re-syncs fully idempotent. Returns BOOLEAN (true = new event, false = duplicate skip) for observability logging.
 
 ---
 
@@ -355,7 +389,7 @@ One per auth user. Org membership, role, team.
 
 ### 4.2 Scorecard / KPIs
 
-#### kpi_metrics (global catalog — 21 KPIs)
+#### kpi_metrics (global catalog — 38 KPIs)
 - `key` (unique), `name`, `goal`, `weight`, `unit` (count/minutes/dollars/percent/days), `category` (activity/engagement/pipeline/revenue/efficiency)
 - `show_on_scorecard`, `scorecard_position`, `is_custom`, `is_active`
 
@@ -448,7 +482,7 @@ One per auth user. Org membership, role, team.
 - `signal_tier` (tier1/tier2/tier3), `respond_by` (timestamptz — SLA window)
 - `ai_summary`, `ai_recommended_action`, `ai_outreach_angle`
 
-#### engage_signal_definitions (global library — 45 signals)
+#### engage_signal_definitions (global library — 47 signals)
 - `signal_key` (unique), `signal_name`, `category` (buyer_intent/interest/company_event/universal)
 - `default_score`, `default_strength`, `is_universal`
 
@@ -541,7 +575,7 @@ Global data tables allow NULL organization_id for system records.
 
 ---
 
-## 5. API Endpoints (97 total)
+## 5. API Endpoints (106 total)
 
 ### Auth & Onboarding (4)
 | Method | Path | Description |
@@ -695,7 +729,7 @@ Global data tables allow NULL organization_id for system records.
 
 ---
 
-## 6. Cron Jobs (15)
+## 6. Cron Jobs (23 total)
 
 | Job | Interval | Description |
 |-----|----------|-------------|
@@ -710,10 +744,18 @@ Global data tables allow NULL organization_id for system records.
 | `follow-up-nudges` | 24h | Detect stale approved/sent signal actions (7+ days) → AI follow-up drafts via Haiku |
 | `competitive-intel` | 7d | Tavily web search for competitor signals → Haiku brief → competitive_brief notification |
 | `leaderboard-refresh` | 6h | Recalculate all active contest leaderboards |
-| `integration-sync` | 6h | Run scheduled syncs for all connected integrations |
+| `integration-sync` | 30m | Run scheduled syncs for all connected integrations (reduced from 6h for Planera pilot near-real-time feedback) |
 | `integration-push` | 15m | Process push queue for CRM write-back |
 | `sequence-execution` | 1h | Execute pending sequence steps for enrolled prospects |
 | `upgrade-triggers` | 24h | Check Basic-tier orgs for upgrade signals (Aaron limits, signal volume, team size, feature gates) → nudge notification |
+| `competitor-news-scan` | 24h | Tavily news scan for each org's competitor domains → surfaces Competitor Takedown signals with 48h SLA |
+| `outreach-style-memory-recompute` | 7d | Aggregate per-rep edit diffs and dismissal feedback into outreach style preferences for Engage drafting |
+| `aaron-outcome-attribution` | 24h | Measure coaching recommendation outcomes at +14d/+30d/+60d windows against KPI baselines |
+| `pre-call-prep-generation` | 1h | Auto-generate Aaron Pre-Call Prep cards for meetings starting within 60 minutes |
+| `daily-briefing-notification` | 24h | Fire daily operating summary notification for reps with upcoming meetings or KPI anomalies |
+| `aaron-memory-consolidation` | 7d | Consolidate per-rep Aaron interaction patterns into persistent memory for personalized coaching |
+| `trial-expiry-check` | 24h | Detect expiring trials, send reminder notifications, enforce trial-to-paid conversion gates |
+| `kpi-metric-history-backfill` | 24h | Ensure kpi_metric_history has complete weekly snapshots for all active reps and KPIs |
 
 All jobs use CronManager with overlap guards (prevents concurrent runs) + stale guard safety valve (force-clears jobs running > 2× interval).
 
@@ -738,6 +780,9 @@ All jobs use CronManager with overlap guards (prevents concurrent runs) + stale 
 - **Message validation:** 4,000 character limit per message
 - **Sales DNA cache:** `_salesDnaCache` with 5-min TTL per org (prevents repeated DB calls for org methodology)
 - **Cache eviction:** 10-min interval clears stale live context (>120s), org context (>600s), Sales DNA (>300s), and previous-day limits
+- **Tier 2 modes (shipped):** Mode 1 (Daily Operating — KPI summary + anomalies + pipeline alerts), Mode 2 (Pre-Call Prep — auto-generated 60min before meetings, structured card output), Mode 4 (Skill Builder — Sales Performance Pyramid diagnosis, 8 skill dimensions, practice loops with rubric scoring)
+- **Tiered model routing:** Haiku for data lookups and label extraction, Sonnet for coaching and complex analysis — reduces per-message inference cost by 50-70%
+- **Structured output cards:** 3 card renderers in AaronChatbot.jsx — PreCallPrepCard, SkillPracticeCard, DailyBriefingCard
 
 ### Frameworks
 Messaging Equation, Winning Call Structure, Objection Handling, Discovery Execution, Value Selling, Negotiation, Time Management, Pipeline Management, Closing Techniques, Relationship Building, Social Selling, Territory Planning, Competitive Positioning, Account Planning
@@ -873,13 +918,13 @@ Categories: Volume (17), Achievement Milestones (5), Revenue (5), Scorecard Exce
 - Gamification (achievements, skillsets, badges, levels)
 - Contests with leaderboards
 - Wallboard (8 slides)
-- Aaron AI chatbot (14 frameworks, rep memory, RevOps/CRO coaching modes)
+- Aaron AI chatbot (14 frameworks, rep memory, RevOps/CRO coaching modes, Tier 2 modes: Daily Operating, Pre-Call Prep, Skill Builder)
 - 10 integration providers (7 org-level + 3 personal) with standardized sync, webhook, and KPI mapping
 - Stripe billing with 3 tiers + feature gates (revops_analytics, cross_org_benchmarks)
 - 9-step onboarding wizard
 - Org health scorecard
 - KPI Watchdog anomaly detection
-- 14 automated cron jobs (including follow-up nudges, competitive intel, integration-push, sequence-execution)
+- 23 automated cron jobs (including follow-up nudges, competitive intel, integration-push, sequence-execution, pre-call prep gen, aaron outcome attribution, style memory, daily briefing)
 - Website visitor tracking
 - Twilio click-to-call
 - CSV import for KPIs and users
@@ -901,16 +946,35 @@ Categories: Volume (17), Achievement Milestones (5), Revenue (5), Scorecard Exce
 - Pro-tier benchmarks summary (April 14, 2026): `GET /api/analytics/benchmarks-summary` (min 2 orgs), `fetchPeerBenchmarks()` shared helper, Analytics "Benchmarks" tab with blurred upsell for Basic users
 - CRM write-back on coaching actions (April 14, 2026): `aaron_coaching_actions` table (migration 135), `POST /api/aaron/coaching-action` (Haiku label extraction + `enqueuePush()`), "Log Action" hover button in Aaron chat, "Aaron Actions" tab in CoachingPlans page
 - Provider build spec (April 15, 2026): 10 provider modules in `providers/` directory with standardized interface. `integrationService.js` passes `sb` (Supabase client) to all sync functions. All kpiMappings include `source` and `weekStart` fields. 3 personal integrations (Apollo API key, Google Calendar OAuth, Microsoft Outlook OAuth) use `profile_id` directly. 7 org-level providers (Salesforce, HubSpot, Gong, SalesLoft, Outreach, Marketo, Sendoso) use `resolveProfileByEmail(sb, orgId, email)`. Webhook support with HMAC verification on all providers. `getWeekStart()` helper standardized across all modules.
+- KPI canonical translation layer (April 16, 2026 → expanded April 21, 2026): `providers/kpiCanonical.js` — 35 canonical KPI definitions (expanded from 22) with unit transformers (`fromSeconds`, `fromMilliseconds`, `fromRatio`, `fromPercent`, `fromDollars`, `fromCents`, `fromCount`, `fromBoolean`, `fromScore`, `fromDays`, `fromMinutes`) and 4 aggregation modes (`sum`, `avg`, `max`, `set`). `buildKpiMapping()` replaces all inline unit conversion in providers. `getWeekStart()` consolidated from 10 duplicate implementations. `upsertKpiValue()` expanded with `avg` (rolling average via `sample_count`), `max`, and `set` (direct value upsert for derived KPIs) aggregation. Migration 138 adds `sample_count` column. Migrations 149-150 add sum-mode dedup via `processed_event_ids` JSONB array. Contract tests: 74/74 passing (`providers/__tests__/kpiContract.test.js`).
+- Apollo comprehensive CRM sync (April 16, 2026 → expanded April 21, 2026): Apollo refactored from 2 KPIs / 1 entity to 20 KPIs / 6 entities (calls, emails, opportunities, conversations, sequences, tasks). Verified field names from production API: `duration` (seconds), `status: "completed"`, `logged: true`, `X-Api-Key` header auth. Call intelligence KPIs: talk_to_listen_ratio, longest_monologue_sec, questions_asked, next_steps_mentioned, interactivity_score. New KPIs added: dials (all calls), conversations (conversation records), sequences_started (unique campaigns), pipeline_created (opp amounts), sales_cycle_days (won deals). Graceful 403 handling for plan-gated endpoints.
+- Circular dependency fix (April 16, 2026): Moved `module.exports` assignment in `integrationService.js` BEFORE the auto-register providers block. Previously providers were loaded before exports were assigned, causing "non-existent property 'fetchJson'" warnings. All 7 providers with `fetchJson` also moved to lazy imports inside helper functions.
+- Integration sync frequency (April 16, 2026): Reduced from 1 hour (`ONE_HOUR`) to 30 minutes (`THIRTY_MIN`) for Planera pilot near-real-time scorecard feedback. Well within Apollo rate limits (48 calls/day vs 1000/hour limit).
+- Analytics filters org-scoping fix (April 16, 2026): `ScorecardFilters` in Analytics page was missing `organizationId` prop — Teams and Team Members dropdowns showed all orgs. Fixed by passing `orgId` to the component.
+- Scorecard table alignment fix (April 16, 2026): `<td>` element on line 1627 of `ApptiviaScorecard.tsx` had `flex items-center gap-1` directly on the cell, breaking table row alignment. Moved flex to inner `<div>`. Added `table-fixed` to both scorecard tables for consistent column widths. Added `truncate` on name buttons to prevent column blowout.
+- Apollo KPI `updated_at` bug fix (April 16, 2026): `upsertKpiValue()` in `integrationService.js` included `updated_at: new Date().toISOString()` in all 3 UPDATE modes (sum, max, avg), but `kpi_values` has NO `updated_at` column. PostgREST silently rejected all UPDATEs, so KPI values never incremented past the initial INSERT. Removed `updated_at` from all UPDATE calls.
+- Migration 139 — org structural definitions (April 16, 2026): Seeds 7 skillsets, ~150 achievement definitions, ~40 badge definitions from Apptivia Test Org to all orgs with zero skillsets. Fixes UNIQUE constraints to be org-scoped: `skillsets(name, organization_id)`, `badge_definitions(badge_name, organization_id)`. Construction Test Org (and future orgs) now have the structural foundation for the gamification system — achievements/badges earned through real activity, never seeded.
+- Coaching Opportunities removed from Scorecard (April 16, 2026): Removed entire "Coaching Opportunities" section from `ApptiviaScorecard.tsx` (~250 lines). Section used a 30-day fixed window with `numWeeks = 30/7` divisor that artificially diluted new users' metrics (e.g. 3% talk time → 1%). Coaching insights belong on the Coach page, not the Scorecard. Removed: JSX section, `fetchCoachingWindow` useEffect, `coachingOpportunities` useMemo, `coachSkillsetsByName`, `buildCoachLink`, `openCoachForKpi`, related state and imports (`useCoachData`, `KPI_GUIDANCE`, `FeedbackThumb`, `SKILLSET_KPI_MAP`).
+- Tooltip clipping fix (April 16, 2026): Coach page "Avg Score" tooltip was clipped by left sidebar due to `overflow-x-hidden` on DashboardLayout main content div. Changed tooltip position from `"bottom"` to `"right"` in `Coach.jsx:1099`.
+- Integration hardening 7-fix audit (April 21, 2026): 7 fixes across Salesforce, Apollo, and HubSpot providers. Fix 1: HubSpot null-body crash guard (empty call records). Fix 2: Salesforce SystemModstamp cursor fix (was using ActivityDate, missing re-synced records). Fix 3: Apollo conversations syncCursor initialization. Fix 4: HubSpot meeting attendee resolution (was using `hs_attendee_owner_ids` which is null — switched to `hs_internal_meeting_notes` owner lookup). Fix 5: Apollo email ownership attribution (filter to `email_account.user_id` match). Fix 6: Salesforce SOQL field list validation (removed CallDurationInSeconds from Task queries — field doesn't exist on Task). Fix 7: HubSpot deal pipeline/stage dedup (skip non-pipeline deals, deduplicate by dealId).
+- KPI wiring — 12 new KPIs (April 21, 2026): Wired 10 direct-emission KPIs + 2 derived KPIs from existing Apollo/SF/HS integrations. New direct KPIs: `dials` (all calls regardless of status), `conversations` (Apollo conversation records), `sequences_started` (unique Apollo campaign IDs), `pipeline_created` ($ on new opps), `sales_cycle_days` (close - create date for won deals), `follow_ups` (SF non-call/email tasks), `demos_completed` (meetings with "demo" in subject), `discovery_calls` (calls/meetings with "discovery" in subject). New derived KPIs: `win_rate` (closed_won/sourced_opps * 100), `average_deal_size` (revenue/closed_won). Total canonical KPIs: 35 (was 22). Derived KPIs computed post-sync via `computeDerivedKpis()` in integrationService.js. Heuristic KPIs (demos/discovery) use regex subject matching.
+- Sum-mode dedup fix (April 21, 2026): Migration 149 adds `processed_event_ids` JSONB array to `kpi_values` for tracking ALL event IDs aggregated into each sum row. `upsert_kpi_sum()` RPC checks this array before incrementing, making re-syncs idempotent. Backfills existing rows. Migration 150 changes return type from VOID to BOOLEAN for observability (TRUE = new event, FALSE = skipped duplicate).
+- Salesforce broadened SOQL (April 21, 2026): Changed syncActivities query from `TaskSubtype IN ('Call', 'Email') AND Status = 'Completed'` to `(TaskSubtype = 'Call') OR (TaskSubtype = 'Email' AND Status = 'Completed')` — captures all calls (not just completed) for `dials` KPI. Added separate SOQL for `follow_ups` (non-call/email completed tasks).
+- Aaron Tier 2 — Rep-Facing Daily Surface (April 25, 2026): Mode 1 (Daily Operating Mode — KPI summary, anomalies, pipeline alerts, coaching nudges), Mode 2 (Pre-Call Prep Mode — auto-generated 60min before meetings via calendar integration, renders structured prep cards), Mode 4 (Skill Builder Mode — Sales Performance Pyramid diagnosis with 8 skill dimensions, rubric scoring, practice loops). 2 new tables (`aaron_pre_call_prep_cards`, `aaron_skill_practice_logs`), 2 new crons (`pre-call-prep-generation` hourly, `daily-briefing-notification` daily), 4 new API endpoints, 3 structured output card renderers in AaronChatbot.jsx. Tiered model routing: Haiku for data lookups, Sonnet for coaching responses.
+- Pipeline Operator CRM deal sync (April 26, 2026): All 3 CRM providers (Salesforce, Apollo, HubSpot) now insert deal records into `engage_pipeline_deals` during sync. `upsertDeal()` function in `integrationService.js` follows the `upsertCalendarEvent()` pattern. Migration 167 adds unique index on `(organization_id, source, external_id)` for upsert dedup. Regular (non-partial) index — PostgreSQL treats NULLs as distinct, so manual deals with NULL external_id don't conflict. Apollo lookback extended from 7 to 90 days to capture older deals.
 
 ### Known Gaps
 - **Admins appear in scorecard** — should be filtered out of KPI views
 - **Team-based achievements** — deferred to Coach phase
+- **3 KPIs not yet wired** — `qualified_leads` (needs syncLeads handler), `pipeline_advanced` (needs stage-change history tracking), `response_time` (needs lead-to-first-activity timestamp correlation)
+- **Gmail email sync** — Google Calendar integration exists (meetings only). No Gmail provider for tracking emails_sent. Planera pilot TBD based on workflow confirmation.
+- **LinkedIn Sales Navigator** — No provider exists (LinkedIn API requires partnership approval). LinkedIn URLs populated via Apollo enrichment. UI references are display-only.
 
 ---
 
 ## 15. Migration Summary
 
-135 migrations (000–135) applied. Recent additions:
+167 migrations (000–167) applied. Recent additions:
 - **121** `signal_tier_columns` — `signal_tier` (text) + `respond_by` (timestamptz) on engage_intent_signals, backfill by score
 - **122** `idp_drafts` — new table for AI-auto-drafted IDPs (profile_id, manager_id, organization_id, draft_content jsonb, status, generated_by, trigger_reason, review fields, RLS)
 - **123** `notifications_metadata` — `metadata` (jsonb) column + GIN index + 3 new notification_type enum values (competitive_brief, idp_auto_drafted, follow_up_ready)
@@ -926,6 +990,25 @@ Categories: Volume (17), Achievement Milestones (5), Revenue (5), Scorecard Exce
 - **133** `feature_gate_hits` — Table for logging Pro feature gate 403s: user_id, organization_id, feature, hit_at. Admin-only SELECT RLS + service_role bypass
 - **134** `aaron_limit_hit_dates` — `aaron_limit_hit_dates` (jsonb, default '[]') on profiles for daily limit hit tracking (trimmed to last 30 dates)
 - **135** `coaching_actions` — `aaron_coaching_actions` table: action_type, action_label, source_framework, crm_push_status, session_thread_id FK. User-own SELECT/INSERT RLS + service_role bypass
+- **138** `kpi_values_sample_count` — `sample_count` (INTEGER, DEFAULT 1, NOT NULL) on kpi_values for rolling average aggregation support (used by avg-mode KPIs like talk_to_listen_ratio, interactivity_score)
+- **139** `seed_org_structural_definitions` — Seeds skillsets (7), achievement definitions (~150 rules), and badge definitions (~40 templates) from Apptivia Test Org to all other orgs missing them. Fixes UNIQUE constraints on skillsets.name and badge_definitions.badge_name to be org-scoped (composite with organization_id). Idempotent — only seeds orgs with zero skillsets.
+- **149** `kpi_sum_dedup` — Fixes sum-mode KPI dedup on re-sync. Adds `processed_event_ids` (JSONB, default '[]') to `kpi_values`. Backfills existing rows with their current `external_event_id`. Replaces `upsert_kpi_sum()` RPC with dedup-aware version that checks the array before incrementing.
+- **150** `kpi_sum_dedup_observability` — Changes `upsert_kpi_sum()` return type from VOID to BOOLEAN. Returns TRUE for new events, FALSE for duplicate skips. Enables callers to log dedup behavior.
+- **151** `org_trial_abuse_guard` — Trial abuse prevention constraints
+- **152** `fix_orphaned_achievement_kpi_keys` — Fix orphaned achievement KPI keys
+- **153** `backfill_kpi_metric_history` — Backfill kpi_metric_history for complete weekly snapshots
+- **154** `volume_badges_new_kpis` — Volume badges for newly wired KPIs
+- **155** `trial_expiry_notified_at` — Trial expiry notification tracking
+- **156** `achievement_unique_constraint` — Unique constraint on achievements to prevent duplicate awards
+- **157** `sync_achievements_across_orgs` — Sync achievement definitions across all orgs
+- **158** `apptivia_test_org_signal_updates` — Test org signal configuration updates
+- **159** `apptivia_test_org_sales_dna` — Test org Sales DNA configuration
+- **160–161** Engage feedback loop — `dismissal_reason`, `edit_diff` capture on signal actions, outreach style memory tables
+- **162** `aaron_recommendation_outcomes` — Aaron outcome tracking at +14d/+30d/+60d windows
+- **163** `competitor_takedown_website_visitor_signals` — 2 new signal definitions (competitor_takedown, website_visitor_activation)
+- **165** `aaron_pre_call_prep_cards` — Pre-Call Prep cards for Aaron Mode 2 (calendar integration, auto-generated 60min before meetings)
+- **166** `aaron_skill_practice_logs` — Skill Practice logs for Aaron Mode 4 (8 skill dimensions, rubric scores, improvements tracking)
+- **167** `pipeline_deal_sync_upsert` — Unique index on engage_pipeline_deals (organization_id, source, external_id) for CRM deal upsert dedup
 
 All migrations cover:
 - Core schema (profiles, teams, organizations)
@@ -943,4 +1026,4 @@ All migrations cover:
 
 ---
 
-*This document was generated from the Apptivia codebase and updated April 15, 2026 (migrations 000–135, 10 provider modules). For implementation-specific details, refer to the source files directly.*
+*This document was generated from the Apptivia codebase and updated April 26, 2026 (migrations 000–167, 10 provider modules, 35 canonical KPIs, ~110 API endpoints, 23 cron jobs, 47 signals, Aaron Tier 2 modes shipped, Pipeline Operator CRM deal sync). For implementation-specific details, refer to the source files directly.*

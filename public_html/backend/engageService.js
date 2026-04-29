@@ -193,7 +193,7 @@ async function enrichPeopleBatch(apiKey, people) {
   const enrichPromises = people.map(person => {
     const matchBody = {
       reveal_personal_emails: true,
-      reveal_phone_number: false,  // phone reveal requires async webhook — disable explicitly
+      reveal_phone_number: true,
     };
     if (person.id) matchBody.id = person.id;
     if (person.first_name) matchBody.first_name = person.first_name;
@@ -207,6 +207,19 @@ async function enrichPeopleBatch(apiKey, people) {
       headers: { 'X-Api-Key': apiKey },
       body: JSON.stringify(matchBody),
     }).catch((err) => {
+      // Apollo requires webhook_url for reveal_phone_number on some plans — retry without
+      if (err.message?.includes('webhook_url') || err.message?.includes('reveal_phone_number')) {
+        console.warn(`Apollo reveal_phone_number requires webhook for ${person.first_name} ${person.last_name} — retrying without`);
+        delete matchBody.reveal_phone_number;
+        return fetchJson(`${APOLLO_BASE}/people/match`, {
+          method: 'POST',
+          headers: { 'X-Api-Key': apiKey },
+          body: JSON.stringify(matchBody),
+        }).catch((err2) => {
+          console.warn(`Enrichment failed for ${person.id} (${person.first_name} ${person.last_name}):`, err2.message);
+          return { person };
+        });
+      }
       console.warn(`Enrichment failed for ${person.id} (${person.first_name} ${person.last_name}):`, err.message);
       return { person };
     });
@@ -269,15 +282,43 @@ async function apolloSearchCompanies(filters = {}) {
   });
 }
 
-async function apolloEnrichPerson(email) {
+async function apolloEnrichPerson(identifier) {
   const key = env('APOLLO_API_KEY');
   if (!key) throw new Error('APOLLO_API_KEY not configured');
 
-  return fetchJson(`${APOLLO_BASE}/people/match`, {
-    method: 'POST',
-    headers: { 'X-Api-Key': key },
-    body: JSON.stringify({ email }),
-  });
+  const body = {
+    reveal_personal_emails: true,
+    reveal_phone_number: true,
+  };
+  if (typeof identifier === 'string') {
+    body.email = identifier;
+  } else {
+    if (identifier.email) body.email = identifier.email;
+    if (identifier.first_name) body.first_name = identifier.first_name;
+    if (identifier.last_name) body.last_name = identifier.last_name;
+    if (identifier.organization_name) body.organization_name = identifier.organization_name;
+    if (identifier.linkedin_url) body.linkedin_url = identifier.linkedin_url;
+  }
+
+  try {
+    return await fetchJson(`${APOLLO_BASE}/people/match`, {
+      method: 'POST',
+      headers: { 'X-Api-Key': key },
+      body: JSON.stringify(body),
+    });
+  } catch (err) {
+    // Apollo requires webhook_url for reveal_phone_number on some plans — retry without
+    if (err.message?.includes('webhook_url') || err.message?.includes('reveal_phone_number')) {
+      console.warn('Apollo reveal_phone_number requires webhook — retrying without phone reveal');
+      delete body.reveal_phone_number;
+      return fetchJson(`${APOLLO_BASE}/people/match`, {
+        method: 'POST',
+        headers: { 'X-Api-Key': key },
+        body: JSON.stringify(body),
+      });
+    }
+    throw err;
+  }
 }
 
 async function apolloEnrichCompany(domain) {
@@ -686,12 +727,14 @@ async function researchCompany(domain, context = {}) {
 async function researchProspect(identifier) {
   const steps = { enrich: null, tavily: null, brief: null };
 
-  // Step 1: Enrich — Apollo for email, PDL for LinkedIn
+  // Step 1: Enrich — Apollo for email/name, PDL for LinkedIn
   try {
     if (identifier.email) {
-      steps.enrich = await apolloEnrichPerson(identifier.email);
+      steps.enrich = await apolloEnrichPerson(identifier);
     } else if (identifier.linkedin_url) {
       steps.enrich = await pdlEnrichPerson({ linkedin_url: identifier.linkedin_url });
+    } else if (identifier.first_name && identifier.last_name) {
+      steps.enrich = await apolloEnrichPerson(identifier);
     }
   } catch (err) {
     steps.enrich = { error: err.message };

@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Apptivia Business Plan — v3.1</title>
+<title>Apptivia Business Plan — v3.2</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
 
@@ -209,7 +209,7 @@
   <div class="subtitle">
     The Sales Performance Intelligence Platform That Replaces Your $200K RevOps Hire
   </div>
-  <div class="version-badge">v3.1 &mdash; Production-Verified &bull; April 2026</div>
+  <div class="version-badge">v3.2 &mdash; Production-Verified &bull; April 2026</div>
   <div class="meta">
     <span>Confidential</span>
     <span>April 2026</span>
@@ -250,7 +250,7 @@
   <h2>Executive Summary</h2>
 
   <p class="lead">
-    Apptivia is a sales performance intelligence platform that replaces the fragmented stack of point tools &mdash; and the $200K RevOps hire who glues them together &mdash; with a single system that scores, coaches, prospects, and motivates. Built, tested, and production-verified with 150 database migrations, 106 API endpoints, and zero placeholder components.
+    Apptivia is a sales performance intelligence platform that replaces the fragmented stack of point tools &mdash; and the $200K RevOps hire who glues them together &mdash; with a single system that scores, coaches, prospects, and motivates. Built, tested, and production-verified with 167 database migrations, 106 API endpoints, and zero placeholder components.
   </p>
 
   <div class="stats-row five">
@@ -267,17 +267,17 @@
       <div class="label">React components</div>
     </div>
     <div class="stat-card">
-      <div class="number green">15</div>
+      <div class="number green">23</div>
       <div class="label">Autopilot cron jobs</div>
     </div>
     <div class="stat-card">
-      <div class="number green">150</div>
+      <div class="number green">167</div>
       <div class="label">DB migrations</div>
     </div>
   </div>
 
   <div class="callout success">
-    <p><strong>Production-Verified (April 2026):</strong> Every claim in this document has been verified against the production codebase via comprehensive source audit &mdash; 21 pages, 94 components, 25 hooks, 12 constants modules, 106 API endpoints, 15 automated cron jobs, and 150 database migrations. 42-fix security and correctness audit applied to server.js. Multi-tenant org-scoping complete (all 3 FK-dependent tables migrated to direct org_id). CRM bidirectional push engine with queue, retry, and audit trail. Multi-step sequence execution engine with hourly cron and reply detection. 35-KPI canonical translation layer with 4 aggregation modes (sum/avg/max/set) and sum-mode dedup via processed_event_ids JSONB array. 7-fix integration hardening audit across Salesforce, HubSpot, and Apollo. 12 new KPIs wired (10 direct + 2 derived) from existing integrations. Strategic analysis grounded in 70+ industry sources across 8 analysis batches.</p>
+    <p><strong>Production-Verified (April 2026):</strong> Every claim in this document has been verified against the production codebase via comprehensive source audit &mdash; 21 pages, 94 components, 25 hooks, 12 constants modules, 106 API endpoints, 23 automated cron jobs, and 167 database migrations. 42-fix security and correctness audit applied to server.js. Multi-tenant org-scoping complete (all 3 FK-dependent tables migrated to direct org_id). CRM bidirectional push engine with queue, retry, and audit trail. Multi-step sequence execution engine with hourly cron and reply detection. 35-KPI canonical translation layer with 4 aggregation modes (sum/avg/max/set) and sum-mode dedup via processed_event_ids JSONB array. 7-fix integration hardening audit across Salesforce, HubSpot, and Apollo. 12 new KPIs wired (10 direct + 2 derived) from existing integrations. Strategic analysis grounded in 70+ industry sources across 8 analysis batches.</p>
   </div>
 
   <div class="stats-row">
@@ -300,7 +300,7 @@
   <h3>Key Differentiators</h3>
   <ul>
     <li><strong>Rep-first design:</strong> Every feature answers "how does this help the rep?" before "how does this help the manager?" &mdash; anti-surveillance positioning</li>
-    <li><strong>Aaron AI:</strong> Claude-powered coaching engine with 14 proprietary frameworks, Sales DNA methodology injection, live KPI context, and intelligent framework routing &mdash; not a generic chatbot</li>
+    <li><strong>Aaron AI:</strong> Claude-powered coaching engine with 14 proprietary frameworks, Sales DNA methodology injection, live KPI context, intelligent framework routing, tiered model routing (Haiku for lookups / Sonnet for coaching) + deferred framework loading reduce per-message inference cost by 50-70% &mdash; not a generic chatbot</li>
     <li><strong>Human-in-the-loop:</strong> AI drafts; humans approve. Signal-based outreach with pending&rarr;approved&rarr;sent workflow, validated by 6+ industry practitioners</li>
     <li><strong>Productized RevOps:</strong> 12 RevOps functions automated (scoring, coaching, prospecting, contests, achievements, reporting, anomaly detection, nudges, signal processing, deal tracking, call intelligence, schedule delivery) &mdash; replaces a $180K-$250K hire</li>
     <li><strong>Cross-org benchmarking:</strong> Aggregate performance data creates a defensible moat no single-tenant AI can replicate</li>
@@ -408,7 +408,7 @@
     <li><strong>Score (Continuous):</strong> Every rep gets a real-time performance score updated weekly. KPI Watchdog auto-detects anomalies (rolling 4-week averages) and positive trends (&ge;15% improvement). Managers see team-wide patterns at a glance.</li>
     <li><strong>Coach (Automated):</strong> Aaron AI identifies at-risk reps and applies framework-specific coaching using 14 proprietary frameworks. Coaching nudges auto-fire weekly when Tier 1 KPIs fall below 80% for 2+ consecutive weeks. AI generates targeted coaching plans from live KPI data vs. goals.</li>
     <li><strong>Compete (Daily):</strong> Contests and wallboards create healthy competition. 8 auto-rotating wallboard slides with real-time Supabase subscriptions. Achievements reward sustained excellence via daily auto-award cron (2,213 types awarded on first run, 357 badges).</li>
-    <li><strong>Prospect (Signal-Driven):</strong> Engage surfaces companies showing buying signals from 45+ signal types. AI drafts personalized outreach and queues it for human approval. Pipeline Operator tracks deals through configurable CEP stages with AI forecast notes.</li>
+    <li><strong>Prospect (Signal-Driven):</strong> Engage surfaces companies showing buying signals from 47+ signal types. AI drafts personalized outreach and queues it for human approval. Pipeline Operator tracks deals through configurable CEP stages with AI forecast notes.</li>
   </ol>
 
   <div class="callout">
@@ -454,7 +454,7 @@
   <h2>Product Architecture &mdash; Production-Verified</h2>
 
   <div class="callout success">
-    <p><strong>Full Production Audit (April 2026):</strong> Source audit of 21 pages, 94 components, 25 hooks, 12 constants modules, 106 API endpoints, 15 cron jobs, and 150 database migrations confirms the platform is production-ready. 42-fix server.js audit hardened billing lifecycle, middleware pipeline, cron dedup, concurrency, and security validation. 7-fix integration hardening audit across Salesforce, HubSpot, and Apollo (null-body guards, cursor fixes, ownership attribution, field validation, dedup). 35-KPI canonical translation layer with sum-mode dedup (processed_event_ids JSONB array) makes re-syncs fully idempotent. Multi-tenant org-scoping verified across every INSERT operation. Zero placeholder pages or stub components.</p>
+    <p><strong>Full Production Audit (April 2026):</strong> Source audit of 21 pages, 94 components, 25 hooks, 12 constants modules, 106 API endpoints, 23 cron jobs, and 167 database migrations confirms the platform is production-ready. 42-fix server.js audit hardened billing lifecycle, middleware pipeline, cron dedup, concurrency, and security validation. 7-fix integration hardening audit across Salesforce, HubSpot, and Apollo (null-body guards, cursor fixes, ownership attribution, field validation, dedup). 35-KPI canonical translation layer with sum-mode dedup (processed_event_ids JSONB array) makes re-syncs fully idempotent. Multi-tenant org-scoping verified across every INSERT operation. Zero placeholder pages or stub components.</p>
   </div>
 
   <h3>The 5-Layer RevOps Operating System</h3>
@@ -476,7 +476,7 @@
     <tr>
       <td><strong>2. Signal &rarr; Decision Engine</strong></td>
       <td>Intent scoring, ICP fit, buying group, engagement decay, lead routing with reasoning</td>
-      <td>45-signal library + Fit/Relevance/Intent scoring + scan cron</td>
+      <td>47-signal library (incl. Competitor Takedown via Tavily news scan + Website Visitor Activation via RB2B webhook) + Fit/Relevance/Intent scoring + scan cron</td>
       <td><span style="color: var(--success); font-weight:600;">Built</span></td>
     </tr>
     <tr>
@@ -488,19 +488,19 @@
     <tr>
       <td><strong>4. GTM Execution</strong></td>
       <td>Context-driven sequences, personalized outbound, territory plans, meeting prep</td>
-      <td>Engage Action Queue + Nudges + 15 Autopilot crons</td>
+      <td>Engage Action Queue + Nudges + 23 Autopilot crons</td>
       <td><span style="color: var(--success); font-weight:600;">Built</span></td>
     </tr>
     <tr>
       <td><strong>5. Feedback &amp; Learning Loop</strong></td>
       <td>Compare signals&rarr;outcomes, refine scoring, learn from wins/losses/dismissals</td>
-      <td>Outcome tracking + learn-from-dismissals + recommendation observability</td>
-      <td><span style="color: var(--accent); font-weight:600;">Roadmap (Aaron Phase 3-4)</span></td>
+      <td>Engage dismissal_reason + edit_diff capture, weekly per-rep outreach style memory, Aaron recommendation outcomes measured at +14d/+30d/+60d</td>
+      <td><span style="color: var(--success); font-weight:600;">Built</span></td>
     </tr>
   </table>
 
   <div class="callout purple">
-    <p><strong>&ldquo;Most RevOps stacks move data. This system makes decisions.&rdquo;</strong> The Section 4 feature detail below documents production evidence for Layers 1&ndash;4. Layer 5 (Feedback &amp; Learning) is the Aaron evolution path in Section 5 and appears in the Roadmap as the bridge from &ldquo;AI assistant&rdquo; to &ldquo;senior strategist.&rdquo;</p>
+    <p><strong>&ldquo;Most RevOps stacks move data. This system makes decisions.&rdquo;</strong> The Section 4 feature detail below documents production evidence for all 5 layers. Layer 5 (Feedback &amp; Learning Loop) is now built &mdash; Engage captures dismissal reasons and edit diffs, Aaron tracks recommendation outcomes at +14d/+30d/+60d, and weekly crons recompute per-rep outreach style memory. The closed loop is what distinguishes Apptivia from feature-level competitors.</p>
   </div>
 
   <h3>Apptivia Scorecard</h3>
@@ -536,7 +536,7 @@
   <p>Signal-based prospecting with AI-drafted outreach and human-in-the-loop approval.</p>
   <div class="audit-note">Verified: 5 tabs, 5,500+ lines of components, Twilio VoIP, org-scoped</div>
   <ul>
-    <li><strong>Signal Prospecting:</strong> 45 universal signals + per-org customization, tiered processing (Fit&rarr;Relevance&rarr;Intent)</li>
+    <li><strong>Signal Prospecting:</strong> 47 universal signals (incl. Competitor Takedown + Website Visitor Activation) + per-org customization, tiered processing (Fit&rarr;Relevance&rarr;Intent)</li>
     <li><strong>Discover:</strong> Company search, people finder, enrichment waterfall (Apollo + PDL merge + Tavily + SEC Edgar) with 7-day cache and per-call cost logging, one-click prospect research from contact lists, Generate Draft modal with prompt template overrides, sufficiency checker for data completeness</li>
     <li><strong>AI Outreach:</strong> Single-draft or multi-angle generation (4 distinct messages per angle: Risk Avoidance, Missed Opportunity, Operational Drag, Strategic Exposure), tone/channel selection, prompt template library</li>
     <li><strong>Account Intelligence:</strong> ICP fit scoring, AI company briefs, talking points, competitor analysis</li>
@@ -616,7 +616,7 @@
       </ul>
     </div>
     <div class="col-card">
-      <h4>15 Automated Cron Jobs</h4>
+      <h4>23 Automated Cron Jobs</h4>
       <ul>
         <li>Deal risk (24h), Signal scan (24h), Scorecard alerts (7d)</li>
         <li>Contest complete (24h), KPI anomaly (7d), Scheduled reports (24h)</li>
@@ -624,6 +624,10 @@
         <li>Follow-up nudges (24h), Competitive intel (7d)</li>
         <li>Leaderboard refresh (6h), Integration sync (30m)</li>
         <li>Integration push (15m), Sequence execution (1h), Upgrade triggers (24h)</li>
+        <li>Competitor news scan (24h), Outreach style memory (7d)</li>
+        <li>Aaron outcome attribution (24h), Pre-call prep gen (1h)</li>
+        <li>Daily briefing (24h), Aaron memory consolidation (7d)</li>
+        <li>Trial expiry check (24h), KPI history backfill (24h)</li>
       </ul>
     </div>
   </div>
@@ -720,28 +724,51 @@
   </table>
 
   <h3>Aaron Evolution Roadmap</h3>
+  <p>The Phase 3 architecture defines Aaron's transition from a chatbot interface to a 12-mode coaching system organized by primary user (Rep / Manager / Org Admin) and primary time-frame (Daily / Weekly / Per-Event). Each mode declares its trigger, data dependencies, output structure, and underlying coaching framework. Sequenced across 4 tiers based on de-risking value and build effort.</p>
+
   <div class="timeline">
     <div class="timeline-item done">
       <div class="phase-label">Shipped</div>
-      <h4>Phase 1: Coaching Chatbot</h4>
-      <p>14 frameworks, Sales DNA, live KPI context, offline fallback, org context injection</p>
+      <h4>Phase 1 &mdash; Coaching Chatbot</h4>
+      <p>14 frameworks, Sales DNA, live KPI context, offline fallback, org context injection.</p>
+    </div>
+    <div class="timeline-item done">
+      <div class="phase-label">Shipped</div>
+      <h4>Phase 2 &mdash; Role Presets + Interactive Chips</h4>
+      <p>Role-filtered preset buttons (Rep: Coach Me / My Performance / Deal Strategy; Manager: Team Overview / 1:1 Prep / Coaching Plan). Clickable chip suggestions after each response.</p>
+    </div>
+    <div class="timeline-item done">
+      <div class="phase-label">Shipped</div>
+      <h4>Phase 3 Tier 1 &mdash; Constraint Injection + Structured Outputs</h4>
+      <p>Six-constraint behavioral injection on every response (anti-AI-slop, specificity-over-generality, earned advice, rep dignity, manager respect, length discipline). Three modes converted from freeform to structured JSON output: Mode 6 (1:1 Prep), Mode 8 (Coaching Plan Generator), Mode 9 (Pipeline Diagnosis). Tiered model routing &mdash; Haiku for lookups, Sonnet for coaching judgment &mdash; reduces per-message inference cost by 50-70%.</p>
+    </div>
+    <div class="timeline-item done">
+      <div class="phase-label">Shipped</div>
+      <h4>Phase 3 Tier 2 &mdash; Rep-Facing Daily Surface</h4>
+      <p>Mode 1 (Daily Operating Mode), Mode 2 (Pre-Call Prep Mode auto-generated 60min before each meeting), Mode 4 (Skill Builder Mode with Sales Performance Pyramid diagnosis). Calendar integration trigger plus Skill Practice Loop format. 2 new tables (aaron_pre_call_prep_cards, aaron_skill_practice_logs), 2 new crons (pre-call-prep-generation, daily-briefing-notification).</p>
     </div>
     <div class="timeline-item active">
-      <div class="phase-label">Next</div>
-      <h4>Phase 2: Role Presets + Interactive Chips</h4>
-      <p>Role-filtered preset buttons (Rep: Coach Me / My Performance / Deal Strategy; Manager: Team Overview / 1:1 Prep / Coaching Plan). Clickable chip suggestions after each response.</p>
+      <div class="phase-label">In Build</div>
+      <h4>Phase 3 Tier 3 &mdash; Rep Memory and Advanced Manager Modes</h4>
+      <p>Mode 3 (Post-Call Reflection with Solution Graveyard 8-pattern analysis), Mode 5 (Belief Reframe Mode using Belief Demolition Sequence &mdash; only fires after rep reaches Permission Phase 3+), Mode 7 (Team Health Mode), Mode 10 (Org Health Mode), Permission Phase Logic (4-phase state machine), Resistance Detection (language forensics analyzer). 60-day target.</p>
     </div>
     <div class="timeline-item">
       <div class="phase-label">Planned</div>
-      <h4>Phase 3: Rep Memory + Agent Suite</h4>
-      <p>Per-rep learning (aaron_rep_memory table), structured outputs (Executive Memo, Pipeline Diagnosis, Action Plan), constraint injection (team size, quota, ACV), recommendation observability and logging.</p>
+      <h4>Phase 3 Tier 4 &mdash; Customer-Offerable Advanced Modes</h4>
+      <p>Mode 11 (Investor Briefing Mode &mdash; Apptivia uses internally first, customer-offerable later), Mode 12 (Audience Researcher), final Belief Reframe Mode polish. 120-day target.</p>
     </div>
     <div class="timeline-item">
       <div class="phase-label">Future</div>
-      <h4>Phase 4: Autonomous Agent</h4>
-      <p>Multi-step reasoning, tool use (query Supabase, trigger actions, generate reports), learn from dismissals. Position: "senior strategist" not "AI assistant."</p>
+      <h4>Phase 4 &mdash; Autonomous Agent</h4>
+      <p>Aaron operates autonomously within Permission Phase 4 (rep has accepted &ge;3 prior recommendations and demonstrated behavior change). At Phase 4, Aaron drafts coaching plans, schedules 1:1 prep, and proposes practice sessions without manager approval &mdash; but every action is reviewable and reversible. The closed-loop feedback layer (Layer 5 of the 5-Layer RevOps OS, now Built) provides the safety rails that make Phase 4 viable in production.</p>
     </div>
   </div>
+
+  <h4>The 12 Modes &mdash; Reference</h4>
+  <p><strong>Rep modes:</strong> Daily Operating (Mode 1), Pre-Call Prep (Mode 2), Post-Call Reflection (Mode 3), Skill Builder (Mode 4), Belief Reframe (Mode 5).</p>
+  <p><strong>Manager modes:</strong> 1:1 Prep (Mode 6), Team Health (Mode 7), Coaching Plan Generator (Mode 8), Pipeline Diagnosis (Mode 9).</p>
+  <p><strong>Org Admin modes:</strong> Org Health (Mode 10), Investor Briefing (Mode 11), Audience Researcher (Mode 12).</p>
+  <p>Each mode is grounded in Aaron's existing 14 coaching frameworks. Modes are not new frameworks &mdash; they are the surface API that determines which framework gets invoked, against what data, in what output format, with what tone calibration.</p>
 </div>
 
 <!-- ==================== 6. TECHNICAL INFRASTRUCTURE ==================== -->
@@ -754,7 +781,7 @@
     <tr><th>Layer</th><th>Technology</th><th>Details</th></tr>
     <tr><td>Frontend</td><td>React + Vite</td><td>21 pages, 94 components, 25 hooks, Tailwind CSS</td></tr>
     <tr><td>Backend</td><td>Node.js + Express</td><td>106 API endpoints, HTTPS on port 3000, PM2 process manager</td></tr>
-    <tr><td>Database</td><td>Supabase (PostgreSQL)</td><td>150 migrations, RLS policies on every table, real-time subscriptions</td></tr>
+    <tr><td>Database</td><td>Supabase (PostgreSQL)</td><td>167 migrations, RLS policies on every table, real-time subscriptions</td></tr>
     <tr><td>Auth</td><td>Supabase Auth</td><td>JWT tokens, role-based access, org-scoped profiles</td></tr>
     <tr><td>AI</td><td>Claude (Anthropic)</td><td>Sonnet 4 for Aaron coaching, Haiku for outreach drafting</td></tr>
     <tr><td>Real-time</td><td>Socket.IO</td><td>Live chat, notifications, wallboard updates</td></tr>
@@ -777,12 +804,12 @@
     <li><strong>Leadership Exclusion:</strong> Admins and managers automatically excluded from scorecard/KPI views to prevent data contamination</li>
   </ul>
 
-  <h3>Autopilot System (15 Cron Jobs)</h3>
-  <p>The backend runs 15 scheduled jobs that operate the platform autonomously:</p>
+  <h3>Autopilot System (23 Cron Jobs)</h3>
+  <p>The backend runs 23 scheduled jobs that operate the platform autonomously:</p>
   <table>
     <tr><th>Job</th><th>Frequency</th><th>Function</th></tr>
     <tr><td>deal-risk</td><td>Every 24h</td><td>Identify at-risk deals based on stage duration and activity</td></tr>
-    <tr><td>signal-scan</td><td>Every 24h</td><td>Process 45+ signals with p-limit(5) concurrency, score accounts, queue outreach actions</td></tr>
+    <tr><td>signal-scan</td><td>Every 24h</td><td>Process 47+ signals with p-limit(5) concurrency, score accounts, queue outreach actions</td></tr>
     <tr><td>scorecard-alerts</td><td>Every 7d</td><td>Detect KPI anomalies and positive trends, notify stakeholders</td></tr>
     <tr><td>contest-complete</td><td>Every 24h</td><td>Auto-complete expired contests, finalize leaderboards, dedup via winner_finalized_at</td></tr>
     <tr><td>kpi-anomaly</td><td>Every 7d</td><td>Org-scoped, direction-aware anomaly analysis with rolling 4-week comparisons</td></tr>
@@ -796,6 +823,14 @@
     <tr><td>integration-push</td><td>Every 15m</td><td>Process outbound CRM push queue &mdash; retry failed items with exponential backoff, log results to audit trail</td></tr>
     <tr><td>sequence-execution</td><td>Every 1h</td><td>Execute due sequence steps &mdash; send emails, route to CRM push, create pending tasks, advance enrollments</td></tr>
     <tr><td>upgrade-triggers</td><td>Every 24h</td><td>Detect Basic-tier upgrade signals (Aaron limit hits, signal volume, team size, feature gate 403s) and surface contextual upgrade prompts</td></tr>
+    <tr><td>competitor-news-scan</td><td>Every 24h</td><td>Tavily news scan for each org&rsquo;s competitor domains &mdash; surfaces Competitor Takedown signals with 48h SLA</td></tr>
+    <tr><td>outreach-style-memory-recompute</td><td>Every 7d</td><td>Aggregate per-rep edit diffs and dismissal feedback into outreach style preferences for Engage drafting</td></tr>
+    <tr><td>aaron-outcome-attribution</td><td>Every 24h</td><td>Measure coaching recommendation outcomes at +14d/+30d/+60d windows against KPI baselines</td></tr>
+    <tr><td>pre-call-prep-generation</td><td>Every 1h</td><td>Auto-generate Aaron Pre-Call Prep cards for meetings starting within 60 minutes</td></tr>
+    <tr><td>daily-briefing-notification</td><td>Every 24h</td><td>Fire daily operating summary notification for reps with upcoming meetings or KPI anomalies</td></tr>
+    <tr><td>aaron-memory-consolidation</td><td>Every 7d</td><td>Consolidate per-rep Aaron interaction patterns into persistent memory for personalized coaching</td></tr>
+    <tr><td>trial-expiry-check</td><td>Every 24h</td><td>Detect expiring trials, send reminder notifications, enforce trial-to-paid conversion gates</td></tr>
+    <tr><td>kpi-metric-history-backfill</td><td>Every 24h</td><td>Ensure kpi_metric_history has complete weekly snapshots for all active reps and KPIs</td></tr>
   </table>
 </div>
 
@@ -898,7 +933,7 @@
   <ul>
     <li><strong>Matching:</strong> Signal data routed to the right rep at the right time</li>
     <li><strong>Trust:</strong> Human-in-the-loop approval layer prevents AI spam</li>
-    <li><strong>Logistics:</strong> 15 automated cron jobs handle scheduling, scoring, alerting, intelligence gathering</li>
+    <li><strong>Logistics:</strong> 23 automated cron jobs handle scheduling, scoring, alerting, intelligence gathering</li>
     <li><strong>Value-Added Intelligence:</strong> Scoring, trend analysis, coaching, and prospecting on top of raw data</li>
   </ul>
   <p>The platform <strong>disintermediates</strong> the sales ops analyst who spends 10 hours/week building reports manually, and creates a <strong>new market</strong> by connecting AI insights to human sales actions with an approval layer.</p>
@@ -1032,8 +1067,11 @@
   <div class="framework-box">
     <h4>Apptivia is the Economic Engine in the sales-AI category</h4>
     <p>Apptivia&rsquo;s autopilot layer is a closed loop with infinite demand. Scorecard &rarr; coaching nudge &rarr; KPI movement &rarr; refined recommendation. Every sales org on earth needs performance intelligence, and every week of data makes the next recommendation sharper. Most sales-AI products ship as Creative Amplifiers (open-loop coaching advice the human judges) or Utility Tools (call summaries). That is the category we are competing against &mdash; and losing to is not a real risk because the economics are structurally different.</p>
-    <p style="margin-top:10px;"><strong>Strategic implication for Aaron:</strong> Aaron today operates partially as a Creative Amplifier (open-loop coaching advice). Moving Aaron to Economic Engine status via outcome tracking &mdash; did the rep&rsquo;s KPI actually move after the coaching? &mdash; is the product arc. This is <strong>Assumption #2</strong> (AI coaching behavior change) from the Learn-It-All framework tested in production.</p>
+    <p style="margin-top:10px;"><strong>Strategic implication for Aaron:</strong> Aaron&rsquo;s recommendation outcomes are now tracked in production at +14, +30, and +60 day windows. Each coaching action ties to a target KPI, a baseline (4-week trailing average at recommendation time), an evidence flag for whether the rep + manager acted on the recommendation, and a measured KPI lift at three time horizons. The per-org Aaron Coaching ROI dashboard surfaces three numbers: acted-on rate (% of recommendations the rep + manager actually executed), measured 30-day lift on acted-on recommendations, and framework-by-framework performance (which of the 14 coaching frameworks produces measurable KPI movement in this org). This makes Aaron a measurable Economic Engine &mdash; not a Creative Amplifier wearing engine branding. It also turns Riskiest Assumption #2 (AI coaching behavior change) from a pre-pilot bet into a continuously measured signal that re-rates as data accumulates.</p>
   </div>
+
+  <h4>Industry Benchmark for Engage Architecture</h4>
+  <p>LangChain published a benchmark for an internal GTM Agent architecturally identical to Apptivia Engage (signal detection &rarr; enrichment subagent &rarr; AI-drafted outreach with rep approval &rarr; style memory from edits &rarr; cancellation feedback): <strong>250% lead conversion improvement, 40 hours per week saved per rep</strong> (LangChain internal data, 2025). That is the bar Engage is built against. Pilot data from Planera and subsequent customers will be reported against this benchmark &mdash; not as a sales claim, but as the public commitment Apptivia is measuring itself by.</p>
 
   <h3>ICP: Ideal Customer Profile</h3>
   <p>Apptivia serves any B2B company with an active or growing SDR/BDR/AE sales motion that needs better performance visibility, data-driven coaching, and signal-based prospecting. The addressable market is not limited to companies building a sales org from scratch &mdash; it is equally large among companies that already have reps on the floor but lack the infrastructure to manage, coach, and develop them effectively.</p>
@@ -1116,21 +1154,23 @@
   <h2>Competitive Landscape</h2>
 
   <p class="lead">
-    Apptivia doesn't compete in any single category &mdash; it bridges the gap between conversation intelligence, sales engagement, and gamification. The closest competitors each cover one piece; Apptivia covers the entire performance loop.
+    Apptivia doesn&rsquo;t compete in any single category &mdash; it bridges the gap between conversation intelligence, sales engagement, gamification, and the layer underneath all of them: the foundation that any AI sales agent has to stand on. The closest competitors each cover one piece. Apptivia covers the entire performance loop.
   </p>
 
   <h3>Competitive Positioning Matrix</h3>
   <table>
     <tr><th>Competitor</th><th>Category</th><th>What They Do</th><th>Apptivia Advantage</th></tr>
-    <tr><td><strong>Gong</strong></td><td>Conversation Intel</td><td>Record &amp; analyze calls</td><td>Broader: scores beyond calls, coaches holistically, triggers outreach</td></tr>
-    <tr><td><strong>Weflow AI</strong></td><td>Sales Analytics</td><td>"Gong at 50% price"</td><td>Adds Engage + unified Scorecard + coaching plans</td></tr>
-    <tr><td><strong>Salesfinity</strong></td><td>SDR Analytics</td><td>SDR activity tracking</td><td>Covers all roles + coaching + signals + gamification</td></tr>
-    <tr><td><strong>Ambition / Spinify</strong></td><td>Gamification</td><td>Leaderboards, contests</td><td>Has gamification AND intelligence layer</td></tr>
-    <tr><td><strong>Clay</strong></td><td>Enrichment</td><td>Data enrichment workflows</td><td>Intelligence that acts ON enriched data, not just surfaces it</td></tr>
-    <tr><td><strong>HockeyStack</strong></td><td>Attribution</td><td>Revenue attribution</td><td>Improves people performance, not just measures funnel</td></tr>
-    <tr><td><strong>Artisan (Ava)</strong></td><td>AI SDR</td><td>Autonomous outbound</td><td>Human-in-the-loop &gt; autonomous = less spam, better brand</td></tr>
-    <tr><td><strong>Apollo.io</strong></td><td>Contacts + Outreach</td><td>Contact DB + sequences</td><td>Integration target (built), not competitor</td></tr>
-    <tr><td><strong>Outreach / Salesloft</strong></td><td>Engagement</td><td>Sequence execution</td><td>Performance layer that informs WHICH sequences to run</td></tr>
+    <tr><td><strong>Foundation Layer rivals &mdash; Artisan (Ava), 11x, Rox</strong></td><td>AI SDR / autonomous agent</td><td>Generate emails, book meetings, run outbound at scale without human-in-loop</td><td>&ldquo;They built the agent. We built what the agent stands on.&rdquo; Apptivia has the data layer (multi-tenant org scoping, idempotent KPI re-syncs, 47-signal library, closed-loop feedback). Most agent startups skipped the foundation. 50-70% of customers churn within 3 months (Bretsen 2026).</td></tr>
+    <tr><td><strong>Gong</strong></td><td>Conversation Intel</td><td>Record &amp; analyze calls</td><td>Broader: scores beyond calls, coaches holistically, triggers outreach. Apptivia plus Gong is a working architecture; Gong alone misses the coaching question.</td></tr>
+    <tr><td><strong>Weflow AI</strong></td><td>Sales Analytics</td><td>&ldquo;Gong at 50% the price&rdquo;</td><td>Weflow makes Gong cheaper. Apptivia makes Gong unnecessary for the coaching question. They&rsquo;re price-positioned against Gong&rsquo;s data layer; Apptivia is capability-positioned above all conversation intelligence tools, including Weflow.</td></tr>
+    <tr><td><strong>Salesfinity</strong></td><td>SDR Analytics</td><td>SDR activity tracking with derived ratio metrics (Activity Heatmap, &ldquo;Best time to call: 09:00&rdquo;)</td><td>Salesfinity does SDR analytics for SDR teams. Apptivia covers all sales roles (SDR/AE/CSM) plus coaching, signal prospecting, and gamification &mdash; in one closed loop. Salesfinity surfaces patterns; Apptivia turns patterns into coaching action.</td></tr>
+    <tr><td><strong>SalesHood</strong></td><td>Sales Enablement + Practice Simulation</td><td>Content-led training, practice simulation, role-play. Source of the 15-25% ramp / 10-20% quota benchmarks Apptivia uses as the bar.</td><td>Practice simulation is their moat. Live KPI performance data is ours. Apptivia cites SalesHood&rsquo;s industry benchmarks as authoritative &mdash; they&rsquo;re a real competitor whose data Apptivia respects. Customers that need both will likely keep SalesHood for role-play and add Apptivia for the measurement layer SalesHood doesn&rsquo;t have.</td></tr>
+    <tr><td><strong>Ambition / Spinify</strong></td><td>Gamification</td><td>Leaderboards, contests</td><td>Apptivia has gamification AND the intelligence layer underneath (Scorecard, Coach, Engage). Gamification alone is shelfware after 90 days.</td></tr>
+    <tr><td><strong>Clay</strong></td><td>Enrichment</td><td>Data enrichment workflows</td><td>Apptivia is the intelligence layer that ACTS on enriched data, not just surfaces it. Integration partner candidate, not a head-on competitor.</td></tr>
+    <tr><td><strong>Lavender</strong></td><td>Email Coaching</td><td>Real-time feedback on cold email drafts (single skill: writing)</td><td>Lavender coaches one skill (email writing). Apptivia Coach handles email plus every other rep skill (discovery, objection handling, closing, negotiation, pipeline management) &mdash; with the live KPI data Lavender doesn&rsquo;t have access to.</td></tr>
+    <tr><td><strong>HockeyStack</strong></td><td>Attribution</td><td>Revenue attribution</td><td>Improves people performance, not just measures the funnel. Apptivia plus HockeyStack is a working stack; HockeyStack alone tells you what happened, not what to do.</td></tr>
+    <tr><td><strong>Apollo.io</strong></td><td>Contacts + Outreach</td><td>Contact DB + sequences</td><td>Integration target (built), not competitor.</td></tr>
+    <tr><td><strong>Outreach / Salesloft</strong></td><td>Engagement</td><td>Sequence execution</td><td>Performance layer that informs WHICH sequences to run. Integration target.</td></tr>
   </table>
 
   <h3>The Apptivia Moat</h3>
@@ -1148,6 +1188,26 @@
       <p>Each module reinforces the others. Scorecard data powers Coach. Coach insights drive Engage targeting. Engage outcomes flow back to Scorecard. No competitor offers this closed loop.</p>
     </div>
   </div>
+
+  <div class="two-col">
+    <div class="col-card">
+      <h4>Engage Feedback Loop</h4>
+      <p>When reps dismiss an AI-drafted outreach, the dismissal reason and category are captured. When reps edit before sending, the structural diff (added phrases, removed phrases, length delta) is captured. A weekly cron aggregates per-rep style memory &mdash; preferred length, avoided phrases, preferred phrases, preferred signoff. Future drafts inject that memory as constraint. LangChain published a 250% conversion lift benchmark for this exact architecture. Without this loop, Engage is a one-shot drafter that any competitor with a Claude API key can build. With it, Engage compounds with every edit and cannot be replicated without Apptivia&rsquo;s install base.</p>
+    </div>
+    <div class="col-card">
+      <h4>Competitor Takedown Signals</h4>
+      <p>A daily Tavily news scan watches each org&rsquo;s configured competitor domains for layoffs, price increases, acquisitions, shutdowns, data breaches, leadership changes, funding rounds, and product deprecations. When an event matches a prospect&rsquo;s known tech stack (from Apollo enrichment), Apptivia fires a Competitor Takedown signal with a 48-hour SLA. RB2B webhook scaffold mirrors the same pattern for Website Visitor Activation signals. Both are tier-3 Intent classification &mdash; highest-converting class for Pain #4 (AI SDR refugee) prospects.</p>
+    </div>
+  </div>
+
+  <h3>Adjacent / Watch List</h3>
+  <p>These companies do not compete with Apptivia today, but their adjacent architecture means they could move into Apptivia&rsquo;s category if they choose to.</p>
+  <table>
+    <tr><th>Company</th><th>Category</th><th>Relationship Today</th><th>Apptivia Response</th></tr>
+    <tr><td><strong>Octave</strong></td><td>Living context graph for GTM. MCP-accessible (Claude, Gemini, GPT).</td><td>They store &ldquo;who the customer is&rdquo;; Apptivia stores &ldquo;what the rep did this week.&rdquo; Complementary today.</td><td>By Q4 2026, expose a subset of Apptivia KPI data via an MCP server endpoint. Build when &ge;3 customers ask for it.</td></tr>
+    <tr><td><strong>Conigma</strong></td><td>Claude workflow system for GTM leaders, distributed as a prompt package.</td><td>Unproductized version of Aaron&rsquo;s Daily Operating Mode (Mode 1). Prompt template vs. platform.</td><td>Watch for productization moves. Apptivia has the data layer Conigma&rsquo;s prompts assume but don&rsquo;t provide.</td></tr>
+    <tr><td><strong>Salesforce Agentforce</strong></td><td>$800M ARR, 34% productivity lift on 29K deals (Bretsen 2026).</td><td>Validates the hybrid AI + human bet at scale. Not head-on (enterprise CRM platform vs. horizontal performance layer).</td><td>Watch for SMB-targeted Agentforce products that compress the gap.</td></tr>
+  </table>
 
   <h3>Positioning Statement</h3>
   <div class="callout purple">
@@ -1201,6 +1261,7 @@
     <tr><td><strong>LinkedIn Content</strong></td><td>Low</td><td>$100-200</td><td>Daily LinkedIn habit stack: post insights, engage with VP Sales content, build brand</td></tr>
     <tr><td><strong>Reddit &rarr; SEO Pipeline</strong></td><td>Med</td><td>$50-150</td><td>Answer RevOps questions, create SEO guides, build backlinks</td></tr>
     <tr><td><strong>Dog-Food Engage</strong></td><td>None</td><td>$0</td><td>Use Apptivia's own signal prospecting to find prospects</td></tr>
+    <tr><td><strong>AEO (Answer Engine Optimization)</strong></td><td>Built</td><td>$0</td><td>apptivia.app footer hands ChatGPT, Claude, Gemini, Perplexity, and Grok the canonical Apptivia brief on demand. Optimizes for the AI research phase that comes after discovery, not Google ranking. Brief at apptivia.app/api/public/aeo-brief.</td></tr>
     <tr><td><strong>Training Firm Partnerships</strong></td><td>Med</td><td>Revenue share</td><td>Sandler, Challenger Group &mdash; methodology alignment</td></tr>
     <tr><td><strong>Outbound SDR</strong></td><td>High</td><td>$300-500</td><td>Hire at $100K ARR. Use Apptivia's Engage module for prospecting.</td></tr>
   </table>
@@ -1240,6 +1301,10 @@
       <h4>For CROs (Performance Pressure)</h4>
       <p><em>"Your team has Gong. They have Salesforce. They have Outreach. And 57% of reps are still missing quota. The problem isn't data &mdash; it's that the data doesn't coach anyone. Apptivia does."</em></p>
     </div>
+  </div>
+
+  <div class="callout warning" style="margin-top: 18px;">
+    <p><strong>For AI SDR Refugees (Pain #4, Segment C):</strong> <em>"If you've been burned by an AI SDR tool that promised 5x meetings and delivered chaos, you're not crazy. The tool was missing the foundation. Apptivia is the foundation."</em> Investor-pitch counter to Artisan/11x/Rox: <strong>"They built the agent. We built what the agent stands on."</strong></p>
   </div>
 
   <h3>Agent-First GTM: Operating Without a Sales or Marketing Team</h3>
@@ -1299,7 +1364,7 @@
     </div>
     <div class="maturity-card l4">
       <h4>Level 4: Autopilot (Month 4+)</h4>
-      <p><strong>Action:</strong> All 15 crons running, Engage signals surfacing prospects, contests motivating team.<br>
+      <p><strong>Action:</strong> All 23 crons running, Engage signals surfacing prospects, contests motivating team.<br>
       <strong>Success metric:</strong> Platform runs autonomously; team checks Apptivia before any other tool.<br>
       <strong>Apptivia features:</strong> Full platform: Engage, Contests, Achievements, Scheduled Reports.</p>
     </div>
@@ -1382,6 +1447,16 @@
       <td><span class="tag green">SHIPPED</span></td>
       <td>Post-sync computation of win_rate (closed_won/sourced_opps &times; 100) and average_deal_size (revenue/closed_won) across all providers. Deterministic event IDs for idempotent re-computation. Validates that Apptivia can deliver composite metrics &mdash; prerequisite for sales velocity and advanced analytics.</td>
     </tr>
+    <tr>
+      <td>Aaron Tier 2 &mdash; Modes 1, 2, 4</td>
+      <td><span class="tag green">SHIPPED</span></td>
+      <td>Daily Operating Mode (Mode 1), Pre-Call Prep (Mode 2, auto-generated 60min before meetings via calendar integration), Skill Builder (Mode 4, Sales Performance Pyramid diagnosis with practice loops). 2 new tables (aaron_pre_call_prep_cards, aaron_skill_practice_logs), 2 new crons, 4 new API endpoints, 3 structured output card renderers. Reps experience Aaron daily before managers ever ask for coaching plans.</td>
+    </tr>
+    <tr>
+      <td>Pipeline Operator CRM Deal Sync</td>
+      <td><span class="tag green">SHIPPED</span></td>
+      <td>CRM deals from Salesforce, Apollo, and HubSpot now flow into engage_pipeline_deals via upsertDeal() with dedup unique index. Pipeline Operator shows real deal data with values, stages, risk flags, and CRM links. 90-day lookback on cursor reset ensures complete deal coverage.</td>
+    </tr>
   </table>
 
   <h3>Deliberately Deferred</h3>
@@ -1428,13 +1503,14 @@
     <tr><th>Risk</th><th>Doubt</th><th>Importance</th><th>Risk Factor</th><th>Est. Cost to Test</th><th>Risk-to-Cost Ratio</th><th>Priority</th></tr>
     <tr><td>Manager adoption &amp; workflow fit</td><td>3/3</td><td>3/3</td><td>9</td><td>$10,000</td><td>0.0009</td><td>1st</td></tr>
     <tr><td>Org buy-in &amp; willingness to pay</td><td>3/3</td><td>3/3</td><td>9</td><td>$5,500</td><td>0.00164</td><td>2nd &mdash; highest efficiency</td></tr>
-    <tr><td>AI coaching behavior change</td><td>2/3</td><td>3/3</td><td>6</td><td>$10,000</td><td>0.0006</td><td>3rd</td></tr>
+    <tr><td>AI coaching behavior change*</td><td>2/3</td><td>3/3</td><td>6</td><td>$0</td><td>&mdash;</td><td>In-test</td></tr>
     <tr><td>CRM &amp; data integration reliability</td><td>2/3</td><td>3/3</td><td>6</td><td>$10,000</td><td>0.0006</td><td>4th</td></tr>
     <tr><td>Unit profitability &amp; pricing model</td><td>3/3</td><td>3/3</td><td>9</td><td>$1,500</td><td>0.006</td><td>5th &mdash; cheapest to test</td></tr>
   </table>
   <div class="callout">
     <p><strong>Key insight:</strong> Organizational buy-in and willingness to pay has the highest risk-to-cost ratio (0.00164) &mdash; meaning it is both high-risk and cheap to test. This is why the Planera pilot begins with a paying customer rather than a free trial. Paying signals genuine willingness to pay; free trials do not.</p>
     <p>Unit profitability has the highest ratio of all (0.006) because it can be validated through secondary research and the existing Stripe billing data at near-zero cost. This assumption is already being tested passively from day one.</p>
+    <p style="font-size: 12px; color: var(--gray-500); margin-top: 8px;">* Cost-to-test for AI coaching behavior change reduced to $0 in v3.2 because measurement is now automated (aaron_recommendation_outcomes table + aaron-outcome-attribution daily cron, both shipped in Wave 1). Validation is now a function of letting the system run, not investing additional resources. Doubt stays at 2/3 until 30+ measured outcomes accumulate.</p>
   </div>
 
   <h3>Five Strategic Pillars</h3>
@@ -1465,7 +1541,7 @@
   <p>SDRs, AEs, Managers, and Admins have different daily tasks and KPIs. Apptivia makes role assignment a first-class concept: when tagged "SDR," the Scorecard shows SDR KPIs (Meetings Booked, Response Time), Coach nudges focus on prospecting discipline, and Aaron loads SDR-relevant presets. When tagged "AE," everything shifts to Win Rate, Deal Size, discovery prep.</p>
 
   <h3>Theme 2: Signal Intelligence Is the Moat</h3>
-  <p>The 45-signal library with 3-tier taxonomy (Fit &rarr; Relevance &rarr; Intent) is the most important structural differentiator. Competitors either have no signals (Ambition, Spinify) or only basic intent data (Apollo). Apptivia's signal processing pipeline (Apollo + Tavily + SEC + Claude) creates compound intelligence that improves with every scan.</p>
+  <p>The 47-signal library with 3-tier taxonomy (Fit &rarr; Relevance &rarr; Intent) is the most important structural differentiator. Competitors either have no signals (Ambition, Spinify) or only basic intent data (Apollo). Apptivia's signal processing pipeline (Apollo + Tavily + SEC + Claude) creates compound intelligence that improves with every scan.</p>
 
   <h3>Theme 3: Unified Data Is Worth More Than Fancy AI</h3>
   <p>Apptivia's positioning: NOT an outbound tool (vs. Apollo, Outreach), NOT a conversation intelligence tool (vs. Gong, Chorus). It is <strong>performance intelligence that sits above all of them</strong>, pulling data from wherever it lives, scoring it, coaching from it, and triggering action based on it.</p>
@@ -1479,7 +1555,7 @@
     <tr><td style="color: var(--danger); font-weight:600;">Fundamentals</td><td>Know your numbers</td><td>Scorecard + Wallboard</td><td>Are reps checking their score weekly without being asked?</td></tr>
     <tr><td style="color: var(--accent); font-weight:600;">Adoption</td><td>Act on data</td><td>Coach + Aaron AI</td><td>Has a manager changed how they run a 1:1 because of Apptivia data?</td></tr>
     <tr><td style="color: var(--primary); font-weight:600;">Optimization</td><td>Scale what works</td><td>Engage + Contests</td><td>Has a rep booked a meeting from an Apptivia-surfaced signal?</td></tr>
-    <tr><td style="color: var(--success); font-weight:600;">Amplification</td><td>System runs itself</td><td>Autopilot (15 crons)</td><td>Has the platform identified and escalated a performance issue before the manager noticed it?</td></tr>
+    <tr><td style="color: var(--success); font-weight:600;">Amplification</td><td>System runs itself</td><td>Autopilot (23 crons)</td><td>Has the platform identified and escalated a performance issue before the manager noticed it?</td></tr>
   </table>
   <div class="callout">
     <p><strong>Rationale:</strong> Each validation question targets behavior change, not feature usage. A rep who logs in but doesn't change behavior is not a retained customer &mdash; they are a churn risk. These questions are used in customer success check-ins at each maturity stage to confirm genuine adoption before expanding platform usage.</p>
@@ -1612,7 +1688,7 @@
 
   <h3>Key Risk: Single Developer</h3>
   <div class="callout warning">
-    <p><strong>Mitigation strategy:</strong> The codebase is not a prototype &mdash; it's production-grade with 150 database migrations, comprehensive RLS policies, and well-structured component architecture. Claude Code accelerates development 5-10x. First engineering hire should be a senior fullstack developer who can own features end-to-end. Target: hire at $100K ARR or after seed funding.</p>
+    <p><strong>Mitigation strategy:</strong> The codebase is not a prototype &mdash; it's production-grade with 167 database migrations, comprehensive RLS policies, and well-structured component architecture. Claude Code accelerates development 5-10x. First engineering hire should be a senior fullstack developer who can own features end-to-end. Target: hire at $100K ARR or after seed funding.</p>
   </div>
 
   <h3>What Could Kill Us</h3>
@@ -1622,6 +1698,10 @@
     <li><strong>AI commoditization:</strong> Generic AI coaching becomes free. Apptivia's moat is the data (cross-org benchmarks, historical coaching plans), not the AI model itself.</li>
     <li><strong>Market timing:</strong> Sales teams not yet ready for "productized RevOps." Mitigated by starting with simple scorecard (proven need) and expanding.</li>
   </ul>
+
+  <div class="callout success">
+    <p><strong>Update for v3.2 (AI coaching behavior change risk):</strong> The mitigation for this risk is now built. The aaron_recommendation_outcomes table (migration 162) tracks every coaching action&rsquo;s target KPI, baseline, and measured value at +14, +30, and +60 day windows. The risk is no longer &ldquo;we don&rsquo;t know if Aaron&rsquo;s coaching changes behavior.&rdquo; The risk is now &ldquo;the measured behavior change may not justify the price point&rdquo; &mdash; a different and lower-Doubt question that resolves with each pilot&rsquo;s outcome data.</p>
+  </div>
 </div>
 
 <!-- ==================== 16. THE ASK ==================== -->
@@ -1714,7 +1794,7 @@
     <li><strong>Purpose:</strong> Why sales performance intelligence matters now</li>
     <li><strong>Problem:</strong> Three failure modes + $3.35M annual cost for a 50-rep team</li>
     <li><strong>Solution:</strong> Performance Intelligence Stack (5 layers, all built)</li>
-    <li><strong>Evidence:</strong> 21 pages, 106 endpoints, 150 migrations, 42-fix server audit + 7-fix integration audit, 35 KPIs flowing, Planera pilot data</li>
+    <li><strong>Evidence:</strong> 21 pages, 106 endpoints, 167 migrations, 42-fix server audit + 7-fix integration audit, 35 KPIs flowing, Planera pilot data</li>
     <li><strong>Market:</strong> $8.2B TAM, $2.4B SAM, signal-first selling moment</li>
     <li><strong>Unique Advantage:</strong> Productized RevOps replacing $200K hire at 13.6x ROI</li>
     <li><strong>Business Model:</strong> $19/$49/custom per seat, 95% gross margin, PLG</li>
@@ -1746,7 +1826,7 @@
     <li><strong>RevOps Agent Framework:</strong> Independent analysis mapped 12 RevOps functions &mdash; Apptivia productizes all 12. Validates positioning as "$200K hire replacement."</li>
     <li><strong>LangChain GTM Agent:</strong> Autonomous outbound agent architecture matches Engage's design exactly. Reported 250% conversion increase + 40 hours/week saved.</li>
     <li><strong>GTM Efficiency Pyramid:</strong> Sales Performance Pyramid maps directly to Apptivia's product stack (Scorecard = base, Coach = middle, Engage = top).</li>
-    <li><strong>Signal Library Taxonomy:</strong> 12-signal GTM taxonomy from industry framework validates Apptivia's 45-signal library approach.</li>
+    <li><strong>Signal Library Taxonomy:</strong> 12-signal GTM taxonomy from industry framework validates Apptivia's 47-signal library approach.</li>
     <li><strong>Human-in-the-Loop Validation:</strong> 6+ practitioners independently validate the pending &rarr; approved &rarr; sent workflow vs. autonomous AI SDR approach.</li>
     <li><strong>Enrichment Waterfall:</strong> 4x confirmed across batches &mdash; now shipped: Apollo + PDL merge with 7-day cache, per-call enrichment logging, and centralized sufficiency checker (migrations 129-130).</li>
     <li><strong>Salesfinity Competitor Analysis:</strong> Direct competitor in SDR analytics; Apptivia differentiates with full coaching + prospecting stack.</li>
@@ -1774,7 +1854,7 @@
 
   <h3>Pitch Narrative</h3>
   <div class="callout purple">
-    <p><strong>The 60-Second Pitch:</strong> "Sales teams use 10+ tools but have zero visibility into whether reps are actually getting better. Managers coach by gut. Reps waste 70% of their time on admin. Companies hire a $200K RevOps person to glue it all together. Apptivia replaces that hire. We're a unified platform that scores rep performance weekly, auto-coaches from the data, surfaces buying signals for prospecting, and gamifies the entire experience. The product is built &mdash; 21 pages, 106 API endpoints, 150 database migrations, 15 autonomous cron jobs, 35 canonical KPIs flowing from 10 integrations, all production-verified. We're launching our first pilot in May and looking for our first 10 paying customers."</p>
+    <p><strong>The 60-Second Pitch:</strong> "Sales teams use 10+ tools but have zero visibility into whether reps are actually getting better. Managers coach by gut. Reps waste 70% of their time on admin. Companies hire a $200K RevOps person to glue it all together. Apptivia replaces that hire. We're a unified platform that scores rep performance weekly, auto-coaches from the data, surfaces buying signals for prospecting, and gamifies the entire experience. The product is built &mdash; 21 pages, 106 API endpoints, 167 database migrations, 23 autonomous cron jobs, 35 canonical KPIs flowing from 10 integrations, all production-verified. We're launching our first pilot in May and looking for our first 10 paying customers."</p>
   </div>
 </div>
 
@@ -1804,7 +1884,7 @@
 
 <!-- ==================== FOOTER ==================== -->
 <div class="confidential">
-  Confidential &mdash; Apptivia Business Plan v3.1 &mdash; April 2026
+  Confidential &mdash; Apptivia Business Plan v3.2 &mdash; April 2026
 </div>
 
 </body>

@@ -60,23 +60,44 @@ module.exports = {
 
       const { api_key } = freshIntegration.decryptedCreds;
 
-      const { res } = await apolloGet(api_key, '/phone_calls/search?per_page=100&sort_by_field=start_time&sort_ascending=false');
-      if (!res.ok) throw new Error(`Apollo calls API error: ${res.status} ${res.statusText}`);
+      let res;
+      try {
+        ({ res } = await apolloGet(api_key, '/phone_calls/search?per_page=100&sort_by_field=start_time&sort_ascending=true'));
+      } catch (err) {
+        throw new Error(`Apollo calls network error: ${err.message}`);
+      }
+
+      if (!res.ok) {
+        if (res.status === 403 || res.status === 404 || res.status === 422) {
+          console.log(`[apollo:calls] API returned ${res.status}, skipping`);
+          return { records: [], nextCursor: since, kpiMappings: [] };
+        }
+        const err = new Error(`Apollo calls API error: ${res.status} ${res.statusText}`);
+        err.status = res.status;
+        throw err;
+      }
       const data = await res.json();
 
       const calls = (data.phone_calls || []).filter(c => {
         const startTime = new Date(c.start_time);
-        return startTime >= new Date(since);
+        return startTime > new Date(since);
       });
 
       const kpiMappings = [];
 
       for (const call of calls) {
-        // Only completed calls (verified: status === 'completed' and logged === true)
-        if (call.status !== 'completed' || !call.logged) continue;
-
         const callId = call.id;
         const weekStart = getWeekStart(call.start_time);
+
+        // dials — every call record is a dial attempt, regardless of status
+        const dialMapping = buildKpiMapping({
+          profileId, kpiKey: 'dials', rawValue: 1, fromUnit: 'Count',
+          source: 'apollo', externalEventId: `apollo:call:${callId}:dials`, weekStart,
+        });
+        if (dialMapping) kpiMappings.push(dialMapping);
+
+        // Only completed calls for remaining KPIs
+        if (call.status !== 'completed' || !call.logged) continue;
 
         // call_connects
         const connectMapping = buildKpiMapping({
@@ -124,7 +145,7 @@ module.exports = {
 
       let res;
       try {
-        ({ res } = await apolloGet(api_key, '/activities?types[]=email&sort_by_field=created_at&sort_ascending=false&per_page=100'));
+        ({ res } = await apolloGet(api_key, '/activities?types[]=email&sort_by_field=created_at&sort_ascending=true&per_page=100'));
       } catch (err) {
         throw new Error(`Apollo emails network error: ${err.message}`);
       }
@@ -134,13 +155,15 @@ module.exports = {
           console.log(`[apollo:emails] API returned ${res.status}, skipping`);
           return { records: [], nextCursor: since, kpiMappings: [] };
         }
-        throw new Error(`Apollo emails API error: ${res.status} ${res.statusText}`);
+        const err = new Error(`Apollo emails API error: ${res.status} ${res.statusText}`);
+        err.status = res.status;
+        throw err;
       }
 
       const data = await res.json();
       const emails = (data.activities || []).filter(e => {
         const created = new Date(e.created_at);
-        return created >= new Date(since);
+        return created > new Date(since);
       });
 
       const kpiMappings = [];
@@ -158,32 +181,47 @@ module.exports = {
         });
         if (sentMapping) kpiMappings.push(sentMapping);
 
-        // sequence_replies — sequence email that got a reply
-        if ((email.sequence_id || email.emailer_campaign_id) &&
-            (email.was_replied || email.reply_received)) {
-          const replyMapping = buildKpiMapping({
-            profileId, kpiKey: 'sequence_replies', rawValue: 1, fromUnit: 'Count',
-            source: 'apollo', externalEventId: `apollo:email:${emailId}:sequence_replies`, weekStart,
-          });
-          if (replyMapping) kpiMappings.push(replyMapping);
-        }
+        // sequence_replies — owned by sequences handler to avoid cross-handler double-counting
       }
 
       console.log(`[apollo:emails] Processed ${emails.length} emails, ${kpiMappings.length} KPI mappings`);
       return { records: emails, nextCursor: latestTimestamp(emails, 'created_at', since), kpiMappings };
     },
 
-    // === OPPORTUNITIES (Pipeline) ===
+    // === OPPORTUNITIES / DEALS (Pipeline) ===
+    // Verified fields from real Apollo API (2026-04-21):
+    //   Endpoint:  GET /opportunities/search  (NOT /opportunities — that 404s)
+    //   Response:  { opportunities: [...] }
+    //   Deal obj:  id, opportunity_created_at, amount, is_won, is_closed, opportunity_stage_id
+    //   Stages:    GET /opportunity_stages → display_order + name
+    //   Stage map: 0=Lead, 1=Sales Qualified, 2=Meeting Booked, 3=Negotiation,
+    //              4=Contract Sent, 5=Closed Won, 6=Closed Lost
     opportunities: async (freshIntegration, cursor, sb) => {
       const profileId = await guardRep(freshIntegration, sb);
-      const since = cursor || new Date(Date.now() - 7 * 86400000).toISOString();
+      const since = cursor || new Date(Date.now() - 90 * 86400000).toISOString();
       if (!profileId) return { records: [], nextCursor: since, kpiMappings: [] };
 
       const { api_key } = freshIntegration.decryptedCreds;
 
+      // 1. Fetch deal stages to build lookup (stageId → display_order)
+      let stageMap = {};
+      try {
+        const { res: stageRes } = await apolloGet(api_key, '/opportunity_stages');
+        if (stageRes.ok) {
+          const stageData = await stageRes.json();
+          for (const s of (stageData.opportunity_stages || [])) {
+            stageMap[s.id] = { name: s.name, order: s.display_order, isWon: s.is_won, isClosed: s.is_closed };
+          }
+          console.log(`[apollo:opportunities] Loaded ${Object.keys(stageMap).length} deal stages`);
+        }
+      } catch (err) {
+        console.warn(`[apollo:opportunities] Could not fetch stages: ${err.message}, falling back to deal-level flags`);
+      }
+
+      // 2. Fetch deals — correct endpoint is /opportunities/search (GET)
       let res;
       try {
-        ({ res } = await apolloGet(api_key, '/opportunities?sort_by_field=created_at&sort_ascending=false&per_page=100'));
+        ({ res } = await apolloGet(api_key, '/opportunities/search?per_page=100'));
       } catch (err) {
         throw new Error(`Apollo opportunities network error: ${err.message}`);
       }
@@ -193,32 +231,50 @@ module.exports = {
           console.log(`[apollo:opportunities] API returned ${res.status}, skipping`);
           return { records: [], nextCursor: since, kpiMappings: [] };
         }
-        throw new Error(`Apollo opportunities API error: ${res.status} ${res.statusText}`);
+        const err = new Error(`Apollo opportunities API error: ${res.status} ${res.statusText}`);
+        err.status = res.status;
+        throw err;
       }
 
       const data = await res.json();
+      // Filter by stage_updated_at (catches stage changes), fall back to opportunity_created_at
       const opps = (data.opportunities || []).filter(opp => {
-        const created = new Date(opp.created_at);
-        return created >= new Date(since);
+        const ts = opp.stage_updated_at || opp.opportunity_created_at;
+        return ts && new Date(ts) > new Date(since);
       });
 
       const kpiMappings = [];
 
       for (const opp of opps) {
         const oppId = opp.id;
-        const weekStart = getWeekStart(opp.created_at);
-        const stage = opp.stage_name || opp.stage || '';
-        const status = (opp.status || '').toLowerCase();
+        const weekStart = getWeekStart(opp.opportunity_created_at);
 
-        // sourced_opps
+        // Resolve stage via lookup, fall back to deal-level flags
+        const stage = stageMap[opp.opportunity_stage_id] || {};
+        const displayOrder = stage.order ?? -1;
+        const isWon = opp.is_won === true;
+        const isClosed = opp.is_closed === true;
+
+        // sourced_opps — all deals
         const sourcedMapping = buildKpiMapping({
           profileId, kpiKey: 'sourced_opps', rawValue: 1, fromUnit: 'Count',
           source: 'apollo', externalEventId: `apollo:opp:${oppId}:sourced_opps`, weekStart,
         });
         if (sourcedMapping) kpiMappings.push(sourcedMapping);
 
-        // stage2_opps — beyond initial contact/prospecting
-        if (/qualified|demo|proposal|negotiation|closing|stage\s*[2-9]/i.test(stage) || opp.stage_order > 1) {
+        // pipeline_created — value of new opportunities
+        const oppAmount = opp.amount || 0;
+        if (oppAmount > 0) {
+          const pipelineMapping = buildKpiMapping({
+            profileId, kpiKey: 'pipeline_created', rawValue: oppAmount, fromUnit: 'Dollars',
+            source: 'apollo', externalEventId: `apollo:opp:${oppId}:pipeline_created`, weekStart,
+          });
+          if (pipelineMapping) kpiMappings.push(pipelineMapping);
+        }
+
+        // stage2_opps — Meeting Booked (order 2) and beyond, excluding Closed Lost
+        const isStage2 = displayOrder >= 2 && (!isClosed || isWon);
+        if (isStage2) {
           const stage2Mapping = buildKpiMapping({
             profileId, kpiKey: 'stage2_opps', rawValue: 1, fromUnit: 'Count',
             source: 'apollo', externalEventId: `apollo:opp:${oppId}:stage2_opps`, weekStart,
@@ -226,29 +282,73 @@ module.exports = {
           if (stage2Mapping) kpiMappings.push(stage2Mapping);
         }
 
-        // closed_won
-        const isWon = status === 'won' || status === 'closed_won' || /won|closed.won/i.test(stage);
+        // stage3_opps — Negotiation (order 3) and beyond, excluding Closed Lost
+        const isStage3 = displayOrder >= 3 && (!isClosed || isWon);
+        if (isStage3) {
+          const stage3Mapping = buildKpiMapping({
+            profileId, kpiKey: 'stage3_opps', rawValue: 1, fromUnit: 'Count',
+            source: 'apollo', externalEventId: `apollo:opp:${oppId}:stage3_opps`, weekStart,
+          });
+          if (stage3Mapping) kpiMappings.push(stage3Mapping);
+        }
+
+        // closed_won — verified: opp.is_won boolean
         if (isWon) {
+          // Use closed_date for won deals (when they actually closed), fall back to creation date
+          const closedWeek = getWeekStart(opp.closed_date || opp.opportunity_created_at);
           const wonMapping = buildKpiMapping({
             profileId, kpiKey: 'closed_won', rawValue: 1, fromUnit: 'Count',
-            source: 'apollo', externalEventId: `apollo:opp:${oppId}:closed_won`, weekStart,
+            source: 'apollo', externalEventId: `apollo:opp:${oppId}:closed_won`, weekStart: closedWeek,
           });
           if (wonMapping) kpiMappings.push(wonMapping);
 
-          // revenue_generated
-          const amount = opp.amount || opp.value || opp.deal_value || 0;
+          // revenue_generated — verified field: opp.amount
+          const amount = opp.amount || 0;
           if (amount > 0) {
             const revenueMapping = buildKpiMapping({
               profileId, kpiKey: 'revenue_generated', rawValue: amount, fromUnit: 'Dollars',
-              source: 'apollo', externalEventId: `apollo:opp:${oppId}:revenue_generated`, weekStart,
+              source: 'apollo', externalEventId: `apollo:opp:${oppId}:revenue_generated`, weekStart: closedWeek,
             });
             if (revenueMapping) kpiMappings.push(revenueMapping);
+          }
+
+          // sales_cycle_days — days from creation to close
+          if (opp.opportunity_created_at && opp.closed_date) {
+            const cycleDays = (new Date(opp.closed_date) - new Date(opp.opportunity_created_at)) / (1000 * 60 * 60 * 24);
+            if (cycleDays >= 0) {
+              const cycleMapping = buildKpiMapping({
+                profileId, kpiKey: 'sales_cycle_days', rawValue: cycleDays, fromUnit: 'Days',
+                source: 'apollo', externalEventId: `apollo:opp:${oppId}:sales_cycle_days`, weekStart: closedWeek,
+              });
+              if (cycleMapping) kpiMappings.push(cycleMapping);
+            }
           }
         }
       }
 
-      console.log(`[apollo:opportunities] Processed ${opps.length} opportunities, ${kpiMappings.length} KPI mappings`);
-      return { records: opps, nextCursor: latestTimestamp(opps, 'created_at', since), kpiMappings };
+      console.log(`[apollo:opportunities] Processed ${opps.length} deals, ${kpiMappings.length} KPI mappings`);
+
+      // Build pipeline deals for engage_pipeline_deals upsert
+      const pipelineDeals = opps.map(opp => {
+        const stage = stageMap[opp.opportunity_stage_id] || {};
+        return {
+          ownerId: profileId,
+          dealName: opp.name || `Apollo Opp ${opp.id.slice(0, 8)}`,
+          dealValue: opp.amount || 0,
+          stage: stage.name || 'discovery',
+          probability: opp.is_won ? 100 : (opp.is_closed ? 0 : Math.min((stage.order || 0) * 20, 80)),
+          closeDate: opp.closed_date || null,
+          lastActivityAt: opp.stage_updated_at || opp.opportunity_created_at || null,
+          source: 'apollo',
+          externalId: opp.id,
+          crmUrl: null,
+          metadata: { apolloStageId: opp.opportunity_stage_id, stageName: stage.name },
+        };
+      });
+
+      // Advance cursor by stage_updated_at (catches stage changes), fall back to opportunity_created_at
+      const cursorField = opps.length > 0 && opps[0].stage_updated_at ? 'stage_updated_at' : 'opportunity_created_at';
+      return { records: opps, nextCursor: latestTimestamp(opps, cursorField, since), kpiMappings, pipelineDeals };
     },
 
     // === CONVERSATIONS (Call Intelligence — plan-dependent, 403 = skip) ===
@@ -261,7 +361,7 @@ module.exports = {
 
       let listRes;
       try {
-        ({ res: listRes } = await apolloGet(api_key, '/conversations?sort_by_field=created_at&sort_ascending=false&per_page=100'));
+        ({ res: listRes } = await apolloGet(api_key, '/conversations?sort_by_field=created_at&sort_ascending=true&per_page=100'));
       } catch (err) {
         throw new Error(`Apollo conversations network error: ${err.message}`);
       }
@@ -271,13 +371,15 @@ module.exports = {
           console.log('[apollo:conversations] Not available on current plan, skipping');
           return { records: [], nextCursor: since, kpiMappings: [] };
         }
-        throw new Error(`Apollo conversations API error: ${listRes.status} ${listRes.statusText}`);
+        const err = new Error(`Apollo conversations API error: ${listRes.status} ${listRes.statusText}`);
+        err.status = listRes.status;
+        throw err;
       }
 
       const listData = await listRes.json();
       const conversations = (listData.conversations || []).filter(conv => {
         const created = new Date(conv.created_at || conv.recorded_at);
-        return created >= new Date(since);
+        return created > new Date(since);
       });
 
       const kpiMappings = [];
@@ -286,6 +388,13 @@ module.exports = {
         const convId = conv.id;
         if (!convId) continue;
         const weekStart = getWeekStart(conv.created_at || conv.recorded_at);
+
+        // conversations — count each conversation record
+        const convCountMapping = buildKpiMapping({
+          profileId, kpiKey: 'conversations', rawValue: 1, fromUnit: 'Count',
+          source: 'apollo', externalEventId: `apollo:conv:${convId}:conversations`, weekStart,
+        });
+        if (convCountMapping) kpiMappings.push(convCountMapping);
 
         // talk_to_listen_ratio
         const talkRatio = conv.talk_time_ratio || conv.rep_talk_ratio || conv.agent_talk_ratio;
@@ -364,7 +473,7 @@ module.exports = {
 
       let res;
       try {
-        ({ res } = await apolloGet(api_key, '/emailer_campaign_steps?sort_by_field=created_at&sort_ascending=false&per_page=100'));
+        ({ res } = await apolloGet(api_key, '/emailer_campaign_steps?sort_by_field=created_at&sort_ascending=true&per_page=100'));
       } catch (err) {
         throw new Error(`Apollo sequences network error: ${err.message}`);
       }
@@ -374,31 +483,41 @@ module.exports = {
           console.log('[apollo:sequences] Not available, skipping');
           return { records: [], nextCursor: since, kpiMappings: [] };
         }
-        throw new Error(`Apollo sequences API error: ${res.status} ${res.statusText}`);
+        const err = new Error(`Apollo sequences API error: ${res.status} ${res.statusText}`);
+        err.status = res.status;
+        throw err;
       }
 
       const data = await res.json();
       const steps = (data.emailer_campaign_steps || []).filter(step => {
         const created = new Date(step.created_at);
-        return created >= new Date(since);
+        return created > new Date(since);
       });
 
       const kpiMappings = [];
+
+      // sequences_started — count unique campaigns (each campaign = one sequence started)
+      const seenCampaigns = new Set();
+      for (const step of steps) {
+        const campaignId = step.emailer_campaign_id;
+        if (campaignId && !seenCampaigns.has(campaignId)) {
+          seenCampaigns.add(campaignId);
+          const seqWeekStart = getWeekStart(step.created_at);
+          const seqMapping = buildKpiMapping({
+            profileId, kpiKey: 'sequences_started', rawValue: 1, fromUnit: 'Count',
+            source: 'apollo', externalEventId: `apollo:campaign:${campaignId}:sequences_started`, weekStart: seqWeekStart,
+          });
+          if (seqMapping) kpiMappings.push(seqMapping);
+        }
+      }
 
       for (const step of steps) {
         const stepId = step.id;
         const weekStart = getWeekStart(step.created_at);
 
-        // emails_sent — sequence emails
-        if (step.status === 'sent' || step.executed_at) {
-          const sentMapping = buildKpiMapping({
-            profileId, kpiKey: 'emails_sent', rawValue: 1, fromUnit: 'Count',
-            source: 'apollo', externalEventId: `apollo:seq:${stepId}:emails_sent`, weekStart,
-          });
-          if (sentMapping) kpiMappings.push(sentMapping);
-        }
+        // emails_sent — owned by emails handler to avoid cross-handler double-counting
 
-        // sequence_replies
+        // sequence_replies — sole owner of this KPI
         if (step.replied || (step.reply_count && step.reply_count > 0)) {
           const replyMapping = buildKpiMapping({
             profileId, kpiKey: 'sequence_replies', rawValue: step.reply_count || 1, fromUnit: 'Count',
@@ -422,7 +541,7 @@ module.exports = {
 
       let res;
       try {
-        ({ res } = await apolloGet(api_key, '/activities?sort_by_field=created_at&sort_ascending=false&per_page=100'));
+        ({ res } = await apolloGet(api_key, '/activities?sort_by_field=created_at&sort_ascending=true&per_page=100'));
       } catch (err) {
         throw new Error(`Apollo tasks network error: ${err.message}`);
       }
@@ -432,13 +551,15 @@ module.exports = {
           console.log(`[apollo:tasks] API returned ${res.status}, skipping`);
           return { records: [], nextCursor: since, kpiMappings: [] };
         }
-        throw new Error(`Apollo tasks API error: ${res.status} ${res.statusText}`);
+        const err = new Error(`Apollo tasks API error: ${res.status} ${res.statusText}`);
+        err.status = res.status;
+        throw err;
       }
 
       const data = await res.json();
       const activities = (data.activities || []).filter(a => {
         const created = new Date(a.created_at);
-        return created >= new Date(since);
+        return created > new Date(since);
       });
 
       const kpiMappings = [];
@@ -448,24 +569,15 @@ module.exports = {
         const weekStart = getWeekStart(activity.created_at);
         const aType = (activity.type || activity.activity_type || '').toLowerCase();
 
+        // Only process meeting-type activities — calls/emails are owned by their dedicated handlers
         if ((aType === 'meeting' || aType === 'demo' || aType === 'presentation') && activity.status === 'completed') {
           const m = buildKpiMapping({
             profileId, kpiKey: 'meetings', rawValue: 1, fromUnit: 'Count',
             source: 'apollo', externalEventId: `apollo:task:${actId}:meetings`, weekStart,
           });
           if (m) kpiMappings.push(m);
-        } else if (aType === 'call' && activity.status === 'completed' && activity.duration > 0) {
-          const c = buildKpiMapping({
-            profileId, kpiKey: 'call_connects', rawValue: 1, fromUnit: 'Count',
-            source: 'apollo', externalEventId: `apollo:task:${actId}:call_connects`, weekStart,
-          });
-          if (c) kpiMappings.push(c);
-          const t = buildKpiMapping({
-            profileId, kpiKey: 'talk_time_minutes', rawValue: activity.duration, fromUnit: 'Seconds',
-            source: 'apollo', externalEventId: `apollo:task:${actId}:talk_time_minutes`, weekStart,
-          });
-          if (t) kpiMappings.push(t);
         }
+        // call_connects + talk_time_minutes — owned by calls handler to avoid double-counting
       }
 
       console.log(`[apollo:tasks] Processed ${activities.length} activities, ${kpiMappings.length} KPI mappings`);

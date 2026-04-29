@@ -141,6 +141,39 @@ async function hsPatch(creds, path, body) {
   return res.json();
 }
 
+// ── Stage Mapping ────────────────────────────────────────────
+
+let _dealStageMapCache = null;
+
+async function fetchDealStageMap(creds) {
+  if (_dealStageMapCache) return _dealStageMapCache;
+
+  try {
+    const result = await hsGet(creds, '/crm/v3/pipelines/deals');
+    const pipelines = result.results || [];
+    if (pipelines.length === 0) throw new Error('No deal pipelines returned');
+
+    // Use the default pipeline (first one), or the one with label "default"
+    const pipeline = pipelines.find(p => p.label === 'default' || p.id === 'default') || pipelines[0];
+    const stages = pipeline.stages || [];
+
+    const stageMap = {};
+    for (const s of stages) {
+      stageMap[s.id] = {
+        label: s.label,
+        displayOrder: s.displayOrder,
+        metadata: s.metadata || {},
+      };
+    }
+    console.log(`[hubspot] Loaded ${stages.length} stages from pipeline "${pipeline.label}": ${stages.map(s => `${s.label}(${s.displayOrder})`).join(', ')}`);
+    _dealStageMapCache = stageMap;
+    return stageMap;
+  } catch (err) {
+    console.warn(`[hubspot] Could not fetch deal stages: ${err.message}, using hardcoded fallback`);
+    return null;
+  }
+}
+
 // ── Owner Mapping ────────────────────────────────────────────
 
 const _ownerCache = {};
@@ -175,7 +208,7 @@ async function syncActivities(integration, cursor, sb) {
   const result = await hsGet(creds, '/crm/v3/objects/calls', params);
   const records = result.results || [];
   const kpiMappings = [];
-  const { resolveProfileByEmail } = require('../integrationService');
+  const { resolveProfileByEmail, shouldSkipProfile } = require('../integrationService');
 
   for (const record of records) {
     const props = record.properties || {};
@@ -185,10 +218,19 @@ async function syncActivities(integration, cursor, sb) {
 
     const profileId = await resolveProfileByEmail(sb, integration.organization_id, email);
     if (!profileId) continue;
+    if (await shouldSkipProfile(sb, profileId)) continue;
 
-    // Call connects
+    const weekStart = getWeekStart(props.hs_timestamp || record.createdAt);
+
+    // dials — every call record is a dial attempt, regardless of status
+    const dialMapping = buildKpiMapping({
+      profileId, kpiKey: 'dials', rawValue: 1, fromUnit: 'Count',
+      source: 'hubspot', externalEventId: `hubspot:call:${record.id}:dials`, weekStart,
+    });
+    if (dialMapping) kpiMappings.push(dialMapping);
+
+    // Call connects — only COMPLETED calls
     if (props.hs_call_status === 'COMPLETED') {
-      const weekStart = getWeekStart(props.hs_timestamp || record.createdAt);
 
       const connectMapping = buildKpiMapping({
         profileId, kpiKey: 'call_connects', rawValue: 1, fromUnit: 'Count',
@@ -224,7 +266,7 @@ async function syncMeetings(integration, cursor, sb) {
   const records = result.results || [];
   const kpiMappings = [];
   const calendarEvents = [];
-  const { resolveProfileByEmail } = require('../integrationService');
+  const { resolveProfileByEmail, shouldSkipProfile } = require('../integrationService');
 
   for (const record of records) {
     const props = record.properties || {};
@@ -235,13 +277,25 @@ async function syncMeetings(integration, cursor, sb) {
       ? await resolveProfileByEmail(sb, integration.organization_id, email)
       : null;
 
-    if (profileId) {
+    if (profileId && !(await shouldSkipProfile(sb, profileId))) {
+      const meetingWeekStart = getWeekStart(props.hs_meeting_start_time || record.createdAt);
+
       const meetingMapping = buildKpiMapping({
         profileId, kpiKey: 'meetings', rawValue: 1, fromUnit: 'Count',
         source: 'hubspot', externalEventId: `hubspot:meeting:${record.id}:meetings`,
-        weekStart: getWeekStart(props.hs_meeting_start_time || record.createdAt),
+        weekStart: meetingWeekStart,
       });
       if (meetingMapping) kpiMappings.push(meetingMapping);
+
+      // demos_completed — meetings with "demo" in title
+      if (props.hs_meeting_title && /demo/i.test(props.hs_meeting_title)) {
+        const demoMapping = buildKpiMapping({
+          profileId, kpiKey: 'demos_completed', rawValue: 1, fromUnit: 'Count',
+          source: 'hubspot', externalEventId: `hubspot:meeting:${record.id}:demos_completed`,
+          weekStart: meetingWeekStart,
+        });
+        if (demoMapping) kpiMappings.push(demoMapping);
+      }
     }
 
     calendarEvents.push({
@@ -278,7 +332,15 @@ async function syncDeals(integration, cursor, sb) {
   const result = await hsGet(creds, '/crm/v3/objects/deals', params);
   const records = result.results || [];
   const kpiMappings = [];
-  const { resolveProfileByEmail } = require('../integrationService');
+  const pipelineDeals = [];
+  const { resolveProfileByEmail, shouldSkipProfile } = require('../integrationService');
+
+  // Fetch dynamic stage metadata — falls back to hardcoded if API fails
+  const stageMap = await fetchDealStageMap(creds);
+
+  // Hardcoded fallback lists (used only when stageMap is null)
+  const FALLBACK_STAGE2 = ['qualifiedtobuy', 'presentationscheduled', 'decisionmakerboughtin', 'contractsent', 'closedwon'];
+  const FALLBACK_STAGE3 = ['presentationscheduled', 'decisionmakerboughtin', 'contractsent', 'closedwon'];
 
   for (const record of records) {
     const props = record.properties || {};
@@ -288,6 +350,7 @@ async function syncDeals(integration, cursor, sb) {
 
     const profileId = await resolveProfileByEmail(sb, integration.organization_id, email);
     if (!profileId) continue;
+    if (await shouldSkipProfile(sb, profileId)) continue;
 
     const weekStart = getWeekStart(props.createdate || record.createdAt);
 
@@ -298,8 +361,55 @@ async function syncDeals(integration, cursor, sb) {
     });
     if (sourcedMapping) kpiMappings.push(sourcedMapping);
 
-    // Closed Won — HubSpot default stage
-    if (props.dealstage === 'closedwon') {
+    // pipeline_created — value of new deals
+    const dealAmount = parseFloat(props.amount);
+    if (dealAmount > 0) {
+      const pipelineMapping = buildKpiMapping({
+        profileId, kpiKey: 'pipeline_created', rawValue: dealAmount, fromUnit: 'Dollars',
+        source: 'hubspot', externalEventId: `hubspot:deal:${record.id}:pipeline_created`, weekStart,
+      });
+      if (pipelineMapping) kpiMappings.push(pipelineMapping);
+    }
+
+    const dealstage = props.dealstage || '';
+    const stageInfo = stageMap ? stageMap[dealstage] : null;
+
+    // Dynamic: use displayOrder thresholds (matching Apollo: >=2 = stage2, >=3 = stage3)
+    // HubSpot metadata.isClosed indicates won/lost via probability
+    // Fallback: use hardcoded stage ID lists
+    let isStage2, isStage3, isClosedWon;
+
+    if (stageInfo) {
+      const order = stageInfo.displayOrder ?? -1;
+      const isClosed = stageInfo.metadata?.isClosed === 'true';
+      const probability = parseFloat(stageInfo.metadata?.probability || '0');
+      const isWon = isClosed && probability >= 1.0;
+      isStage2 = order >= 2 && (!isClosed || isWon);
+      isStage3 = order >= 3 && (!isClosed || isWon);
+      isClosedWon = isWon;
+    } else {
+      isStage2 = FALLBACK_STAGE2.includes(dealstage);
+      isStage3 = FALLBACK_STAGE3.includes(dealstage);
+      isClosedWon = dealstage === 'closedwon';
+    }
+
+    if (isStage2) {
+      const stage2Mapping = buildKpiMapping({
+        profileId, kpiKey: 'stage2_opps', rawValue: 1, fromUnit: 'Count',
+        source: 'hubspot', externalEventId: `hubspot:deal:${record.id}:stage2`, weekStart,
+      });
+      if (stage2Mapping) kpiMappings.push(stage2Mapping);
+    }
+
+    if (isStage3) {
+      const stage3Mapping = buildKpiMapping({
+        profileId, kpiKey: 'stage3_opps', rawValue: 1, fromUnit: 'Count',
+        source: 'hubspot', externalEventId: `hubspot:deal:${record.id}:stage3`, weekStart,
+      });
+      if (stage3Mapping) kpiMappings.push(stage3Mapping);
+    }
+
+    if (isClosedWon) {
       const closedWeek = getWeekStart(props.closedate || record.createdAt);
       const wonMapping = buildKpiMapping({
         profileId, kpiKey: 'closed_won', rawValue: 1, fromUnit: 'Count',
@@ -315,11 +425,38 @@ async function syncDeals(integration, cursor, sb) {
         });
         if (revenueMapping) kpiMappings.push(revenueMapping);
       }
+
+      // sales_cycle_days — days from creation to close
+      if (props.createdate && props.closedate) {
+        const cycleDays = (new Date(props.closedate) - new Date(props.createdate)) / (1000 * 60 * 60 * 24);
+        if (cycleDays >= 0) {
+          const cycleMapping = buildKpiMapping({
+            profileId, kpiKey: 'sales_cycle_days', rawValue: cycleDays, fromUnit: 'Days',
+            source: 'hubspot', externalEventId: `hubspot:deal:${record.id}:sales_cycle_days`, weekStart: closedWeek,
+          });
+          if (cycleMapping) kpiMappings.push(cycleMapping);
+        }
+      }
     }
+
+    // Build pipeline deal for engage_pipeline_deals upsert
+    pipelineDeals.push({
+      ownerId: profileId,
+      dealName: props.dealname || `HubSpot Deal ${record.id}`,
+      dealValue: parseFloat(props.amount) || 0,
+      stage: dealstage || 'discovery',
+      probability: stageInfo ? (parseFloat(stageInfo.metadata?.probability || '0') * 100) : 0,
+      closeDate: props.closedate || null,
+      lastActivityAt: record.updatedAt || record.createdAt || null,
+      source: 'hubspot',
+      externalId: record.id,
+      crmUrl: `https://app.hubspot.com/contacts/${integration.organization_id}/deal/${record.id}`,
+      metadata: { hsDealStage: dealstage },
+    });
   }
 
   const nextCursor = result.paging?.next?.after || null;
-  return { records, nextCursor, kpiMappings };
+  return { records, nextCursor, kpiMappings, pipelineDeals };
 }
 
 // ── Push: Create Meeting ─────────────────────────────────────

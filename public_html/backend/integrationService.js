@@ -47,7 +47,9 @@ async function fetchJson(url, options = {}) {
   });
   if (!res.ok) {
     const text = await res.text().catch(() => '');
-    throw new Error(`${res.status} ${res.statusText}: ${text}`);
+    const err = new Error(`${res.status} ${res.statusText}: ${text}`);
+    err.status = res.status;
+    throw err;
   }
   return res.json();
 }
@@ -310,6 +312,7 @@ async function runIntegrationSync(sb, integrationId, entityTypes) {
 
   const types = entityTypes || Object.keys(provider.sync);
   const results = { total: 0, created: 0, updated: 0, failed: 0, errors: [] };
+  const syncedProfileIds = new Set();
 
   // Create sync history record
   const { data: syncRun } = await sb.from('integration_sync_history').insert({
@@ -335,6 +338,8 @@ async function runIntegrationSync(sb, integrationId, entityTypes) {
         .eq('entity_type', entityType)
         .maybeSingle();
 
+      console.log(`[sync:${integration.integration_type}:${entityType}] instance_url=${freshIntegration.decryptedCreds?.instance_url || 'N/A'}, cursor=${cursor?.last_sync_cursor || 'none'}`);
+
       const syncResult = await withRetry(
         () => provider.sync[entityType](freshIntegration, cursor?.last_sync_cursor, sb),
         `${integration.integration_type}:${entityType}`
@@ -344,15 +349,44 @@ async function runIntegrationSync(sb, integrationId, entityTypes) {
       const nextCursor = syncResult.nextCursor;
       const kpiMappings = syncResult.kpiMappings || [];
 
+      console.log(`[sync:${integration.integration_type}:${entityType}] ${records.length} records fetched, ${kpiMappings.length} KPI mappings generated`);
+
       // Process KPI mappings from synced records
+      let dupesSkipped = 0;
       for (const mapping of kpiMappings) {
         try {
-          await upsertKpiValue(sb, mapping, integration);
-          results.created++;
+          const wasNew = await upsertKpiValue(sb, mapping, integration);
+          if (wasNew === false) {
+            dupesSkipped++;
+          } else {
+            results.created++;
+            if (mapping.profileId) syncedProfileIds.add(mapping.profileId);
+          }
         } catch (kpiErr) {
           if (kpiErr.code !== '23505') { // Ignore duplicate key
             results.failed++;
             results.errors.push(`KPI upsert: ${kpiErr.message}`);
+          }
+        }
+      }
+      if (dupesSkipped > 0) {
+        console.log(`[sync:${integration.integration_type}:${entityType}] Skipped ${dupesSkipped} duplicate events (dedup working)`);
+      }
+
+      // Post-sync integrity check: verify sample_count matches processed_event_ids length
+      if (kpiMappings.length > 0) {
+        const profileIds = [...new Set(kpiMappings.map(m => m.profileId).filter(Boolean))];
+        if (profileIds.length > 0) {
+          const { data: integrityRows } = await sb.from('kpi_values')
+            .select('kpi_id, sample_count, processed_event_ids, period_start')
+            .in('profile_id', profileIds)
+            .eq('source', integration.integration_type)
+            .not('processed_event_ids', 'is', null);
+          for (const row of (integrityRows || [])) {
+            const arrLen = Array.isArray(row.processed_event_ids) ? row.processed_event_ids.length : 0;
+            if (row.sample_count !== arrLen && arrLen > 0) {
+              console.warn(`[sync:integrity] MISMATCH kpi_id=${row.kpi_id} period=${row.period_start}: sample_count=${row.sample_count} but processed_event_ids has ${arrLen} entries`);
+            }
           }
         }
       }
@@ -362,6 +396,14 @@ async function runIntegrationSync(sb, integrationId, entityTypes) {
         for (const evt of syncResult.calendarEvents) {
           await upsertCalendarEvent(sb, evt, integration);
         }
+      }
+
+      // Process pipeline deals if returned (Salesforce, Apollo, HubSpot)
+      if (syncResult.pipelineDeals?.length) {
+        for (const deal of syncResult.pipelineDeals) {
+          await upsertDeal(sb, deal, integration);
+        }
+        console.log(`[sync:${integration.integration_type}:${entityType}] Upserted ${syncResult.pipelineDeals.length} pipeline deals`);
       }
 
       // Update cursor
@@ -378,6 +420,16 @@ async function runIntegrationSync(sb, integrationId, entityTypes) {
       results.failed++;
       results.errors.push(`${entityType}: ${err.message}`);
       console.error(`[sync] ${entityType} error for ${integrationId}:`, err.message);
+    }
+  }
+
+  // Post-sync: compute derived KPIs (win_rate, average_deal_size)
+  if (syncedProfileIds.size > 0) {
+    try {
+      const weekStart = getWeekStart();
+      await computeDerivedKpis(sb, integration, [...syncedProfileIds], weekStart);
+    } catch (err) {
+      console.warn(`[sync:derived] Error: ${err.message}`);
     }
   }
 
@@ -434,7 +486,8 @@ async function upsertKpiValue(sb, mapping, integration) {
   if (aggregation === 'sum' && mapping.increment) {
     // Sum mode — atomic increment via RPC (eliminates read-then-write race)
     // external_event_id enables dedup across both webhook and cron sync paths.
-    await sb.rpc('upsert_kpi_sum', {
+    // Returns boolean: true = new event processed, false = duplicate skipped.
+    const { data: wasNew } = await sb.rpc('upsert_kpi_sum', {
       p_profile_id:        mapping.profileId,
       p_kpi_id:            metric.id,
       p_period_start:      weekStart,
@@ -443,6 +496,7 @@ async function upsertKpiValue(sb, mapping, integration) {
       p_source:            src,
       p_external_event_id: mapping.externalEventId || null,
     });
+    return wasNew;
   } else if (aggregation === 'max') {
     // Max mode — keep the highest value for the week (e.g. longest_monologue_sec)
     const { data: existing } = await sb.from('kpi_values')
@@ -516,6 +570,71 @@ async function upsertKpiValue(sb, mapping, integration) {
   }
 }
 
+// ── Derived KPI Computation ──────────────────────────────────
+
+/**
+ * Compute derived KPIs (win_rate, average_deal_size) from raw KPI values.
+ * Called once per integration sync after all entity types complete.
+ */
+async function computeDerivedKpis(sb, integration, profileIds, weekStart) {
+  if (!profileIds.length) return;
+
+  const { buildKpiMapping } = require('./providers/kpiCanonical');
+  let derivedCount = 0;
+
+  for (const profileId of profileIds) {
+    try {
+      // Fetch the raw KPI values needed for derivation
+      const { data: rawValues } = await sb.from('kpi_values')
+        .select('value, kpi_metrics!inner(key)')
+        .eq('profile_id', profileId)
+        .eq('period_start', weekStart)
+        .in('kpi_metrics.key', ['closed_won', 'sourced_opps', 'revenue_generated']);
+
+      const byKey = {};
+      for (const row of (rawValues || [])) {
+        byKey[row.kpi_metrics.key] = row.value;
+      }
+
+      const closedWon = Number(byKey['closed_won']) || 0;
+      const sourcedOpps = Number(byKey['sourced_opps']) || 0;
+      const revenue = Number(byKey['revenue_generated']) || 0;
+
+      // win_rate = closed_won / sourced_opps * 100
+      if (sourcedOpps > 0) {
+        const winRate = (closedWon / sourcedOpps) * 100;
+        const winRateMapping = buildKpiMapping({
+          profileId, kpiKey: 'win_rate', rawValue: winRate, fromUnit: 'Percent',
+          source: 'derived', externalEventId: `derived:${profileId}:${weekStart}:win_rate`, weekStart,
+        });
+        if (winRateMapping) {
+          await upsertKpiValue(sb, winRateMapping, integration);
+          derivedCount++;
+        }
+      }
+
+      // average_deal_size = revenue_generated / closed_won
+      if (closedWon > 0) {
+        const avgDealSize = revenue / closedWon;
+        const avgDealMapping = buildKpiMapping({
+          profileId, kpiKey: 'average_deal_size', rawValue: avgDealSize, fromUnit: 'Dollars',
+          source: 'derived', externalEventId: `derived:${profileId}:${weekStart}:average_deal_size`, weekStart,
+        });
+        if (avgDealMapping) {
+          await upsertKpiValue(sb, avgDealMapping, integration);
+          derivedCount++;
+        }
+      }
+    } catch (err) {
+      console.warn(`[sync:derived] Error computing derived KPIs for profile ${profileId}: ${err.message}`);
+    }
+  }
+
+  if (derivedCount > 0) {
+    console.log(`[sync:derived] Computed ${derivedCount} derived KPI values for ${profileIds.length} profiles`);
+  }
+}
+
 // ── Calendar Event Upsert ────────────────────────────────────
 
 async function upsertCalendarEvent(sb, evt, integration) {
@@ -538,6 +657,29 @@ async function upsertCalendarEvent(sb, evt, integration) {
     synced_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
   }, { onConflict: 'integration_id,external_event_id' });
+}
+
+// ── Pipeline Deal Upsert ─────────────────────────────────────
+// Mirrors upsertCalendarEvent pattern: providers return pipelineDeals array,
+// sync handler iterates and upserts into engage_pipeline_deals.
+
+async function upsertDeal(sb, deal, integration) {
+  const { error } = await sb.from('engage_pipeline_deals').upsert({
+    organization_id: integration.organization_id,
+    owner_id: deal.ownerId || null,
+    deal_name: deal.dealName,
+    deal_value: deal.dealValue || 0,
+    stage: deal.stage || 'discovery',
+    probability: deal.probability ?? 0,
+    close_date: deal.closeDate || null,
+    last_activity_at: deal.lastActivityAt || null,
+    source: deal.source,
+    external_id: deal.externalId,
+    crm_url: deal.crmUrl || null,
+    metadata: deal.metadata || {},
+    updated_at: new Date().toISOString(),
+  }, { onConflict: 'organization_id,source,external_id', ignoreDuplicates: false });
+  if (error) console.warn(`[sync:upsertDeal] ${deal.externalId}: ${error.message}`);
 }
 
 // ── Date Helpers ─────────────────────────────────────────────
@@ -572,6 +714,22 @@ async function resolveProfileByEmail(sb, organizationId, email) {
     .ilike('email', email.trim())
     .maybeSingle();
   return profile?.id || null;
+}
+
+/**
+ * Check if a resolved profile should be skipped for KPI sync.
+ * Returns true if the profile is a non-quota-carrying leader (admin/manager/coach).
+ * Mirrors Apollo's guardRep logic, shared across all providers.
+ */
+async function shouldSkipProfile(sb, profileId) {
+  if (!profileId) return true;
+  const { data: profile } = await sb.from('profiles')
+    .select('role, carries_quota')
+    .eq('id', profileId)
+    .maybeSingle();
+  if (!profile) return true;
+  const isLeader = ['admin', 'manager', 'coach'].includes(profile.role);
+  return isLeader && !profile.carries_quota;
 }
 
 // ── CRUD Helpers ─────────────────────────────────────────────
@@ -1302,6 +1460,7 @@ module.exports = {
   upsertKpiValue,
   upsertCalendarEvent,
   resolveProfileByEmail,
+  shouldSkipProfile,
 
   // CRUD
   listIntegrations,

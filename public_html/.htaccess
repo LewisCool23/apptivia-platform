@@ -1,6 +1,9 @@
 RewriteEngine On
 RewriteBase /
 
+# Serve .md files as plain text so AI crawlers can read them
+AddType text/plain .md
+
 # Proxy /api/ and /track/ and /socket.io/ to Node.js backend
 RewriteCond %{REQUEST_URI} ^/(api|track|socket\.io)(/|$)
 RewriteRule ^(.*)$ http://localhost:3000/$1 [P,L]

@@ -214,17 +214,20 @@ function sumByProfileKpi(values) {
 
 function computeScore(profileId, sums, metrics, getConfigAt, weekDate) {
   let score = 0;
+  let totalWeight = 0;
   for (const metric of metrics) {
     const cfg  = getConfigAt(metric.id, weekDate, metrics);
     const val  = sums[`${profileId}:${metric.id}`] || 0;
     const goal = cfg.goal || 1;
+    const w    = cfg.weight || 1;
     const dir  = cfg.direction || 'higher';
     const pct  = dir === 'lower'
       ? (val > 0 ? Math.min((goal / val) * 100, 200) : 200)
       : Math.min((val / goal) * 100, 200);
-    score += pct * cfg.weight;
+    score += pct * w;
+    totalWeight += w;
   }
-  return Math.round(score);
+  return Math.round(totalWeight > 0 ? score / totalWeight : 0);
 }
 
 function repName(rep) {
@@ -233,12 +236,27 @@ function repName(rep) {
 
 // ── Scorecard helpers shared across reports ──────────────────────────
 
+// Mon-Sun week boundaries matching the frontend scorecard
+function getReportMonday(d) {
+  const dt = new Date(d);
+  const day = dt.getUTCDay();
+  dt.setUTCDate(dt.getUTCDate() - ((day + 6) % 7));
+  dt.setUTCHours(0, 0, 0, 0);
+  return dt;
+}
+
 async function fetchScorecardData(sb, orgId) {
-  const now       = new Date();
-  const currEnd   = now.toISOString().split('T')[0];
-  const currStart = new Date(now.getTime() - 7 * 86400000).toISOString().split('T')[0];
-  const priorEnd  = currStart;
-  const priorStart = new Date(now.getTime() - 14 * 86400000).toISOString().split('T')[0];
+  // Use the most recently completed Mon-Sun week (not the current incomplete week)
+  const thisMonday = getReportMonday(new Date());
+  const lastMonday = new Date(thisMonday.getTime() - 7 * 86400000);
+  const lastSunday = new Date(thisMonday.getTime() - 1 * 86400000);
+  const twoWeeksAgoMonday = new Date(lastMonday.getTime() - 7 * 86400000);
+  const twoWeeksAgoSunday = new Date(lastMonday.getTime() - 1 * 86400000);
+
+  const currStart  = lastMonday.toISOString().split('T')[0];
+  const currEnd    = lastSunday.toISOString().split('T')[0];
+  const priorStart = twoWeeksAgoMonday.toISOString().split('T')[0];
+  const priorEnd   = twoWeeksAgoSunday.toISOString().split('T')[0];
 
   // Use org-specific KPI configs when orgId is available (matches scorecard logic)
   let metrics = [];
@@ -429,11 +447,15 @@ async function generateAnalyticsReport(sb, orgId, opts) {
 
   const metricIds = metrics.map(m => m.id);
   const repIds = reps.map(r => r.id);
-  const now = new Date();
-  const currEnd = now.toISOString().split('T')[0];
-  const currStart = new Date(now.getTime() - 7 * 86400000).toISOString().split('T')[0];
-  const avgEnd = currStart;
-  const avgStart = new Date(now.getTime() - 35 * 86400000).toISOString().split('T')[0]; // 4-week lookback
+  // Use Mon-Sun boundaries matching the scorecard
+  const thisMonday = getReportMonday(new Date());
+  const lastMonday = new Date(thisMonday.getTime() - 7 * 86400000);
+  const lastSunday = new Date(thisMonday.getTime() - 1 * 86400000);
+  const currStart = lastMonday.toISOString().split('T')[0];
+  const currEnd   = lastSunday.toISOString().split('T')[0];
+  // 4-week lookback ending at the start of the reported week
+  const avgEnd   = new Date(lastMonday.getTime() - 1 * 86400000).toISOString().split('T')[0];
+  const avgStart = new Date(lastMonday.getTime() - 28 * 86400000).toISOString().split('T')[0];
 
   const [{ data: currValues }, { data: avgValues }] = await Promise.all([
     sb.from('kpi_values').select('kpi_id, profile_id, value')

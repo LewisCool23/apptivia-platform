@@ -124,11 +124,27 @@ async function apolloSearchPeople(filters: any) {
   body.reveal_personal_emails = true;
   body.reveal_phone_number = true;
 
-  const searchResult = await fetchJson(`${APOLLO_BASE}/mixed_people/api_search`, {
-    method: 'POST',
-    headers: { 'X-Api-Key': key },
-    body: JSON.stringify(body),
-  });
+  let searchResult: any;
+  try {
+    searchResult = await fetchJson(`${APOLLO_BASE}/mixed_people/api_search`, {
+      method: 'POST',
+      headers: { 'X-Api-Key': key },
+      body: JSON.stringify(body),
+    });
+  } catch (err: any) {
+    // Apollo requires webhook_url for reveal_phone_number on some plans — retry without
+    if (err.message?.includes('webhook_url') || err.message?.includes('reveal_phone_number')) {
+      console.warn('Apollo search reveal_phone_number requires webhook — retrying without phone reveal');
+      delete body.reveal_phone_number;
+      searchResult = await fetchJson(`${APOLLO_BASE}/mixed_people/api_search`, {
+        method: 'POST',
+        headers: { 'X-Api-Key': key },
+        body: JSON.stringify(body),
+      });
+    } else {
+      throw err;
+    }
+  }
 
   // If inline reveals didn't populate contacts, enrich individually by Apollo ID
   const people = searchResult?.people || [];
@@ -221,6 +237,19 @@ async function enrichPeopleBatch(apiKey: string, people: any[]) {
       headers: { 'X-Api-Key': apiKey },
       body: JSON.stringify(matchBody),
     }).catch((err: any) => {
+      // Apollo requires webhook_url for reveal_phone_number on some plans — retry without
+      if (err.message?.includes('webhook_url') || err.message?.includes('reveal_phone_number')) {
+        console.warn(`Apollo reveal_phone_number requires webhook for ${person.first_name} ${person.last_name} — retrying without`);
+        delete matchBody.reveal_phone_number;
+        return fetchJson(`${APOLLO_BASE}/people/match`, {
+          method: 'POST',
+          headers: { 'X-Api-Key': apiKey },
+          body: JSON.stringify(matchBody),
+        }).catch((err2: any) => {
+          console.warn(`Enrichment failed for ${person.id} (${person.first_name} ${person.last_name}):`, err2.message);
+          return { person };
+        });
+      }
       console.warn(`Enrichment failed for ${person.id} (${person.first_name} ${person.last_name}):`, err.message);
       return { person };
     });
@@ -251,14 +280,41 @@ async function enrichPeopleBatch(apiKey: string, people: any[]) {
   });
 }
 
-async function apolloEnrichPerson(email: string) {
+async function apolloEnrichPerson(identifier: string | { email?: string; first_name?: string; last_name?: string; organization_name?: string; linkedin_url?: string }) {
   const key = Deno.env.get('APOLLO_API_KEY');
   if (!key) throw new Error('APOLLO_API_KEY not configured');
-  return fetchJson(`${APOLLO_BASE}/people/match`, {
-    method: 'POST',
-    headers: { 'X-Api-Key': key },
-    body: JSON.stringify({ email }),
-  });
+  const body: any = {
+    reveal_personal_emails: true,
+    reveal_phone_number: true,
+  };
+  if (typeof identifier === 'string') {
+    body.email = identifier;
+  } else {
+    if (identifier.email) body.email = identifier.email;
+    if (identifier.first_name) body.first_name = identifier.first_name;
+    if (identifier.last_name) body.last_name = identifier.last_name;
+    if (identifier.organization_name) body.organization_name = identifier.organization_name;
+    if (identifier.linkedin_url) body.linkedin_url = identifier.linkedin_url;
+  }
+  try {
+    return await fetchJson(`${APOLLO_BASE}/people/match`, {
+      method: 'POST',
+      headers: { 'X-Api-Key': key },
+      body: JSON.stringify(body),
+    });
+  } catch (err: any) {
+    // Apollo requires webhook_url for reveal_phone_number on some plans — retry without
+    if (err.message?.includes('webhook_url') || err.message?.includes('reveal_phone_number')) {
+      console.warn('Apollo reveal_phone_number requires webhook — retrying without phone reveal');
+      delete body.reveal_phone_number;
+      return fetchJson(`${APOLLO_BASE}/people/match`, {
+        method: 'POST',
+        headers: { 'X-Api-Key': key },
+        body: JSON.stringify(body),
+      });
+    }
+    throw err;
+  }
 }
 
 async function pdlEnrichPerson(params: { email?: string; linkedin_url?: string }) {
@@ -390,9 +446,13 @@ async function researchProspect(identifier: any) {
 
   try {
     if (identifier.email) {
-      steps.enrich = await apolloEnrichPerson(identifier.email);
+      // Pass full identifier for better match quality (name + org improve confidence)
+      steps.enrich = await apolloEnrichPerson(identifier);
     } else if (identifier.linkedin_url) {
       steps.enrich = await pdlEnrichPerson({ linkedin_url: identifier.linkedin_url });
+    } else if (identifier.first_name && identifier.last_name) {
+      // Name-based lookup (no email/linkedin) — Apollo can match by name + org
+      steps.enrich = await apolloEnrichPerson(identifier);
     }
   } catch (err: any) { steps.enrich = { error: err.message }; }
 

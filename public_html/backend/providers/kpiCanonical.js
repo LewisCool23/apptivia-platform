@@ -19,6 +19,20 @@ const KPI_CANONICAL = {
     fromCount: (n) => Math.round(Number(n) || 1),
   },
 
+  dials: {
+    unit: 'count',
+    precision: 0,
+    aggregation: 'sum',
+    fromCount: (n) => Math.round(Number(n) || 1),
+  },
+
+  conversations: {
+    unit: 'count',
+    precision: 0,
+    aggregation: 'sum',
+    fromCount: (n) => Math.round(Number(n) || 1),
+  },
+
   talk_time_minutes: {
     unit: 'minutes',
     precision: 2,
@@ -29,6 +43,27 @@ const KPI_CANONICAL = {
   },
 
   meetings: {
+    unit: 'count',
+    precision: 0,
+    aggregation: 'sum',
+    fromCount: (n) => Math.round(Number(n) || 1),
+  },
+
+  demos_completed: {
+    unit: 'count',
+    precision: 0,
+    aggregation: 'sum',
+    fromCount: (n) => Math.round(Number(n) || 1),
+  },
+
+  discovery_calls: {
+    unit: 'count',
+    precision: 0,
+    aggregation: 'sum',
+    fromCount: (n) => Math.round(Number(n) || 1),
+  },
+
+  follow_ups: {
     unit: 'count',
     precision: 0,
     aggregation: 'sum',
@@ -86,6 +121,13 @@ const KPI_CANONICAL = {
     fromCount: (n) => Math.round(Number(n) || 1),
   },
 
+  stage3_opps: {
+    unit: 'count',
+    precision: 0,
+    aggregation: 'sum',
+    fromCount: (n) => Math.round(Number(n) || 1),
+  },
+
   closed_won: {
     unit: 'count',
     precision: 0,
@@ -99,6 +141,36 @@ const KPI_CANONICAL = {
     aggregation: 'sum',
     fromDollars: (d) => Math.round(Number(d) * 100) / 100,
     fromCents: (c) => Math.round(Number(c)) / 100,
+  },
+
+  pipeline_created: {
+    unit: 'dollars',
+    precision: 2,
+    aggregation: 'sum',
+    fromDollars: (d) => Math.round(Number(d) * 100) / 100,
+    fromCents: (c) => Math.round(Number(c)) / 100,
+  },
+
+  // === Efficiency/Derived KPIs ===
+  sales_cycle_days: {
+    unit: 'days',
+    precision: 1,
+    aggregation: 'avg',
+    fromDays: (d) => Math.round(Number(d) * 10) / 10,
+  },
+
+  win_rate: {
+    unit: 'percent',
+    precision: 1,
+    aggregation: 'set',
+    fromPercent: (p) => Math.round(Number(p) * 10) / 10,
+  },
+
+  average_deal_size: {
+    unit: 'dollars',
+    precision: 2,
+    aggregation: 'set',
+    fromDollars: (d) => Math.round(Number(d) * 100) / 100,
   },
 
   // === Call Intelligence KPIs (Gong + Apollo Conversations) ===
@@ -239,11 +311,11 @@ function buildKpiMapping({ profileId, kpiKey, rawValue, fromUnit, source, extern
  */
 function getWeekStart(fromDate) {
   const d = fromDate ? new Date(fromDate) : new Date();
-  const day = d.getDay();
-  const diff = d.getDate() - day + (day === 0 ? -6 : 1);
+  const day = d.getUTCDay();
+  const diff = d.getUTCDate() - day + (day === 0 ? -6 : 1);
   const monday = new Date(d);
-  monday.setDate(diff);
-  monday.setHours(0, 0, 0, 0);
+  monday.setUTCDate(diff);
+  monday.setUTCHours(0, 0, 0, 0);
   return monday.toISOString().split('T')[0];
 }
 
