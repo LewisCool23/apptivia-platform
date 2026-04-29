@@ -25,15 +25,15 @@ export const ToastProvider = ({ children }) => {
     toast.success(message, {
       duration: 3000,
       style: {
-        background: '#10b981',
-        color: '#fff',
+        background: '#16A34A',
+        color: '#F7F5F2',
         fontWeight: '500',
         borderRadius: '8px',
         padding: '12px 16px',
       },
       iconTheme: {
-        primary: '#fff',
-        secondary: '#10b981',
+        primary: '#F7F5F2',
+        secondary: '#16A34A',
       },
       ...options,
     });
@@ -43,15 +43,15 @@ export const ToastProvider = ({ children }) => {
     toast.error(message, {
       duration: 4000,
       style: {
-        background: '#ef4444',
-        color: '#fff',
+        background: '#C8341B',
+        color: '#F7F5F2',
         fontWeight: '500',
         borderRadius: '8px',
         padding: '12px 16px',
       },
       iconTheme: {
-        primary: '#fff',
-        secondary: '#ef4444',
+        primary: '#F7F5F2',
+        secondary: '#C8341B',
       },
       ...options,
     });
@@ -60,8 +60,8 @@ export const ToastProvider = ({ children }) => {
   const showLoading = (message, options = {}) => {
     return toast.loading(message, {
       style: {
-        background: '#3b82f6',
-        color: '#fff',
+        background: '#FF4D2E',
+        color: '#F7F5F2',
         fontWeight: '500',
         borderRadius: '8px',
         padding: '12px 16px',
@@ -86,22 +86,22 @@ export const ToastProvider = ({ children }) => {
         },
         success: {
           style: {
-            background: '#10b981',
-            color: '#fff',
+            background: '#16A34A',
+            color: '#F7F5F2',
           },
           iconTheme: {
-            primary: '#fff',
-            secondary: '#10b981',
+            primary: '#F7F5F2',
+            secondary: '#16A34A',
           },
         },
         error: {
           style: {
-            background: '#ef4444',
-            color: '#fff',
+            background: '#C8341B',
+            color: '#F7F5F2',
           },
           iconTheme: {
-            primary: '#fff',
-            secondary: '#ef4444',
+            primary: '#F7F5F2',
+            secondary: '#C8341B',
           },
         },
       }
@@ -113,8 +113,8 @@ export const ToastProvider = ({ children }) => {
       duration: 3000,
       icon: 'ℹ️',
       style: {
-        background: '#3b82f6',
-        color: '#fff',
+        background: '#FF4D2E',
+        color: '#F7F5F2',
         fontWeight: '500',
         borderRadius: '8px',
         padding: '12px 16px',
