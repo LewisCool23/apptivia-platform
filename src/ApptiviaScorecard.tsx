@@ -1125,7 +1125,7 @@ const ApptiviaScorecard: React.FC = () => {
                   <div className="bg-white rounded-lg border border-apptivia-carbon-100 shadow-sm p-3 flex items-center gap-3 transition-all duration-300 hover:shadow-lg hover:-translate-y-1">
                     {/* Progress Ring */}
                     <svg width="52" height="52" viewBox="0 0 52 52" className="flex-shrink-0">
-                      <circle cx="26" cy="26" r="22" fill="none" stroke="#e5e7eb" strokeWidth="4" />
+                      <circle cx="26" cy="26" r="22" fill="none" stroke="#E4E4E7" strokeWidth="4" />
                       <circle
                         cx="26" cy="26" r="22"
                         fill="none"
