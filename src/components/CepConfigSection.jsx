@@ -171,7 +171,7 @@ function CepStageEditorModal({ stage, titles, onSave, onClose }) {
   const [form, setForm] = useState({
     stage_name: stage?.stage_name || '',
     stage_key: stage?.stage_key || '',
-    color: stage?.color || '#6366f1',
+    color: stage?.color || '#FF4D2E',
     win_probability: stage?.win_probability ?? 0,
     expected_days: stage?.expected_days ?? '',
     is_terminal: stage?.is_terminal ?? false,
