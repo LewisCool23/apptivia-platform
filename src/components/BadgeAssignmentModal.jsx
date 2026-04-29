@@ -106,7 +106,7 @@ export default function BadgeAssignmentModal({ isOpen, onClose, badge }) {
           badge_name: badge.badge_name,
           badge_description: badge.badge_description || '',
           icon: badge.icon || '🏆',
-          color: badge.color || '#3B82F6',
+          color: badge.color || '#FF4D2E',
           earned_at: new Date().toISOString(),
           organization_id: profile?.organization_id,
         };
