@@ -2,24 +2,25 @@
  * Shared Email Template Utilities
  *
  * Centralized HTML email builders for all Apptivia email types.
- * Uses consistent Apptivia branding: gradient header, stat boxes, footer.
+ * Uses consistent Apptivia branding: coral header, stat boxes, footer.
  */
 
 // ── Brand Colors ─────────────────────────────────────────────────────
 export const EMAIL_COLORS = {
-  blue: '#3b82f6',
-  purple: '#8b5cf6',
-  pink: '#ec4899',
-  green: '#10b981',
-  amber: '#f59e0b',
-  red: '#ef4444',
-  gray: '#6b7280',
-  lightGray: '#f3f4f6',
-  bgNotes: '#e0f2fe',
+  ink: '#0A0A0B',
+  coral: '#FF4D2E',
+  paper: '#F7F5F2',
+  carbon700: '#3F3F46',
+  carbon500: '#71717A',
+  carbon200: '#E4E4E7',
+  success: '#16A34A',
+  warning: '#F59E0B',
+  error: '#C8341B',
+  bgNotes: '#FFF5F2',
   bgWarning: '#fef3c7',
 } as const;
 
-const GRADIENT = 'linear-gradient(135deg, #3b82f6 0%, #8b5cf6 50%, #ec4899 100%)';
+const HEADER_BG = '#FF4D2E';
 
 // ── Shared Email Wrapper ─────────────────────────────────────────────
 
@@ -45,7 +46,7 @@ export function buildEmailWrapper(
 
   const ctaBlock = ctaUrl && ctaLabel
     ? `<div style="text-align: center; margin: 30px 0;">
-        <a href="${ctaUrl}" style="display: inline-block; background: ${GRADIENT}; color: white; padding: 12px 30px; text-decoration: none; border-radius: 8px; font-weight: bold;">${ctaLabel}</a>
+        <a href="${ctaUrl}" style="display: inline-block; background: ${HEADER_BG}; color: white; padding: 12px 30px; text-decoration: none; border-radius: 8px; font-weight: bold;">${ctaLabel}</a>
       </div>`
     : '';
 
@@ -61,13 +62,13 @@ export function buildEmailWrapper(
   <style>
     body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0; }
     .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-    .header { background: ${GRADIENT}; color: white; padding: 30px; border-radius: 10px; text-align: center; }
-    .stat-box { background: ${EMAIL_COLORS.lightGray}; padding: 20px; border-radius: 8px; text-align: center; }
-    .stat-value { font-size: 32px; font-weight: bold; color: ${EMAIL_COLORS.blue}; }
-    .stat-label { font-size: 14px; color: ${EMAIL_COLORS.gray}; }
+    .header { background: ${HEADER_BG}; color: white; padding: 30px; border-radius: 10px; text-align: center; }
+    .stat-box { background: ${EMAIL_COLORS.paper}; padding: 20px; border-radius: 8px; text-align: center; }
+    .stat-value { font-size: 32px; font-weight: bold; color: ${EMAIL_COLORS.coral}; }
+    .stat-label { font-size: 14px; color: ${EMAIL_COLORS.carbon500}; }
     .section { margin: 20px 0; }
     .section-title { font-size: 16px; font-weight: bold; margin: 0 0 10px 0; color: #111827; }
-    .footer { text-align: center; color: ${EMAIL_COLORS.gray}; font-size: 12px; margin-top: 30px; border-top: 1px solid #e5e7eb; padding-top: 20px; }
+    .footer { text-align: center; color: ${EMAIL_COLORS.carbon500}; font-size: 12px; margin-top: 30px; border-top: 1px solid #e5e7eb; padding-top: 20px; }
   </style>
 </head>
 <body>
@@ -96,9 +97,9 @@ function buildStatGrid(stats: Array<{ value: string | number; label: string; col
   for (let i = 0; i < stats.length; i += columns) {
     const cells = stats.slice(i, i + columns).map(s => `
       <td style="width: ${Math.round(100 / columns)}%; padding: 8px;">
-        <div style="background: ${EMAIL_COLORS.lightGray}; padding: 16px; border-radius: 8px; text-align: center;">
-          <div style="font-size: 28px; font-weight: bold; color: ${s.color || EMAIL_COLORS.blue};">${s.value}</div>
-          <div style="font-size: 13px; color: ${EMAIL_COLORS.gray};">${s.label}</div>
+        <div style="background: ${EMAIL_COLORS.paper}; padding: 16px; border-radius: 8px; text-align: center;">
+          <div style="font-size: 28px; font-weight: bold; color: ${s.color || EMAIL_COLORS.coral};">${s.value}</div>
+          <div style="font-size: 13px; color: ${EMAIL_COLORS.carbon500};">${s.label}</div>
         </div>
       </td>
     `).join('');
@@ -124,7 +125,7 @@ function buildListSection(
     ).join('');
   } else if (style === 'card') {
     listHtml = items.map(item =>
-      `<div style="background: #f9fafb; padding: 12px 15px; border-radius: 8px; margin-bottom: 8px; border-left: 4px solid ${cardBorderColor || EMAIL_COLORS.blue}; font-size: 14px;">${item}</div>`
+      `<div style="background: #f9fafb; padding: 12px 15px; border-radius: 8px; margin-bottom: 8px; border-left: 4px solid ${cardBorderColor || EMAIL_COLORS.coral}; font-size: 14px;">${item}</div>`
     ).join('');
   } else {
     listHtml = items.map(item =>
@@ -186,22 +187,22 @@ export function buildScorecardSnapshotEmailHtml(data: ScorecardData, options: Sc
     <table style="width: 100%; border-collapse: collapse;">
       <tr>
         <td style="width: 50%; text-align: center; padding: 8px;">
-          <div style="font-size: 24px; font-weight: bold; color: ${EMAIL_COLORS.green};">${scoreDistribution.excellent}</div>
-          <div style="font-size: 12px; color: ${EMAIL_COLORS.gray};">Excellent (≥90%)</div>
+          <div style="font-size: 24px; font-weight: bold; color: ${EMAIL_COLORS.success};">${scoreDistribution.excellent}</div>
+          <div style="font-size: 12px; color: ${EMAIL_COLORS.carbon500};">Excellent (≥90%)</div>
         </td>
         <td style="width: 50%; text-align: center; padding: 8px;">
-          <div style="font-size: 24px; font-weight: bold; color: ${EMAIL_COLORS.blue};">${scoreDistribution.good}</div>
-          <div style="font-size: 12px; color: ${EMAIL_COLORS.gray};">Good (70-89%)</div>
+          <div style="font-size: 24px; font-weight: bold; color: ${EMAIL_COLORS.coral};">${scoreDistribution.good}</div>
+          <div style="font-size: 12px; color: ${EMAIL_COLORS.carbon500};">Good (70-89%)</div>
         </td>
       </tr>
       <tr>
         <td style="width: 50%; text-align: center; padding: 8px;">
-          <div style="font-size: 24px; font-weight: bold; color: ${EMAIL_COLORS.amber};">${scoreDistribution.fair}</div>
-          <div style="font-size: 12px; color: ${EMAIL_COLORS.gray};">Fair (50-69%)</div>
+          <div style="font-size: 24px; font-weight: bold; color: ${EMAIL_COLORS.warning};">${scoreDistribution.fair}</div>
+          <div style="font-size: 12px; color: ${EMAIL_COLORS.carbon500};">Fair (50-69%)</div>
         </td>
         <td style="width: 50%; text-align: center; padding: 8px;">
-          <div style="font-size: 24px; font-weight: bold; color: ${EMAIL_COLORS.red};">${scoreDistribution.poor}</div>
-          <div style="font-size: 12px; color: ${EMAIL_COLORS.gray};">Needs Focus (&lt;50%)</div>
+          <div style="font-size: 24px; font-weight: bold; color: ${EMAIL_COLORS.error};">${scoreDistribution.poor}</div>
+          <div style="font-size: 12px; color: ${EMAIL_COLORS.carbon500};">Needs Focus (&lt;50%)</div>
         </td>
       </tr>
     </table>
@@ -211,7 +212,7 @@ export function buildScorecardSnapshotEmailHtml(data: ScorecardData, options: Sc
   if (trendWeeks && trendWeeks.length > 0) {
     const trendRows = trendWeeks.map(w => {
       const deltaStr = w.delta != null
-        ? `<span style="color: ${w.delta >= 0 ? EMAIL_COLORS.green : EMAIL_COLORS.red}; font-weight: bold;">${w.delta >= 0 ? '▲' : '▼'} ${Math.abs(w.delta)}%</span>`
+        ? `<span style="color: ${w.delta >= 0 ? EMAIL_COLORS.success : EMAIL_COLORS.error}; font-weight: bold;">${w.delta >= 0 ? '▲' : '▼'} ${Math.abs(w.delta)}%</span>`
         : '<span style="color: #9ca3af;">—</span>';
       return `<tr>
         <td style="padding: 8px 12px; border-bottom: 1px solid #f3f4f6; font-size: 14px;">${w.week}</td>
@@ -224,10 +225,10 @@ export function buildScorecardSnapshotEmailHtml(data: ScorecardData, options: Sc
       <h3 style="margin: 0 0 10px 0; font-size: 16px;">📊 5-Week Trend</h3>
       <table style="width: 100%; border-collapse: collapse; background: #f9fafb; border-radius: 8px; overflow: hidden;">
         <thead>
-          <tr style="background: ${EMAIL_COLORS.lightGray};">
-            <th style="padding: 10px 12px; text-align: left; font-size: 13px; color: ${EMAIL_COLORS.gray};">Week</th>
-            <th style="padding: 10px 12px; text-align: right; font-size: 13px; color: ${EMAIL_COLORS.gray};">Score</th>
-            <th style="padding: 10px 12px; text-align: right; font-size: 13px; color: ${EMAIL_COLORS.gray};">Change</th>
+          <tr style="background: ${EMAIL_COLORS.paper};">
+            <th style="padding: 10px 12px; text-align: left; font-size: 13px; color: ${EMAIL_COLORS.carbon500};">Week</th>
+            <th style="padding: 10px 12px; text-align: right; font-size: 13px; color: ${EMAIL_COLORS.carbon500};">Score</th>
+            <th style="padding: 10px 12px; text-align: right; font-size: 13px; color: ${EMAIL_COLORS.carbon500};">Change</th>
           </tr>
         </thead>
         <tbody>${trendRows}</tbody>
@@ -238,7 +239,7 @@ export function buildScorecardSnapshotEmailHtml(data: ScorecardData, options: Sc
   // Per-KPI Score Breakdown (new)
   if (kpiScores && kpiScores.length > 0) {
     const kpiRows = kpiScores.map(kpi => {
-      const color = kpi.percentage >= 80 ? EMAIL_COLORS.green : kpi.percentage >= 50 ? EMAIL_COLORS.amber : EMAIL_COLORS.red;
+      const color = kpi.percentage >= 80 ? EMAIL_COLORS.success : kpi.percentage >= 50 ? EMAIL_COLORS.warning : EMAIL_COLORS.error;
       return `<div style="display: flex; justify-content: space-between; padding: 8px 12px; border-bottom: 1px solid #f3f4f6; font-size: 14px;">
         <span>${kpi.label}</span>
         <span style="font-weight: bold; color: ${color};">${kpi.percentage}%</span>
@@ -254,16 +255,16 @@ export function buildScorecardSnapshotEmailHtml(data: ScorecardData, options: Sc
   // Top Performers
   if (topPerformers.length > 0) {
     bodyHtml += buildListSection('🏆', 'Top Performers',
-      topPerformers.map((p, i) => `<strong>${i + 1}. ${p.name || 'Team Member'}</strong> <span style="color: ${EMAIL_COLORS.gray};">${p.score}%</span>`),
-      'card', EMAIL_COLORS.green,
+      topPerformers.map((p, i) => `<strong>${i + 1}. ${p.name || 'Team Member'}</strong> <span style="color: ${EMAIL_COLORS.carbon500};">${p.score}%</span>`),
+      'card', EMAIL_COLORS.success,
     );
   }
 
   // Needs Improvement
   if (needsImprovement.length > 0) {
     bodyHtml += buildListSection('📈', 'Needs Improvement',
-      needsImprovement.map(m => `<strong>${m.name || 'Team Member'}</strong> <span style="color: ${EMAIL_COLORS.gray};">${m.score}%</span>`),
-      'card', EMAIL_COLORS.amber,
+      needsImprovement.map(m => `<strong>${m.name || 'Team Member'}</strong> <span style="color: ${EMAIL_COLORS.carbon500};">${m.score}%</span>`),
+      'card', EMAIL_COLORS.warning,
     );
   }
 
@@ -414,9 +415,9 @@ export function buildCoachSnapshotEmailHtml(data: CoachData, options: CoachEmail
   if (allSkillsets.length > 0) {
     const skillsetCards = allSkillsets.map(s => {
       const name = s.skillset_name || s.name || 'Skillset';
-      return `<strong>${name}</strong><div style="font-size: 14px; color: ${EMAIL_COLORS.gray};">Progress: ${Math.round(s.progress || 0)}% • Achievements: ${s.achievements_completed || 0} • Points: ${s.points || 0}</div>`;
+      return `<strong>${name}</strong><div style="font-size: 14px; color: ${EMAIL_COLORS.carbon500};">Progress: ${Math.round(s.progress || 0)}% • Achievements: ${s.achievements_completed || 0} • Points: ${s.points || 0}</div>`;
     });
-    bodyHtml += buildListSection('🎯', 'Skillset Mastery Progress', skillsetCards, 'card', EMAIL_COLORS.blue);
+    bodyHtml += buildListSection('🎯', 'Skillset Mastery Progress', skillsetCards, 'card', EMAIL_COLORS.coral);
   }
 
   return buildEmailWrapper(
@@ -481,7 +482,7 @@ export function buildCoachingPlanEmailHtml(plan: CoachingPlan, options: Coaching
 
   // Intro message (for assignment emails)
   if (introMessage) {
-    bodyHtml += `<div style="margin: 20px 0; padding: 15px; background: #eff6ff; border-radius: 8px; border-left: 4px solid ${EMAIL_COLORS.blue}; font-size: 14px;">
+    bodyHtml += `<div style="margin: 20px 0; padding: 15px; background: #eff6ff; border-radius: 8px; border-left: 4px solid ${EMAIL_COLORS.coral}; font-size: 14px;">
       ${introMessage}
     </div>`;
   }
@@ -491,7 +492,7 @@ export function buildCoachingPlanEmailHtml(plan: CoachingPlan, options: Coaching
 
   // Date range banner
   if (plan.date_range_start && plan.date_range_end) {
-    bodyHtml += `<div style="margin: 0 0 20px 0; padding: 8px 16px; background: ${EMAIL_COLORS.lightGray}; border-radius: 6px; display: inline-block; font-size: 13px; color: ${EMAIL_COLORS.gray};">
+    bodyHtml += `<div style="margin: 0 0 20px 0; padding: 8px 16px; background: ${EMAIL_COLORS.paper}; border-radius: 6px; display: inline-block; font-size: 13px; color: ${EMAIL_COLORS.carbon500};">
       &#128197; ${plan.date_range_start} &#8594; ${plan.date_range_end}
     </div>`;
   }
@@ -509,7 +510,7 @@ export function buildCoachingPlanEmailHtml(plan: CoachingPlan, options: Coaching
         <span style="color: #374151;">${g}</span>
       </div>`
     ).join('');
-    bodyHtml += `<div style="margin: 20px 0; padding: 16px; background: #eff6ff; border-left: 4px solid ${EMAIL_COLORS.blue}; border-radius: 8px;">
+    bodyHtml += `<div style="margin: 20px 0; padding: 16px; background: #eff6ff; border-left: 4px solid ${EMAIL_COLORS.coral}; border-radius: 8px;">
       <h3 style="margin: 0 0 12px 0; font-size: 16px; color: #111827;">&#127919; Goals</h3>
       ${goalItems}
     </div>`;
@@ -532,7 +533,7 @@ export function buildCoachingPlanEmailHtml(plan: CoachingPlan, options: Coaching
         <span style="color: #374151;">${a}</span>
       </div>`
     ).join('');
-    bodyHtml += `<div style="margin: 20px 0; padding: 16px; background: #ecfdf5; border-left: 4px solid ${EMAIL_COLORS.green}; border-radius: 8px;">
+    bodyHtml += `<div style="margin: 20px 0; padding: 16px; background: #ecfdf5; border-left: 4px solid ${EMAIL_COLORS.success}; border-radius: 8px;">
       <h3 style="margin: 0 0 12px 0; font-size: 16px; color: #111827;">&#9989; Action Items</h3>
       ${actionItems}
     </div>`;
@@ -543,7 +544,7 @@ export function buildCoachingPlanEmailHtml(plan: CoachingPlan, options: Coaching
     const metricItems = plan.success_metrics.map(s =>
       `<div style="padding: 8px 0; font-size: 14px; color: #374151;">&#8226; ${s}</div>`
     ).join('');
-    bodyHtml += `<div style="margin: 20px 0; padding: 16px; background: #f5f3ff; border-left: 4px solid ${EMAIL_COLORS.purple}; border-radius: 8px;">
+    bodyHtml += `<div style="margin: 20px 0; padding: 16px; background: #f5f3ff; border-left: 4px solid ${EMAIL_COLORS.ink}; border-radius: 8px;">
       <h3 style="margin: 0 0 12px 0; font-size: 16px; color: #111827;">&#128200; Success Metrics</h3>
       ${metricItems}
     </div>`;
@@ -552,7 +553,7 @@ export function buildCoachingPlanEmailHtml(plan: CoachingPlan, options: Coaching
   // Lagging KPI Analysis (color-coded) — suppress for team-visibility plans
   if (laggingKpis && laggingKpis.length > 0 && !suppressTeamData) {
     const kpiRows = laggingKpis.map(kpi => {
-      const color = kpi.percentage < 50 ? EMAIL_COLORS.red : EMAIL_COLORS.amber;
+      const color = kpi.percentage < 50 ? EMAIL_COLORS.error : EMAIL_COLORS.warning;
       const bgColor = kpi.percentage < 50 ? '#fef2f2' : '#fffbeb';
       return `<div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 12px; background: ${bgColor}; border-radius: 6px; margin-bottom: 6px; font-size: 14px;">
         <span>${kpi.label}</span>
@@ -573,10 +574,10 @@ export function buildCoachingPlanEmailHtml(plan: CoachingPlan, options: Coaching
       return `<div style="margin-bottom: 10px;">
         <div style="display: flex; justify-content: space-between; font-size: 14px; margin-bottom: 4px;">
           <span style="font-weight: 600;">${s.name}</span>
-          <span style="color: ${EMAIL_COLORS.gray};">${Math.round(s.progress)}%</span>
+          <span style="color: ${EMAIL_COLORS.carbon500};">${Math.round(s.progress)}%</span>
         </div>
         <div style="background: #e5e7eb; border-radius: 999px; height: 8px; overflow: hidden;">
-          <div style="background: ${EMAIL_COLORS.blue}; height: 8px; border-radius: 999px; width: ${barWidth}%;"></div>
+          <div style="background: ${EMAIL_COLORS.coral}; height: 8px; border-radius: 999px; width: ${barWidth}%;"></div>
         </div>
       </div>`;
     }).join('');
@@ -600,7 +601,7 @@ export function buildCoachingPlanEmailHtml(plan: CoachingPlan, options: Coaching
 
   // Notes — gray left border card
   if (plan.notes) {
-    bodyHtml += `<div style="margin: 20px 0; padding: 16px; background: #f9fafb; border-left: 4px solid ${EMAIL_COLORS.gray}; border-radius: 8px;">
+    bodyHtml += `<div style="margin: 20px 0; padding: 16px; background: #f9fafb; border-left: 4px solid ${EMAIL_COLORS.carbon500}; border-radius: 8px;">
       <h3 style="margin: 0 0 10px 0; font-size: 16px; color: #111827;">&#128172; Coach Notes</h3>
       <span style="font-size: 14px; color: #374151;">${plan.notes.replace(/\n/g, '<br/>')}</span>
     </div>`;
