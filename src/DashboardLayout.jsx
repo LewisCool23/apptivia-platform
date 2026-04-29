@@ -7,6 +7,8 @@ import NotificationPanel from './components/NotificationPanel';
 import AaronChatbot from './AaronChatbot';
 import SetupChecklist from './components/onboarding/SetupChecklist';
 import { useBilling } from './hooks/useBilling';
+import { ApptiviaLogo } from './components/ApptiviaLogo';
+import { ApptiviaMark } from './components/ApptiviaMark';
 
 const navigation = [
   { id: 'dashboard', name: 'Apptivia Scorecard', icon: Home, route: '/dashboard', description: 'Performance dashboard' },
@@ -40,7 +42,7 @@ function TrialBanner({ billing }) {
   if (status === 'trialing' && trialEndsAt) {
     const daysLeft = Math.max(0, Math.ceil((new Date(trialEndsAt) - Date.now()) / 86400000));
     return (
-      <div className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-4 py-2 text-sm flex items-center justify-center gap-3">
+      <div className="bg-apptivia-ink text-white px-4 py-2 text-sm flex items-center justify-center gap-3">
         <Clock size={14} />
         <span><strong>{daysLeft} day{daysLeft !== 1 ? 's' : ''}</strong> left in your Pro trial</span>
         <button
@@ -67,7 +69,7 @@ function TrialBanner({ billing }) {
         <span>Your Pro trial has ended. Upgrade to unlock Engage, Contests, Coaching Plans, and more.</span>
         <button
           onClick={() => navigate('/organization-settings')}
-          className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-xs font-semibold transition-colors"
+          className="bg-apptivia-coral hover:bg-apptivia-coral text-white px-3 py-1 rounded text-xs font-semibold transition-colors"
         >
           Upgrade to Pro
         </button>
@@ -163,14 +165,12 @@ function DashboardLayout({ children }) {
         });
       }
 
-      // Search achievements (org-scoped)
-      let achievementsSearch = supabase
+      // Search achievements (global structural definitions)
+      const { data: achievements } = await supabase
         .from('achievements')
         .select('id, name, description')
         .ilike('name', `%${searchTerm}%`)
         .limit(5);
-      if (searchOrgId) achievementsSearch = achievementsSearch.eq('organization_id', searchOrgId);
-      const { data: achievements } = await achievementsSearch;
 
       if (achievements) {
         achievements.forEach(achievement => {
@@ -184,14 +184,12 @@ function DashboardLayout({ children }) {
         });
       }
 
-      // Search badges (org-scoped)
-      let badgesSearch = supabase
+      // Search badges (global structural definitions)
+      const { data: badges } = await supabase
         .from('badge_definitions')
         .select('id, badge_name, badge_description')
         .ilike('badge_name', `%${searchTerm}%`)
         .limit(5);
-      if (searchOrgId) badgesSearch = badgesSearch.eq('organization_id', searchOrgId);
-      const { data: badges } = await badgesSearch;
 
       if (badges) {
         badges.forEach(badge => {
@@ -360,23 +358,21 @@ function DashboardLayout({ children }) {
   });
 
   return (
-    <div className="flex min-h-screen bg-gray-50 relative">
+    <div className="flex min-h-screen bg-apptivia-paper relative">
       {/* Mobile Header */}
       <div className="lg:hidden fixed top-0 left-0 right-0 bg-white shadow-md z-40 px-4 py-3 flex items-center justify-between">
         <button
           onClick={() => setMobileMenuOpen(true)}
-          className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-all duration-200 hover:scale-105"
+          className="p-2 text-apptivia-carbon-600 hover:bg-apptivia-carbon-100 rounded-lg transition-all duration-200 hover:scale-105"
           aria-label="Open menu"
         >
           <Menu size={24} />
         </button>
         <div className="flex items-center gap-2">
-          <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
-            <span className="text-white font-bold text-sm">A</span>
-          </div>
-          <h1 className="font-bold text-lg text-gray-900">Apptivia</h1>
+          <ApptiviaMark className="rounded-lg" />
+          <h1 className="text-lg"><ApptiviaLogo /></h1>
         </div>
-        <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
+        <div className="w-8 h-8 bg-apptivia-coral rounded-full flex items-center justify-center">
           <span className="text-white font-bold text-xs">{getProfileInitials()}</span>
         </div>
       </div>
@@ -399,12 +395,10 @@ function DashboardLayout({ children }) {
           <div className="relative flex items-center mb-2">
             {sidebarOpen ? (
               <div className="flex items-center gap-2">
-                <div className="w-7 h-7 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
-                  <span className="text-white font-bold text-xs">A</span>
-                </div>
+                <ApptiviaMark className="w-7 h-7 rounded-lg" />
                 <div>
-                  <h1 className="font-semibold text-xs text-gray-900">Apptivia</h1>
-                  <p className="text-[10px] text-gray-500">Sales Productivity Platform</p>
+                  <h1 className="text-xs"><ApptiviaLogo /></h1>
+                  <p className="text-[10px] text-apptivia-carbon-500">Sales Productivity Platform</p>
                 </div>
               </div>
             ) : (
@@ -414,15 +408,13 @@ function DashboardLayout({ children }) {
                 aria-label="Expand sidebar"
                 title="Expand sidebar"
               >
-                <div className="w-7 h-7 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
-                  <span className="text-white font-bold text-xs">A</span>
-                </div>
+                <ApptiviaMark className="w-7 h-7 rounded-lg" />
               </button>
             )}
             {sidebarOpen && (
               <button
                 onClick={() => setSidebarOpen(false)}
-                className="absolute right-0 top-1/2 -translate-y-1/2 p-1 text-gray-600 hover:bg-gray-100 rounded transition-all duration-200"
+                className="absolute right-0 top-1/2 -translate-y-1/2 p-1 text-apptivia-carbon-600 hover:bg-apptivia-carbon-100 rounded transition-all duration-200"
                 title="Collapse sidebar"
               >
                 <Menu size={16} />
@@ -431,13 +423,13 @@ function DashboardLayout({ children }) {
           </div>
           {/* User Info Section */}
           <div className="flex items-center gap-2 mt-1 mb-1">
-            <div className="w-7 h-7 bg-blue-500 rounded-full flex items-center justify-center">
+            <div className="w-7 h-7 bg-apptivia-coral rounded-full flex items-center justify-center">
               <span className="text-white font-bold text-xs">{getProfileInitials()}</span>
             </div>
             {sidebarOpen && (
               <div>
-                <div className="font-semibold text-gray-900 leading-tight text-xs">Welcome, {getProfileFirstName()}</div>
-                <div className="text-[10px] text-gray-500">{profile?.title || 'N/A'}</div>
+                <div className="font-semibold text-apptivia-ink leading-tight text-xs">Welcome, {getProfileFirstName()}</div>
+                <div className="text-[10px] text-apptivia-carbon-500">{profile?.title || 'N/A'}</div>
               </div>
             )}
           </div>
@@ -453,8 +445,8 @@ function DashboardLayout({ children }) {
                       onClick={() => sidebarOpen ? toggleSubmenu(item.id) : navigate(item.route)}
                       className={`w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-left text-xs transition-all duration-200 hover:scale-[1.02] ${
                         activeRoute === item.route
-                          ? 'bg-blue-500 text-white shadow-md'
-                          : 'text-gray-700 hover:bg-gray-100'
+                          ? 'bg-apptivia-coral text-white shadow-md'
+                          : 'text-apptivia-carbon-700 hover:bg-apptivia-carbon-100'
                       }`}
                     >
                       <item.icon size={18} />
@@ -477,8 +469,8 @@ function DashboardLayout({ children }) {
                             onClick={() => navigate(subItem.route)}
                             className={`w-full flex items-center gap-2 px-2.5 py-1 rounded-lg text-left text-xs transition-all duration-200 hover:scale-[1.02] ${
                               activeRoute === subItem.route
-                                ? 'bg-blue-100 text-blue-700 font-medium'
-                                : 'text-gray-600 hover:bg-gray-50'
+                                ? 'bg-apptivia-coral-tone-50 text-apptivia-coral font-medium'
+                                : 'text-apptivia-carbon-600 hover:bg-apptivia-paper'
                             }`}
                           >
                             <subItem.icon size={14} />
@@ -494,8 +486,8 @@ function DashboardLayout({ children }) {
                     onClick={() => navigate(item.route)}
                     className={`w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-left text-xs transition-all duration-200 hover:scale-[1.02] ${
                       activeRoute === item.route
-                        ? 'bg-blue-500 text-white shadow-md'
-                        : 'text-gray-700 hover:bg-gray-100'
+                        ? 'bg-apptivia-coral text-white shadow-md'
+                        : 'text-apptivia-carbon-700 hover:bg-apptivia-carbon-100'
                     }`}
                   >
                     <item.icon size={18} />
@@ -532,17 +524,15 @@ function DashboardLayout({ children }) {
         <div className="p-4 border-b">
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-3">
-              <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-sm">A</span>
-              </div>
+              <ApptiviaMark className="rounded-lg" />
               <div>
-                <h1 className="font-semibold text-sm text-gray-900">Apptivia</h1>
-                <p className="text-[11px] text-gray-500">Sales Productivity</p>
+                <h1 className="text-sm"><ApptiviaLogo /></h1>
+                <p className="text-[11px] text-apptivia-carbon-500">Sales Productivity</p>
               </div>
             </div>
             <button
               onClick={() => setMobileMenuOpen(false)}
-              className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-all duration-200 hover:scale-105"
+              className="p-2 text-apptivia-carbon-600 hover:bg-apptivia-carbon-100 rounded-lg transition-all duration-200 hover:scale-105"
               aria-label="Close menu"
             >
               <X size={20} />
@@ -550,26 +540,26 @@ function DashboardLayout({ children }) {
           </div>
           {/* User Info Section */}
           <div className="flex items-center gap-2 mt-2 mb-2">
-            <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
+            <div className="w-8 h-8 bg-apptivia-coral rounded-full flex items-center justify-center">
               <span className="text-white font-bold text-sm">{getProfileInitials()}</span>
             </div>
             <div>
-              <div className="font-semibold text-gray-900 leading-tight text-sm">Welcome, {getProfileFirstName()}</div>
-              <div className="text-[11px] text-gray-500">{profile?.title || 'N/A'}</div>
+              <div className="font-semibold text-apptivia-ink leading-tight text-sm">Welcome, {getProfileFirstName()}</div>
+              <div className="text-[11px] text-apptivia-carbon-500">{profile?.title || 'N/A'}</div>
             </div>
           </div>
         </div>
         {/* Search Bar for Mobile */}
         <div className="px-4 pb-3 border-b">
           <div className="relative">
-            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-apptivia-carbon-400" />
             <input
               type="text"
               placeholder="Search app..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               onFocus={() => searchQuery && setShowSearchResults(true)}
-              className="w-full pl-9 pr-3 py-2 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="w-full pl-9 pr-3 py-2 text-sm border border-apptivia-carbon-200 rounded-lg focus:ring-2 focus:ring-apptivia-coral focus:border-apptivia-coral"
             />
             {searchQuery && (
               <button
@@ -578,7 +568,7 @@ function DashboardLayout({ children }) {
                   setSearchResults([]);
                   setShowSearchResults(false);
                 }}
-                className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-apptivia-carbon-400 hover:text-apptivia-carbon-600"
               >
                 <X size={14} />
               </button>
@@ -586,7 +576,7 @@ function DashboardLayout({ children }) {
           </div>
           {/* Mobile Search Results */}
           {showSearchResults && searchResults.length > 0 && (
-            <div className="absolute left-4 right-4 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-96 overflow-y-auto z-50">
+            <div className="absolute left-4 right-4 mt-1 bg-white border border-apptivia-carbon-200 rounded-lg shadow-lg max-h-96 overflow-y-auto z-50">
               {searchResults.map((result, idx) => (
                 <button
                   key={idx}
@@ -597,17 +587,17 @@ function DashboardLayout({ children }) {
                     setShowSearchResults(false);
                     setMobileMenuOpen(false);
                   }}
-                  className="w-full text-left px-4 py-3 hover:bg-gray-50 border-b last:border-b-0 transition-colors"
+                  className="w-full text-left px-4 py-3 hover:bg-apptivia-paper border-b last:border-b-0 transition-colors"
                 >
                   <div className="flex items-start gap-3">
                     <span className="text-xl">{result.icon}</span>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
-                        <span className="text-xs font-semibold text-gray-900">{result.title}</span>
-                        <span className="text-[10px] px-1.5 py-0.5 rounded bg-gray-100 text-gray-600">{result.type}</span>
+                        <span className="text-xs font-semibold text-apptivia-ink">{result.title}</span>
+                        <span className="text-[10px] px-1.5 py-0.5 rounded bg-apptivia-carbon-100 text-apptivia-carbon-600">{result.type}</span>
                       </div>
                       {result.subtitle && (
-                        <div className="text-[11px] text-gray-500 mt-0.5 truncate">{result.subtitle}</div>
+                        <div className="text-[11px] text-apptivia-carbon-500 mt-0.5 truncate">{result.subtitle}</div>
                       )}
                     </div>
                   </div>
@@ -627,8 +617,8 @@ function DashboardLayout({ children }) {
                       onClick={() => toggleSubmenu(item.id)}
                       className={`w-full flex items-center gap-3 px-3 py-3 rounded-lg text-left text-sm transition-all duration-200 hover:scale-[1.02] ${
                         activeRoute === item.route
-                          ? 'bg-blue-500 text-white shadow-md'
-                          : 'text-gray-700 hover:bg-gray-100'
+                          ? 'bg-apptivia-coral text-white shadow-md'
+                          : 'text-apptivia-carbon-700 hover:bg-apptivia-carbon-100'
                       }`}
                     >
                       <item.icon size={22} />
@@ -647,8 +637,8 @@ function DashboardLayout({ children }) {
                             onClick={() => navigate(subItem.route)}
                             className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-left text-sm transition-all duration-200 hover:scale-[1.02] ${
                               activeRoute === subItem.route
-                                ? 'bg-blue-100 text-blue-700 font-medium'
-                                : 'text-gray-600 hover:bg-gray-50'
+                                ? 'bg-apptivia-coral-tone-50 text-apptivia-coral font-medium'
+                                : 'text-apptivia-carbon-600 hover:bg-apptivia-paper'
                             }`}
                           >
                             <subItem.icon size={16} />
@@ -664,8 +654,8 @@ function DashboardLayout({ children }) {
                     onClick={() => navigate(item.route)}
                     className={`w-full flex items-center gap-3 px-3 py-3 rounded-lg text-left text-sm transition-all duration-200 hover:scale-[1.02] ${
                       activeRoute === item.route
-                        ? 'bg-blue-500 text-white shadow-md'
-                        : 'text-gray-700 hover:bg-gray-100'
+                        ? 'bg-apptivia-coral text-white shadow-md'
+                        : 'text-apptivia-carbon-700 hover:bg-apptivia-carbon-100'
                     }`}
                   >
                     <item.icon size={22} />
@@ -691,7 +681,7 @@ function DashboardLayout({ children }) {
       </div>
 
       {/* Main Content */}
-      <div className={`flex-1 lg:pt-0 pt-16 text-sm min-w-0 overflow-x-hidden layout-root ${
+      <div className={`flex-1 lg:pt-0 pt-16 pb-24 text-sm min-w-0 overflow-x-hidden layout-root ${
         sidebarOpen ? 'lg:ml-64' : 'lg:ml-16'
       } transition-all duration-300`}>
         <TrialBanner billing={billing} />
@@ -708,7 +698,7 @@ function DashboardLayout({ children }) {
       {!chatbotOpen && (
         <button
           onClick={() => setChatbotOpen(true)}
-          className="fixed bottom-6 right-6 w-12 h-12 sm:w-14 sm:h-14 bg-gradient-to-br from-blue-500 via-indigo-500 to-purple-600 text-white rounded-full shadow-lg hover:shadow-xl flex items-center justify-center z-40 transition-all duration-300 hover:scale-110 group"
+          className="fixed bottom-6 right-6 w-12 h-12 sm:w-14 sm:h-14 bg-apptivia-coral text-white rounded-full shadow-lg hover:shadow-xl flex items-center justify-center z-40 transition-all duration-300 hover:scale-110 group"
           aria-label="Open Aaron AI Coach"
         >
           <div className="relative">

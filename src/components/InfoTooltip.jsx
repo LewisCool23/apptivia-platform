@@ -29,7 +29,7 @@ export default function InfoTooltip({ text, className = '', iconClassName = '', 
         {...wrapperProps}
         className={`inline-flex items-center ${className}`}
       >
-        <Info size={14} className={`text-gray-400 hover:text-gray-600 cursor-help ${iconClassName}`} />
+        <Info size={14} className={`text-apptivia-carbon-400 hover:text-apptivia-carbon-600 cursor-help ${iconClassName}`} />
       </Wrapper>
     </Tooltip>
   );

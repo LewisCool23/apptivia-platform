@@ -340,10 +340,10 @@ export default function Profile() {
       payload.secondary_role = profileForm.secondary_role || null;
       payload.team_id = profileForm.team_id || null;
       payload.segment = profileForm.segment || null;
-      // Resolve title_id from selected title label
+      // Resolve title_id from selected title label (use UUID, not key)
       const matchedTitle = titles.find(t => t.label === profileForm.title);
-      if (matchedTitle) {
-        payload.title_id = matchedTitle.key;
+      if (matchedTitle?.id) {
+        payload.title_id = matchedTitle.id;
       }
       // Auto-resolve department from team's department_id
       if (profileForm.team_id) {
@@ -451,12 +451,8 @@ export default function Profile() {
           .from('profile_skillsets')
           .select(`*, skillset:skillsets(id, name, description, color, icon)`)
           .in('profile_id', targetProfileIds),
-        orgId
-          ? supabase.from('skillsets').select('id, name, description, color, icon').eq('organization_id', orgId).order('name')
-          : supabase.from('skillsets').select('id, name, description, color, icon').order('name'),
-        orgId
-          ? supabase.from('achievements').select('id, skillset_id, points').eq('organization_id', orgId)
-          : supabase.from('achievements').select('id, skillset_id, points'),
+        supabase.from('skillsets').select('id, name, description, color, icon').order('name'),
+        supabase.from('achievements').select('id, skillset_id, points'),
         supabase
           .from('profile_achievements')
           .select('achievement_id, profile_id')
@@ -658,17 +654,17 @@ export default function Profile() {
     setAwardingBadge(true);
     try {
       const badgeDef = availableBadgeDefs.find(b => b.badge_name === awardBadgeForm.badge_name);
-      const { error } = await supabase.from('profile_badges').insert([{
+      const { error } = await supabase.from('profile_badges').upsert([{
         profile_id: awardBadgeForm.profile_id,
         badge_name: awardBadgeForm.badge_name,
         badge_description: badgeDef?.badge_description || '',
         icon: badgeDef?.icon || '🏆',
-        color: badgeDef?.color || '#3B82F6',
+        color: badgeDef?.color || '#FF4D2E',
         badge_type: badgeDef?.badge_type || 'special',
         points: badgeDef?.points || 0,
         earned_at: new Date().toISOString(),
         organization_id: orgId,
-      }]);
+      }], { onConflict: 'profile_id,badge_name', ignoreDuplicates: true });
       if (error) throw error;
       const member = editableProfiles.find(p => String(p.id) === String(awardBadgeForm.profile_id));
       toast.success(`Badge "${awardBadgeForm.badge_name}" awarded to ${formatProfileName(member)}`);
@@ -685,8 +681,7 @@ export default function Profile() {
 
   const loadBadgeDefinitions = async () => {
     try {
-      let bdQuery = supabase.from('badge_definitions').select('badge_name, badge_description, icon, color, badge_type, points').order('badge_name');
-      if (orgId) bdQuery = bdQuery.eq('organization_id', orgId);
+      const bdQuery = supabase.from('badge_definitions').select('badge_name, badge_description, icon, color, badge_type, points').order('badge_name');
       const { data } = await bdQuery;
       setAvailableBadgeDefs(data || []);
     } catch (e) {
@@ -757,20 +752,20 @@ export default function Profile() {
       <div className="p-6">
         <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between mb-4 gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-blue-700 mb-1">Profile Settings</h1>
-            <p className="text-gray-500 text-sm">Manage your personal information</p>
+            <h1 className="text-2xl font-bold text-apptivia-coral mb-1">Profile Settings</h1>
+            <p className="text-apptivia-carbon-500 text-sm">Manage your personal information</p>
           </div>
           <div className="flex gap-2 items-center">
             {/* Search Bar */}
             <div className="relative">
-              <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+              <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-apptivia-carbon-400" />
               <input
                 type="text"
                 placeholder="Search..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 onFocus={() => searchQuery && setShowSearchResults(true)}
-                className="w-64 pl-9 pr-8 py-2 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-64 pl-9 pr-8 py-2 text-sm border border-apptivia-carbon-200 rounded-lg focus:ring-2 focus:ring-apptivia-coral focus:border-apptivia-coral"
               />
               {searchQuery && (
                 <button
@@ -779,13 +774,13 @@ export default function Profile() {
                     setSearchResults([]);
                     setShowSearchResults(false);
                   }}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-apptivia-carbon-400 hover:text-apptivia-carbon-600"
                 >
                   <X size={14} />
                 </button>
               )}
               {showSearchResults && searchResults.length > 0 && (
-                <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-96 overflow-y-auto z-50">
+                <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-apptivia-carbon-200 rounded-lg shadow-lg max-h-96 overflow-y-auto z-50">
                   {searchResults.map((result, idx) => (
                     <button
                       key={idx}
@@ -795,17 +790,17 @@ export default function Profile() {
                         setSearchResults([]);
                         setShowSearchResults(false);
                       }}
-                      className="w-full text-left px-4 py-3 hover:bg-gray-50 border-b last:border-b-0 transition-colors"
+                      className="w-full text-left px-4 py-3 hover:bg-apptivia-paper border-b last:border-b-0 transition-colors"
                     >
                       <div className="flex items-start gap-3">
                         <span className="text-xl">{result.icon}</span>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2">
-                            <span className="text-xs font-semibold text-gray-900">{result.title}</span>
-                            <span className="text-[10px] px-1.5 py-0.5 rounded bg-gray-100 text-gray-600">{result.type}</span>
+                            <span className="text-xs font-semibold text-apptivia-ink">{result.title}</span>
+                            <span className="text-[10px] px-1.5 py-0.5 rounded bg-apptivia-carbon-100 text-apptivia-carbon-600">{result.type}</span>
                           </div>
                           {result.subtitle && (
-                            <div className="text-[11px] text-gray-500 mt-0.5 truncate">{result.subtitle}</div>
+                            <div className="text-[11px] text-apptivia-carbon-500 mt-0.5 truncate">{result.subtitle}</div>
                           )}
                         </div>
                       </div>
@@ -814,13 +809,13 @@ export default function Profile() {
                 </div>
               )}
               {showSearchResults && searchQuery && searchResults.length === 0 && !searching && (
-                <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg p-4 z-50">
-                  <div className="text-sm text-gray-500 text-center">No results found</div>
+                <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-apptivia-carbon-200 rounded-lg shadow-lg p-4 z-50">
+                  <div className="text-sm text-apptivia-carbon-500 text-center">No results found</div>
                 </div>
               )}
               {searching && (
-                <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg p-4 z-50">
-                  <div className="text-sm text-gray-500 text-center">Searching...</div>
+                <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-apptivia-carbon-200 rounded-lg shadow-lg p-4 z-50">
+                  <div className="text-sm text-apptivia-carbon-500 text-center">Searching...</div>
                 </div>
               )}
             </div>
@@ -828,7 +823,7 @@ export default function Profile() {
             <button
               onClick={handleRefresh}
               disabled={isRefreshing}
-              className={`relative p-2 rounded-lg font-semibold text-sm bg-white text-gray-700 border border-gray-200 hover:bg-gray-50 group ${
+              className={`relative p-2 rounded-lg font-semibold text-sm bg-white text-apptivia-carbon-700 border border-apptivia-carbon-200 hover:bg-apptivia-paper group ${
                 isRefreshing ? 'opacity-50 cursor-not-allowed' : 'transition-all duration-200 hover:scale-105 hover:shadow-md'
               }`}
             >
@@ -845,7 +840,7 @@ export default function Profile() {
                   d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" 
                 />
               </svg>
-              <span className="absolute top-full left-1/2 -translate-x-1/2 mt-2 px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 pointer-events-none group-hover:opacity-100 whitespace-nowrap transition-opacity z-50">
+              <span className="absolute top-full left-1/2 -translate-x-1/2 mt-2 px-2 py-1 bg-apptivia-ink text-white text-xs rounded opacity-0 pointer-events-none group-hover:opacity-100 whitespace-nowrap transition-opacity z-50">
                 {isRefreshing ? 'Refreshing...' : 'Refresh'}
               </span>
             </button>
@@ -876,7 +871,7 @@ export default function Profile() {
 
         <div className="space-y-6">
           {/* Tab Navigation */}
-          <div className="bg-white rounded-lg p-2 shadow-sm border border-gray-100">
+          <div className="bg-white rounded-lg p-2 shadow-sm border border-apptivia-carbon-100">
             <div className="flex flex-wrap gap-2">
               {tabs.map((tab) => (
                 <button
@@ -884,8 +879,8 @@ export default function Profile() {
                   onClick={() => setActiveTab(tab.id)}
                   className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-all ${
                     activeTab === tab.id
-                      ? 'bg-blue-600 text-white shadow-sm'
-                      : 'text-gray-600 hover:bg-gray-100'
+                      ? 'bg-apptivia-coral text-white shadow-sm'
+                      : 'text-apptivia-carbon-600 hover:bg-apptivia-carbon-100'
                   }`}
                 >
                   {tab.label}
@@ -899,17 +894,17 @@ export default function Profile() {
           <div className="bg-white rounded-lg shadow-sm p-5">
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-4">
               <div>
-                <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-                  <Edit size={18} className="text-blue-500" />
+                <h2 className="text-lg font-semibold text-apptivia-ink flex items-center gap-2">
+                  <Edit size={18} className="text-apptivia-coral" />
                   Profile Details
                 </h2>
-                <p className="text-xs text-gray-500">
+                <p className="text-xs text-apptivia-carbon-500">
                   Update your personal information{canEditAnyProfile ? ' or manage profiles for any user.' : canEditTeamProfiles ? ' or update profiles for your team.' : '.'}
                 </p>
               </div>
               {(canEditAnyProfile || canEditTeamProfiles) && (
                 <div className="flex items-center gap-2">
-                  <label className="text-xs text-gray-500">User</label>
+                  <label className="text-xs text-apptivia-carbon-500">User</label>
                   <select
                     value={selectedProfileId}
                     onChange={(e) => setSelectedProfileId(e.target.value)}
@@ -930,33 +925,33 @@ export default function Profile() {
             </div>
 
             {!activeProfile ? (
-              <div className="text-sm text-gray-500">No profile selected.</div>
+              <div className="text-sm text-apptivia-carbon-500">No profile selected.</div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {/* Profile Picture */}
                 {String(activeProfile.id) === String(user?.id) && (
-                  <div className="md:col-span-2 flex items-center gap-4 pb-3 border-b border-gray-100 mb-1">
+                  <div className="md:col-span-2 flex items-center gap-4 pb-3 border-b border-apptivia-carbon-100 mb-1">
                     <div className="relative">
-                      <div className="w-16 h-16 rounded-full bg-blue-100 flex items-center justify-center text-xl font-bold text-blue-600 overflow-hidden">
+                      <div className="w-16 h-16 rounded-full bg-apptivia-coral-tone-50 flex items-center justify-center text-xl font-bold text-apptivia-coral overflow-hidden">
                         {profile?.profile_picture ? (
                           <img src={profile.profile_picture} alt="Profile" className="w-full h-full object-cover" />
                         ) : (
                           getInitials(repName)
                         )}
                       </div>
-                      <label className="absolute -bottom-1 -right-1 w-7 h-7 bg-blue-600 rounded-full flex items-center justify-center cursor-pointer hover:bg-blue-700 transition-colors shadow-sm">
+                      <label className="absolute -bottom-1 -right-1 w-7 h-7 bg-apptivia-coral rounded-full flex items-center justify-center cursor-pointer hover:bg-apptivia-coral transition-colors shadow-sm">
                         <Camera size={14} className="text-white" />
                         <input type="file" accept="image/*" className="hidden" onChange={handlePhotoUpload} disabled={uploadingPhoto} />
                       </label>
                     </div>
                     <div>
-                      <div className="text-sm font-medium text-gray-900">{repName}</div>
-                      <div className="text-xs text-gray-500">{uploadingPhoto ? 'Uploading...' : 'Click camera icon to update photo'}</div>
+                      <div className="text-sm font-medium text-apptivia-ink">{repName}</div>
+                      <div className="text-xs text-apptivia-carbon-500">{uploadingPhoto ? 'Uploading...' : 'Click camera icon to update photo'}</div>
                     </div>
                   </div>
                 )}
                 <div>
-                  <label className="block text-xs text-gray-500 mb-1">First name</label>
+                  <label className="block text-xs text-apptivia-carbon-500 mb-1">First name</label>
                   <input
                     value={profileForm.first_name}
                     onChange={(e) => handleProfileFieldChange('first_name', e.target.value)}
@@ -965,7 +960,7 @@ export default function Profile() {
                   />
                 </div>
                 <div>
-                  <label className="block text-xs text-gray-500 mb-1">Last name</label>
+                  <label className="block text-xs text-apptivia-carbon-500 mb-1">Last name</label>
                   <input
                     value={profileForm.last_name}
                     onChange={(e) => handleProfileFieldChange('last_name', e.target.value)}
@@ -974,19 +969,19 @@ export default function Profile() {
                   />
                 </div>
                 <div>
-                  <label className="block text-xs text-gray-500 mb-1">Email</label>
+                  <label className="block text-xs text-apptivia-carbon-500 mb-1">Email</label>
                   <input
                     value={profileForm.email}
-                    className="w-full border rounded px-3 py-2 text-sm bg-gray-50 text-gray-500"
+                    className="w-full border rounded px-3 py-2 text-sm bg-apptivia-paper text-apptivia-carbon-500"
                     disabled
                   />
                 </div>
                 <div>
-                  <label className="block text-xs text-gray-500 mb-1">Title</label>
+                  <label className="block text-xs text-apptivia-carbon-500 mb-1">Title</label>
                   <select
                     value={profileForm.title}
                     onChange={(e) => handleProfileFieldChange('title', e.target.value)}
-                    className={`w-full border rounded px-3 py-2 text-sm ${!canEditAnyProfile ? 'bg-gray-50 text-gray-500' : ''}`}
+                    className={`w-full border rounded px-3 py-2 text-sm ${!canEditAnyProfile ? 'bg-apptivia-paper text-apptivia-carbon-500' : ''}`}
                     disabled={profileSaving || !canEditAnyProfile}
                   >
                     <option value="">Select title...</option>
@@ -996,11 +991,11 @@ export default function Profile() {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-xs text-gray-500 mb-1">Department</label>
+                  <label className="block text-xs text-apptivia-carbon-500 mb-1">Department</label>
                   <select
                     value={profileForm.department}
                     onChange={(e) => handleProfileFieldChange('department', e.target.value)}
-                    className={`w-full border rounded px-3 py-2 text-sm ${!canEditAnyProfile ? 'bg-gray-50 text-gray-500' : ''}`}
+                    className={`w-full border rounded px-3 py-2 text-sm ${!canEditAnyProfile ? 'bg-apptivia-paper text-apptivia-carbon-500' : ''}`}
                     disabled={profileSaving || !canEditAnyProfile}
                   >
                     <option value="">Select department...</option>
@@ -1015,7 +1010,7 @@ export default function Profile() {
                 {canEditAnyProfile ? (
                   <>
                     <div>
-                      <label className="block text-xs text-gray-500 mb-1">Role</label>
+                      <label className="block text-xs text-apptivia-carbon-500 mb-1">Role</label>
                       <select
                         value={profileForm.role}
                         onChange={(e) => handleProfileFieldChange('role', e.target.value)}
@@ -1028,7 +1023,7 @@ export default function Profile() {
                       </select>
                     </div>
                     <div>
-                      <label className="block text-xs text-gray-500 mb-1">Secondary Role</label>
+                      <label className="block text-xs text-apptivia-carbon-500 mb-1">Secondary Role</label>
                       <select
                         value={profileForm.secondary_role}
                         onChange={(e) => handleProfileFieldChange('secondary_role', e.target.value)}
@@ -1044,7 +1039,7 @@ export default function Profile() {
                       </select>
                     </div>
                     <div>
-                      <label className="block text-xs text-gray-500 mb-1">Team</label>
+                      <label className="block text-xs text-apptivia-carbon-500 mb-1">Team</label>
                       <select
                         value={profileForm.team_id}
                         onChange={(e) => handleProfileFieldChange('team_id', e.target.value)}
@@ -1058,7 +1053,7 @@ export default function Profile() {
                       </select>
                     </div>
                     <div>
-                      <label className="block text-xs text-gray-500 mb-1">Segment</label>
+                      <label className="block text-xs text-apptivia-carbon-500 mb-1">Segment</label>
                       <select
                         value={profileForm.segment}
                         onChange={(e) => handleProfileFieldChange('segment', e.target.value)}
@@ -1074,10 +1069,10 @@ export default function Profile() {
                   </>
                 ) : (
                   <div>
-                    <label className="block text-xs text-gray-500 mb-1">Team</label>
+                    <label className="block text-xs text-apptivia-carbon-500 mb-1">Team</label>
                     <input
                       value={teams.find(t => String(t.id) === String(activeProfile.team_id))?.name || 'Unassigned'}
-                      className="w-full border rounded px-3 py-2 text-sm bg-gray-50 text-gray-500"
+                      className="w-full border rounded px-3 py-2 text-sm bg-apptivia-paper text-apptivia-carbon-500"
                       disabled
                     />
                   </div>
@@ -1097,7 +1092,7 @@ export default function Profile() {
                     </button>
                     <button
                       onClick={handleProfileSave}
-                      className="px-3 py-1.5 text-xs rounded bg-blue-600 text-white disabled:opacity-60"
+                      className="px-3 py-1.5 text-xs rounded bg-apptivia-coral text-white disabled:opacity-60"
                       disabled={profileSaving}
                     >
                       {profileSaving ? 'Saving...' : 'Save changes'}
@@ -1122,7 +1117,7 @@ export default function Profile() {
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => setShareSnapshotModal(true)}
-                  className="flex items-center gap-1 px-3 py-1.5 bg-blue-50 text-blue-600 rounded-lg text-sm font-medium hover:bg-blue-100 transition-colors"
+                  className="flex items-center gap-1 px-3 py-1.5 bg-apptivia-coral-tone-50 text-apptivia-coral rounded-lg text-sm font-medium hover:bg-apptivia-coral-tone-50 transition-colors"
                 >
                   <span>📸</span>
                   Share Snapshot
@@ -1147,7 +1142,7 @@ export default function Profile() {
                 )}
                 <button
                   onClick={() => setViewAllBadgesModal(true)}
-                  className="flex items-center gap-1 px-3 py-1.5 bg-indigo-50 text-indigo-600 rounded-lg text-sm font-medium hover:bg-indigo-100 transition-colors"
+                  className="flex items-center gap-1 px-3 py-1.5 bg-apptivia-carbon-100 text-apptivia-ink rounded-lg text-sm font-medium hover:bg-apptivia-carbon-100 transition-colors"
                 >
                   <span>🎖️</span>
                   View All Badges
@@ -1156,18 +1151,18 @@ export default function Profile() {
             </div>
 
             {loadingBadges ? (
-              <div className="text-center py-8 text-gray-500">Loading badges...</div>
+              <div className="text-center py-8 text-apptivia-carbon-500">Loading badges...</div>
             ) : badges.length === 0 ? (
-              <div className="text-center py-8 bg-gray-50 rounded-lg">
-                <div className="text-gray-400 text-lg mb-2">No badges earned yet</div>
-                <p className="text-gray-500 text-sm">Complete activities to earn badges.</p>
+              <div className="text-center py-8 bg-apptivia-paper rounded-lg">
+                <div className="text-apptivia-carbon-400 text-lg mb-2">No badges earned yet</div>
+                <p className="text-apptivia-carbon-500 text-sm">Complete activities to earn badges.</p>
               </div>
             ) : (
               <>
                 {/* Recently Earned Section */}
                 {badges.slice(0, 3).length > 0 && (
                   <div className="mb-6">
-                    <h4 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
+                    <h4 className="text-sm font-semibold text-apptivia-carbon-700 mb-3 flex items-center gap-2">
                       <span>✨</span>
                       Recently Earned
                     </h4>
@@ -1184,9 +1179,9 @@ export default function Profile() {
                               <div className="text-4xl mb-2">{badge.icon}</div>
                               <div className="font-semibold text-sm">{badge.badge_name}</div>
                               {badge.badge_description && (
-                                <div className="text-xs text-gray-600 mt-1 line-clamp-2">{badge.badge_description}</div>
+                                <div className="text-xs text-apptivia-carbon-600 mt-1 line-clamp-2">{badge.badge_description}</div>
                               )}
-                              <div className="text-xs text-gray-400 mt-2">
+                              <div className="text-xs text-apptivia-carbon-400 mt-2">
                                 {new Date(badge.earned_at).toLocaleDateString()}
                               </div>
                             </div>
@@ -1199,7 +1194,7 @@ export default function Profile() {
 
                 {/* All Badges Grid */}
                 <div>
-                  <h4 className="text-sm font-semibold text-gray-700 mb-3">All Badges ({badges.length})</h4>
+                  <h4 className="text-sm font-semibold text-apptivia-carbon-700 mb-3">All Badges ({badges.length})</h4>
                   <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                     {(showAllBadges ? badges : badges.slice(0, 8)).map((badge) => (
                       <div
@@ -1208,7 +1203,7 @@ export default function Profile() {
                         className={`rounded-lg p-4 text-center border-2 transition-all hover:scale-105 cursor-pointer hover:shadow-lg ${
                           badge.is_featured ? 'bg-gradient-to-br from-amber-50 to-yellow-50 shadow-md' : 'bg-white'
                         }`}
-                        style={{ borderColor: badge.color || '#e5e7eb' }}
+                        style={{ borderColor: badge.color || '#E4E4E7' }}
                       >
                         <Tooltip text={badge.badge_description} position="bottom" wide>
                           <div className="cursor-pointer">
@@ -1218,14 +1213,14 @@ export default function Profile() {
                             <div className="text-4xl mb-2">{badge.icon}</div>
                             <div className="font-semibold text-sm">{badge.badge_name}</div>
                             {badge.badge_description && (
-                              <div className="text-xs text-gray-600 mt-1 line-clamp-2">{badge.badge_description}</div>
+                              <div className="text-xs text-apptivia-carbon-600 mt-1 line-clamp-2">{badge.badge_description}</div>
                             )}
                             {(badge.contest?.name || badge.achievement?.name) && (
-                              <div className="text-xs text-blue-600 mt-1 font-medium truncate">
+                              <div className="text-xs text-apptivia-coral mt-1 font-medium truncate">
                                 {badge.contest?.name || badge.achievement?.name}
                               </div>
                             )}
-                            <div className="text-xs text-gray-400 mt-2">
+                            <div className="text-xs text-apptivia-carbon-400 mt-2">
                               {new Date(badge.earned_at).toLocaleDateString()}
                             </div>
                           </div>
@@ -1236,7 +1231,7 @@ export default function Profile() {
                   {badges.length > 8 && (
                     <button
                       onClick={() => setShowAllBadges(!showAllBadges)}
-                      className="w-full mt-4 py-2 text-blue-600 hover:text-blue-700 font-medium text-sm"
+                      className="w-full mt-4 py-2 text-apptivia-coral hover:text-apptivia-coral font-medium text-sm"
                     >
                       {showAllBadges ? 'Show Less' : `Show All ${badges.length} Badges`}
                     </button>
@@ -1256,22 +1251,22 @@ export default function Profile() {
                 <h3 className="font-semibold text-base flex items-center gap-2">
                   <TrendingUp size={20} className="text-green-500" />
                   {isTeamSkillsetView ? 'Team Skillset Progress' : 'Skillset Progress'}
-                  {isTeamSkillsetView && <span className="text-xs font-normal text-gray-500 ml-1">(team average)</span>}
+                  {isTeamSkillsetView && <span className="text-xs font-normal text-apptivia-carbon-500 ml-1">(team average)</span>}
                 </h3>
               </div>
 
               {loadingAchievements ? (
-                <div className="text-center py-8 text-gray-500">Loading achievements...</div>
+                <div className="text-center py-8 text-apptivia-carbon-500">Loading achievements...</div>
               ) : achievements.length === 0 ? (
-                <div className="text-center py-8 bg-gray-50 rounded-lg">
-                  <div className="text-gray-400 text-lg mb-2">No achievements tracked yet</div>
-                  <p className="text-gray-500 text-sm">Start completing achievements to unlock rewards!</p>
+                <div className="text-center py-8 bg-apptivia-paper rounded-lg">
+                  <div className="text-apptivia-carbon-400 text-lg mb-2">No achievements tracked yet</div>
+                  <p className="text-apptivia-carbon-500 text-sm">Start completing achievements to unlock rewards!</p>
                 </div>
               ) : (
                 <div className="space-y-2">
                   {achievements.map((achievement) => {
                     const pct = Math.round(achievement.progress || 0);
-                    const color = achievement.skillset?.color || '#3B82F6';
+                    const color = achievement.skillset?.color || '#FF4D2E';
                     return (
                       <div
                         key={achievement.id}
@@ -1284,17 +1279,17 @@ export default function Profile() {
                             {achievement.skillset?.icon && <span>{achievement.skillset.icon}</span>}
                             <span className="font-semibold text-sm">{achievement.skillset?.name || 'Unknown Skillset'}</span>
                             {achievement.skillset?.description && (
-                              <span className="text-xs text-gray-500 hidden sm:inline">— {achievement.skillset.description}</span>
+                              <span className="text-xs text-apptivia-carbon-500 hidden sm:inline">— {achievement.skillset.description}</span>
                             )}
                           </div>
                           <div className="flex items-center gap-3">
                             <div className="flex items-center gap-2 text-xs">
                               <span className="text-emerald-600 font-medium">{achievement.achievements_completed || 0} earned</span>
-                              <span className="text-gray-300">|</span>
-                              <span className="text-blue-600 font-medium">{achievement.points || 0} pts</span>
+                              <span className="text-apptivia-carbon-300">|</span>
+                              <span className="text-apptivia-coral font-medium">{achievement.points || 0} pts</span>
                               {pct >= 100 && (
                                 <>
-                                  <span className="text-gray-300">|</span>
+                                  <span className="text-apptivia-carbon-300">|</span>
                                   <span className="text-green-600 font-medium">Mastered!</span>
                                 </>
                               )}
@@ -1304,7 +1299,7 @@ export default function Profile() {
                             </Tooltip>
                           </div>
                         </div>
-                        <div className="w-full bg-gray-200 rounded-full h-1.5">
+                        <div className="w-full bg-apptivia-carbon-200 rounded-full h-1.5">
                           <div
                             className="h-1.5 rounded-full transition-all duration-300"
                             style={{ width: `${pct}%`, backgroundColor: color }}
@@ -1321,12 +1316,12 @@ export default function Profile() {
           {/* [FEATURE 2] Notification Preferences Tab */}
           {activeTab === 'notifications' && (
           <div className="bg-white rounded-lg shadow-sm p-5">
-            <h2 className="text-lg font-semibold text-gray-900 mb-1">Notification Preferences</h2>
-            <p className="text-xs text-gray-500 mb-4">Choose how you receive coaching nudges from Aaron.</p>
+            <h2 className="text-lg font-semibold text-apptivia-ink mb-1">Notification Preferences</h2>
+            <p className="text-xs text-apptivia-carbon-500 mb-4">Choose how you receive coaching nudges from Aaron.</p>
 
             <div className="space-y-3 max-w-md">
               <div>
-                <label className="block text-xs font-medium text-gray-700 mb-1.5">Nudge Delivery Channel</label>
+                <label className="block text-xs font-medium text-apptivia-carbon-700 mb-1.5">Nudge Delivery Channel</label>
                 <div className="space-y-2">
                   {[
                     { value: 'in_app', label: 'In-App Only', desc: 'Notifications appear in the bell icon' },
@@ -1344,8 +1339,8 @@ export default function Profile() {
                         className="mt-0.5"
                       />
                       <div>
-                        <span className="text-sm font-medium text-gray-800">{opt.label}</span>
-                        <p className="text-[10px] text-gray-500">{opt.desc}</p>
+                        <span className="text-sm font-medium text-apptivia-ink">{opt.label}</span>
+                        <p className="text-[10px] text-apptivia-carbon-500">{opt.desc}</p>
                       </div>
                     </label>
                   ))}
@@ -1354,16 +1349,16 @@ export default function Profile() {
 
               {(nudgeChannel === 'slack' || nudgeChannel === 'email_and_slack') && (
                 <div>
-                  <label className="block text-xs font-medium text-gray-700 mb-1">Slack Incoming Webhook URL</label>
+                  <label className="block text-xs font-medium text-apptivia-carbon-700 mb-1">Slack Incoming Webhook URL</label>
                   <input
                     type="url"
                     value={slackWebhookUrl}
                     onChange={e => setSlackWebhookUrl(e.target.value)}
                     placeholder="https://hooks.slack.com/services/..."
-                    className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className="w-full px-3 py-2 text-sm border border-apptivia-carbon-300 rounded-lg focus:ring-2 focus:ring-apptivia-coral focus:border-apptivia-coral"
                   />
-                  <p className="text-[10px] text-gray-400 mt-1">
-                    <a href="https://api.slack.com/messaging/webhooks" target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">How to create an incoming webhook</a>
+                  <p className="text-[10px] text-apptivia-carbon-400 mt-1">
+                    <a href="https://api.slack.com/messaging/webhooks" target="_blank" rel="noopener noreferrer" className="text-apptivia-coral hover:underline">How to create an incoming webhook</a>
                   </p>
                 </div>
               )}
@@ -1371,7 +1366,7 @@ export default function Profile() {
               <button
                 onClick={handleSaveNudgePrefs}
                 disabled={savingNudgePrefs}
-                className="px-4 py-2 bg-blue-600 text-white text-sm font-semibold rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors"
+                className="px-4 py-2 bg-apptivia-coral text-white text-sm font-semibold rounded-lg hover:bg-apptivia-coral disabled:opacity-50 transition-colors"
               >
                 {savingNudgePrefs ? 'Saving...' : 'Save Preferences'}
               </button>
@@ -1387,34 +1382,34 @@ export default function Profile() {
           <div className="bg-white rounded-lg shadow-sm p-5 mb-5">
             <div className="mb-4">
               <div className="flex items-center gap-2">
-                <Building2 size={18} className="text-blue-600" />
-                <h2 className="text-lg font-semibold text-gray-900">Org Integrations</h2>
+                <Building2 size={18} className="text-apptivia-coral" />
+                <h2 className="text-lg font-semibold text-apptivia-ink">Org Integrations</h2>
               </div>
-              <p className="text-xs text-gray-500 mt-0.5 ml-7">Connected by your admin — data syncs automatically for all team members</p>
+              <p className="text-xs text-apptivia-carbon-500 mt-0.5 ml-7">Connected by your admin — data syncs automatically for all team members</p>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
               {connectedOrgIntegrations.map((integration) => {
                 const template = SUPPORTED_INTEGRATIONS.find(t => t.integration_type === integration.integration_type);
                 if (!template) return null;
                 return (
-                  <div key={integration.id} className="bg-gray-50 rounded-xl p-5 border border-gray-100 flex flex-col">
+                  <div key={integration.id} className="bg-apptivia-paper rounded-lg p-5 border border-apptivia-carbon-100 flex flex-col">
                     <div className="flex items-center gap-3 mb-3">
                       <div className={`w-11 h-11 bg-gradient-to-br ${template.color} rounded-lg flex items-center justify-center text-xs font-bold text-white shadow-sm`}>
                         {template.icon}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <div className="font-semibold text-gray-900 text-sm">{template.display_name}</div>
-                        <div className="text-xs text-gray-500 truncate">{template.description}</div>
+                        <div className="font-semibold text-apptivia-ink text-sm">{template.display_name}</div>
+                        <div className="text-xs text-apptivia-carbon-500 truncate">{template.description}</div>
                       </div>
                       <div className="w-2.5 h-2.5 rounded-full bg-green-500 shrink-0" title="Connected" />
                     </div>
                     <div className="mb-3">
-                      <span className="inline-flex items-center gap-1 text-xs bg-blue-50 text-blue-700 px-2.5 py-1 rounded-full font-medium">
+                      <span className="inline-flex items-center gap-1 text-xs bg-apptivia-coral-tone-50 text-apptivia-coral px-2.5 py-1 rounded-full font-medium">
                         <Building2 size={11} /> Org-wide
                       </span>
                     </div>
                     {integration.last_sync_at && (
-                      <div className="text-xs text-gray-400 flex items-center gap-1">
+                      <div className="text-xs text-apptivia-carbon-400 flex items-center gap-1">
                         <Clock size={11} />
                         Last synced: {new Date(integration.last_sync_at).toLocaleString()}
                       </div>
@@ -1430,10 +1425,10 @@ export default function Profile() {
           <div className="bg-white rounded-lg shadow-sm p-5">
             <div className="flex items-center justify-between mb-4">
               <div>
-                <h2 className="text-lg font-semibold text-gray-900">Personal Integrations</h2>
-                <p className="text-xs text-gray-500">Connect your personal accounts to sync data</p>
+                <h2 className="text-lg font-semibold text-apptivia-ink">Personal Integrations</h2>
+                <p className="text-xs text-apptivia-carbon-500">Connect your personal accounts to sync data</p>
               </div>
-              <button onClick={refreshIntegrations} className="p-2 rounded-lg text-gray-500 hover:bg-gray-100 transition-colors" title="Refresh">
+              <button onClick={refreshIntegrations} className="p-2 rounded-lg text-apptivia-carbon-500 hover:bg-apptivia-carbon-100 transition-colors" title="Refresh">
                 <RefreshCw size={16} />
               </button>
             </div>
@@ -1446,7 +1441,7 @@ export default function Profile() {
             )}
 
             {integrationsLoading ? (
-              <div className="flex items-center justify-center py-12 text-gray-400">
+              <div className="flex items-center justify-center py-12 text-apptivia-carbon-400">
                 <Loader2 size={20} className="animate-spin mr-2" />
                 Loading integrations...
               </div>
@@ -1458,14 +1453,14 @@ export default function Profile() {
                   const isError = integration?.status === 'error';
 
                   return (
-                    <div key={template.integration_type} className="bg-white rounded-xl p-5 shadow-sm border border-gray-100 flex flex-col hover:shadow-md transition-shadow">
+                    <div key={template.integration_type} className="bg-white rounded-lg p-5 shadow-sm border border-apptivia-carbon-100 flex flex-col hover:shadow-md transition-shadow">
                       <div className="flex items-center gap-3 mb-3">
                         <div className={`w-11 h-11 bg-gradient-to-br ${template.color} rounded-lg flex items-center justify-center text-xs font-bold text-white shadow-sm`}>
                           {template.icon}
                         </div>
                         <div className="flex-1 min-w-0">
-                          <div className="font-semibold text-gray-900 text-sm">{template.display_name}</div>
-                          <div className="text-xs text-gray-500 truncate">{template.description}</div>
+                          <div className="font-semibold text-apptivia-ink text-sm">{template.display_name}</div>
+                          <div className="text-xs text-apptivia-carbon-500 truncate">{template.description}</div>
                         </div>
                         {isConnected && <div className="w-2.5 h-2.5 rounded-full bg-green-500 shrink-0" title="Connected" />}
                         {isError && <div className="w-2.5 h-2.5 rounded-full bg-red-500 shrink-0" title="Error" />}
@@ -1483,14 +1478,14 @@ export default function Profile() {
                           </span>
                         )}
                         {!integration && (
-                          <span className="inline-flex items-center gap-1 text-xs bg-gray-50 text-gray-500 px-2.5 py-1 rounded-full font-medium">
+                          <span className="inline-flex items-center gap-1 text-xs bg-apptivia-paper text-apptivia-carbon-500 px-2.5 py-1 rounded-full font-medium">
                             Available
                           </span>
                         )}
                       </div>
 
                       {isConnected && integration?.last_sync_at && (
-                        <div className="text-xs text-gray-400 mb-3 flex items-center gap-1">
+                        <div className="text-xs text-apptivia-carbon-400 mb-3 flex items-center gap-1">
                           <Clock size={11} />
                           Last synced: {new Date(integration.last_sync_at).toLocaleString()}
                         </div>
@@ -1507,14 +1502,14 @@ export default function Profile() {
                         ) : API_KEY_PROVIDERS[template.integration_type] ? (
                           <button
                             onClick={() => setCredentialsModal(template.integration_type)}
-                            className="w-full flex items-center justify-center gap-1.5 bg-blue-600 text-white py-2 rounded-md text-sm font-medium hover:bg-blue-700 transition-colors"
+                            className="w-full flex items-center justify-center gap-1.5 bg-apptivia-coral text-white py-2 rounded-md text-sm font-medium hover:bg-apptivia-coral transition-colors"
                           >
                             <Key size={14} /> Connect with API Key
                           </button>
                         ) : (
                           <button
                             onClick={() => connectOAuth(template.integration_type)}
-                            className="w-full bg-blue-600 text-white py-2 rounded-md text-sm font-medium hover:bg-blue-700 transition-colors"
+                            className="w-full bg-apptivia-coral text-white py-2 rounded-md text-sm font-medium hover:bg-apptivia-coral transition-colors"
                           >
                             Connect
                           </button>
@@ -1538,65 +1533,65 @@ export default function Profile() {
             onClick={() => setShowAdminTeamsModal(false)}
           >
             <div
-              className="bg-white w-[95%] max-w-6xl rounded-2xl shadow-2xl p-6"
+              className="bg-white w-[95%] max-w-6xl rounded-lg shadow-2xl p-6"
               onClick={(e) => e.stopPropagation()}
             >
               <div className="flex items-start justify-between mb-4">
                 <div>
-                  <h2 className="text-lg font-bold text-gray-900">Team Management</h2>
-                  <p className="text-xs text-gray-500">Manage teams and team members across the organization</p>
+                  <h2 className="text-lg font-bold text-apptivia-ink">Team Management</h2>
+                  <p className="text-xs text-apptivia-carbon-500">Manage teams and team members across the organization</p>
                 </div>
                 <button
                   onClick={() => setShowAdminTeamsModal(false)}
-                  className="text-gray-400 hover:text-gray-600 text-sm"
+                  className="text-apptivia-carbon-400 hover:text-apptivia-carbon-600 text-sm"
                 >
                   Close
                 </button>
               </div>
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-                <div className="bg-gray-50 rounded-xl p-3 border">
+                <div className="bg-apptivia-paper rounded-lg p-3 border">
                   <div className="flex items-center justify-between mb-2">
-                    <div className="text-xs font-semibold text-gray-600">Teams</div>
-                    <span className="text-[10px] text-gray-400">Manage in Systems</span>
+                    <div className="text-xs font-semibold text-apptivia-carbon-600">Teams</div>
+                    <span className="text-[10px] text-apptivia-carbon-400">Manage in Systems</span>
                   </div>
                   <div className="space-y-2 max-h-[420px] overflow-auto">
                     {teams.length === 0 ? (
-                      <div className="text-xs text-gray-500">No teams found.</div>
+                      <div className="text-xs text-apptivia-carbon-500">No teams found.</div>
                     ) : (
                       teams.map((team) => (
                         <button
                           key={team.id}
                           onClick={() => setSelectedTeamId(String(team.id))}
-                          className={`w-full text-left px-3 py-2 rounded-lg text-xs font-medium transition-all ${String(team.id) === String(selectedTeamId) ? 'bg-blue-600 text-white' : 'bg-white text-gray-700 hover:bg-gray-100'}`}
+                          className={`w-full text-left px-3 py-2 rounded-lg text-xs font-medium transition-all ${String(team.id) === String(selectedTeamId) ? 'bg-apptivia-coral text-white' : 'bg-white text-apptivia-carbon-700 hover:bg-apptivia-carbon-100'}`}
                         >
                           <div>{team.name}</div>
-                          <div className={`${String(team.id) === String(selectedTeamId) ? 'text-blue-100' : 'text-gray-400'} text-[10px]`}>{team.department || 'No department'}</div>
+                          <div className={`${String(team.id) === String(selectedTeamId) ? 'text-apptivia-coral-tone-300' : 'text-apptivia-carbon-400'} text-[10px]`}>{team.department || 'No department'}</div>
                         </button>
                       ))
                     )}
                   </div>
                 </div>
-                <div className="lg:col-span-2 bg-white rounded-xl border p-4">
+                <div className="lg:col-span-2 bg-white rounded-lg border p-4">
                   <div className="flex items-center justify-between mb-3">
                     <div>
-                      <div className="text-xs text-gray-500">Team members</div>
-                      <div className="text-sm font-semibold text-gray-900">
+                      <div className="text-xs text-apptivia-carbon-500">Team members</div>
+                      <div className="text-sm font-semibold text-apptivia-ink">
                         {teams.find(t => String(t.id) === String(selectedTeamId))?.name || 'Select a team'}
                       </div>
                     </div>
-                    <div className="text-xs text-gray-400">
+                    <div className="text-xs text-apptivia-carbon-400">
                       Team member management available in Systems → Permissions & Teams
                     </div>
                   </div>
                   <div className="space-y-2 max-h-[420px] overflow-auto">
                     {teamMembers.length === 0 ? (
-                      <div className="text-xs text-gray-500">No team members found.</div>
+                      <div className="text-xs text-apptivia-carbon-500">No team members found.</div>
                     ) : (
                       teamMembers.map((member) => (
                         <div key={member.id} className="border rounded-lg p-3 flex items-center justify-between">
                           <div>
                             <div className="text-sm font-semibold">{`${member.first_name || ''} ${member.last_name || ''}`.trim() || member.email}</div>
-                            <div className="text-[11px] text-gray-500">{normalizeRole(member.role)}</div>
+                            <div className="text-[11px] text-apptivia-carbon-500">{normalizeRole(member.role)}</div>
                           </div>
                         </div>
                       ))
@@ -1613,37 +1608,37 @@ export default function Profile() {
             onClick={() => setShowManagerTeamsModal(false)}
           >
             <div
-              className="bg-white w-[95%] max-w-5xl rounded-2xl shadow-2xl p-6"
+              className="bg-white w-[95%] max-w-5xl rounded-lg shadow-2xl p-6"
               onClick={(e) => e.stopPropagation()}
             >
               <div className="flex items-start justify-between mb-4">
                 <div>
-                  <h2 className="text-lg font-bold text-gray-900">Team Settings</h2>
-                  <p className="text-xs text-gray-500">Manage your assigned team members and integrations</p>
+                  <h2 className="text-lg font-bold text-apptivia-ink">Team Settings</h2>
+                  <p className="text-xs text-apptivia-carbon-500">Manage your assigned team members and integrations</p>
                 </div>
                 <button
                   onClick={() => setShowManagerTeamsModal(false)}
-                  className="text-gray-400 hover:text-gray-600 text-sm"
+                  className="text-apptivia-carbon-400 hover:text-apptivia-carbon-600 text-sm"
                 >
                   Close
                 </button>
               </div>
-              <div className="bg-white rounded-xl border p-4">
+              <div className="bg-white rounded-lg border p-4">
                 <div className="flex items-center justify-between mb-3">
                   <div>
-                    <div className="text-xs text-gray-500">Team</div>
-                    <div className="text-sm font-semibold text-gray-900">
+                    <div className="text-xs text-apptivia-carbon-500">Team</div>
+                    <div className="text-sm font-semibold text-apptivia-ink">
                       {teams.find(t => String(t.id) === String(selectedTeamId))?.name || 'Your Team'}
                     </div>
                   </div>
-                  <div className="text-xs text-gray-400">
+                  <div className="text-xs text-apptivia-carbon-400">
                     Manage members in Systems → Permissions & Teams
                   </div>
                 </div>
                 <div className="overflow-auto">
                   <table className="w-full text-xs">
                     <thead>
-                      <tr className="text-left text-gray-500">
+                      <tr className="text-left text-apptivia-carbon-500">
                         <th className="py-2">Team Member</th>
                         <th className="py-2">Role</th>
                       </tr>
@@ -1651,15 +1646,15 @@ export default function Profile() {
                     <tbody>
                       {teamMembers.length === 0 ? (
                         <tr>
-                          <td colSpan={2} className="py-4 text-center text-gray-500">No team members available.</td>
+                          <td colSpan={2} className="py-4 text-center text-apptivia-carbon-500">No team members available.</td>
                         </tr>
                       ) : (
                         teamMembers.map((member) => (
                           <tr key={member.id} className="border-t">
                             <td className="py-2">
-                              <div className="font-semibold text-gray-900">{`${member.first_name || ''} ${member.last_name || ''}`.trim() || member.email}</div>
+                              <div className="font-semibold text-apptivia-ink">{`${member.first_name || ''} ${member.last_name || ''}`.trim() || member.email}</div>
                             </td>
-                            <td className="py-2 text-gray-500">{normalizeRole(member.role)}</td>
+                            <td className="py-2 text-apptivia-carbon-500">{normalizeRole(member.role)}</td>
                           </tr>
                         ))
                       )}
@@ -1686,7 +1681,7 @@ export default function Profile() {
           subtitle="Filter profile views"
           showReset
         >
-          <div className="text-xs text-gray-500">No filters available yet.</div>
+          <div className="text-xs text-apptivia-carbon-500">No filters available yet.</div>
         </RightFilterPanel>
       <BadgeModal
         isOpen={badgeModal.isOpen}
@@ -1749,23 +1744,23 @@ export default function Profile() {
       {/* Award Badge Modal */}
       {showAwardBadgeModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={() => setShowAwardBadgeModal(false)}>
-          <div className="bg-white rounded-xl shadow-2xl max-w-md w-full" onClick={(e) => e.stopPropagation()}>
-            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
+          <div className="bg-white rounded-lg shadow-2xl max-w-md w-full" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between px-6 py-4 border-b border-apptivia-carbon-200">
               <div className="flex items-center gap-2">
                 <Gift size={20} className="text-amber-500" />
-                <h3 className="text-lg font-bold text-gray-900">Award Badge</h3>
+                <h3 className="text-lg font-bold text-apptivia-ink">Award Badge</h3>
               </div>
-              <button onClick={() => setShowAwardBadgeModal(false)} className="p-2 hover:bg-gray-100 rounded-lg">
-                <X size={18} className="text-gray-400" />
+              <button onClick={() => setShowAwardBadgeModal(false)} className="p-2 hover:bg-apptivia-carbon-100 rounded-lg">
+                <X size={18} className="text-apptivia-carbon-400" />
               </button>
             </div>
             <div className="p-6 space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">Badge</label>
+                <label className="block text-sm font-medium text-apptivia-carbon-700 mb-1.5">Badge</label>
                 <select
                   value={awardBadgeForm.badge_name}
                   onChange={(e) => setAwardBadgeForm(prev => ({ ...prev, badge_name: e.target.value }))}
-                  className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-3 py-2 text-sm border border-apptivia-carbon-300 rounded-lg focus:ring-2 focus:ring-apptivia-coral focus:border-transparent"
                 >
                   <option value="">Select a badge...</option>
                   {availableBadgeDefs.map((b) => (
@@ -1774,11 +1769,11 @@ export default function Profile() {
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">Team Member</label>
+                <label className="block text-sm font-medium text-apptivia-carbon-700 mb-1.5">Team Member</label>
                 <select
                   value={awardBadgeForm.profile_id}
                   onChange={(e) => setAwardBadgeForm(prev => ({ ...prev, profile_id: e.target.value }))}
-                  className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-3 py-2 text-sm border border-apptivia-carbon-300 rounded-lg focus:ring-2 focus:ring-apptivia-coral focus:border-transparent"
                 >
                   <option value="">Select a member...</option>
                   {editableProfiles.filter(p => !['admin', 'manager'].includes(normalizeRole(p.role))).map((p) => (
@@ -1792,8 +1787,8 @@ export default function Profile() {
                   <div className="flex items-center gap-3 p-3 bg-amber-50 rounded-lg border border-amber-200">
                     <span className="text-3xl">{sel.icon}</span>
                     <div>
-                      <div className="text-sm font-semibold text-gray-900">{sel.badge_name}</div>
-                      <div className="text-xs text-gray-600">{sel.badge_description}</div>
+                      <div className="text-sm font-semibold text-apptivia-ink">{sel.badge_name}</div>
+                      <div className="text-xs text-apptivia-carbon-600">{sel.badge_description}</div>
                       <div className="text-xs text-amber-600 font-medium mt-0.5">{sel.points} points</div>
                     </div>
                   </div>
@@ -1809,7 +1804,7 @@ export default function Profile() {
                 </button>
                 <button
                   onClick={() => setShowAwardBadgeModal(false)}
-                  className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-300 transition-colors"
+                  className="px-4 py-2 bg-apptivia-carbon-200 text-apptivia-carbon-700 rounded-lg text-sm font-medium hover:bg-apptivia-carbon-300 transition-colors"
                 >
                   Cancel
                 </button>

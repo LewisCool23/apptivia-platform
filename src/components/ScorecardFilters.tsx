@@ -282,7 +282,7 @@ export default function ScorecardFilters({
     <div className="flex flex-wrap items-center gap-2 mb-3">
       {showDate && (
         <div>
-          <label className="block text-xs text-gray-500 mb-1">Date Range</label>
+          <label className="block text-xs text-apptivia-carbon-500 mb-1">Date Range</label>
           <select
             value={dateRange}
             onChange={e => {
@@ -309,7 +309,7 @@ export default function ScorecardFilters({
       
       {dateRange === 'Custom Week' && (
         <div>
-          <label className="block text-xs text-gray-500 mb-1">Pick any day in the week</label>
+          <label className="block text-xs text-apptivia-carbon-500 mb-1">Pick any day in the week</label>
           <input
             type="date"
             title="Pick any day — the full Mon–Sun week will be selected"
@@ -318,7 +318,7 @@ export default function ScorecardFilters({
             className="border rounded px-2 py-1 text-xs"
           />
           {customWeekDate && (
-            <div className="text-[10px] text-gray-400 mt-0.5">
+            <div className="text-[10px] text-apptivia-carbon-400 mt-0.5">
               Week: {snapToMonday(customWeekDate)} → {(() => {
                 const mon = new Date(snapToMonday(customWeekDate) + 'T00:00:00');
                 mon.setDate(mon.getDate() + 6);
@@ -331,7 +331,7 @@ export default function ScorecardFilters({
 
 
       <div>
-        <label className="block text-xs text-gray-500 mb-1">Departments</label>
+        <label className="block text-xs text-apptivia-carbon-500 mb-1">Departments</label>
         <select multiple size={1} value={selectedDepartments} onChange={e => handleMultiSelect(e, setSelectedDepartments)} className={`border rounded px-2 py-1 text-xs min-w-[140px] ${lockedFilters?.departments ? 'opacity-60 cursor-not-allowed' : ''}`} disabled={lockedFilters?.departments}>
           <option value="">All Departments</option>
           {departments.map(d => <option key={d} value={d}>{d}</option>)}
@@ -339,7 +339,7 @@ export default function ScorecardFilters({
       </div>
 
       <div>
-        <label className="block text-xs text-gray-500 mb-1">Teams</label>
+        <label className="block text-xs text-apptivia-carbon-500 mb-1">Teams</label>
         <select multiple size={1} value={selectedTeams} onChange={e => handleMultiSelect(e, setSelectedTeams)} className={`border rounded px-2 py-1 text-xs min-w-[160px] ${lockedFilters?.teams ? 'opacity-60 cursor-not-allowed' : ''}`} disabled={lockedFilters?.teams}>
           <option value="">All Teams</option>
           {filteredTeams.map(t => <option key={t.id} value={String(t.id)}>{t.name}</option>)}
@@ -347,7 +347,7 @@ export default function ScorecardFilters({
       </div>
 
       <div>
-        <label className="block text-xs text-gray-500 mb-1">Team Members</label>
+        <label className="block text-xs text-apptivia-carbon-500 mb-1">Team Members</label>
         <select multiple size={1} value={selectedMembers} onChange={e => handleMultiSelect(e, setSelectedMembers)} className={`border rounded px-2 py-1 text-xs min-w-[200px] ${lockedFilters?.members ? 'opacity-60 cursor-not-allowed' : ''}`} disabled={lockedFilters?.members}>
           <option value="">All Members</option>
           {filteredMembers.map(m => <option key={m.id} value={String(m.id)}>{`${m.first_name || ''} ${m.last_name || ''}`.trim()}</option>)}

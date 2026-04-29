@@ -43,26 +43,26 @@ export default function PlanDetailModal({
       onClick={onClose}
     >
       <div
-        className="bg-white rounded-xl shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-hidden flex flex-col"
+        className="bg-white rounded-lg shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-hidden flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-apptivia-carbon-200">
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-blue-100 rounded-lg">
-              <Target className="w-5 h-5 text-blue-600" />
+            <div className="p-2 bg-apptivia-coral-tone-50 rounded-lg">
+              <Target className="w-5 h-5 text-apptivia-coral" />
             </div>
             <div>
-              <h3 className="text-lg font-bold text-gray-900">{plan.name}</h3>
+              <h3 className="text-lg font-bold text-apptivia-ink">{plan.name}</h3>
               {plan.date_range_start && plan.date_range_end && (
-                <p className="text-sm text-gray-500 mt-0.5">
+                <p className="text-sm text-apptivia-carbon-500 mt-0.5">
                   {plan.date_range_start} to {plan.date_range_end}
                 </p>
               )}
             </div>
           </div>
-          <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
-            <X size={20} className="text-gray-400" />
+          <button onClick={onClose} className="p-2 hover:bg-apptivia-carbon-100 rounded-lg transition-colors">
+            <X size={20} className="text-apptivia-carbon-400" />
           </button>
         </div>
 
@@ -70,15 +70,15 @@ export default function PlanDetailModal({
         <div className="flex-1 overflow-y-auto p-6">
           {/* Goals */}
           {plan.goals?.length > 0 && (
-            <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-              <h4 className="font-semibold text-gray-900 mb-2 flex items-center gap-2">
-                <Target size={16} className="text-blue-600" />
+            <div className="mb-4 p-4 bg-apptivia-coral-tone-50 border border-apptivia-coral-tone-100 rounded-lg">
+              <h4 className="font-semibold text-apptivia-ink mb-2 flex items-center gap-2">
+                <Target size={16} className="text-apptivia-coral" />
                 Goals
               </h4>
               <ul className="space-y-1.5">
                 {plan.goals.map((goal, idx) => (
-                  <li key={idx} className="flex items-start gap-2 text-sm text-gray-700">
-                    <span className="mt-0.5 w-5 h-5 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-xs font-bold flex-shrink-0">{idx + 1}</span>
+                  <li key={idx} className="flex items-start gap-2 text-sm text-apptivia-carbon-700">
+                    <span className="mt-0.5 w-5 h-5 rounded-full bg-apptivia-coral-tone-50 text-apptivia-coral flex items-center justify-center text-xs font-bold flex-shrink-0">{idx + 1}</span>
                     {goal}
                   </li>
                 ))}
@@ -88,14 +88,14 @@ export default function PlanDetailModal({
 
           {/* Focus KPIs */}
           {plan.focus_kpis?.length > 0 && (
-            <div className="mb-4 p-4 bg-indigo-50 border border-indigo-200 rounded-lg">
-              <h4 className="font-semibold text-gray-900 mb-2 flex items-center gap-2">
-                <BarChart3 size={16} className="text-indigo-600" />
+            <div className="mb-4 p-4 bg-apptivia-carbon-100 border border-apptivia-carbon-300 rounded-lg">
+              <h4 className="font-semibold text-apptivia-ink mb-2 flex items-center gap-2">
+                <BarChart3 size={16} className="text-apptivia-ink" />
                 Focus KPIs
               </h4>
               <div className="flex flex-wrap gap-2">
                 {plan.focus_kpis.map((kpi, idx) => (
-                  <span key={idx} className="px-3 py-1 bg-white text-indigo-700 rounded-full text-sm font-medium border border-indigo-200">
+                  <span key={idx} className="px-3 py-1 bg-white text-apptivia-ink rounded-full text-sm font-medium border border-apptivia-carbon-300">
                     {buildLabel(kpi)}
                   </span>
                 ))}
@@ -106,13 +106,13 @@ export default function PlanDetailModal({
           {/* Action Items */}
           {plan.action_items?.length > 0 && (
             <div className="mb-4 p-4 bg-green-50 border border-green-200 rounded-lg">
-              <h4 className="font-semibold text-gray-900 mb-2 flex items-center gap-2">
+              <h4 className="font-semibold text-apptivia-ink mb-2 flex items-center gap-2">
                 <ClipboardCheck size={16} className="text-green-600" />
                 Action Items
               </h4>
               <ol className="space-y-1.5">
                 {plan.action_items.map((action, idx) => (
-                  <li key={idx} className="flex items-start gap-2 text-sm text-gray-700">
+                  <li key={idx} className="flex items-start gap-2 text-sm text-apptivia-carbon-700">
                     <span className="mt-0.5 w-5 h-5 rounded-full bg-green-100 text-green-600 flex items-center justify-center text-xs font-bold flex-shrink-0">{idx + 1}</span>
                     {action}
                   </li>
@@ -123,15 +123,15 @@ export default function PlanDetailModal({
 
           {/* Success Metrics */}
           {plan.success_metrics?.length > 0 && (
-            <div className="mb-4 p-4 bg-purple-50 border border-purple-200 rounded-lg">
-              <h4 className="font-semibold text-gray-900 mb-2 flex items-center gap-2">
-                <TrendingUp size={16} className="text-purple-600" />
+            <div className="mb-4 p-4 bg-apptivia-carbon-100 border border-apptivia-carbon-300 rounded-lg">
+              <h4 className="font-semibold text-apptivia-ink mb-2 flex items-center gap-2">
+                <TrendingUp size={16} className="text-apptivia-ink" />
                 Success Metrics
               </h4>
               <ul className="space-y-1.5">
                 {plan.success_metrics.map((metric, idx) => (
-                  <li key={idx} className="flex items-start gap-2 text-sm text-gray-700">
-                    <span className="mt-1 w-1.5 h-1.5 rounded-full bg-purple-400 flex-shrink-0" />
+                  <li key={idx} className="flex items-start gap-2 text-sm text-apptivia-carbon-700">
+                    <span className="mt-1 w-1.5 h-1.5 rounded-full bg-apptivia-ink flex-shrink-0" />
                     {metric}
                   </li>
                 ))}
@@ -141,12 +141,12 @@ export default function PlanDetailModal({
 
           {/* Notes */}
           {plan.notes && (
-            <div className="mb-4 p-4 bg-gray-50 border border-gray-200 rounded-lg">
-              <h4 className="font-semibold text-gray-900 mb-2 flex items-center gap-2">
-                <MessageSquare size={16} className="text-gray-500" />
+            <div className="mb-4 p-4 bg-apptivia-paper border border-apptivia-carbon-200 rounded-lg">
+              <h4 className="font-semibold text-apptivia-ink mb-2 flex items-center gap-2">
+                <MessageSquare size={16} className="text-apptivia-carbon-500" />
                 Notes
               </h4>
-              <p className="text-sm text-gray-700 whitespace-pre-wrap">{plan.notes}</p>
+              <p className="text-sm text-apptivia-carbon-700 whitespace-pre-wrap">{plan.notes}</p>
             </div>
           )}
 
@@ -161,31 +161,31 @@ export default function PlanDetailModal({
             if (isPowerUser && plan.visibility === 'team') return null;
             const ctx = enriched.context;
             return (
-              <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                <h4 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
-                  <BarChart3 size={16} className="text-blue-600" />
+              <div className="mb-4 p-4 bg-apptivia-coral-tone-50 border border-apptivia-coral-tone-100 rounded-lg">
+                <h4 className="font-semibold text-apptivia-ink mb-3 flex items-center gap-2">
+                  <BarChart3 size={16} className="text-apptivia-coral" />
                   Coaching Context (at time of creation)
                 </h4>
                 <div className="grid grid-cols-3 gap-3 mb-3">
-                  <div className="text-center bg-white rounded-lg p-3 border border-blue-100">
-                    <div className="text-2xl font-bold text-blue-600">{ctx.currentScore}%</div>
-                    <div className="text-xs text-gray-500">Score at Creation</div>
+                  <div className="text-center bg-white rounded-lg p-3 border border-apptivia-coral-tone-100">
+                    <div className="text-2xl font-bold text-apptivia-coral">{ctx.currentScore}%</div>
+                    <div className="text-xs text-apptivia-carbon-500">Score at Creation</div>
                   </div>
-                  <div className="text-center bg-white rounded-lg p-3 border border-blue-100">
+                  <div className="text-center bg-white rounded-lg p-3 border border-apptivia-coral-tone-100">
                     <div className="text-2xl font-bold text-red-500">{ctx.laggingKpis?.length || 0}</div>
-                    <div className="text-xs text-gray-500">Lagging KPIs</div>
+                    <div className="text-xs text-apptivia-carbon-500">Lagging KPIs</div>
                   </div>
-                  <div className="text-center bg-white rounded-lg p-3 border border-blue-100">
+                  <div className="text-center bg-white rounded-lg p-3 border border-apptivia-coral-tone-100">
                     <div className="text-2xl font-bold text-green-500">{ctx.exceedingCount || 0}</div>
-                    <div className="text-xs text-gray-500">Exceeding</div>
+                    <div className="text-xs text-apptivia-carbon-500">Exceeding</div>
                   </div>
                 </div>
                 {ctx.laggingKpis?.length > 0 && (
                   <div className="space-y-1 mb-3">
-                    <div className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Lagging KPIs</div>
+                    <div className="text-xs font-semibold text-apptivia-carbon-500 uppercase tracking-wide">Lagging KPIs</div>
                     {ctx.laggingKpis.map(kpi => (
-                      <div key={kpi.key} className="flex items-center justify-between text-sm bg-white rounded px-3 py-1.5 border border-gray-100">
-                        <span className="text-gray-700">{kpi.label}</span>
+                      <div key={kpi.key} className="flex items-center justify-between text-sm bg-white rounded px-3 py-1.5 border border-apptivia-carbon-100">
+                        <span className="text-apptivia-carbon-700">{kpi.label}</span>
                         <span className={`font-semibold ${scoreTextColor(kpi.percentage)}`}>
                           {kpi.percentage}%
                         </span>
@@ -195,18 +195,18 @@ export default function PlanDetailModal({
                 )}
                 {ctx.prioritySkillsets?.length > 0 && (
                   <div className="space-y-1 mb-3">
-                    <div className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Priority Skillsets</div>
+                    <div className="text-xs font-semibold text-apptivia-carbon-500 uppercase tracking-wide">Priority Skillsets</div>
                     {ctx.prioritySkillsets.map(s => (
-                      <div key={s.name} className="flex items-center justify-between text-sm bg-white rounded px-3 py-1.5 border border-gray-100">
-                        <span className="text-gray-700">{s.name}</span>
-                        <span className="text-blue-600 font-semibold">{Math.round(s.progress)}%</span>
+                      <div key={s.name} className="flex items-center justify-between text-sm bg-white rounded px-3 py-1.5 border border-apptivia-carbon-100">
+                        <span className="text-apptivia-carbon-700">{s.name}</span>
+                        <span className="text-apptivia-coral font-semibold">{Math.round(s.progress)}%</span>
                       </div>
                     ))}
                   </div>
                 )}
                 {ctx.xpEstimate?.length > 0 && (
                   <div>
-                    <div className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Estimated XP Gain</div>
+                    <div className="text-xs font-semibold text-apptivia-carbon-500 uppercase tracking-wide mb-1">Estimated XP Gain</div>
                     <div className="flex flex-wrap gap-1.5">
                       {ctx.xpEstimate.map(item => (
                         <span key={item.skillset} className="inline-flex items-center gap-1 px-2.5 py-1 bg-yellow-50 text-yellow-700 rounded-full text-xs font-semibold border border-yellow-200">
@@ -227,9 +227,9 @@ export default function PlanDetailModal({
             const impact = enriched?.context?.skillsetImpact;
             if (!impact?.projected?.length) return null;
             return (
-              <div className="mb-4 p-4 bg-indigo-50 border border-indigo-200 rounded-lg">
-                <h4 className="font-semibold text-indigo-800 mb-3 flex items-center gap-2">
-                  <Zap size={16} className="text-indigo-600" />
+              <div className="mb-4 p-4 bg-apptivia-carbon-100 border border-apptivia-carbon-300 rounded-lg">
+                <h4 className="font-semibold text-apptivia-ink mb-3 flex items-center gap-2">
+                  <Zap size={16} className="text-apptivia-ink" />
                   Skillset Impact Review
                 </h4>
                 <div className="grid grid-cols-2 gap-2">
@@ -237,24 +237,24 @@ export default function PlanDetailModal({
                     const current = (impact.current || []).find(c => c.skillset_key === s.skillset.toLowerCase().replace(/\s+/g, '_'));
                     const currentXp = current?.current_xp || 0;
                     return (
-                      <div key={s.skillset} className="flex items-center gap-2 text-xs bg-white rounded-md px-3 py-2 border border-indigo-100">
-                        <span className={`w-2 h-2 rounded-full ${s.color || 'bg-indigo-400'}`} />
-                        <span className="font-medium text-gray-800">{s.skillset}</span>
-                        <span className="text-gray-400 ml-auto">{currentXp} XP</span>
-                        <span className="text-indigo-600 font-semibold">+{s.estimatedXp}</span>
+                      <div key={s.skillset} className="flex items-center gap-2 text-xs bg-white rounded-md px-3 py-2 border border-apptivia-carbon-300">
+                        <span className={`w-2 h-2 rounded-full ${s.color || 'bg-apptivia-ink'}`} />
+                        <span className="font-medium text-apptivia-ink">{s.skillset}</span>
+                        <span className="text-apptivia-carbon-400 ml-auto">{currentXp} XP</span>
+                        <span className="text-apptivia-ink font-semibold">+{s.estimatedXp}</span>
                       </div>
                     );
                   })}
                 </div>
-                <p className="text-[10px] text-indigo-500 mt-2">Estimated XP gain from completing this plan's focus KPIs</p>
+                <p className="text-[10px] text-apptivia-ink mt-2">Estimated XP gain from completing this plan's focus KPIs</p>
               </div>
             );
           })()}
 
           {/* Assignment status for power_users */}
           {isPowerUser && plan.assigned_to?.includes(user?.id) && (
-            <div className="mb-4 p-4 bg-indigo-50 border border-indigo-200 rounded-lg">
-              <h4 className="font-semibold text-indigo-900 mb-2 flex items-center gap-2">
+            <div className="mb-4 p-4 bg-apptivia-carbon-100 border border-apptivia-carbon-300 rounded-lg">
+              <h4 className="font-semibold text-apptivia-ink mb-2 flex items-center gap-2">
                 <UserPlus size={16} />
                 Your Assignment Status
               </h4>
@@ -290,8 +290,8 @@ export default function PlanDetailModal({
 
           {/* Manager assignment overview */}
           {canManagePlans && plan.assigned_to?.length > 0 && (
-            <div className="mb-4 p-4 bg-gray-50 border border-gray-200 rounded-lg">
-              <h4 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
+            <div className="mb-4 p-4 bg-apptivia-paper border border-apptivia-carbon-200 rounded-lg">
+              <h4 className="font-semibold text-apptivia-ink mb-3 flex items-center gap-2">
                 <Users size={16} />
                 Assignment Overview
               </h4>
@@ -307,8 +307,8 @@ export default function PlanDetailModal({
                   const cfg = statusConfig[displayStatus] || statusConfig.active;
                   const StatusIcon = cfg.icon;
                   return (
-                    <div key={memberId} className="flex items-center justify-between py-1.5 px-2 rounded-md hover:bg-gray-100">
-                      <span className="text-sm text-gray-800">{memberName}</span>
+                    <div key={memberId} className="flex items-center justify-between py-1.5 px-2 rounded-md hover:bg-apptivia-carbon-100">
+                      <span className="text-sm text-apptivia-ink">{memberName}</span>
                       <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${cfg.color}`}>
                         <StatusIcon size={11} />
                         {cfg.label}
@@ -323,7 +323,7 @@ export default function PlanDetailModal({
           {/* Plan Effectiveness — shown when at least one assignee has completed with effectiveness data */}
           {planEffectiveness && (
             <div className="mb-4 p-4 bg-emerald-50 border border-emerald-200 rounded-lg">
-              <h4 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
+              <h4 className="font-semibold text-apptivia-ink mb-3 flex items-center gap-2">
                 <BarChart3 size={16} className="text-emerald-600" />
                 Plan Effectiveness
                 <span className={`ml-auto inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold ${
@@ -342,7 +342,7 @@ export default function PlanDetailModal({
                   return (
                     <div key={memberId} className="border border-emerald-100 rounded-lg p-3 bg-white">
                       <div className="flex items-center justify-between mb-2">
-                        <span className="text-sm font-medium text-gray-900">{memberName}</span>
+                        <span className="text-sm font-medium text-apptivia-ink">{memberName}</span>
                         <span className={`text-xs font-bold ${data.score >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
                           {data.score >= 0 ? '+' : ''}{data.score}%
                         </span>
@@ -356,11 +356,11 @@ export default function PlanDetailModal({
                             const delta = (f?.pct || 0) - (b?.pct || 0);
                             return (
                               <div key={kpi} className="flex items-center justify-between text-xs">
-                                <span className="text-gray-600">{buildLabel(kpi)}</span>
+                                <span className="text-apptivia-carbon-600">{buildLabel(kpi)}</span>
                                 <div className="flex items-center gap-2">
-                                  <span className="text-gray-400">{b?.pct || 0}%</span>
-                                  <span className="text-gray-300">&rarr;</span>
-                                  <span className="font-medium text-gray-900">{f?.pct || 0}%</span>
+                                  <span className="text-apptivia-carbon-400">{b?.pct || 0}%</span>
+                                  <span className="text-apptivia-carbon-300">&rarr;</span>
+                                  <span className="font-medium text-apptivia-ink">{f?.pct || 0}%</span>
                                   <span className={`font-bold ${delta >= 0 ? 'text-emerald-500' : 'text-red-500'}`}>
                                     ({delta >= 0 ? '+' : ''}{delta})
                                   </span>
@@ -379,11 +379,11 @@ export default function PlanDetailModal({
         </div>
 
         {/* Footer */}
-        <div className="border-t border-gray-200 p-4 flex justify-end gap-2">
+        <div className="border-t border-apptivia-carbon-200 p-4 flex justify-end gap-2">
           {canCreatePlans && (
             <button
               onClick={() => { onClose(); onEdit(plan); }}
-              className="px-4 py-2 text-sm font-semibold border border-blue-600 text-blue-600 rounded-md hover:bg-blue-50"
+              className="px-4 py-2 text-sm font-semibold border border-apptivia-coral text-apptivia-coral rounded-md hover:bg-apptivia-coral-tone-50"
             >
               Edit Plan
             </button>
@@ -400,21 +400,21 @@ export default function PlanDetailModal({
             <>
               <button
                 onClick={() => { onClose(); onSnapshot && onSnapshot(plan); }}
-                className="flex items-center gap-1.5 px-4 py-2 text-sm font-semibold border border-indigo-400 text-indigo-500 rounded-md hover:bg-indigo-50"
+                className="flex items-center gap-1.5 px-4 py-2 text-sm font-semibold border border-apptivia-carbon-300 text-apptivia-ink rounded-md hover:bg-apptivia-carbon-100"
               >
                 <Share2 size={14} />
                 Snapshot
               </button>
               <button
                 onClick={() => { onClose(); onShare(plan); }}
-                className="flex items-center gap-1.5 px-4 py-2 text-sm font-semibold border border-blue-400 text-blue-500 rounded-md hover:bg-blue-50"
+                className="flex items-center gap-1.5 px-4 py-2 text-sm font-semibold border border-apptivia-coral-tone-100 text-apptivia-coral rounded-md hover:bg-apptivia-coral-tone-50"
               >
                 <Mail size={14} />
                 Email
               </button>
             </>
           )}
-          <button onClick={onClose} className="px-4 py-2 text-sm font-semibold border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50">
+          <button onClick={onClose} className="px-4 py-2 text-sm font-semibold border border-apptivia-carbon-300 text-apptivia-carbon-700 rounded-md hover:bg-apptivia-paper">
             Close
           </button>
         </div>

@@ -20,17 +20,17 @@ class ErrorBoundary extends React.Component {
   render() {
     if (this.state.hasError) {
       return (
-        <div className="min-h-screen bg-gray-50 flex items-center justify-center p-6">
-          <div className="bg-white border rounded-xl shadow-sm p-6 max-w-lg text-center">
-            <h1 className="text-lg font-semibold text-gray-900 mb-2">Something went wrong</h1>
-            <p className="text-sm text-gray-500 mb-3">An unexpected error occurred while rendering this page.</p>
+        <div className="min-h-screen bg-apptivia-paper flex items-center justify-center p-6">
+          <div className="bg-white border rounded-lg shadow-sm p-6 max-w-lg text-center">
+            <h1 className="text-lg font-semibold text-apptivia-ink mb-2">Something went wrong</h1>
+            <p className="text-sm text-apptivia-carbon-500 mb-3">An unexpected error occurred while rendering this page.</p>
             <button
               onClick={() => window.location.reload()}
-              className="mb-3 px-4 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700"
+              className="mb-3 px-4 py-2 bg-apptivia-coral text-white text-sm rounded-lg hover:bg-apptivia-coral"
             >
               Reload Page
             </button>
-            <div className="text-xs text-left bg-gray-50 border rounded p-3 text-gray-700 overflow-auto max-h-48 whitespace-pre-wrap">
+            <div className="text-xs text-left bg-apptivia-paper border rounded p-3 text-apptivia-carbon-700 overflow-auto max-h-48 whitespace-pre-wrap">
               {String(this.state.error?.message || this.state.error || 'Unknown error')}
               {this.state.error?.stack ? `\n\n${this.state.error.stack}` : ''}
               {this.state.errorInfo?.componentStack ? `\n\n${this.state.errorInfo.componentStack}` : ''}
@@ -72,24 +72,24 @@ export class PageErrorBoundary extends React.Component {
     if (this.state.hasError) {
       return (
         <div className="min-h-[60vh] flex items-center justify-center p-8">
-          <div className="bg-white border border-red-100 rounded-2xl shadow-sm p-8 max-w-md text-center">
+          <div className="bg-white border border-red-100 rounded-lg shadow-sm p-8 max-w-md text-center">
             <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
               <span className="text-2xl">⚠️</span>
             </div>
-            <h2 className="text-base font-semibold text-gray-900 mb-1">This page ran into a problem</h2>
-            <p className="text-sm text-gray-500 mb-5">
+            <h2 className="text-base font-semibold text-apptivia-ink mb-1">This page ran into a problem</h2>
+            <p className="text-sm text-apptivia-carbon-500 mb-5">
               {String(this.state.error?.message || 'An unexpected error occurred.')}
             </p>
             <div className="flex items-center justify-center gap-3">
               <button
                 onClick={this.reset}
-                className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors"
+                className="px-4 py-2 bg-apptivia-coral text-white text-sm font-medium rounded-lg hover:bg-apptivia-coral transition-colors"
               >
                 Try Again
               </button>
               <button
                 onClick={() => window.history.back()}
-                className="px-4 py-2 border border-gray-300 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-50 transition-colors"
+                className="px-4 py-2 border border-apptivia-carbon-300 text-apptivia-carbon-700 text-sm font-medium rounded-lg hover:bg-apptivia-paper transition-colors"
               >
                 Go Back
               </button>

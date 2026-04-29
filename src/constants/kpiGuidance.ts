@@ -323,4 +323,29 @@ export const KPI_GUIDANCE: Record<string, KpiGuidanceEntry> = {
       'Review your Engage-influenced deals monthly to identify which activities have the highest deal impact.',
     ],
   },
+  // F14: Previously missing guidance entries
+  dials: {
+    title: 'Dials',
+    diagnosis: 'Low dial count means reps aren\'t hitting the phones enough — either call blocks aren\'t protected, dialing tools aren\'t optimized, or reps are avoiding phone outreach.',
+    coachingQuestion: 'Walk me through your daily calling routine — when do you dial, how long is your call block, and what tools are you using?',
+    tips: [
+      'Block 2-3 dedicated power-hour calling sessions per day and batch your dials to maintain momentum.',
+      'Use a parallel dialer or power dialer to maximize connect rates during call blocks.',
+      'Prioritize warm dials first — inbound leads, website visitors, and signal-triggered accounts connect at 2-3x cold rates.',
+      'Track dials-to-connects ratio weekly to optimize calling times and identify when prospects are most reachable.',
+      'Pair every dial session with a clear call objective and a one-page talk track to stay focused.',
+    ],
+  },
+  average_deal_size: {
+    title: 'Average Deal Size',
+    diagnosis: 'Low average deal size suggests reps are discounting too aggressively, selling to smaller accounts, or not expanding scope during the sales cycle.',
+    coachingQuestion: 'For your last 5 closed deals, did you present the full solution or did you scope down? What drove the final pricing decision?',
+    tips: [
+      'Always present the full solution first — let the prospect self-select down rather than starting small and trying to upsell.',
+      'Build multi-threaded relationships to access economic buyers who can approve larger budgets.',
+      'Use value-based selling: quantify the ROI and business impact before discussing price to anchor at higher values.',
+      'Review your ICP fit regularly — ensure you\'re targeting accounts with adequate budget and pain severity for your full platform.',
+      'Practice negotiation techniques: hold price, trade concessions (terms vs. discount), and protect deal size with anchoring.',
+    ],
+  },
 };

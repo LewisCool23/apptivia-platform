@@ -800,14 +800,12 @@ export default function Coach() {
         });
       }
 
-      // Search achievements (org-scoped)
-      let achievementsSearch = supabase
+      // Search achievements (global structural definitions)
+      const { data: achievements } = await supabase
         .from('achievements')
         .select('id, name, description')
         .ilike('name', `%${searchTerm}%`)
         .limit(5);
-      if (orgId) achievementsSearch = achievementsSearch.eq('organization_id', orgId);
-      const { data: achievements } = await achievementsSearch;
 
       if (achievements) {
         achievements.forEach((achievement) => {
@@ -821,14 +819,12 @@ export default function Coach() {
         });
       }
 
-      // Search skillsets (org-scoped)
-      let skillsetsSearch = supabase
+      // Search skillsets (global structural definitions)
+      const { data: skillsets } = await supabase
         .from('skillsets')
         .select('id, name, description')
         .ilike('name', `%${searchTerm}%`)
         .limit(5);
-      if (orgId) skillsetsSearch = skillsetsSearch.eq('organization_id', orgId);
-      const { data: skillsets } = await skillsetsSearch;
 
       if (skillsets) {
         skillsets.forEach((skillset) => {
@@ -877,24 +873,24 @@ export default function Coach() {
         <div className="flex items-start justify-between mb-4">
           <div>
             <div className="flex items-center gap-2 mb-1">
-              <h1 className="text-2xl font-bold text-blue-700">Apptivia Coach</h1>
+              <h1 className="text-2xl font-bold text-apptivia-coral">Apptivia Coach</h1>
               <InfoTooltip text="Overview of coaching performance, mastery progress, and achievements for the selected audience." />
             </div>
-            <p className="text-gray-500 text-sm">
+            <p className="text-apptivia-carbon-500 text-sm">
               {isPowerUser ? 'Your personalized coaching insights and progress' : 'Personalized coaching insights and progress'}
             </p>
           </div>
           <div className="flex gap-2 items-center">
             {/* Search Bar */}
             <div className="relative">
-              <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+              <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-apptivia-carbon-400" />
               <input
                 type="text"
                 placeholder="Search..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 onFocus={() => searchQuery && setShowSearchResults(true)}
-                className="w-64 pl-9 pr-8 py-2 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-64 pl-9 pr-8 py-2 text-sm border border-apptivia-carbon-200 rounded-lg focus:ring-2 focus:ring-apptivia-coral focus:border-apptivia-coral"
               />
               {searchQuery && (
                 <button
@@ -903,14 +899,14 @@ export default function Coach() {
                     setSearchResults([]);
                     setShowSearchResults(false);
                   }}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-apptivia-carbon-400 hover:text-apptivia-carbon-600"
                 >
                   <X size={14} />
                 </button>
               )}
               {/* Search Results Dropdown */}
               {showSearchResults && searchResults.length > 0 && (
-                <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-96 overflow-y-auto z-50">
+                <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-apptivia-carbon-200 rounded-lg shadow-lg max-h-96 overflow-y-auto z-50">
                   {searchResults.map((result, idx) => (
                     <button
                       key={idx}
@@ -920,17 +916,17 @@ export default function Coach() {
                         setSearchResults([]);
                         setShowSearchResults(false);
                       }}
-                      className="w-full text-left px-4 py-3 hover:bg-gray-50 border-b last:border-b-0 transition-colors"
+                      className="w-full text-left px-4 py-3 hover:bg-apptivia-paper border-b last:border-b-0 transition-colors"
                     >
                       <div className="flex items-start gap-3">
                         <span className="text-xl">{result.icon}</span>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2">
-                            <span className="text-xs font-semibold text-gray-900">{result.title}</span>
-                            <span className="text-[10px] px-1.5 py-0.5 rounded bg-gray-100 text-gray-600">{result.type}</span>
+                            <span className="text-xs font-semibold text-apptivia-ink">{result.title}</span>
+                            <span className="text-[10px] px-1.5 py-0.5 rounded bg-apptivia-carbon-100 text-apptivia-carbon-600">{result.type}</span>
                           </div>
                           {result.subtitle && (
-                            <div className="text-[11px] text-gray-500 mt-0.5 truncate">{result.subtitle}</div>
+                            <div className="text-[11px] text-apptivia-carbon-500 mt-0.5 truncate">{result.subtitle}</div>
                           )}
                         </div>
                       </div>
@@ -939,13 +935,13 @@ export default function Coach() {
                 </div>
               )}
               {showSearchResults && searchQuery && searchResults.length === 0 && !searching && (
-                <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg p-4 z-50">
-                  <div className="text-sm text-gray-500 text-center">No results found</div>
+                <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-apptivia-carbon-200 rounded-lg shadow-lg p-4 z-50">
+                  <div className="text-sm text-apptivia-carbon-500 text-center">No results found</div>
                 </div>
               )}
               {searching && (
-                <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg p-4 z-50">
-                  <div className="text-sm text-gray-500 text-center">Searching...</div>
+                <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-apptivia-carbon-200 rounded-lg shadow-lg p-4 z-50">
+                  <div className="text-sm text-apptivia-carbon-500 text-center">Searching...</div>
                 </div>
               )}
             </div>
@@ -953,7 +949,7 @@ export default function Coach() {
             <button
               onClick={handleRefresh}
               disabled={isRefreshing}
-              className={`relative p-2 rounded-lg font-semibold text-sm bg-white text-gray-700 border border-gray-200 hover:bg-gray-50 group ${
+              className={`relative p-2 rounded-lg font-semibold text-sm bg-white text-apptivia-carbon-700 border border-apptivia-carbon-200 hover:bg-apptivia-paper group ${
                 isRefreshing ? 'opacity-50 cursor-not-allowed' : 'transition-all duration-200 hover:scale-105 hover:shadow-md'
               }`}
               /* tooltip handled by custom hover span below */
@@ -971,7 +967,7 @@ export default function Coach() {
                   d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" 
                 />
               </svg>
-              <span className="absolute top-full left-1/2 -translate-x-1/2 mt-2 px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 pointer-events-none group-hover:opacity-100 whitespace-nowrap transition-opacity z-50">
+              <span className="absolute top-full left-1/2 -translate-x-1/2 mt-2 px-2 py-1 bg-apptivia-ink text-white text-xs rounded opacity-0 pointer-events-none group-hover:opacity-100 whitespace-nowrap transition-opacity z-50">
                 {isRefreshing ? 'Refreshing...' : 'Refresh'}
               </span>
             </button>
@@ -1011,14 +1007,14 @@ export default function Coach() {
         <div className="mb-6">
           {loading ? (
             <div className="flex flex-wrap gap-4 items-center">
-              <div className="bg-gray-200 rounded-lg px-6 py-6 flex-1 min-w-[300px] animate-pulse" style={{ height: '280px' }} />
+              <div className="bg-apptivia-carbon-200 rounded-lg px-6 py-6 flex-1 min-w-[300px] animate-pulse" style={{ height: '280px' }} />
             </div>
           ) : error ? (
             <div className="text-center py-8 text-red-500">Error: {error}</div>
           ) : (
-            <div className="flex flex-wrap gap-4 items-stretch text-sm text-gray-600">
+            <div className="flex flex-wrap gap-4 items-stretch text-sm text-apptivia-carbon-600">
               {/* Main Level Card */}
-              <div className={`bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-lg px-4 py-4 flex-1 min-w-[280px] flex flex-col justify-between transition-all duration-300 hover:shadow-xl hover:scale-[1.02] ${data.levelProgress === 100 ? 'ring-2 ring-yellow-400 shadow-[0_0_20px_rgba(250,204,21,0.4)]' : ''}`}>
+              <div className={`bg-apptivia-coral text-white rounded-lg px-4 py-4 flex-1 min-w-[280px] flex flex-col justify-between transition-all duration-300 hover:shadow-xl hover:scale-[1.02] ${data.levelProgress === 100 ? 'ring-2 ring-yellow-400 shadow-[0_0_20px_rgba(250,204,21,0.4)]' : ''}`}>
                 <div className="flex items-center gap-2 mb-1">
                   <span className="text-base font-semibold">{data.avgLevel}</span>
                   {data.levelProgress === 100 && (
@@ -1044,11 +1040,11 @@ export default function Coach() {
                     const lvl = getEffectiveLevel(p.total_points || 0, skillsetProgresses).level;
                     dist[lvl] = (dist[lvl] || 0) + 1;
                   });
-                  const colors = { Developing: 'bg-orange-400', Intermediate: 'bg-blue-400', Proficient: 'bg-emerald-400', Elite: 'bg-yellow-400', Master: 'bg-purple-400' };
+                  const colors = { Developing: 'bg-orange-400', Intermediate: 'bg-apptivia-coral', Proficient: 'bg-emerald-400', Elite: 'bg-yellow-400', Master: 'bg-apptivia-ink' };
                   return (
                     <div className="flex flex-wrap gap-1.5 mb-2">
                       {Object.entries(dist).filter(([, count]) => count > 0).map(([label, count]) => (
-                        <span key={label} className={`px-2 py-0.5 rounded-full text-[10px] font-semibold ${colors[label] || 'bg-gray-400'} text-white/90`}>
+                        <span key={label} className={`px-2 py-0.5 rounded-full text-[10px] font-semibold ${colors[label] || 'bg-apptivia-carbon-400'} text-white/90`}>
                           {count} {label}
                         </span>
                       ))}
@@ -1062,7 +1058,7 @@ export default function Coach() {
                     <div className="text-lg font-bold cursor-help">{data.avgPoints || 0}</div>
                     <div className="text-xs">Level Points</div>
                     <div className="absolute bottom-full left-0 mb-2 hidden group-hover/pts:block z-50">
-                      <div className="bg-gray-900 text-white text-[10px] rounded-lg px-3 py-2 whitespace-nowrap shadow-lg">
+                      <div className="bg-apptivia-ink text-white text-[10px] rounded-lg px-3 py-2 whitespace-nowrap shadow-lg">
                         <div className="font-semibold mb-1">Points Breakdown</div>
                         <div>Achievements: {isPowerUser ? userAchievementCount : data.totalAchievements} earned</div>
                         <div>Badges: {data.totalBadges} earned</div>
@@ -1096,7 +1092,7 @@ export default function Coach() {
                   }
                 </div>
                 <div className="w-full mt-4 pt-4 border-t border-white border-opacity-10 flex justify-between items-center">
-                  <Tooltip text={isPowerUser ? "Your weighted average KPI attainment for the current period" : "Weighted average of all KPI attainment percentages for the current period"} position="bottom">
+                  <Tooltip text={isPowerUser ? "Your weighted average KPI attainment for the current period" : "Weighted average of all KPI attainment percentages for the current period"} position="right">
                     <div className="flex flex-col items-center min-w-[60px] cursor-help">
                       <div className="text-lg font-bold">{data.avgScore}%</div>
                       <div className="text-xs text-white/80">{isPowerUser ? 'Score' : 'Avg Score'}</div>
@@ -1125,22 +1121,22 @@ export default function Coach() {
 
               {/* Side Cards: Growth Path (power user) or Team Leaderboard (manager) */}
               {isPowerUser && (
-                <div className="bg-white border border-gray-200 rounded-lg p-4 min-w-[220px] max-w-[260px] flex flex-col">
-                  <div className="text-sm font-semibold text-gray-900 mb-3">My Growth Path</div>
+                <div className="bg-white border border-apptivia-carbon-200 rounded-lg p-4 min-w-[220px] max-w-[260px] flex flex-col">
+                  <div className="text-sm font-semibold text-apptivia-ink mb-3">My Growth Path</div>
                   {(() => {
                     const pts = data.avgPoints || 0;
                     const skillsetProgresses = (data.skillsets || []).map(s => s.progress);
                     const effectiveInfo = getEffectiveLevel(pts, skillsetProgresses);
                     const currentIdx = LEVELS.findIndex(l => l.label === effectiveInfo.level);
                     const nextLevel = currentIdx < LEVELS.length - 1 ? LEVELS[currentIdx + 1] : null;
-                    const levelColors = ['text-orange-500', 'text-blue-500', 'text-emerald-500', 'text-yellow-500', 'text-purple-500'];
+                    const levelColors = ['text-orange-500', 'text-apptivia-coral', 'text-emerald-500', 'text-yellow-500', 'text-apptivia-ink'];
                     return (
                       <div className="space-y-2 flex-1">
                         {LEVELS.map((lvl, i) => (
-                          <div key={lvl.label} className={`flex items-center gap-2 text-xs ${i === currentIdx ? 'font-bold' : i < currentIdx ? 'text-gray-400' : 'text-gray-500'}`}>
-                            <span className={`w-2 h-2 rounded-full ${i <= currentIdx ? (levelColors[i] || 'text-gray-400').replace('text-', 'bg-') : 'bg-gray-200'}`} />
+                          <div key={lvl.label} className={`flex items-center gap-2 text-xs ${i === currentIdx ? 'font-bold' : i < currentIdx ? 'text-apptivia-carbon-400' : 'text-apptivia-carbon-500'}`}>
+                            <span className={`w-2 h-2 rounded-full ${i <= currentIdx ? (levelColors[i] || 'text-apptivia-carbon-400').replace('text-', 'bg-') : 'bg-apptivia-carbon-200'}`} />
                             <span className={i === currentIdx ? levelColors[i] || '' : ''}>{lvl.label}</span>
-                            {i === currentIdx && <span className="ml-auto text-[10px] bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded">YOU</span>}
+                            {i === currentIdx && <span className="ml-auto text-[10px] bg-apptivia-coral-tone-50 text-apptivia-coral px-1.5 py-0.5 rounded">YOU</span>}
                             {i < currentIdx && <span className="ml-auto text-[10px] text-green-500">✓</span>}
                           </div>
                         ))}
@@ -1150,8 +1146,8 @@ export default function Coach() {
                           </div>
                         )}
                         {!effectiveInfo.cappedByBreadth && nextLevel && (
-                          <div className="mt-3 pt-2 border-t text-[11px] text-gray-500">
-                            <span className="font-medium text-gray-700">{effectiveInfo.pointsToNext} pts</span> to reach {nextLevel.label}
+                          <div className="mt-3 pt-2 border-t text-[11px] text-apptivia-carbon-500">
+                            <span className="font-medium text-apptivia-carbon-700">{effectiveInfo.pointsToNext} pts</span> to reach {nextLevel.label}
                           </div>
                         )}
                       </div>
@@ -1192,16 +1188,16 @@ export default function Coach() {
 
               <div className="space-y-2">
                 {/* Section 1: KPI Success Trends */}
-                <div className={`rounded-lg border transition-colors ${insightsSection === 'trends' ? 'border-blue-200 bg-blue-50/30' : 'border-gray-100 bg-blue-50/10 hover:bg-blue-50/30'}`}>
+                <div className={`rounded-lg border transition-colors ${insightsSection === 'trends' ? 'border-apptivia-coral-tone-100 bg-apptivia-coral-tone-50/30' : 'border-apptivia-carbon-100 bg-apptivia-coral-tone-50/10 hover:bg-apptivia-coral-tone-50/30'}`}>
                   <button
                     type="button"
                     onClick={() => setInsightsSection(prev => prev === 'trends' ? null : 'trends')}
                     className="w-full flex items-center gap-3 px-4 py-3 text-left"
                   >
-                    <svg className="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>
-                    <span className="font-semibold text-sm text-gray-900">KPI Success Trends</span>
+                    <svg className="w-5 h-5 text-apptivia-coral" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>
+                    <span className="font-semibold text-sm text-apptivia-ink">KPI Success Trends</span>
                     {kpiTrends && (
-                      <span className="ml-auto text-[10px] font-medium text-gray-500">
+                      <span className="ml-auto text-[10px] font-medium text-apptivia-carbon-500">
                         {onTrackCount > 0 && <span className="text-emerald-600">{onTrackCount} on track</span>}
                         {onTrackCount > 0 && declining.length > 0 && <span className="mx-1">·</span>}
                         {declining.length > 0 && <span className="text-red-500">{declining.length} need focus</span>}
@@ -1209,27 +1205,27 @@ export default function Coach() {
                       </span>
                     )}
                     {insightsSection === 'trends'
-                      ? <svg className="w-4 h-4 text-gray-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" /></svg>
-                      : <svg className="w-4 h-4 text-gray-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+                      ? <svg className="w-4 h-4 text-apptivia-carbon-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" /></svg>
+                      : <svg className="w-4 h-4 text-apptivia-carbon-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
                     }
                   </button>
                   {insightsSection === 'trends' && (
                     <div className="px-4 pb-4">
                       {kpiTrendsLoading ? (
-                        <div className="text-xs text-gray-500 py-4">Loading performance trends...</div>
+                        <div className="text-xs text-apptivia-carbon-500 py-4">Loading performance trends...</div>
                       ) : !kpiTrends || trendEntries.length === 0 ? (
-                        <div className="text-xs text-gray-500 py-4">No trend data available yet.</div>
+                        <div className="text-xs text-apptivia-carbon-500 py-4">No trend data available yet.</div>
                       ) : (
                         <div className="overflow-y-auto max-h-[300px]">
                           <table className="w-full text-xs">
                             <thead className="sticky top-0 bg-white">
-                              <tr className="border-b border-gray-100">
-                                <th className="text-left py-1.5 px-2 font-semibold text-gray-700">KPI</th>
+                              <tr className="border-b border-apptivia-carbon-100">
+                                <th className="text-left py-1.5 px-2 font-semibold text-apptivia-carbon-700">KPI</th>
                                 {(trendEntries[0]?.[1]?.weeks || []).map((w, i) => (
-                                  <th key={i} className="text-center py-1.5 px-1 font-medium text-gray-400 text-[10px]">{w.week}</th>
+                                  <th key={i} className="text-center py-1.5 px-1 font-medium text-apptivia-carbon-400 text-[10px]">{w.week}</th>
                                 ))}
-                                <th className="text-center py-1.5 px-2 font-semibold text-gray-700">Trend</th>
-                                <th className="text-center py-1.5 px-2 font-semibold text-gray-700">Status</th>
+                                <th className="text-center py-1.5 px-2 font-semibold text-apptivia-carbon-700">Trend</th>
+                                <th className="text-center py-1.5 px-2 font-semibold text-apptivia-carbon-700">Status</th>
                               </tr>
                             </thead>
                             <tbody>
@@ -1237,16 +1233,16 @@ export default function Coach() {
                                 const isLagging = trend.avgPct < LAGGING_THRESHOLD;
                                 const statusColor = trend.avgPct >= 90 ? 'text-green-600 bg-green-50' : trend.avgPct >= 80 ? 'text-yellow-600 bg-yellow-50' : trend.avgPct >= 60 ? 'text-orange-600 bg-orange-50' : 'text-red-600 bg-red-50';
                                 return (
-                                  <tr key={key} className={`border-b border-gray-50 ${isLagging ? 'bg-red-50/30' : ''}`}>
-                                    <td className="py-1.5 px-2 font-medium text-gray-900 whitespace-nowrap">{trend.name}</td>
+                                  <tr key={key} className={`border-b border-apptivia-carbon-100 ${isLagging ? 'bg-red-50/30' : ''}`}>
+                                    <td className="py-1.5 px-2 font-medium text-apptivia-ink whitespace-nowrap">{trend.name}</td>
                                     {trend.weeks.map((w, i) => {
-                                      const cellColor = w.pct > 0 ? scoreTextColor(w.pct) : 'text-gray-300';
+                                      const cellColor = w.pct > 0 ? scoreTextColor(w.pct) : 'text-apptivia-carbon-300';
                                       return (
                                         <td key={i} className={`text-center py-1.5 px-1 font-medium ${cellColor}`}>{w.pct}%</td>
                                       );
                                     })}
                                     <td className="text-center py-1.5 px-2">
-                                      <span className={`text-[10px] font-semibold ${trend.direction === 'up' ? 'text-emerald-600' : trend.direction === 'down' ? 'text-rose-600' : 'text-gray-400'}`}>
+                                      <span className={`text-[10px] font-semibold ${trend.direction === 'up' ? 'text-emerald-600' : trend.direction === 'down' ? 'text-rose-600' : 'text-apptivia-carbon-400'}`}>
                                         {trend.direction === 'up' ? '▲' : trend.direction === 'down' ? '▼' : '—'}
                                         {trend.trendDelta !== 0 ? ` ${Math.abs(trend.trendDelta)}%` : ''}
                                       </span>
@@ -1268,14 +1264,14 @@ export default function Coach() {
                 </div>
 
                 {/* Section 2: Improvement Suggestions */}
-                <div className={`rounded-lg border transition-colors ${insightsSection === 'suggestions' ? 'border-orange-200 bg-orange-50/30' : 'border-gray-100 bg-orange-50/10 hover:bg-orange-50/30'}`}>
+                <div className={`rounded-lg border transition-colors ${insightsSection === 'suggestions' ? 'border-orange-200 bg-orange-50/30' : 'border-apptivia-carbon-100 bg-orange-50/10 hover:bg-orange-50/30'}`}>
                   <button
                     type="button"
                     onClick={() => setInsightsSection(prev => prev === 'suggestions' ? null : 'suggestions')}
                     className="w-full flex items-center gap-3 px-4 py-3 text-left"
                   >
                     <svg className="w-5 h-5 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" /></svg>
-                    <span className="font-semibold text-sm text-gray-900">Improvement Suggestions</span>
+                    <span className="font-semibold text-sm text-apptivia-ink">Improvement Suggestions</span>
                     <span className="ml-auto flex items-center gap-2">
                       {declining.length > 0 ? (
                         <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-orange-100 text-orange-600 font-semibold">{declining.length} KPI{declining.length !== 1 ? 's' : ''}</span>
@@ -1284,8 +1280,8 @@ export default function Coach() {
                       )}
                     </span>
                     {insightsSection === 'suggestions'
-                      ? <svg className="w-4 h-4 text-gray-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" /></svg>
-                      : <svg className="w-4 h-4 text-gray-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+                      ? <svg className="w-4 h-4 text-apptivia-carbon-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" /></svg>
+                      : <svg className="w-4 h-4 text-apptivia-carbon-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
                     }
                   </button>
                   {insightsSection === 'suggestions' && (
@@ -1298,7 +1294,7 @@ export default function Coach() {
                             return (
                               <div key={key} className="border border-orange-100 bg-orange-50/50 rounded-lg p-3">
                                 <div className="flex items-center gap-2 mb-1">
-                                  <span className="font-semibold text-xs text-gray-900">{trend.name}</span>
+                                  <span className="font-semibold text-xs text-apptivia-ink">{trend.name}</span>
                                   <span className={`text-[10px] font-semibold ${trend.direction === 'down' ? 'text-rose-600' : 'text-amber-600'}`}>
                                     {trend.direction === 'down' ? `▼ ${Math.abs(trend.trendDelta)}% declining` : `${trend.avgPct}% avg — below ${LAGGING_THRESHOLD}%`}
                                   </span>
@@ -1306,7 +1302,7 @@ export default function Coach() {
                                 <div className="text-[11px] text-amber-800 italic mb-1.5">{guidance.diagnosis}</div>
                                 <div className="space-y-0.5">
                                   {guidance.tips.slice(0, 2).map((tip, i) => (
-                                    <div key={i} className="flex items-start gap-1.5 text-[11px] text-gray-700">
+                                    <div key={i} className="flex items-start gap-1.5 text-[11px] text-apptivia-carbon-700">
                                       <span className="text-orange-400 mt-0.5 shrink-0">•</span>
                                       <span>{tip}</span>
                                     </div>
@@ -1329,45 +1325,45 @@ export default function Coach() {
                 </div>
 
                 {/* Section 3: Active Coaching Plans */}
-                <div className={`rounded-lg border transition-colors ${insightsSection === 'plans' ? 'border-green-200 bg-green-50/30' : 'border-gray-100 bg-green-50/10 hover:bg-green-50/30'}`}>
+                <div className={`rounded-lg border transition-colors ${insightsSection === 'plans' ? 'border-green-200 bg-green-50/30' : 'border-apptivia-carbon-100 bg-green-50/10 hover:bg-green-50/30'}`}>
                   <button
                     type="button"
                     onClick={() => setInsightsSection(prev => prev === 'plans' ? null : 'plans')}
                     className="w-full flex items-center gap-3 px-4 py-3 text-left"
                   >
                     <svg className="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" /></svg>
-                    <span className="font-semibold text-sm text-gray-900">Active Coaching Plans</span>
+                    <span className="font-semibold text-sm text-apptivia-ink">Active Coaching Plans</span>
                     <span className="ml-auto flex items-center gap-2">
                       {activePlansLoading ? (
-                        <span className="text-[10px] font-medium text-gray-400">Loading...</span>
+                        <span className="text-[10px] font-medium text-apptivia-carbon-400">Loading...</span>
                       ) : totalPlans > 0 ? (
-                        <span className="text-[10px] font-medium text-gray-500">
+                        <span className="text-[10px] font-medium text-apptivia-carbon-500">
                           {activePlans.length > 0 && <span className="text-green-600">{activePlans.length} active</span>}
                           {activePlans.length > 0 && completedPlans.length > 0 && <span className="mx-1">·</span>}
-                          {completedPlans.length > 0 && <span className="text-gray-400">{completedPlans.length} completed</span>}
+                          {completedPlans.length > 0 && <span className="text-apptivia-carbon-400">{completedPlans.length} completed</span>}
                         </span>
                       ) : (
-                        <span className="text-[10px] font-medium text-gray-400">
+                        <span className="text-[10px] font-medium text-apptivia-carbon-400">
                           No plans
-                          <span className="ml-1.5 text-blue-600 hover:text-blue-800 cursor-pointer" onClick={(e) => { e.stopPropagation(); setRequestPlanOpen(true); }}>
+                          <span className="ml-1.5 text-apptivia-coral hover:text-apptivia-coral-tone-700 cursor-pointer" onClick={(e) => { e.stopPropagation(); setRequestPlanOpen(true); }}>
                             + Request
                           </span>
                         </span>
                       )}
                     </span>
                     {insightsSection === 'plans'
-                      ? <svg className="w-4 h-4 text-gray-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" /></svg>
-                      : <svg className="w-4 h-4 text-gray-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+                      ? <svg className="w-4 h-4 text-apptivia-carbon-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" /></svg>
+                      : <svg className="w-4 h-4 text-apptivia-carbon-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
                     }
                   </button>
                   {insightsSection === 'plans' && (
                     <div className="px-4 pb-4">
                       {activePlansLoading ? (
-                        <div className="text-xs text-gray-500 py-4">Loading coaching plans...</div>
+                        <div className="text-xs text-apptivia-carbon-500 py-4">Loading coaching plans...</div>
                       ) : totalPlans === 0 ? (
-                        <div className="border border-dashed border-gray-200 rounded-lg p-4 text-center">
-                          <div className="text-sm text-gray-500 mb-2">No active coaching plans</div>
-                          <button type="button" onClick={() => setRequestPlanOpen(true)} className="text-xs text-blue-600 hover:text-blue-800 font-medium">
+                        <div className="border border-dashed border-apptivia-carbon-200 rounded-lg p-4 text-center">
+                          <div className="text-sm text-apptivia-carbon-500 mb-2">No active coaching plans</div>
+                          <button type="button" onClick={() => setRequestPlanOpen(true)} className="text-xs text-apptivia-coral hover:text-apptivia-coral-tone-700 font-medium">
                             Request Coaching Plan
                           </button>
                         </div>
@@ -1376,14 +1372,14 @@ export default function Coach() {
                           {activePlans.map(plan => {
                             const assignment = myAssignments[plan.id] || {};
                             const status = assignment.status || 'active';
-                            const statusColor = status === 'in_progress' ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-600';
+                            const statusColor = status === 'in_progress' ? 'bg-apptivia-coral-tone-50 text-apptivia-coral' : 'bg-apptivia-carbon-100 text-apptivia-carbon-600';
                             const statusLabel = status === 'in_progress' ? 'In Progress' : 'Active';
                             return (
-                              <div key={plan.id} className="border border-gray-100 rounded-lg p-3 hover:shadow-sm transition-all">
+                              <div key={plan.id} className="border border-apptivia-carbon-100 rounded-lg p-3 hover:shadow-sm transition-all">
                                 <div className="flex items-center justify-between mb-2">
-                                  <div className="font-semibold text-sm text-gray-900">{plan.name || 'Coaching Plan'}</div>
+                                  <div className="font-semibold text-sm text-apptivia-ink">{plan.name || 'Coaching Plan'}</div>
                                   <div className="flex items-center gap-2">
-                                    <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-semibold ${plan.plan_type === 'ai_self_coaching' ? 'bg-purple-100 text-purple-700' : 'bg-blue-100 text-blue-700'}`}>
+                                    <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-semibold ${plan.plan_type === 'ai_self_coaching' ? 'bg-apptivia-carbon-100 text-apptivia-ink' : 'bg-apptivia-coral-tone-50 text-apptivia-coral'}`}>
                                       {plan.plan_type === 'ai_self_coaching' ? 'AI Generated' : 'Manager Assigned'}
                                     </span>
                                     <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-semibold ${statusColor}`}>{statusLabel}</span>
@@ -1392,25 +1388,25 @@ export default function Coach() {
                                 {plan.focus_kpis?.length > 0 && (
                                   <div className="flex flex-wrap gap-1 mb-2">
                                     {plan.focus_kpis.map((kpi, i) => (
-                                      <span key={i} className="text-[10px] px-2 py-0.5 rounded-full bg-gray-100 text-gray-600 font-medium">{buildLabel(kpi)}</span>
+                                      <span key={i} className="text-[10px] px-2 py-0.5 rounded-full bg-apptivia-carbon-100 text-apptivia-carbon-600 font-medium">{buildLabel(kpi)}</span>
                                     ))}
                                   </div>
                                 )}
                                 {plan.action_items && (
                                   <div className="space-y-1 mb-2">
                                     {(Array.isArray(plan.action_items) ? plan.action_items : []).slice(0, 3).map((item, i) => (
-                                      <div key={i} className="flex items-start gap-1.5 text-[11px] text-gray-700">
-                                        <span className="text-blue-400 mt-0.5 shrink-0">○</span>
+                                      <div key={i} className="flex items-start gap-1.5 text-[11px] text-apptivia-carbon-700">
+                                        <span className="text-apptivia-coral-tone-300 mt-0.5 shrink-0">○</span>
                                         <span>{typeof item === 'string' ? item : item?.text || item?.action || JSON.stringify(item)}</span>
                                       </div>
                                     ))}
                                     {Array.isArray(plan.action_items) && plan.action_items.length > 3 && (
-                                      <div className="text-[10px] text-gray-400 ml-4">+{plan.action_items.length - 3} more items</div>
+                                      <div className="text-[10px] text-apptivia-carbon-400 ml-4">+{plan.action_items.length - 3} more items</div>
                                     )}
                                   </div>
                                 )}
                                 <div className="flex gap-2 mt-2">
-                                  <button type="button" onClick={() => setViewPlanDetail(plan)} className="text-[11px] px-2.5 py-1 rounded-md bg-gray-50 text-gray-700 hover:bg-gray-100 font-medium border border-gray-200 transition-colors">
+                                  <button type="button" onClick={() => setViewPlanDetail(plan)} className="text-[11px] px-2.5 py-1 rounded-md bg-apptivia-paper text-apptivia-carbon-700 hover:bg-apptivia-carbon-100 font-medium border border-apptivia-carbon-200 transition-colors">
                                     View Full Plan
                                   </button>
                                   {(status === 'active' || status === 'in_progress') && (
@@ -1426,7 +1422,7 @@ export default function Coach() {
                           {/* Completed Plans — collapsible */}
                           {completedPlans.length > 0 && (
                             <div className={`${activePlans.length > 0 ? 'border-t pt-3' : ''}`}>
-                              <button type="button" onClick={() => setCompletedPlansOpen(o => !o)} className="flex items-center gap-2 text-xs font-semibold text-gray-600 hover:text-gray-800 transition-colors">
+                              <button type="button" onClick={() => setCompletedPlansOpen(o => !o)} className="flex items-center gap-2 text-xs font-semibold text-apptivia-carbon-600 hover:text-apptivia-ink transition-colors">
                                 <span className="text-[10px]">{completedPlansOpen ? '▲' : '▼'}</span>
                                 Past Plans ({completedPlans.length})
                               </button>
@@ -1442,18 +1438,18 @@ export default function Coach() {
                                     if (effScore != null) {
                                       if (effScore >= 5) { effTier = 'Strong improvement'; effColor = 'text-emerald-600'; }
                                       else if (effScore > -5) { effTier = 'Some improvement'; effColor = 'text-amber-600'; }
-                                      else { effTier = 'No change'; effColor = 'text-gray-500'; }
+                                      else { effTier = 'No change'; effColor = 'text-apptivia-carbon-500'; }
                                     }
                                     return (
-                                      <div key={plan.id} className="border border-gray-100 rounded-lg p-3 bg-gray-50">
+                                      <div key={plan.id} className="border border-apptivia-carbon-100 rounded-lg p-3 bg-apptivia-paper">
                                         <div className="flex items-center justify-between mb-1">
-                                          <span className="font-semibold text-sm text-gray-900">{plan.name || 'Coaching Plan'}</span>
-                                          <span className="text-[10px] text-gray-400">{assignment.status === 'cancelled' ? 'Cancelled' : 'Completed'} {assignment.completed_at ? new Date(assignment.completed_at).toLocaleDateString() : ''}</span>
+                                          <span className="font-semibold text-sm text-apptivia-ink">{plan.name || 'Coaching Plan'}</span>
+                                          <span className="text-[10px] text-apptivia-carbon-400">{assignment.status === 'cancelled' ? 'Cancelled' : 'Completed'} {assignment.completed_at ? new Date(assignment.completed_at).toLocaleDateString() : ''}</span>
                                         </div>
                                         {focusKpis.length > 0 && (
                                           <div className="flex flex-wrap gap-1 mb-2">
                                             {focusKpis.map((kpi, i) => (
-                                              <span key={i} className="text-[10px] px-2 py-0.5 rounded-full bg-gray-100 text-gray-600 font-medium">{buildLabel(kpi)}</span>
+                                              <span key={i} className="text-[10px] px-2 py-0.5 rounded-full bg-apptivia-carbon-100 text-apptivia-carbon-600 font-medium">{buildLabel(kpi)}</span>
                                             ))}
                                           </div>
                                         )}
@@ -1466,12 +1462,12 @@ export default function Coach() {
                                               const delta = f && b ? (f.pct || 0) - (b.pct || 0) : null;
                                               return (
                                                 <div key={kpi} className="flex items-center gap-2 text-[10px]">
-                                                  <span className="text-gray-600 w-28 truncate">{buildLabel(kpi)}</span>
-                                                  <span className="text-gray-500">{b.pct ?? '—'}%</span>
-                                                  <span className="text-gray-400">→</span>
-                                                  <span className="text-gray-700 font-medium">{f?.pct ?? '—'}%</span>
+                                                  <span className="text-apptivia-carbon-600 w-28 truncate">{buildLabel(kpi)}</span>
+                                                  <span className="text-apptivia-carbon-500">{b.pct ?? '—'}%</span>
+                                                  <span className="text-apptivia-carbon-400">→</span>
+                                                  <span className="text-apptivia-carbon-700 font-medium">{f?.pct ?? '—'}%</span>
                                                   {delta !== null && (
-                                                    <span className={`font-semibold ${delta > 0 ? 'text-emerald-600' : delta < 0 ? 'text-red-500' : 'text-gray-400'}`}>
+                                                    <span className={`font-semibold ${delta > 0 ? 'text-emerald-600' : delta < 0 ? 'text-red-500' : 'text-apptivia-carbon-400'}`}>
                                                       {delta > 0 ? '+' : ''}{delta}%
                                                     </span>
                                                   )}
@@ -1494,41 +1490,41 @@ export default function Coach() {
                 </div>
 
                 {/* Section 4: My Development Plans (IDPs) */}
-                <div className={`rounded-lg border transition-colors ${insightsSection === 'idps' ? 'border-purple-200 bg-purple-50/30' : 'border-gray-100 bg-purple-50/10 hover:bg-purple-50/30'}`}>
+                <div className={`rounded-lg border transition-colors ${insightsSection === 'idps' ? 'border-apptivia-carbon-300 bg-apptivia-carbon-100/30' : 'border-apptivia-carbon-100 bg-apptivia-carbon-100/10 hover:bg-apptivia-carbon-100/30'}`}>
                   <button
                     type="button"
                     onClick={() => setInsightsSection(prev => prev === 'idps' ? null : 'idps')}
                     className="w-full flex items-center gap-3 px-4 py-3 text-left"
                   >
-                    <svg className="w-5 h-5 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" /></svg>
-                    <span className="font-semibold text-sm text-gray-900">My Development Plans</span>
+                    <svg className="w-5 h-5 text-apptivia-ink" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" /></svg>
+                    <span className="font-semibold text-sm text-apptivia-ink">My Development Plans</span>
                     <span className="ml-auto flex items-center gap-2">
                       {myIdpsLoading ? (
-                        <span className="text-[10px] font-medium text-gray-400">Loading...</span>
+                        <span className="text-[10px] font-medium text-apptivia-carbon-400">Loading...</span>
                       ) : myIdps.length > 0 ? (
-                        <span className="text-[10px] font-medium text-gray-500">
-                          <span className="text-purple-600">{myIdps.filter(p => p.status !== 'completed').length} active</span>
+                        <span className="text-[10px] font-medium text-apptivia-carbon-500">
+                          <span className="text-apptivia-ink">{myIdps.filter(p => p.status !== 'completed').length} active</span>
                           {myIdps.filter(p => p.status === 'completed').length > 0 && (
-                            <><span className="mx-1">·</span><span className="text-gray-400">{myIdps.filter(p => p.status === 'completed').length} completed</span></>
+                            <><span className="mx-1">·</span><span className="text-apptivia-carbon-400">{myIdps.filter(p => p.status === 'completed').length} completed</span></>
                           )}
                         </span>
                       ) : (
-                        <span className="text-[10px] font-medium text-gray-400">No plans</span>
+                        <span className="text-[10px] font-medium text-apptivia-carbon-400">No plans</span>
                       )}
                     </span>
                     {insightsSection === 'idps'
-                      ? <svg className="w-4 h-4 text-gray-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" /></svg>
-                      : <svg className="w-4 h-4 text-gray-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+                      ? <svg className="w-4 h-4 text-apptivia-carbon-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" /></svg>
+                      : <svg className="w-4 h-4 text-apptivia-carbon-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
                     }
                   </button>
                   {insightsSection === 'idps' && (
                     <div className="px-4 pb-4">
                       {myIdpsLoading ? (
-                        <div className="text-xs text-gray-500 py-4">Loading development plans...</div>
+                        <div className="text-xs text-apptivia-carbon-500 py-4">Loading development plans...</div>
                       ) : myIdps.length === 0 ? (
-                        <div className="border border-dashed border-gray-200 rounded-lg p-4 text-center">
-                          <div className="text-sm text-gray-500">No development plans assigned yet</div>
-                          <div className="text-xs text-gray-400 mt-1">Your manager will create an IDP when ready</div>
+                        <div className="border border-dashed border-apptivia-carbon-200 rounded-lg p-4 text-center">
+                          <div className="text-sm text-apptivia-carbon-500">No development plans assigned yet</div>
+                          <div className="text-xs text-apptivia-carbon-400 mt-1">Your manager will create an IDP when ready</div>
                         </div>
                       ) : (
                         <div className="space-y-3">
@@ -1539,19 +1535,19 @@ export default function Coach() {
                             const isOverdue = idp.period_end && new Date() > new Date(idp.period_end) && idp.status !== 'completed';
                             const displayStatus = isOverdue ? 'overdue' : idp.status;
                             const statusStyles = {
-                              draft: 'bg-gray-100 text-gray-600',
-                              active: 'bg-blue-100 text-blue-700',
+                              draft: 'bg-apptivia-carbon-100 text-apptivia-carbon-600',
+                              active: 'bg-apptivia-coral-tone-50 text-apptivia-coral',
                               in_progress: 'bg-yellow-100 text-yellow-700',
                               completed: 'bg-green-100 text-green-700',
                               overdue: 'bg-red-100 text-red-700',
                             };
                             const statusLabels = { draft: 'Draft', active: 'Active', in_progress: 'In Progress', completed: 'Completed', overdue: 'Overdue' };
                             return (
-                              <div key={idp.id} className="border border-gray-100 rounded-lg p-3 hover:shadow-sm transition-all">
+                              <div key={idp.id} className="border border-apptivia-carbon-100 rounded-lg p-3 hover:shadow-sm transition-all">
                                 <div className="flex items-center justify-between mb-2">
-                                  <div className="font-semibold text-sm text-gray-900 truncate">{idp.name}</div>
+                                  <div className="font-semibold text-sm text-apptivia-ink truncate">{idp.name}</div>
                                   <div className="flex items-center gap-2 shrink-0">
-                                    <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-semibold ${idp.plan_type === 'annual' ? 'bg-purple-100 text-purple-700' : 'bg-indigo-100 text-indigo-700'}`}>
+                                    <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-semibold ${idp.plan_type === 'annual' ? 'bg-apptivia-carbon-100 text-apptivia-ink' : 'bg-apptivia-carbon-100 text-apptivia-ink'}`}>
                                       {idp.plan_type === 'annual' ? 'Annual' : idp.plan_type === 'quarterly' ? 'Quarterly' : 'Custom'}
                                     </span>
                                     <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-semibold ${statusStyles[displayStatus] || statusStyles.draft}`}>
@@ -1560,31 +1556,31 @@ export default function Coach() {
                                   </div>
                                 </div>
                                 {idp.period_start && idp.period_end && (
-                                  <div className="text-[10px] text-gray-500 mb-2">{idp.period_start} → {idp.period_end}</div>
+                                  <div className="text-[10px] text-apptivia-carbon-500 mb-2">{idp.period_start} → {idp.period_end}</div>
                                 )}
                                 {idp.focus_kpis?.length > 0 && (
                                   <div className="flex flex-wrap gap-1 mb-2">
                                     {idp.focus_kpis.slice(0, 4).map((kpi, i) => (
-                                      <span key={i} className="text-[10px] px-2 py-0.5 rounded-full bg-purple-50 text-purple-600 font-medium">{buildLabel(kpi)}</span>
+                                      <span key={i} className="text-[10px] px-2 py-0.5 rounded-full bg-apptivia-carbon-100 text-apptivia-ink font-medium">{buildLabel(kpi)}</span>
                                     ))}
-                                    {idp.focus_kpis.length > 4 && <span className="text-[10px] text-gray-400">+{idp.focus_kpis.length - 4}</span>}
+                                    {idp.focus_kpis.length > 4 && <span className="text-[10px] text-apptivia-carbon-400">+{idp.focus_kpis.length - 4}</span>}
                                   </div>
                                 )}
                                 {milestones.length > 0 && (
                                   <div className="mb-2">
-                                    <div className="flex items-center justify-between text-[10px] text-gray-500 mb-1">
+                                    <div className="flex items-center justify-between text-[10px] text-apptivia-carbon-500 mb-1">
                                       <span>Milestones ({completedMs}/{milestones.length})</span>
-                                      <span className="font-semibold text-purple-600">{msPct}%</span>
+                                      <span className="font-semibold text-apptivia-ink">{msPct}%</span>
                                     </div>
-                                    <div className="w-full bg-gray-200 rounded-full h-1.5 overflow-hidden">
-                                      <div className="h-1.5 rounded-full bg-purple-500 transition-all duration-500" style={{ width: `${msPct}%` }} />
+                                    <div className="w-full bg-apptivia-carbon-200 rounded-full h-1.5 overflow-hidden">
+                                      <div className="h-1.5 rounded-full bg-apptivia-ink transition-all duration-500" style={{ width: `${msPct}%` }} />
                                     </div>
                                   </div>
                                 )}
                                 <button
                                   type="button"
                                   onClick={() => setViewIdpDetail(idp)}
-                                  className="text-[11px] px-2.5 py-1 rounded-md bg-purple-50 text-purple-700 hover:bg-purple-100 font-medium border border-purple-200 transition-colors mt-1"
+                                  className="text-[11px] px-2.5 py-1 rounded-md bg-apptivia-carbon-100 text-apptivia-ink hover:bg-apptivia-carbon-100 font-medium border border-apptivia-carbon-300 transition-colors mt-1"
                                 >
                                   View Full Plan
                                 </button>
@@ -1598,21 +1594,21 @@ export default function Coach() {
                 </div>
 
                 {/* Section 5: My Performance Reviews */}
-                <div className={`rounded-lg border transition-colors ${insightsSection === 'reviews' ? 'border-amber-200 bg-amber-50/30' : 'border-gray-100 bg-amber-50/10 hover:bg-amber-50/30'}`}>
+                <div className={`rounded-lg border transition-colors ${insightsSection === 'reviews' ? 'border-amber-200 bg-amber-50/30' : 'border-apptivia-carbon-100 bg-amber-50/10 hover:bg-amber-50/30'}`}>
                   <button
                     type="button"
                     onClick={() => setInsightsSection(prev => prev === 'reviews' ? null : 'reviews')}
                     className="w-full flex items-center gap-3 px-4 py-3 text-left"
                   >
                     <svg className="w-5 h-5 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                    <span className="font-semibold text-sm text-gray-900">My Performance Reviews</span>
+                    <span className="font-semibold text-sm text-apptivia-ink">My Performance Reviews</span>
                     <span className="ml-auto flex items-center gap-2">
                       {myReviewsLoading ? (
-                        <span className="text-[10px] font-medium text-gray-400">Loading...</span>
+                        <span className="text-[10px] font-medium text-apptivia-carbon-400">Loading...</span>
                       ) : (() => {
                         const needsAction = myReviews.filter(r => r.status === 'pending_self_assessment' || r.status === 'finalized');
                         return myReviews.length > 0 ? (
-                          <span className="text-[10px] font-medium text-gray-500">
+                          <span className="text-[10px] font-medium text-apptivia-carbon-500">
                             {needsAction.length > 0 ? (
                               <span className="text-amber-600">{needsAction.length} need{needsAction.length === 1 ? 's' : ''} action</span>
                             ) : (
@@ -1620,32 +1616,32 @@ export default function Coach() {
                             )}
                           </span>
                         ) : (
-                          <span className="text-[10px] font-medium text-gray-400">No reviews</span>
+                          <span className="text-[10px] font-medium text-apptivia-carbon-400">No reviews</span>
                         );
                       })()}
                     </span>
                     {insightsSection === 'reviews'
-                      ? <svg className="w-4 h-4 text-gray-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" /></svg>
-                      : <svg className="w-4 h-4 text-gray-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+                      ? <svg className="w-4 h-4 text-apptivia-carbon-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" /></svg>
+                      : <svg className="w-4 h-4 text-apptivia-carbon-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
                     }
                   </button>
                   {insightsSection === 'reviews' && (
                     <div className="px-4 pb-4">
                       {myReviewsLoading ? (
-                        <div className="text-xs text-gray-500 py-4">Loading performance reviews...</div>
+                        <div className="text-xs text-apptivia-carbon-500 py-4">Loading performance reviews...</div>
                       ) : myReviews.length === 0 ? (
-                        <div className="border border-dashed border-gray-200 rounded-lg p-4 text-center">
-                          <div className="text-sm text-gray-500">No performance reviews yet</div>
-                          <div className="text-xs text-gray-400 mt-1">Your manager will initiate reviews during review cycles</div>
+                        <div className="border border-dashed border-apptivia-carbon-200 rounded-lg p-4 text-center">
+                          <div className="text-sm text-apptivia-carbon-500">No performance reviews yet</div>
+                          <div className="text-xs text-apptivia-carbon-400 mt-1">Your manager will initiate reviews during review cycles</div>
                         </div>
                       ) : (
                         <div className="space-y-3">
                           {myReviews.map(review => {
                             const reviewStatusStyles = {
-                              draft: { bg: 'bg-gray-100 text-gray-600', label: 'Draft' },
+                              draft: { bg: 'bg-apptivia-carbon-100 text-apptivia-carbon-600', label: 'Draft' },
                               pending_self_assessment: { bg: 'bg-amber-100 text-amber-700', label: 'Self-Assessment Needed' },
-                              self_assessment_submitted: { bg: 'bg-blue-100 text-blue-700', label: 'Under Review' },
-                              manager_review: { bg: 'bg-blue-100 text-blue-700', label: 'Manager Reviewing' },
+                              self_assessment_submitted: { bg: 'bg-apptivia-coral-tone-50 text-apptivia-coral', label: 'Under Review' },
+                              manager_review: { bg: 'bg-apptivia-coral-tone-50 text-apptivia-coral', label: 'Manager Reviewing' },
                               finalized: { bg: 'bg-green-100 text-green-700', label: 'Ready to Acknowledge' },
                               acknowledged: { bg: 'bg-emerald-100 text-emerald-700', label: 'Acknowledged' },
                               reopened: { bg: 'bg-yellow-100 text-yellow-700', label: 'Reopened' },
@@ -1654,11 +1650,11 @@ export default function Coach() {
                             const needsAction = review.status === 'pending_self_assessment' || review.status === 'finalized';
                             const rating = review.final_rating || review.manager_rating;
                             return (
-                              <div key={review.id} className={`border rounded-lg p-3 hover:shadow-sm transition-all ${needsAction ? 'border-amber-200 bg-amber-50/30' : 'border-gray-100'}`}>
+                              <div key={review.id} className={`border rounded-lg p-3 hover:shadow-sm transition-all ${needsAction ? 'border-amber-200 bg-amber-50/30' : 'border-apptivia-carbon-100'}`}>
                                 <div className="flex items-center justify-between mb-2">
-                                  <div className="font-semibold text-sm text-gray-900 truncate">{review.title}</div>
+                                  <div className="font-semibold text-sm text-apptivia-ink truncate">{review.title}</div>
                                   <div className="flex items-center gap-2 shrink-0">
-                                    <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-semibold ${review.review_type === 'annual' ? 'bg-purple-100 text-purple-700' : 'bg-blue-100 text-blue-700'}`}>
+                                    <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-semibold ${review.review_type === 'annual' ? 'bg-apptivia-carbon-100 text-apptivia-ink' : 'bg-apptivia-coral-tone-50 text-apptivia-coral'}`}>
                                       {review.review_type === 'annual' ? 'Annual' : 'Mid-Year'}
                                     </span>
                                     <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-semibold ${rs.bg}`}>
@@ -1667,16 +1663,16 @@ export default function Coach() {
                                   </div>
                                 </div>
                                 {review.period_start && review.period_end && (
-                                  <div className="text-[10px] text-gray-500 mb-2">{review.period_start} → {review.period_end}</div>
+                                  <div className="text-[10px] text-apptivia-carbon-500 mb-2">{review.period_start} → {review.period_end}</div>
                                 )}
                                 {rating && (
                                   <div className="flex items-center gap-1 mb-2">
                                     {[1, 2, 3, 4, 5].map(star => (
-                                      <svg key={star} className={`w-3.5 h-3.5 ${star <= rating ? 'text-yellow-400' : 'text-gray-200'}`} fill="currentColor" viewBox="0 0 20 20">
+                                      <svg key={star} className={`w-3.5 h-3.5 ${star <= rating ? 'text-yellow-400' : 'text-apptivia-carbon-300'}`} fill="currentColor" viewBox="0 0 20 20">
                                         <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
                                       </svg>
                                     ))}
-                                    <span className="text-[10px] text-gray-500 ml-1">{rating}/5</span>
+                                    <span className="text-[10px] text-apptivia-carbon-500 ml-1">{rating}/5</span>
                                   </div>
                                 )}
                                 {needsAction && (
@@ -1693,7 +1689,7 @@ export default function Coach() {
                                   className={`text-[11px] px-2.5 py-1 rounded-md font-medium border transition-colors mt-1 ${
                                     needsAction
                                       ? 'bg-amber-50 text-amber-700 hover:bg-amber-100 border-amber-200'
-                                      : 'bg-gray-50 text-gray-700 hover:bg-gray-100 border-gray-200'
+                                      : 'bg-apptivia-paper text-apptivia-carbon-700 hover:bg-apptivia-carbon-100 border-apptivia-carbon-200'
                                   }`}
                                 >
                                   {review.status === 'pending_self_assessment' ? 'Start Self-Assessment' : review.status === 'finalized' ? 'View & Acknowledge' : 'View Review'}
@@ -1725,50 +1721,50 @@ export default function Coach() {
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 items-stretch auto-rows-fr">
               {data.skillsets.map((skillset, index) => (
-                <div key={index} className="border-2 border-gray-100 rounded-lg p-4 hover:shadow-md transition-all duration-200 hover:-translate-y-0.5 h-full flex flex-col">
+                <div key={index} className="border-2 border-apptivia-carbon-100 rounded-lg p-4 hover:shadow-md transition-all duration-200 hover:-translate-y-0.5 h-full flex flex-col">
                   <div className="flex items-start gap-2 mb-3">
                     <div className="p-2 rounded-lg bg-white shadow-sm flex-shrink-0">
                       <span style={{ color: skillset.color, fontSize: 20 }}>●</span>
                     </div>
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2 mb-1">
-                        <h3 className="font-bold text-base text-gray-900">{skillset.skillset_name}</h3>
+                        <h3 className="font-bold text-base text-apptivia-ink">{skillset.skillset_name}</h3>
                         <Tooltip text={`Skillset level based on achievement progress: Beginner (0-24%), Intermediate (25-49%), Advanced (50-74%), Expert (75-99%), Master (100%)`} position="bottom" wide>
-                        <span className={`px-1.5 py-0.5 rounded-full text-[9px] font-semibold cursor-help ${SKILLSET_LEVEL_COLORS[getSkillsetLevel(skillset.progress)] || 'bg-gray-100 text-gray-600'}`}>
+                        <span className={`px-1.5 py-0.5 rounded-full text-[9px] font-semibold cursor-help ${SKILLSET_LEVEL_COLORS[getSkillsetLevel(skillset.progress)] || 'bg-apptivia-carbon-100 text-apptivia-carbon-600'}`}>
                           {getSkillsetLevel(skillset.progress)}
                         </span>
                       </Tooltip>
                       </div>
-                      <p className="text-xs text-gray-600 break-words line-clamp-2 min-h-[2.5rem]">{skillset.description}</p>
+                      <p className="text-xs text-apptivia-carbon-600 break-words line-clamp-2 min-h-[2.5rem]">{skillset.description}</p>
                     </div>
                   </div>
                   <div className="mb-3">
-                    <div className="relative w-full bg-gray-200 rounded-full h-1.5 overflow-hidden">
+                    <div className="relative w-full bg-apptivia-carbon-200 rounded-full h-1.5 overflow-hidden">
                       <div className="h-1.5 rounded-full transition-all duration-500 ease-out" style={{ width: `${skillset.progress}%`, backgroundColor: skillset.color }}></div>
                       {[25, 50, 75].map(pct => (
-                        <div key={pct} className="absolute top-0 h-full w-px bg-gray-400/50" style={{ left: `${pct}%` }} />
+                        <div key={pct} className="absolute top-0 h-full w-px bg-apptivia-carbon-400/50" style={{ left: `${pct}%` }} />
                       ))}
                     </div>
                     <div className="flex justify-between text-xs mt-1">
-                      <span className="text-gray-500">{skillset.achievements_completed}/{skillset.total_achievements} achievements</span>
+                      <span className="text-apptivia-carbon-500">{skillset.achievements_completed}/{skillset.total_achievements} achievements</span>
                       <Tooltip text="Percentage of total achievement points earned in this skillset" position="left">
                         <span className="font-bold cursor-help" style={{ color: skillset.color }}>{skillset.progress}%</span>
                       </Tooltip>
                     </div>
                   </div>
-                  <div className="bg-gray-50 rounded-lg p-2.5 border border-gray-100 mb-2">
-                    <div className="text-[10px] font-medium text-gray-500 mb-0.5">Next Achievement</div>
-                    <div className="text-xs text-gray-900 break-words line-clamp-2">{skillset.next_achievement}</div>
+                  <div className="bg-apptivia-paper rounded-lg p-2.5 border border-apptivia-carbon-100 mb-2">
+                    <div className="text-[10px] font-medium text-apptivia-carbon-500 mb-0.5">Next Achievement</div>
+                    <div className="text-xs text-apptivia-ink break-words line-clamp-2">{skillset.next_achievement}</div>
                   </div>
-                  <div className="bg-gray-50 rounded-lg p-2.5 border border-gray-100 mb-2">
-                    <div className="text-[10px] font-medium text-gray-500 mb-0.5">{isPowerUser ? 'Skillset Points' : 'Avg Skillset Points'}</div>
-                    <div className="text-xs font-semibold text-gray-900">{skillset.points}</div>
+                  <div className="bg-apptivia-paper rounded-lg p-2.5 border border-apptivia-carbon-100 mb-2">
+                    <div className="text-[10px] font-medium text-apptivia-carbon-500 mb-0.5">{isPowerUser ? 'Skillset Points' : 'Avg Skillset Points'}</div>
+                    <div className="text-xs font-semibold text-apptivia-ink">{skillset.points}</div>
                   </div>
                   <button
                     onClick={() => setSelectedSkillset({ id: skillset.skillset_id, name: skillset.skillset_name, color: skillset.color })}
                     className="w-full py-1.5 px-3 rounded-md font-medium text-xs transition-all duration-200 hover:opacity-90 hover:shadow-md mt-auto text-white"
                     style={{
-                      backgroundColor: skillset.color || '#3B82F6',
+                      backgroundColor: skillset.color || '#FF4D2E',
                       color: '#ffffff',
                       textShadow: '0 1px 2px rgba(0, 0, 0, 0.1)'
                     }}

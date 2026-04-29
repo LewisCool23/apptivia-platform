@@ -21,6 +21,7 @@ const PublicIntegrations = React.lazy(() => import('./pages/PublicIntegrations')
 const PrivacyPolicy      = React.lazy(() => import('./pages/PrivacyPolicy'));
 const TermsOfService     = React.lazy(() => import('./pages/TermsOfService'));
 const SecurityPage       = React.lazy(() => import('./pages/Security'));
+const PilotApplication   = React.lazy(() => import('./pages/PilotApplication'));
 
 // ── Lazily-loaded pages (split into separate chunks) ────────────────────────
 const Coach            = React.lazy(() => import('./pages/Coach'));
@@ -41,10 +42,10 @@ const PilotDashboard   = React.lazy(() => import('./pages/PilotDashboard'));
 // ── Simple page-level loading fallback ──────────────────────────────────────
 function PageLoader() {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
+    <div className="min-h-screen flex items-center justify-center bg-apptivia-paper">
       <div className="flex flex-col items-center gap-3">
-        <div className="w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
-        <span className="text-sm text-gray-400">Loading…</span>
+        <div className="w-8 h-8 border-2 border-apptivia-coral border-t-transparent rounded-full animate-spin" />
+        <span className="text-sm text-apptivia-carbon-400">Loading…</span>
       </div>
     </div>
   );
@@ -77,6 +78,7 @@ const AppRoutes = () => {
         <Route path="/privacy" element={<PrivacyPolicy />} />
         <Route path="/terms" element={<TermsOfService />} />
         <Route path="/security" element={<SecurityPage />} />
+        <Route path="/pilot" element={<PilotApplication />} />
         <Route
           path="/dashboard"
           element={

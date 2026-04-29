@@ -293,7 +293,7 @@ export function usePipelineOperator(
         event_type: 'deal.created',
         title: 'Deal Created',
         description: `${data.deal_name} — $${((data.deal_value || 0) / 1000).toFixed(0)}K`,
-        icon: '\uD83D\uDCB0', color: '#3b82f6',
+        icon: '\uD83D\uDCB0', color: '#FF4D2E',
       }).then(() => {}, () => {});
     }
 

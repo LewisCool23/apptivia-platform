@@ -28,6 +28,7 @@ import { supabase } from '../supabaseClient';
 import { Maximize2, Minimize2, Trophy, TrendingUp, Zap, Users, Star, Flame, Award, ArrowLeft, Target } from 'lucide-react';
 import { getMonday } from '../utils/dateUtils';
 import { LEADERSHIP_ROLE_FILTER } from '../constants/roles';
+import { ApptiviaLogo } from '../components/ApptiviaLogo';
 
 // ── Constants ────────────────────────────────────────────────────────────────
 
@@ -45,31 +46,31 @@ const DEFAULT_SLIDE_CONFIG = {
 };
 
 const LEVEL_COLORS = {
-  Developing:   { bg: 'from-slate-600 to-slate-700',   badge: 'bg-slate-500' },
-  Intermediate: { bg: 'from-blue-600 to-blue-700',     badge: 'bg-blue-500' },
-  Proficient:   { bg: 'from-purple-600 to-purple-700', badge: 'bg-purple-500' },
-  Elite:        { bg: 'from-amber-500 to-orange-600',  badge: 'bg-amber-500' },
-  Master:       { bg: 'from-rose-500 to-pink-600',     badge: 'bg-rose-500' },
+  Developing:   { bg: 'bg-apptivia-carbon-600',   badge: 'bg-apptivia-carbon-500' },
+  Intermediate: { bg: 'bg-apptivia-coral',     badge: 'bg-apptivia-coral' },
+  Proficient:   { bg: 'bg-apptivia-ink', badge: 'bg-apptivia-ink' },
+  Elite:        { bg: 'bg-amber-500',  badge: 'bg-amber-500' },
+  Master:       { bg: 'bg-rose-500',  badge: 'bg-rose-500' },
 };
 
 const RARITY_COLORS = {
   legendary: { border: '#FFD700', glow: 'shadow-yellow-400/40', label: 'text-yellow-300' },
-  epic:      { border: '#9333ea', glow: 'shadow-purple-400/40', label: 'text-purple-300' },
-  rare:      { border: '#3b82f6', glow: 'shadow-blue-400/40',   label: 'text-blue-300'   },
-  common:    { border: '#6b7280', glow: '',                      label: 'text-gray-400'   },
+  epic:      { border: '#9333ea', glow: 'shadow-purple-400/40', label: 'text-apptivia-ink' },
+  rare:      { border: '#FF4D2E', glow: 'shadow-apptivia-coral', label: 'text-apptivia-coral-tone-300' },
+  common:    { border: '#71717A', glow: '',                      label: 'text-apptivia-carbon-400' },
 };
 
 const DIFFICULTY_COLORS = {
   easy:   { bg: 'bg-green-500/20', text: 'text-green-300', border: 'border-green-500/30' },
-  medium: { bg: 'bg-blue-500/20',  text: 'text-blue-300',  border: 'border-blue-500/30' },
-  hard:   { bg: 'bg-purple-500/20', text: 'text-purple-300', border: 'border-purple-500/30' },
+  medium: { bg: 'bg-apptivia-coral/20',  text: 'text-apptivia-coral-tone-300',  border: 'border-apptivia-coral/30' },
+  hard:   { bg: 'bg-apptivia-ink/20', text: 'text-apptivia-ink', border: 'border-apptivia-carbon-300/30' },
   expert: { bg: 'bg-amber-500/20', text: 'text-amber-300', border: 'border-amber-500/30' },
 };
 
 const CELEBRATION_COLORS = [
-  '#f59e0b', '#fcd34d', '#10b981', '#34d399',
-  '#3b82f6', '#93c5fd', '#8b5cf6', '#c4b5fd',
-  '#ef4444', '#fca5a5', '#ec4899', '#f9a8d4',
+  '#FF4D2E', '#FF8A6B', '#F59E0B', '#16A34A', '#06B6D4',
+  '#FF4D2E', '#71717A', '#FF8A6B', '#C8341B', '#F59E0B',
+  '#FF4D2E', '#16A34A',
 ];
 const CELEBRATION_CONFETTI = Array.from({ length: 90 }, (_, i) => ({
   color: CELEBRATION_COLORS[i % CELEBRATION_COLORS.length],
@@ -214,20 +215,25 @@ function useWallboardData(orgId, selectedTeamId) {
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
-  // Live updates
+  // Live updates — F26: debounced to prevent refetch storms on rapid kpi_values changes
   useEffect(() => {
-    const channel = supabase
-      .channel('wallboard_live')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'kpi_values' }, () => {
+    let debounceTimer = null;
+    const debouncedFetch = () => {
+      if (debounceTimer) clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(() => {
         refreshRef.current += 1;
         fetchData();
-      })
-      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'profiles' }, () => fetchData())
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'profile_badges' }, () => fetchData())
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'profile_achievements' }, () => fetchData())
+      }, 500);
+    };
+    const channel = supabase
+      .channel('wallboard_live')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'kpi_values' }, debouncedFetch)
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'profiles' }, debouncedFetch)
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'profile_badges' }, debouncedFetch)
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'profile_achievements' }, debouncedFetch)
       .subscribe();
 
-    return () => { supabase.removeChannel(channel); };
+    return () => { if (debounceTimer) clearTimeout(debounceTimer); supabase.removeChannel(channel); };
   }, [fetchData]);
 
   return { profiles, contests, recentBadges, teams, weeklyKpis, priorWeekKpis, recentAchievements, wallboardConfig, loading };
@@ -277,9 +283,9 @@ function LeaderboardSlide({ profiles }) {
           return (
             <div
               key={rep.id}
-              className={`flex items-center gap-4 rounded-2xl p-4 transition-all ${
+              className={`flex items-center gap-4 rounded-lg p-4 transition-all ${
                 isTop3
-                  ? `bg-gradient-to-r ${colors.bg} shadow-lg shadow-black/30`
+                  ? `${colors.bg} shadow-lg shadow-black/30`
                   : 'bg-white/5 border border-white/10'
               }`}
             >
@@ -350,26 +356,26 @@ function SpotlightSlide({ profiles }) {
         <div className="text-8xl font-black text-white leading-none mb-4">
           {top.first_name}<br />{top.last_name}
         </div>
-        <div className={`inline-flex items-center gap-2 px-6 py-2 rounded-full bg-gradient-to-r ${colors.bg} text-white font-bold text-xl`}>
+        <div className={`inline-flex items-center gap-2 px-6 py-2 rounded-full ${colors.bg} text-white font-bold text-xl`}>
           <Star size={20} />
           {level}
         </div>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-8 text-center">
-        <div className="bg-white/10 rounded-2xl p-6">
+        <div className="bg-white/10 rounded-lg p-6">
           <div className="text-5xl font-black text-amber-400 tabular-nums">
             {(top.total_points || 0).toLocaleString()}
           </div>
           <div className="text-white/60 mt-1 font-medium">Total Points</div>
         </div>
-        <div className="bg-white/10 rounded-2xl p-6">
-          <div className="text-5xl font-black text-blue-400 tabular-nums">
+        <div className="bg-white/10 rounded-lg p-6">
+          <div className="text-5xl font-black text-apptivia-coral-tone-300 tabular-nums">
             {top.current_score || 0}%
           </div>
           <div className="text-white/60 mt-1 font-medium">Scorecard</div>
         </div>
-        <div className="bg-white/10 rounded-2xl p-6">
+        <div className="bg-white/10 rounded-lg p-6">
           <div className="text-5xl font-black text-orange-400 tabular-nums flex items-center justify-center gap-2">
             <Flame size={40} />
             {top.day_streak || 0}
@@ -381,7 +387,7 @@ function SpotlightSlide({ profiles }) {
       {(runnerUp || third) && (
         <div className="flex gap-6 items-end">
           {runnerUp && (
-            <div className="text-center bg-white/5 rounded-xl px-6 py-3">
+            <div className="text-center bg-white/5 rounded-lg px-6 py-3">
               <div className="text-3xl mb-1">{'\u{1F948}'}</div>
               <div className="text-white font-bold">{runnerUp.first_name} {runnerUp.last_name}</div>
               <div className="text-white/50 text-sm">{(runnerUp.total_points || 0).toLocaleString()} pts</div>
@@ -389,7 +395,7 @@ function SpotlightSlide({ profiles }) {
             </div>
           )}
           {third && (
-            <div className="text-center bg-white/5 rounded-xl px-6 py-3">
+            <div className="text-center bg-white/5 rounded-lg px-6 py-3">
               <div className="text-3xl mb-1">{'\u{1F949}'}</div>
               <div className="text-white font-bold">{third.first_name} {third.last_name}</div>
               <div className="text-white/50 text-sm">{(third.total_points || 0).toLocaleString()} pts</div>
@@ -430,7 +436,7 @@ function ContestsSlide({ contests }) {
           const daysLeft = end ? Math.max(0, Math.ceil((end - new Date()) / (1000 * 60 * 60 * 24))) : null;
 
           return (
-            <div key={contest.id} className="bg-white/5 border border-white/10 rounded-2xl p-6">
+            <div key={contest.id} className="bg-white/5 border border-white/10 rounded-lg p-6">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-2xl font-bold text-white">{contest.name}</h3>
                 {daysLeft !== null && (
@@ -488,7 +494,7 @@ function TeamStatsSlide({ profiles }) {
   }, {});
 
   const stats = [
-    { label: 'Team Members', value: totalMembers, icon: Users, color: 'text-blue-400' },
+    { label: 'Team Members', value: totalMembers, icon: Users, color: 'text-apptivia-coral-tone-300' },
     { label: 'Total Points', value: totalPoints.toLocaleString(), icon: Zap, color: 'text-amber-400' },
     { label: 'Avg Scorecard', value: `${avgScore}%`, icon: TrendingUp, color: 'text-green-400' },
     { label: 'Longest Streak', value: `${topStreak}d`, icon: Flame, color: 'text-orange-400' },
@@ -503,7 +509,7 @@ function TeamStatsSlide({ profiles }) {
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-8">
         {stats.map(({ label, value, icon: Icon, color }) => (
-          <div key={label} className="bg-white/5 border border-white/10 rounded-2xl p-8 flex items-center gap-6">
+          <div key={label} className="bg-white/5 border border-white/10 rounded-lg p-8 flex items-center gap-6">
             <Icon size={48} className={color} />
             <div>
               <div className="text-5xl font-black text-white tabular-nums">{value}</div>
@@ -520,7 +526,7 @@ function TeamStatsSlide({ profiles }) {
             const count = levelCounts[level] || 0;
             if (count === 0) return null;
             return (
-              <div key={level} className={`flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r ${colors.bg}`}>
+              <div key={level} className={`flex items-center gap-2 px-4 py-2 rounded-lg ${colors.bg}`}>
                 <span className="text-white font-bold text-lg">{count}</span>
                 <span className="text-white/80 font-medium">{level}</span>
               </div>
@@ -563,7 +569,7 @@ function BadgesSlide({ recentBadges }) {
           return (
             <div
               key={b.id}
-              className={`flex items-center gap-4 bg-white/5 border rounded-2xl p-4 shadow-lg ${rc.glow}`}
+              className={`flex items-center gap-4 bg-white/5 border rounded-lg p-4 shadow-lg ${rc.glow}`}
               style={{ borderColor: rc.border }}
             >
               <div className="text-4xl flex-shrink-0">{b.icon || '\u{1F3C6}'}</div>
@@ -617,7 +623,7 @@ function ActivitySlide({ weeklyKpis, priorWeekKpis }) {
           const isDown = delta < -2;
 
           return (
-            <div key={kpi.kpi_key} className="bg-white/5 border border-white/10 rounded-2xl p-6 flex flex-col justify-center">
+            <div key={kpi.kpi_key} className="bg-white/5 border border-white/10 rounded-lg p-6 flex flex-col justify-center">
               <div className="text-white/50 text-sm font-medium mb-2 truncate">{kpi.name}</div>
               <div className="text-4xl font-black text-white tabular-nums">
                 {formatKpiValue(kpi.value, kpi.unit)}
@@ -667,7 +673,7 @@ function AchievementsSlide({ recentAchievements }) {
           const when = new Date(a.completed_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 
           return (
-            <div key={a.id} className={`flex items-center gap-4 bg-white/5 border ${dc.border} rounded-2xl p-4`}>
+            <div key={a.id} className={`flex items-center gap-4 bg-white/5 border ${dc.border} rounded-lg p-4`}>
               <div className="text-4xl flex-shrink-0">{a.achievement?.icon || '\u{1F3C5}'}</div>
               <div className="min-w-0 flex-1">
                 <div className="text-white font-bold text-lg leading-tight truncate">
@@ -730,7 +736,7 @@ function GoalProgressSlide({ weeklyKpis, profileCount }) {
 
       <div className="space-y-4 flex-1 overflow-y-auto">
         {kpisWithProgress.slice(0, 10).map((kpi) => (
-          <div key={kpi.kpi_key} className="bg-white/5 border border-white/10 rounded-xl p-4">
+          <div key={kpi.kpi_key} className="bg-white/5 border border-white/10 rounded-lg p-4">
             <div className="flex items-center justify-between mb-2">
               <span className="text-white font-semibold text-lg">{kpi.name}</span>
               <span className={`font-bold ${pctText(kpi.pct)}`}>
@@ -838,7 +844,7 @@ function WallboardCelebration({ orgId, enabled }) {
           style={{
             position: 'absolute', top: '50%', left: '50%',
             animation: 'wbCardIn 0.5s cubic-bezier(0.34,1.56,0.64,1) forwards',
-            background: 'linear-gradient(145deg, #0f172a 0%, #1e1b4b 50%, #0f172a 100%)',
+            background: 'linear-gradient(145deg, #0A0A0B 0%, #27272A 50%, #0A0A0B 100%)',
             border: '2px solid rgba(245,158,11,0.5)', borderRadius: 28,
             padding: '52px 72px 44px', textAlign: 'center', minWidth: 460, maxWidth: '88vw', cursor: 'default',
             boxShadow: '0 0 0 1px rgba(245,158,11,0.15), 0 0 80px rgba(245,158,11,0.25), 0 40px 80px rgba(0,0,0,0.6)',
@@ -848,7 +854,7 @@ function WallboardCelebration({ orgId, enabled }) {
           <div style={{ fontSize: 11, fontWeight: 800, letterSpacing: '0.2em', color: '#fcd34d', textTransform: 'uppercase', marginBottom: 16 }}>
             {typeLabel}
           </div>
-          <div style={{ fontSize: 26, fontWeight: 800, color: '#f8fafc', marginBottom: 10, lineHeight: 1.25 }}>{active.title}</div>
+          <div style={{ fontSize: 26, fontWeight: 800, color: '#F7F5F2', marginBottom: 10, lineHeight: 1.25 }}>{active.title}</div>
           {active.message && <div style={{ fontSize: 16, color: 'rgba(255,255,255,0.6)', maxWidth: 380, margin: '0 auto' }}>{active.message}</div>}
           {queue.length > 0 && (
             <div style={{ marginTop: 20, color: 'rgba(255,255,255,0.3)', fontSize: 12 }}>
@@ -979,7 +985,7 @@ export default function Wallboard() {
   const currentSlide = activeSlides[displayIndex];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-950 via-slate-900 to-blue-950 flex flex-col select-none overflow-hidden">
+    <div className="min-h-screen bg-apptivia-ink flex flex-col select-none overflow-hidden">
       {/* Celebration overlay */}
       <WallboardCelebration orgId={orgId} enabled={celebrationsEnabled} />
 
@@ -1000,10 +1006,10 @@ export default function Wallboard() {
       {/* Header bar */}
       <div className="flex items-center justify-between px-8 py-4 border-b border-white/5">
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-lg flex items-center justify-center">
+          <div className="w-9 h-9 bg-apptivia-ink rounded-lg flex items-center justify-center">
             <Trophy size={18} className="text-white" />
           </div>
-          <span className="text-white font-bold text-xl tracking-tight">Apptivia</span>
+          <ApptiviaLogo dark className="text-xl" />
           <span className="text-white/30 text-sm">Sales Floor</span>
         </div>
 
@@ -1013,11 +1019,11 @@ export default function Wallboard() {
             <select
               value={selectedTeamId || ''}
               onChange={(e) => setSelectedTeamId(e.target.value || null)}
-              className="bg-white/5 border border-white/10 text-white rounded-lg px-3 py-1.5 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none cursor-pointer"
+              className="bg-white/5 border border-white/10 text-white rounded-lg px-3 py-1.5 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-apptivia-coral appearance-none cursor-pointer"
             >
-              <option value="" className="bg-gray-900">All Teams</option>
+              <option value="" className="bg-apptivia-ink">All Teams</option>
               {teams.map(t => (
-                <option key={t.id} value={t.id} className="bg-gray-900">{t.name}</option>
+                <option key={t.id} value={t.id} className="bg-apptivia-ink">{t.name}</option>
               ))}
             </select>
           )}

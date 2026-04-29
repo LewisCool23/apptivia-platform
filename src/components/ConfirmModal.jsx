@@ -29,21 +29,21 @@ export default function ConfirmModal({
 
   const variantConfig = {
     danger: {
-      gradient: 'from-red-500 via-red-600 to-rose-600',
+      gradient: 'bg-red-500',
       icon: Trash2,
       iconBg: 'bg-red-100',
       iconColor: 'text-red-600',
       confirmBtn: 'bg-red-600 hover:bg-red-700 focus:ring-red-500',
     },
     warning: {
-      gradient: 'from-amber-500 via-orange-500 to-orange-600',
+      gradient: 'bg-amber-500',
       icon: AlertTriangle,
       iconBg: 'bg-amber-100',
       iconColor: 'text-amber-600',
       confirmBtn: 'bg-amber-600 hover:bg-amber-700 focus:ring-amber-500',
     },
     success: {
-      gradient: 'from-emerald-500 via-green-500 to-teal-600',
+      gradient: 'bg-emerald-500',
       icon: CheckCircle,
       iconBg: 'bg-emerald-100',
       iconColor: 'text-emerald-600',
@@ -60,11 +60,11 @@ export default function ConfirmModal({
       onClick={onClose}
     >
       <div
-        className="bg-white rounded-2xl shadow-2xl max-w-sm w-full overflow-hidden transform transition-all animate-in fade-in zoom-in-95 duration-200"
+        className="bg-white rounded-lg shadow-2xl max-w-sm w-full overflow-hidden transform transition-all animate-in fade-in zoom-in-95 duration-200"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Gradient Header */}
-        <div className={`bg-gradient-to-r ${config.gradient} p-4 relative`}>
+        <div className={`${config.gradient} p-4 relative`}>
           <button
             onClick={onClose}
             className="absolute top-3 right-3 text-white/80 hover:text-white transition-colors p-1.5 hover:bg-white/10 rounded-lg"
@@ -73,7 +73,7 @@ export default function ConfirmModal({
             <X size={18} />
           </button>
           <div className="flex items-center gap-3">
-            <div className={`p-2 rounded-xl ${config.iconBg}`}>
+            <div className={`p-2 rounded-lg ${config.iconBg}`}>
               <IconComponent size={20} className={config.iconColor} />
             </div>
             <h3 className="text-lg font-semibold text-white">{title}</h3>
@@ -82,7 +82,7 @@ export default function ConfirmModal({
 
         {/* Content */}
         <div className="p-5">
-          <p className="text-sm text-gray-600 leading-relaxed">{message}</p>
+          <p className="text-sm text-apptivia-carbon-600 leading-relaxed">{message}</p>
         </div>
 
         {/* Actions */}
@@ -90,7 +90,7 @@ export default function ConfirmModal({
           <button
             onClick={onClose}
             disabled={isLoading}
-            className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-gray-300 disabled:opacity-50"
+            className="px-4 py-2 text-sm font-medium text-apptivia-carbon-700 bg-apptivia-carbon-100 hover:bg-apptivia-carbon-200 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-apptivia-carbon-300 disabled:opacity-50"
           >
             {cancelText}
           </button>

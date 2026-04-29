@@ -28,22 +28,22 @@ export default function AssignPlanModal({
       onClick={onClose}
     >
       <div
-        className="bg-white rounded-xl shadow-2xl max-w-md w-full"
+        className="bg-white rounded-lg shadow-2xl max-w-md w-full"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-gray-200">
+        <div className="flex items-center justify-between p-4 border-b border-apptivia-carbon-200">
           <div className="flex items-center gap-3">
             <div className="p-2 bg-green-100 rounded-lg">
               <UserPlus className="w-5 h-5 text-green-600" />
             </div>
             <div>
-              <h3 className="text-lg font-bold text-gray-900">Assign Plan</h3>
-              <p className="text-sm text-gray-500">Select team members</p>
+              <h3 className="text-lg font-bold text-apptivia-ink">Assign Plan</h3>
+              <p className="text-sm text-apptivia-carbon-500">Select team members</p>
             </div>
           </div>
-          <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
-            <X size={20} className="text-gray-400" />
+          <button onClick={onClose} className="p-2 hover:bg-apptivia-carbon-100 rounded-lg transition-colors">
+            <X size={20} className="text-apptivia-carbon-400" />
           </button>
         </div>
 
@@ -58,12 +58,12 @@ export default function AssignPlanModal({
               </p>
             </div>
           )}
-          <p className="text-sm text-gray-600 mb-4">
+          <p className="text-sm text-apptivia-carbon-600 mb-4">
             Select team members to assign <strong>{plan.name}</strong>
           </p>
           <div className="max-h-64 overflow-y-auto space-y-2">
             {teamMembers.filter(m => !LEADERSHIP_ROLES.includes(m.role)).map(member => (
-              <label key={member.id} className="flex items-center gap-2 p-2 hover:bg-gray-50 rounded cursor-pointer">
+              <label key={member.id} className="flex items-center gap-2 p-2 hover:bg-apptivia-paper rounded cursor-pointer">
                 <input
                   type="checkbox"
                   checked={selectedMembers.includes(member.id)}
@@ -77,10 +77,10 @@ export default function AssignPlanModal({
                   className="rounded"
                 />
                 <div className="flex-1">
-                  <div className="text-sm font-medium text-gray-900">
+                  <div className="text-sm font-medium text-apptivia-ink">
                     {member.first_name} {member.last_name}
                   </div>
-                  <div className="text-xs text-gray-500">{member.email}</div>
+                  <div className="text-xs text-apptivia-carbon-500">{member.email}</div>
                 </div>
               </label>
             ))}
@@ -88,8 +88,8 @@ export default function AssignPlanModal({
         </div>
 
         {/* Footer */}
-        <div className="border-t border-gray-200 p-4 flex justify-end gap-2">
-          <button onClick={onClose} className="px-4 py-2 text-sm font-semibold border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50">
+        <div className="border-t border-apptivia-carbon-200 p-4 flex justify-end gap-2">
+          <button onClick={onClose} className="px-4 py-2 text-sm font-semibold border border-apptivia-carbon-300 text-apptivia-carbon-700 rounded-md hover:bg-apptivia-paper">
             Cancel
           </button>
           <button
@@ -98,7 +98,7 @@ export default function AssignPlanModal({
             className={`px-4 py-2 text-sm font-semibold rounded-md ${
               selectedMembers.length > 0 && !saving
                 ? 'bg-green-600 text-white hover:bg-green-700'
-                : 'bg-gray-200 text-gray-500 cursor-not-allowed'
+                : 'bg-apptivia-carbon-200 text-apptivia-carbon-500 cursor-not-allowed'
             }`}
           >
             {saving ? 'Assigning...' : `Assign to ${selectedMembers.length} Member${selectedMembers.length !== 1 ? 's' : ''}`}

@@ -45,24 +45,24 @@ export default function PlanBuilderForm({
   };
 
   return (
-    <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6 relative">
+    <div className="bg-white rounded-lg shadow-sm border border-apptivia-carbon-200 p-6 mb-6 relative">
       {/* Loading overlay during auto-generation */}
       {autoGenerating && (
         <div className="absolute inset-0 bg-white/70 rounded-lg flex flex-col items-center justify-center z-10">
-          <Loader2 size={32} className="animate-spin text-blue-600 mb-3" />
-          <p className="text-sm font-semibold text-blue-700">Generating AI coaching plan...</p>
-          <p className="text-xs text-gray-500 mt-1">Analyzing performance data and building recommendations</p>
+          <Loader2 size={32} className="animate-spin text-apptivia-coral mb-3" />
+          <p className="text-sm font-semibold text-apptivia-coral">Generating AI coaching plan...</p>
+          <p className="text-xs text-apptivia-carbon-500 mt-1">Analyzing performance data and building recommendations</p>
         </div>
       )}
 
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h3 className="text-lg font-semibold text-gray-900">
+          <h3 className="text-lg font-semibold text-apptivia-ink">
             {editingPlan
               ? (isPlaybook ? 'Edit Manager Playbook' : 'Edit Coaching Plan')
               : (isPlaybook ? 'Create Manager Playbook' : 'Create Coaching Plan')}
           </h3>
-          <p className="text-xs text-gray-500">
+          <p className="text-xs text-apptivia-carbon-500">
             {isPlaybook
               ? 'Select a manager to auto-generate a data-driven playbook for their team'
               : 'Select a rep to auto-generate a personalized coaching plan from their performance data'}
@@ -70,7 +70,7 @@ export default function PlanBuilderForm({
         </div>
         <button
           onClick={onCancel}
-          className="px-3 py-1.5 text-xs font-semibold text-gray-600 border border-gray-300 rounded-md hover:bg-gray-50"
+          className="px-3 py-1.5 text-xs font-semibold text-apptivia-carbon-600 border border-apptivia-carbon-300 rounded-md hover:bg-apptivia-paper"
         >
           Cancel
         </button>
@@ -80,7 +80,7 @@ export default function PlanBuilderForm({
         {/* Person selector — Manager dropdown on Playbooks, Rep dropdown on Rep Plans */}
         {setPlanFor && (
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-apptivia-carbon-700 mb-2">
               {isPlaybook ? 'Playbook For' : 'Plan For'} <span className="text-red-500">*</span>
             </label>
             {isPlaybook ? (
@@ -88,7 +88,7 @@ export default function PlanBuilderForm({
                 <select
                   value={planFor?.memberId || ''}
                   onChange={(e) => handlePersonChange(e.target.value)}
-                  className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full border border-apptivia-carbon-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-apptivia-coral focus:border-transparent"
                 >
                   <option value="">Select a manager...</option>
                   {(managers || []).map(m => (
@@ -98,7 +98,7 @@ export default function PlanBuilderForm({
                   ))}
                 </select>
                 {!planFor?.memberId && !editingPlan && (
-                  <p className="text-xs text-blue-600 mt-1.5">
+                  <p className="text-xs text-apptivia-coral mt-1.5">
                     Choose a manager to auto-generate a playbook based on their team's performance data.
                   </p>
                 )}
@@ -108,7 +108,7 @@ export default function PlanBuilderForm({
                 <select
                   value={planFor?.memberId || ''}
                   onChange={(e) => handlePersonChange(e.target.value)}
-                  className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full border border-apptivia-carbon-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-apptivia-coral focus:border-transparent"
                 >
                   <option value="">Select a team member...</option>
                   {repMembers.map(m => (
@@ -118,7 +118,7 @@ export default function PlanBuilderForm({
                   ))}
                 </select>
                 {!planFor?.memberId && !editingPlan && (
-                  <p className="text-xs text-blue-600 mt-1.5">
+                  <p className="text-xs text-apptivia-coral mt-1.5">
                     Choose a rep to auto-generate a coaching plan from their KPI data.
                   </p>
                 )}
@@ -132,18 +132,18 @@ export default function PlanBuilderForm({
           <div className="flex items-center gap-2">
             <button
               onClick={() => onPersonSelected(planFor.memberId)}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-purple-600 border border-purple-300 rounded-md hover:bg-purple-50 transition-colors"
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-apptivia-ink border border-apptivia-carbon-300 rounded-md hover:bg-apptivia-carbon-100 transition-colors"
             >
               <Sparkles size={14} />
               Regenerate Plan
             </button>
-            <span className="text-xs text-gray-400">Re-runs AI generation with latest data</span>
+            <span className="text-xs text-apptivia-carbon-400">Re-runs AI generation with latest data</span>
           </div>
         )}
 
         {/* Plan Name */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label className="block text-sm font-medium text-apptivia-carbon-700 mb-2">
             Plan Name <span className="text-red-500">*</span>
           </label>
           <input
@@ -151,7 +151,7 @@ export default function PlanBuilderForm({
             value={planForm.name}
             onChange={(e) => setPlanForm({ ...planForm, name: e.target.value })}
             disabled={inputDisabled}
-            className={`w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent ${inputDisabled ? 'bg-gray-50 text-gray-400' : ''}`}
+            className={`w-full border border-apptivia-carbon-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-apptivia-coral focus:border-transparent ${inputDisabled ? 'bg-apptivia-paper text-apptivia-carbon-400' : ''}`}
             placeholder="e.g., Q1 Pipeline Acceleration Plan"
           />
         </div>
@@ -159,23 +159,23 @@ export default function PlanBuilderForm({
         {/* Date Range */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Start Date</label>
+            <label className="block text-sm font-medium text-apptivia-carbon-700 mb-2">Start Date</label>
             <input
               type="date"
               value={planForm.date_range_start}
               onChange={(e) => setPlanForm({ ...planForm, date_range_start: e.target.value })}
               disabled={inputDisabled}
-              className={`w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent ${inputDisabled ? 'bg-gray-50 text-gray-400' : ''}`}
+              className={`w-full border border-apptivia-carbon-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-apptivia-coral focus:border-transparent ${inputDisabled ? 'bg-apptivia-paper text-apptivia-carbon-400' : ''}`}
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">End Date</label>
+            <label className="block text-sm font-medium text-apptivia-carbon-700 mb-2">End Date</label>
             <input
               type="date"
               value={planForm.date_range_end}
               onChange={(e) => setPlanForm({ ...planForm, date_range_end: e.target.value })}
               disabled={inputDisabled}
-              className={`w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent ${inputDisabled ? 'bg-gray-50 text-gray-400' : ''}`}
+              className={`w-full border border-apptivia-carbon-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-apptivia-coral focus:border-transparent ${inputDisabled ? 'bg-apptivia-paper text-apptivia-carbon-400' : ''}`}
             />
           </div>
         </div>
@@ -183,9 +183,9 @@ export default function PlanBuilderForm({
         {/* Goals */}
         <div>
           <div className="flex items-center justify-between mb-2">
-            <label className="block text-sm font-medium text-gray-700">Goals (1-3)</label>
+            <label className="block text-sm font-medium text-apptivia-carbon-700">Goals (1-3)</label>
             {!inputDisabled && (
-              <button onClick={() => addArrayField('goals')} className="text-xs text-blue-600 hover:text-blue-700 font-medium">
+              <button onClick={() => addArrayField('goals')} className="text-xs text-apptivia-coral hover:text-apptivia-coral font-medium">
                 + Add Goal
               </button>
             )}
@@ -198,7 +198,7 @@ export default function PlanBuilderForm({
                   value={goal}
                   onChange={(e) => updateArrayField('goals', index, e.target.value)}
                   disabled={inputDisabled}
-                  className={`flex-1 border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent ${inputDisabled ? 'bg-gray-50 text-gray-400' : ''}`}
+                  className={`flex-1 border border-apptivia-carbon-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-apptivia-coral focus:border-transparent ${inputDisabled ? 'bg-apptivia-paper text-apptivia-carbon-400' : ''}`}
                   placeholder="e.g., Increase pipeline by 25% this quarter"
                 />
                 {planForm.goals.length > 1 && !inputDisabled && (
@@ -214,9 +214,9 @@ export default function PlanBuilderForm({
         {/* Focus KPIs */}
         <div>
           <div className="flex items-center justify-between mb-2">
-            <label className="block text-sm font-medium text-gray-700">Focus KPIs (2-5)</label>
+            <label className="block text-sm font-medium text-apptivia-carbon-700">Focus KPIs (2-5)</label>
             {!inputDisabled && (
-              <button onClick={() => addArrayField('focus_kpis')} className="text-xs text-blue-600 hover:text-blue-700 font-medium">
+              <button onClick={() => addArrayField('focus_kpis')} className="text-xs text-apptivia-coral hover:text-apptivia-coral font-medium">
                 + Add KPI
               </button>
             )}
@@ -228,7 +228,7 @@ export default function PlanBuilderForm({
                   value={kpi}
                   onChange={(e) => handleFocusKpiChange(index, e.target.value)}
                   disabled={inputDisabled}
-                  className={`flex-1 border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent ${inputDisabled ? 'bg-gray-50 text-gray-400' : ''}`}
+                  className={`flex-1 border border-apptivia-carbon-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-apptivia-coral focus:border-transparent ${inputDisabled ? 'bg-apptivia-paper text-apptivia-carbon-400' : ''}`}
                 >
                   <option value="">Select a KPI...</option>
                   {availableKPIs.map(k => (
@@ -249,32 +249,32 @@ export default function PlanBuilderForm({
 
         {/* Skillset Impact Preview — shown for rep plans after AI generation */}
         {skillsetPreview && !isPlaybook && skillsetPreview.projected?.length > 0 && (
-          <div className="bg-indigo-50 border border-indigo-200 rounded-lg p-4">
-            <h4 className="text-sm font-semibold text-indigo-800 mb-3">Skillset Impact Preview</h4>
+          <div className="bg-apptivia-carbon-100 border border-apptivia-carbon-300 rounded-lg p-4">
+            <h4 className="text-sm font-semibold text-apptivia-ink mb-3">Skillset Impact Preview</h4>
             <div className="grid grid-cols-2 gap-2">
               {skillsetPreview.projected.map(s => {
                 const current = (skillsetPreview.current || []).find(c => c.skillset_key === s.skillset.toLowerCase().replace(/\s+/g, '_'));
                 const currentXp = current?.current_xp || 0;
                 return (
-                  <div key={s.skillset} className="flex items-center gap-2 text-xs bg-white rounded-md px-3 py-2 border border-indigo-100">
+                  <div key={s.skillset} className="flex items-center gap-2 text-xs bg-white rounded-md px-3 py-2 border border-apptivia-carbon-300">
                     <span className={`w-2 h-2 rounded-full ${s.color}`} />
-                    <span className="font-medium text-gray-800">{s.skillset}</span>
-                    <span className="text-gray-400 ml-auto">{currentXp} XP</span>
-                    <span className="text-indigo-600 font-semibold">+{s.estimatedXp}</span>
+                    <span className="font-medium text-apptivia-ink">{s.skillset}</span>
+                    <span className="text-apptivia-carbon-400 ml-auto">{currentXp} XP</span>
+                    <span className="text-apptivia-ink font-semibold">+{s.estimatedXp}</span>
                   </div>
                 );
               })}
             </div>
-            <p className="text-[10px] text-indigo-500 mt-2">Estimated XP gain from completing this plan's focus KPIs</p>
+            <p className="text-[10px] text-apptivia-ink mt-2">Estimated XP gain from completing this plan's focus KPIs</p>
           </div>
         )}
 
         {/* Action Items */}
         <div>
           <div className="flex items-center justify-between mb-2">
-            <label className="block text-sm font-medium text-gray-700">Action Items</label>
+            <label className="block text-sm font-medium text-apptivia-carbon-700">Action Items</label>
             {!inputDisabled && (
-              <button onClick={() => addArrayField('action_items')} className="text-xs text-blue-600 hover:text-blue-700 font-medium">
+              <button onClick={() => addArrayField('action_items')} className="text-xs text-apptivia-coral hover:text-apptivia-coral font-medium">
                 + Add Action
               </button>
             )}
@@ -287,7 +287,7 @@ export default function PlanBuilderForm({
                   value={action}
                   onChange={(e) => updateArrayField('action_items', index, e.target.value)}
                   disabled={inputDisabled}
-                  className={`flex-1 border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent ${inputDisabled ? 'bg-gray-50 text-gray-400' : ''}`}
+                  className={`flex-1 border border-apptivia-carbon-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-apptivia-coral focus:border-transparent ${inputDisabled ? 'bg-apptivia-paper text-apptivia-carbon-400' : ''}`}
                   placeholder={`Action item ${index + 1}`}
                 />
                 {planForm.action_items.length > 1 && !inputDisabled && (
@@ -303,9 +303,9 @@ export default function PlanBuilderForm({
         {/* Success Metrics */}
         <div>
           <div className="flex items-center justify-between mb-2">
-            <label className="block text-sm font-medium text-gray-700">Success Metrics</label>
+            <label className="block text-sm font-medium text-apptivia-carbon-700">Success Metrics</label>
             {!inputDisabled && (
-              <button onClick={() => addArrayField('success_metrics')} className="text-xs text-blue-600 hover:text-blue-700 font-medium">
+              <button onClick={() => addArrayField('success_metrics')} className="text-xs text-apptivia-coral hover:text-apptivia-coral font-medium">
                 + Add Metric
               </button>
             )}
@@ -318,7 +318,7 @@ export default function PlanBuilderForm({
                   value={metric}
                   onChange={(e) => updateArrayField('success_metrics', index, e.target.value)}
                   disabled={inputDisabled}
-                  className={`flex-1 border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent ${inputDisabled ? 'bg-gray-50 text-gray-400' : ''}`}
+                  className={`flex-1 border border-apptivia-carbon-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-apptivia-coral focus:border-transparent ${inputDisabled ? 'bg-apptivia-paper text-apptivia-carbon-400' : ''}`}
                   placeholder="e.g., Achieve 20% conversion rate"
                 />
                 {planForm.success_metrics.length > 1 && !inputDisabled && (
@@ -333,29 +333,29 @@ export default function PlanBuilderForm({
 
         {/* Notes */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Notes</label>
+          <label className="block text-sm font-medium text-apptivia-carbon-700 mb-2">Notes</label>
           <textarea
             value={planForm.notes}
             onChange={(e) => setPlanForm({ ...planForm, notes: e.target.value })}
             disabled={inputDisabled}
             rows={4}
-            className={`w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent ${inputDisabled ? 'bg-gray-50 text-gray-400' : ''}`}
+            className={`w-full border border-apptivia-carbon-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-apptivia-coral focus:border-transparent ${inputDisabled ? 'bg-apptivia-paper text-apptivia-carbon-400' : ''}`}
             placeholder="Additional notes or context..."
           />
         </div>
 
         {/* Save Button */}
-        <div className="flex justify-end gap-2 pt-4 border-t border-gray-200">
+        <div className="flex justify-end gap-2 pt-4 border-t border-apptivia-carbon-200">
           <button
             onClick={onCancel}
-            className="px-4 py-2 text-sm font-semibold border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50"
+            className="px-4 py-2 text-sm font-semibold border border-apptivia-carbon-300 text-apptivia-carbon-700 rounded-md hover:bg-apptivia-paper"
           >
             Cancel
           </button>
           <button
             onClick={handleSavePlan}
             disabled={savingPlan || inputDisabled}
-            className="px-4 py-2 text-sm font-semibold bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-60"
+            className="px-4 py-2 text-sm font-semibold bg-apptivia-coral text-white rounded-md hover:bg-apptivia-coral disabled:opacity-60"
           >
             {savingPlan ? 'Saving...' : (editingPlan ? (isPlaybook ? 'Update Playbook' : 'Update Plan') : (isPlaybook ? 'Save Playbook' : 'Save Plan'))}
           </button>

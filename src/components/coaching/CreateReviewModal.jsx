@@ -83,14 +83,14 @@ export default function CreateReviewModal({ isOpen, onClose, repId, repName, tea
 
   return (
     <div className="fixed inset-0 bg-black/40 z-50 flex items-start justify-center pt-10 overflow-y-auto">
-      <div className="bg-white rounded-xl shadow-xl w-full max-w-2xl mx-4 mb-10">
+      <div className="bg-white rounded-lg shadow-xl w-full max-w-2xl mx-4 mb-10">
         {/* Header */}
         <div className="px-6 py-4 border-b flex items-center justify-between">
           <div>
-            <h2 className="text-lg font-bold text-gray-900">Start Performance Review</h2>
-            {repName && <p className="text-sm text-gray-500">Creating review for {repName}</p>}
+            <h2 className="text-lg font-bold text-apptivia-ink">Start Performance Review</h2>
+            {repName && <p className="text-sm text-apptivia-carbon-500">Creating review for {repName}</p>}
           </div>
-          <button onClick={onClose} className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg">
+          <button onClick={onClose} className="p-2 text-apptivia-carbon-400 hover:text-apptivia-carbon-600 hover:bg-apptivia-carbon-100 rounded-lg">
             <X size={18} />
           </button>
         </div>

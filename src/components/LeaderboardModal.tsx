@@ -56,9 +56,9 @@ export default function LeaderboardModal({
   const getRankTextClass = (rank: number) => {
     switch (rank) {
       case 1: return 'text-yellow-500 text-lg';
-      case 2: return 'text-gray-400 text-lg';
+      case 2: return 'text-apptivia-carbon-400 text-lg';
       case 3: return 'text-orange-500 text-lg';
-      default: return 'text-gray-600 text-sm';
+      default: return 'text-apptivia-carbon-600 text-sm';
     }
   };
 
@@ -72,17 +72,17 @@ export default function LeaderboardModal({
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="px-6 py-4 border-b border-gray-200">
+        <div className="px-6 py-4 border-b border-apptivia-carbon-200">
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
+              <h2 className="text-2xl font-bold text-apptivia-ink flex items-center gap-2">
                 🏆 Leaderboard
               </h2>
-              <p className="text-sm text-gray-600 mt-1">{contestName}</p>
+              <p className="text-sm text-apptivia-carbon-600 mt-1">{contestName}</p>
             </div>
             <button
               onClick={onClose}
-              className="text-gray-400 hover:text-gray-600 text-2xl font-bold leading-none"
+              className="text-apptivia-carbon-400 hover:text-apptivia-carbon-600 text-2xl font-bold leading-none"
             >
               ×
             </button>
@@ -92,13 +92,13 @@ export default function LeaderboardModal({
         {/* Leaderboard Content */}
         <div className="flex-1 overflow-y-auto px-6 py-4">
           {hasNoLeaderboardData && (
-            <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg text-sm text-blue-700">
+            <div className="mb-4 p-3 bg-apptivia-coral-tone-50 border border-apptivia-coral-tone-100 rounded-lg text-sm text-apptivia-coral">
               Scores haven't been calculated yet. Showing enrolled participants — rankings will update as KPI data comes in.
             </div>
           )}
           {displayEntries.length === 0 ? (
             <div className="text-center py-12">
-              <p className="text-gray-500">No participants yet</p>
+              <p className="text-apptivia-carbon-500">No participants yet</p>
             </div>
           ) : (
             <div className="space-y-2">
@@ -107,8 +107,8 @@ export default function LeaderboardModal({
                   key={entry.profile_id}
                   className={`flex items-center justify-between p-4 rounded-lg transition-all ${
                     entry.profile_id === currentUserId
-                      ? 'bg-blue-50 border-2 border-blue-300 shadow-md'
-                      : 'bg-gray-50 hover:bg-gray-100'
+                      ? 'bg-apptivia-coral-tone-50 border-2 border-apptivia-coral-tone-100 shadow-md'
+                      : 'bg-apptivia-paper hover:bg-apptivia-carbon-100'
                   }`}
                 >
                   <div className="flex items-center gap-4">
@@ -125,14 +125,14 @@ export default function LeaderboardModal({
                           <span className="text-xs">{getRankChangeIcon(entry.rank_change)}</span>
                         )}
                         {entry.profile_id === currentUserId && (
-                          <span className="text-xs bg-blue-500 text-white px-2 py-1 rounded">You</span>
+                          <span className="text-xs bg-apptivia-coral text-white px-2 py-1 rounded">You</span>
                         )}
                       </div>
                       {entry.team_name && (
-                        <div className="text-sm text-gray-500">{entry.team_name}</div>
+                        <div className="text-sm text-apptivia-carbon-500">{entry.team_name}</div>
                       )}
                       {entry.previous_rank && entry.previous_rank !== entry.rank && (
-                        <div className="text-xs text-gray-400">
+                        <div className="text-xs text-apptivia-carbon-400">
                           Previous: #{entry.previous_rank}
                         </div>
                       )}
@@ -141,9 +141,9 @@ export default function LeaderboardModal({
 
                   {/* Score */}
                   <div className="flex flex-col items-end">
-                    <div className="font-bold text-xl text-blue-600">{entry.score}</div>
+                    <div className="font-bold text-xl text-apptivia-coral">{typeof entry.score === 'number' ? entry.score.toLocaleString(undefined, { maximumFractionDigits: 1 }) : entry.score}</div>
                     {entry.rank <= 3 && (
-                      <div className="text-xs text-gray-500">
+                      <div className="text-xs text-apptivia-carbon-500">
                         {entry.rank === 1 ? '1st Place' : entry.rank === 2 ? '2nd Place' : '3rd Place'}
                       </div>
                     )}
@@ -155,12 +155,12 @@ export default function LeaderboardModal({
         </div>
 
         {/* Footer */}
-        <div className="px-6 py-4 border-t border-gray-200 bg-gray-50">
-          <div className="flex items-center justify-between text-sm text-gray-600">
+        <div className="px-6 py-4 border-t border-apptivia-carbon-200 bg-apptivia-paper">
+          <div className="flex items-center justify-between text-sm text-apptivia-carbon-600">
             <span>Total Participants: {displayEntries.length}</span>
             <button
               onClick={onClose}
-              className="bg-blue-500 text-white px-6 py-2 rounded-lg font-semibold hover:bg-blue-600 transition-colors"
+              className="bg-apptivia-coral text-white px-6 py-2 rounded-lg font-semibold hover:bg-apptivia-coral transition-colors"
             >
               Close
             </button>

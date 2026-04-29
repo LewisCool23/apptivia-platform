@@ -58,8 +58,8 @@ export default function StepIntegration({ wizardState, updateState }) {
           <Plug size={20} className="text-cyan-600" />
         </div>
         <div>
-          <h3 className="text-lg font-semibold text-gray-900">Connect Your Data Source</h3>
-          <p className="text-sm text-gray-500">
+          <h3 className="text-lg font-semibold text-apptivia-ink">Connect Your Data Source</h3>
+          <p className="text-sm text-apptivia-carbon-500">
             The scorecard needs activity data to generate scores. Connect a CRM integration or choose manual CSV upload.
           </p>
         </div>
@@ -70,30 +70,30 @@ export default function StepIntegration({ wizardState, updateState }) {
         <button
           type="button"
           onClick={() => updateState({ integrationMethod: 'crm', integrationTestStatus: null })}
-          className={`p-4 rounded-xl border-2 text-left transition-all ${
+          className={`p-4 rounded-lg border-2 text-left transition-all ${
             integrationMethod === 'crm'
               ? 'border-cyan-500 bg-cyan-50 ring-1 ring-cyan-200'
-              : 'border-gray-200 hover:border-gray-300'
+              : 'border-apptivia-carbon-200 hover:border-apptivia-carbon-300'
           }`}
         >
           <Plug size={24} className="text-cyan-600 mb-2" />
-          <div className="font-semibold text-gray-900">CRM Integration</div>
-          <p className="text-xs text-gray-500 mt-1">
+          <div className="font-semibold text-apptivia-ink">CRM Integration</div>
+          <p className="text-xs text-apptivia-carbon-500 mt-1">
             Connect Salesforce, HubSpot, Apollo, Outreach, Gong, or SalesLoft for automatic data sync
           </p>
         </button>
         <button
           type="button"
           onClick={() => updateState({ integrationMethod: 'csv', selectedIntegration: null, integrationApiKey: '', integrationTestStatus: 'success' })}
-          className={`p-4 rounded-xl border-2 text-left transition-all ${
+          className={`p-4 rounded-lg border-2 text-left transition-all ${
             integrationMethod === 'csv'
               ? 'border-cyan-500 bg-cyan-50 ring-1 ring-cyan-200'
-              : 'border-gray-200 hover:border-gray-300'
+              : 'border-apptivia-carbon-200 hover:border-apptivia-carbon-300'
           }`}
         >
           <FileSpreadsheet size={24} className="text-emerald-600 mb-2" />
-          <div className="font-semibold text-gray-900">CSV / Manual Upload</div>
-          <p className="text-xs text-gray-500 mt-1">
+          <div className="font-semibold text-apptivia-ink">CSV / Manual Upload</div>
+          <p className="text-xs text-apptivia-carbon-500 mt-1">
             Upload data manually via CSV files. You can always connect a CRM later in Settings.
           </p>
         </button>
@@ -103,9 +103,9 @@ export default function StepIntegration({ wizardState, updateState }) {
       {integrationMethod === 'crm' && (
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Select Integration</label>
+            <label className="block text-sm font-medium text-apptivia-carbon-700 mb-2">Select Integration</label>
             {loadingIntegrations ? (
-              <div className="text-sm text-gray-400 flex items-center gap-2">
+              <div className="text-sm text-apptivia-carbon-400 flex items-center gap-2">
                 <Loader2 size={14} className="animate-spin" /> Loading integrations...
               </div>
             ) : (
@@ -118,11 +118,11 @@ export default function StepIntegration({ wizardState, updateState }) {
                     className={`p-3 rounded-lg border text-left transition-all text-sm ${
                       selectedIntegration?.id === integ.id
                         ? 'border-cyan-500 bg-cyan-50 ring-1 ring-cyan-200'
-                        : 'border-gray-200 hover:border-gray-300'
+                        : 'border-apptivia-carbon-200 hover:border-apptivia-carbon-300'
                     }`}
                   >
-                    <div className="font-medium text-gray-900">{integ.display_name}</div>
-                    <div className="text-xs text-gray-400">{integ.integration_type}</div>
+                    <div className="font-medium text-apptivia-ink">{integ.display_name}</div>
+                    <div className="text-xs text-apptivia-carbon-400">{integ.integration_type}</div>
                   </button>
                 ))}
               </div>
@@ -131,7 +131,7 @@ export default function StepIntegration({ wizardState, updateState }) {
 
           {selectedIntegration && (
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-apptivia-carbon-700 mb-1">
                 API Key <span className="text-red-500">*</span>
               </label>
               <div className="flex gap-2">
@@ -139,7 +139,7 @@ export default function StepIntegration({ wizardState, updateState }) {
                   type="password"
                   value={integrationApiKey}
                   onChange={(e) => updateState({ integrationApiKey: e.target.value, integrationTestStatus: null })}
-                  className="flex-1 px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500"
+                  className="flex-1 px-3 py-2.5 border border-apptivia-carbon-300 rounded-lg text-sm focus:ring-2 focus:ring-apptivia-coral"
                   placeholder={`Enter your ${selectedIntegration.display_name} API key`}
                 />
                 <button

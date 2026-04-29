@@ -4,6 +4,22 @@ import { supabase } from '../../supabaseClient';
 import { useKpiTemplates } from '../../hooks/useKpiTemplates';
 import { validateKpiGoals } from './onboardingConstants';
 
+// F13: KPI-to-integration mapping — shows which integration provides each KPI's data
+const KPI_INTEGRATION_REQ = {
+  call_connects: 'Salesforce/HubSpot', talk_time_minutes: 'Gong', dials: 'Salesforce/HubSpot',
+  meetings: 'Google Cal/Outlook', conversations: 'Gong', demos_completed: 'Salesforce/HubSpot',
+  follow_ups: 'Salesforce/HubSpot', discovery_calls: 'Gong',
+  pipeline_created: 'Salesforce/HubSpot', pipeline_advanced: 'Salesforce/HubSpot',
+  sourced_opps: 'Salesforce/HubSpot', stage2_opps: 'Salesforce/HubSpot', stage3_opps: 'Salesforce/HubSpot',
+  closed_won: 'Salesforce/HubSpot', revenue_generated: 'Salesforce/HubSpot',
+  average_deal_size: 'Salesforce/HubSpot', win_rate: 'Salesforce/HubSpot', sales_cycle_days: 'Salesforce/HubSpot',
+  emails_sent: 'Outreach/SalesLoft', emails_opened: 'Outreach/SalesLoft',
+  sequences_started: 'Outreach/SalesLoft', tasks_completed: 'Outreach/SalesLoft',
+  talk_to_listen_ratio: 'Gong', longest_monologue_sec: 'Gong', questions_asked: 'Gong',
+  next_steps_mentioned: 'Gong', interactivity_score: 'Gong',
+  gifts_sent: 'Sendoso', gifts_accepted: 'Sendoso', gift_influenced_meetings: 'Sendoso',
+};
+
 const CATEGORY_ORDER = ['activity', 'engagement', 'pipeline', 'revenue', 'efficiency'];
 const CATEGORY_LABELS = {
   activity: 'Activity',
@@ -160,17 +176,17 @@ export default function StepKpiConfig({ wizardState, updateState, organizationId
           <BarChart3 size={20} className="text-amber-600" />
         </div>
         <div>
-          <h3 className="text-lg font-semibold text-gray-900">KPI Configuration</h3>
-          <p className="text-sm text-gray-500">Choose a role-based template or configure your own scorecard</p>
+          <h3 className="text-lg font-semibold text-apptivia-ink">KPI Configuration</h3>
+          <p className="text-sm text-apptivia-carbon-500">Choose a role-based template or configure your own scorecard</p>
         </div>
       </div>
 
       {/* Template Selector */}
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">Quick Start: Role Templates</label>
+        <label className="block text-sm font-medium text-apptivia-carbon-700 mb-2">Quick Start: Role Templates</label>
         <div className="flex gap-2 flex-wrap">
           {templatesLoading ? (
-            <span className="text-xs text-gray-400">Loading templates...</span>
+            <span className="text-xs text-apptivia-carbon-400">Loading templates...</span>
           ) : (
             <>
               {templates.map(t => (
@@ -181,7 +197,7 @@ export default function StepKpiConfig({ wizardState, updateState, organizationId
                   className={`px-4 py-2 rounded-lg border text-sm font-medium transition-all ${
                     selectedTemplate === t.title_key
                       ? 'border-amber-500 bg-amber-50 text-amber-700 ring-1 ring-amber-200'
-                      : 'border-gray-200 text-gray-700 hover:border-gray-300'
+                      : 'border-apptivia-carbon-200 text-apptivia-carbon-700 hover:border-apptivia-carbon-300'
                   }`}
                 >
                   {t.template_name}
@@ -194,7 +210,7 @@ export default function StepKpiConfig({ wizardState, updateState, organizationId
                 className={`px-4 py-2 rounded-lg border text-sm font-medium transition-all flex items-center gap-1 ${
                   selectedTemplate === 'custom'
                     ? 'border-amber-500 bg-amber-50 text-amber-700 ring-1 ring-amber-200'
-                    : 'border-gray-200 text-gray-700 hover:border-gray-300'
+                    : 'border-apptivia-carbon-200 text-apptivia-carbon-700 hover:border-apptivia-carbon-300'
                 }`}
               >
                 <Sliders size={14} /> Custom
@@ -222,9 +238,9 @@ export default function StepKpiConfig({ wizardState, updateState, organizationId
       <div className="space-y-4 max-h-80 overflow-y-auto pr-1">
         {groupedKpis.map(group => (
           <div key={group.category}>
-            <h4 className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-1.5 py-1">
+            <h4 className="text-xs font-bold text-apptivia-carbon-500 uppercase tracking-wide mb-1.5 py-1">
               {CATEGORY_LABELS[group.category] || group.category}
-              <span className="font-normal text-gray-400 ml-1">
+              <span className="font-normal text-apptivia-carbon-400 ml-1">
                 ({group.kpis.filter(k => k.enabled).length}/{group.kpis.length})
               </span>
             </h4>
@@ -235,7 +251,7 @@ export default function StepKpiConfig({ wizardState, updateState, organizationId
                   className={`flex items-center gap-3 p-2.5 rounded-lg border transition-all ${
                     kpi.enabled
                       ? 'border-amber-200 bg-amber-50/50'
-                      : 'border-gray-100 bg-gray-50/50 opacity-60'
+                      : 'border-apptivia-carbon-100 bg-apptivia-paper/50 opacity-60'
                   }`}
                 >
                   <button
@@ -244,38 +260,45 @@ export default function StepKpiConfig({ wizardState, updateState, organizationId
                     className={`w-5 h-5 rounded flex items-center justify-center flex-shrink-0 ${
                       kpi.enabled
                         ? 'bg-amber-500 text-white'
-                        : 'border border-gray-300'
+                        : 'border border-apptivia-carbon-300'
                     }`}
                   >
                     {kpi.enabled && <Check size={12} />}
                   </button>
                   <div className="flex-1 min-w-0">
-                    <div className="text-sm font-medium text-gray-900">{kpi.name}</div>
+                    <div className="text-sm font-medium text-apptivia-ink">
+                      {kpi.name}
+                      {kpi.enabled && KPI_INTEGRATION_REQ[kpi.key] && (
+                        <span className="ml-1.5 text-[10px] font-normal text-apptivia-carbon-400">
+                          via {KPI_INTEGRATION_REQ[kpi.key]}
+                        </span>
+                      )}
+                    </div>
                   </div>
                   {kpi.enabled && (
                     <>
                       <div className="flex items-center gap-1">
-                        <label className="text-xs text-gray-500">Goal:</label>
+                        <label className="text-xs text-apptivia-carbon-500">Goal:</label>
                         <input
                           type="number"
                           value={kpi.goal}
                           onChange={(e) => updateKpi(kpi._idx, 'goal', e.target.value)}
-                          className="w-20 px-2 py-1 border border-gray-300 rounded text-sm text-center"
+                          className="w-20 px-2 py-1 border border-apptivia-carbon-300 rounded text-sm text-center"
                           min="1"
                         />
-                        <span className="text-xs text-gray-400">{kpi.unit === 'dollars' ? '$' : ''}</span>
+                        <span className="text-xs text-apptivia-carbon-400">{kpi.unit === 'dollars' ? '$' : ''}</span>
                       </div>
                       <div className="flex items-center gap-1">
-                        <label className="text-xs text-gray-500">Weight:</label>
+                        <label className="text-xs text-apptivia-carbon-500">Weight:</label>
                         <input
                           type="number"
                           value={kpi.weight}
                           onChange={(e) => updateKpi(kpi._idx, 'weight', e.target.value)}
-                          className="w-16 px-2 py-1 border border-gray-300 rounded text-sm text-center"
+                          className="w-16 px-2 py-1 border border-apptivia-carbon-300 rounded text-sm text-center"
                           min="0"
                           max="100"
                         />
-                        <span className="text-xs text-gray-400">%</span>
+                        <span className="text-xs text-apptivia-carbon-400">%</span>
                       </div>
                     </>
                   )}

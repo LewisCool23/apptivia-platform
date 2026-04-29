@@ -22,7 +22,7 @@ const SIGNAL_ICONS = {
   // === BUYER INTENT (Highest Value) ===
   solution_search: { icon: Search, color: 'text-emerald-600 bg-emerald-50' },
   pain_point: { icon: AlertTriangle, color: 'text-rose-600 bg-rose-50' },
-  icp_job_posting: { icon: Users, color: 'text-blue-600 bg-blue-50' },
+  icp_job_posting: { icon: Users, color: 'text-apptivia-coral bg-apptivia-coral-tone-50' },
   tech_stack_churn: { icon: RefreshCw, color: 'text-orange-600 bg-orange-50' },
   competitor_comparison: { icon: Target, color: 'text-amber-600 bg-amber-50' },
   competitor_complaint: { icon: AlertTriangle, color: 'text-red-600 bg-red-50' },
@@ -32,7 +32,7 @@ const SIGNAL_ICONS = {
   
   // === COMPANY EVENTS ===
   funding: { icon: DollarSign, color: 'text-emerald-600 bg-emerald-50' },
-  leadership_change: { icon: UserCheck, color: 'text-indigo-600 bg-indigo-50' },
+  leadership_change: { icon: UserCheck, color: 'text-apptivia-ink bg-apptivia-carbon-100' },
   expansion: { icon: TrendingUp, color: 'text-green-600 bg-green-50' },
   layoffs: { icon: TrendingDown, color: 'text-rose-600 bg-rose-50' },
   contract_win: { icon: Trophy, color: 'text-yellow-600 bg-yellow-50' },
@@ -42,18 +42,18 @@ const SIGNAL_ICONS = {
   dept_expansion:      { icon: BarChart2, color: 'text-teal-600 bg-teal-50' },
 
   // === ENGAGEMENT ===
-  hiring: { icon: Building2, color: 'text-purple-600 bg-purple-50' },
-  job_change: { icon: Briefcase, color: 'text-blue-600 bg-blue-50' },
+  hiring: { icon: Building2, color: 'text-apptivia-ink bg-apptivia-carbon-100' },
+  job_change: { icon: Briefcase, color: 'text-apptivia-coral bg-apptivia-coral-tone-50' },
   content_engagement: { icon: Newspaper, color: 'text-amber-600 bg-amber-50' },
-  event_participation: { icon: Mic, color: 'text-violet-600 bg-violet-50' },
+  event_participation: { icon: Mic, color: 'text-apptivia-ink bg-apptivia-carbon-100' },
   review_sentiment: { icon: Star, color: 'text-orange-600 bg-orange-50' },
   g2_review:        { icon: Star, color: 'text-green-600 bg-green-50' },
-  capterra_review:  { icon: Star, color: 'text-blue-600 bg-blue-50' },
+  capterra_review:  { icon: Star, color: 'text-apptivia-coral bg-apptivia-coral-tone-50' },
   press_release: { icon: Megaphone, color: 'text-sky-600 bg-sky-50' },
   tech_adoption: { icon: Settings, color: 'text-cyan-600 bg-cyan-50' },
 
   // === DATA SOURCES ===
-  sec_filing:               { icon: FileText,      color: 'text-indigo-600 bg-indigo-50' },
+  sec_filing:               { icon: FileText,      color: 'text-apptivia-ink bg-apptivia-carbon-100' },
   glassdoor_sentiment:          { icon: ThumbsDown, color: 'text-orange-600 bg-orange-50' },
   glassdoor_leadership_concern: { icon: ThumbsDown, color: 'text-red-600 bg-red-50' },
   glassdoor_culture_issue:      { icon: ThumbsDown, color: 'text-rose-600 bg-rose-50' },
@@ -71,14 +71,14 @@ const STRENGTH_COLORS = {
   very_high: 'bg-red-500',
   high: 'bg-orange-500',
   medium: 'bg-yellow-500',
-  low: 'bg-gray-400',
+  low: 'bg-apptivia-carbon-400',
 };
 
 const STATUS_STYLES = {
-  new: { bg: 'bg-blue-50', text: 'text-blue-700', label: 'New' },
+  new: { bg: 'bg-apptivia-coral-tone-50', text: 'text-apptivia-coral', label: 'New' },
   reviewed: { bg: 'bg-yellow-50', text: 'text-yellow-700', label: 'Reviewed' },
   actioned: { bg: 'bg-emerald-50', text: 'text-emerald-700', label: 'Actioned' },
-  dismissed: { bg: 'bg-gray-50', text: 'text-gray-500', label: 'Dismissed' },
+  dismissed: { bg: 'bg-apptivia-paper', text: 'text-apptivia-carbon-500', label: 'Dismissed' },
 };
 
 function timeAgo(dateStr) {
@@ -96,16 +96,74 @@ function signalAge(dateStr) {
   if (!dateStr) return null;
   const days = (Date.now() - new Date(dateStr).getTime()) / (1000 * 60 * 60 * 24);
   if (days < 1) return { label: 'Fresh', color: 'text-emerald-600 bg-emerald-50', stale: false, days };
-  if (days < 3) return { label: `${Math.floor(days)}d`, color: 'text-blue-600 bg-blue-50', stale: false, days };
+  if (days < 3) return { label: `${Math.floor(days)}d`, color: 'text-apptivia-coral bg-apptivia-coral-tone-50', stale: false, days };
   if (days < 7) return { label: 'Aging', color: 'text-amber-600 bg-amber-50', stale: false, days };
-  return { label: 'Stale', color: 'text-gray-500 bg-gray-100', stale: true, days };
+  return { label: 'Stale', color: 'text-apptivia-carbon-500 bg-apptivia-carbon-100', stale: true, days };
 }
 
 // ── Action Queue Panel ────────────────────────────────────
 
-function ActionQueuePanel({ actionQueue, actionQueueLoading, lastScanAt, nextScanAt, onApprove, onDismiss }) {
+const DISMISSAL_CATEGORIES = [
+  { key: 'wrong_target', label: 'Wrong Target', icon: UserPlus },
+  { key: 'wrong_timing', label: 'Wrong Timing', icon: Clock },
+  { key: 'wrong_message', label: 'Wrong Message', icon: MessageSquare },
+  { key: 'already_handled', label: 'Already Handled', icon: CheckCheck },
+  { key: 'low_priority', label: 'Low Priority', icon: TrendingDown },
+  { key: 'other', label: 'Other', icon: FileText },
+];
+
+// [SPEC 09] Multi-step play types
+const PLAY_TYPES = [
+  { key: 'pre_call_nurture',    label: 'Pre-Call Nurture',     icon: Phone,     desc: 'Warm before discovery call' },
+  { key: 'post_call_follow_up', label: 'Post-Call Follow-Up',  icon: Mail,      desc: 'Reinforce after a call' },
+  { key: 'no_show_recovery',    label: 'No-Show Recovery',     icon: RefreshCw, desc: 'Re-engage after missed meeting' },
+  { key: 'lead_reactivation',   label: 'Lead Reactivation',    icon: Zap,       desc: 'Re-warm a cold lead' },
+  { key: 'social_to_pipeline',  label: 'Social to Pipeline',   icon: Linkedin,  desc: 'LinkedIn engagement to meeting' },
+];
+
+const STEP_CHANNEL_META = {
+  email:                 { icon: Mail,          color: 'text-apptivia-coral',   label: 'Email' },
+  linkedin_dm:           { icon: MessageCircle, color: 'text-apptivia-coral',   label: 'LinkedIn DM' },
+  linkedin_connection:   { icon: UserPlus,      color: 'text-apptivia-coral',   label: 'LinkedIn Connect' },
+  phone_call:            { icon: Phone,         color: 'text-green-500',  label: 'Phone Call' },
+  task:                  { icon: FileText,      color: 'text-apptivia-ink', label: 'Task' },
+};
+
+const STEP_STATUS_BADGE = {
+  pending:                 { label: 'Pending',  color: 'bg-apptivia-carbon-100 text-apptivia-carbon-600' },
+  sent:                    { label: 'Sent',     color: 'bg-green-100 text-green-700' },
+  replied:                 { label: 'Replied',  color: 'bg-emerald-100 text-emerald-700' },
+  skipped_replied_earlier: { label: 'Skipped',  color: 'bg-yellow-100 text-yellow-600' },
+  cancelled:               { label: 'Cancelled', color: 'bg-red-100 text-red-600' },
+  failed:                  { label: 'Failed',   color: 'bg-red-100 text-red-700' },
+};
+
+function ActionQueuePanel({
+  actionQueue, actionQueueLoading, lastScanAt, nextScanAt,
+  onApprove, onDismiss, onSend,
+  onExpandToPlay, onFetchSteps, onUpdateStep, actionSteps, expandingActionId,
+}) {
   const [expandedId, setExpandedId] = useState(null);
   const [bulkProcessing, setBulkProcessing] = useState(false);
+  // Dismissal state per item
+  const [dismissingId, setDismissingId] = useState(null);
+  const [dismissCategory, setDismissCategory] = useState(null);
+  const [dismissReason, setDismissReason] = useState('');
+  // Editable draft state per item
+  const [editSubject, setEditSubject] = useState({});
+  const [editBody, setEditBody] = useState({});
+  const [sendingId, setSendingId] = useState(null);
+  // [SPEC 09] Play selector state
+  const [showPlaySelector, setShowPlaySelector] = useState(null);
+
+  // Auto-fetch steps for expanded plays
+  useEffect(() => {
+    for (const item of actionQueue) {
+      if (item.play_type && item.play_type !== 'single_action' && !actionSteps?.[item.id] && onFetchSteps) {
+        onFetchSteps(item.id);
+      }
+    }
+  }, [actionQueue, actionSteps, onFetchSteps]);
 
   if (!actionQueueLoading && actionQueue.length === 0) return null;
 
@@ -135,32 +193,79 @@ function ActionQueuePanel({ actionQueue, actionQueueLoading, lastScanAt, nextSca
     }
   };
 
+  const openDismissFlow = (itemId) => {
+    setDismissingId(itemId);
+    setDismissCategory(null);
+    setDismissReason('');
+  };
+
+  const confirmDismiss = async () => {
+    if (!dismissingId || !dismissCategory) return;
+    try {
+      await onDismiss(dismissingId, dismissCategory, dismissReason || undefined);
+    } catch (err) {
+      console.error('Dismiss error:', err);
+    } finally {
+      setDismissingId(null);
+      setDismissCategory(null);
+      setDismissReason('');
+    }
+  };
+
+  const handleExpand = (item) => {
+    const id = item.id;
+    const isExpanding = expandedId !== id;
+    setExpandedId(isExpanding ? id : null);
+    // Initialize editable fields when expanding
+    if (isExpanding) {
+      setEditSubject(prev => ({ ...prev, [id]: prev[id] ?? (item.draft_email_subject || '') }));
+      setEditBody(prev => ({ ...prev, [id]: prev[id] ?? (item.draft_email_body || '') }));
+    }
+  };
+
+  const handleSend = async (item) => {
+    setSendingId(item.id);
+    try {
+      const subject = editSubject[item.id] ?? item.draft_email_subject ?? '';
+      const body = editBody[item.id] ?? item.draft_email_body ?? '';
+      await onSend(item.id, subject, body);
+      // Clear edit state for this item
+      setEditSubject(prev => { const n = { ...prev }; delete n[item.id]; return n; });
+      setEditBody(prev => { const n = { ...prev }; delete n[item.id]; return n; });
+      setExpandedId(null);
+    } catch (err) {
+      console.error('Send error:', err);
+    } finally {
+      setSendingId(null);
+    }
+  };
+
   return (
-    <div className="bg-gradient-to-r from-violet-50 to-purple-50 rounded-xl border border-violet-200 p-4 space-y-3">
+    <div className="bg-apptivia-coral-tone-50 rounded-lg border border-apptivia-carbon-300 p-4 space-y-3">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <div className="w-7 h-7 bg-gradient-to-br from-violet-500 to-purple-600 rounded-lg flex items-center justify-center">
+          <div className="w-7 h-7 bg-apptivia-ink rounded-lg flex items-center justify-center">
             <Zap size={12} className="text-white" />
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <h3 className="text-sm font-semibold text-gray-800">Action Queue</h3>
+              <h3 className="text-sm font-semibold text-apptivia-ink">Action Queue</h3>
               {actionQueue.length > 0 && (
-                <span className="inline-flex items-center px-1.5 py-0.5 rounded-full bg-violet-600 text-white text-[10px] font-bold">
+                <span className="inline-flex items-center px-1.5 py-0.5 rounded-full bg-apptivia-ink text-white text-[10px] font-bold">
                   {actionQueue.length}
                 </span>
               )}
-              <span className="inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full bg-violet-100 text-violet-700 font-medium">
+              <span className="inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full bg-apptivia-carbon-100 text-apptivia-ink font-medium">
                 <Clock size={8} /> Auto-drafted
               </span>
             </div>
-            <p className="text-[11px] text-gray-500">
+            <p className="text-[11px] text-apptivia-carbon-500">
               AI-drafted outreach ready for your review
               {lastScanAt && (
-                <span className="ml-2 text-gray-400">· Last scan: {timeAgo(lastScanAt)}</span>
+                <span className="ml-2 text-apptivia-carbon-400">· Last scan: {timeAgo(lastScanAt)}</span>
               )}
               {nextScanAt && (
-                <span className="ml-1 text-gray-400">· Next: {new Date(nextScanAt).toLocaleDateString()}</span>
+                <span className="ml-1 text-apptivia-carbon-400">· Next: {new Date(nextScanAt).toLocaleDateString()}</span>
               )}
             </p>
           </div>
@@ -176,21 +281,21 @@ function ActionQueuePanel({ actionQueue, actionQueueLoading, lastScanAt, nextSca
             </button>
             <button
               onClick={handleBulkDismiss}
-              className="text-[10px] font-medium px-2 py-1 rounded-md bg-gray-50 text-gray-500 hover:bg-gray-100 transition-colors"
+              className="text-[10px] font-medium px-2 py-1 rounded-md bg-apptivia-paper text-apptivia-carbon-500 hover:bg-apptivia-carbon-100 transition-colors"
             >
               Dismiss All
             </button>
           </div>
         )}
         {bulkProcessing && (
-          <span className="text-[10px] text-violet-600 flex items-center gap-1">
+          <span className="text-[10px] text-apptivia-ink flex items-center gap-1">
             <Loader size={10} className="animate-spin" /> Processing...
           </span>
         )}
       </div>
 
       {actionQueueLoading && (
-        <div className="flex items-center gap-2 text-xs text-violet-600 py-1">
+        <div className="flex items-center gap-2 text-xs text-apptivia-ink py-1">
           <Loader size={12} className="animate-spin" /> Loading action queue...
         </div>
       )}
@@ -199,23 +304,25 @@ function ActionQueuePanel({ actionQueue, actionQueueLoading, lastScanAt, nextSca
         {actionQueue.map((item) => {
           const signal = item.signal;
           const isExpanded = expandedId === item.id;
+          const isDismissing = dismissingId === item.id;
+          const isSending = sendingId === item.id;
           const signalInfo = SIGNAL_ICONS[signal?.signal_type] || {};
 
           return (
-            <div key={item.id} className="bg-white rounded-lg border border-violet-100 p-3 space-y-2">
+            <div key={item.id} className="bg-white rounded-lg border border-apptivia-carbon-300 p-3 space-y-2">
               {/* Header row */}
               <div className="flex items-start justify-between gap-2">
                 <div className="flex items-center gap-2 min-w-0">
-                  <div className={`w-6 h-6 rounded-md flex items-center justify-center flex-shrink-0 ${signalInfo.color || 'text-gray-500 bg-gray-50'}`}>
+                  <div className={`w-6 h-6 rounded-md flex items-center justify-center flex-shrink-0 ${signalInfo.color || 'text-apptivia-carbon-500 bg-apptivia-paper'}`}>
                     {signalInfo.icon ? React.createElement(signalInfo.icon, { size: 12 }) : <Zap size={12} />}
                   </div>
                   <div className="min-w-0">
-                    <p className="text-xs font-semibold text-gray-800 truncate">{signal?.company_name || 'Unknown Company'}</p>
-                    <p className="text-[11px] text-gray-500 truncate">{signal?.title || signal?.signal_type}</p>
+                    <p className="text-xs font-semibold text-apptivia-ink truncate">{signal?.company_name || 'Unknown Company'}</p>
+                    <p className="text-[11px] text-apptivia-carbon-500 truncate">{signal?.title || signal?.signal_type}</p>
                   </div>
                   {signal?.signal_score != null && (
                     <Tooltip text={`Intent Score: ${signal.signal_score}/100 — AI-assigned signal strength based on relevance and buying intent`}>
-                      <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-violet-100 text-violet-700 flex-shrink-0 cursor-help">
+                      <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-apptivia-carbon-100 text-apptivia-ink flex-shrink-0 cursor-help">
                         {signal.signal_score}
                       </span>
                     </Tooltip>
@@ -223,62 +330,232 @@ function ActionQueuePanel({ actionQueue, actionQueueLoading, lastScanAt, nextSca
                 </div>
                 <div className="flex items-center gap-1.5 flex-shrink-0">
                   <button
-                    onClick={() => setExpandedId(isExpanded ? null : item.id)}
-                    className="text-[11px] text-violet-600 hover:text-violet-800 font-medium px-2 py-1 rounded-md bg-violet-50 hover:bg-violet-100 transition-colors"
+                    onClick={() => handleExpand(item)}
+                    className="text-[11px] text-apptivia-ink hover:text-apptivia-ink font-medium px-2 py-1 rounded-md bg-apptivia-carbon-100 hover:bg-apptivia-carbon-100 transition-colors"
                   >
                     {isExpanded ? 'Hide' : 'View Draft'}
                   </button>
-                  <button
-                    onClick={() => onApprove(item.id)}
-                    className="text-[11px] font-medium px-2 py-1 rounded-md bg-emerald-50 text-emerald-700 hover:bg-emerald-100 transition-colors flex items-center gap-1"
-                  >
-                    <CheckCircle size={10} /> Approve
-                  </button>
-                  <button
-                    onClick={() => onDismiss(item.id)}
-                    className="p-1 rounded-md bg-gray-50 text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-colors"
-                  >
-                    <X size={12} />
-                  </button>
+                  {item.status === 'pending' && (
+                    <button
+                      onClick={() => onApprove(item.id)}
+                      className="text-[11px] font-medium px-2 py-1 rounded-md bg-emerald-50 text-emerald-700 hover:bg-emerald-100 transition-colors flex items-center gap-1"
+                    >
+                      <CheckCircle size={10} /> Approve
+                    </button>
+                  )}
+                  {item.status === 'approved' && (!item.play_type || item.play_type === 'single_action') && (
+                    <button
+                      onClick={() => setShowPlaySelector(showPlaySelector === item.id ? null : item.id)}
+                      className="text-[11px] font-medium px-2 py-1 rounded-md bg-apptivia-carbon-100 text-apptivia-ink hover:bg-apptivia-carbon-100 transition-colors flex items-center gap-1"
+                    >
+                      <Layers size={10} /> Expand to Play
+                    </button>
+                  )}
+                  {item.status === 'approved' && item.play_type && item.play_type !== 'single_action' && (
+                    <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-apptivia-carbon-100 text-apptivia-ink flex items-center gap-1">
+                      <Layers size={9} /> {PLAY_TYPES.find(p => p.key === item.play_type)?.label || item.play_type}
+                    </span>
+                  )}
+                  {item.status === 'pending' && (
+                    <button
+                      onClick={() => openDismissFlow(item.id)}
+                      className="p-1 rounded-md bg-apptivia-paper text-apptivia-carbon-400 hover:bg-apptivia-carbon-100 hover:text-apptivia-carbon-600 transition-colors"
+                    >
+                      <X size={12} />
+                    </button>
+                  )}
                 </div>
               </div>
 
               {/* Outreach angle summary */}
-              {item.outreach_angle && !isExpanded && (
-                <p className="text-[11px] text-gray-600 italic line-clamp-2 ml-8">{item.outreach_angle}</p>
+              {item.outreach_angle && !isExpanded && !isDismissing && (
+                <p className="text-[11px] text-apptivia-carbon-600 italic line-clamp-2 ml-8">{item.outreach_angle}</p>
               )}
 
-              {/* Expanded draft */}
-              {isExpanded && (
-                <div className="ml-0 space-y-2 border-t border-violet-100 pt-2">
+              {/* ── Dismissal chip selector ── */}
+              {isDismissing && (
+                <div className="border-t border-apptivia-carbon-100 pt-2 space-y-2">
+                  <p className="text-[11px] font-medium text-apptivia-carbon-700">Why are you dismissing this?</p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {DISMISSAL_CATEGORIES.map((cat) => {
+                      const isSelected = dismissCategory === cat.key;
+                      return (
+                        <button
+                          key={cat.key}
+                          onClick={() => setDismissCategory(cat.key)}
+                          className={`inline-flex items-center gap-1 text-[11px] font-medium px-2.5 py-1 rounded-full border transition-colors ${
+                            isSelected
+                              ? 'bg-apptivia-carbon-100 border-apptivia-carbon-300 text-apptivia-ink'
+                              : 'bg-white border-apptivia-carbon-200 text-apptivia-carbon-600 hover:bg-apptivia-paper hover:border-apptivia-carbon-300'
+                          }`}
+                        >
+                          {React.createElement(cat.icon, { size: 10 })} {cat.label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  {dismissCategory && (
+                    <input
+                      type="text"
+                      placeholder="Optional: tell us more..."
+                      value={dismissReason}
+                      onChange={(e) => setDismissReason(e.target.value)}
+                      className="w-full text-xs text-apptivia-carbon-700 border border-apptivia-carbon-200 rounded-md px-2.5 py-1.5 focus:outline-none focus:ring-1 focus:ring-apptivia-coral-tone-300 placeholder-gray-400"
+                    />
+                  )}
+                  <div className="flex items-center justify-between">
+                    <p className="text-[10px] text-apptivia-ink italic">Aaron will learn from this</p>
+                    <div className="flex items-center gap-1.5">
+                      <button
+                        onClick={() => setDismissingId(null)}
+                        className="text-[11px] text-apptivia-carbon-500 hover:text-apptivia-carbon-700 px-2 py-1 rounded-md hover:bg-apptivia-paper transition-colors"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        onClick={confirmDismiss}
+                        disabled={!dismissCategory}
+                        className={`text-[11px] font-medium px-3 py-1 rounded-md transition-colors flex items-center gap-1 ${
+                          dismissCategory
+                            ? 'bg-red-50 text-red-700 hover:bg-red-100'
+                            : 'bg-apptivia-paper text-apptivia-carbon-400 cursor-not-allowed'
+                        }`}
+                      >
+                        <ThumbsDown size={10} /> Dismiss
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* ── Expanded editable draft ── */}
+              {isExpanded && !isDismissing && (
+                <div className="ml-0 space-y-2 border-t border-apptivia-carbon-300 pt-2">
                   {item.draft_email_subject && (
                     <div>
-                      <p className="text-[10px] font-semibold text-gray-500 uppercase tracking-wide mb-0.5">Email Subject</p>
-                      <p className="text-xs text-gray-800 font-medium">{item.draft_email_subject}</p>
+                      <p className="text-[10px] font-semibold text-apptivia-carbon-500 uppercase tracking-wide mb-0.5">Email Subject</p>
+                      <input
+                        type="text"
+                        value={editSubject[item.id] ?? item.draft_email_subject}
+                        onChange={(e) => setEditSubject(prev => ({ ...prev, [item.id]: e.target.value }))}
+                        className="w-full text-xs text-apptivia-ink font-medium border border-apptivia-carbon-200 rounded-md px-2.5 py-1.5 focus:outline-none focus:ring-1 focus:ring-apptivia-coral-tone-300"
+                      />
                     </div>
                   )}
                   {item.draft_email_body && (
                     <div>
-                      <p className="text-[10px] font-semibold text-gray-500 uppercase tracking-wide mb-0.5">Email Body</p>
+                      <p className="text-[10px] font-semibold text-apptivia-carbon-500 uppercase tracking-wide mb-0.5">Email Body</p>
                       <textarea
-                        readOnly
-                        value={item.draft_email_body}
+                        value={editBody[item.id] ?? item.draft_email_body}
+                        onChange={(e) => setEditBody(prev => ({ ...prev, [item.id]: e.target.value }))}
                         rows={6}
-                        className="w-full text-xs text-gray-700 bg-gray-50 border border-gray-200 rounded-md p-2 resize-none focus:outline-none"
+                        className="w-full text-xs text-apptivia-carbon-700 border border-apptivia-carbon-200 rounded-md p-2 resize-y focus:outline-none focus:ring-1 focus:ring-apptivia-coral-tone-300"
                       />
                     </div>
                   )}
                   {item.draft_linkedin_message && (
                     <div>
-                      <p className="text-[10px] font-semibold text-gray-500 uppercase tracking-wide mb-0.5">LinkedIn Message</p>
+                      <p className="text-[10px] font-semibold text-apptivia-carbon-500 uppercase tracking-wide mb-0.5">LinkedIn Message</p>
                       <textarea
                         readOnly
                         value={item.draft_linkedin_message}
                         rows={3}
-                        className="w-full text-xs text-gray-700 bg-gray-50 border border-gray-200 rounded-md p-2 resize-none focus:outline-none"
+                        className="w-full text-xs text-apptivia-carbon-700 bg-apptivia-paper border border-apptivia-carbon-200 rounded-md p-2 resize-none focus:outline-none"
                       />
                     </div>
                   )}
+                  <div className="flex items-center justify-between pt-1">
+                    <p className="text-[10px] text-apptivia-ink italic">Aaron will learn from your edits</p>
+                    <button
+                      onClick={() => handleSend(item)}
+                      disabled={isSending}
+                      className="text-[11px] font-medium px-3 py-1.5 rounded-md bg-apptivia-ink text-white hover:bg-apptivia-ink transition-colors flex items-center gap-1 disabled:opacity-50"
+                    >
+                      {isSending ? (
+                        <><Loader size={10} className="animate-spin" /> Sending...</>
+                      ) : (
+                        <><Mail size={10} /> Send with Edits</>
+                      )}
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* [SPEC 09] Play type selector */}
+              {showPlaySelector === item.id && (
+                <div className="border-t border-apptivia-carbon-300 pt-2 space-y-2">
+                  <p className="text-[11px] font-medium text-apptivia-carbon-700">Select a play type:</p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {PLAY_TYPES.map((pt) => (
+                      <button
+                        key={pt.key}
+                        onClick={() => { onExpandToPlay(item.id, pt.key); setShowPlaySelector(null); }}
+                        disabled={expandingActionId === item.id}
+                        title={pt.desc}
+                        className="inline-flex items-center gap-1 text-[11px] font-medium px-2.5 py-1 rounded-full border bg-white border-apptivia-carbon-200 text-apptivia-carbon-600 hover:bg-apptivia-carbon-100 hover:border-apptivia-carbon-300 hover:text-apptivia-ink transition-colors disabled:opacity-50"
+                      >
+                        {React.createElement(pt.icon, { size: 10 })} {pt.label}
+                      </button>
+                    ))}
+                  </div>
+                  {expandingActionId === item.id && (
+                    <span className="text-[10px] text-apptivia-ink flex items-center gap-1">
+                      <Loader size={10} className="animate-spin" /> Generating play steps...
+                    </span>
+                  )}
+                </div>
+              )}
+
+              {/* [SPEC 09] Step timeline for expanded plays */}
+              {item.play_type && item.play_type !== 'single_action' && (actionSteps?.[item.id] || []).length > 0 && (
+                <div className="border-t border-apptivia-carbon-300 pt-2 space-y-1.5">
+                  <div className="flex items-center gap-1.5 mb-1">
+                    <Layers size={10} className="text-apptivia-ink" />
+                    <span className="text-[10px] font-semibold text-apptivia-ink uppercase tracking-wide">
+                      {PLAY_TYPES.find(p => p.key === item.play_type)?.label || item.play_type}
+                    </span>
+                    <span className="text-[10px] text-apptivia-carbon-400">
+                      {(actionSteps[item.id] || []).filter(s => s.status === 'sent' || s.status === 'replied').length}/{(actionSteps[item.id] || []).length} complete
+                    </span>
+                  </div>
+                  {(actionSteps[item.id] || []).map((step) => {
+                    const ch = STEP_CHANNEL_META[step.channel] || STEP_CHANNEL_META.task;
+                    const badge = STEP_STATUS_BADGE[step.status] || STEP_STATUS_BADGE.pending;
+                    return (
+                      <div key={step.id} className="flex items-start gap-2 p-2 bg-apptivia-paper rounded-lg">
+                        <div className={`w-5 h-5 rounded flex items-center justify-center flex-shrink-0 ${ch.color} bg-white border border-apptivia-carbon-100`}>
+                          {React.createElement(ch.icon, { size: 10 })}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-[11px] font-medium text-apptivia-carbon-700">Step {step.step_order}: {ch.label}</span>
+                            <span className={`text-[9px] px-1.5 py-0.5 rounded-full font-medium ${badge.color}`}>
+                              {badge.label}
+                            </span>
+                          </div>
+                          {step.draft_subject && (
+                            <p className="text-[10px] text-apptivia-carbon-600 font-medium truncate">Subject: {step.draft_subject}</p>
+                          )}
+                          <p className="text-[10px] text-apptivia-carbon-500 line-clamp-2">{step.draft_body}</p>
+                          <p className="text-[10px] text-apptivia-carbon-400 mt-0.5">
+                            {step.status === 'sent' && step.sent_at
+                              ? `Sent ${new Date(step.sent_at).toLocaleDateString()}`
+                              : `Scheduled: ${new Date(step.scheduled_for).toLocaleDateString()} ${new Date(step.scheduled_for).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
+                            }
+                          </p>
+                        </div>
+                        {step.status === 'pending' && onUpdateStep && (
+                          <button
+                            onClick={() => onUpdateStep(step.id, item.id, { status: 'cancelled' })}
+                            className="p-1 rounded text-apptivia-carbon-300 hover:text-red-500 hover:bg-red-50 transition-colors"
+                            title="Cancel step"
+                          >
+                            <X size={10} />
+                          </button>
+                        )}
+                      </div>
+                    );
+                  })}
                 </div>
               )}
             </div>
@@ -293,23 +570,23 @@ function ActionQueuePanel({ actionQueue, actionQueueLoading, lastScanAt, nextSca
 
 function SignalSummaryCards({ summary }) {
   const cards = [
-    { label: 'Total Signals', value: summary.totalSignals, icon: Radar, color: 'text-blue-600 bg-blue-50' },
+    { label: 'Total Signals', value: summary.totalSignals, icon: Radar, color: 'text-apptivia-coral bg-apptivia-coral-tone-50' },
     { label: 'New (Unreviewed)', value: summary.newSignals, icon: Zap, color: 'text-amber-600 bg-amber-50' },
     { label: 'High Intent', value: summary.highIntentCount, icon: TrendingUp, color: 'text-emerald-600 bg-emerald-50' },
-    { label: 'Companies Tracked', value: summary.topCompanies.length, icon: Building2, color: 'text-purple-600 bg-purple-50' },
+    { label: 'Companies Tracked', value: summary.topCompanies.length, icon: Building2, color: 'text-apptivia-ink bg-apptivia-carbon-100' },
   ];
 
   return (
     <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
       {cards.map((card) => (
-        <div key={card.label} className="bg-white rounded-xl border border-gray-100 p-4 hover:shadow-sm transition-shadow">
+        <div key={card.label} className="bg-white rounded-lg border border-apptivia-carbon-100 p-4 hover:shadow-sm transition-shadow">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-xs font-medium text-gray-500">{card.label}</span>
+            <span className="text-xs font-medium text-apptivia-carbon-500">{card.label}</span>
             <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${card.color}`}>
               <card.icon size={16} />
             </div>
           </div>
-          <div className="text-lg font-bold text-gray-900">{card.value}</div>
+          <div className="text-lg font-bold text-apptivia-ink">{card.value}</div>
         </div>
       ))}
     </div>
@@ -329,10 +606,10 @@ function BuyingStageFunnel({ byBuyingStage = {} }) {
   ];
 
   return (
-    <div className="bg-white rounded-xl border border-gray-100 p-4">
+    <div className="bg-white rounded-lg border border-apptivia-carbon-100 p-4">
       <div className="flex items-center gap-2 mb-3">
-        <Layers size={16} className="text-gray-500" />
-        <span className="text-sm font-semibold text-gray-700">Buying Stage Distribution</span>
+        <Layers size={16} className="text-apptivia-carbon-500" />
+        <span className="text-sm font-semibold text-apptivia-carbon-700">Buying Stage Distribution</span>
       </div>
       <div className="flex items-center gap-2 h-8 rounded-lg overflow-hidden">
         {stages.map(stage => {
@@ -370,27 +647,27 @@ function BuyingStageFunnel({ byBuyingStage = {} }) {
 function SignalContactsSection({ companyName, contacts, isEnriching, onEnrich, onCallContact }) {
   if (contacts && contacts.length > 0) {
     return (
-      <div className="mt-2 pt-2 border-t border-gray-100">
+      <div className="mt-2 pt-2 border-t border-apptivia-carbon-100">
         <div className="flex items-center gap-1.5 mb-1.5">
           <Users size={10} className="text-teal-500" />
-          <span className="text-[10px] font-semibold text-gray-500 uppercase tracking-wide">Key Contacts</span>
+          <span className="text-[10px] font-semibold text-apptivia-carbon-500 uppercase tracking-wide">Key Contacts</span>
         </div>
         <div className="space-y-1.5">
           {contacts.map((person, i) => (
             <div key={person.id || i} className="flex items-center gap-2 group/contact">
-              <div className="w-6 h-6 rounded-full bg-gradient-to-br from-teal-400 to-cyan-500 flex items-center justify-center text-white text-[9px] font-bold flex-shrink-0 select-none">
+              <div className="w-6 h-6 rounded-full bg-emerald-500 flex items-center justify-center text-white text-[9px] font-bold flex-shrink-0 select-none">
                 {(person.first_name?.[0] || person.name?.[0] || '?').toUpperCase()}
                 {(person.last_name?.[0] || '').toUpperCase()}
               </div>
               <div className="flex-1 min-w-0">
-                <span className="text-[10px] font-semibold text-gray-800 truncate block">{person.name || 'Unknown'}</span>
-                <span className="text-[9px] text-gray-500 truncate block">{person.title}</span>
+                <span className="text-[10px] font-semibold text-apptivia-ink truncate block">{person.name || 'Unknown'}</span>
+                <span className="text-[9px] text-apptivia-carbon-500 truncate block">{person.title}</span>
               </div>
               <div className="flex items-center gap-1 opacity-50 group-hover/contact:opacity-100 transition-opacity">
                 {person.email && (
                   <button
                     onClick={() => navigator.clipboard.writeText(person.email)}
-                    className="text-blue-400 hover:text-blue-600 transition-colors"
+                    className="text-apptivia-coral-tone-300 hover:text-apptivia-coral transition-colors"
                     title={`Copy email: ${person.email}`}
                   >
                     <Mail size={10} />
@@ -413,7 +690,7 @@ function SignalContactsSection({ companyName, contacts, isEnriching, onEnrich, o
                     href={person.linkedin_url}
                     target="_blank"
                     rel="noreferrer"
-                    className="text-blue-400 hover:text-blue-600 transition-colors"
+                    className="text-apptivia-coral-tone-300 hover:text-apptivia-coral transition-colors"
                     title="LinkedIn profile"
                   >
                     <Linkedin size={10} />
@@ -429,23 +706,23 @@ function SignalContactsSection({ companyName, contacts, isEnriching, onEnrich, o
 
   if (contacts && contacts.length === 0 && !isEnriching) {
     return (
-      <div className="mt-2 pt-2 border-t border-gray-100">
-        <span className="text-[10px] text-gray-400 italic">No contacts found for {companyName}</span>
+      <div className="mt-2 pt-2 border-t border-apptivia-carbon-100">
+        <span className="text-[10px] text-apptivia-carbon-400 italic">No contacts found for {companyName}</span>
       </div>
     );
   }
 
   if (isEnriching) {
     return (
-      <div className="mt-2 pt-2 border-t border-gray-100 flex items-center gap-1.5">
+      <div className="mt-2 pt-2 border-t border-apptivia-carbon-100 flex items-center gap-1.5">
         <Loader size={10} className="animate-spin text-teal-500" />
-        <span className="text-[10px] text-gray-400">Finding contacts...</span>
+        <span className="text-[10px] text-apptivia-carbon-400">Finding contacts...</span>
       </div>
     );
   }
 
   return (
-    <div className="mt-2 pt-2 border-t border-gray-100">
+    <div className="mt-2 pt-2 border-t border-apptivia-carbon-100">
       <button
         onClick={onEnrich}
         className="inline-flex items-center gap-1 text-[10px] font-medium text-teal-600 hover:text-teal-800 hover:bg-teal-50 px-2 py-0.5 rounded transition-colors"
@@ -472,17 +749,17 @@ const AccountCard = React.memo(function AccountCard({ group, onAction, onDismiss
   const domain = group.signals.find((s) => s.raw_data?.domain)?.raw_data?.domain || '';
 
   return (
-    <div className={`bg-white rounded-xl border ${hasHighIntent ? 'border-amber-200' : 'border-gray-100'} p-4 hover:shadow-sm transition-shadow`}>
+    <div className={`bg-white rounded-lg border ${hasHighIntent ? 'border-amber-200' : 'border-apptivia-carbon-100'} p-4 hover:shadow-sm transition-shadow`}>
       {/* Header */}
       <div className="flex items-start justify-between gap-3 mb-3">
         <div className="flex items-center gap-2.5">
-          <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-slate-600 to-slate-800 flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
+          <div className="w-9 h-9 rounded-lg bg-apptivia-carbon-700 flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
             {group.name[0]?.toUpperCase() || '?'}
           </div>
           <div>
-            <h4 className="text-sm font-semibold text-gray-900">{group.name}</h4>
+            <h4 className="text-sm font-semibold text-apptivia-ink">{group.name}</h4>
             <div className="flex items-center gap-2 mt-0.5 flex-wrap">
-              <span className="text-[10px] text-gray-500">{group.signals.length} signal{group.signals.length !== 1 ? 's' : ''}</span>
+              <span className="text-[10px] text-apptivia-carbon-500">{group.signals.length} signal{group.signals.length !== 1 ? 's' : ''}</span>
               {group.stages.map((stage) => {
                 const s = BUYING_STAGE_BADGE[stage];
                 return s ? (
@@ -496,9 +773,9 @@ const AccountCard = React.memo(function AccountCard({ group, onAction, onDismiss
         </div>
         {/* Avg score */}
         <Tooltip text={`Avg Signal Score: ${group.avgScore}/100 — Average of all individual signal intent scores for this account`}>
-          <div className={`flex-shrink-0 text-center px-2.5 py-1 rounded-lg cursor-help ${group.avgScore >= 70 ? 'bg-amber-50' : group.avgScore >= 50 ? 'bg-blue-50' : 'bg-gray-50'}`}>
-            <div className={`text-sm font-bold ${group.avgScore >= 70 ? 'text-amber-700' : group.avgScore >= 50 ? 'text-blue-700' : 'text-gray-600'}`}>{group.avgScore}</div>
-            <div className="text-[9px] text-gray-400">Avg Signal</div>
+          <div className={`flex-shrink-0 text-center px-2.5 py-1 rounded-lg cursor-help ${group.avgScore >= 70 ? 'bg-amber-50' : group.avgScore >= 50 ? 'bg-apptivia-coral-tone-50' : 'bg-apptivia-paper'}`}>
+            <div className={`text-sm font-bold ${group.avgScore >= 70 ? 'text-amber-700' : group.avgScore >= 50 ? 'text-apptivia-coral' : 'text-apptivia-carbon-600'}`}>{group.avgScore}</div>
+            <div className="text-[9px] text-apptivia-carbon-400">Avg Signal</div>
           </div>
         </Tooltip>
       </div>
@@ -509,14 +786,14 @@ const AccountCard = React.memo(function AccountCard({ group, onAction, onDismiss
           const iconCfg = SIGNAL_ICONS[type];
           const IconC = iconCfg?.icon;
           return (
-            <span key={type} className={`inline-flex items-center gap-1 text-[9px] font-medium px-1.5 py-0.5 rounded-full ${iconCfg?.color || 'text-gray-500 bg-gray-50'}`}>
+            <span key={type} className={`inline-flex items-center gap-1 text-[9px] font-medium px-1.5 py-0.5 rounded-full ${iconCfg?.color || 'text-apptivia-carbon-500 bg-apptivia-paper'}`}>
               {IconC && <IconC size={8} />}
               {type.replace(/_/g, ' ')}
             </span>
           );
         })}
         {group.types.length > 4 && (
-          <span className="text-[9px] text-gray-400 px-1.5 py-0.5">+{group.types.length - 4} more</span>
+          <span className="text-[9px] text-apptivia-carbon-400 px-1.5 py-0.5">+{group.types.length - 4} more</span>
         )}
       </div>
 
@@ -525,7 +802,7 @@ const AccountCard = React.memo(function AccountCard({ group, onAction, onDismiss
         {onResearchCompany && (
           <button
             onClick={() => onResearchCompany(group.name)}
-            className="inline-flex items-center gap-1 text-[10px] font-medium px-2 py-1 rounded-md bg-blue-50 text-blue-700 hover:bg-blue-100 transition-colors"
+            className="inline-flex items-center gap-1 text-[10px] font-medium px-2 py-1 rounded-md bg-apptivia-coral-tone-50 text-apptivia-coral hover:bg-apptivia-coral-tone-50 transition-colors"
           >
             <Search size={9} /> Research
           </button>
@@ -549,7 +826,7 @@ const AccountCard = React.memo(function AccountCard({ group, onAction, onDismiss
         {topSignal && onDraftMessage && (
           <button
             onClick={() => onDraftMessage(topSignal, companyContacts?.[group.name]?.[0])}
-            className="inline-flex items-center gap-1 text-[10px] font-medium px-2 py-1 rounded-md bg-purple-50 text-purple-700 hover:bg-purple-100 transition-colors"
+            className="inline-flex items-center gap-1 text-[10px] font-medium px-2 py-1 rounded-md bg-apptivia-carbon-100 text-apptivia-ink hover:bg-apptivia-carbon-100 transition-colors"
           >
             <MessageSquare size={9} /> Draft Message
           </button>
@@ -577,7 +854,7 @@ const AccountCard = React.memo(function AccountCard({ group, onAction, onDismiss
           <button
             onClick={() => onPromoteToAccount(group, false)}
             disabled={isPromoting}
-            className="inline-flex items-center gap-1 text-[10px] font-medium px-2 py-1 rounded-md bg-indigo-50 text-indigo-700 hover:bg-indigo-100 disabled:opacity-50 transition-colors"
+            className="inline-flex items-center gap-1 text-[10px] font-medium px-2 py-1 rounded-md bg-apptivia-carbon-100 text-apptivia-ink hover:bg-apptivia-carbon-100 disabled:opacity-50 transition-colors"
             title="Promote to Accounts tab"
           >
             {isPromoting ? <Loader size={9} className="animate-spin" /> : <Building2 size={9} />} Promote
@@ -585,7 +862,7 @@ const AccountCard = React.memo(function AccountCard({ group, onAction, onDismiss
         )}
         <button
           onClick={() => setExpanded(!expanded)}
-          className="ml-auto inline-flex items-center gap-1 text-[10px] text-gray-400 hover:text-gray-600 transition-colors"
+          className="ml-auto inline-flex items-center gap-1 text-[10px] text-apptivia-carbon-400 hover:text-apptivia-carbon-600 transition-colors"
         >
           {expanded ? 'Hide' : `${group.signals.length} signals`}
           <ChevronDown size={9} className={`transition-transform ${expanded ? 'rotate-180' : ''}`} />
@@ -603,7 +880,7 @@ const AccountCard = React.memo(function AccountCard({ group, onAction, onDismiss
 
       {/* Expanded signals */}
       {expanded && (
-        <div className="mt-3 space-y-2 pt-3 border-t border-gray-100">
+        <div className="mt-3 space-y-2 pt-3 border-t border-apptivia-carbon-100">
           {group.signals.map((signal) => (
             <SignalCard
               key={signal.id}
@@ -642,7 +919,7 @@ const SignalCard = React.memo(function SignalCard({ signal, onAction, onDismiss,
   const stageStyle = signal.buying_stage_indicator ? buyingStageStyles[signal.buying_stage_indicator] : null;
 
   return (
-    <div className={`bg-white rounded-xl border ${getSignalTier(signal.signal_score, getSignalCategory(signal.signal_type)).label === 'T1' ? 'border-amber-200' : 'border-gray-100'} p-4 hover:shadow-sm transition-shadow ${age?.stale ? 'opacity-75' : ''}`}>
+    <div className={`bg-white rounded-lg border ${getSignalTier(signal.signal_score, getSignalCategory(signal.signal_type)).label === 'T1' ? 'border-amber-200' : 'border-apptivia-carbon-100'} p-4 hover:shadow-sm transition-shadow ${age?.stale ? 'opacity-75' : ''}`}>
       <div className="flex items-start gap-3">
         {/* Icon */}
         <div className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${iconConfig.color}`}>
@@ -652,7 +929,7 @@ const SignalCard = React.memo(function SignalCard({ signal, onAction, onDismiss,
         {/* Content */}
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1 flex-wrap">
-            <h4 className="text-sm font-semibold text-gray-900 truncate">{signal.title}</h4>
+            <h4 className="text-sm font-semibold text-apptivia-ink truncate">{signal.title}</h4>
             <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded-full ${statusStyle.bg} ${statusStyle.text}`}>
               {statusStyle.label}
             </span>
@@ -667,7 +944,7 @@ const SignalCard = React.memo(function SignalCard({ signal, onAction, onDismiss,
               </span>
             )}
             {signal.raw_data?.signal_subtype && (
-              <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-600">
+              <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-apptivia-carbon-100 text-apptivia-carbon-600">
                 {signal.raw_data.signal_subtype.replace(/_/g, ' ')}
               </span>
             )}
@@ -684,37 +961,37 @@ const SignalCard = React.memo(function SignalCard({ signal, onAction, onDismiss,
 
           <div className="flex items-center gap-3 mb-2">
             {signal.company_name && (
-              <span className="text-xs text-gray-500 flex items-center gap-1">
+              <span className="text-xs text-apptivia-carbon-500 flex items-center gap-1">
                 <Building2 size={10} /> {signal.company_name}
               </span>
             )}
-            <span className="text-xs text-gray-400">{timeAgo(signal.detected_at)}</span>
-            <span className="text-xs text-gray-400 capitalize">{signal.source_platform}</span>
+            <span className="text-xs text-apptivia-carbon-400">{timeAgo(signal.detected_at)}</span>
+            <span className="text-xs text-apptivia-carbon-400 capitalize">{signal.source_platform}</span>
           </div>
 
           {signal.description && (
-            <p className="text-xs text-gray-600 line-clamp-2 mb-2">{signal.description}</p>
+            <p className="text-xs text-apptivia-carbon-600 line-clamp-2 mb-2">{signal.description}</p>
           )}
 
           {/* Signal strength bar */}
           <div className="flex items-center gap-2 mb-2">
             <Tooltip text="AI-assigned signal strength (1-100). Higher scores indicate stronger buying intent or relevance to your ICP." position="right">
-              <span className="text-[10px] text-gray-500 font-medium w-20 cursor-help">Intent Score</span>
+              <span className="text-[10px] text-apptivia-carbon-500 font-medium w-20 cursor-help">Intent Score</span>
             </Tooltip>
-            <div className="flex-1 bg-gray-100 rounded-full h-1.5">
+            <div className="flex-1 bg-apptivia-carbon-100 rounded-full h-1.5">
               <div
                 className={`h-full rounded-full ${STRENGTH_COLORS[signal.signal_strength]} transition-all`}
                 style={{ width: `${signal.signal_score}%` }}
               />
             </div>
-            <span className="text-xs font-semibold text-gray-700 w-8 text-right">{signal.signal_score}</span>
+            <span className="text-xs font-semibold text-apptivia-carbon-700 w-8 text-right">{signal.signal_score}</span>
           </div>
 
           {/* AI Insights (expandable) */}
           {(signal.ai_summary || signal.ai_recommended_action) && (
             <button
               onClick={() => setExpanded(!expanded)}
-              className="text-xs text-purple-600 font-medium flex items-center gap-1 mt-1 hover:text-purple-800"
+              className="text-xs text-apptivia-ink font-medium flex items-center gap-1 mt-1 hover:text-apptivia-ink"
             >
               <Sparkles size={10} />
               {expanded ? 'Hide AI Insights' : 'View AI Insights'}
@@ -723,31 +1000,31 @@ const SignalCard = React.memo(function SignalCard({ signal, onAction, onDismiss,
           )}
 
           {expanded && (
-            <div className="mt-2 bg-purple-50/50 rounded-lg p-3 space-y-2">
+            <div className="mt-2 bg-apptivia-carbon-100/50 rounded-lg p-3 space-y-2">
               {signal.ai_summary && (
                 <div>
-                  <span className="text-[10px] font-medium text-purple-600 uppercase">Summary</span>
-                  <p className="text-xs text-gray-700">{signal.ai_summary}</p>
+                  <span className="text-[10px] font-medium text-apptivia-ink uppercase">Summary</span>
+                  <p className="text-xs text-apptivia-carbon-700">{signal.ai_summary}</p>
                 </div>
               )}
               {signal.ai_recommended_action && (
                 <div>
-                  <span className="text-[10px] font-medium text-purple-600 uppercase">Recommended Action</span>
-                  <p className="text-xs text-gray-700">{signal.ai_recommended_action}</p>
+                  <span className="text-[10px] font-medium text-apptivia-ink uppercase">Recommended Action</span>
+                  <p className="text-xs text-apptivia-carbon-700">{signal.ai_recommended_action}</p>
                 </div>
               )}
               {signal.ai_outreach_angle && (
                 <div>
-                  <span className="text-[10px] font-medium text-purple-600 uppercase">Outreach Angle</span>
-                  <p className="text-xs text-gray-700">{signal.ai_outreach_angle}</p>
+                  <span className="text-[10px] font-medium text-apptivia-ink uppercase">Outreach Angle</span>
+                  <p className="text-xs text-apptivia-carbon-700">{signal.ai_outreach_angle}</p>
                 </div>
               )}
               {/* Quick-action buttons inside AI Insights */}
-              <div className="flex items-center gap-2 pt-2 border-t border-purple-100/50 mt-2">
+              <div className="flex items-center gap-2 pt-2 border-t border-apptivia-carbon-300/50 mt-2">
                 {signal.company_name && onResearchCompany && (
                   <button
                     onClick={() => onResearchCompany(signal.company_name)}
-                    className="inline-flex items-center gap-1 text-[10px] font-medium px-2.5 py-1 rounded-md bg-blue-50 text-blue-700 hover:bg-blue-100 transition-colors"
+                    className="inline-flex items-center gap-1 text-[10px] font-medium px-2.5 py-1 rounded-md bg-apptivia-coral-tone-50 text-apptivia-coral hover:bg-apptivia-coral-tone-50 transition-colors"
                   >
                     <Search size={10} /> Research {signal.company_name}
                   </button>
@@ -797,7 +1074,7 @@ const SignalCard = React.memo(function SignalCard({ signal, onAction, onDismiss,
               </button>
               <button
                 onClick={() => onDismiss(signal.id)}
-                className="p-1.5 rounded-lg bg-gray-50 text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-colors"
+                className="p-1.5 rounded-lg bg-apptivia-paper text-apptivia-carbon-400 hover:bg-apptivia-carbon-100 hover:text-apptivia-carbon-600 transition-colors"
                 title="Dismiss"
               >
                 <XCircle size={14} />
@@ -818,7 +1095,7 @@ const SignalCard = React.memo(function SignalCard({ signal, onAction, onDismiss,
               href={signal.source_url}
               target="_blank"
               rel="noreferrer"
-              className="p-1.5 rounded-lg bg-blue-50 text-blue-500 hover:bg-blue-100 transition-colors"
+              className="p-1.5 rounded-lg bg-apptivia-coral-tone-50 text-apptivia-coral hover:bg-apptivia-coral-tone-50 transition-colors"
               title="View source"
             >
               <ExternalLink size={14} />
@@ -827,7 +1104,7 @@ const SignalCard = React.memo(function SignalCard({ signal, onAction, onDismiss,
           {onDraftMessage && (
             <button
               onClick={() => onDraftMessage(signal)}
-              className="p-1.5 rounded-lg bg-purple-50 text-purple-500 hover:bg-purple-100 transition-colors"
+              className="p-1.5 rounded-lg bg-apptivia-carbon-100 text-apptivia-ink hover:bg-apptivia-carbon-100 transition-colors"
               title="Draft outreach message"
             >
               <MessageSquare size={14} />
@@ -840,14 +1117,14 @@ const SignalCard = React.memo(function SignalCard({ signal, onAction, onDismiss,
                 <span className={`text-[9px] font-semibold px-1.5 py-0.5 rounded-full ${
                   signal.outcome === 'won'     ? 'bg-emerald-100 text-emerald-700' :
                   signal.outcome === 'lost'    ? 'bg-rose-100 text-rose-700' :
-                                                 'bg-gray-100 text-gray-500'
+                                                 'bg-apptivia-carbon-100 text-apptivia-carbon-500'
                 }`}>
                   {signal.outcome === 'won' ? '✓ Won' : signal.outcome === 'lost' ? '✗ Lost' : '⏳ Pending'}
                 </span>
                 {signal.contributed_to_deal_id && (
                   <a
                     href={`/engage?tab=pipeline&deal=${signal.contributed_to_deal_id}`}
-                    className="text-[9px] font-medium px-1.5 py-0.5 rounded-full bg-blue-50 text-blue-600 hover:bg-blue-100 transition-colors"
+                    className="text-[9px] font-medium px-1.5 py-0.5 rounded-full bg-apptivia-coral-tone-50 text-apptivia-coral hover:bg-apptivia-coral-tone-50 transition-colors"
                     title="View linked deal"
                   >
                     View Deal →
@@ -862,10 +1139,10 @@ const SignalCard = React.memo(function SignalCard({ signal, onAction, onDismiss,
                 >
                   <CheckCheck size={14} />
                 </button>
-                <div className="absolute right-0 top-full mt-1 hidden group-hover:flex flex-col bg-white border border-gray-200 rounded-lg shadow-lg z-10 overflow-hidden w-28">
+                <div className="absolute right-0 top-full mt-1 hidden group-hover:flex flex-col bg-white border border-apptivia-carbon-200 rounded-lg shadow-lg z-10 overflow-hidden w-28">
                   <button onClick={() => onMarkOutcome(signal.id, 'won')}   className="px-3 py-1.5 text-[11px] text-left text-emerald-700 hover:bg-emerald-50 font-medium">✓ Won</button>
                   <button onClick={() => onMarkOutcome(signal.id, 'lost')}  className="px-3 py-1.5 text-[11px] text-left text-rose-600 hover:bg-rose-50 font-medium">✗ Lost</button>
-                  <button onClick={() => onMarkOutcome(signal.id, 'pending')} className="px-3 py-1.5 text-[11px] text-left text-gray-600 hover:bg-gray-50">⏳ Pursuing</button>
+                  <button onClick={() => onMarkOutcome(signal.id, 'pending')} className="px-3 py-1.5 text-[11px] text-left text-apptivia-carbon-600 hover:bg-apptivia-paper">⏳ Pursuing</button>
                 </div>
               </div>
             )
@@ -884,20 +1161,20 @@ function ScanResultsPanel({ signals, lastScanSignalIds, onAction, onDismiss, onC
   if (newSignals.length === 0) return null;
 
   return (
-    <div className="bg-gradient-to-r from-cyan-50 to-blue-50 rounded-xl border border-cyan-200 p-5">
+    <div className="bg-apptivia-coral-tone-50 rounded-lg border border-cyan-200 p-5">
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
-          <div className="w-8 h-8 bg-gradient-to-br from-cyan-500 to-blue-600 rounded-lg flex items-center justify-center">
+          <div className="w-8 h-8 bg-apptivia-ink rounded-lg flex items-center justify-center">
             <Sparkles size={14} className="text-white" />
           </div>
           <div>
-            <h3 className="text-sm font-semibold text-gray-800">Scan Results</h3>
-            <p className="text-xs text-gray-500">{newSignals.length} new signal{newSignals.length !== 1 ? 's' : ''} detected</p>
+            <h3 className="text-sm font-semibold text-apptivia-ink">Scan Results</h3>
+            <p className="text-xs text-apptivia-carbon-500">{newSignals.length} new signal{newSignals.length !== 1 ? 's' : ''} detected</p>
           </div>
         </div>
         <button
           onClick={onClear}
-          className="text-xs text-gray-400 hover:text-gray-600 transition-colors flex items-center gap-1"
+          className="text-xs text-apptivia-carbon-400 hover:text-apptivia-carbon-600 transition-colors flex items-center gap-1"
         >
           <X size={12} /> Dismiss
         </button>
@@ -947,15 +1224,15 @@ function TrackingScriptModal({ isOpen, onClose, organizationId }) {
   if (!isOpen) return null;
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg mx-4 p-6">
+      <div className="bg-white rounded-lg shadow-2xl w-full max-w-lg mx-4 p-6">
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h2 className="text-base font-semibold text-gray-800">Website Visitor Tracking</h2>
-            <p className="text-xs text-gray-500 mt-0.5">Paste this snippet on every page of your marketing site</p>
+            <h2 className="text-base font-semibold text-apptivia-ink">Website Visitor Tracking</h2>
+            <p className="text-xs text-apptivia-carbon-500 mt-0.5">Paste this snippet on every page of your marketing site</p>
           </div>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600"><X size={16} /></button>
+          <button onClick={onClose} className="text-apptivia-carbon-400 hover:text-apptivia-carbon-600"><X size={16} /></button>
         </div>
-        <pre className="bg-gray-50 rounded-lg p-3 text-[10px] text-gray-700 overflow-x-auto whitespace-pre-wrap break-all border border-gray-200 font-mono leading-relaxed">
+        <pre className="bg-apptivia-paper rounded-lg p-3 text-[10px] text-apptivia-carbon-700 overflow-x-auto whitespace-pre-wrap break-all border border-apptivia-carbon-200 font-mono leading-relaxed">
           {snippet}
         </pre>
         <div className="flex items-center gap-3 mt-4">
@@ -965,11 +1242,11 @@ function TrackingScriptModal({ isOpen, onClose, organizationId }) {
           >
             {copied ? <><CheckCheck size={14} /> Copied!</> : <><Copy size={14} /> Copy Snippet</>}
           </button>
-          <button onClick={onClose} className="px-4 py-2 text-sm text-gray-500 hover:text-gray-700">Close</button>
+          <button onClick={onClose} className="px-4 py-2 text-sm text-apptivia-carbon-500 hover:text-apptivia-carbon-700">Close</button>
         </div>
-        <p className="text-[10px] text-gray-400 mt-3">
+        <p className="text-[10px] text-apptivia-carbon-400 mt-3">
           Identifies company visitors via IP lookup. Residential IPs and VPNs are filtered out automatically.
-          Requires IPInfo token for best results — set <code className="bg-gray-100 px-1 rounded">IPINFO_TOKEN</code> in backend env.
+          Requires IPInfo token for best results — set <code className="bg-apptivia-carbon-100 px-1 rounded">IPINFO_TOKEN</code> in backend env.
         </p>
       </div>
     </div>
@@ -1003,18 +1280,18 @@ function WebsiteVisitorPanel({ organizationId, onDraftMessage, onEnrichCompany, 
   useEffect(() => { load(); }, [load]);
 
   return (
-    <div className="bg-white rounded-xl border border-gray-100 p-5">
+    <div className="bg-white rounded-lg border border-apptivia-carbon-100 p-5">
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
           <Monitor size={13} className="text-teal-500" />
-          <h3 className="text-sm font-semibold text-gray-800">Website Visitors</h3>
+          <h3 className="text-sm font-semibold text-apptivia-ink">Website Visitors</h3>
           {visitors.length > 0 && (
             <span className="text-[9px] font-bold bg-teal-50 text-teal-600 px-1.5 py-0.5 rounded-full">{visitors.length}</span>
           )}
         </div>
         <button
           onClick={() => setShowScript(true)}
-          className="text-[10px] text-gray-400 hover:text-teal-600 transition-colors flex items-center gap-1"
+          className="text-[10px] text-apptivia-carbon-400 hover:text-teal-600 transition-colors flex items-center gap-1"
           title="Get tracking snippet"
         >
           <Settings size={10} /> Setup
@@ -1024,12 +1301,12 @@ function WebsiteVisitorPanel({ organizationId, onDraftMessage, onEnrichCompany, 
       {loading && (
         <div className="flex items-center gap-1.5 py-3">
           <Loader size={10} className="animate-spin text-teal-500" />
-          <span className="text-[10px] text-gray-400">Loading visitors...</span>
+          <span className="text-[10px] text-apptivia-carbon-400">Loading visitors...</span>
         </div>
       )}
 
       {!loading && visitors.length === 0 && (
-        <p className="text-[10px] text-gray-400 py-2 text-center">
+        <p className="text-[10px] text-apptivia-carbon-400 py-2 text-center">
           No visitors tracked yet · <button onClick={() => setShowScript(true)} className="text-teal-500 hover:text-teal-700 font-medium">Setup →</button>
         </p>
       )}
@@ -1043,11 +1320,11 @@ function WebsiteVisitorPanel({ organizationId, onDraftMessage, onEnrichCompany, 
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center justify-between gap-1">
-                  <span className="text-[10px] font-semibold text-gray-800 truncate">{v.company_name}</span>
-                  <span className="text-[9px] text-gray-400 flex-shrink-0">{timeAgo(v.last_seen_at)}</span>
+                  <span className="text-[10px] font-semibold text-apptivia-ink truncate">{v.company_name}</span>
+                  <span className="text-[9px] text-apptivia-carbon-400 flex-shrink-0">{timeAgo(v.last_seen_at)}</span>
                 </div>
                 {v.page_title && (
-                  <p className="text-[9px] text-gray-500 truncate">{v.page_title}</p>
+                  <p className="text-[9px] text-apptivia-carbon-500 truncate">{v.page_title}</p>
                 )}
                 <div className="flex items-center gap-1.5 mt-1 opacity-0 group-hover/visitor:opacity-100 transition-opacity">
                   {companyContacts?.[v.company_name]?.length > 0 ? (
@@ -1055,7 +1332,7 @@ function WebsiteVisitorPanel({ organizationId, onDraftMessage, onEnrichCompany, 
                       {companyContacts[v.company_name][0].email && (
                         <button
                           onClick={() => navigator.clipboard.writeText(companyContacts[v.company_name][0].email)}
-                          className="text-blue-400 hover:text-blue-600 transition-colors"
+                          className="text-apptivia-coral-tone-300 hover:text-apptivia-coral transition-colors"
                           title={`Copy: ${companyContacts[v.company_name][0].email}`}
                         ><Mail size={10} /></button>
                       )}
@@ -1065,7 +1342,7 @@ function WebsiteVisitorPanel({ organizationId, onDraftMessage, onEnrichCompany, 
                             { company_name: v.company_name, signal_type: 'website_visit', title: `${v.company_name} visited your website`, ai_outreach_angle: "They were on your site today — reach out while the problem is top of mind." },
                             companyContacts[v.company_name][0]
                           )}
-                          className="text-purple-400 hover:text-purple-600 transition-colors"
+                          className="text-apptivia-ink hover:text-apptivia-ink transition-colors"
                           title="Draft message"
                         ><MessageSquare size={10} /></button>
                       )}
@@ -1137,13 +1414,13 @@ function DailyPriorityPanel({ allSignals, companyContacts, onDraftMessage, onEnr
   if (priorityList.length === 0) return null;
 
   return (
-    <div className="bg-white rounded-xl border border-gray-100 p-5">
+    <div className="bg-white rounded-lg border border-apptivia-carbon-100 p-5">
       <div className="flex items-center justify-between mb-4">
         <div>
-          <h3 className="text-sm font-semibold text-gray-800">Today's Priority List</h3>
-          <p className="text-[10px] text-gray-400 mt-0.5">{today}</p>
+          <h3 className="text-sm font-semibold text-apptivia-ink">Today's Priority List</h3>
+          <p className="text-[10px] text-apptivia-carbon-400 mt-0.5">{today}</p>
         </div>
-        <span className="text-[9px] font-semibold text-purple-600 bg-purple-50 px-2 py-0.5 rounded-full uppercase tracking-wide">AI Ranked</span>
+        <span className="text-[9px] font-semibold text-apptivia-ink bg-apptivia-carbon-100 px-2 py-0.5 rounded-full uppercase tracking-wide">AI Ranked</span>
       </div>
       <div className="space-y-3">
         {priorityList.map((item, i) => (
@@ -1152,35 +1429,35 @@ function DailyPriorityPanel({ allSignals, companyContacts, onDraftMessage, onEnr
               {/* Rank badge */}
               <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-bold flex-shrink-0 mt-0.5 ${
                 i === 0 ? 'bg-amber-100 text-amber-700' :
-                i === 1 ? 'bg-gray-100 text-gray-600' :
+                i === 1 ? 'bg-apptivia-carbon-100 text-apptivia-carbon-600' :
                 i === 2 ? 'bg-orange-50 text-orange-600' :
-                'bg-gray-50 text-gray-500'
+                'bg-apptivia-paper text-apptivia-carbon-500'
               }`}>{i + 1}</span>
 
               <div className="flex-1 min-w-0">
                 {/* Company + priority score */}
                 <div className="flex items-center gap-1.5 justify-between">
-                  <span className="text-xs font-semibold text-gray-800 truncate">{item.name}</span>
+                  <span className="text-xs font-semibold text-apptivia-ink truncate">{item.name}</span>
                   <Tooltip text={`Priority Score: ${item.priorityScore}/100 — Composite of signal strength, recency, buying stage, signal count, and contact availability`} position="left">
                     <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded flex-shrink-0 cursor-help ${
                       item.priorityScore >= 80 ? 'bg-emerald-50 text-emerald-700' :
                       item.priorityScore >= 60 ? 'bg-yellow-50 text-yellow-700' :
-                      'bg-gray-50 text-gray-600'
+                      'bg-apptivia-paper text-apptivia-carbon-600'
                     }`}>{item.priorityScore}</span>
                   </Tooltip>
                 </div>
 
                 {/* Top signal context */}
-                <p className="text-[10px] text-gray-500 truncate mt-0.5">{item.topSignal?.title}</p>
+                <p className="text-[10px] text-apptivia-carbon-500 truncate mt-0.5">{item.topSignal?.title}</p>
 
                 {/* Meta chips */}
                 <div className="flex items-center gap-1.5 mt-1">
-                  <span className="text-[9px] text-gray-400">{item.signals.length} signal{item.signals.length !== 1 ? 's' : ''}</span>
+                  <span className="text-[9px] text-apptivia-carbon-400">{item.signals.length} signal{item.signals.length !== 1 ? 's' : ''}</span>
                   {item.stages.length > 0 && (
                     <span className={`text-[9px] px-1.5 rounded-full font-medium ${
                       item.stages.includes('decision') ? 'bg-emerald-50 text-emerald-600' :
-                      item.stages.includes('consideration') ? 'bg-blue-50 text-blue-600' :
-                      'bg-gray-50 text-gray-500'
+                      item.stages.includes('consideration') ? 'bg-apptivia-coral-tone-50 text-apptivia-coral' :
+                      'bg-apptivia-paper text-apptivia-carbon-500'
                     }`}>
                       {item.stages.includes('decision') ? 'Decision' : item.stages.includes('consideration') ? 'Consideration' : 'Awareness'}
                     </span>
@@ -1189,32 +1466,32 @@ function DailyPriorityPanel({ allSignals, companyContacts, onDraftMessage, onEnr
 
                 {/* Contact row */}
                 {item.contact ? (
-                  <div className="flex items-center gap-1.5 mt-1.5 pt-1.5 border-t border-gray-50">
-                    <div className="w-4 h-4 rounded-full bg-gradient-to-br from-teal-400 to-cyan-500 flex items-center justify-center text-white text-[7px] font-bold flex-shrink-0">
+                  <div className="flex items-center gap-1.5 mt-1.5 pt-1.5 border-t border-apptivia-carbon-100">
+                    <div className="w-4 h-4 rounded-full bg-emerald-500 flex items-center justify-center text-white text-[7px] font-bold flex-shrink-0">
                       {(item.contact.first_name?.[0] || item.contact.name?.[0] || '?').toUpperCase()}
                     </div>
-                    <span className="text-[10px] text-gray-700 font-medium truncate flex-1">
+                    <span className="text-[10px] text-apptivia-carbon-700 font-medium truncate flex-1">
                       {item.contact.name}
-                      {item.contact.title && <span className="text-gray-400 font-normal"> · {item.contact.title}</span>}
+                      {item.contact.title && <span className="text-apptivia-carbon-400 font-normal"> · {item.contact.title}</span>}
                     </span>
                     <div className="flex items-center gap-1 opacity-0 group-hover/priority:opacity-100 transition-opacity">
                       {item.contact.email && (
                         <button
                           onClick={() => navigator.clipboard.writeText(item.contact.email)}
-                          className="text-blue-400 hover:text-blue-600 transition-colors"
+                          className="text-apptivia-coral-tone-300 hover:text-apptivia-coral transition-colors"
                           title={`Copy: ${item.contact.email}`}
                         ><Mail size={10} /></button>
                       )}
                       {item.contact.linkedin_url && (
                         <a href={item.contact.linkedin_url} target="_blank" rel="noreferrer"
-                          className="text-blue-400 hover:text-blue-600 transition-colors"
+                          className="text-apptivia-coral-tone-300 hover:text-apptivia-coral transition-colors"
                           title="LinkedIn"
                         ><Linkedin size={10} /></a>
                       )}
                       {onDraftMessage && (
                         <button
                           onClick={() => onDraftMessage(item.topSignal, item.contact)}
-                          className="text-purple-400 hover:text-purple-600 transition-colors"
+                          className="text-apptivia-ink hover:text-apptivia-ink transition-colors"
                           title="Draft message"
                         ><MessageSquare size={10} /></button>
                       )}
@@ -1243,25 +1520,25 @@ function TopCompaniesPanel({ companies, companyContacts }) {
   if (!companies.length) return null;
 
   return (
-    <div className="bg-white rounded-xl border border-gray-100 p-5">
-      <h3 className="text-sm font-semibold text-gray-700 mb-3">Top Signal Companies</h3>
+    <div className="bg-white rounded-lg border border-apptivia-carbon-100 p-5">
+      <h3 className="text-sm font-semibold text-apptivia-carbon-700 mb-3">Top Signal Companies</h3>
       <div className="space-y-2">
         {companies.slice(0, 8).map((c, i) => (
           <div key={c.name} className="flex items-center gap-3">
-            <span className="text-xs font-bold text-gray-400 w-5">{i + 1}</span>
-            <span className="flex-1 text-sm text-gray-800 font-medium truncate">{c.name}</span>
+            <span className="text-xs font-bold text-apptivia-carbon-400 w-5">{i + 1}</span>
+            <span className="flex-1 text-sm text-apptivia-ink font-medium truncate">{c.name}</span>
             <div className="flex items-center gap-2">
               {companyContacts?.[c.name]?.length > 0 && (
                 <span className="text-[9px] text-teal-600 flex items-center gap-0.5">
                   <Users size={8} /> {companyContacts[c.name].length}
                 </span>
               )}
-              <span className="text-xs text-gray-500">{c.count} signals</span>
+              <span className="text-xs text-apptivia-carbon-500">{c.count} signals</span>
               <Tooltip text={`Avg Signal Score: ${c.score}/100 — Average intent score across ${c.count} signal${c.count !== 1 ? 's' : ''}`} position="left">
                 <span className={`text-xs font-bold px-2 py-0.5 rounded-full cursor-help ${
                   c.score >= 70 ? 'bg-emerald-50 text-emerald-700' :
                   c.score >= 50 ? 'bg-yellow-50 text-yellow-700' :
-                  'bg-gray-50 text-gray-600'
+                  'bg-apptivia-paper text-apptivia-carbon-600'
                 }`}>
                   {c.score}
                 </span>
@@ -1283,21 +1560,21 @@ function IcpProspectorHeader({ icpConfig, onEditIcp }) {
     ? `${icpConfig.headcount_min}–${icpConfig.headcount_max} employees`
     : 'Any headcount';
   return (
-    <div className="bg-gradient-to-r from-indigo-50 to-purple-50 border border-indigo-100 rounded-xl p-4 flex items-start justify-between gap-3">
+    <div className="bg-apptivia-coral-tone-50 border border-apptivia-carbon-300 rounded-lg p-4 flex items-start justify-between gap-3">
       <div className="flex items-center gap-2.5">
-        <div className="w-9 h-9 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-lg flex items-center justify-center flex-shrink-0">
+        <div className="w-9 h-9 bg-apptivia-ink rounded-lg flex items-center justify-center flex-shrink-0">
           <Target size={16} className="text-white" />
         </div>
         <div>
-          <h3 className="text-sm font-semibold text-gray-800">ICP Prospector</h3>
-          <p className="text-[10px] text-gray-500 mt-0.5">
+          <h3 className="text-sm font-semibold text-apptivia-ink">ICP Prospector</h3>
+          <p className="text-[10px] text-apptivia-carbon-500 mt-0.5">
             {industries}{hasMore ? ' + more' : ''} · {headcount}
           </p>
         </div>
       </div>
       <button
         onClick={onEditIcp}
-        className="text-[10px] text-indigo-600 hover:text-indigo-800 underline whitespace-nowrap flex-shrink-0"
+        className="text-[10px] text-apptivia-ink hover:text-apptivia-ink underline whitespace-nowrap flex-shrink-0"
       >
         Edit ICP
       </button>
@@ -1307,19 +1584,19 @@ function IcpProspectorHeader({ icpConfig, onEditIcp }) {
 
 function IcpProspectorFilters({ filters, onChange, onSearch, isLoading }) {
   return (
-    <div className="bg-white rounded-xl border border-gray-100 p-4 space-y-3">
+    <div className="bg-white rounded-lg border border-apptivia-carbon-100 p-4 space-y-3">
       <div className="flex items-center gap-2 flex-wrap">
         <div className="relative flex-1 min-w-40">
-          <Search size={12} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+          <Search size={12} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-apptivia-carbon-400 pointer-events-none" />
           <input
             value={filters.keywords}
             onChange={e => onChange({ keywords: e.target.value })}
             onKeyDown={e => e.key === 'Enter' && onSearch()}
             placeholder="Keyword or industry..."
-            className="w-full text-xs border border-gray-200 rounded-lg pl-7 pr-3 py-1.5 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-300"
+            className="w-full text-xs border border-apptivia-carbon-200 rounded-lg pl-7 pr-3 py-1.5 bg-white focus:outline-none focus:ring-2 focus:ring-apptivia-coral-tone-300"
           />
         </div>
-        <label className="flex items-center gap-1.5 text-xs text-gray-500 cursor-pointer select-none">
+        <label className="flex items-center gap-1.5 text-xs text-apptivia-carbon-500 cursor-pointer select-none">
           <input
             type="checkbox"
             checked={filters.useIndustryKeywords}
@@ -1331,7 +1608,7 @@ function IcpProspectorFilters({ filters, onChange, onSearch, isLoading }) {
         <button
           onClick={onSearch}
           disabled={isLoading}
-          className="inline-flex items-center gap-1.5 text-xs font-medium px-4 py-1.5 rounded-lg bg-gradient-to-r from-indigo-500 to-purple-600 text-white hover:from-indigo-600 hover:to-purple-700 disabled:opacity-40 transition-all shadow-sm"
+          className="inline-flex items-center gap-1.5 text-xs font-medium px-4 py-1.5 rounded-lg bg-apptivia-ink text-white hover:bg-apptivia-coral-tone-600 disabled:opacity-40 transition-all shadow-sm"
         >
           {isLoading
             ? <><RefreshCw size={11} className="animate-spin" /> Searching...</>
@@ -1340,13 +1617,13 @@ function IcpProspectorFilters({ filters, onChange, onSearch, isLoading }) {
       </div>
       {filters.locations.length > 0 && (
         <div className="flex items-center gap-1.5 flex-wrap">
-          <span className="text-[10px] text-gray-400 uppercase font-medium tracking-wide">Regions:</span>
+          <span className="text-[10px] text-apptivia-carbon-400 uppercase font-medium tracking-wide">Regions:</span>
           {filters.locations.map(loc => (
-            <span key={loc} className="inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-700">
+            <span key={loc} className="inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full bg-apptivia-carbon-100 text-apptivia-ink">
               {loc}
               <button
                 onClick={() => onChange({ locations: filters.locations.filter(l => l !== loc) })}
-                className="ml-0.5 hover:text-indigo-900"
+                className="ml-0.5 hover:text-apptivia-ink"
               >
                 <X size={8} />
               </button>
@@ -1366,7 +1643,7 @@ function IcpCompanyCard({ company, icpScore, isAlreadyAdded, existingAccountId, 
     ? 'bg-emerald-50 text-emerald-700'
     : icpScore >= 50
       ? 'bg-amber-50 text-amber-700'
-      : 'bg-gray-50 text-gray-500';
+      : 'bg-apptivia-paper text-apptivia-carbon-500';
   const techList = (company.technologies || []).map(t => typeof t === 'string' ? t : t?.name).filter(Boolean);
 
   const handleToggleContacts = () => {
@@ -1377,22 +1654,22 @@ function IcpCompanyCard({ company, icpScore, isAlreadyAdded, existingAccountId, 
   };
 
   return (
-    <div className={`bg-white rounded-xl border ${isAlreadyAdded ? 'border-emerald-200' : 'border-gray-100'} p-4 hover:shadow-sm transition-shadow`}>
+    <div className={`bg-white rounded-lg border ${isAlreadyAdded ? 'border-emerald-200' : 'border-apptivia-carbon-100'} p-4 hover:shadow-sm transition-shadow`}>
       {/* Header */}
       <div className="flex items-start justify-between gap-3 mb-3">
         <div className="flex items-center gap-2.5 min-w-0">
           {company.logo_url ? (
-            <img src={company.logo_url} alt={company.name} className="w-9 h-9 rounded-lg object-contain border border-gray-100 flex-shrink-0" />
+            <img src={company.logo_url} alt={company.name} className="w-9 h-9 rounded-lg object-contain border border-apptivia-carbon-100 flex-shrink-0" />
           ) : (
-            <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
+            <div className="w-9 h-9 rounded-lg bg-apptivia-ink flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
               {company.name[0]?.toUpperCase()}
             </div>
           )}
           <div className="min-w-0">
             <div className="flex items-center gap-1.5 flex-wrap">
-              <h4 className="text-sm font-semibold text-gray-900 truncate">{company.name}</h4>
+              <h4 className="text-sm font-semibold text-apptivia-ink truncate">{company.name}</h4>
               {company.website_url && (
-                <a href={company.website_url} target="_blank" rel="noreferrer" className="text-gray-400 hover:text-blue-500 transition-colors flex-shrink-0">
+                <a href={company.website_url} target="_blank" rel="noreferrer" className="text-apptivia-carbon-400 hover:text-apptivia-coral transition-colors flex-shrink-0">
                   <ExternalLink size={10} />
                 </a>
               )}
@@ -1403,11 +1680,11 @@ function IcpCompanyCard({ company, icpScore, isAlreadyAdded, existingAccountId, 
               )}
             </div>
             <div className="flex items-center gap-2 mt-0.5 flex-wrap">
-              {company.industry && <span className="text-[10px] text-gray-500">{company.industry}</span>}
+              {company.industry && <span className="text-[10px] text-apptivia-carbon-500">{company.industry}</span>}
               {company.estimated_num_employees > 0 && (
-                <span className="text-[10px] text-gray-400">{company.estimated_num_employees.toLocaleString()} employees</span>
+                <span className="text-[10px] text-apptivia-carbon-400">{company.estimated_num_employees.toLocaleString()} employees</span>
               )}
-              {location && <span className="text-[10px] text-gray-400">{location}</span>}
+              {location && <span className="text-[10px] text-apptivia-carbon-400">{location}</span>}
             </div>
           </div>
         </div>
@@ -1415,7 +1692,7 @@ function IcpCompanyCard({ company, icpScore, isAlreadyAdded, existingAccountId, 
           <Tooltip text={`ICP Fit Score: ${icpScore}/100 — Weighted match across industry, headcount, revenue, tech stack, geography, company age, and keywords`} wide>
             <div className={`flex-shrink-0 text-center px-2.5 py-1 rounded-lg cursor-help ${scoreColor}`}>
               <div className="text-sm font-bold">{icpScore}</div>
-              <div className="text-[9px] text-gray-400">ICP Fit</div>
+              <div className="text-[9px] text-apptivia-carbon-400">ICP Fit</div>
             </div>
           </Tooltip>
         )}
@@ -1423,7 +1700,7 @@ function IcpCompanyCard({ company, icpScore, isAlreadyAdded, existingAccountId, 
 
       {/* Description */}
       {company.short_description && (
-        <p className="text-[11px] text-gray-500 line-clamp-2 mb-3">{company.short_description}</p>
+        <p className="text-[11px] text-apptivia-carbon-500 line-clamp-2 mb-3">{company.short_description}</p>
       )}
 
       {/* Tech chips */}
@@ -1432,13 +1709,13 @@ function IcpCompanyCard({ company, icpScore, isAlreadyAdded, existingAccountId, 
           {techList.slice(0, 5).map(t => (
             <span key={t} className="text-[9px] px-1.5 py-0.5 rounded-full bg-cyan-50 text-cyan-700 font-medium">{t}</span>
           ))}
-          {techList.length > 5 && <span className="text-[9px] text-gray-400">+{techList.length - 5}</span>}
+          {techList.length > 5 && <span className="text-[9px] text-apptivia-carbon-400">+{techList.length - 5}</span>}
         </div>
       )}
 
       {/* Actions */}
       <div className="flex items-center gap-1.5 flex-wrap mb-2">
-        <button onClick={onResearch} className="inline-flex items-center gap-1 text-[10px] font-medium px-2 py-1 rounded-md bg-blue-50 text-blue-700 hover:bg-blue-100 transition-colors">
+        <button onClick={onResearch} className="inline-flex items-center gap-1 text-[10px] font-medium px-2 py-1 rounded-md bg-apptivia-coral-tone-50 text-apptivia-coral hover:bg-apptivia-coral-tone-50 transition-colors">
           <Search size={9} /> Research
         </button>
         <button onClick={handleToggleContacts} className="inline-flex items-center gap-1 text-[10px] font-medium px-2 py-1 rounded-md bg-teal-50 text-teal-700 hover:bg-teal-100 transition-colors">
@@ -1449,36 +1726,36 @@ function IcpCompanyCard({ company, icpScore, isAlreadyAdded, existingAccountId, 
             <CheckCircle size={9} /> In Accounts <ArrowRight size={9} />
           </button>
         ) : (
-          <button onClick={onAddToAccounts} disabled={isAdding} className="inline-flex items-center gap-1 text-[10px] font-medium px-2 py-1 rounded-md bg-indigo-50 text-indigo-700 hover:bg-indigo-100 disabled:opacity-50 transition-colors">
+          <button onClick={onAddToAccounts} disabled={isAdding} className="inline-flex items-center gap-1 text-[10px] font-medium px-2 py-1 rounded-md bg-apptivia-carbon-100 text-apptivia-ink hover:bg-apptivia-carbon-100 disabled:opacity-50 transition-colors">
             {isAdding ? <Loader size={9} className="animate-spin" /> : <Building2 size={9} />}
             Add to Accounts
           </button>
         )}
-        <button onClick={onDraftMessage} className="inline-flex items-center gap-1 text-[10px] font-medium px-2 py-1 rounded-md bg-purple-50 text-purple-700 hover:bg-purple-100 transition-colors">
+        <button onClick={onDraftMessage} className="inline-flex items-center gap-1 text-[10px] font-medium px-2 py-1 rounded-md bg-apptivia-carbon-100 text-apptivia-ink hover:bg-apptivia-carbon-100 transition-colors">
           <MessageSquare size={9} /> Draft Message
         </button>
       </div>
 
       {/* Contacts expansion */}
       {showContacts && (
-        <div className="mt-2 pt-2 border-t border-gray-50">
+        <div className="mt-2 pt-2 border-t border-apptivia-carbon-100">
           {isEnriching ? (
-            <div className="flex items-center gap-1.5 text-[10px] text-gray-400">
+            <div className="flex items-center gap-1.5 text-[10px] text-apptivia-carbon-400">
               <Loader size={10} className="animate-spin" /> Finding contacts...
             </div>
           ) : contacts?.length > 0 ? (
             <div className="space-y-1.5">
               {contacts.map((c, i) => (
                 <div key={c.id || i} className="flex items-center gap-2 text-[10px]">
-                  <div className="w-5 h-5 rounded-full bg-gradient-to-br from-gray-200 to-gray-300 flex items-center justify-center text-gray-600 text-[8px] font-bold flex-shrink-0">
+                  <div className="w-5 h-5 rounded-full bg-apptivia-carbon-200 flex items-center justify-center text-apptivia-carbon-600 text-[8px] font-bold flex-shrink-0">
                     {(c.name || c.first_name || '?')[0]?.toUpperCase()}
                   </div>
                   <div className="min-w-0">
-                    <span className="font-medium text-gray-800">{c.name || `${c.first_name} ${c.last_name}`.trim()}</span>
-                    {c.title && <span className="text-gray-400 ml-1">· {c.title}</span>}
+                    <span className="font-medium text-apptivia-ink">{c.name || `${c.first_name} ${c.last_name}`.trim()}</span>
+                    {c.title && <span className="text-apptivia-carbon-400 ml-1">· {c.title}</span>}
                   </div>
                   {c.email && (
-                    <button onClick={() => navigator.clipboard.writeText(c.email)} className="ml-auto text-gray-400 hover:text-blue-500 transition-colors flex-shrink-0" title={c.email}>
+                    <button onClick={() => navigator.clipboard.writeText(c.email)} className="ml-auto text-apptivia-carbon-400 hover:text-apptivia-coral transition-colors flex-shrink-0" title={c.email}>
                       <Mail size={9} />
                     </button>
                   )}
@@ -1488,14 +1765,14 @@ function IcpCompanyCard({ company, icpScore, isAlreadyAdded, existingAccountId, 
                         ? onCallContact({ name: c.name || `${c.first_name || ''} ${c.last_name || ''}`.trim(), phone: c.phone, company_name: company.name })
                         : navigator.clipboard.writeText(c.phone)
                       }
-                      className="text-gray-400 hover:text-emerald-500 transition-colors flex-shrink-0"
+                      className="text-apptivia-carbon-400 hover:text-emerald-500 transition-colors flex-shrink-0"
                       title={onCallContact ? `Call ${c.name || c.phone}` : c.phone}
                     >
                       <Phone size={9} />
                     </button>
                   )}
                   {c.linkedin_url && (
-                    <a href={c.linkedin_url} target="_blank" rel="noreferrer" className="text-gray-400 hover:text-blue-700 transition-colors flex-shrink-0">
+                    <a href={c.linkedin_url} target="_blank" rel="noreferrer" className="text-apptivia-carbon-400 hover:text-apptivia-coral transition-colors flex-shrink-0">
                       <Linkedin size={9} />
                     </a>
                   )}
@@ -1503,7 +1780,7 @@ function IcpCompanyCard({ company, icpScore, isAlreadyAdded, existingAccountId, 
               ))}
             </div>
           ) : (
-            <p className="text-[10px] text-gray-400">No contacts found for this company.</p>
+            <p className="text-[10px] text-apptivia-carbon-400">No contacts found for this company.</p>
           )}
         </div>
       )}
@@ -1570,20 +1847,20 @@ function IcpProspectorView({ icp, icpConfig, onDraftMessage, onNavigateDiscover,
       />
 
       {icp.loading ? (
-        <div className="bg-white rounded-xl border border-gray-100 py-16 text-center">
-          <RefreshCw size={28} className="mx-auto text-indigo-300 mb-3 animate-spin" />
-          <p className="text-sm text-gray-500">Searching Apollo for ICP-matching companies...</p>
+        <div className="bg-white rounded-lg border border-apptivia-carbon-100 py-16 text-center">
+          <RefreshCw size={28} className="mx-auto text-apptivia-ink mb-3 animate-spin" />
+          <p className="text-sm text-apptivia-carbon-500">Searching Apollo for ICP-matching companies...</p>
         </div>
       ) : icp.error ? (
-        <div className="bg-white rounded-xl border border-red-100 py-12 text-center px-4">
+        <div className="bg-white rounded-lg border border-red-100 py-12 text-center px-4">
           <p className="text-sm text-red-500 mb-2">Search failed: {icp.error}</p>
-          <button onClick={() => icp.search()} className="text-xs text-indigo-600 underline">Retry</button>
+          <button onClick={() => icp.search()} className="text-xs text-apptivia-ink underline">Retry</button>
         </div>
       ) : icp.results.length === 0 ? (
-        <div className="bg-white rounded-xl border border-gray-100 py-16 text-center">
-          <Target size={32} className="mx-auto text-gray-300 mb-3" />
-          <p className="text-sm text-gray-500 mb-1">No results yet</p>
-          <p className="text-xs text-gray-400">
+        <div className="bg-white rounded-lg border border-apptivia-carbon-100 py-16 text-center">
+          <Target size={32} className="mx-auto text-apptivia-carbon-300 mb-3" />
+          <p className="text-sm text-apptivia-carbon-500 mb-1">No results yet</p>
+          <p className="text-xs text-apptivia-carbon-400">
             {icpConfig?.enabled
               ? 'Click "Search ICP Companies" to find matching prospects'
               : 'Configure your ICP in Organization Settings, then search'}
@@ -1591,7 +1868,7 @@ function IcpProspectorView({ icp, icpConfig, onDraftMessage, onNavigateDiscover,
         </div>
       ) : (
         <>
-          <p className="text-[10px] text-gray-400 px-1">
+          <p className="text-[10px] text-apptivia-carbon-400 px-1">
             Showing {icp.results.length} of ~{icp.totalResults.toLocaleString()} ICP-matching companies
           </p>
           <div className="space-y-2">
@@ -1624,7 +1901,7 @@ function IcpProspectorView({ icp, icpConfig, onDraftMessage, onNavigateDiscover,
             <button
               onClick={icp.loadMore}
               disabled={icp.loadingMore}
-              className="w-full py-2.5 text-xs font-medium text-indigo-600 hover:text-indigo-800 border border-dashed border-indigo-200 hover:border-indigo-400 rounded-xl transition-colors flex items-center justify-center gap-2"
+              className="w-full py-2.5 text-xs font-medium text-apptivia-ink hover:text-apptivia-ink border border-dashed border-apptivia-carbon-300 hover:border-apptivia-carbon-300 rounded-lg transition-colors flex items-center justify-center gap-2"
             >
               {icp.loadingMore
                 ? <><RefreshCw size={12} className="animate-spin" /> Loading more...</>
@@ -1911,8 +2188,8 @@ export default function SignalProspecting({ organizationId, userId, onCallContac
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-base font-semibold text-gray-900">Signal-Based Prospecting</h2>
-          <p className="text-xs text-gray-500 mt-0.5">Detect high-intent signals from competitors, job changes, funding, and more</p>
+          <h2 className="text-base font-semibold text-apptivia-ink">Signal-Based Prospecting</h2>
+          <p className="text-xs text-apptivia-carbon-500 mt-0.5">Detect high-intent signals from competitors, job changes, funding, and more</p>
         </div>
         {activeSignalCount > 0 && (
           <button
@@ -1958,18 +2235,18 @@ export default function SignalProspecting({ organizationId, userId, onCallContac
       )}
 
       {/* Signal Scanner */}
-      <div className="bg-white rounded-xl border border-gray-100 p-5">
+      <div className="bg-white rounded-lg border border-apptivia-carbon-100 p-5">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-gradient-to-br from-cyan-500 to-blue-600 rounded-lg flex items-center justify-center">
+            <div className="w-8 h-8 bg-apptivia-ink rounded-lg flex items-center justify-center">
               <Radar size={14} className="text-white" />
             </div>
             <div>
-              <h3 className="text-sm font-semibold text-gray-700">Signal Scanner</h3>
+              <h3 className="text-sm font-semibold text-apptivia-carbon-700">Signal Scanner</h3>
               {signals.hasOrgSignalConfig ? (
-                <p className="text-xs text-gray-400">Ready to scan — org signal config loaded</p>
+                <p className="text-xs text-apptivia-carbon-400">Ready to scan — org signal config loaded</p>
               ) : (
-                <p className="text-xs text-gray-400">
+                <p className="text-xs text-apptivia-carbon-400">
                   No signal config yet.{' '}
                   <button
                     onClick={() => navigate('/organization-settings')}
@@ -1985,29 +2262,29 @@ export default function SignalProspecting({ organizationId, userId, onCallContac
             <button
               onClick={() => signals.runSignalScan()}
               disabled={signals.isScanning || !signals.hasOrgSignalConfig}
-              className="inline-flex items-center gap-1.5 text-xs font-medium px-4 py-2 rounded-lg bg-gradient-to-r from-cyan-500 to-blue-600 text-white hover:from-cyan-600 hover:to-blue-700 disabled:opacity-40 transition-all shadow-sm"
+              className="inline-flex items-center gap-1.5 text-xs font-medium px-4 py-2 rounded-lg bg-apptivia-coral text-white hover:bg-apptivia-coral-tone-600 disabled:opacity-40 transition-all shadow-sm"
             >
               {signals.isScanning ? <RefreshCw size={12} className="animate-spin" /> : <Search size={12} />}
               {signals.isScanning ? 'Scanning...' : 'Scan Now'}
             </button>
             {signals.lastScanAt && (
-              <p className="text-[10px] text-gray-400">
+              <p className="text-[10px] text-apptivia-carbon-400">
                 Last: {timeAgo(signals.lastScanAt)}
                 {signals.nextScanAt && ` · Next: ${new Date(signals.nextScanAt).toLocaleDateString()}`}
               </p>
             )}
             {!signals.lastScanAt && (
-              <p className="text-[10px] text-gray-400">Scans run automatically weekly</p>
+              <p className="text-[10px] text-apptivia-carbon-400">Scans run automatically weekly</p>
             )}
           </div>
         </div>
 
         {/* Scan Progress */}
         {signals.scanProgress.length > 0 && (
-          <div className="mt-4 bg-blue-50/50 rounded-lg p-3 space-y-1">
+          <div className="mt-4 bg-apptivia-coral-tone-50/50 rounded-lg p-3 space-y-1">
             {signals.scanProgress.map((p, i) => (
-              <div key={i} className="flex items-center gap-2 text-xs text-blue-700">
-                <CheckCircle size={12} className="text-blue-500 flex-shrink-0" />
+              <div key={i} className="flex items-center gap-2 text-xs text-apptivia-coral">
+                <CheckCircle size={12} className="text-apptivia-coral flex-shrink-0" />
                 <span className="font-medium">{p.step}:</span>
                 <span>{p.detail}</span>
               </div>
@@ -2042,6 +2319,12 @@ export default function SignalProspecting({ organizationId, userId, onCallContac
         nextScanAt={signals.nextScanAt}
         onApprove={signals.approveAction}
         onDismiss={signals.dismissAction}
+        onSend={signals.sendAction}
+        onExpandToPlay={signals.expandToPlay}
+        onFetchSteps={signals.fetchActionSteps}
+        onUpdateStep={signals.updateActionStep}
+        actionSteps={signals.actionSteps}
+        expandingActionId={signals.expandingActionId}
       />
 
       {/* Summary */}
@@ -2055,22 +2338,22 @@ export default function SignalProspecting({ organizationId, userId, onCallContac
         {/* Signal Feed */}
         <div className="lg:col-span-2 space-y-3">
           {/* View mode toggle */}
-          <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-0.5 self-start">
+          <div className="flex items-center gap-1 bg-apptivia-carbon-100 rounded-lg p-0.5 self-start">
             <button
               onClick={() => setViewMode('signals')}
-              className={`px-3 py-1 text-xs font-medium rounded-md transition-all ${viewMode === 'signals' ? 'bg-white shadow-sm text-gray-800' : 'text-gray-500 hover:text-gray-700'}`}
+              className={`px-3 py-1 text-xs font-medium rounded-md transition-all ${viewMode === 'signals' ? 'bg-white shadow-sm text-apptivia-ink' : 'text-apptivia-carbon-500 hover:text-apptivia-carbon-700'}`}
             >
               Signals ({filteredSignals.length})
             </button>
             <button
               onClick={() => setViewMode('accounts')}
-              className={`px-3 py-1 text-xs font-medium rounded-md transition-all ${viewMode === 'accounts' ? 'bg-white shadow-sm text-gray-800' : 'text-gray-500 hover:text-gray-700'}`}
+              className={`px-3 py-1 text-xs font-medium rounded-md transition-all ${viewMode === 'accounts' ? 'bg-white shadow-sm text-apptivia-ink' : 'text-apptivia-carbon-500 hover:text-apptivia-carbon-700'}`}
             >
               Signal Accounts ({accountGroups.length})
             </button>
             <button
               onClick={() => setViewMode('icp')}
-              className={`px-3 py-1 text-xs font-medium rounded-md transition-all ${viewMode === 'icp' ? 'bg-white shadow-sm text-gray-800' : 'text-gray-500 hover:text-gray-700'}`}
+              className={`px-3 py-1 text-xs font-medium rounded-md transition-all ${viewMode === 'icp' ? 'bg-white shadow-sm text-apptivia-ink' : 'text-apptivia-carbon-500 hover:text-apptivia-carbon-700'}`}
             >
               ICP Prospector{icp.results.length > 0 ? ` (${icp.results.length})` : ''}
             </button>
@@ -2078,7 +2361,7 @@ export default function SignalProspecting({ organizationId, userId, onCallContac
 
           {/* Ownership filter (accounts view only) */}
           {viewMode === 'accounts' && (
-            <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-0.5 self-start">
+            <div className="flex items-center gap-1 bg-apptivia-carbon-100 rounded-lg p-0.5 self-start">
               {[
                 { key: 'all', label: 'All' },
                 { key: 'mine', label: 'My Accounts' },
@@ -2089,8 +2372,8 @@ export default function SignalProspecting({ organizationId, userId, onCallContac
                   onClick={() => setOwnershipFilter(opt.key)}
                   className={`px-2.5 py-1 text-xs font-medium rounded-md transition-all ${
                     ownershipFilter === opt.key
-                      ? 'bg-white shadow-sm text-gray-800'
-                      : 'text-gray-500 hover:text-gray-700'
+                      ? 'bg-white shadow-sm text-apptivia-ink'
+                      : 'text-apptivia-carbon-500 hover:text-apptivia-carbon-700'
                   }`}
                 >
                   {opt.label}
@@ -2103,32 +2386,32 @@ export default function SignalProspecting({ organizationId, userId, onCallContac
           <div className="flex items-center gap-2 flex-wrap">
             {/* Company search with autocomplete */}
             <div className="relative">
-              <Search size={12} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+              <Search size={12} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-apptivia-carbon-400 pointer-events-none" />
               <input
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 onFocus={() => setShowAutocomplete(true)}
                 onBlur={() => setTimeout(() => setShowAutocomplete(false), 150)}
                 placeholder="Search company or signal..."
-                className="text-xs border border-gray-200 rounded-lg pl-7 pr-3 py-1.5 bg-white focus:outline-none focus:ring-2 focus:ring-blue-300 w-48"
+                className="text-xs border border-apptivia-carbon-200 rounded-lg pl-7 pr-3 py-1.5 bg-white focus:outline-none focus:ring-2 focus:ring-apptivia-coral-tone-300 w-48"
               />
               {searchQuery && (
                 <button
                   onClick={() => setSearchQuery('')}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-apptivia-carbon-400 hover:text-apptivia-carbon-600"
                 >
                   <X size={10} />
                 </button>
               )}
               {showAutocomplete && autocompleteOptions.length > 0 && (
-                <div className="absolute top-full left-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-20 w-56 max-h-40 overflow-y-auto">
+                <div className="absolute top-full left-0 mt-1 bg-white border border-apptivia-carbon-200 rounded-lg shadow-lg z-20 w-56 max-h-40 overflow-y-auto">
                   {autocompleteOptions.map((name) => (
                     <button
                       key={name}
                       onMouseDown={() => setSearchQuery(name)}
-                      className="w-full text-left px-3 py-1.5 text-xs text-gray-700 hover:bg-gray-50 flex items-center gap-1.5"
+                      className="w-full text-left px-3 py-1.5 text-xs text-apptivia-carbon-700 hover:bg-apptivia-paper flex items-center gap-1.5"
                     >
-                      <Building2 size={10} className="text-gray-400 flex-shrink-0" />
+                      <Building2 size={10} className="text-apptivia-carbon-400 flex-shrink-0" />
                       {name}
                     </button>
                   ))}
@@ -2136,11 +2419,11 @@ export default function SignalProspecting({ organizationId, userId, onCallContac
               )}
             </div>
 
-            <Filter size={12} className="text-gray-400" />
+            <Filter size={12} className="text-apptivia-carbon-400" />
             <select
               value={filterType}
               onChange={(e) => setFilterType(e.target.value)}
-              className="text-xs border border-gray-200 rounded-lg px-2 py-1.5 bg-white focus:outline-none focus:ring-2 focus:ring-blue-300"
+              className="text-xs border border-apptivia-carbon-200 rounded-lg px-2 py-1.5 bg-white focus:outline-none focus:ring-2 focus:ring-apptivia-coral-tone-300"
             >
               <option value="all">All Types</option>
               {signals.SIGNAL_TYPES.map((t) => (
@@ -2150,7 +2433,7 @@ export default function SignalProspecting({ organizationId, userId, onCallContac
             <select
               value={filterStatus}
               onChange={(e) => setFilterStatus(e.target.value)}
-              className="text-xs border border-gray-200 rounded-lg px-2 py-1.5 bg-white focus:outline-none focus:ring-2 focus:ring-blue-300"
+              className="text-xs border border-apptivia-carbon-200 rounded-lg px-2 py-1.5 bg-white focus:outline-none focus:ring-2 focus:ring-apptivia-coral-tone-300"
             >
               <option value="all">All Statuses</option>
               <option value="new">New</option>
@@ -2158,7 +2441,7 @@ export default function SignalProspecting({ organizationId, userId, onCallContac
               <option value="actioned">Actioned</option>
               <option value="dismissed">Dismissed</option>
             </select>
-            <label className="flex items-center gap-1.5 text-xs text-gray-500 cursor-pointer select-none">
+            <label className="flex items-center gap-1.5 text-xs text-apptivia-carbon-500 cursor-pointer select-none">
               <input
                 type="checkbox"
                 checked={hideStale}
@@ -2168,7 +2451,7 @@ export default function SignalProspecting({ organizationId, userId, onCallContac
               Hide stale (&gt;7d)
             </label>
             {Object.keys(promotedAccounts).length > 0 && (
-              <label className="flex items-center gap-1.5 text-xs text-gray-500 cursor-pointer select-none">
+              <label className="flex items-center gap-1.5 text-xs text-apptivia-carbon-500 cursor-pointer select-none">
                 <input
                   type="checkbox"
                   checked={hidePromoted}
@@ -2183,14 +2466,14 @@ export default function SignalProspecting({ organizationId, userId, onCallContac
           {/* Signal / Account List */}
           {signals.loading && !signals.signals.length ? (
             <div className="flex items-center justify-center py-16">
-              <RefreshCw size={20} className="animate-spin text-blue-400 mr-2" />
-              <span className="text-sm text-gray-500">Loading signals...</span>
+              <RefreshCw size={20} className="animate-spin text-apptivia-coral-tone-300 mr-2" />
+              <span className="text-sm text-apptivia-carbon-500">Loading signals...</span>
             </div>
           ) : filteredSignals.length === 0 ? (
-            <div className="bg-white rounded-xl border border-gray-100 py-16 text-center">
-              <Radar size={32} className="mx-auto text-gray-300 mb-3" />
-              <p className="text-sm text-gray-500 mb-1">No signals detected yet</p>
-              <p className="text-xs text-gray-400">Configure Signal Prospecting in Organization Settings and run a scan</p>
+            <div className="bg-white rounded-lg border border-apptivia-carbon-100 py-16 text-center">
+              <Radar size={32} className="mx-auto text-apptivia-carbon-300 mb-3" />
+              <p className="text-sm text-apptivia-carbon-500 mb-1">No signals detected yet</p>
+              <p className="text-xs text-apptivia-carbon-400">Configure Signal Prospecting in Organization Settings and run a scan</p>
             </div>
           ) : viewMode === 'icp' ? (
             <IcpProspectorView
@@ -2268,15 +2551,15 @@ export default function SignalProspecting({ organizationId, userId, onCallContac
             const activeTypes = signals.SIGNAL_TYPES.filter((t) => (signals.summary.byType[t.key] || 0) > 0);
             if (activeTypes.length === 0) return null;
             return (
-              <div className="bg-white rounded-xl border border-gray-100 p-5">
-                <h3 className="text-sm font-semibold text-gray-700 mb-3">By Signal Type</h3>
+              <div className="bg-white rounded-lg border border-apptivia-carbon-100 p-5">
+                <h3 className="text-sm font-semibold text-apptivia-carbon-700 mb-3">By Signal Type</h3>
                 <div className="space-y-2">
                   {activeTypes.map((t) => (
                     <div key={t.key} className="flex items-center justify-between">
-                      <span className="text-xs text-gray-600 flex items-center gap-1.5">
+                      <span className="text-xs text-apptivia-carbon-600 flex items-center gap-1.5">
                         <span>{t.icon}</span> {t.label}
                       </span>
-                      <span className="text-xs font-bold text-gray-800">{signals.summary.byType[t.key]}</span>
+                      <span className="text-xs font-bold text-apptivia-ink">{signals.summary.byType[t.key]}</span>
                     </div>
                   ))}
                 </div>

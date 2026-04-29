@@ -231,14 +231,14 @@ export default function KpiImportModal({ isOpen, onClose, onImportComplete, orga
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-xl shadow-2xl max-w-5xl w-full max-h-[90vh] overflow-hidden flex flex-col">
+      <div className="bg-white rounded-lg shadow-2xl max-w-5xl w-full max-h-[90vh] overflow-hidden flex flex-col">
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b">
           <div className="flex items-center gap-3">
             <Database size={24} className="text-emerald-600" />
             <div>
               <h2 className="text-xl font-bold">Import Historical KPI Data</h2>
-              <p className="text-sm text-gray-500">
+              <p className="text-sm text-apptivia-carbon-500">
                 {step === 1 && 'Upload a CSV file with historical performance data'}
                 {step === 2 && `Review ${parsedData.length} rows across ${uniqueWeeks.size} weeks`}
                 {step === 3 && 'Importing data...'}
@@ -246,8 +246,8 @@ export default function KpiImportModal({ isOpen, onClose, onImportComplete, orga
               </p>
             </div>
           </div>
-          <button onClick={handleClose} className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
-            <X size={20} className="text-gray-500" />
+          <button onClick={handleClose} className="p-2 hover:bg-apptivia-carbon-100 rounded-lg transition-colors">
+            <X size={20} className="text-apptivia-carbon-500" />
           </button>
         </div>
 
@@ -263,11 +263,11 @@ export default function KpiImportModal({ isOpen, onClose, onImportComplete, orga
           {/* Step 1: Upload */}
           {step === 1 && (
             <div className="space-y-6">
-              <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-emerald-400 transition-colors">
+              <div className="border-2 border-dashed border-apptivia-carbon-300 rounded-lg p-8 text-center hover:border-emerald-400 transition-colors">
                 <input ref={fileInputRef} type="file" accept=".csv" onChange={handleFileSelect} className="hidden" />
-                <Upload size={48} className="mx-auto text-gray-400 mb-4" />
+                <Upload size={48} className="mx-auto text-apptivia-carbon-400 mb-4" />
                 <h3 className="text-lg font-semibold mb-2">Upload CSV File</h3>
-                <p className="text-sm text-gray-600 mb-4">
+                <p className="text-sm text-apptivia-carbon-600 mb-4">
                   Upload historical KPI data to backfill scorecards. Max 5MB / 10,000 rows.
                 </p>
                 <button
@@ -312,10 +312,10 @@ export default function KpiImportModal({ isOpen, onClose, onImportComplete, orga
           {step === 2 && (
             <div className="space-y-4">
               {/* Summary bar */}
-              <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+              <div className="flex items-center justify-between p-3 bg-apptivia-paper rounded-lg">
                 <div>
                   <div className="font-semibold">{parsedData.length} rows — {uniqueEmails.size} reps, {uniqueWeeks.size} weeks, {kpiColHeaders.length} KPIs</div>
-                  <div className="text-sm text-gray-600">Review the data below before importing</div>
+                  <div className="text-sm text-apptivia-carbon-600">Review the data below before importing</div>
                 </div>
                 <div className="flex gap-2">
                   {validationErrors.length > 0 && (
@@ -363,7 +363,7 @@ export default function KpiImportModal({ isOpen, onClose, onImportComplete, orga
               {/* Preview table */}
               <div className="overflow-x-auto border rounded-lg max-h-[40vh]">
                 <table className="w-full text-xs">
-                  <thead className="bg-gray-50 border-b sticky top-0">
+                  <thead className="bg-apptivia-paper border-b sticky top-0">
                     <tr>
                       <th className="px-2 py-2 text-left font-semibold">#</th>
                       <th className="px-2 py-2 text-left font-semibold">week_start</th>
@@ -375,13 +375,13 @@ export default function KpiImportModal({ isOpen, onClose, onImportComplete, orga
                   </thead>
                   <tbody>
                     {parsedData.slice(0, 100).map((row, i) => (
-                      <tr key={i} className={`border-b ${errorRows.has(row._rowNumber) ? 'bg-red-50' : 'hover:bg-gray-50'}`}>
-                        <td className="px-2 py-1.5 text-gray-400">{i + 1}</td>
+                      <tr key={i} className={`border-b ${errorRows.has(row._rowNumber) ? 'bg-red-50' : 'hover:bg-apptivia-paper'}`}>
+                        <td className="px-2 py-1.5 text-apptivia-carbon-400">{i + 1}</td>
                         <td className="px-2 py-1.5 font-mono">{row.week_start}</td>
                         <td className="px-2 py-1.5">{row.rep_email}</td>
                         {kpiColHeaders.map(k => (
                           <td key={k} className="px-2 py-1.5 text-right font-mono">
-                            {row[k] || <span className="text-gray-300">—</span>}
+                            {row[k] || <span className="text-apptivia-carbon-300">—</span>}
                           </td>
                         ))}
                       </tr>
@@ -389,7 +389,7 @@ export default function KpiImportModal({ isOpen, onClose, onImportComplete, orga
                   </tbody>
                 </table>
                 {parsedData.length > 100 && (
-                  <div className="text-center text-xs text-gray-400 py-2 bg-gray-50 border-t">
+                  <div className="text-center text-xs text-apptivia-carbon-400 py-2 bg-apptivia-paper border-t">
                     Showing first 100 of {parsedData.length} rows
                   </div>
                 )}
@@ -402,7 +402,7 @@ export default function KpiImportModal({ isOpen, onClose, onImportComplete, orga
             <div className="text-center py-12">
               <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-emerald-600 mx-auto mb-4"></div>
               <div className="text-lg font-semibold mb-2">Importing {parsedData.length} rows...</div>
-              <div className="text-sm text-gray-600">This may take a moment for large files</div>
+              <div className="text-sm text-apptivia-carbon-600">This may take a moment for large files</div>
             </div>
           )}
 
@@ -413,7 +413,7 @@ export default function KpiImportModal({ isOpen, onClose, onImportComplete, orga
                 <CheckCircle size={64} className="mx-auto text-emerald-600 mb-4" />
                 <h3 className="text-2xl font-bold mb-1">Import Complete!</h3>
                 {importResults.weekRange && (
-                  <p className="text-sm text-gray-500">{importResults.weekRange} — {importResults.repCount} reps, {importResults.kpiCount} KPIs</p>
+                  <p className="text-sm text-apptivia-carbon-500">{importResults.weekRange} — {importResults.repCount} reps, {importResults.kpiCount} KPIs</p>
                 )}
               </div>
 
@@ -449,8 +449,8 @@ export default function KpiImportModal({ isOpen, onClose, onImportComplete, orga
         </div>
 
         {/* Footer */}
-        <div className="p-6 border-t bg-gray-50 flex items-center justify-between">
-          <button onClick={handleClose} className="px-4 py-2 text-gray-600 hover:text-gray-800">
+        <div className="p-6 border-t bg-apptivia-paper flex items-center justify-between">
+          <button onClick={handleClose} className="px-4 py-2 text-apptivia-carbon-600 hover:text-apptivia-ink">
             {step === 4 ? 'Close' : 'Cancel'}
           </button>
 

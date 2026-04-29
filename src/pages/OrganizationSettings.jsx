@@ -22,8 +22,8 @@ import { INDUSTRY_OPTIONS } from '../components/onboarding/onboardingConstants';
 function SignalTagField({ label, hint, items, value, onChange, onAdd, onRemove, placeholder, tagClass }) {
   return (
     <div>
-      <label className="block text-sm font-medium text-gray-700 mb-1">{label}</label>
-      {hint && <p className="text-xs text-gray-500 mb-2">{hint}</p>}
+      <label className="block text-sm font-medium text-apptivia-carbon-700 mb-1">{label}</label>
+      {hint && <p className="text-xs text-apptivia-carbon-500 mb-2">{hint}</p>}
       <div className="flex flex-wrap gap-1.5 mb-2">
         {items.map((item, i) => (
           <span key={i} className={`inline-flex items-center gap-1 ${tagClass} text-xs font-medium px-2.5 py-1 rounded-full`}>
@@ -39,9 +39,9 @@ function SignalTagField({ label, hint, items, value, onChange, onAdd, onRemove, 
           onChange={(e) => onChange(e.target.value)}
           onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); onAdd(); } }}
           placeholder={placeholder}
-          className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+          className="flex-1 border border-apptivia-carbon-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-apptivia-coral focus:border-apptivia-coral"
         />
-        <button type="button" onClick={onAdd} className="px-3 py-2 bg-gray-100 rounded-lg hover:bg-gray-200 text-gray-600">
+        <button type="button" onClick={onAdd} className="px-3 py-2 bg-apptivia-carbon-100 rounded-lg hover:bg-apptivia-carbon-200 text-apptivia-carbon-600">
           <Plus size={14} />
         </button>
       </div>
@@ -96,9 +96,9 @@ function SubscriptionTab({ organization, members, teams, setMessage }) {
     setActionLoading(false);
   };
 
-  const statusColor = status === 'active' ? 'bg-green-100 text-green-700' : status === 'trialing' ? 'bg-blue-100 text-blue-700' : status === 'past_due' ? 'bg-red-100 text-red-700' : 'bg-gray-100 text-gray-600';
+  const statusColor = status === 'active' ? 'bg-green-100 text-green-700' : status === 'trialing' ? 'bg-apptivia-coral-tone-50 text-apptivia-coral' : status === 'past_due' ? 'bg-red-100 text-red-700' : 'bg-apptivia-carbon-100 text-apptivia-carbon-600';
 
-  if (loading) return <div className="bg-white rounded-lg shadow-sm p-6"><div className="animate-pulse h-40 bg-gray-100 rounded-lg" /></div>;
+  if (loading) return <div className="bg-white rounded-lg shadow-sm p-6"><div className="animate-pulse h-40 bg-apptivia-carbon-100 rounded-lg" /></div>;
 
   return (
     <div className="space-y-6">
@@ -114,13 +114,13 @@ function SubscriptionTab({ organization, members, teams, setMessage }) {
                   {status === 'active' ? 'Active' : status === 'trialing' ? 'Trial' : status === 'past_due' ? 'Past Due' : status === 'canceled' ? 'Canceled' : status}
                 </span>
               </div>
-              {periodEnd && <div className="text-sm text-gray-500 mt-1">Renews {new Date(periodEnd).toLocaleDateString()}</div>}
+              {periodEnd && <div className="text-sm text-apptivia-carbon-500 mt-1">Renews {new Date(periodEnd).toLocaleDateString()}</div>}
             </div>
             <div className="text-right">
               {pricePerSeat ? (
                 <>
-                  <div className="text-2xl font-bold">${pricePerSeat}<span className="text-sm font-normal text-gray-500">/seat/mo</span></div>
-                  {monthlyTotal && <div className="text-sm text-gray-500">${monthlyTotal}/mo total ({seats} {seats === 1 ? 'seat' : 'seats'})</div>}
+                  <div className="text-2xl font-bold">${pricePerSeat}<span className="text-sm font-normal text-apptivia-carbon-500">/seat/mo</span></div>
+                  {monthlyTotal && <div className="text-sm text-apptivia-carbon-500">${monthlyTotal}/mo total ({seats} {seats === 1 ? 'seat' : 'seats'})</div>}
                 </>
               ) : (
                 <div className="text-2xl font-bold">Custom</div>
@@ -128,10 +128,10 @@ function SubscriptionTab({ organization, members, teams, setMessage }) {
             </div>
           </div>
           <div className="border-t pt-4 space-y-2 text-sm">
-            <div className="flex justify-between"><span className="text-gray-600">Active Users</span><span className="font-medium">{userCount}</span></div>
-            <div className="flex justify-between"><span className="text-gray-600">Seats</span><span className="font-medium">{seats}</span></div>
-            <div className="flex justify-between"><span className="text-gray-600">Teams</span><span className="font-medium">{teams.length}</span></div>
-            <div className="flex justify-between"><span className="text-gray-600">Support</span><span className="font-medium">{TIER_SUPPORT[currentTier] || 'Email'}</span></div>
+            <div className="flex justify-between"><span className="text-apptivia-carbon-600">Active Users</span><span className="font-medium">{userCount}</span></div>
+            <div className="flex justify-between"><span className="text-apptivia-carbon-600">Seats</span><span className="font-medium">{seats}</span></div>
+            <div className="flex justify-between"><span className="text-apptivia-carbon-600">Teams</span><span className="font-medium">{teams.length}</span></div>
+            <div className="flex justify-between"><span className="text-apptivia-carbon-600">Support</span><span className="font-medium">{TIER_SUPPORT[currentTier] || 'Email'}</span></div>
           </div>
           {status === 'past_due' && (
             <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
@@ -141,11 +141,11 @@ function SubscriptionTab({ organization, members, teams, setMessage }) {
         </div>
         <div className="flex gap-3">
           {hasStripe ? (
-            <button onClick={handlePortal} disabled={actionLoading} className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50">
+            <button onClick={handlePortal} disabled={actionLoading} className="px-6 py-2 bg-apptivia-coral text-white rounded-lg hover:bg-apptivia-coral disabled:opacity-50">
               {actionLoading ? 'Loading...' : 'Manage Billing'}
             </button>
           ) : (
-            <button onClick={() => handleCheckout(currentTier)} disabled={actionLoading} className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50">
+            <button onClick={() => handleCheckout(currentTier)} disabled={actionLoading} className="px-6 py-2 bg-apptivia-coral text-white rounded-lg hover:bg-apptivia-coral disabled:opacity-50">
               {actionLoading ? 'Loading...' : 'Set Up Billing'}
             </button>
           )}
@@ -165,25 +165,25 @@ function SubscriptionTab({ organization, members, teams, setMessage }) {
               Enterprise: ['Everything in Pro', 'Custom integrations', 'SSO & audit log', 'API access', 'Dedicated support', 'SLA guarantee'],
             };
             return (
-              <div key={tier} className={`border rounded-lg p-5 ${isCurrent ? 'border-blue-500 bg-blue-50/30 ring-1 ring-blue-200' : 'border-gray-200'} ${tier === 'Pro' && !isCurrent ? 'border-purple-300' : ''}`}>
+              <div key={tier} className={`border rounded-lg p-5 ${isCurrent ? 'border-apptivia-coral bg-apptivia-coral-tone-50/30 ring-1 ring-apptivia-coral-tone-100' : 'border-apptivia-carbon-200'} ${tier === 'Pro' && !isCurrent ? 'border-apptivia-carbon-300' : ''}`}>
                 <div className="flex items-center justify-between mb-2">
                   <h4 className="font-semibold text-lg">{TIER_DISPLAY[tier]}</h4>
-                  {isCurrent && <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">Current</span>}
-                  {tier === 'Pro' && !isCurrent && <span className="text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full">Popular</span>}
+                  {isCurrent && <span className="text-xs bg-apptivia-coral-tone-50 text-apptivia-coral px-2 py-0.5 rounded-full">Current</span>}
+                  {tier === 'Pro' && !isCurrent && <span className="text-xs bg-apptivia-carbon-100 text-apptivia-ink px-2 py-0.5 rounded-full">Popular</span>}
                 </div>
-                <div className="text-2xl font-bold mb-3">{TIER_SEAT_PRICES[tier] ? `$${TIER_SEAT_PRICES[tier]}` : 'Custom'}{TIER_SEAT_PRICES[tier] && <span className="text-sm font-normal text-gray-500">/seat/mo</span>}</div>
-                <ul className="space-y-1.5 text-sm text-gray-600 mb-4">
+                <div className="text-2xl font-bold mb-3">{TIER_SEAT_PRICES[tier] ? `$${TIER_SEAT_PRICES[tier]}` : 'Custom'}{TIER_SEAT_PRICES[tier] && <span className="text-sm font-normal text-apptivia-carbon-500">/seat/mo</span>}</div>
+                <ul className="space-y-1.5 text-sm text-apptivia-carbon-600 mb-4">
                   {(features[tier] || []).map((f, i) => <li key={i} className="flex items-start gap-1.5"><Check size={14} className="text-green-500 mt-0.5 flex-shrink-0" />{f}</li>)}
                 </ul>
                 {!isCurrent && isUpgrade && tier !== 'Enterprise' && (
-                  <button onClick={() => handleCheckout(tier)} disabled={actionLoading} className="w-full py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm disabled:opacity-50">
+                  <button onClick={() => handleCheckout(tier)} disabled={actionLoading} className="w-full py-2 bg-apptivia-coral text-white rounded-lg hover:bg-apptivia-coral text-sm disabled:opacity-50">
                     {actionLoading ? 'Loading...' : `Upgrade to ${TIER_DISPLAY[tier]}`}
                   </button>
                 )}
                 {tier === 'Enterprise' && !isCurrent && (
-                  <a href="mailto:support@apptivia.app?subject=Enterprise Plan Inquiry" className="block w-full py-2 text-center border border-gray-300 rounded-lg hover:bg-gray-50 text-sm">Contact Sales</a>
+                  <a href="mailto:support@apptivia.app?subject=Enterprise Plan Inquiry" className="block w-full py-2 text-center border border-apptivia-carbon-300 rounded-lg hover:bg-apptivia-paper text-sm">Contact Sales</a>
                 )}
-                {isCurrent && <div className="text-center text-sm text-gray-400 py-2">Your current plan</div>}
+                {isCurrent && <div className="text-center text-sm text-apptivia-carbon-400 py-2">Your current plan</div>}
               </div>
             );
           })}
@@ -922,9 +922,9 @@ export default function OrganizationSettings() {
     return (
       <DashboardLayout>
         <div className="text-center py-12">
-          <Shield size={48} className="mx-auto text-gray-300 mb-3" />
-          <h2 className="text-xl font-semibold text-gray-700 mb-2">Admin Access Required</h2>
-          <p className="text-gray-500">You don't have permission to access organization settings.</p>
+          <Shield size={48} className="mx-auto text-apptivia-carbon-300 mb-3" />
+          <h2 className="text-xl font-semibold text-apptivia-carbon-700 mb-2">Admin Access Required</h2>
+          <p className="text-apptivia-carbon-500">You don't have permission to access organization settings.</p>
         </div>
       </DashboardLayout>
     );
@@ -933,7 +933,7 @@ export default function OrganizationSettings() {
   if (loading) {
     return (
       <DashboardLayout>
-        <div className="text-center py-12 text-gray-500">Loading settings...</div>
+        <div className="text-center py-12 text-apptivia-carbon-500">Loading settings...</div>
       </DashboardLayout>
     );
   }
@@ -943,28 +943,28 @@ export default function OrganizationSettings() {
       <div className="p-6">
         <div className="flex items-start justify-between mb-4">
           <div>
-            <h1 className="text-2xl font-bold text-blue-700 mb-1">Organization Settings</h1>
-            <p className="text-gray-500 text-sm">Manage your organization and team settings</p>
+            <h1 className="text-2xl font-bold text-apptivia-coral mb-1">Organization Settings</h1>
+            <p className="text-apptivia-carbon-500 text-sm">Manage your organization and team settings</p>
           </div>
           <div className="flex gap-2 items-center">
             <div className="relative">
-              <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-              <input type="text" placeholder="Search..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} onFocus={() => searchQuery && setShowSearchResults(true)} className="w-64 pl-9 pr-8 py-2 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" />
+              <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-apptivia-carbon-400" />
+              <input type="text" placeholder="Search..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} onFocus={() => searchQuery && setShowSearchResults(true)} className="w-64 pl-9 pr-8 py-2 text-sm border border-apptivia-carbon-200 rounded-lg focus:ring-2 focus:ring-apptivia-coral focus:border-apptivia-coral" />
               {searchQuery && (
-                <button onClick={() => { setSearchQuery(''); setSearchResults([]); setShowSearchResults(false); }} className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"><X size={14} /></button>
+                <button onClick={() => { setSearchQuery(''); setSearchResults([]); setShowSearchResults(false); }} className="absolute right-2 top-1/2 -translate-y-1/2 text-apptivia-carbon-400 hover:text-apptivia-carbon-600"><X size={14} /></button>
               )}
               {showSearchResults && searchResults.length > 0 && (
-                <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-96 overflow-y-auto z-50">
+                <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-apptivia-carbon-200 rounded-lg shadow-lg max-h-96 overflow-y-auto z-50">
                   {searchResults.map((result, idx) => (
-                    <button key={idx} onClick={() => { navigate(result.link); setSearchQuery(''); setSearchResults([]); setShowSearchResults(false); }} className="w-full text-left px-4 py-3 hover:bg-gray-50 border-b last:border-b-0 transition-colors">
+                    <button key={idx} onClick={() => { navigate(result.link); setSearchQuery(''); setSearchResults([]); setShowSearchResults(false); }} className="w-full text-left px-4 py-3 hover:bg-apptivia-paper border-b last:border-b-0 transition-colors">
                       <div className="flex items-start gap-3">
                         <span className="text-xl">{result.icon}</span>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2">
-                            <span className="text-xs font-semibold text-gray-900">{result.title}</span>
-                            <span className="text-[10px] px-1.5 py-0.5 rounded bg-gray-100 text-gray-600">{result.type}</span>
+                            <span className="text-xs font-semibold text-apptivia-ink">{result.title}</span>
+                            <span className="text-[10px] px-1.5 py-0.5 rounded bg-apptivia-carbon-100 text-apptivia-carbon-600">{result.type}</span>
                           </div>
-                          {result.subtitle && <div className="text-[11px] text-gray-500 mt-0.5 truncate">{result.subtitle}</div>}
+                          {result.subtitle && <div className="text-[11px] text-apptivia-carbon-500 mt-0.5 truncate">{result.subtitle}</div>}
                         </div>
                       </div>
                     </button>
@@ -972,21 +972,21 @@ export default function OrganizationSettings() {
                 </div>
               )}
               {showSearchResults && searchQuery && searchResults.length === 0 && !searching && (
-                <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg p-4 z-50">
-                  <div className="text-sm text-gray-500 text-center">No results found</div>
+                <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-apptivia-carbon-200 rounded-lg shadow-lg p-4 z-50">
+                  <div className="text-sm text-apptivia-carbon-500 text-center">No results found</div>
                 </div>
               )}
               {searching && (
-                <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg p-4 z-50">
-                  <div className="text-sm text-gray-500 text-center">Searching...</div>
+                <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-apptivia-carbon-200 rounded-lg shadow-lg p-4 z-50">
+                  <div className="text-sm text-apptivia-carbon-500 text-center">Searching...</div>
                 </div>
               )}
             </div>
-            <button onClick={handleRefresh} disabled={isRefreshing} className={`relative p-2 rounded-lg font-semibold text-sm bg-white text-gray-700 border border-gray-200 hover:bg-gray-50 group ${isRefreshing ? 'opacity-50 cursor-not-allowed' : 'transition-all duration-200 hover:scale-105 hover:shadow-md'}`} title="Refresh data">
+            <button onClick={handleRefresh} disabled={isRefreshing} className={`relative p-2 rounded-lg font-semibold text-sm bg-white text-apptivia-carbon-700 border border-apptivia-carbon-200 hover:bg-apptivia-paper group ${isRefreshing ? 'opacity-50 cursor-not-allowed' : 'transition-all duration-200 hover:scale-105 hover:shadow-md'}`} title="Refresh data">
               <svg className={`w-[18px] h-[18px] ${isRefreshing ? 'animate-spin' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
               </svg>
-              <span className="absolute top-full left-1/2 -translate-x-1/2 mt-2 px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 pointer-events-none group-hover:opacity-100 whitespace-nowrap transition-opacity z-50">
+              <span className="absolute top-full left-1/2 -translate-x-1/2 mt-2 px-2 py-1 bg-apptivia-ink text-white text-xs rounded opacity-0 pointer-events-none group-hover:opacity-100 whitespace-nowrap transition-opacity z-50">
                 {isRefreshing ? 'Refreshing...' : 'Refresh'}
               </span>
             </button>
@@ -1020,8 +1020,8 @@ export default function OrganizationSettings() {
                 onClick={() => setActiveTab(tab.id)}
                 className={`px-6 py-3 font-medium transition-colors flex items-center gap-2 ${
                   activeTab === tab.id
-                    ? 'border-b-2 border-blue-600 text-blue-600'
-                    : 'text-gray-600 hover:text-gray-800'
+                    ? 'border-b-2 border-apptivia-coral text-apptivia-coral'
+                    : 'text-apptivia-carbon-600 hover:text-apptivia-ink'
                 }`}
               >
                 <tab.icon size={18} />
@@ -1052,26 +1052,26 @@ export default function OrganizationSettings() {
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-apptivia-carbon-700 mb-1">
                       Organization Name *
                     </label>
                     <input
                       type="text"
                       value={organization?.name || ''}
                       onChange={(e) => setOrganization({ ...organization, name: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2 border border-apptivia-carbon-300 rounded-lg focus:ring-2 focus:ring-apptivia-coral"
                       required
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-apptivia-carbon-700 mb-1">
                       Industry
                     </label>
                     <select
                       value={organization?.industry || ''}
                       onChange={(e) => setOrganization({ ...organization, industry: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2 border border-apptivia-carbon-300 rounded-lg focus:ring-2 focus:ring-apptivia-coral"
                     >
                       <option value="">Select industry</option>
                       {INDUSTRY_OPTIONS.map((ind) => (
@@ -1081,26 +1081,26 @@ export default function OrganizationSettings() {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-apptivia-carbon-700 mb-1">
                       Primary Contact Name
                     </label>
                     <input
                       type="text"
                       value={organization?.primary_contact_name || ''}
                       onChange={(e) => setOrganization({ ...organization, primary_contact_name: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2 border border-apptivia-carbon-300 rounded-lg focus:ring-2 focus:ring-apptivia-coral"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-apptivia-carbon-700 mb-1">
                       Primary Contact Email
                     </label>
                     <input
                       type="email"
                       value={organization?.primary_contact_email || ''}
                       onChange={(e) => setOrganization({ ...organization, primary_contact_email: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2 border border-apptivia-carbon-300 rounded-lg focus:ring-2 focus:ring-apptivia-coral"
                     />
                   </div>
                 </div>
@@ -1111,13 +1111,13 @@ export default function OrganizationSettings() {
                 <div className="flex items-center justify-between mb-4">
                   <div>
                     <h3 className="text-lg font-semibold">ICP Configuration</h3>
-                    <p className="text-xs text-gray-500 mt-0.5">Define your Ideal Customer Profile. Apptivia scores accounts 0–100 based on how well they match these criteria.</p>
+                    <p className="text-xs text-apptivia-carbon-500 mt-0.5">Define your Ideal Customer Profile. Apptivia scores accounts 0–100 based on how well they match these criteria.</p>
                   </div>
                   <label className="flex items-center gap-2 cursor-pointer">
-                    <span className="text-sm text-gray-600">Enable ICP Scoring</span>
+                    <span className="text-sm text-apptivia-carbon-600">Enable ICP Scoring</span>
                     <div
                       onClick={() => setIcpConfig(c => ({ ...c, enabled: !c.enabled }))}
-                      className={`relative w-11 h-6 rounded-full transition-colors cursor-pointer ${icpConfig.enabled ? 'bg-blue-600' : 'bg-gray-300'}`}
+                      className={`relative w-11 h-6 rounded-full transition-colors cursor-pointer ${icpConfig.enabled ? 'bg-apptivia-coral' : 'bg-apptivia-carbon-300'}`}
                     >
                       <div className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${icpConfig.enabled ? 'translate-x-5' : 'translate-x-0'}`} />
                     </div>
@@ -1125,76 +1125,76 @@ export default function OrganizationSettings() {
                 </div>
 
                 {icpConfig.enabled && (
-                  <div className="space-y-4 bg-blue-50/50 border border-blue-100 rounded-lg p-4">
+                  <div className="space-y-4 bg-apptivia-coral-tone-50/50 border border-apptivia-coral-tone-100 rounded-lg p-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Target Industries <span className="text-gray-400 font-normal">(comma-separated)</span></label>
+                      <label className="block text-sm font-medium text-apptivia-carbon-700 mb-1">Target Industries <span className="text-apptivia-carbon-400 font-normal">(comma-separated)</span></label>
                       <input
                         type="text"
                         value={icpConfig.target_industries}
                         onChange={(e) => setIcpConfig(c => ({ ...c, target_industries: e.target.value }))}
                         placeholder="e.g. SaaS, Financial Services, Technology"
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-sm"
+                        className="w-full px-3 py-2 border border-apptivia-carbon-300 rounded-lg focus:ring-2 focus:ring-apptivia-coral text-sm"
                       />
                     </div>
 
                     <div className="grid grid-cols-2 gap-4">
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Min Headcount</label>
+                        <label className="block text-sm font-medium text-apptivia-carbon-700 mb-1">Min Headcount</label>
                         <input
                           type="number"
                           value={icpConfig.headcount_min}
                           onChange={(e) => setIcpConfig(c => ({ ...c, headcount_min: e.target.value }))}
                           placeholder="e.g. 50"
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-sm"
+                          className="w-full px-3 py-2 border border-apptivia-carbon-300 rounded-lg focus:ring-2 focus:ring-apptivia-coral text-sm"
                         />
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Max Headcount</label>
+                        <label className="block text-sm font-medium text-apptivia-carbon-700 mb-1">Max Headcount</label>
                         <input
                           type="number"
                           value={icpConfig.headcount_max}
                           onChange={(e) => setIcpConfig(c => ({ ...c, headcount_max: e.target.value }))}
                           placeholder="e.g. 5000"
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-sm"
+                          className="w-full px-3 py-2 border border-apptivia-carbon-300 rounded-lg focus:ring-2 focus:ring-apptivia-coral text-sm"
                         />
                       </div>
                     </div>
 
                     <div className="grid grid-cols-2 gap-4">
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Min Revenue ($M)</label>
+                        <label className="block text-sm font-medium text-apptivia-carbon-700 mb-1">Min Revenue ($M)</label>
                         <input
                           type="number"
                           value={icpConfig.revenue_min_m}
                           onChange={(e) => setIcpConfig(c => ({ ...c, revenue_min_m: e.target.value }))}
                           placeholder="e.g. 5"
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-sm"
+                          className="w-full px-3 py-2 border border-apptivia-carbon-300 rounded-lg focus:ring-2 focus:ring-apptivia-coral text-sm"
                         />
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Max Revenue ($M)</label>
+                        <label className="block text-sm font-medium text-apptivia-carbon-700 mb-1">Max Revenue ($M)</label>
                         <input
                           type="number"
                           value={icpConfig.revenue_max_m}
                           onChange={(e) => setIcpConfig(c => ({ ...c, revenue_max_m: e.target.value }))}
                           placeholder="e.g. 500"
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-sm"
+                          className="w-full px-3 py-2 border border-apptivia-carbon-300 rounded-lg focus:ring-2 focus:ring-apptivia-coral text-sm"
                         />
                       </div>
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Target Technologies <span className="text-gray-400 font-normal">(comma-separated)</span></label>
+                      <label className="block text-sm font-medium text-apptivia-carbon-700 mb-1">Target Technologies <span className="text-apptivia-carbon-400 font-normal">(comma-separated)</span></label>
                       <input
                         type="text"
                         value={icpConfig.target_technologies}
                         onChange={(e) => setIcpConfig(c => ({ ...c, target_technologies: e.target.value }))}
                         placeholder="e.g. Salesforce, HubSpot, Outreach, Slack"
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-sm"
+                        className="w-full px-3 py-2 border border-apptivia-carbon-300 rounded-lg focus:ring-2 focus:ring-apptivia-coral text-sm"
                       />
                     </div>
 
-                    <p className="text-xs text-gray-400">Scoring weights: Industry 30% · Headcount 25% · Revenue 25% · Tech Stack 20%</p>
+                    <p className="text-xs text-apptivia-carbon-400">Scoring weights: Industry 30% · Headcount 25% · Revenue 25% · Tech Stack 20%</p>
                   </div>
                 )}
               </div>
@@ -1204,7 +1204,7 @@ export default function OrganizationSettings() {
                 <div className="flex items-center justify-between mb-4">
                   <div>
                     <h3 className="text-lg font-semibold">Signal Prospecting Configuration</h3>
-                    <p className="text-xs text-gray-500 mt-0.5">Define what Apptivia Engage looks for when scanning for buyer intent signals. Reps will use these settings when running a signal scan.</p>
+                    <p className="text-xs text-apptivia-carbon-500 mt-0.5">Define what Apptivia Engage looks for when scanning for buyer intent signals. Reps will use these settings when running a signal scan.</p>
                   </div>
                   <div className="flex items-center gap-2 flex-shrink-0">
                     <button
@@ -1212,8 +1212,8 @@ export default function OrganizationSettings() {
                       onClick={() => setShowAddSignalForm(v => !v)}
                       className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm transition-colors ${
                         showAddSignalForm
-                          ? 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                          : 'bg-blue-600 text-white hover:bg-blue-700'
+                          ? 'bg-apptivia-carbon-200 text-apptivia-carbon-700 hover:bg-apptivia-carbon-300'
+                          : 'bg-apptivia-coral text-white hover:bg-apptivia-coral'
                       }`}
                     >
                       <Plus size={14} />
@@ -1273,7 +1273,7 @@ export default function OrganizationSettings() {
                           onAdd={() => addSignalItem('job_titles_to_track', 'job_title')}
                           onRemove={(i) => removeSignalItem('job_titles_to_track', i)}
                           placeholder="e.g. VP Sales, SDR Manager, RevOps"
-                          tagClass="bg-blue-100 text-blue-700"
+                          tagClass="bg-apptivia-coral-tone-50 text-apptivia-coral"
                         />
                       </div>
                     )}
@@ -1321,49 +1321,49 @@ export default function OrganizationSettings() {
               <div className="border-t pt-6">
                 <div className="mb-4">
                   <h3 className="text-lg font-semibold">Signal Library</h3>
-                  <p className="text-xs text-gray-500 mt-0.5">
+                  <p className="text-xs text-apptivia-carbon-500 mt-0.5">
                     Universal signals are available to all orgs. Toggle off any that aren't relevant.
                     Add custom signals specific to your ICP and what you sell.
                   </p>
                 </div>
 
                 {loadingSignalLibrary ? (
-                  <p className="text-sm text-gray-400">Loading signal library...</p>
+                  <p className="text-sm text-apptivia-carbon-400">Loading signal library...</p>
                 ) : (
                   <div className="space-y-6">
                     {/* Add custom signal form — appears at top of library */}
                     {showAddSignalForm && (
-                      <div className="border border-blue-200 rounded-lg p-4 bg-blue-50/40 space-y-3">
-                        <h4 className="text-sm font-semibold text-gray-700">New Custom Signal</h4>
+                      <div className="border border-apptivia-coral-tone-100 rounded-lg p-4 bg-apptivia-coral-tone-50/40 space-y-3">
+                        <h4 className="text-sm font-semibold text-apptivia-carbon-700">New Custom Signal</h4>
                         <div className="grid grid-cols-2 gap-3">
                           <div>
-                            <label className="block text-xs font-medium text-gray-600 mb-1">Signal Name *</label>
+                            <label className="block text-xs font-medium text-apptivia-carbon-600 mb-1">Signal Name *</label>
                             <input
                               type="text"
                               value={newCustomSignal.signal_name}
                               onChange={e => setNewCustomSignal(s => ({ ...s, signal_name: e.target.value }))}
                               placeholder="e.g. Researching Sales Tools"
-                              className="w-full px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500"
+                              className="w-full px-3 py-1.5 border border-apptivia-carbon-300 rounded-lg text-sm focus:ring-2 focus:ring-apptivia-coral"
                             />
                           </div>
                           <div>
-                            <label className="block text-xs font-medium text-gray-600 mb-1">Signal Key * <span className="text-gray-400 font-normal">(unique ID)</span></label>
+                            <label className="block text-xs font-medium text-apptivia-carbon-600 mb-1">Signal Key * <span className="text-apptivia-carbon-400 font-normal">(unique ID)</span></label>
                             <input
                               type="text"
                               value={newCustomSignal.signal_key}
                               onChange={e => setNewCustomSignal(s => ({ ...s, signal_key: e.target.value }))}
                               placeholder="e.g. researching_sales_tools"
-                              className="w-full px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 font-mono"
+                              className="w-full px-3 py-1.5 border border-apptivia-carbon-300 rounded-lg text-sm focus:ring-2 focus:ring-apptivia-coral font-mono"
                             />
                           </div>
                         </div>
                         <div className="grid grid-cols-3 gap-3">
                           <div>
-                            <label className="block text-xs font-medium text-gray-600 mb-1">Category</label>
+                            <label className="block text-xs font-medium text-apptivia-carbon-600 mb-1">Category</label>
                             <select
                               value={newCustomSignal.category}
                               onChange={e => setNewCustomSignal(s => ({ ...s, category: e.target.value }))}
-                              className="w-full px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500"
+                              className="w-full px-3 py-1.5 border border-apptivia-carbon-300 rounded-lg text-sm focus:ring-2 focus:ring-apptivia-coral"
                             >
                               <option value="buyer_intent">Buyer Intent</option>
                               <option value="interest">Interest</option>
@@ -1371,22 +1371,22 @@ export default function OrganizationSettings() {
                             </select>
                           </div>
                           <div>
-                            <label className="block text-xs font-medium text-gray-600 mb-1">Default Score (0–100)</label>
+                            <label className="block text-xs font-medium text-apptivia-carbon-600 mb-1">Default Score (0–100)</label>
                             <input
                               type="number"
                               min="0"
                               max="100"
                               value={newCustomSignal.default_score}
                               onChange={e => setNewCustomSignal(s => ({ ...s, default_score: e.target.value }))}
-                              className="w-full px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500"
+                              className="w-full px-3 py-1.5 border border-apptivia-carbon-300 rounded-lg text-sm focus:ring-2 focus:ring-apptivia-coral"
                             />
                           </div>
                           <div>
-                            <label className="block text-xs font-medium text-gray-600 mb-1">Strength</label>
+                            <label className="block text-xs font-medium text-apptivia-carbon-600 mb-1">Strength</label>
                             <select
                               value={newCustomSignal.default_strength}
                               onChange={e => setNewCustomSignal(s => ({ ...s, default_strength: e.target.value }))}
-                              className="w-full px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500"
+                              className="w-full px-3 py-1.5 border border-apptivia-carbon-300 rounded-lg text-sm focus:ring-2 focus:ring-apptivia-coral"
                             >
                               <option value="low">Low</option>
                               <option value="medium">Medium</option>
@@ -1396,22 +1396,22 @@ export default function OrganizationSettings() {
                           </div>
                         </div>
                         <div>
-                          <label className="block text-xs font-medium text-gray-600 mb-1">Description</label>
+                          <label className="block text-xs font-medium text-apptivia-carbon-600 mb-1">Description</label>
                           <input
                             type="text"
                             value={newCustomSignal.description}
                             onChange={e => setNewCustomSignal(s => ({ ...s, description: e.target.value }))}
                             placeholder="What this signal means and why it matters"
-                            className="w-full px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500"
+                            className="w-full px-3 py-1.5 border border-apptivia-carbon-300 rounded-lg text-sm focus:ring-2 focus:ring-apptivia-coral"
                           />
                         </div>
                         <div className="flex justify-end gap-2">
-                          <button type="button" onClick={() => setShowAddSignalForm(false)} className="px-3 py-1.5 text-sm text-gray-600 hover:text-gray-800">Cancel</button>
+                          <button type="button" onClick={() => setShowAddSignalForm(false)} className="px-3 py-1.5 text-sm text-apptivia-carbon-600 hover:text-apptivia-ink">Cancel</button>
                           <button
                             type="button"
                             onClick={addCustomSignal}
                             disabled={savingSignal || !newCustomSignal.signal_name.trim() || !newCustomSignal.signal_key.trim()}
-                            className="px-4 py-1.5 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700 disabled:opacity-50"
+                            className="px-4 py-1.5 bg-apptivia-coral text-white rounded-lg text-sm hover:bg-apptivia-coral disabled:opacity-50"
                           >
                             {savingSignal ? 'Saving...' : 'Add Signal'}
                           </button>
@@ -1425,43 +1425,43 @@ export default function OrganizationSettings() {
                       const catLabels = { buyer_intent: 'Buyer Intent', interest: 'Interest', company_event: 'Company / Trigger Events', universal: 'Universal' };
                       const catColors = { buyer_intent: 'purple', interest: 'cyan', company_event: 'amber', universal: 'gray' };
                       return (
-                        <div className="rounded-lg border border-purple-200 overflow-hidden">
+                        <div className="rounded-lg border border-apptivia-carbon-300 overflow-hidden">
                           <button
                             type="button"
                             onClick={() => toggleSection('customSignals')}
-                            className="w-full flex items-center justify-between px-4 py-2.5 bg-purple-50/60 hover:bg-purple-100/50 transition-colors"
+                            className="w-full flex items-center justify-between px-4 py-2.5 bg-apptivia-carbon-100/60 hover:bg-apptivia-carbon-100/50 transition-colors"
                           >
-                            <h4 className="text-xs font-bold text-purple-700 uppercase tracking-wide">
+                            <h4 className="text-xs font-bold text-apptivia-ink uppercase tracking-wide">
                               Custom Signals — This Org Only ({customs.length})
                             </h4>
-                            {expandedSections.customSignals ? <ChevronDown size={14} className="text-purple-400" /> : <ChevronRight size={14} className="text-purple-400" />}
+                            {expandedSections.customSignals ? <ChevronDown size={14} className="text-apptivia-ink" /> : <ChevronRight size={14} className="text-apptivia-ink" />}
                           </button>
                           {expandedSections.customSignals && (
                             <div className="px-3 py-2">
                               {customs.length === 0 ? (
-                                <p className="text-xs text-gray-400 italic px-1 py-2">No custom signals yet. Click "Add Custom Signal" above to create one.</p>
+                                <p className="text-xs text-apptivia-carbon-400 italic px-1 py-2">No custom signals yet. Click "Add Custom Signal" above to create one.</p>
                               ) : (
                                 <div className="space-y-1.5">
                                   {customs.map(cfg => {
-                                    const colorMap = { purple: 'bg-purple-50 border-purple-100', cyan: 'bg-cyan-50 border-cyan-100', amber: 'bg-amber-50 border-amber-100', gray: 'bg-gray-50 border-gray-200' };
-                                    const badgeMap = { purple: 'bg-purple-100 text-purple-700', cyan: 'bg-cyan-100 text-cyan-700', amber: 'bg-amber-100 text-amber-700', gray: 'bg-gray-100 text-gray-600' };
+                                    const colorMap = { purple: 'bg-apptivia-carbon-100 border-apptivia-carbon-300', cyan: 'bg-cyan-50 border-cyan-100', amber: 'bg-amber-50 border-amber-100', gray: 'bg-apptivia-paper border-apptivia-carbon-200' };
+                                    const badgeMap = { purple: 'bg-apptivia-carbon-100 text-apptivia-ink', cyan: 'bg-cyan-100 text-cyan-700', amber: 'bg-amber-100 text-amber-700', gray: 'bg-apptivia-carbon-100 text-apptivia-carbon-600' };
                                     const col = catColors[cfg.category] || 'gray';
                                     return (
                                       <div key={cfg.id} className={`flex items-center justify-between px-3 py-2 rounded-lg border ${colorMap[col]}`}>
                                         <div className="flex-1 min-w-0">
                                           <div className="flex items-center gap-2">
-                                            <span className="text-sm font-medium text-gray-800">{cfg.signal_name}</span>
+                                            <span className="text-sm font-medium text-apptivia-ink">{cfg.signal_name}</span>
                                             <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium ${badgeMap[col]}`}>{catLabels[cfg.category]}</span>
                                           </div>
-                                          {cfg.description && <p className="text-xs text-gray-500 mt-0.5 truncate">{cfg.description}</p>}
+                                          {cfg.description && <p className="text-xs text-apptivia-carbon-500 mt-0.5 truncate">{cfg.description}</p>}
                                         </div>
                                         <div className="flex items-center gap-3 ml-3 shrink-0">
-                                          <span className="text-xs text-gray-400">Score {cfg.default_score}</span>
+                                          <span className="text-xs text-apptivia-carbon-400">Score {cfg.default_score}</span>
                                           <button
                                             type="button"
                                             onClick={() => !savingSignal && deleteCustomSignal(cfg.id)}
                                             disabled={savingSignal}
-                                            className="text-gray-400 hover:text-red-500 transition-colors disabled:opacity-50"
+                                            className="text-apptivia-carbon-400 hover:text-red-500 transition-colors disabled:opacity-50"
                                           >
                                             <X size={14} />
                                           </button>
@@ -1485,10 +1485,10 @@ export default function OrganizationSettings() {
                       const defs = signalLibrary.universalDefs.filter(d => d.category === key);
                       if (!defs.length) return null;
                       const isExpanded = expandedSections[stateKey];
-                      const borderColor = color === 'amber' ? 'border-amber-200' : 'border-blue-200';
-                      const bgColor = color === 'amber' ? 'bg-amber-50/60 hover:bg-amber-100/50' : 'bg-blue-50/60 hover:bg-blue-100/50';
-                      const textColor = color === 'amber' ? 'text-amber-700' : 'text-blue-700';
-                      const chevronColor = color === 'amber' ? 'text-amber-400' : 'text-blue-400';
+                      const borderColor = color === 'amber' ? 'border-amber-200' : 'border-apptivia-coral-tone-100';
+                      const bgColor = color === 'amber' ? 'bg-amber-50/60 hover:bg-amber-100/50' : 'bg-apptivia-coral-tone-50/60 hover:bg-apptivia-coral-tone-50/50';
+                      const textColor = color === 'amber' ? 'text-amber-700' : 'text-apptivia-coral';
+                      const chevronColor = color === 'amber' ? 'text-amber-400' : 'text-apptivia-coral-tone-300';
                       return (
                         <div key={key} className={`rounded-lg border ${borderColor} overflow-hidden`}>
                           <button
@@ -1500,7 +1500,7 @@ export default function OrganizationSettings() {
                               <h4 className={`text-xs font-bold uppercase tracking-wide ${textColor}`}>
                                 Universal — {label}
                               </h4>
-                              <span className="text-[10px] text-gray-400">({defs.length})</span>
+                              <span className="text-[10px] text-apptivia-carbon-400">({defs.length})</span>
                             </div>
                             {isExpanded ? <ChevronDown size={14} className={chevronColor} /> : <ChevronRight size={14} className={chevronColor} />}
                           </button>
@@ -1510,16 +1510,16 @@ export default function OrganizationSettings() {
                                 const override = signalLibrary.orgConfigs.find(c => c.signal_definition_id === def.id);
                                 const isEnabled = override ? override.is_enabled : true;
                                 return (
-                                  <div key={def.id} className={`flex items-center justify-between px-3 py-2 rounded-lg border ${isEnabled ? 'bg-white border-gray-200' : 'bg-gray-50 border-gray-100 opacity-60'}`}>
+                                  <div key={def.id} className={`flex items-center justify-between px-3 py-2 rounded-lg border ${isEnabled ? 'bg-white border-apptivia-carbon-200' : 'bg-apptivia-paper border-apptivia-carbon-100 opacity-60'}`}>
                                     <div className="flex-1 min-w-0">
-                                      <span className="text-sm font-medium text-gray-800">{def.signal_name}</span>
-                                      {def.description && <p className="text-xs text-gray-500 mt-0.5 truncate">{def.description}</p>}
+                                      <span className="text-sm font-medium text-apptivia-ink">{def.signal_name}</span>
+                                      {def.description && <p className="text-xs text-apptivia-carbon-500 mt-0.5 truncate">{def.description}</p>}
                                     </div>
                                     <div className="flex items-center gap-3 ml-3 shrink-0">
-                                      <span className="text-xs text-gray-400">Score {def.default_score}</span>
+                                      <span className="text-xs text-apptivia-carbon-400">Score {def.default_score}</span>
                                       <div
                                         onClick={() => !savingSignal && toggleUniversalSignal(def.id, isEnabled)}
-                                        className={`relative w-9 h-5 rounded-full transition-colors cursor-pointer ${isEnabled ? 'bg-blue-500' : 'bg-gray-300'} ${savingSignal ? 'opacity-50 pointer-events-none' : ''}`}
+                                        className={`relative w-9 h-5 rounded-full transition-colors cursor-pointer ${isEnabled ? 'bg-apptivia-coral' : 'bg-apptivia-carbon-300'} ${savingSignal ? 'opacity-50 pointer-events-none' : ''}`}
                                       >
                                         <div className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform ${isEnabled ? 'translate-x-4' : 'translate-x-0'}`} />
                                       </div>
@@ -1540,20 +1540,20 @@ export default function OrganizationSettings() {
               <div className="border-t pt-6">
                 <div className="mb-4">
                   <h3 className="text-lg font-semibold">Sales DNA</h3>
-                  <p className="text-xs text-gray-500 mt-0.5">
+                  <p className="text-xs text-apptivia-carbon-500 mt-0.5">
                     Define how your team sells, qualifies deals, and manages the sales process. This drives all AI coaching recommendations.
                   </p>
                 </div>
                 <div className="space-y-3">
                   {/* Methodology & Qualification — collapsible */}
-                  <div className="rounded-lg border border-blue-200/60 overflow-hidden">
+                  <div className="rounded-lg border border-apptivia-coral-tone-100/60 overflow-hidden">
                     <button
                       type="button"
                       onClick={() => toggleSection('salesMethodology')}
-                      className="w-full flex items-center justify-between px-4 py-2.5 bg-blue-50/80 hover:bg-blue-100/60 transition-colors"
+                      className="w-full flex items-center justify-between px-4 py-2.5 bg-apptivia-coral-tone-50/80 hover:bg-apptivia-coral-tone-50/60 transition-colors"
                     >
-                      <h4 className="text-xs font-bold text-blue-800 uppercase tracking-wide">Methodology & Qualification</h4>
-                      {expandedSections.salesMethodology ? <ChevronDown size={14} className="text-blue-500" /> : <ChevronRight size={14} className="text-blue-500" />}
+                      <h4 className="text-xs font-bold text-apptivia-coral-tone-700 uppercase tracking-wide">Methodology & Qualification</h4>
+                      {expandedSections.salesMethodology ? <ChevronDown size={14} className="text-apptivia-coral" /> : <ChevronRight size={14} className="text-apptivia-coral" />}
                     </button>
                     {expandedSections.salesMethodology && (
                       <div className="px-4 py-4 bg-white/50">
@@ -1563,14 +1563,14 @@ export default function OrganizationSettings() {
                   </div>
 
                   {/* Sales Process (CEP) — collapsible */}
-                  <div className="rounded-lg border border-indigo-200/60 overflow-hidden">
+                  <div className="rounded-lg border border-apptivia-carbon-300/60 overflow-hidden">
                     <button
                       type="button"
                       onClick={() => toggleSection('salesProcess')}
-                      className="w-full flex items-center justify-between px-4 py-2.5 bg-indigo-50/80 hover:bg-indigo-100/60 transition-colors"
+                      className="w-full flex items-center justify-between px-4 py-2.5 bg-apptivia-carbon-100/80 hover:bg-apptivia-carbon-100/60 transition-colors"
                     >
-                      <h4 className="text-xs font-bold text-indigo-800 uppercase tracking-wide">Sales Process (CEP)</h4>
-                      {expandedSections.salesProcess ? <ChevronDown size={14} className="text-indigo-500" /> : <ChevronRight size={14} className="text-indigo-500" />}
+                      <h4 className="text-xs font-bold text-apptivia-ink uppercase tracking-wide">Sales Process (CEP)</h4>
+                      {expandedSections.salesProcess ? <ChevronDown size={14} className="text-apptivia-ink" /> : <ChevronRight size={14} className="text-apptivia-ink" />}
                     </button>
                     {expandedSections.salesProcess && (
                       <div className="px-4 py-4 bg-white/50">
@@ -1585,14 +1585,14 @@ export default function OrganizationSettings() {
               <div className="border-t pt-6">
                 <div className="mb-4">
                   <h3 className="text-lg font-semibold">Feedback Insights</h3>
-                  <p className="text-xs text-gray-500 mt-0.5">
+                  <p className="text-xs text-apptivia-carbon-500 mt-0.5">
                     Aggregated "Was this helpful?" feedback from your team across AI suggestions and coaching content.
                   </p>
                 </div>
                 {loadingFeedback ? (
-                  <p className="text-sm text-gray-400">Loading feedback data...</p>
+                  <p className="text-sm text-apptivia-carbon-400">Loading feedback data...</p>
                 ) : !feedbackInsights ? (
-                  <div className="text-xs text-gray-400 bg-gray-50 rounded-lg p-4 text-center">
+                  <div className="text-xs text-apptivia-carbon-400 bg-apptivia-paper rounded-lg p-4 text-center">
                     No feedback collected yet. Feedback widgets appear next to coaching suggestions throughout the app.
                   </div>
                 ) : (
@@ -1602,14 +1602,14 @@ export default function OrganizationSettings() {
                         {feedbackInsights.overallPct}%
                       </div>
                       <div>
-                        <div className="text-sm font-medium text-gray-900">Overall Helpful</div>
-                        <div className="text-xs text-gray-500">{feedbackInsights.total} total ratings</div>
+                        <div className="text-sm font-medium text-apptivia-ink">Overall Helpful</div>
+                        <div className="text-xs text-apptivia-carbon-500">{feedbackInsights.total} total ratings</div>
                       </div>
                     </div>
                     <div className="border rounded-lg overflow-hidden">
                       <table className="w-full text-sm">
                         <thead>
-                          <tr className="bg-gray-50 text-left text-xs text-gray-500 uppercase tracking-wide">
+                          <tr className="bg-apptivia-paper text-left text-xs text-apptivia-carbon-500 uppercase tracking-wide">
                             <th className="px-3 py-2">Feature Area</th>
                             <th className="px-3 py-2 text-center">Ratings</th>
                             <th className="px-3 py-2 text-center">Helpful %</th>
@@ -1618,8 +1618,8 @@ export default function OrganizationSettings() {
                         <tbody>
                           {feedbackInsights.breakdown.map(row => (
                             <tr key={row.area} className="border-t">
-                              <td className="px-3 py-2 font-medium text-gray-800">{row.label}</td>
-                              <td className="px-3 py-2 text-center text-gray-500">{row.total}</td>
+                              <td className="px-3 py-2 font-medium text-apptivia-ink">{row.label}</td>
+                              <td className="px-3 py-2 text-center text-apptivia-carbon-500">{row.total}</td>
                               <td className="px-3 py-2 text-center">
                                 <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-bold ${
                                   row.pct >= 70 ? 'bg-emerald-100 text-emerald-700'
@@ -1642,10 +1642,10 @@ export default function OrganizationSettings() {
               <div className="border-t pt-6">
                 <div className="mb-4">
                   <h3 className="text-lg font-semibold flex items-center gap-2">
-                    <Maximize2 size={18} className="text-blue-600" />
+                    <Maximize2 size={18} className="text-apptivia-coral" />
                     Wallboard Configuration
                   </h3>
-                  <p className="text-xs text-gray-500 mt-0.5">
+                  <p className="text-xs text-apptivia-carbon-500 mt-0.5">
                     Choose which slides appear on the Wallboard and how long each displays.
                   </p>
                 </div>
@@ -1664,7 +1664,7 @@ export default function OrganizationSettings() {
                     const slideEnabled = wallboardSettings.slides[key]?.enabled !== false;
                     const slideDuration = wallboardSettings.slides[key]?.duration || 15;
                     return (
-                      <div key={key} className="flex items-center justify-between py-2 px-3 bg-gray-50 rounded-lg">
+                      <div key={key} className="flex items-center justify-between py-2 px-3 bg-apptivia-paper rounded-lg">
                         <div className="flex items-center gap-4">
                           <button
                             type="button"
@@ -1672,11 +1672,11 @@ export default function OrganizationSettings() {
                               ...ws,
                               slides: { ...ws.slides, [key]: { ...ws.slides[key], enabled: !slideEnabled } }
                             }))}
-                            className={`w-10 h-5 rounded-full transition-colors ${slideEnabled ? 'bg-blue-600' : 'bg-gray-300'} relative flex-shrink-0`}
+                            className={`w-10 h-5 rounded-full transition-colors ${slideEnabled ? 'bg-apptivia-coral' : 'bg-apptivia-carbon-300'} relative flex-shrink-0`}
                           >
                             <span className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform ${slideEnabled ? 'translate-x-5' : 'translate-x-0.5'}`} />
                           </button>
-                          <span className="text-sm font-medium text-gray-700">{label}</span>
+                          <span className="text-sm font-medium text-apptivia-carbon-700">{label}</span>
                         </div>
                         <div className="flex items-center gap-2">
                           <input
@@ -1690,29 +1690,29 @@ export default function OrganizationSettings() {
                             }))}
                             className="w-16 text-center text-sm border rounded px-2 py-1"
                           />
-                          <span className="text-xs text-gray-500">sec</span>
+                          <span className="text-xs text-apptivia-carbon-500">sec</span>
                         </div>
                       </div>
                     );
                   })}
                 </div>
 
-                <div className="flex items-center gap-4 mt-4 py-2 px-3 bg-gray-50 rounded-lg">
+                <div className="flex items-center gap-4 mt-4 py-2 px-3 bg-apptivia-paper rounded-lg">
                   <button
                     type="button"
                     onClick={() => setWallboardSettings(ws => ({ ...ws, celebrations: !ws.celebrations }))}
-                    className={`w-10 h-5 rounded-full transition-colors ${wallboardSettings.celebrations ? 'bg-blue-600' : 'bg-gray-300'} relative flex-shrink-0`}
+                    className={`w-10 h-5 rounded-full transition-colors ${wallboardSettings.celebrations ? 'bg-apptivia-coral' : 'bg-apptivia-carbon-300'} relative flex-shrink-0`}
                   >
                     <span className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform ${wallboardSettings.celebrations ? 'translate-x-5' : 'translate-x-0.5'}`} />
                   </button>
-                  <span className="text-sm font-medium text-gray-700">Celebration Overlays</span>
-                  <span className="text-xs text-gray-400 ml-1">(confetti for level-ups, rare badges, contest wins)</span>
+                  <span className="text-sm font-medium text-apptivia-carbon-700">Celebration Overlays</span>
+                  <span className="text-xs text-apptivia-carbon-400 ml-1">(confetti for level-ups, rare badges, contest wins)</span>
                 </div>
               </div>
 
               <div className="border-t pt-4">
-                <h4 className="text-sm font-semibold text-gray-700 mb-2">Onboarding Status</h4>
-                <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                <h4 className="text-sm font-semibold text-apptivia-carbon-700 mb-2">Onboarding Status</h4>
+                <div className="flex items-center justify-between p-3 bg-apptivia-paper rounded-lg">
                   <div>
                     <div className="text-sm font-medium">
                       {organization?.onboarding_status === 'completed' ? (
@@ -1722,7 +1722,7 @@ export default function OrganizationSettings() {
                       )}
                     </div>
                     {organization?.onboarding_completed_at && (
-                      <div className="text-xs text-gray-500">
+                      <div className="text-xs text-apptivia-carbon-500">
                         Completed: {new Date(organization.onboarding_completed_at).toLocaleDateString()}
                       </div>
                     )}
@@ -1731,7 +1731,7 @@ export default function OrganizationSettings() {
                     <button
                       type="button"
                       onClick={() => setShowOnboarding(true)}
-                      className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700"
+                      className="px-4 py-2 bg-apptivia-coral text-white rounded-lg text-sm hover:bg-apptivia-coral"
                     >
                       Resume Onboarding
                     </button>
@@ -1750,7 +1750,7 @@ export default function OrganizationSettings() {
             <div className="bg-white rounded-lg shadow-sm p-6">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-lg font-semibold">Teams</h3>
-                <button onClick={teamHook.openAddTeamModal} className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700">
+                <button onClick={teamHook.openAddTeamModal} className="px-4 py-2 bg-apptivia-coral text-white rounded-lg text-sm hover:bg-apptivia-coral">
                   + Add Team
                 </button>
               </div>
@@ -1763,7 +1763,7 @@ export default function OrganizationSettings() {
                       {isAdmin && (
                         <button
                           onClick={() => setDeleteTeamTarget(team)}
-                          className="p-1 text-gray-400 hover:text-red-500 transition-colors"
+                          className="p-1 text-apptivia-carbon-400 hover:text-red-500 transition-colors"
                           title="Delete team"
                         >
                           <Trash2 size={14} />
@@ -1771,9 +1771,9 @@ export default function OrganizationSettings() {
                       )}
                     </div>
                     {team.description && (
-                      <div className="text-sm text-gray-600 mt-1">{team.description}</div>
+                      <div className="text-sm text-apptivia-carbon-600 mt-1">{team.description}</div>
                     )}
-                    <div className="text-xs text-gray-500 mt-2">
+                    <div className="text-xs text-apptivia-carbon-500 mt-2">
                       {members.filter(m => m.team_id === team.id).length} members
                     </div>
                   </div>
@@ -1793,7 +1793,7 @@ export default function OrganizationSettings() {
                     <UserPlus size={14} />
                     Add Existing Users
                   </button>
-                  <button onClick={() => setShowInviteModal(true)} className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700">
+                  <button onClick={() => setShowInviteModal(true)} className="px-4 py-2 bg-apptivia-coral text-white rounded-lg text-sm hover:bg-apptivia-coral">
                     + Invite Members
                   </button>
                 </div>
@@ -1819,15 +1819,15 @@ export default function OrganizationSettings() {
                         <tr key={member.id} className="border-b">
                           <td className="py-3">
                             {isPending ? (
-                              <span className="text-gray-400 italic">Pending setup</span>
+                              <span className="text-apptivia-carbon-400 italic">Pending setup</span>
                             ) : (
                               <>{member.first_name} {member.last_name}</>
                             )}
                           </td>
-                          <td className="py-3 text-gray-600">{member.email}</td>
-                          <td className="py-3 text-gray-600 text-xs">{member.title || '-'}</td>
+                          <td className="py-3 text-apptivia-carbon-600">{member.email}</td>
+                          <td className="py-3 text-apptivia-carbon-600 text-xs">{member.title || '-'}</td>
                           <td className="py-3">
-                            <span className="px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs">
+                            <span className="px-2 py-1 bg-apptivia-coral-tone-50 text-apptivia-coral rounded text-xs">
                               {member.role}
                             </span>
                             {isPending && (
@@ -1836,12 +1836,12 @@ export default function OrganizationSettings() {
                               </span>
                             )}
                           </td>
-                          <td className="py-3 text-gray-600">
+                          <td className="py-3 text-apptivia-carbon-600">
                             {teamHook.teams.find(t => t.id === member.team_id)?.name || '-'}
                           </td>
-                          <td className="py-3 text-gray-600 text-xs">{member.segment || '-'}</td>
+                          <td className="py-3 text-apptivia-carbon-600 text-xs">{member.segment || '-'}</td>
                           <td className="py-3 flex items-center gap-2">
-                            <button onClick={() => openEditMember(member)} className="text-blue-600 hover:text-blue-700 text-sm">
+                            <button onClick={() => openEditMember(member)} className="text-apptivia-coral hover:text-apptivia-coral text-sm">
                               Edit
                             </button>
                             {isPending && isAdmin && (
@@ -1891,14 +1891,14 @@ export default function OrganizationSettings() {
             <div className="flex items-center justify-between mb-6">
               <div>
                 <h3 className="text-lg font-semibold">Scheduled Reports</h3>
-                <p className="text-xs text-gray-500 mt-0.5">
+                <p className="text-xs text-apptivia-carbon-500 mt-0.5">
                   Automate periodic email delivery of Apptivia reports to your team.
                 </p>
               </div>
               {isManagerOrAbove && (
                 <button
                   onClick={() => { setEditingReport(null); setShowScheduleModal(true); }}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700 flex items-center gap-2"
+                  className="px-4 py-2 bg-apptivia-coral text-white rounded-lg text-sm hover:bg-apptivia-coral flex items-center gap-2"
                 >
                   <Plus size={14} />
                   New Report Schedule
@@ -1907,12 +1907,12 @@ export default function OrganizationSettings() {
             </div>
 
             {loadingReports ? (
-              <div className="text-center py-12 text-gray-400 text-sm">Loading scheduled reports...</div>
+              <div className="text-center py-12 text-apptivia-carbon-400 text-sm">Loading scheduled reports...</div>
             ) : scheduledReports.length === 0 ? (
               <div className="text-center py-12">
-                <CalendarClock size={40} className="mx-auto text-gray-300 mb-3" />
-                <p className="text-sm text-gray-500 mb-1">No scheduled reports yet</p>
-                <p className="text-xs text-gray-400">
+                <CalendarClock size={40} className="mx-auto text-apptivia-carbon-300 mb-3" />
+                <p className="text-sm text-apptivia-carbon-500 mb-1">No scheduled reports yet</p>
+                <p className="text-xs text-apptivia-carbon-400">
                   {isManagerOrAbove
                     ? 'Create your first report schedule above to start receiving automated email reports.'
                     : 'A manager or admin can set up automated report delivery.'}
@@ -1923,19 +1923,19 @@ export default function OrganizationSettings() {
                 {scheduledReports.map((report) => {
                   const recipientCount = Array.isArray(report.recipients) ? report.recipients.length : 0;
                   return (
-                    <div key={report.id} className={`border rounded-lg p-4 ${report.active ? 'bg-white' : 'bg-gray-50 opacity-75'}`}>
+                    <div key={report.id} className={`border rounded-lg p-4 ${report.active ? 'bg-white' : 'bg-apptivia-paper opacity-75'}`}>
                       <div className="flex items-start justify-between">
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 mb-1">
-                            <FileText size={16} className="text-blue-600 flex-shrink-0" />
-                            <span className="font-medium text-gray-900 text-sm">
+                            <FileText size={16} className="text-apptivia-coral flex-shrink-0" />
+                            <span className="font-medium text-apptivia-ink text-sm">
                               {REPORT_TYPE_LABELS[report.report_type] || report.report_type}
                             </span>
                             {!report.active && (
-                              <span className="px-2 py-0.5 text-xs font-medium bg-gray-200 text-gray-600 rounded-full">Paused</span>
+                              <span className="px-2 py-0.5 text-xs font-medium bg-apptivia-carbon-200 text-apptivia-carbon-600 rounded-full">Paused</span>
                             )}
                           </div>
-                          <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-gray-500 mt-1">
+                          <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-apptivia-carbon-500 mt-1">
                             <span className="flex items-center gap-1">
                               <Calendar size={12} />
                               {FREQUENCY_LABELS[report.frequency] || report.frequency}
@@ -1953,12 +1953,12 @@ export default function OrganizationSettings() {
                             </span>
                           </div>
                           {report.last_sent_at && (
-                            <div className="text-xs text-gray-400 mt-1">
+                            <div className="text-xs text-apptivia-carbon-400 mt-1">
                               Last sent: {new Date(report.last_sent_at).toLocaleString()}
                             </div>
                           )}
                           {report.next_scheduled_at && report.active && (
-                            <div className="text-xs text-blue-500 mt-0.5">
+                            <div className="text-xs text-apptivia-coral mt-0.5">
                               Next: {new Date(report.next_scheduled_at).toLocaleString()}
                             </div>
                           )}
@@ -1968,7 +1968,7 @@ export default function OrganizationSettings() {
                           <div className="flex items-center gap-1 ml-3 flex-shrink-0">
                             <button
                               onClick={() => { setEditingReport(report); setShowScheduleModal(true); }}
-                              className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
+                              className="p-1.5 text-apptivia-carbon-400 hover:text-apptivia-coral hover:bg-apptivia-coral-tone-50 rounded transition-colors"
                               title="Edit"
                             >
                               <Pencil size={14} />
@@ -1977,8 +1977,8 @@ export default function OrganizationSettings() {
                               onClick={() => handleToggleReport(report)}
                               className={`p-1.5 rounded transition-colors ${
                                 report.active
-                                  ? 'text-gray-400 hover:text-amber-600 hover:bg-amber-50'
-                                  : 'text-gray-400 hover:text-green-600 hover:bg-green-50'
+                                  ? 'text-apptivia-carbon-400 hover:text-amber-600 hover:bg-amber-50'
+                                  : 'text-apptivia-carbon-400 hover:text-green-600 hover:bg-green-50'
                               }`}
                               title={report.active ? 'Pause' : 'Resume'}
                             >
@@ -1987,7 +1987,7 @@ export default function OrganizationSettings() {
                             {isAdmin && (
                               <button
                                 onClick={() => handleSendNow(report.id)}
-                                className="p-1.5 text-gray-400 hover:text-emerald-600 hover:bg-emerald-50 rounded transition-colors"
+                                className="p-1.5 text-apptivia-carbon-400 hover:text-emerald-600 hover:bg-emerald-50 rounded transition-colors"
                                 title="Send now"
                               >
                                 <Send size={14} />
@@ -1995,7 +1995,7 @@ export default function OrganizationSettings() {
                             )}
                             <button
                               onClick={() => handleDeleteReport(report.id)}
-                              className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
+                              className="p-1.5 text-apptivia-carbon-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
                               title="Delete"
                             >
                               <Trash2 size={14} />
@@ -2017,32 +2017,34 @@ export default function OrganizationSettings() {
             <div className="flex items-center justify-between mb-4">
               <div>
                 <h3 className="text-lg font-semibold">KPI Role Templates</h3>
-                <p className="text-sm text-gray-500 mt-1">Pre-configured KPI goals and weights by job title. Apply a template to instantly update your scorecard configuration.</p>
+                <p className="text-sm text-apptivia-carbon-500 mt-1">Pre-configured KPI goals and weights by job title. Apply a template to instantly update your scorecard configuration.</p>
               </div>
             </div>
 
             {kpiTemplates.loading ? (
-              <div className="text-center py-8 text-gray-400">Loading templates...</div>
+              <div className="text-center py-8 text-apptivia-carbon-400">Loading templates...</div>
             ) : kpiTemplates.error ? (
               <div className="text-center py-8 text-red-500">{kpiTemplates.error}</div>
             ) : kpiTemplates.templates.length === 0 ? (
-              <div className="text-center py-8 text-gray-400">No templates available. Run migration 097 to seed defaults.</div>
+              <div className="text-center py-8 text-apptivia-carbon-400">No templates available. Run migration 097 to seed defaults.</div>
             ) : (
               <div className="space-y-4">
                 {kpiTemplates.templates.map((template) => (
                   <div key={template.id} className="border rounded-lg p-4">
                     <div className="flex items-center justify-between mb-3">
                       <div>
-                        <span className="font-medium text-gray-900">{template.template_name}</span>
-                        <span className="ml-2 text-xs px-2 py-0.5 rounded-full bg-gray-100 text-gray-600">
+                        <span className="font-medium text-apptivia-ink">{template.template_name}</span>
+                        <span className="ml-2 text-xs px-2 py-0.5 rounded-full bg-apptivia-carbon-100 text-apptivia-carbon-600">
                           {template.title_key}
                         </span>
                         {template.is_default && !template.organization_id && (
-                          <span className="ml-2 text-xs px-2 py-0.5 rounded-full bg-blue-50 text-blue-600">Global Default</span>
+                          <span className="ml-2 text-xs px-2 py-0.5 rounded-full bg-apptivia-coral-tone-50 text-apptivia-coral">Global Default</span>
                         )}
                       </div>
                       <button
                         onClick={async () => {
+                          // F22: Confirm before destructive template apply
+                          if (!window.confirm(`Apply "${template.template_name}"? This will replace your current KPI goals, weights, and scorecard visibility settings.`)) return;
                           setApplyingTemplate(template.id);
                           try {
                             await kpiTemplates.applyTemplate(template);
@@ -2054,7 +2056,7 @@ export default function OrganizationSettings() {
                           }
                         }}
                         disabled={applyingTemplate === template.id}
-                        className="px-3 py-1.5 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 disabled:opacity-50"
+                        className="px-3 py-1.5 bg-apptivia-coral text-white text-sm rounded-lg hover:bg-apptivia-coral disabled:opacity-50"
                       >
                         {applyingTemplate === template.id ? 'Applying...' : 'Apply to Scorecard'}
                       </button>
@@ -2062,10 +2064,10 @@ export default function OrganizationSettings() {
 
                     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2">
                       {(template.kpi_configs || []).map((cfg, i) => (
-                        <div key={i} className="bg-gray-50 rounded px-3 py-2 text-center">
-                          <div className="text-xs font-medium text-gray-700 truncate">{cfg.kpi_key.replace(/_/g, ' ')}</div>
-                          <div className="text-sm font-semibold text-gray-900 mt-0.5">{cfg.goal}</div>
-                          <div className="text-[10px] text-gray-500">Weight: {Math.round(cfg.weight * 100)}%</div>
+                        <div key={i} className="bg-apptivia-paper rounded px-3 py-2 text-center">
+                          <div className="text-xs font-medium text-apptivia-carbon-700 truncate">{cfg.kpi_key.replace(/_/g, ' ')}</div>
+                          <div className="text-sm font-semibold text-apptivia-ink mt-0.5">{cfg.goal}</div>
+                          <div className="text-[10px] text-apptivia-carbon-500">Weight: {Math.round(cfg.weight * 100)}%</div>
                         </div>
                       ))}
                     </div>
@@ -2082,11 +2084,11 @@ export default function OrganizationSettings() {
             <div className="flex items-center justify-between mb-6">
               <div>
                 <h3 className="text-lg font-semibold">Import KPI Data</h3>
-                <p className="text-sm text-gray-500 mt-1">Upload historical KPI data via CSV to populate your scorecard</p>
+                <p className="text-sm text-apptivia-carbon-500 mt-1">Upload historical KPI data via CSV to populate your scorecard</p>
               </div>
               <button
                 onClick={() => setShowKpiImport(true)}
-                className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors"
+                className="flex items-center gap-2 px-4 py-2 bg-apptivia-coral text-white rounded-lg text-sm font-medium hover:bg-apptivia-coral transition-colors"
               >
                 <Upload size={16} />
                 Import CSV
@@ -2095,21 +2097,21 @@ export default function OrganizationSettings() {
 
             {/* Import History */}
             <div>
-              <h4 className="text-sm font-semibold text-gray-700 mb-3">Import History</h4>
+              <h4 className="text-sm font-semibold text-apptivia-carbon-700 mb-3">Import History</h4>
               {loadingImportHistory ? (
                 <div className="animate-pulse space-y-2">
-                  {[1, 2, 3].map(i => <div key={i} className="h-12 bg-gray-100 rounded-lg" />)}
+                  {[1, 2, 3].map(i => <div key={i} className="h-12 bg-apptivia-carbon-100 rounded-lg" />)}
                 </div>
               ) : importHistory.length === 0 ? (
-                <div className="text-center py-10 border border-dashed border-gray-200 rounded-lg">
-                  <Database size={32} className="mx-auto text-gray-300 mb-2" />
-                  <p className="text-sm text-gray-500">No imports yet</p>
-                  <p className="text-xs text-gray-400 mt-1">Upload a CSV to get started</p>
+                <div className="text-center py-10 border border-dashed border-apptivia-carbon-200 rounded-lg">
+                  <Database size={32} className="mx-auto text-apptivia-carbon-300 mb-2" />
+                  <p className="text-sm text-apptivia-carbon-500">No imports yet</p>
+                  <p className="text-xs text-apptivia-carbon-400 mt-1">Upload a CSV to get started</p>
                 </div>
               ) : (
                 <div className="border rounded-lg overflow-hidden">
                   <table className="w-full text-sm">
-                    <thead className="bg-gray-50 text-gray-600">
+                    <thead className="bg-apptivia-paper text-apptivia-carbon-600">
                       <tr>
                         <th className="text-left px-4 py-2.5 font-medium">Date</th>
                         <th className="text-left px-4 py-2.5 font-medium">File</th>
@@ -2125,18 +2127,18 @@ export default function OrganizationSettings() {
                           completed: 'bg-green-100 text-green-700',
                           partial: 'bg-yellow-100 text-yellow-700',
                           failed: 'bg-red-100 text-red-700',
-                          processing: 'bg-blue-100 text-blue-700',
+                          processing: 'bg-apptivia-coral-tone-50 text-apptivia-coral',
                         };
                         return (
-                          <tr key={job.id} className="hover:bg-gray-50">
-                            <td className="px-4 py-2.5 text-gray-600">
+                          <tr key={job.id} className="hover:bg-apptivia-paper">
+                            <td className="px-4 py-2.5 text-apptivia-carbon-600">
                               {new Date(job.created_at).toLocaleDateString()}
                             </td>
-                            <td className="px-4 py-2.5 text-gray-900 font-medium truncate max-w-[200px]">
+                            <td className="px-4 py-2.5 text-apptivia-ink font-medium truncate max-w-[200px]">
                               {job.filename || '—'}
                             </td>
                             <td className="px-4 py-2.5">
-                              <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${statusColors[job.status] || 'bg-gray-100 text-gray-600'}`}>
+                              <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${statusColors[job.status] || 'bg-apptivia-carbon-100 text-apptivia-carbon-600'}`}>
                                 {job.status}
                               </span>
                             </td>
@@ -2146,7 +2148,7 @@ export default function OrganizationSettings() {
                             <td className="px-4 py-2.5 text-right text-red-600 font-medium">
                               {job.rows_failed || 0}
                             </td>
-                            <td className="px-4 py-2.5 text-gray-500 text-xs">
+                            <td className="px-4 py-2.5 text-apptivia-carbon-500 text-xs">
                               {job.week_range || '—'}
                             </td>
                           </tr>
@@ -2176,11 +2178,11 @@ export default function OrganizationSettings() {
                 <div key={index} className="flex items-center justify-between p-3 border rounded-lg">
                   <div>
                     <div className="font-medium">{setting.label}</div>
-                    <div className="text-sm text-gray-600">{setting.description}</div>
+                    <div className="text-sm text-apptivia-carbon-600">{setting.description}</div>
                   </div>
                   <label className="relative inline-flex items-center cursor-pointer">
                     <input type="checkbox" defaultChecked className="sr-only peer" />
-                    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                    <div className="w-11 h-6 bg-apptivia-carbon-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-apptivia-coral-tone-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-apptivia-carbon-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-apptivia-coral"></div>
                   </label>
                 </div>
               ))}
@@ -2194,26 +2196,26 @@ export default function OrganizationSettings() {
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
           <div className="bg-white rounded-lg shadow-xl w-full max-w-md p-6">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-bold text-gray-900">Invite Members</h2>
-              <button onClick={() => setShowInviteModal(false)} className="p-1 hover:bg-gray-100 rounded"><X size={18} /></button>
+              <h2 className="text-lg font-bold text-apptivia-ink">Invite Members</h2>
+              <button onClick={() => setShowInviteModal(false)} className="p-1 hover:bg-apptivia-carbon-100 rounded"><X size={18} /></button>
             </div>
-            <p className="text-sm text-gray-500 mb-4">Enter email addresses (one per line or comma-separated)</p>
+            <p className="text-sm text-apptivia-carbon-500 mb-4">Enter email addresses (one per line or comma-separated)</p>
 
             <textarea
               value={inviteEmails}
               onChange={(e) => setInviteEmails(e.target.value)}
               placeholder="user@example.com&#10;another@example.com"
               rows={4}
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 mb-3"
+              className="w-full border border-apptivia-carbon-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-apptivia-coral focus:border-apptivia-coral mb-3"
             />
 
             <div className="grid grid-cols-3 gap-3 mb-4">
               <div>
-                <label className="block text-xs font-medium text-gray-600 mb-1">Role</label>
+                <label className="block text-xs font-medium text-apptivia-carbon-600 mb-1">Role</label>
                 <select
                   value={inviteRole}
                   onChange={(e) => setInviteRole(e.target.value)}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
+                  className="w-full border border-apptivia-carbon-300 rounded-lg px-3 py-2 text-sm"
                 >
                   <option value="power_user">Power User</option>
                   <option value="coach">Coach</option>
@@ -2222,7 +2224,7 @@ export default function OrganizationSettings() {
                 </select>
               </div>
               <div>
-                <label className="block text-xs font-medium text-gray-600 mb-1">Title</label>
+                <label className="block text-xs font-medium text-apptivia-carbon-600 mb-1">Title</label>
                 <select
                   value={inviteTitle}
                   onChange={(e) => {
@@ -2230,18 +2232,18 @@ export default function OrganizationSettings() {
                     const selected = titles.find(t => t.label === e.target.value);
                     setInviteTitleKey(selected?.key || '');
                   }}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
+                  className="w-full border border-apptivia-carbon-300 rounded-lg px-3 py-2 text-sm"
                 >
                   <option value="">Select title</option>
                   {titles.map(t => <option key={t.key} value={t.label}>{t.label}</option>)}
                 </select>
               </div>
               <div>
-                <label className="block text-xs font-medium text-gray-600 mb-1">Team (optional)</label>
+                <label className="block text-xs font-medium text-apptivia-carbon-600 mb-1">Team (optional)</label>
                 <select
                   value={inviteTeamId}
                   onChange={(e) => setInviteTeamId(e.target.value)}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
+                  className="w-full border border-apptivia-carbon-300 rounded-lg px-3 py-2 text-sm"
                 >
                   <option value="">No team</option>
                   {teamHook.teams.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
@@ -2250,11 +2252,11 @@ export default function OrganizationSettings() {
             </div>
 
             <div className="flex justify-end gap-2">
-              <button onClick={() => setShowInviteModal(false)} className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg text-sm hover:bg-gray-200">Cancel</button>
+              <button onClick={() => setShowInviteModal(false)} className="px-4 py-2 bg-apptivia-carbon-100 text-apptivia-carbon-700 rounded-lg text-sm hover:bg-apptivia-carbon-200">Cancel</button>
               <button
                 onClick={handleInviteMembers}
                 disabled={!inviteEmails.trim() || inviteSending}
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700 disabled:opacity-50"
+                className="px-4 py-2 bg-apptivia-coral text-white rounded-lg text-sm hover:bg-apptivia-coral disabled:opacity-50"
               >
                 {inviteSending ? 'Sending...' : 'Send Invitations'}
               </button>
@@ -2268,37 +2270,37 @@ export default function OrganizationSettings() {
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
           <div className="bg-white rounded-lg shadow-xl w-full max-w-sm p-6">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-bold text-gray-900">Create Team</h2>
-              <button onClick={() => teamHook.setShowAddTeamModal(false)} className="p-1 hover:bg-gray-100 rounded"><X size={18} /></button>
+              <h2 className="text-lg font-bold text-apptivia-ink">Create Team</h2>
+              <button onClick={() => teamHook.setShowAddTeamModal(false)} className="p-1 hover:bg-apptivia-carbon-100 rounded"><X size={18} /></button>
             </div>
 
             <div className="space-y-3 mb-4">
               <div>
-                <label className="block text-xs font-medium text-gray-600 mb-1">Team Name</label>
+                <label className="block text-xs font-medium text-apptivia-carbon-600 mb-1">Team Name</label>
                 <input
                   type="text"
                   value={teamHook.newTeamName}
                   onChange={(e) => teamHook.setNewTeamName(e.target.value)}
                   placeholder="e.g. Enterprise Sales"
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full border border-apptivia-carbon-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-apptivia-coral focus:border-apptivia-coral"
                 />
               </div>
               <div>
-                <label className="block text-xs font-medium text-gray-600 mb-1">Description (optional)</label>
+                <label className="block text-xs font-medium text-apptivia-carbon-600 mb-1">Description (optional)</label>
                 <input
                   type="text"
                   value={teamHook.newTeamDescription}
                   onChange={(e) => teamHook.setNewTeamDescription(e.target.value)}
                   placeholder="Brief team description"
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full border border-apptivia-carbon-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-apptivia-coral focus:border-apptivia-coral"
                 />
               </div>
               <div>
-                <label className="block text-xs font-medium text-gray-600 mb-1">Manager (optional)</label>
+                <label className="block text-xs font-medium text-apptivia-carbon-600 mb-1">Manager (optional)</label>
                 <select
                   value={teamHook.newTeamManagerId}
                   onChange={(e) => teamHook.setNewTeamManagerId(e.target.value)}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full border border-apptivia-carbon-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-apptivia-coral focus:border-apptivia-coral"
                 >
                   <option value="">No manager assigned</option>
                   {teamHook.allProfiles
@@ -2313,11 +2315,11 @@ export default function OrganizationSettings() {
             </div>
 
             <div className="flex justify-end gap-2">
-              <button onClick={() => teamHook.setShowAddTeamModal(false)} className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg text-sm hover:bg-gray-200">Cancel</button>
+              <button onClick={() => teamHook.setShowAddTeamModal(false)} className="px-4 py-2 bg-apptivia-carbon-100 text-apptivia-carbon-700 rounded-lg text-sm hover:bg-apptivia-carbon-200">Cancel</button>
               <button
                 onClick={handleAddTeam}
                 disabled={!teamHook.newTeamName.trim() || teamHook.addingTeam}
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700 disabled:opacity-50"
+                className="px-4 py-2 bg-apptivia-coral text-white rounded-lg text-sm hover:bg-apptivia-coral disabled:opacity-50"
               >
                 {teamHook.addingTeam ? 'Creating...' : 'Create Team'}
               </button>
@@ -2331,29 +2333,29 @@ export default function OrganizationSettings() {
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
           <div className="bg-white rounded-lg shadow-xl w-full max-w-sm p-6">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-bold text-gray-900">Edit Member</h2>
-              <button onClick={() => setEditingMember(null)} className="p-1 hover:bg-gray-100 rounded"><X size={18} /></button>
+              <h2 className="text-lg font-bold text-apptivia-ink">Edit Member</h2>
+              <button onClick={() => setEditingMember(null)} className="p-1 hover:bg-apptivia-carbon-100 rounded"><X size={18} /></button>
             </div>
-            <p className="text-sm text-gray-500 mb-4">{editingMember.first_name} {editingMember.last_name} ({editingMember.email})</p>
+            <p className="text-sm text-apptivia-carbon-500 mb-4">{editingMember.first_name} {editingMember.last_name} ({editingMember.email})</p>
 
             <div className="space-y-3 mb-4">
               <div>
-                <label className="block text-xs font-medium text-gray-600 mb-1">Title</label>
+                <label className="block text-xs font-medium text-apptivia-carbon-600 mb-1">Title</label>
                 <select
                   value={editTitle}
                   onChange={(e) => setEditTitle(e.target.value)}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
+                  className="w-full border border-apptivia-carbon-300 rounded-lg px-3 py-2 text-sm"
                 >
                   <option value="">No title</option>
                   {titles.map(t => <option key={t.key} value={t.label}>{t.label}</option>)}
                 </select>
               </div>
               <div>
-                <label className="block text-xs font-medium text-gray-600 mb-1">Role</label>
+                <label className="block text-xs font-medium text-apptivia-carbon-600 mb-1">Role</label>
                 <select
                   value={editRole}
                   onChange={(e) => setEditRole(e.target.value)}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
+                  className="w-full border border-apptivia-carbon-300 rounded-lg px-3 py-2 text-sm"
                 >
                   <option value="power_user">Power User</option>
                   <option value="coach">Coach</option>
@@ -2362,11 +2364,11 @@ export default function OrganizationSettings() {
                 </select>
               </div>
               <div>
-                <label className="block text-xs font-medium text-gray-600 mb-1">Secondary Role</label>
+                <label className="block text-xs font-medium text-apptivia-carbon-600 mb-1">Secondary Role</label>
                 <select
                   value={editSecondaryRole}
                   onChange={(e) => setEditSecondaryRole(e.target.value)}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
+                  className="w-full border border-apptivia-carbon-300 rounded-lg px-3 py-2 text-sm"
                 >
                   <option value="">None</option>
                   {[ROLES.POWER_USER, ROLES.COACH, ROLES.MANAGER, ROLES.ADMIN]
@@ -2375,22 +2377,22 @@ export default function OrganizationSettings() {
                 </select>
               </div>
               <div>
-                <label className="block text-xs font-medium text-gray-600 mb-1">Team</label>
+                <label className="block text-xs font-medium text-apptivia-carbon-600 mb-1">Team</label>
                 <select
                   value={editTeamId}
                   onChange={(e) => setEditTeamId(e.target.value)}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
+                  className="w-full border border-apptivia-carbon-300 rounded-lg px-3 py-2 text-sm"
                 >
                   <option value="">No team</option>
                   {teamHook.teams.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
                 </select>
               </div>
               <div>
-                <label className="block text-xs font-medium text-gray-600 mb-1">Segment</label>
+                <label className="block text-xs font-medium text-apptivia-carbon-600 mb-1">Segment</label>
                 <select
                   value={editSegment}
                   onChange={(e) => setEditSegment(e.target.value)}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
+                  className="w-full border border-apptivia-carbon-300 rounded-lg px-3 py-2 text-sm"
                 >
                   <option value="">No segment</option>
                   <option value="Territory">Territory</option>
@@ -2401,11 +2403,11 @@ export default function OrganizationSettings() {
             </div>
 
             <div className="flex justify-end gap-2">
-              <button onClick={() => setEditingMember(null)} className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg text-sm hover:bg-gray-200">Cancel</button>
+              <button onClick={() => setEditingMember(null)} className="px-4 py-2 bg-apptivia-carbon-100 text-apptivia-carbon-700 rounded-lg text-sm hover:bg-apptivia-carbon-200">Cancel</button>
               <button
                 onClick={handleSaveMember}
                 disabled={savingMember}
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700 disabled:opacity-50"
+                className="px-4 py-2 bg-apptivia-coral text-white rounded-lg text-sm hover:bg-apptivia-coral disabled:opacity-50"
               >
                 {savingMember ? 'Saving...' : 'Save Changes'}
               </button>
@@ -2445,24 +2447,24 @@ export default function OrganizationSettings() {
             {/* Header */}
             <div className="flex items-center justify-between p-6 border-b">
               <div>
-                <h2 className="text-xl font-bold text-gray-900">Add Existing Users</h2>
-                <p className="text-sm text-gray-500 mt-1">Select users to add to {organization?.name || 'your organization'}</p>
+                <h2 className="text-xl font-bold text-apptivia-ink">Add Existing Users</h2>
+                <p className="text-sm text-apptivia-carbon-500 mt-1">Select users to add to {organization?.name || 'your organization'}</p>
               </div>
-              <button onClick={() => setShowAddUsersModal(false)} className="p-1 hover:bg-gray-100 rounded">
-                <X size={20} className="text-gray-500" />
+              <button onClick={() => setShowAddUsersModal(false)} className="p-1 hover:bg-apptivia-carbon-100 rounded">
+                <X size={20} className="text-apptivia-carbon-500" />
               </button>
             </div>
 
             {/* Search */}
             <div className="px-6 pt-4">
               <div className="relative">
-                <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-apptivia-carbon-400" />
                 <input
                   type="text"
                   placeholder="Search by name or email..."
                   value={addUsersSearch}
                   onChange={(e) => setAddUsersSearch(e.target.value)}
-                  className="w-full pl-9 pr-3 py-2 text-sm border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full pl-9 pr-3 py-2 text-sm border border-apptivia-carbon-300 rounded-md focus:ring-2 focus:ring-apptivia-coral focus:border-apptivia-coral"
                 />
               </div>
             </div>
@@ -2470,7 +2472,7 @@ export default function OrganizationSettings() {
             {/* User List */}
             <div className="flex-1 overflow-y-auto px-6 py-3">
               {loadingUnassigned ? (
-                <div className="text-center py-8 text-gray-500 text-sm">Loading users...</div>
+                <div className="text-center py-8 text-apptivia-carbon-500 text-sm">Loading users...</div>
               ) : (() => {
                 const term = addUsersSearch.trim().toLowerCase();
                 const filtered = term
@@ -2484,8 +2486,8 @@ export default function OrganizationSettings() {
                 if (filtered.length === 0) {
                   return (
                     <div className="text-center py-8">
-                      <Users size={32} className="mx-auto text-gray-300 mb-2" />
-                      <p className="text-sm text-gray-500">
+                      <Users size={32} className="mx-auto text-apptivia-carbon-300 mb-2" />
+                      <p className="text-sm text-apptivia-carbon-500">
                         {unassignedUsers.length === 0
                           ? 'All users are already assigned to an organization'
                           : 'No users match your search'}
@@ -2501,10 +2503,10 @@ export default function OrganizationSettings() {
                     {/* Select All */}
                     <button
                       onClick={() => selectAllFiltered(filtered)}
-                      className="w-full flex items-center gap-3 px-3 py-2 rounded-md hover:bg-gray-50 text-sm font-medium text-gray-700 border-b mb-1"
+                      className="w-full flex items-center gap-3 px-3 py-2 rounded-md hover:bg-apptivia-paper text-sm font-medium text-apptivia-carbon-700 border-b mb-1"
                     >
                       <div className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-colors ${
-                        allFilteredSelected ? 'bg-blue-600 border-blue-600' : 'border-gray-300'
+                        allFilteredSelected ? 'bg-apptivia-coral border-apptivia-coral' : 'border-apptivia-carbon-300'
                       }`}>
                         {allFilteredSelected && <Check size={14} className="text-white" />}
                       </div>
@@ -2519,19 +2521,19 @@ export default function OrganizationSettings() {
                           key={u.id}
                           onClick={() => toggleUserSelection(u.id)}
                           className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-md text-left transition-colors ${
-                            selected ? 'bg-blue-50' : 'hover:bg-gray-50'
+                            selected ? 'bg-apptivia-coral-tone-50' : 'hover:bg-apptivia-paper'
                           }`}
                         >
                           <div className={`w-5 h-5 rounded border-2 flex items-center justify-center flex-shrink-0 transition-colors ${
-                            selected ? 'bg-blue-600 border-blue-600' : 'border-gray-300'
+                            selected ? 'bg-apptivia-coral border-apptivia-coral' : 'border-apptivia-carbon-300'
                           }`}>
                             {selected && <Check size={14} className="text-white" />}
                           </div>
                           <div className="flex-1 min-w-0">
-                            <div className="text-sm font-medium text-gray-900 truncate">{name || u.email}</div>
-                            {name && <div className="text-xs text-gray-500 truncate">{u.email}</div>}
+                            <div className="text-sm font-medium text-apptivia-ink truncate">{name || u.email}</div>
+                            {name && <div className="text-xs text-apptivia-carbon-500 truncate">{u.email}</div>}
                           </div>
-                          <span className="text-[10px] px-2 py-0.5 bg-gray-100 text-gray-600 rounded-full flex-shrink-0">
+                          <span className="text-[10px] px-2 py-0.5 bg-apptivia-carbon-100 text-apptivia-carbon-600 rounded-full flex-shrink-0">
                             {u.role || 'user'}
                           </span>
                         </button>
@@ -2543,21 +2545,21 @@ export default function OrganizationSettings() {
             </div>
 
             {/* Footer */}
-            <div className="flex items-center justify-between p-6 border-t bg-gray-50">
-              <span className="text-sm text-gray-500">
+            <div className="flex items-center justify-between p-6 border-t bg-apptivia-paper">
+              <span className="text-sm text-apptivia-carbon-500">
                 {selectedUserIds.length} user{selectedUserIds.length !== 1 ? 's' : ''} selected
               </span>
               <div className="flex gap-3">
                 <button
                   onClick={() => setShowAddUsersModal(false)}
-                  className="px-4 py-2 bg-gray-100 text-gray-700 rounded-md text-sm hover:bg-gray-200"
+                  className="px-4 py-2 bg-apptivia-carbon-100 text-apptivia-carbon-700 rounded-md text-sm hover:bg-apptivia-carbon-200"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={assignSelectedUsers}
                   disabled={selectedUserIds.length === 0 || assigningUsers}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-md text-sm hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                  className="px-4 py-2 bg-apptivia-coral text-white rounded-md text-sm hover:bg-apptivia-coral disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
                 >
                   <UserPlus size={14} />
                   {assigningUsers ? 'Adding...' : `Add ${selectedUserIds.length || ''} User${selectedUserIds.length !== 1 ? 's' : ''}`}

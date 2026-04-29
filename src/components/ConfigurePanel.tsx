@@ -153,6 +153,31 @@ export default function ConfigurePanel({
         }
       }
 
+      // Round-trip validation: re-read saved values and verify they match
+      if (orgId) {
+        const { data: verifyData } = await supabase
+          .from('kpi_org_configs')
+          .select('kpi_id, goal, weight, kpi_metrics!inner(key)')
+          .eq('organization_id', orgId)
+          .eq('is_active', true);
+        const mismatches: string[] = [];
+        for (const key of selectedKeys) {
+          const config = kpiConfigs.find((k) => k.key === key);
+          if (!config) continue;
+          const saved = (verifyData || []).find((v: any) => (v.kpi_metrics as any)?.key === key);
+          if (saved && (saved.goal !== config.goal || saved.weight !== config.weight)) {
+            mismatches.push(`${key}: expected ${config.goal}/${config.weight}, got ${saved.goal}/${saved.weight}`);
+          }
+        }
+        if (mismatches.length > 0) {
+          console.error('[ConfigurePanel] Round-trip validation failed:', mismatches);
+          toast.dismiss(loadingToast);
+          toast.error('Settings saved but verification failed — please refresh and check values');
+          setMessage('Warning: saved values may not have applied correctly. Please refresh.');
+          return;
+        }
+      }
+
       toast.dismiss(loadingToast);
       toast.success('Quick settings saved!');
       if (onSave) onSave();
@@ -257,15 +282,15 @@ export default function ConfigurePanel({
       contentClassName="pb-6"
     >
       <div className="flex items-center justify-between mb-3">
-        <div className="text-xs text-gray-500">
-          Scorecard KPIs: <span className="font-semibold text-gray-800">{slots.filter(Boolean).length}/5</span>
+        <div className="text-xs text-apptivia-carbon-500">
+          Scorecard KPIs: <span className="font-semibold text-apptivia-ink">{slots.filter(Boolean).length}/5</span>
         </div>
       </div>
 
       {loading ? (
         <div className="text-center py-8">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto mb-3"></div>
-          <p className="text-xs text-gray-500">Loading quick settings...</p>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-apptivia-coral mx-auto mb-3"></div>
+          <p className="text-xs text-apptivia-carbon-500">Loading quick settings...</p>
         </div>
       ) : (
         <div className="space-y-3">
@@ -274,15 +299,15 @@ export default function ConfigurePanel({
             return (
               <div
                 key={`slot-${index}`}
-                className="bg-white border border-gray-200 rounded-lg p-3 space-y-2"
+                className="bg-white border border-apptivia-carbon-200 rounded-lg p-3 space-y-2"
               >
                 <div className="flex items-start justify-between gap-2">
                   <div>
-                    <div className="text-[11px] text-gray-500">Slot {index + 1}</div>
-                    <div className="text-sm font-semibold text-gray-900">
+                    <div className="text-[11px] text-apptivia-carbon-500">Slot {index + 1}</div>
+                    <div className="text-sm font-semibold text-apptivia-ink">
                       {config ? config.name : 'Empty Slot'}
                     </div>
-                    <div className="text-[11px] text-gray-500">
+                    <div className="text-[11px] text-apptivia-carbon-500">
                       {config ? (config.description || 'No description') : 'Add a KPI to this slot'}
                     </div>
                   </div>
@@ -300,34 +325,34 @@ export default function ConfigurePanel({
                   <>
                     <div className="grid grid-cols-2 gap-2">
                       <div>
-                        <label className="block text-[11px] text-gray-500 mb-1">Goal</label>
+                        <label className="block text-[11px] text-apptivia-carbon-500 mb-1">Goal</label>
                         <input
                           type="number"
                           value={config.goal}
                           onChange={(e) => {
                             updateConfig(config.key, 'goal', parseFloat(e.target.value) || 0);
                           }}
-                          className="w-full px-2 py-1.5 border border-gray-300 rounded text-xs focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                          className="w-full px-2 py-1.5 border border-apptivia-carbon-300 rounded text-xs focus:ring-2 focus:ring-apptivia-coral focus:border-apptivia-coral"
                           min="0"
                           step="1"
                         />
                       </div>
                       <div>
-                        <label className="block text-[11px] text-gray-500 mb-1">Weight (%)</label>
+                        <label className="block text-[11px] text-apptivia-carbon-500 mb-1">Weight (%)</label>
                         <input
                           type="number"
                           value={Math.round(config.weight * 100)}
                           onChange={(e) => {
                             updateConfig(config.key, 'weight', (parseFloat(e.target.value) || 0) / 100);
                           }}
-                          className="w-full px-2 py-1.5 border border-gray-300 rounded text-xs focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                          className="w-full px-2 py-1.5 border border-apptivia-carbon-300 rounded text-xs focus:ring-2 focus:ring-apptivia-coral focus:border-apptivia-coral"
                           min="0"
                           max="100"
                           step="1"
                         />
                       </div>
                     </div>
-                    <div className="text-[10px] text-gray-400">Unit: {config.unit || 'n/a'}</div>
+                    <div className="text-[10px] text-apptivia-carbon-400">Unit: {config.unit || 'n/a'}</div>
                   </>
                 ) : (
                   <div>
@@ -336,7 +361,7 @@ export default function ConfigurePanel({
                         <select
                           value={selectedAddKey}
                           onChange={(e) => setSelectedAddKey(e.target.value)}
-                          className="w-full px-2 py-1.5 border border-gray-300 rounded text-xs focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                          className="w-full px-2 py-1.5 border border-apptivia-carbon-300 rounded text-xs focus:ring-2 focus:ring-apptivia-coral focus:border-apptivia-coral"
                         >
                           <option value="">Select a KPI...</option>
                           {availableKpis.map((kpi) => (
@@ -349,7 +374,7 @@ export default function ConfigurePanel({
                           <button
                             onClick={() => handleAdd(index)}
                             disabled={!selectedAddKey}
-                            className="flex-1 px-2 py-1.5 text-xs bg-blue-500 text-white rounded hover:bg-blue-600 disabled:opacity-50"
+                            className="flex-1 px-2 py-1.5 text-xs bg-apptivia-coral text-white rounded hover:bg-apptivia-coral disabled:opacity-50"
                           >
                             Add KPI
                           </button>
@@ -358,13 +383,13 @@ export default function ConfigurePanel({
                               setAddingSlotIndex(null);
                               setSelectedAddKey('');
                             }}
-                            className="flex-1 px-2 py-1.5 text-xs border border-gray-300 rounded hover:bg-gray-50"
+                            className="flex-1 px-2 py-1.5 text-xs border border-apptivia-carbon-300 rounded hover:bg-apptivia-paper"
                           >
                             Cancel
                           </button>
                         </div>
                         {availableKpis.length === 0 && (
-                          <div className="text-[11px] text-gray-500">No available KPIs to add.</div>
+                          <div className="text-[11px] text-apptivia-carbon-500">No available KPIs to add.</div>
                         )}
                       </div>
                     ) : (
@@ -373,7 +398,7 @@ export default function ConfigurePanel({
                           setAddingSlotIndex(index);
                           setSelectedAddKey('');
                         }}
-                        className="px-3 py-2 text-xs bg-gray-100 text-gray-700 rounded hover:bg-gray-200"
+                        className="px-3 py-2 text-xs bg-apptivia-carbon-100 text-apptivia-carbon-700 rounded hover:bg-apptivia-carbon-200"
                       >
                         Add KPI
                       </button>
@@ -384,8 +409,8 @@ export default function ConfigurePanel({
             );
           })}
 
-          <div className="pt-2 text-xs text-gray-600">
-            Total Weight: <span className="font-semibold text-gray-900">{totalWeight}%</span>
+          <div className="pt-2 text-xs text-apptivia-carbon-600">
+            Total Weight: <span className="font-semibold text-apptivia-ink">{totalWeight}%</span>
           </div>
 
           {message && (
@@ -400,14 +425,14 @@ export default function ConfigurePanel({
             <button
               onClick={onClose}
               disabled={saving}
-              className="flex-1 px-3 py-2 text-xs text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50"
+              className="flex-1 px-3 py-2 text-xs text-apptivia-carbon-700 bg-white border border-apptivia-carbon-300 rounded-lg hover:bg-apptivia-paper disabled:opacity-50"
             >
               Close
             </button>
             <button
               onClick={handleSave}
               disabled={saving || loading || slots.filter(Boolean).length === 0}
-              className="flex-1 px-3 py-2 text-xs bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50"
+              className="flex-1 px-3 py-2 text-xs bg-apptivia-coral text-white rounded-lg hover:bg-apptivia-coral disabled:opacity-50"
             >
               {saving ? 'Saving...' : 'Save Changes'}
             </button>

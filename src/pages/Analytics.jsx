@@ -805,22 +805,22 @@ export default function Analytics() {
         <div className="flex items-start justify-between mb-4">
           <div>
             <div className="flex items-center gap-2 mb-1">
-              <h1 className="text-2xl font-bold text-blue-700">Analytics Dashboard</h1>
+              <h1 className="text-2xl font-bold text-apptivia-coral">Analytics Dashboard</h1>
               <InfoTooltip text="Performance analytics across the selected timeframe and audience." />
             </div>
-            <p className="text-gray-500 text-sm">Advanced reporting and insights</p>
+            <p className="text-apptivia-carbon-500 text-sm">Advanced reporting and insights</p>
           </div>
           <div className="flex gap-2 items-center">
             {/* Search Bar */}
             <div className="relative">
-              <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+              <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-apptivia-carbon-400" />
               <input
                 type="text"
                 placeholder="Search..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 onFocus={() => searchQuery && setShowSearchResults(true)}
-                className="w-64 pl-9 pr-8 py-2 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-64 pl-9 pr-8 py-2 text-sm border border-apptivia-carbon-200 rounded-lg focus:ring-2 focus:ring-apptivia-coral focus:border-apptivia-coral"
               />
               {searchQuery && (
                 <button
@@ -829,14 +829,14 @@ export default function Analytics() {
                     setSearchResults([]);
                     setShowSearchResults(false);
                   }}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-apptivia-carbon-400 hover:text-apptivia-carbon-600"
                 >
                   <X size={14} />
                 </button>
               )}
               {/* Search Results Dropdown */}
               {showSearchResults && searchResults.length > 0 && (
-                <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-96 overflow-y-auto z-50">
+                <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-apptivia-carbon-200 rounded-lg shadow-lg max-h-96 overflow-y-auto z-50">
                   {searchResults.map((result, idx) => (
                     <button
                       key={idx}
@@ -846,17 +846,17 @@ export default function Analytics() {
                         setSearchResults([]);
                         setShowSearchResults(false);
                       }}
-                      className="w-full text-left px-4 py-3 hover:bg-gray-50 border-b last:border-b-0 transition-colors"
+                      className="w-full text-left px-4 py-3 hover:bg-apptivia-paper border-b last:border-b-0 transition-colors"
                     >
                       <div className="flex items-start gap-3">
                         <span className="text-xl">{result.icon}</span>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2">
-                            <span className="text-xs font-semibold text-gray-900">{result.title}</span>
-                            <span className="text-[10px] px-1.5 py-0.5 rounded bg-gray-100 text-gray-600">{result.type}</span>
+                            <span className="text-xs font-semibold text-apptivia-ink">{result.title}</span>
+                            <span className="text-[10px] px-1.5 py-0.5 rounded bg-apptivia-carbon-100 text-apptivia-carbon-600">{result.type}</span>
                           </div>
                           {result.subtitle && (
-                            <div className="text-[11px] text-gray-500 mt-0.5 truncate">{result.subtitle}</div>
+                            <div className="text-[11px] text-apptivia-carbon-500 mt-0.5 truncate">{result.subtitle}</div>
                           )}
                         </div>
                       </div>
@@ -865,13 +865,13 @@ export default function Analytics() {
                 </div>
               )}
               {showSearchResults && searchQuery && searchResults.length === 0 && !searching && (
-                <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg p-4 z-50">
-                  <div className="text-sm text-gray-500 text-center">No results found</div>
+                <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-apptivia-carbon-200 rounded-lg shadow-lg p-4 z-50">
+                  <div className="text-sm text-apptivia-carbon-500 text-center">No results found</div>
                 </div>
               )}
               {searching && (
-                <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg p-4 z-50">
-                  <div className="text-sm text-gray-500 text-center">Searching...</div>
+                <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-apptivia-carbon-200 rounded-lg shadow-lg p-4 z-50">
+                  <div className="text-sm text-apptivia-carbon-500 text-center">Searching...</div>
                 </div>
               )}
             </div>
@@ -879,7 +879,7 @@ export default function Analytics() {
             <button
               onClick={handleRefresh}
               disabled={isRefreshing}
-              className={`relative p-2 rounded-lg font-semibold text-sm bg-white text-gray-700 border border-gray-200 hover:bg-gray-50 group ${
+              className={`relative p-2 rounded-lg font-semibold text-sm bg-white text-apptivia-carbon-700 border border-apptivia-carbon-200 hover:bg-apptivia-paper group ${
                 isRefreshing ? 'opacity-50 cursor-not-allowed' : 'transition-all duration-200 hover:scale-105 hover:shadow-md'
               }`}
             >
@@ -896,7 +896,7 @@ export default function Analytics() {
                   d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" 
                 />
               </svg>
-              <span className="absolute top-full left-1/2 -translate-x-1/2 mt-2 px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 pointer-events-none group-hover:opacity-100 whitespace-nowrap transition-opacity z-50">
+              <span className="absolute top-full left-1/2 -translate-x-1/2 mt-2 px-2 py-1 bg-apptivia-ink text-white text-xs rounded opacity-0 pointer-events-none group-hover:opacity-100 whitespace-nowrap transition-opacity z-50">
                 {isRefreshing ? 'Refreshing...' : 'Refresh'}
               </span>
             </button>
@@ -926,7 +926,7 @@ export default function Analytics() {
 
         {!loading && !error && (
           <div className="space-y-6 mt-6">
-            <div className="bg-white rounded-lg p-2 shadow-sm border border-gray-100">
+            <div className="bg-white rounded-lg p-2 shadow-sm border border-apptivia-carbon-100">
               <div className="flex flex-wrap gap-2">
                 {tabs.map((tab) => (
                   <button
@@ -934,8 +934,8 @@ export default function Analytics() {
                     onClick={() => setActiveTab(tab.id)}
                     className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-all ${
                       activeTab === tab.id
-                        ? 'bg-blue-600 text-white shadow-sm'
-                        : 'text-gray-600 hover:bg-gray-100'
+                        ? 'bg-apptivia-coral text-white shadow-sm'
+                        : 'text-apptivia-carbon-600 hover:bg-apptivia-carbon-100'
                     }`}
                   >
                     {tab.label}
@@ -946,12 +946,12 @@ export default function Analytics() {
             <div className="bg-white rounded-lg p-3 shadow-sm flex flex-wrap items-center justify-between gap-3">
               <div className="flex-1">
                 <div className="flex items-center gap-2 mb-1">
-                  <div className="text-xs text-gray-500">Quick date presets</div>
+                  <div className="text-xs text-apptivia-carbon-500">Quick date presets</div>
                   {weeklyAverage && (
-                    <span className="text-[10px] bg-blue-50 text-blue-600 px-1.5 py-0.5 rounded-full font-semibold">avg/wk</span>
+                    <span className="text-[10px] bg-apptivia-coral-tone-50 text-apptivia-coral px-1.5 py-0.5 rounded-full font-semibold">avg/wk</span>
                   )}
                   {formatPresetDateRange(filters.dateRange || 'This Week') && (
-                    <span className="text-xs font-medium text-gray-700">
+                    <span className="text-xs font-medium text-apptivia-carbon-700">
                       {formatPresetDateRange(filters.dateRange || 'This Week')}
                     </span>
                   )}
@@ -963,8 +963,8 @@ export default function Analytics() {
                       onClick={() => applyQuickRange(range)}
                       className={`px-3 py-1 rounded-full text-xs font-semibold transition-all ${
                         filters.dateRange === range
-                          ? 'bg-blue-600 text-white'
-                          : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                          ? 'bg-apptivia-coral text-white'
+                          : 'bg-apptivia-carbon-100 text-apptivia-carbon-600 hover:bg-apptivia-carbon-200'
                       }`}
                     >
                       {range}
@@ -973,16 +973,16 @@ export default function Analytics() {
                 </div>
                 {filters.dateRange === 'Custom Week' && (
                   <div className="flex items-center gap-2 mt-2">
-                    <label className="text-xs text-gray-500">Pick any day in the week:</label>
+                    <label className="text-xs text-apptivia-carbon-500">Pick any day in the week:</label>
                     <input
                       type="date"
                       title="Pick any day — the full Mon–Sun week will be used"
                       value={customWeekDate}
                       onChange={e => setCustomWeekDate(e.target.value)}
-                      className="border border-gray-200 rounded px-2 py-0.5 text-xs"
+                      className="border border-apptivia-carbon-200 rounded px-2 py-0.5 text-xs"
                     />
                     {customWeekDate && (
-                      <span className="text-[11px] text-gray-400">
+                      <span className="text-[11px] text-apptivia-carbon-400">
                         {dateRange.start.slice(0, 10)} → {dateRange.end.slice(0, 10)}
                       </span>
                     )}
@@ -991,16 +991,16 @@ export default function Analytics() {
               </div>
               <button
                 onClick={() => setFiltersOpen(true)}
-                className="px-3 py-1.5 rounded-md text-xs font-semibold bg-white border border-gray-200 text-gray-700 hover:bg-gray-50"
+                className="px-3 py-1.5 rounded-md text-xs font-semibold bg-white border border-apptivia-carbon-200 text-apptivia-carbon-700 hover:bg-apptivia-paper"
               >
                 More Filters
               </button>
             </div>
 
             {data.rows.length === 0 && (
-              <div className="bg-gray-50 border border-gray-200 rounded-lg p-6 text-center">
-                <div className="text-gray-500 text-sm">No data for the selected filters.</div>
-                <div className="text-xs text-gray-400 mt-1">Try expanding the date range or teams.</div>
+              <div className="bg-apptivia-paper border border-apptivia-carbon-200 rounded-lg p-6 text-center">
+                <div className="text-apptivia-carbon-500 text-sm">No data for the selected filters.</div>
+                <div className="text-xs text-apptivia-carbon-400 mt-1">Try expanding the date range or teams.</div>
               </div>
             )}
 
@@ -1063,20 +1063,20 @@ export default function Analytics() {
             {activeTab === 'kpi-attainment' && (
               <>
                 <div className="flex items-center gap-2">
-                  <h2 className="text-sm font-semibold text-gray-900">Summary Metrics</h2>
+                  <h2 className="text-sm font-semibold text-apptivia-ink">Summary Metrics</h2>
                   <InfoTooltip text={weeklyAverage ? "Weekly averages of key activities for the selected filters and date range." : "Totals of key activities for the selected filters and date range."} />
                 </div>
                 {aggregateKPIs.length > 0 && (
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
                   {aggregateKPIs.map((kpi, idx) => {
-                    const colors = ['text-blue-600', 'text-green-600', 'text-purple-600', 'text-cyan-600', 'text-amber-600', 'text-rose-600'];
+                    const colors = ['text-apptivia-coral', 'text-green-600', 'text-apptivia-ink', 'text-cyan-600', 'text-amber-600', 'text-rose-600'];
                     const unitSuffix = kpi.unit === 'currency' ? '' : kpi.unit === 'minutes' ? ' min' : kpi.unit === 'hours' ? ' hrs' : kpi.unit === 'percentage' || kpi.unit === 'percent' ? '%' : '';
                     const formatted = kpi.unit === 'currency' ? `$${kpi.total.toLocaleString()}` : `${kpi.total.toLocaleString()}${unitSuffix}`;
                     return (
                       <div key={kpi.key} className="bg-white rounded-lg p-3 shadow-sm transition-all duration-300 hover:shadow-lg hover:-translate-y-1">
-                        <div className="text-xs text-gray-500 mb-1 truncate" title={kpi.name}>{kpi.name}</div>
+                        <div className="text-xs text-apptivia-carbon-500 mb-1 truncate" title={kpi.name}>{kpi.name}</div>
                         <div className={`text-base font-bold ${colors[idx % colors.length]}`}>{formatted}</div>
-                        <div className="text-xs text-gray-400 mt-1">{weeklyAverage ? 'Avg/week' : 'Team total'}</div>
+                        <div className="text-xs text-apptivia-carbon-400 mt-1">{weeklyAverage ? 'Avg/week' : 'Team total'}</div>
                       </div>
                     );
                   })}
@@ -1109,14 +1109,14 @@ export default function Analytics() {
                 {/* Detailed KPI Breakdown — All KPIs */}
                 <div className="bg-white rounded-lg p-4 shadow-sm">
                   <div className="flex items-center gap-2 mb-4">
-                    <h3 className="text-sm font-semibold text-gray-900">All KPI Details</h3>
+                    <h3 className="text-sm font-semibold text-apptivia-ink">All KPI Details</h3>
                     <InfoTooltip text="Detailed view of every active KPI metric — including those not shown on the scorecard." />
-                    <span className="text-[10px] bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full font-medium">{allKpiMetrics.length} KPIs</span>
+                    <span className="text-[10px] bg-apptivia-coral-tone-50 text-apptivia-coral px-2 py-0.5 rounded-full font-medium">{allKpiMetrics.length} KPIs</span>
                   </div>
                   <div className="overflow-x-auto">
                     <table className="w-full text-left text-xs">
                       <thead>
-                        <tr className="text-gray-500 border-b border-gray-100">
+                        <tr className="text-apptivia-carbon-500 border-b border-apptivia-carbon-100">
                           <th className="py-2 px-3 font-medium">KPI Name</th>
                           <th className="py-2 px-3 font-medium">Category</th>
                           <th className="py-2 px-3 font-medium">Goal</th>
@@ -1134,27 +1134,27 @@ export default function Analytics() {
                             ? Math.round(data.rows.reduce((sum, row) => sum + (row.kpis[metric.key]?.value || 0), 0) / data.rows.length * 10) / 10
                             : 0;
                           return (
-                            <tr key={metric.key} className="border-b border-gray-50 hover:bg-gray-50/50">
+                            <tr key={metric.key} className="border-b border-apptivia-carbon-100 hover:bg-apptivia-paper/50">
                               <td className="py-2.5 px-3">
-                                <div className="font-medium text-gray-900">{metric.name}</div>
-                                {metric.description && <div className="text-[10px] text-gray-400 mt-0.5 truncate max-w-[200px]">{metric.description}</div>}
+                                <div className="font-medium text-apptivia-ink">{metric.name}</div>
+                                {metric.description && <div className="text-[10px] text-apptivia-carbon-400 mt-0.5 truncate max-w-[200px]">{metric.description}</div>}
                               </td>
                               <td className="py-2.5 px-3">
-                                <span className="text-xs text-gray-500 capitalize">{(metric.category || 'general').replace(/_/g, ' ')}</span>
+                                <span className="text-xs text-apptivia-carbon-500 capitalize">{(metric.category || 'general').replace(/_/g, ' ')}</span>
                               </td>
-                              <td className="py-2.5 px-3 font-medium text-gray-700">
+                              <td className="py-2.5 px-3 font-medium text-apptivia-carbon-700">
                                 {metric.unit === 'currency' ? `$${Number(metric.goal).toLocaleString()}` : metric.goal}
                                 {metric.unit === 'percentage' || metric.unit === 'percent' ? '%' : ''}
                                 {metric.unit === 'minutes' ? ' min' : ''}
                                 {metric.unit === 'hours' ? ' hrs' : ''}
                                 {metric.unit === 'seconds' ? ' sec' : ''}
                                 {metric.unit === 'days' ? ' days' : ''}
-                                {metric.direction === 'lower' && <span className="text-[10px] text-gray-400 ml-1">(lower=better)</span>}
+                                {metric.direction === 'lower' && <span className="text-[10px] text-apptivia-carbon-400 ml-1">(lower=better)</span>}
                               </td>
-                              <td className="py-2.5 px-3 font-medium text-gray-700">{avgValue}</td>
+                              <td className="py-2.5 px-3 font-medium text-apptivia-carbon-700">{avgValue}</td>
                               <td className="py-2.5 px-3">
                                 <div className="flex items-center gap-2">
-                                  <div className="w-16 bg-gray-100 rounded-full h-1.5">
+                                  <div className="w-16 bg-apptivia-carbon-100 rounded-full h-1.5">
                                     <div
                                       className={`h-full rounded-full transition-all ${scoreBgColor(avgPct)}`}
                                       style={{ width: `${Math.min(avgPct, 100)}%` }}
@@ -1169,7 +1169,7 @@ export default function Analytics() {
                                 {metric.show_on_scorecard ? (
                                   <span className="text-[10px] bg-emerald-50 text-emerald-700 px-1.5 py-0.5 rounded-full font-medium">Yes</span>
                                 ) : (
-                                  <span className="text-[10px] bg-gray-50 text-gray-400 px-1.5 py-0.5 rounded-full font-medium">No</span>
+                                  <span className="text-[10px] bg-apptivia-paper text-apptivia-carbon-400 px-1.5 py-0.5 rounded-full font-medium">No</span>
                                 )}
                               </td>
                               <td className="py-2.5 px-3">
@@ -1178,7 +1178,7 @@ export default function Analytics() {
                                   avgPct >= 80 ? 'bg-yellow-50 text-yellow-700' :
                                   avgPct >= 60 ? 'bg-orange-50 text-orange-700' :
                                   avgPct > 0 ? 'bg-red-50 text-red-600' :
-                                  'bg-gray-50 text-gray-400'
+                                  'bg-apptivia-paper text-apptivia-carbon-400'
                                 }`}>
                                   {avgPct >= 90 ? 'On Track' : avgPct >= 80 ? 'Acceptable' : avgPct >= 60 ? 'Needs Focus' : avgPct > 0 ? 'Critical' : 'No Data'}
                                 </span>
@@ -1190,7 +1190,7 @@ export default function Analytics() {
                     </table>
                   </div>
                   {allKpiMetrics.length === 0 && (
-                    <div className="text-center py-8 text-sm text-gray-400">No KPI metrics configured yet.</div>
+                    <div className="text-center py-8 text-sm text-apptivia-carbon-400">No KPI metrics configured yet.</div>
                   )}
                 </div>
               </>
@@ -1199,10 +1199,10 @@ export default function Analytics() {
             {activeTab === 'funnel' && (
               <div className="space-y-4">
                 <div className="flex items-center gap-2 mb-2">
-                  <h2 className="text-sm font-semibold text-gray-900">Sales Funnel</h2>
+                  <h2 className="text-sm font-semibold text-apptivia-ink">Sales Funnel</h2>
                   <InfoTooltip text="Conversion rates across each stage of the sales funnel for the selected filters and date range. Benchmarks compare your actuals against industry averages, your team's top 25% performers, or configured goals." />
                 </div>
-                {funnelLoading && <div className="text-center py-8 text-sm text-gray-500">Loading funnel data...</div>}
+                {funnelLoading && <div className="text-center py-8 text-sm text-apptivia-carbon-500">Loading funnel data...</div>}
                 {!funnelLoading && (
                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                     <SalesFunnel
@@ -1212,8 +1212,8 @@ export default function Analytics() {
                       viewMode="team"
                     />
                     {/* Summary conversion stats */}
-                    <div className="bg-white rounded-xl border border-gray-100 p-6">
-                      <h3 className="text-sm font-semibold text-gray-800 mb-4">Conversion Rates</h3>
+                    <div className="bg-white rounded-lg border border-apptivia-carbon-100 p-6">
+                      <h3 className="text-sm font-semibold text-apptivia-ink mb-4">Conversion Rates</h3>
                       {[
                         { from: 'call_connects', to: 'meetings', label: 'Call → Meeting Rate', desc: 'How many calls result in a booked meeting' },
                         { from: 'meetings', to: 'sourced_opps', label: 'Meeting → Opp Rate', desc: 'How many meetings result in a sourced opportunity' },
@@ -1232,26 +1232,26 @@ export default function Analytics() {
                         const pctOfIndustry = rate != null && industryRate > 0
                           ? (parseFloat(rate) / parseFloat(industryRate)) * 100
                           : null;
-                        const color = pctOfIndustry == null ? 'text-gray-400'
+                        const color = pctOfIndustry == null ? 'text-apptivia-carbon-400'
                           : pctOfIndustry >= 100 ? 'text-emerald-600'
                           : pctOfIndustry >= 75 ? 'text-amber-600'
                           : 'text-red-500';
-                        const bg = pctOfIndustry == null ? 'bg-gray-50'
+                        const bg = pctOfIndustry == null ? 'bg-apptivia-paper'
                           : pctOfIndustry >= 100 ? 'bg-emerald-50'
                           : pctOfIndustry >= 75 ? 'bg-amber-50'
                           : 'bg-red-50';
                         return (
                           <div key={`${from}-${to}`} className={`flex items-center justify-between p-3 rounded-lg mb-2 ${bg}`}>
                             <div>
-                              <div className="text-xs font-semibold text-gray-800">{label}</div>
-                              <div className="text-[11px] text-gray-500 mt-0.5">{desc}</div>
+                              <div className="text-xs font-semibold text-apptivia-ink">{label}</div>
+                              <div className="text-[11px] text-apptivia-carbon-500 mt-0.5">{desc}</div>
                             </div>
                             <div className="text-right">
                               <div className={`text-lg font-bold ${color}`}>
                                 {rate != null ? `${rate}%` : '—'}
                               </div>
                               {industryRate && (
-                                <div className="text-[10px] text-gray-400">Ind. avg: {industryRate}%</div>
+                                <div className="text-[10px] text-apptivia-carbon-400">Ind. avg: {industryRate}%</div>
                               )}
                             </div>
                           </div>
@@ -1267,7 +1267,7 @@ export default function Analytics() {
               <div className="space-y-4">
                 <div className="flex items-center gap-2 mb-2">
                   <Shield size={18} className="text-red-500" />
-                  <h2 className="text-sm font-semibold text-gray-900">KPI Anomaly Watchdog</h2>
+                  <h2 className="text-sm font-semibold text-apptivia-ink">KPI Anomaly Watchdog</h2>
                   <InfoTooltip text="Automatically detect KPI drops, trigger coaching recommendations, and track resolution." />
                 </div>
                 <KpiWatchdog
@@ -1282,14 +1282,14 @@ export default function Analytics() {
               <div className="space-y-4">
                 <div className="flex items-center gap-2 mb-2">
                   <Radar size={18} className="text-cyan-500" />
-                  <h2 className="text-sm font-semibold text-gray-900">Engage Analytics</h2>
+                  <h2 className="text-sm font-semibold text-apptivia-ink">Engage Analytics</h2>
                   <InfoTooltip text="Performance metrics from Apptivia Engage — sequences, accounts, playbooks, and signals." />
                 </div>
-                {engageLoading && <div className="text-center py-8 text-sm text-gray-500">Loading Engage data...</div>}
+                {engageLoading && <div className="text-center py-8 text-sm text-apptivia-carbon-500">Loading Engage data...</div>}
                 {!engageLoading && !engageStats && (
-                  <div className="bg-gray-50 border border-gray-200 rounded-lg p-6 text-center">
-                    <div className="text-gray-500 text-sm">No Engage data found.</div>
-                    <div className="text-xs text-gray-400 mt-1">Start using Engage to see analytics here.</div>
+                  <div className="bg-apptivia-paper border border-apptivia-carbon-200 rounded-lg p-6 text-center">
+                    <div className="text-apptivia-carbon-500 text-sm">No Engage data found.</div>
+                    <div className="text-xs text-apptivia-carbon-400 mt-1">Start using Engage to see analytics here.</div>
                     <button
                       onClick={() => navigate('/engage')}
                       className="mt-3 px-4 py-2 bg-cyan-500 text-white text-xs font-semibold rounded-lg hover:bg-cyan-600 transition-colors"
@@ -1302,17 +1302,17 @@ export default function Analytics() {
                   <>
                     {/* Summary Cards */}
                     <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                      <div className="bg-white rounded-lg p-3 shadow-sm border-l-4 border-purple-500">
-                        <div className="text-xs text-gray-500">Accounts</div>
-                        <div className="text-lg font-bold text-purple-600">{engageStats.totalAccounts}</div>
-                        <div className="text-[11px] text-gray-400">Avg score: {engageStats.avgAccountScore}</div>
+                      <div className="bg-white rounded-lg p-3 shadow-sm border-l-4 border-apptivia-carbon-300">
+                        <div className="text-xs text-apptivia-carbon-500">Accounts</div>
+                        <div className="text-lg font-bold text-apptivia-ink">{engageStats.totalAccounts}</div>
+                        <div className="text-[11px] text-apptivia-carbon-400">Avg score: {engageStats.avgAccountScore}</div>
                       </div>
-                      <div className="bg-white rounded-lg p-3 shadow-sm border-l-4 border-blue-500">
-                        <div className="text-xs text-gray-500">Tier 1</div>
-                        <div className="text-lg font-bold text-blue-600">{engageStats.tier1}</div>
+                      <div className="bg-white rounded-lg p-3 shadow-sm border-l-4 border-apptivia-coral">
+                        <div className="text-xs text-apptivia-carbon-500">Tier 1</div>
+                        <div className="text-lg font-bold text-apptivia-coral">{engageStats.tier1}</div>
                       </div>
                       <div className="bg-white rounded-lg p-3 shadow-sm border-l-4 border-cyan-500">
-                        <div className="text-xs text-gray-500">Tier 2 / Tier 3</div>
+                        <div className="text-xs text-apptivia-carbon-500">Tier 2 / Tier 3</div>
                         <div className="text-lg font-bold text-cyan-600">{engageStats.tier2} / {engageStats.tier3}</div>
                       </div>
                     </div>
@@ -1331,22 +1331,22 @@ export default function Analytics() {
                     {/* Detailed Metrics */}
                     <div className="grid grid-cols-1 md:grid-cols-1 gap-3">
                       <div className="bg-white rounded-lg p-3 shadow-sm">
-                        <div className="text-xs text-gray-500 mb-2 font-semibold">Account Tiers</div>
+                        <div className="text-xs text-apptivia-carbon-500 mb-2 font-semibold">Account Tiers</div>
                         <div className="space-y-1.5 text-xs">
-                          <div className="flex justify-between"><span className="text-gray-600">Tier 1</span><span className="font-medium text-purple-600">{engageStats.tier1}</span></div>
-                          <div className="flex justify-between"><span className="text-gray-600">Tier 2</span><span className="font-medium text-blue-600">{engageStats.tier2}</span></div>
-                          <div className="flex justify-between"><span className="text-gray-600">Tier 3</span><span className="font-medium text-gray-600">{engageStats.tier3}</span></div>
+                          <div className="flex justify-between"><span className="text-apptivia-carbon-600">Tier 1</span><span className="font-medium text-apptivia-ink">{engageStats.tier1}</span></div>
+                          <div className="flex justify-between"><span className="text-apptivia-carbon-600">Tier 2</span><span className="font-medium text-apptivia-coral">{engageStats.tier2}</span></div>
+                          <div className="flex justify-between"><span className="text-apptivia-carbon-600">Tier 3</span><span className="font-medium text-apptivia-carbon-600">{engageStats.tier3}</span></div>
                         </div>
                       </div>
                     </div>
 
                     {/* Quick Links */}
-                    <div className="bg-gradient-to-r from-cyan-50 to-blue-50 rounded-lg p-4 border border-cyan-100">
-                      <div className="text-xs font-semibold text-gray-700 mb-2">Quick Links</div>
+                    <div className="bg-apptivia-coral-tone-50 rounded-lg p-4 border border-cyan-100">
+                      <div className="text-xs font-semibold text-apptivia-carbon-700 mb-2">Quick Links</div>
                       <div className="flex flex-wrap gap-2">
                         <button onClick={() => navigate('/engage')} className="px-3 py-1.5 bg-white text-xs font-medium text-cyan-700 rounded-lg border border-cyan-200 hover:bg-cyan-50 transition-colors">Pipeline Operator</button>
-                        <button onClick={() => navigate('/engage')} className="px-3 py-1.5 bg-white text-xs font-medium text-blue-700 rounded-lg border border-blue-200 hover:bg-blue-50 transition-colors">Signal Prospecting</button>
-                        <button onClick={() => navigate('/engage')} className="px-3 py-1.5 bg-white text-xs font-medium text-purple-700 rounded-lg border border-purple-200 hover:bg-purple-50 transition-colors">Accounts</button>
+                        <button onClick={() => navigate('/engage')} className="px-3 py-1.5 bg-white text-xs font-medium text-apptivia-coral rounded-lg border border-apptivia-coral-tone-100 hover:bg-apptivia-coral-tone-50 transition-colors">Signal Prospecting</button>
+                        <button onClick={() => navigate('/engage')} className="px-3 py-1.5 bg-white text-xs font-medium text-apptivia-ink rounded-lg border border-apptivia-carbon-300 hover:bg-apptivia-carbon-100 transition-colors">Accounts</button>
                       </div>
                     </div>
                   </>
@@ -1358,40 +1358,40 @@ export default function Analytics() {
             {activeTab === 'benchmarks' && (
               <div className="space-y-4">
                 <div className="flex items-center gap-2 mb-2">
-                  <Shield size={18} className="text-purple-500" />
-                  <h2 className="text-base font-bold text-gray-900">Team Benchmarks</h2>
+                  <Shield size={18} className="text-apptivia-ink" />
+                  <h2 className="text-base font-bold text-apptivia-ink">Team Benchmarks</h2>
                 </div>
-                <p className="text-xs text-gray-500">See how your team compares to similar sales organizations. All peer data is anonymized.</p>
+                <p className="text-xs text-apptivia-carbon-500">See how your team compares to similar sales organizations. All peer data is anonymized.</p>
 
                 {!isPro ? (
                   <div>
                     {/* Blurred placeholder rows */}
-                    <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+                    <div className="bg-white rounded-lg border border-apptivia-carbon-200 overflow-hidden">
                       <table className="w-full text-sm">
-                        <thead className="bg-gray-50">
-                          <tr><th className="px-4 py-2 text-left text-xs font-semibold text-gray-600">Metric</th><th className="px-4 py-2 text-center text-xs font-semibold text-gray-600">Your Avg</th><th className="px-4 py-2 text-center text-xs font-semibold text-gray-600">Peer Avg</th><th className="px-4 py-2 text-center text-xs font-semibold text-gray-600">Percentile</th></tr>
+                        <thead className="bg-apptivia-paper">
+                          <tr><th className="px-4 py-2 text-left text-xs font-semibold text-apptivia-carbon-600">Metric</th><th className="px-4 py-2 text-center text-xs font-semibold text-apptivia-carbon-600">Your Avg</th><th className="px-4 py-2 text-center text-xs font-semibold text-apptivia-carbon-600">Peer Avg</th><th className="px-4 py-2 text-center text-xs font-semibold text-apptivia-carbon-600">Percentile</th></tr>
                         </thead>
                         <tbody className="blur-[3px] pointer-events-none select-none">
-                          <tr className="border-t"><td className="px-4 py-3 text-gray-700">Calls Made</td><td className="px-4 py-3 text-center">72%</td><td className="px-4 py-3 text-center">65-75%</td><td className="px-4 py-3 text-center"><span className="px-2 py-0.5 rounded-full bg-green-100 text-green-700 text-xs">Top 25%</span></td></tr>
-                          <tr className="border-t"><td className="px-4 py-3 text-gray-700">Meetings Set</td><td className="px-4 py-3 text-center">58%</td><td className="px-4 py-3 text-center">50-60%</td><td className="px-4 py-3 text-center"><span className="px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 text-xs">Top 50%</span></td></tr>
+                          <tr className="border-t"><td className="px-4 py-3 text-apptivia-carbon-700">Calls Made</td><td className="px-4 py-3 text-center">72%</td><td className="px-4 py-3 text-center">65-75%</td><td className="px-4 py-3 text-center"><span className="px-2 py-0.5 rounded-full bg-green-100 text-green-700 text-xs">Top 25%</span></td></tr>
+                          <tr className="border-t"><td className="px-4 py-3 text-apptivia-carbon-700">Meetings Set</td><td className="px-4 py-3 text-center">58%</td><td className="px-4 py-3 text-center">50-60%</td><td className="px-4 py-3 text-center"><span className="px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 text-xs">Top 50%</span></td></tr>
                         </tbody>
                       </table>
                     </div>
                     <UpgradePrompt variant="feature_gate" feature="benchmarks" context="inline" />
                   </div>
                 ) : benchmarksLoading ? (
-                  <div className="text-sm text-gray-500 text-center py-8">Loading benchmarks...</div>
+                  <div className="text-sm text-apptivia-carbon-500 text-center py-8">Loading benchmarks...</div>
                 ) : isEnterprise && enterpriseBenchmarkData ? (
                   <div className="space-y-3">
                     {enterpriseBenchmarkData.org_count > 0 && (
-                      <p className="text-xs text-gray-400">Compared against {enterpriseBenchmarkData.org_count} peer organization{enterpriseBenchmarkData.org_count !== 1 ? 's' : ''} (anonymized){enterpriseBenchmarkData.using_industry_baseline ? ' · Showing industry medians' : ''}</p>
+                      <p className="text-xs text-apptivia-carbon-400">Compared against {enterpriseBenchmarkData.org_count} peer organization{enterpriseBenchmarkData.org_count !== 1 ? 's' : ''} (anonymized){enterpriseBenchmarkData.using_industry_baseline ? ' · Showing industry medians' : ''}</p>
                     )}
                     {(enterpriseBenchmarkData.benchmarks || []).length > 0 ? (
-                      <div className="bg-white rounded-lg border border-gray-200 divide-y divide-gray-50">
+                      <div className="bg-white rounded-lg border border-apptivia-carbon-200 divide-y divide-gray-50">
                         {enterpriseBenchmarkData.benchmarks.map((b, i) => (
                           <div key={i} className="px-4 py-3">
                             <div className="flex items-center justify-between mb-1">
-                              <span className="text-sm font-medium text-gray-800">{b.kpi_name || b.kpi_key}</span>
+                              <span className="text-sm font-medium text-apptivia-ink">{b.kpi_name || b.kpi_key}</span>
                               {b.your_percentile != null ? (
                                 <span className={`text-xs px-1.5 py-0.5 rounded-full font-medium ${
                                   b.your_percentile >= 75 ? 'bg-green-100 text-green-700' :
@@ -1401,16 +1401,16 @@ export default function Analytics() {
                                   {b.your_percentile}th percentile
                                 </span>
                               ) : (
-                                <span className="text-xs text-gray-400">—</span>
+                                <span className="text-xs text-apptivia-carbon-400">—</span>
                               )}
                             </div>
-                            <div className="grid grid-cols-3 gap-2 text-xs text-gray-500">
-                              <div>Your avg: <span className="font-medium text-gray-800">{b.your_avg ?? b.value ?? '—'}</span></div>
-                              <div>Peer median: <span className="font-medium text-gray-800">{b.peer_median ?? (b.benchmark_type === 'industry_median' ? b.value : '—')}</span></div>
-                              <div>Top quartile: <span className="font-medium text-gray-800">{b.top_quartile ?? '—'}</span></div>
+                            <div className="grid grid-cols-3 gap-2 text-xs text-apptivia-carbon-500">
+                              <div>Your avg: <span className="font-medium text-apptivia-ink">{b.your_avg ?? b.value ?? '—'}</span></div>
+                              <div>Peer median: <span className="font-medium text-apptivia-ink">{b.peer_median ?? (b.benchmark_type === 'industry_median' ? b.value : '—')}</span></div>
+                              <div>Top quartile: <span className="font-medium text-apptivia-ink">{b.top_quartile ?? '—'}</span></div>
                             </div>
                             {b.trend != null && (
-                              <div className="mt-1 text-xs text-gray-400">
+                              <div className="mt-1 text-xs text-apptivia-carbon-400">
                                 Trend vs prior period: {b.trend >= 0 ? '+' : ''}{b.trend}%
                               </div>
                             )}
@@ -1418,36 +1418,36 @@ export default function Analytics() {
                         ))}
                       </div>
                     ) : (
-                      <div className="text-sm text-gray-500 text-center py-8">{enterpriseBenchmarkData.message || 'No benchmark data available yet.'}</div>
+                      <div className="text-sm text-apptivia-carbon-500 text-center py-8">{enterpriseBenchmarkData.message || 'No benchmark data available yet.'}</div>
                     )}
                   </div>
                 ) : benchmarksError ? (
-                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-center">
-                    <p className="text-sm text-blue-700">Benchmarks activate once more Apptivia organizations join your segment. Check back soon.</p>
+                  <div className="bg-apptivia-coral-tone-50 border border-apptivia-coral-tone-100 rounded-lg p-4 text-center">
+                    <p className="text-sm text-apptivia-coral">Benchmarks activate once more Apptivia organizations join your segment. Check back soon.</p>
                   </div>
                 ) : benchmarks.length > 0 ? (
-                  <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+                  <div className="bg-white rounded-lg border border-apptivia-carbon-200 overflow-hidden">
                     <table className="w-full text-sm">
-                      <thead className="bg-gray-50">
+                      <thead className="bg-apptivia-paper">
                         <tr>
-                          <th className="px-4 py-2 text-left text-xs font-semibold text-gray-600">Metric</th>
-                          <th className="px-4 py-2 text-center text-xs font-semibold text-gray-600">Your Avg</th>
-                          <th className="px-4 py-2 text-center text-xs font-semibold text-gray-600">Peer Avg</th>
-                          <th className="px-4 py-2 text-center text-xs font-semibold text-gray-600">Percentile</th>
+                          <th className="px-4 py-2 text-left text-xs font-semibold text-apptivia-carbon-600">Metric</th>
+                          <th className="px-4 py-2 text-center text-xs font-semibold text-apptivia-carbon-600">Your Avg</th>
+                          <th className="px-4 py-2 text-center text-xs font-semibold text-apptivia-carbon-600">Peer Avg</th>
+                          <th className="px-4 py-2 text-center text-xs font-semibold text-apptivia-carbon-600">Percentile</th>
                         </tr>
                       </thead>
                       <tbody>
                         {benchmarks.map(b => {
-                          const pctColor = b.percentile >= 75 ? 'bg-green-100 text-green-700' : b.percentile >= 50 ? 'bg-blue-100 text-blue-700' : 'bg-amber-100 text-amber-700';
+                          const pctColor = b.percentile >= 75 ? 'bg-green-100 text-green-700' : b.percentile >= 50 ? 'bg-apptivia-coral-tone-50 text-apptivia-coral' : 'bg-amber-100 text-amber-700';
                           const trendIcon = b.trend === 'improving' ? '↑' : b.trend === 'declining' ? '↓' : '→';
-                          const trendColor = b.trend === 'improving' ? 'text-green-600' : b.trend === 'declining' ? 'text-red-600' : 'text-gray-400';
+                          const trendColor = b.trend === 'improving' ? 'text-green-600' : b.trend === 'declining' ? 'text-red-600' : 'text-apptivia-carbon-400';
                           return (
-                            <tr key={b.metric_name} className="border-t hover:bg-gray-50">
-                              <td className="px-4 py-3 text-gray-700 font-medium">{b.metric_name}</td>
+                            <tr key={b.metric_name} className="border-t hover:bg-apptivia-paper">
+                              <td className="px-4 py-3 text-apptivia-carbon-700 font-medium">{b.metric_name}</td>
                               <td className="px-4 py-3 text-center">
                                 {b.org_avg}% <span className={`ml-1 ${trendColor}`}>{trendIcon}</span>
                               </td>
-                              <td className="px-4 py-3 text-center text-gray-500">{b.peer_range}</td>
+                              <td className="px-4 py-3 text-center text-apptivia-carbon-500">{b.peer_range}</td>
                               <td className="px-4 py-3 text-center">
                                 <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${pctColor}`}>
                                   Top {100 - b.percentile}%
@@ -1460,7 +1460,7 @@ export default function Analytics() {
                     </table>
                   </div>
                 ) : (
-                  <div className="text-sm text-gray-500 text-center py-8">No benchmark data available yet.</div>
+                  <div className="text-sm text-apptivia-carbon-500 text-center py-8">No benchmark data available yet.</div>
                 )}
               </div>
             )}
@@ -1481,7 +1481,7 @@ export default function Analytics() {
                   <div className="overflow-x-auto">
                     <table className="w-full text-xs table-fixed">
                       <thead>
-                        <tr className="text-left text-gray-500">
+                        <tr className="text-left text-apptivia-carbon-500">
                           <th className="py-2 w-1/4">Rep</th>
                           <th className="py-2 w-1/4">Score</th>
                           <th className="py-2 w-1/4">Delta to 80%</th>
@@ -1491,14 +1491,14 @@ export default function Analytics() {
                       <tbody>
                         {topMovers.map((row) => (
                           <tr key={`${row.profile_id}-${row.trend}`} className="border-t">
-                            <td className="py-2 w-1/4 font-medium text-gray-900 truncate">{row.name}</td>
+                            <td className="py-2 w-1/4 font-medium text-apptivia-ink truncate">{row.name}</td>
                             <td className="py-2 w-1/4">
                               <span className={`font-semibold ${scoreTextColor(row.apptivityScore)}`}>
                                 {row.apptivityScore}%
                               </span>
                             </td>
-                            <td className="py-2 w-1/4 text-gray-600">{row.apptivityScore - 80 > 0 ? `+${row.apptivityScore - 80}` : row.apptivityScore - 80}%</td>
-                            <td className="py-2 w-1/4 text-gray-500">{row.trend}</td>
+                            <td className="py-2 w-1/4 text-apptivia-carbon-600">{row.apptivityScore - 80 > 0 ? `+${row.apptivityScore - 80}` : row.apptivityScore - 80}%</td>
+                            <td className="py-2 w-1/4 text-apptivia-carbon-500">{row.trend}</td>
                           </tr>
                         ))}
                       </tbody>
@@ -1508,28 +1508,28 @@ export default function Analytics() {
 
                 {/* Coached vs Uncoached Cohort Comparison */}
                 {!isPowerUser && cohortData && (
-                  <div className="bg-white rounded-xl border border-gray-100 p-4">
-                    <h3 className="font-semibold text-gray-900 text-sm mb-1">Coached vs. Uncoached — KPI Impact</h3>
-                    <p className="text-xs text-gray-400 mb-4">Last {cohortData.period_weeks || 4} weeks · Coached = received AI coaching suggestion</p>
+                  <div className="bg-white rounded-lg border border-apptivia-carbon-100 p-4">
+                    <h3 className="font-semibold text-apptivia-ink text-sm mb-1">Coached vs. Uncoached — KPI Impact</h3>
+                    <p className="text-xs text-apptivia-carbon-400 mb-4">Last {cohortData.period_weeks || 4} weeks · Coached = received AI coaching suggestion</p>
                     <div className="grid grid-cols-2 gap-4">
                       <div className="text-center">
-                        <div className="text-3xl font-semibold text-indigo-600">
+                        <div className="text-3xl font-semibold text-apptivia-ink">
                           {cohortData.coached?.avg_attainment != null ? `${cohortData.coached.avg_attainment}%` : '—'}
                         </div>
-                        <div className="text-xs text-gray-500 mt-1">Coached ({cohortData.coached?.count || 0} reps)</div>
+                        <div className="text-xs text-apptivia-carbon-500 mt-1">Coached ({cohortData.coached?.count || 0} reps)</div>
                       </div>
                       <div className="text-center">
-                        <div className="text-3xl font-semibold text-gray-400">
+                        <div className="text-3xl font-semibold text-apptivia-carbon-400">
                           {cohortData.uncoached?.avg_attainment != null ? `${cohortData.uncoached.avg_attainment}%` : '—'}
                         </div>
-                        <div className="text-xs text-gray-500 mt-1">Uncoached ({cohortData.uncoached?.count || 0} reps)</div>
+                        <div className="text-xs text-apptivia-carbon-500 mt-1">Uncoached ({cohortData.uncoached?.count || 0} reps)</div>
                       </div>
                     </div>
                     {cohortData.coached?.avg_attainment != null && cohortData.uncoached?.avg_attainment != null && (
                       <div className="mt-3 text-center">
                         <span className={`text-sm font-medium ${
                           cohortData.coached.avg_attainment > cohortData.uncoached.avg_attainment
-                            ? 'text-green-600' : 'text-gray-500'
+                            ? 'text-green-600' : 'text-apptivia-carbon-500'
                         }`}>
                           {cohortData.coached.avg_attainment > cohortData.uncoached.avg_attainment
                             ? `+${cohortData.coached.avg_attainment - cohortData.uncoached.avg_attainment}% lift from coaching`
@@ -1548,19 +1548,19 @@ export default function Analytics() {
                   </div>
                   <div className="space-y-3">
                     {data.rows.slice(0, 5).map((performer, i) => (
-                      <div key={performer.profile_id} className="flex items-center justify-between bg-gradient-to-r from-gray-50 to-white rounded-lg p-3 transition-all duration-200 hover:shadow-md">
+                      <div key={performer.profile_id} className="flex items-center justify-between bg-apptivia-carbon-50 rounded-lg p-3 transition-all duration-200 hover:shadow-md">
                         <div className="flex items-center gap-4">
                           <div className={`w-9 h-9 rounded-full flex items-center justify-center text-base font-bold ${
                             i === 0 ? 'bg-yellow-100 text-yellow-600' :
-                            i === 1 ? 'bg-gray-100 text-gray-600' :
+                            i === 1 ? 'bg-apptivia-carbon-100 text-apptivia-carbon-600' :
                             i === 2 ? 'bg-orange-100 text-orange-600' :
-                            'bg-blue-100 text-blue-600'
+                            'bg-apptivia-coral-tone-50 text-apptivia-coral'
                           }`}>
                             {i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : i + 1}
                           </div>
                           <div>
-                            <div className="font-semibold text-gray-900">{performer.name}</div>
-                            <div className="text-xs text-gray-500">
+                            <div className="font-semibold text-apptivia-ink">{performer.name}</div>
+                            <div className="text-xs text-apptivia-carbon-500">
                               {Math.round(performer.kpis.call_connects?.value || 0)} calls • 
                               {Math.round(performer.kpis.meetings?.value || 0)} meetings
                             </div>
@@ -1570,7 +1570,7 @@ export default function Analytics() {
                           <div className={`text-lg font-bold ${scoreTextColor(performer.apptivityScore)}`}>
                             {performer.apptivityScore}%
                           </div>
-                          <div className="text-xs text-gray-500">Apptivia Score</div>
+                          <div className="text-xs text-apptivia-carbon-500">Apptivia Score</div>
                         </div>
                       </div>
                     ))}
@@ -1602,6 +1602,7 @@ export default function Analytics() {
       >
             <ScorecardFilters
               showDate={true}
+              organizationId={orgId}
               onFilterChange={handleFiltersChange}
               initialFilters={defaultFilters}
               resetSignal={filtersResetSignal}

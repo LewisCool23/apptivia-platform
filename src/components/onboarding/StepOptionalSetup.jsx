@@ -37,33 +37,33 @@ export default function StepOptionalSetup({ wizardState, updateState }) {
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-3 mb-2">
-        <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center">
-          <Settings size={20} className="text-gray-600" />
+        <div className="w-10 h-10 bg-apptivia-carbon-100 rounded-lg flex items-center justify-center">
+          <Settings size={20} className="text-apptivia-carbon-600" />
         </div>
         <div>
-          <h3 className="text-lg font-semibold text-gray-900">Optional Setup</h3>
-          <p className="text-sm text-gray-500">
+          <h3 className="text-lg font-semibold text-apptivia-ink">Optional Setup</h3>
+          <p className="text-sm text-apptivia-carbon-500">
             Configure these now or skip — all can be set up later in Settings
           </p>
         </div>
       </div>
 
       {/* Wallboard Config */}
-      <div className="border border-gray-200 rounded-lg overflow-hidden">
+      <div className="border border-apptivia-carbon-200 rounded-lg overflow-hidden">
         <button
           type="button"
           onClick={() => toggle('wallboard')}
-          className="w-full flex items-center justify-between px-4 py-3 bg-gray-50 hover:bg-gray-100 transition-colors"
+          className="w-full flex items-center justify-between px-4 py-3 bg-apptivia-paper hover:bg-apptivia-carbon-100 transition-colors"
         >
           <div className="flex items-center gap-2">
-            <Monitor size={16} className="text-blue-600" />
-            <span className="text-sm font-medium text-gray-900">Wallboard Configuration</span>
+            <Monitor size={16} className="text-apptivia-coral" />
+            <span className="text-sm font-medium text-apptivia-ink">Wallboard Configuration</span>
           </div>
-          {expanded.wallboard ? <ChevronDown size={16} className="text-gray-400" /> : <ChevronRight size={16} className="text-gray-400" />}
+          {expanded.wallboard ? <ChevronDown size={16} className="text-apptivia-carbon-400" /> : <ChevronRight size={16} className="text-apptivia-carbon-400" />}
         </button>
         {expanded.wallboard && (
           <div className="p-4 space-y-2">
-            <p className="text-xs text-gray-500 mb-3">Choose which slides appear on your team wallboard and how long each displays.</p>
+            <p className="text-xs text-apptivia-carbon-500 mb-3">Choose which slides appear on your team wallboard and how long each displays.</p>
             {Object.entries(SLIDE_LABELS).map(([key, label]) => (
               <div key={key} className="flex items-center justify-between py-1.5">
                 <label className="flex items-center gap-2">
@@ -71,20 +71,20 @@ export default function StepOptionalSetup({ wizardState, updateState }) {
                     type="checkbox"
                     checked={wallboardSettings.slides[key]?.enabled ?? true}
                     onChange={(e) => updateSlide(key, 'enabled', e.target.checked)}
-                    className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                    className="rounded border-apptivia-carbon-300 text-apptivia-coral focus:ring-apptivia-coral"
                   />
-                  <span className="text-sm text-gray-700">{label}</span>
+                  <span className="text-sm text-apptivia-carbon-700">{label}</span>
                 </label>
                 <div className="flex items-center gap-1">
                   <input
                     type="number"
                     value={wallboardSettings.slides[key]?.duration ?? 15}
                     onChange={(e) => updateSlide(key, 'duration', Math.max(5, Math.min(120, Number(e.target.value) || 15)))}
-                    className="w-14 px-2 py-1 border border-gray-300 rounded text-sm text-center"
+                    className="w-14 px-2 py-1 border border-apptivia-carbon-300 rounded text-sm text-center"
                     min="5"
                     max="120"
                   />
-                  <span className="text-xs text-gray-400">sec</span>
+                  <span className="text-xs text-apptivia-carbon-400">sec</span>
                 </div>
               </div>
             ))}
@@ -93,38 +93,38 @@ export default function StepOptionalSetup({ wizardState, updateState }) {
                 type="checkbox"
                 checked={wallboardSettings.celebrations}
                 onChange={(e) => updateState({ wallboardSettings: { ...wallboardSettings, celebrations: e.target.checked } })}
-                className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                className="rounded border-apptivia-carbon-300 text-apptivia-coral focus:ring-apptivia-coral"
               />
-              <span className="text-sm text-gray-700">Celebration overlays (confetti for level-ups, badges, wins)</span>
+              <span className="text-sm text-apptivia-carbon-700">Celebration overlays (confetti for level-ups, badges, wins)</span>
             </div>
           </div>
         )}
       </div>
 
       {/* Scheduled Reports */}
-      <div className="border border-gray-200 rounded-lg overflow-hidden">
+      <div className="border border-apptivia-carbon-200 rounded-lg overflow-hidden">
         <button
           type="button"
           onClick={() => toggle('reports')}
-          className="w-full flex items-center justify-between px-4 py-3 bg-gray-50 hover:bg-gray-100 transition-colors"
+          className="w-full flex items-center justify-between px-4 py-3 bg-apptivia-paper hover:bg-apptivia-carbon-100 transition-colors"
         >
           <div className="flex items-center gap-2">
-            <FileText size={16} className="text-purple-600" />
-            <span className="text-sm font-medium text-gray-900">Scheduled Reports</span>
+            <FileText size={16} className="text-apptivia-ink" />
+            <span className="text-sm font-medium text-apptivia-ink">Scheduled Reports</span>
             {!hasReports && (
-              <span className="text-xs bg-gray-200 text-gray-500 px-2 py-0.5 rounded-full">Pro+</span>
+              <span className="text-xs bg-apptivia-carbon-200 text-apptivia-carbon-500 px-2 py-0.5 rounded-full">Pro+</span>
             )}
           </div>
-          {expanded.reports ? <ChevronDown size={16} className="text-gray-400" /> : <ChevronRight size={16} className="text-gray-400" />}
+          {expanded.reports ? <ChevronDown size={16} className="text-apptivia-carbon-400" /> : <ChevronRight size={16} className="text-apptivia-carbon-400" />}
         </button>
         {expanded.reports && (
           <div className="p-4">
             {hasReports ? (
-              <p className="text-sm text-gray-600">
+              <p className="text-sm text-apptivia-carbon-600">
                 Scheduled reports (scorecard summary, pipeline overview, contest results, team activity) can be configured in <strong>Settings → Reports</strong> after onboarding.
               </p>
             ) : (
-              <p className="text-sm text-gray-500">
+              <p className="text-sm text-apptivia-carbon-500">
                 Scheduled reports are available on the Pro plan and above. You can upgrade anytime in Settings → Subscription.
               </p>
             )}
@@ -133,21 +133,21 @@ export default function StepOptionalSetup({ wizardState, updateState }) {
       </div>
 
       {/* Notification Preferences */}
-      <div className="border border-gray-200 rounded-lg overflow-hidden">
+      <div className="border border-apptivia-carbon-200 rounded-lg overflow-hidden">
         <button
           type="button"
           onClick={() => toggle('notifications')}
-          className="w-full flex items-center justify-between px-4 py-3 bg-gray-50 hover:bg-gray-100 transition-colors"
+          className="w-full flex items-center justify-between px-4 py-3 bg-apptivia-paper hover:bg-apptivia-carbon-100 transition-colors"
         >
           <div className="flex items-center gap-2">
             <Bell size={16} className="text-amber-600" />
-            <span className="text-sm font-medium text-gray-900">Notification Preferences</span>
+            <span className="text-sm font-medium text-apptivia-ink">Notification Preferences</span>
           </div>
-          {expanded.notifications ? <ChevronDown size={16} className="text-gray-400" /> : <ChevronRight size={16} className="text-gray-400" />}
+          {expanded.notifications ? <ChevronDown size={16} className="text-apptivia-carbon-400" /> : <ChevronRight size={16} className="text-apptivia-carbon-400" />}
         </button>
         {expanded.notifications && (
           <div className="p-4">
-            <p className="text-sm text-gray-600">
+            <p className="text-sm text-apptivia-carbon-600">
               Notification preferences (badges, contests, achievements, data sync alerts) can be configured in <strong>Settings → Notifications</strong> after onboarding.
             </p>
           </div>

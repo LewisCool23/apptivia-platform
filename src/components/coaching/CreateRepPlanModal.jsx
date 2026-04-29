@@ -15,6 +15,7 @@ const DEFAULT_KPIS = [
   'pipeline_created', 'sourced_opps', 'call_connects', 'meetings',
   'talk_time_minutes', 'emails_sent', 'demos_completed', 'win_rate',
   'response_time', 'follow_ups', 'stage2_opps', 'qualified_leads', 'social_touches',
+  'dials', 'conversations', 'discovery_calls', 'sales_cycle_days', 'average_deal_size',
   'talk_to_listen_ratio', 'longest_monologue_sec', 'questions_asked',
   'next_steps_mentioned', 'interactivity_score',
   'sequences_started', 'emails_opened', 'tasks_completed',
@@ -320,14 +321,14 @@ export default function CreateRepPlanModal({ isOpen, onClose, repId, repName, te
 
   return (
     <div className="fixed inset-0 bg-black/40 z-50 flex items-start justify-center pt-6 overflow-y-auto">
-      <div className="bg-white rounded-xl shadow-xl w-full max-w-4xl mx-4 mb-10">
+      <div className="bg-white rounded-lg shadow-xl w-full max-w-4xl mx-4 mb-10">
         {/* Header */}
         <div className="px-6 py-4 border-b flex items-center justify-between">
           <div>
-            <h2 className="text-lg font-bold text-gray-900">Build Rep Plan</h2>
-            {repName && <p className="text-sm text-gray-500">Creating plan for {repName}</p>}
+            <h2 className="text-lg font-bold text-apptivia-ink">Build Rep Plan</h2>
+            {repName && <p className="text-sm text-apptivia-carbon-500">Creating plan for {repName}</p>}
           </div>
-          <button onClick={onClose} className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg">
+          <button onClick={onClose} className="p-2 text-apptivia-carbon-400 hover:text-apptivia-carbon-600 hover:bg-apptivia-carbon-100 rounded-lg">
             <X size={18} />
           </button>
         </div>

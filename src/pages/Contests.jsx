@@ -81,10 +81,10 @@ export default function Contests() {
   const getStatusColor = (status) => {
     switch (status) {
       case 'active': return 'text-green-600';
-      case 'upcoming': return 'text-indigo-600';
-      case 'completed': return 'text-gray-400';
-      case 'archived': return 'text-purple-400';
-      default: return 'text-gray-500';
+      case 'upcoming': return 'text-apptivia-ink';
+      case 'completed': return 'text-apptivia-carbon-400';
+      case 'archived': return 'text-apptivia-ink';
+      default: return 'text-apptivia-carbon-500';
     }
   };
 
@@ -737,11 +737,11 @@ export default function Contests() {
           <div className="flex items-center gap-2">
             <h3 className="font-semibold text-lg">{contest.name}</h3>
             {contest.is_user_enrolled && (
-              <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded">Enrolled</span>
+              <span className="text-xs bg-apptivia-coral-tone-50 text-apptivia-coral px-2 py-1 rounded">Enrolled</span>
             )}
           </div>
-          <p className="text-sm text-gray-600 mt-1">{contest.description}</p>
-          <div className="flex items-center gap-4 mt-2 text-xs text-gray-500">
+          <p className="text-sm text-apptivia-carbon-600 mt-1">{contest.description}</p>
+          <div className="flex items-center gap-4 mt-2 text-xs text-apptivia-carbon-500">
             <span>👥 {contest.participant_count} participants</span>
             {contest.days_remaining !== null && (
               <span>⏰ {formatDaysRemaining(contest.days_remaining, contest.status)}</span>
@@ -762,7 +762,7 @@ export default function Contests() {
           {contest.winner_name && (
             <>
               <div className="text-sm font-bold mt-2">{contest.winner_score}</div>
-              <div className="text-xs text-gray-500">{contest.winner_name}</div>
+              <div className="text-xs text-apptivia-carbon-500">{contest.winner_name}</div>
             </>
           )}
           {contest.reward_value && (
@@ -777,12 +777,12 @@ export default function Contests() {
 
       {/* User's Current Position */}
       {contest.is_user_enrolled && contest.user_rank && (
-        <div className="mt-3 p-3 bg-blue-50 rounded-lg">
+        <div className="mt-3 p-3 bg-apptivia-coral-tone-50 rounded-lg">
           <div className="flex justify-between items-center text-sm">
-            <span className="font-semibold text-blue-900">Your Position:</span>
+            <span className="font-semibold text-apptivia-coral-tone-700">Your Position:</span>
             <div className="flex items-center gap-2">
-              <span className="text-blue-700">Rank #{contest.user_rank}</span>
-              <span className="text-blue-900 font-bold">{contest.user_score}</span>
+              <span className="text-apptivia-coral">Rank #{contest.user_rank}</span>
+              <span className="text-apptivia-coral-tone-700 font-bold">{contest.user_score}</span>
             </div>
           </div>
         </div>
@@ -791,20 +791,20 @@ export default function Contests() {
       {/* Action Buttons */}
       <div className="mt-4 flex items-center justify-between gap-3">
         {/* Bottom-left contextual info */}
-        <div className="text-xs text-gray-500">
+        <div className="text-xs text-apptivia-carbon-500">
           <div className="flex flex-col gap-1">
             {(contest.status === 'completed' || contest.status === 'archived') && contest.winner_name && (
               <div className="flex items-center gap-1.5">
                 <Trophy size={14} className="text-yellow-500" />
-                <span className="font-semibold text-gray-800">{contest.winner_name}</span>
-                <span className="text-gray-300">·</span>
+                <span className="font-semibold text-apptivia-ink">{contest.winner_name}</span>
+                <span className="text-apptivia-carbon-300">·</span>
                 <span>{contest.winner_score}</span>
               </div>
             )}
             <div className="flex items-center gap-2">
               <span>{formatDateShort(contest.start_date)} – {formatDateShort(contest.end_date)}</span>
               {contest.kpi_key && (
-                <span className="px-2 py-0.5 bg-blue-50 text-blue-600 rounded-full font-medium">
+                <span className="px-2 py-0.5 bg-apptivia-coral-tone-50 text-apptivia-coral rounded-full font-medium">
                   {formatKpiKey(contest.kpi_key)}
                 </span>
               )}
@@ -816,42 +816,42 @@ export default function Contests() {
           <div className="flex items-center gap-1.5 flex-wrap">
             <button
               onClick={() => openLeaderboard(contest)}
-              className="p-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-all duration-200 hover:scale-105 flex items-center justify-center group relative"
+              className="p-2 bg-apptivia-coral-tone-50 text-apptivia-coral rounded-lg hover:bg-apptivia-coral-tone-50 transition-all duration-200 hover:scale-105 flex items-center justify-center group relative"
               title="View Leaderboard"
             >
               <BarChart2 size={16} />
-              <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 px-2 py-1 bg-gray-900 text-white text-[10px] rounded opacity-0 pointer-events-none group-hover:opacity-100 whitespace-nowrap transition-opacity z-10">Leaderboard</span>
+              <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 px-2 py-1 bg-apptivia-ink text-white text-[10px] rounded opacity-0 pointer-events-none group-hover:opacity-100 whitespace-nowrap transition-opacity z-10">Leaderboard</span>
             </button>
             <button
               onClick={() => handleEnrollment(contest.id, contest.is_user_enrolled)}
               className={`p-2 rounded-lg transition-all duration-200 hover:scale-105 flex items-center justify-center group relative ${
                 contest.is_user_enrolled
-                  ? 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                  ? 'bg-apptivia-carbon-100 text-apptivia-carbon-600 hover:bg-apptivia-carbon-200'
                   : 'bg-green-500 text-white hover:bg-green-600'
               }`}
               title={contest.is_user_enrolled ? 'Withdraw' : 'Join Contest'}
             >
               {contest.is_user_enrolled ? <LogOut size={16} /> : <UserPlus size={16} />}
-              <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 px-2 py-1 bg-gray-900 text-white text-[10px] rounded opacity-0 pointer-events-none group-hover:opacity-100 whitespace-nowrap transition-opacity z-10">{contest.is_user_enrolled ? 'Withdraw' : 'Join'}</span>
+              <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 px-2 py-1 bg-apptivia-ink text-white text-[10px] rounded opacity-0 pointer-events-none group-hover:opacity-100 whitespace-nowrap transition-opacity z-10">{contest.is_user_enrolled ? 'Withdraw' : 'Join'}</span>
             </button>
             {canShareResults && (
               <button
                 onClick={() => openShareResults(contest)}
-                className="p-2 bg-slate-100 text-slate-700 rounded-lg hover:bg-slate-200 transition-all duration-200 hover:scale-105 flex items-center justify-center group relative"
+                className="p-2 bg-apptivia-carbon-100 text-apptivia-carbon-700 rounded-lg hover:bg-apptivia-carbon-200 transition-all duration-200 hover:scale-105 flex items-center justify-center group relative"
                 title="Share Results"
               >
                 <Share2 size={16} />
-                <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 px-2 py-1 bg-gray-900 text-white text-[10px] rounded opacity-0 pointer-events-none group-hover:opacity-100 whitespace-nowrap transition-opacity z-10">Share</span>
+                <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 px-2 py-1 bg-apptivia-ink text-white text-[10px] rounded opacity-0 pointer-events-none group-hover:opacity-100 whitespace-nowrap transition-opacity z-10">Share</span>
               </button>
             )}
             {(isAdmin || isManager) && (
               <button
                 onClick={() => setAddMembersModal({ isOpen: true, contest })}
-                className="p-2 bg-indigo-50 text-indigo-600 rounded-lg hover:bg-indigo-100 transition-all duration-200 hover:scale-105 flex items-center justify-center group relative"
+                className="p-2 bg-apptivia-carbon-100 text-apptivia-ink rounded-lg hover:bg-apptivia-carbon-100 transition-all duration-200 hover:scale-105 flex items-center justify-center group relative"
                 title="Add Team Members"
               >
                 <Users size={16} />
-                <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 px-2 py-1 bg-gray-900 text-white text-[10px] rounded opacity-0 pointer-events-none group-hover:opacity-100 whitespace-nowrap transition-opacity z-10">Add Members</span>
+                <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 px-2 py-1 bg-apptivia-ink text-white text-[10px] rounded opacity-0 pointer-events-none group-hover:opacity-100 whitespace-nowrap transition-opacity z-10">Add Members</span>
               </button>
             )}
             {canEditContest(contest) && (
@@ -861,17 +861,17 @@ export default function Contests() {
                 title="End Contest"
               >
                 <StopCircle size={16} />
-                <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 px-2 py-1 bg-gray-900 text-white text-[10px] rounded opacity-0 pointer-events-none group-hover:opacity-100 whitespace-nowrap transition-opacity z-10">End</span>
+                <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 px-2 py-1 bg-apptivia-ink text-white text-[10px] rounded opacity-0 pointer-events-none group-hover:opacity-100 whitespace-nowrap transition-opacity z-10">End</span>
               </button>
             )}
             {canEditContest(contest) && (
               <button
                 onClick={() => handleEditContest(contest)}
-                className="p-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-all duration-200 hover:scale-105 flex items-center justify-center group relative"
+                className="p-2 bg-apptivia-coral-tone-50 text-apptivia-coral rounded-lg hover:bg-apptivia-coral-tone-50 transition-all duration-200 hover:scale-105 flex items-center justify-center group relative"
                 title="Edit Contest"
               >
                 <Edit2 size={16} />
-                <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 px-2 py-1 bg-gray-900 text-white text-[10px] rounded opacity-0 pointer-events-none group-hover:opacity-100 whitespace-nowrap transition-opacity z-10">Edit</span>
+                <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 px-2 py-1 bg-apptivia-ink text-white text-[10px] rounded opacity-0 pointer-events-none group-hover:opacity-100 whitespace-nowrap transition-opacity z-10">Edit</span>
               </button>
             )}
             {canDeleteContest(contest) && (
@@ -881,34 +881,34 @@ export default function Contests() {
                 title="Delete Contest"
               >
                 <Trash2 size={16} />
-                <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 px-2 py-1 bg-gray-900 text-white text-[10px] rounded opacity-0 pointer-events-none group-hover:opacity-100 whitespace-nowrap transition-opacity z-10">Delete</span>
+                <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 px-2 py-1 bg-apptivia-ink text-white text-[10px] rounded opacity-0 pointer-events-none group-hover:opacity-100 whitespace-nowrap transition-opacity z-10">Delete</span>
               </button>
             )}
           </div>
         )}
         {contest.status === 'upcoming' && (
           <div className="flex items-center gap-1.5 flex-wrap">
-            <div className="px-3 py-1.5 bg-gray-50 rounded-lg text-xs text-gray-400 font-medium">
+            <div className="px-3 py-1.5 bg-apptivia-paper rounded-lg text-xs text-apptivia-carbon-400 font-medium">
               Coming Soon
             </div>
             {(isAdmin || isManager) && (
               <button
                 onClick={() => setAddMembersModal({ isOpen: true, contest })}
-                className="p-2 bg-indigo-50 text-indigo-600 rounded-lg hover:bg-indigo-100 transition-all duration-200 hover:scale-105 flex items-center justify-center group relative"
+                className="p-2 bg-apptivia-carbon-100 text-apptivia-ink rounded-lg hover:bg-apptivia-carbon-100 transition-all duration-200 hover:scale-105 flex items-center justify-center group relative"
                 title="Add Team Members"
               >
                 <Users size={16} />
-                <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 px-2 py-1 bg-gray-900 text-white text-[10px] rounded opacity-0 pointer-events-none group-hover:opacity-100 whitespace-nowrap transition-opacity z-10">Add Members</span>
+                <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 px-2 py-1 bg-apptivia-ink text-white text-[10px] rounded opacity-0 pointer-events-none group-hover:opacity-100 whitespace-nowrap transition-opacity z-10">Add Members</span>
               </button>
             )}
             {canEditContest(contest) && (
               <button
                 onClick={() => handleEditContest(contest)}
-                className="p-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-all duration-200 hover:scale-105 flex items-center justify-center group relative"
+                className="p-2 bg-apptivia-coral-tone-50 text-apptivia-coral rounded-lg hover:bg-apptivia-coral-tone-50 transition-all duration-200 hover:scale-105 flex items-center justify-center group relative"
                 title="Edit Contest"
               >
                 <Edit2 size={16} />
-                <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 px-2 py-1 bg-gray-900 text-white text-[10px] rounded opacity-0 pointer-events-none group-hover:opacity-100 whitespace-nowrap transition-opacity z-10">Edit</span>
+                <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 px-2 py-1 bg-apptivia-ink text-white text-[10px] rounded opacity-0 pointer-events-none group-hover:opacity-100 whitespace-nowrap transition-opacity z-10">Edit</span>
               </button>
             )}
             {canDeleteContest(contest) && (
@@ -918,7 +918,7 @@ export default function Contests() {
                 title="Delete Contest"
               >
                 <Trash2 size={16} />
-                <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 px-2 py-1 bg-gray-900 text-white text-[10px] rounded opacity-0 pointer-events-none group-hover:opacity-100 whitespace-nowrap transition-opacity z-10">Delete</span>
+                <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 px-2 py-1 bg-apptivia-ink text-white text-[10px] rounded opacity-0 pointer-events-none group-hover:opacity-100 whitespace-nowrap transition-opacity z-10">Delete</span>
               </button>
             )}
           </div>
@@ -931,36 +931,36 @@ export default function Contests() {
               title="View Results"
             >
               <Trophy size={16} />
-              <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 px-2 py-1 bg-gray-900 text-white text-[10px] rounded opacity-0 pointer-events-none group-hover:opacity-100 whitespace-nowrap transition-opacity z-10">Results</span>
+              <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 px-2 py-1 bg-apptivia-ink text-white text-[10px] rounded opacity-0 pointer-events-none group-hover:opacity-100 whitespace-nowrap transition-opacity z-10">Results</span>
             </button>
             {canShareResults && (
               <button
                 onClick={() => openShareResults(contest)}
-                className="p-2 bg-slate-100 text-slate-700 rounded-lg hover:bg-slate-200 transition-all duration-200 hover:scale-105 flex items-center justify-center group relative"
+                className="p-2 bg-apptivia-carbon-100 text-apptivia-carbon-700 rounded-lg hover:bg-apptivia-carbon-200 transition-all duration-200 hover:scale-105 flex items-center justify-center group relative"
                 title="Share Results"
               >
                 <Share2 size={16} />
-                <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 px-2 py-1 bg-gray-900 text-white text-[10px] rounded opacity-0 pointer-events-none group-hover:opacity-100 whitespace-nowrap transition-opacity z-10">Share</span>
+                <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 px-2 py-1 bg-apptivia-ink text-white text-[10px] rounded opacity-0 pointer-events-none group-hover:opacity-100 whitespace-nowrap transition-opacity z-10">Share</span>
               </button>
             )}
             {canEditContest(contest) && (
               <button
                 onClick={() => handleArchiveContest(contest.id, contest.name)}
-                className="p-2 bg-purple-50 text-purple-600 rounded-lg hover:bg-purple-100 transition-all duration-200 hover:scale-105 flex items-center justify-center group relative"
+                className="p-2 bg-apptivia-carbon-100 text-apptivia-ink rounded-lg hover:bg-apptivia-carbon-100 transition-all duration-200 hover:scale-105 flex items-center justify-center group relative"
                 title="Archive Contest"
               >
                 <Archive size={16} />
-                <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 px-2 py-1 bg-gray-900 text-white text-[10px] rounded opacity-0 pointer-events-none group-hover:opacity-100 whitespace-nowrap transition-opacity z-10">Archive</span>
+                <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 px-2 py-1 bg-apptivia-ink text-white text-[10px] rounded opacity-0 pointer-events-none group-hover:opacity-100 whitespace-nowrap transition-opacity z-10">Archive</span>
               </button>
             )}
             {canEditContest(contest) && (
               <button
                 onClick={() => handleEditContest(contest)}
-                className="p-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-all duration-200 hover:scale-105 flex items-center justify-center group relative"
+                className="p-2 bg-apptivia-coral-tone-50 text-apptivia-coral rounded-lg hover:bg-apptivia-coral-tone-50 transition-all duration-200 hover:scale-105 flex items-center justify-center group relative"
                 title="Edit Contest"
               >
                 <Edit2 size={16} />
-                <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 px-2 py-1 bg-gray-900 text-white text-[10px] rounded opacity-0 pointer-events-none group-hover:opacity-100 whitespace-nowrap transition-opacity z-10">Edit</span>
+                <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 px-2 py-1 bg-apptivia-ink text-white text-[10px] rounded opacity-0 pointer-events-none group-hover:opacity-100 whitespace-nowrap transition-opacity z-10">Edit</span>
               </button>
             )}
             {canDeleteContest(contest) && (
@@ -970,7 +970,7 @@ export default function Contests() {
                 title="Delete Contest"
               >
                 <Trash2 size={16} />
-                <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 px-2 py-1 bg-gray-900 text-white text-[10px] rounded opacity-0 pointer-events-none group-hover:opacity-100 whitespace-nowrap transition-opacity z-10">Delete</span>
+                <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 px-2 py-1 bg-apptivia-ink text-white text-[10px] rounded opacity-0 pointer-events-none group-hover:opacity-100 whitespace-nowrap transition-opacity z-10">Delete</span>
               </button>
             )}
           </div>
@@ -979,11 +979,11 @@ export default function Contests() {
           <div className="flex items-center gap-1.5 flex-wrap">
             <button
               onClick={() => openLeaderboard(contest)}
-              className="p-2 bg-gray-50 text-gray-600 rounded-lg hover:bg-gray-100 transition-all duration-200 hover:scale-105 flex items-center justify-center group relative"
+              className="p-2 bg-apptivia-paper text-apptivia-carbon-600 rounded-lg hover:bg-apptivia-carbon-100 transition-all duration-200 hover:scale-105 flex items-center justify-center group relative"
               title="View Results"
             >
               <Trophy size={16} />
-              <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 px-2 py-1 bg-gray-900 text-white text-[10px] rounded opacity-0 pointer-events-none group-hover:opacity-100 whitespace-nowrap transition-opacity z-10">Results</span>
+              <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 px-2 py-1 bg-apptivia-ink text-white text-[10px] rounded opacity-0 pointer-events-none group-hover:opacity-100 whitespace-nowrap transition-opacity z-10">Results</span>
             </button>
             {canDeleteContest(contest) && (
               <button
@@ -992,20 +992,20 @@ export default function Contests() {
                 title="Delete Contest"
               >
                 <Trash2 size={16} />
-                <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 px-2 py-1 bg-gray-900 text-white text-[10px] rounded opacity-0 pointer-events-none group-hover:opacity-100 whitespace-nowrap transition-opacity z-10">Delete</span>
+                <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 px-2 py-1 bg-apptivia-ink text-white text-[10px] rounded opacity-0 pointer-events-none group-hover:opacity-100 whitespace-nowrap transition-opacity z-10">Delete</span>
               </button>
             )}
           </div>
         )}
       </div>
       {contest.status === 'completed' && contest.leaderboard?.length > 0 && (
-        <div className="mt-4 bg-slate-50 border border-slate-200 rounded-lg p-3">
-          <div className="text-xs text-gray-500 mb-2">Top 3 Results</div>
-          <div className="space-y-1 text-sm text-gray-700">
+        <div className="mt-4 bg-apptivia-paper border border-apptivia-carbon-200 rounded-lg p-3">
+          <div className="text-xs text-apptivia-carbon-500 mb-2">Top 3 Results</div>
+          <div className="space-y-1 text-sm text-apptivia-carbon-700">
             {contest.leaderboard.slice(0, 3).map((entry) => (
               <div key={entry.profile_id} className="flex items-center justify-between">
                 <div className="font-semibold">#{entry.rank} {entry.profile_name}</div>
-                <div className="text-gray-500">{entry.score}</div>
+                <div className="text-apptivia-carbon-500">{entry.score}</div>
               </div>
             ))}
           </div>
@@ -1058,20 +1058,20 @@ export default function Contests() {
       <div className="p-6">
         <div className="flex items-start justify-between mb-4">
           <div>
-            <h1 className="text-2xl font-bold text-blue-700 mb-1 flex items-center gap-2">Sales Contests <InfoTooltip text="Create and manage sales contests to gamify performance, track KPIs, and drive results across your team." /></h1>
-            <p className="text-gray-500 text-sm">Gamify performance and drive results</p>
+            <h1 className="text-2xl font-bold text-apptivia-coral mb-1 flex items-center gap-2">Sales Contests <InfoTooltip text="Create and manage sales contests to gamify performance, track KPIs, and drive results across your team." /></h1>
+            <p className="text-apptivia-carbon-500 text-sm">Gamify performance and drive results</p>
           </div>
           <div className="flex gap-2 items-center">
             {/* Search Bar */}
             <div className="relative">
-              <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+              <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-apptivia-carbon-400" />
               <input
                 type="text"
                 placeholder="Search..."
                 value={globalSearchQuery}
                 onChange={(e) => setGlobalSearchQuery(e.target.value)}
                 onFocus={() => globalSearchQuery && setShowGlobalSearchResults(true)}
-                className="w-64 pl-9 pr-8 py-2 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-64 pl-9 pr-8 py-2 text-sm border border-apptivia-carbon-200 rounded-lg focus:ring-2 focus:ring-apptivia-coral focus:border-apptivia-coral"
               />
               {globalSearchQuery && (
                 <button
@@ -1080,14 +1080,14 @@ export default function Contests() {
                     setGlobalSearchResults([]);
                     setShowGlobalSearchResults(false);
                   }}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-apptivia-carbon-400 hover:text-apptivia-carbon-600"
                 >
                   <X size={14} />
                 </button>
               )}
               {/* Search Results Dropdown */}
               {showGlobalSearchResults && globalSearchResults.length > 0 && (
-                <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-96 overflow-y-auto z-50">
+                <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-apptivia-carbon-200 rounded-lg shadow-lg max-h-96 overflow-y-auto z-50">
                   {globalSearchResults.map((result, idx) => (
                     <button
                       key={idx}
@@ -1097,17 +1097,17 @@ export default function Contests() {
                         setGlobalSearchResults([]);
                         setShowGlobalSearchResults(false);
                       }}
-                      className="w-full text-left px-4 py-3 hover:bg-gray-50 border-b last:border-b-0 transition-colors"
+                      className="w-full text-left px-4 py-3 hover:bg-apptivia-paper border-b last:border-b-0 transition-colors"
                     >
                       <div className="flex items-start gap-3">
                         <span className="text-xl">{result.icon}</span>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2">
-                            <span className="text-xs font-semibold text-gray-900">{result.title}</span>
-                            <span className="text-[10px] px-1.5 py-0.5 rounded bg-gray-100 text-gray-600">{result.type}</span>
+                            <span className="text-xs font-semibold text-apptivia-ink">{result.title}</span>
+                            <span className="text-[10px] px-1.5 py-0.5 rounded bg-apptivia-carbon-100 text-apptivia-carbon-600">{result.type}</span>
                           </div>
                           {result.subtitle && (
-                            <div className="text-[11px] text-gray-500 mt-0.5 truncate">{result.subtitle}</div>
+                            <div className="text-[11px] text-apptivia-carbon-500 mt-0.5 truncate">{result.subtitle}</div>
                           )}
                         </div>
                       </div>
@@ -1116,13 +1116,13 @@ export default function Contests() {
                 </div>
               )}
               {showGlobalSearchResults && globalSearchQuery && globalSearchResults.length === 0 && !globalSearching && (
-                <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg p-4 z-50">
-                  <div className="text-sm text-gray-500 text-center">No results found</div>
+                <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-apptivia-carbon-200 rounded-lg shadow-lg p-4 z-50">
+                  <div className="text-sm text-apptivia-carbon-500 text-center">No results found</div>
                 </div>
               )}
               {globalSearching && (
-                <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg p-4 z-50">
-                  <div className="text-sm text-gray-500 text-center">Searching...</div>
+                <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-apptivia-carbon-200 rounded-lg shadow-lg p-4 z-50">
+                  <div className="text-sm text-apptivia-carbon-500 text-center">Searching...</div>
                 </div>
               )}
             </div>
@@ -1130,7 +1130,7 @@ export default function Contests() {
             <button
               onClick={handleRefresh}
               disabled={isRefreshing}
-              className={`relative p-2 rounded-lg font-semibold text-sm bg-white text-gray-700 border border-gray-200 hover:bg-gray-50 group ${
+              className={`relative p-2 rounded-lg font-semibold text-sm bg-white text-apptivia-carbon-700 border border-apptivia-carbon-200 hover:bg-apptivia-paper group ${
                 isRefreshing ? 'opacity-50 cursor-not-allowed' : 'transition-all duration-200 hover:scale-105 hover:shadow-md'
               }`}
             >
@@ -1147,7 +1147,7 @@ export default function Contests() {
                   d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" 
                 />
               </svg>
-              <span className="absolute top-full left-1/2 -translate-x-1/2 mt-2 px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 pointer-events-none group-hover:opacity-100 whitespace-nowrap transition-opacity z-50">
+              <span className="absolute top-full left-1/2 -translate-x-1/2 mt-2 px-2 py-1 bg-apptivia-ink text-white text-xs rounded opacity-0 pointer-events-none group-hover:opacity-100 whitespace-nowrap transition-opacity z-50">
                 {isRefreshing ? 'Refreshing...' : 'Refresh'}
               </span>
             </button>
@@ -1215,7 +1215,7 @@ export default function Contests() {
       >
         <div className="space-y-3">
           <div>
-            <label className="block text-xs text-gray-500 mb-1">Search</label>
+            <label className="block text-xs text-apptivia-carbon-500 mb-1">Search</label>
             <SearchWithHistory
               value={searchQuery}
               onChange={setSearchQuery}
@@ -1225,11 +1225,11 @@ export default function Contests() {
             />
           </div>
           <div>
-            <label className="block text-xs text-gray-500 mb-1">KPI</label>
+            <label className="block text-xs text-apptivia-carbon-500 mb-1">KPI</label>
             <select
               value={kpiFilter}
               onChange={(e) => setKpiFilter(e.target.value)}
-              className="w-full border border-gray-200 rounded px-2 py-1 text-xs"
+              className="w-full border border-apptivia-carbon-200 rounded px-2 py-1 text-xs"
             >
               <option value="all">All KPIs</option>
               {uniqueKpiKeys.map((k) => (
@@ -1238,11 +1238,11 @@ export default function Contests() {
             </select>
           </div>
           <div>
-            <label className="block text-xs text-gray-500 mb-1">Reward Type</label>
+            <label className="block text-xs text-apptivia-carbon-500 mb-1">Reward Type</label>
             <select
               value={rewardFilter}
               onChange={(e) => setRewardFilter(e.target.value)}
-              className="w-full border border-gray-200 rounded px-2 py-1 text-xs"
+              className="w-full border border-apptivia-carbon-200 rounded px-2 py-1 text-xs"
             >
               <option value="all">All Rewards</option>
               {uniqueRewardTypes.map((r) => (
@@ -1251,11 +1251,11 @@ export default function Contests() {
             </select>
           </div>
           <div>
-            <label className="block text-xs text-gray-500 mb-1">Participants</label>
+            <label className="block text-xs text-apptivia-carbon-500 mb-1">Participants</label>
             <select
               value={participantFilter}
               onChange={(e) => setParticipantFilter(e.target.value)}
-              className="w-full border border-gray-200 rounded px-2 py-1 text-xs"
+              className="w-full border border-apptivia-carbon-200 rounded px-2 py-1 text-xs"
             >
               <option value="all">All Types</option>
               <option value="individual">Individual</option>
@@ -1263,11 +1263,11 @@ export default function Contests() {
             </select>
           </div>
           <div>
-            <label className="block text-xs text-gray-500 mb-1">Enrollment</label>
+            <label className="block text-xs text-apptivia-carbon-500 mb-1">Enrollment</label>
             <select
               value={enrollmentFilter}
               onChange={(e) => setEnrollmentFilter(e.target.value)}
-              className="w-full border border-gray-200 rounded px-2 py-1 text-xs"
+              className="w-full border border-apptivia-carbon-200 rounded px-2 py-1 text-xs"
             >
               <option value="all">All</option>
               <option value="enrolled">Enrolled</option>
@@ -1275,11 +1275,11 @@ export default function Contests() {
             </select>
           </div>
           <div>
-            <label className="block text-xs text-gray-500 mb-1">Date Range</label>
+            <label className="block text-xs text-apptivia-carbon-500 mb-1">Date Range</label>
             <select
               value={dateFilter}
               onChange={(e) => setDateFilter(e.target.value)}
-              className="w-full border border-gray-200 rounded px-2 py-1 text-xs"
+              className="w-full border border-apptivia-carbon-200 rounded px-2 py-1 text-xs"
             >
               <option value="all">All Dates</option>
               <option value="this_month">This Month</option>
@@ -1288,11 +1288,11 @@ export default function Contests() {
             </select>
           </div>
           <div>
-            <label className="block text-xs text-gray-500 mb-1">Sort By</label>
+            <label className="block text-xs text-apptivia-carbon-500 mb-1">Sort By</label>
             <select
               value={sortKey}
               onChange={(e) => setSortKey(e.target.value)}
-              className="w-full border border-gray-200 rounded px-2 py-1 text-xs"
+              className="w-full border border-apptivia-carbon-200 rounded px-2 py-1 text-xs"
             >
               <option value="recent">Most Recent</option>
               <option value="participants">Participants</option>
@@ -1303,7 +1303,7 @@ export default function Contests() {
       </RightFilterPanel>
         {loading && (
           <div className="text-center py-12">
-            <div className="text-gray-500">Loading contests...</div>
+            <div className="text-apptivia-carbon-500">Loading contests...</div>
           </div>
         )}
 
@@ -1316,34 +1316,34 @@ export default function Contests() {
 
         {!loading && !error && (
           <div className="space-y-6">
-            <div className="bg-white rounded-lg p-4 shadow-sm border border-slate-100">
+            <div className="bg-white rounded-lg p-4 shadow-sm border border-apptivia-carbon-100">
               <div className="flex items-center justify-between gap-3 mb-3">
                 <div>
-                  <div className="text-xs text-gray-500">Contest Analytics</div>
-                  <div className="text-base font-semibold text-gray-900 flex items-center gap-2">Performance snapshot across contests <InfoTooltip text="Aggregated statistics across all your contests including active, upcoming, and completed." /></div>
+                  <div className="text-xs text-apptivia-carbon-500">Contest Analytics</div>
+                  <div className="text-base font-semibold text-apptivia-ink flex items-center gap-2">Performance snapshot across contests <InfoTooltip text="Aggregated statistics across all your contests including active, upcoming, and completed." /></div>
                 </div>
                 {analytics.topContest && (
-                  <div className="text-xs text-gray-500">
-                    Most popular: <span className="font-semibold text-gray-700">{analytics.topContest.name}</span>
+                  <div className="text-xs text-apptivia-carbon-500">
+                    Most popular: <span className="font-semibold text-apptivia-carbon-700">{analytics.topContest.name}</span>
                   </div>
                 )}
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-                <div className="bg-slate-50 rounded-lg p-3">
-                  <div className="text-xs text-gray-500">Avg Participants</div>
-                  <div className="text-lg font-bold text-blue-600">{analytics.avgParticipants}</div>
+                <div className="bg-apptivia-paper rounded-lg p-3">
+                  <div className="text-xs text-apptivia-carbon-500">Avg Participants</div>
+                  <div className="text-lg font-bold text-apptivia-coral">{analytics.avgParticipants}</div>
                 </div>
-                <div className="bg-slate-50 rounded-lg p-3">
-                  <div className="text-xs text-gray-500">Completion Rate</div>
+                <div className="bg-apptivia-paper rounded-lg p-3">
+                  <div className="text-xs text-apptivia-carbon-500">Completion Rate</div>
                   <div className="text-lg font-bold text-emerald-600">{analytics.completionRate}%</div>
                 </div>
-                <div className="bg-slate-50 rounded-lg p-3">
-                  <div className="text-xs text-gray-500">Most Popular KPI</div>
-                  <div className="text-sm font-semibold text-gray-700">{getKpiDisplayName(analytics.mostPopularKpi)}</div>
+                <div className="bg-apptivia-paper rounded-lg p-3">
+                  <div className="text-xs text-apptivia-carbon-500">Most Popular KPI</div>
+                  <div className="text-sm font-semibold text-apptivia-carbon-700">{getKpiDisplayName(analytics.mostPopularKpi)}</div>
                 </div>
-                <div className="bg-slate-50 rounded-lg p-3">
-                  <div className="text-xs text-gray-500">Total Contests</div>
-                  <div className="text-lg font-bold text-gray-700">{allContests.length}</div>
+                <div className="bg-apptivia-paper rounded-lg p-3">
+                  <div className="text-xs text-apptivia-carbon-500">Total Contests</div>
+                  <div className="text-lg font-bold text-apptivia-carbon-700">{allContests.length}</div>
                 </div>
               </div>
             </div>
@@ -1363,8 +1363,8 @@ export default function Contests() {
                   onClick={() => setStatusTab(tab.key)}
                   className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all ${
                     statusTab === tab.key
-                      ? 'bg-blue-600 text-white shadow-sm'
-                      : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'
+                      ? 'bg-apptivia-coral text-white shadow-sm'
+                      : 'bg-white text-apptivia-carbon-600 border border-apptivia-carbon-200 hover:bg-apptivia-paper'
                   }`}
                 >
                   {tab.label}
@@ -1373,7 +1373,7 @@ export default function Contests() {
               {canCreateContests && (
                 <button
                   onClick={() => setShowCreateModal(true)}
-                  className="ml-auto px-4 py-1.5 rounded-lg text-xs font-semibold bg-blue-600 text-white hover:bg-blue-700 transition-colors shadow-sm"
+                  className="ml-auto px-4 py-1.5 rounded-lg text-xs font-semibold bg-apptivia-coral text-white hover:bg-apptivia-coral transition-colors shadow-sm"
                 >
                   + Create Contest
                 </button>
@@ -1381,27 +1381,27 @@ export default function Contests() {
             </div>
 
             {myActiveContest && statusTab !== 'completed' && (
-              <div className="bg-white rounded-lg p-4 shadow-sm border border-blue-100">
+              <div className="bg-white rounded-lg p-4 shadow-sm border border-apptivia-coral-tone-100">
                 <div className="flex items-center justify-between mb-2">
                   <div>
-                    <div className="text-xs text-blue-600 font-semibold">My Active Contest</div>
-                    <div className="text-base font-semibold text-gray-900">{myActiveContest.name}</div>
+                    <div className="text-xs text-apptivia-coral font-semibold">My Active Contest</div>
+                    <div className="text-base font-semibold text-apptivia-ink">{myActiveContest.name}</div>
                   </div>
                   <button
                     onClick={() => openLeaderboard(myActiveContest)}
-                    className="px-3 py-1.5 rounded-md text-xs font-semibold bg-blue-50 text-blue-700 hover:bg-blue-100"
+                    className="px-3 py-1.5 rounded-md text-xs font-semibold bg-apptivia-coral-tone-50 text-apptivia-coral hover:bg-apptivia-coral-tone-50"
                   >
                     View Leaderboard
                   </button>
                 </div>
-                <div className="text-xs text-gray-600 mb-2">{myActiveContest.description}</div>
-                <div className="flex items-center gap-4 text-xs text-gray-500">
+                <div className="text-xs text-apptivia-carbon-600 mb-2">{myActiveContest.description}</div>
+                <div className="flex items-center gap-4 text-xs text-apptivia-carbon-500">
                   <span>👥 {myActiveContest.participant_count} participants</span>
                   {myActiveContest.days_remaining !== null && (
                     <span>⏰ {formatDaysRemaining(myActiveContest.days_remaining, myActiveContest.status)}</span>
                   )}
                   {myActiveContest.user_rank && (
-                    <span className="text-blue-700 font-semibold">Rank #{myActiveContest.user_rank}</span>
+                    <span className="text-apptivia-coral font-semibold">Rank #{myActiveContest.user_rank}</span>
                   )}
                 </div>
               </div>
@@ -1410,7 +1410,7 @@ export default function Contests() {
             {/* Active Contests */}
             {(statusTab === 'all' || statusTab === 'active') && filteredActive.length > 0 && (
               <div>
-                <h2 className="text-lg font-semibold text-gray-700 mb-3 flex items-center gap-2">🔥 Active Contests <InfoTooltip text="Contests currently in progress. Join, view leaderboards, and track your ranking." /></h2>
+                <h2 className="text-lg font-semibold text-apptivia-carbon-700 mb-3 flex items-center gap-2">🔥 Active Contests <InfoTooltip text="Contests currently in progress. Join, view leaderboards, and track your ranking." /></h2>
                 <div className="space-y-4">
                   {filteredActive.map(renderContest)}
                 </div>
@@ -1420,7 +1420,7 @@ export default function Contests() {
             {/* Upcoming Contests */}
             {(statusTab === 'all' || statusTab === 'upcoming') && filteredUpcoming.length > 0 && (
               <div>
-                <h2 className="text-lg font-semibold text-gray-700 mb-3 flex items-center gap-2">📅 Upcoming Contests <InfoTooltip text="Contests that haven't started yet. They will become active on their start date." /></h2>
+                <h2 className="text-lg font-semibold text-apptivia-carbon-700 mb-3 flex items-center gap-2">📅 Upcoming Contests <InfoTooltip text="Contests that haven't started yet. They will become active on their start date." /></h2>
                 <div className="space-y-4">
                   {filteredUpcoming.map(renderContest)}
                 </div>
@@ -1430,7 +1430,7 @@ export default function Contests() {
             {/* Completed Contests */}
             {(statusTab === 'all' || statusTab === 'completed') && filteredCompleted.length > 0 && (
               <div>
-                <h2 className="text-lg font-semibold text-gray-700 mb-3 flex items-center gap-2">🏆 Completed Contests <InfoTooltip text="Finished contests with final results. Share results or archive them." /></h2>
+                <h2 className="text-lg font-semibold text-apptivia-carbon-700 mb-3 flex items-center gap-2">🏆 Completed Contests <InfoTooltip text="Finished contests with final results. Share results or archive them." /></h2>
                 <div className="space-y-4">
                   {filteredCompleted.map(renderContest)}
                 </div>
@@ -1440,7 +1440,7 @@ export default function Contests() {
             {/* Archived Contests */}
             {(statusTab === 'all' || statusTab === 'archived') && filteredArchived.length > 0 && (
               <div>
-                <h2 className="text-lg font-semibold text-gray-700 mb-3 flex items-center gap-2">📦 Archived Contests <InfoTooltip text="Historical contests preserved for reference. Includes winners, stats, and leaderboard history." /></h2>
+                <h2 className="text-lg font-semibold text-apptivia-carbon-700 mb-3 flex items-center gap-2">📦 Archived Contests <InfoTooltip text="Historical contests preserved for reference. Includes winners, stats, and leaderboard history." /></h2>
                 <div className="space-y-4">
                   {filteredArchived.map(renderContest)}
                 </div>
@@ -1450,37 +1450,37 @@ export default function Contests() {
             {/* Badge Leaderboard */}
             {statusTab === 'badges' && (
               <div>
-                <h2 className="text-lg font-semibold text-gray-700 mb-4 flex items-center gap-2">🎖️ Badge Leaderboard</h2>
+                <h2 className="text-lg font-semibold text-apptivia-carbon-700 mb-4 flex items-center gap-2">🎖️ Badge Leaderboard</h2>
                 {badgeLeaderboardLoading ? (
-                  <div className="text-center py-8 text-gray-400 text-sm">Loading...</div>
+                  <div className="text-center py-8 text-apptivia-carbon-400 text-sm">Loading...</div>
                 ) : badgeLeaderboard.length === 0 ? (
-                  <div className="text-center py-8 text-gray-400 text-sm">No badges earned yet.</div>
+                  <div className="text-center py-8 text-apptivia-carbon-400 text-sm">No badges earned yet.</div>
                 ) : (
-                  <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+                  <div className="bg-white rounded-lg border border-apptivia-carbon-200 overflow-hidden">
                     <table className="w-full text-sm">
                       <thead>
-                        <tr className="bg-gray-50 border-b border-gray-200">
-                          <th className="text-left px-4 py-3 font-semibold text-gray-600 w-10">#</th>
-                          <th className="text-left px-4 py-3 font-semibold text-gray-600">Rep</th>
-                          <th className="text-center px-4 py-3 font-semibold text-gray-600">Total</th>
+                        <tr className="bg-apptivia-paper border-b border-apptivia-carbon-200">
+                          <th className="text-left px-4 py-3 font-semibold text-apptivia-carbon-600 w-10">#</th>
+                          <th className="text-left px-4 py-3 font-semibold text-apptivia-carbon-600">Rep</th>
+                          <th className="text-center px-4 py-3 font-semibold text-apptivia-carbon-600">Total</th>
                           <th className="text-center px-4 py-3 font-semibold text-yellow-600">👑 Legendary</th>
-                          <th className="text-center px-4 py-3 font-semibold text-purple-600">💜 Epic</th>
-                          <th className="text-center px-4 py-3 font-semibold text-blue-600">💙 Rare</th>
-                          <th className="text-right px-4 py-3 font-semibold text-gray-600">Latest</th>
+                          <th className="text-center px-4 py-3 font-semibold text-apptivia-ink">💜 Epic</th>
+                          <th className="text-center px-4 py-3 font-semibold text-apptivia-coral">💙 Rare</th>
+                          <th className="text-right px-4 py-3 font-semibold text-apptivia-carbon-600">Latest</th>
                         </tr>
                       </thead>
                       <tbody>
                         {badgeLeaderboard.map((rep, i) => (
-                          <tr key={rep.id} className={`border-b border-gray-100 ${i < 3 ? 'bg-amber-50/40' : 'hover:bg-gray-50'}`}>
-                            <td className="px-4 py-3 text-gray-500 font-medium">
+                          <tr key={rep.id} className={`border-b border-apptivia-carbon-100 ${i < 3 ? 'bg-amber-50/40' : 'hover:bg-apptivia-paper'}`}>
+                            <td className="px-4 py-3 text-apptivia-carbon-500 font-medium">
                               {i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `#${i + 1}`}
                             </td>
-                            <td className="px-4 py-3 font-semibold text-gray-900">{rep.name}</td>
-                            <td className="px-4 py-3 text-center font-bold text-gray-800">{rep.count}</td>
+                            <td className="px-4 py-3 font-semibold text-apptivia-ink">{rep.name}</td>
+                            <td className="px-4 py-3 text-center font-bold text-apptivia-ink">{rep.count}</td>
                             <td className="px-4 py-3 text-center text-yellow-700 font-medium">{rep.legendary || '—'}</td>
-                            <td className="px-4 py-3 text-center text-purple-700 font-medium">{rep.epic || '—'}</td>
-                            <td className="px-4 py-3 text-center text-blue-700 font-medium">{rep.rare || '—'}</td>
-                            <td className="px-4 py-3 text-right text-gray-400 text-xs">{new Date(rep.latest).toLocaleDateString()}</td>
+                            <td className="px-4 py-3 text-center text-apptivia-ink font-medium">{rep.epic || '—'}</td>
+                            <td className="px-4 py-3 text-center text-apptivia-coral font-medium">{rep.rare || '—'}</td>
+                            <td className="px-4 py-3 text-right text-apptivia-carbon-400 text-xs">{new Date(rep.latest).toLocaleDateString()}</td>
                           </tr>
                         ))}
                       </tbody>
@@ -1509,55 +1509,55 @@ export default function Contests() {
 
               return (
                 <div className="space-y-6">
-                  <h2 className="text-lg font-semibold text-gray-700 flex items-center gap-2">📊 Contest Analytics</h2>
+                  <h2 className="text-lg font-semibold text-apptivia-carbon-700 flex items-center gap-2">📊 Contest Analytics</h2>
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    <div className="bg-white rounded-lg border border-gray-200 p-4 text-center">
-                      <div className="text-2xl font-bold text-blue-600">{all.length}</div>
-                      <div className="text-xs text-gray-500">Total Contests</div>
+                    <div className="bg-white rounded-lg border border-apptivia-carbon-200 p-4 text-center">
+                      <div className="text-2xl font-bold text-apptivia-coral">{all.length}</div>
+                      <div className="text-xs text-apptivia-carbon-500">Total Contests</div>
                     </div>
-                    <div className="bg-white rounded-lg border border-gray-200 p-4 text-center">
+                    <div className="bg-white rounded-lg border border-apptivia-carbon-200 p-4 text-center">
                       <div className="text-2xl font-bold text-emerald-600">{completed.length}</div>
-                      <div className="text-xs text-gray-500">Completed</div>
+                      <div className="text-xs text-apptivia-carbon-500">Completed</div>
                     </div>
-                    <div className="bg-white rounded-lg border border-gray-200 p-4 text-center">
-                      <div className="text-2xl font-bold text-purple-600">{avgDuration}d</div>
-                      <div className="text-xs text-gray-500">Avg Duration</div>
+                    <div className="bg-white rounded-lg border border-apptivia-carbon-200 p-4 text-center">
+                      <div className="text-2xl font-bold text-apptivia-ink">{avgDuration}d</div>
+                      <div className="text-xs text-apptivia-carbon-500">Avg Duration</div>
                     </div>
-                    <div className="bg-white rounded-lg border border-gray-200 p-4 text-center">
+                    <div className="bg-white rounded-lg border border-apptivia-carbon-200 p-4 text-center">
                       <div className="text-2xl font-bold text-amber-600">{avgParticipants}</div>
-                      <div className="text-xs text-gray-500">Avg Participants</div>
+                      <div className="text-xs text-apptivia-carbon-500">Avg Participants</div>
                     </div>
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     {/* Most Popular KPI */}
-                    <div className="bg-white rounded-lg border border-gray-200 p-4">
-                      <h3 className="text-sm font-semibold text-gray-700 mb-3">Most Popular KPIs</h3>
+                    <div className="bg-white rounded-lg border border-apptivia-carbon-200 p-4">
+                      <h3 className="text-sm font-semibold text-apptivia-carbon-700 mb-3">Most Popular KPIs</h3>
                       {Object.entries(kpiCounts).sort((a, b) => b[1] - a[1]).map(([kpi, count]) => (
-                        <div key={kpi} className="flex items-center justify-between py-1.5 border-b border-gray-50 last:border-0">
-                          <span className="text-sm text-gray-600">{getKpiDisplayName(kpi)}</span>
+                        <div key={kpi} className="flex items-center justify-between py-1.5 border-b border-apptivia-carbon-100 last:border-0">
+                          <span className="text-sm text-apptivia-carbon-600">{getKpiDisplayName(kpi)}</span>
                           <div className="flex items-center gap-2">
-                            <div className="w-24 bg-gray-100 rounded-full h-2">
-                              <div className="bg-blue-500 rounded-full h-2" style={{ width: `${(count / all.length) * 100}%` }} />
+                            <div className="w-24 bg-apptivia-carbon-100 rounded-full h-2">
+                              <div className="bg-apptivia-coral rounded-full h-2" style={{ width: `${(count / all.length) * 100}%` }} />
                             </div>
-                            <span className="text-xs text-gray-400 w-6 text-right">{count}</span>
+                            <span className="text-xs text-apptivia-carbon-400 w-6 text-right">{count}</span>
                           </div>
                         </div>
                       ))}
                     </div>
 
                     {/* Top Winners */}
-                    <div className="bg-white rounded-lg border border-gray-200 p-4">
-                      <h3 className="text-sm font-semibold text-gray-700 mb-3">Top Winners</h3>
+                    <div className="bg-white rounded-lg border border-apptivia-carbon-200 p-4">
+                      <h3 className="text-sm font-semibold text-apptivia-carbon-700 mb-3">Top Winners</h3>
                       {topWinners.length === 0 ? (
-                        <p className="text-sm text-gray-400 py-4 text-center">No completed contests yet</p>
+                        <p className="text-sm text-apptivia-carbon-400 py-4 text-center">No completed contests yet</p>
                       ) : topWinners.map(([name, wins], i) => (
-                        <div key={name} className="flex items-center justify-between py-1.5 border-b border-gray-50 last:border-0">
+                        <div key={name} className="flex items-center justify-between py-1.5 border-b border-apptivia-carbon-100 last:border-0">
                           <div className="flex items-center gap-2">
                             <span className="text-sm font-medium">{i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `#${i + 1}`}</span>
-                            <span className="text-sm text-gray-700">{name}</span>
+                            <span className="text-sm text-apptivia-carbon-700">{name}</span>
                           </div>
-                          <span className="text-xs font-semibold text-blue-600">{wins} win{wins !== 1 ? 's' : ''}</span>
+                          <span className="text-xs font-semibold text-apptivia-coral">{wins} win{wins !== 1 ? 's' : ''}</span>
                         </div>
                       ))}
                     </div>
@@ -1565,14 +1565,14 @@ export default function Contests() {
 
                   {/* Export section */}
                   {completed.length > 0 && (
-                    <div className="bg-white rounded-lg border border-gray-200 p-4">
-                      <h3 className="text-sm font-semibold text-gray-700 mb-3">Export Results</h3>
+                    <div className="bg-white rounded-lg border border-apptivia-carbon-200 p-4">
+                      <h3 className="text-sm font-semibold text-apptivia-carbon-700 mb-3">Export Results</h3>
                       <div className="flex flex-wrap gap-2">
                         {completed.map(c => (
                           <button
                             key={c.id}
                             onClick={() => exportContestResultsToCSV(c)}
-                            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-gray-600 bg-gray-50 border border-gray-200 rounded-lg hover:bg-gray-100 transition-colors"
+                            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-apptivia-carbon-600 bg-apptivia-paper border border-apptivia-carbon-200 rounded-lg hover:bg-apptivia-carbon-100 transition-colors"
                           >
                             <Download size={12} /> {c.name}
                           </button>
@@ -1586,11 +1586,11 @@ export default function Contests() {
 
             {statusTab === 'all' && filteredActive.length === 0 && filteredUpcoming.length === 0 && filteredCompleted.length === 0 && filteredArchived.length === 0 && (
               <div className="text-center py-16">
-                <Trophy size={48} className="mx-auto text-gray-300 mb-3" />
-                <div className="text-gray-500 text-lg font-medium mb-1">No contests yet</div>
-                <p className="text-gray-400 text-sm mb-4">Contests drive friendly competition and boost team performance.</p>
+                <Trophy size={48} className="mx-auto text-apptivia-carbon-300 mb-3" />
+                <div className="text-apptivia-carbon-500 text-lg font-medium mb-1">No contests yet</div>
+                <p className="text-apptivia-carbon-400 text-sm mb-4">Contests drive friendly competition and boost team performance.</p>
                 {(isAdmin || isManager) && (
-                  <button onClick={() => setShowCreateModal(true)} className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors">
+                  <button onClick={() => setShowCreateModal(true)} className="px-4 py-2 bg-apptivia-coral text-white rounded-lg text-sm font-medium hover:bg-apptivia-coral transition-colors">
                     Create Your First Contest
                   </button>
                 )}
@@ -1602,9 +1602,9 @@ export default function Contests() {
               (statusTab === 'completed' && filteredCompleted.length === 0) ||
               (statusTab === 'archived' && filteredArchived.length === 0)
             ) && (
-              <div className="text-center py-8 bg-gray-50 rounded-lg">
-                <div className="text-gray-400 text-sm">No contests in this view.</div>
-                <div className="text-xs text-gray-500">Try another tab or create a new contest.</div>
+              <div className="text-center py-8 bg-apptivia-paper rounded-lg">
+                <div className="text-apptivia-carbon-400 text-sm">No contests in this view.</div>
+                <div className="text-xs text-apptivia-carbon-500">Try another tab or create a new contest.</div>
               </div>
             )}
           </div>
@@ -1628,21 +1628,21 @@ export default function Contests() {
       />
       {shareModal.isOpen && (
         <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4 overflow-y-auto" onClick={closeShareResults}>
-          <div className="bg-white rounded-xl shadow-2xl max-w-2xl w-full my-4 max-h-[85vh] overflow-hidden flex flex-col" onClick={(e) => e.stopPropagation()}>
+          <div className="bg-white rounded-lg shadow-2xl max-w-2xl w-full my-4 max-h-[85vh] overflow-hidden flex flex-col" onClick={(e) => e.stopPropagation()}>
             {/* Header */}
-            <div className="flex items-center justify-between p-4 border-b border-gray-200 flex-shrink-0">
-              <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+            <div className="flex items-center justify-between p-4 border-b border-apptivia-carbon-200 flex-shrink-0">
+              <h2 className="text-xl font-bold text-apptivia-ink flex items-center gap-2">
                 <span>🏆</span>
                 Share Contest Results
               </h2>
-              <button onClick={closeShareResults} className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
-                <X size={20} className="text-gray-500" />
+              <button onClick={closeShareResults} className="p-2 hover:bg-apptivia-carbon-100 rounded-lg transition-colors">
+                <X size={20} className="text-apptivia-carbon-500" />
               </button>
             </div>
 
             {/* Results Preview (Downloadable) */}
-            <div className="flex-1 overflow-y-auto p-4 bg-gray-50 min-h-0">
-              <div ref={sharePreviewRef} className="bg-gradient-to-br from-blue-500 via-purple-500 to-pink-500 rounded-xl p-6 text-white shadow-2xl">
+            <div className="flex-1 overflow-y-auto p-4 bg-apptivia-paper min-h-0">
+              <div ref={sharePreviewRef} className="bg-apptivia-ink rounded-lg p-6 text-white shadow-2xl">
                 {/* Contest Header */}
                 <div className="mb-4">
                   <h3 className="text-xl font-bold">{shareModal.contest?.name}</h3>
@@ -1712,25 +1712,25 @@ export default function Contests() {
             </div>
 
             {/* Action Buttons */}
-            <div className="border-t border-gray-200 p-4 bg-white flex-shrink-0">
+            <div className="border-t border-apptivia-carbon-200 p-4 bg-white flex-shrink-0">
               {!showEmailForm ? (
                 <>
                   {/* Writeup textarea */}
                   <div className="mb-3">
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Writeup (optional)</label>
+                    <label className="block text-sm font-medium text-apptivia-carbon-700 mb-1">Writeup (optional)</label>
                     <textarea
                       value={shareNotes}
                       onChange={(e) => setShareNotes(e.target.value)}
                       rows={2}
                       placeholder="Add a brief summary and next steps for the team."
-                      className="w-full border border-gray-200 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      className="w-full border border-apptivia-carbon-200 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-apptivia-coral focus:border-apptivia-coral"
                     />
                   </div>
                   <div className="flex flex-wrap gap-2 justify-center">
                     <button
                       onClick={handleDownloadResults}
                       disabled={downloadingResults}
-                      className="flex items-center gap-1.5 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="flex items-center gap-1.5 px-4 py-2 bg-apptivia-coral text-white rounded-lg text-sm font-medium hover:bg-apptivia-coral transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       <Download size={16} />
                       {downloadingResults ? 'Downloading...' : 'Download PNG'}
@@ -1743,14 +1743,14 @@ export default function Contests() {
                       Email Results
                     </button>
                   </div>
-                  <p className="text-center text-xs text-gray-500 mt-2">
+                  <p className="text-center text-xs text-apptivia-carbon-500 mt-2">
                     Download as an image or email results to your team
                   </p>
                 </>
               ) : (
                 <div className="space-y-3">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                    <label className="block text-sm font-medium text-apptivia-carbon-700 mb-1.5">
                       Recipients (comma-separated emails)
                     </label>
                     <input
@@ -1758,7 +1758,7 @@ export default function Contests() {
                       value={shareRecipients}
                       onChange={(e) => setShareRecipients(e.target.value)}
                       placeholder="rep@company.com, rep2@company.com"
-                      className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      className="w-full px-3 py-2 text-sm border border-apptivia-carbon-300 rounded-lg focus:ring-2 focus:ring-apptivia-coral focus:border-transparent"
                     />
                     {shareRecipients.split(',').filter(r => r.trim()).length > 50 && (
                       <p className="text-xs text-red-500 mt-1">Maximum 50 recipients per email. Only the first 50 will receive the message.</p>
@@ -1770,8 +1770,8 @@ export default function Contests() {
                       disabled={!shareRecipients.trim() || sendingResults}
                       className={`flex-1 flex items-center justify-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                         shareRecipients.trim() && !sendingResults
-                          ? 'bg-blue-600 hover:bg-blue-700 text-white'
-                          : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                          ? 'bg-apptivia-coral hover:bg-apptivia-coral text-white'
+                          : 'bg-apptivia-carbon-300 text-apptivia-carbon-500 cursor-not-allowed'
                       }`}
                     >
                       <Mail size={16} />
@@ -1779,7 +1779,7 @@ export default function Contests() {
                     </button>
                     <button
                       onClick={() => setShowEmailForm(false)}
-                      className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-300 transition-colors"
+                      className="px-4 py-2 bg-apptivia-carbon-200 text-apptivia-carbon-700 rounded-lg text-sm font-medium hover:bg-apptivia-carbon-300 transition-colors"
                     >
                       Back
                     </button>

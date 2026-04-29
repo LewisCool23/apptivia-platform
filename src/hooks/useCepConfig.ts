@@ -139,7 +139,7 @@ export function useCepConfig(organizationId: string) {
       stage_key: stage.stage_key,
       stage_name: stage.stage_name,
       stage_order: stage.stage_order ?? (stages.length + 1),
-      color: stage.color || '#6366f1',
+      color: stage.color || '#71717A',
       win_probability: stage.win_probability ?? 0,
       checklist_items: stage.checklist_items || [],
       exit_criteria: stage.exit_criteria || [],

@@ -28,29 +28,29 @@ export default function ExportReportModal({ isOpen, onClose, onSelectFormat, tit
       icon: FileText,
       label: 'PDF Report',
       description: 'Branded report with data tables and visuals. Ready to share with leadership.',
-      color: 'text-blue-600',
-      bg: 'bg-blue-50',
-      border: 'border-blue-200 hover:border-blue-400',
+      color: 'text-apptivia-coral',
+      bg: 'bg-apptivia-coral-tone-50',
+      border: 'border-apptivia-coral-tone-100 hover:border-apptivia-coral-tone-100',
     },
   ];
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={onClose}>
       <div
-        className="bg-white rounded-xl shadow-2xl w-full max-w-md mx-4 animate-fadeIn"
+        className="bg-white rounded-lg shadow-2xl w-full max-w-md mx-4 animate-fadeIn"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
-          <h2 className="text-lg font-semibold text-gray-900">{title}</h2>
-          <button onClick={onClose} className="p-1 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-gray-600">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-apptivia-carbon-100">
+          <h2 className="text-lg font-semibold text-apptivia-ink">{title}</h2>
+          <button onClick={onClose} className="p-1 rounded-lg hover:bg-apptivia-carbon-100 text-apptivia-carbon-400 hover:text-apptivia-carbon-600">
             <X size={18} />
           </button>
         </div>
 
         {/* Options */}
         <div className="p-6 space-y-3">
-          <p className="text-sm text-gray-500 mb-4">Choose your export format:</p>
+          <p className="text-sm text-apptivia-carbon-500 mb-4">Choose your export format:</p>
           {options.map((opt) => (
             <button
               key={opt.key}
@@ -58,14 +58,14 @@ export default function ExportReportModal({ isOpen, onClose, onSelectFormat, tit
                 onSelectFormat(opt.key);
                 onClose();
               }}
-              className={`w-full flex items-start gap-4 p-4 rounded-xl border-2 transition-all text-left ${opt.border} hover:shadow-md`}
+              className={`w-full flex items-start gap-4 p-4 rounded-lg border-2 transition-all text-left ${opt.border} hover:shadow-md`}
             >
               <div className={`p-2.5 rounded-lg ${opt.bg} shrink-0`}>
                 <opt.icon size={22} className={opt.color} />
               </div>
               <div>
-                <div className="font-semibold text-gray-900 text-sm">{opt.label}</div>
-                <div className="text-xs text-gray-500 mt-0.5">{opt.description}</div>
+                <div className="font-semibold text-apptivia-ink text-sm">{opt.label}</div>
+                <div className="text-xs text-apptivia-carbon-500 mt-0.5">{opt.description}</div>
               </div>
             </button>
           ))}

@@ -32,9 +32,9 @@ export default function IconButton({
   };
 
   const variantClasses = {
-    ghost: 'hover:bg-gray-100 text-gray-500 hover:text-gray-700',
-    outline: 'border border-gray-300 hover:bg-gray-50 text-gray-600 hover:text-gray-800',
-    solid: 'bg-blue-500 text-white hover:bg-blue-600',
+    ghost: 'hover:bg-apptivia-carbon-100 text-apptivia-carbon-500 hover:text-apptivia-carbon-700',
+    outline: 'border border-apptivia-carbon-300 hover:bg-apptivia-paper text-apptivia-carbon-600 hover:text-apptivia-ink',
+    solid: 'bg-apptivia-coral text-white hover:bg-apptivia-coral',
   };
 
   return (
@@ -42,7 +42,7 @@ export default function IconButton({
       <button
         type="button"
         aria-label={ariaLabel}
-        className={`inline-flex items-center justify-center rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-blue-300 ${sizeClasses[size]} ${variantClasses[variant]} ${className}`}
+        className={`inline-flex items-center justify-center rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-apptivia-coral-tone-300 ${sizeClasses[size]} ${variantClasses[variant]} ${className}`}
         {...rest}
       >
         <Icon className={iconSizes[size]} />

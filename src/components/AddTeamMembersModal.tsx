@@ -165,22 +165,22 @@ export default function AddTeamMembersModal({
       onClick={onClose}
     >
       <div
-        className="bg-white rounded-xl shadow-2xl w-full max-w-lg max-h-[80vh] flex flex-col"
+        className="bg-white rounded-lg shadow-2xl w-full max-w-lg max-h-[80vh] flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="px-5 py-4 border-b border-gray-200 flex-shrink-0">
+        <div className="px-5 py-4 border-b border-apptivia-carbon-200 flex-shrink-0">
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-lg font-bold text-gray-800 flex items-center gap-2">
-                <Users size={20} className="text-blue-600" />
+              <h2 className="text-lg font-bold text-apptivia-ink flex items-center gap-2">
+                <Users size={20} className="text-apptivia-coral" />
                 Add Team Members
               </h2>
-              <p className="text-xs text-gray-500 mt-0.5">{contestName}</p>
+              <p className="text-xs text-apptivia-carbon-500 mt-0.5">{contestName}</p>
             </div>
             <button
               onClick={onClose}
-              className="p-1 text-gray-400 hover:text-gray-600 rounded"
+              className="p-1 text-apptivia-carbon-400 hover:text-apptivia-carbon-600 rounded"
             >
               <X size={20} />
             </button>
@@ -188,44 +188,44 @@ export default function AddTeamMembersModal({
         </div>
 
         {/* Search & Filters */}
-        <div className="px-5 py-3 border-b border-gray-100 flex-shrink-0 space-y-2">
+        <div className="px-5 py-3 border-b border-apptivia-carbon-100 flex-shrink-0 space-y-2">
           <div className="relative">
-            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-apptivia-carbon-400" />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search by name, email, or team..."
-              className="w-full pl-9 pr-3 py-2 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="w-full pl-9 pr-3 py-2 text-sm border border-apptivia-carbon-200 rounded-lg focus:ring-2 focus:ring-apptivia-coral focus:border-apptivia-coral"
             />
           </div>
           <div className="flex items-center justify-between">
-            <label className="flex items-center gap-2 text-xs text-gray-600 cursor-pointer">
+            <label className="flex items-center gap-2 text-xs text-apptivia-carbon-600 cursor-pointer">
               <input
                 type="checkbox"
                 checked={showMyTeamOnly}
                 onChange={(e) => setShowMyTeamOnly(e.target.checked)}
-                className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                className="rounded border-apptivia-carbon-300 text-apptivia-coral focus:ring-apptivia-coral"
               />
               My direct reports only
             </label>
             <div className="flex gap-2">
               <button
                 onClick={selectAll}
-                className="text-xs text-blue-600 hover:text-blue-700 font-medium"
+                className="text-xs text-apptivia-coral hover:text-apptivia-coral font-medium"
               >
                 Select all
               </button>
-              <span className="text-gray-300">|</span>
+              <span className="text-apptivia-carbon-300">|</span>
               <button
                 onClick={clearSelection}
-                className="text-xs text-gray-500 hover:text-gray-700 font-medium"
+                className="text-xs text-apptivia-carbon-500 hover:text-apptivia-carbon-700 font-medium"
               >
                 Clear
               </button>
             </div>
           </div>
-          <div className="text-xs text-gray-400">
+          <div className="text-xs text-apptivia-carbon-400">
             {alreadyEnrolledCount} already enrolled · {filteredProfiles.length} available · {selectedIds.size} selected
           </div>
         </div>
@@ -233,9 +233,9 @@ export default function AddTeamMembersModal({
         {/* Profile List */}
         <div className="flex-1 overflow-y-auto px-5 py-2 min-h-0">
           {loading ? (
-            <div className="text-center py-8 text-gray-400 text-sm">Loading team members...</div>
+            <div className="text-center py-8 text-apptivia-carbon-400 text-sm">Loading team members...</div>
           ) : filteredProfiles.length === 0 ? (
-            <div className="text-center py-8 text-gray-400 text-sm">
+            <div className="text-center py-8 text-apptivia-carbon-400 text-sm">
               {searchQuery ? 'No matching members found' : 'All team members are already enrolled'}
             </div>
           ) : (
@@ -250,22 +250,22 @@ export default function AddTeamMembersModal({
                     onClick={() => toggleSelect(profile.id)}
                     className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left transition-all ${
                       isSelected
-                        ? 'bg-blue-50 border border-blue-200'
-                        : 'hover:bg-gray-50 border border-transparent'
+                        ? 'bg-apptivia-coral-tone-50 border border-apptivia-coral-tone-100'
+                        : 'hover:bg-apptivia-paper border border-transparent'
                     }`}
                   >
                     <div
                       className={`w-5 h-5 rounded flex items-center justify-center flex-shrink-0 ${
                         isSelected
-                          ? 'bg-blue-600 text-white'
-                          : 'border-2 border-gray-300'
+                          ? 'bg-apptivia-coral text-white'
+                          : 'border-2 border-apptivia-carbon-300'
                       }`}
                     >
                       {isSelected && <Check size={12} />}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <div className="text-sm font-medium text-gray-800 truncate">{displayName}</div>
-                      <div className="text-xs text-gray-500 truncate">
+                      <div className="text-sm font-medium text-apptivia-ink truncate">{displayName}</div>
+                      <div className="text-xs text-apptivia-carbon-500 truncate">
                         {profile.email}
                         {profile.team_name && ` · ${profile.team_name}`}
                       </div>
@@ -278,10 +278,10 @@ export default function AddTeamMembersModal({
         </div>
 
         {/* Footer */}
-        <div className="px-5 py-3 border-t border-gray-200 flex-shrink-0 flex gap-2">
+        <div className="px-5 py-3 border-t border-apptivia-carbon-200 flex-shrink-0 flex gap-2">
           <button
             onClick={onClose}
-            className="flex-1 px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+            className="flex-1 px-4 py-2 text-sm font-medium text-apptivia-carbon-700 bg-apptivia-carbon-100 rounded-lg hover:bg-apptivia-carbon-200 transition-colors"
           >
             Cancel
           </button>
@@ -290,8 +290,8 @@ export default function AddTeamMembersModal({
             disabled={selectedIds.size === 0 || saving}
             className={`flex-1 flex items-center justify-center gap-1.5 px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
               selectedIds.size > 0 && !saving
-                ? 'bg-blue-600 text-white hover:bg-blue-700'
-                : 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                ? 'bg-apptivia-coral text-white hover:bg-apptivia-coral'
+                : 'bg-apptivia-carbon-200 text-apptivia-carbon-400 cursor-not-allowed'
             }`}
           >
             <UserPlus size={14} />

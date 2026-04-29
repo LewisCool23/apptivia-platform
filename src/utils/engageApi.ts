@@ -16,7 +16,9 @@ async function invokeEdge<T = any>(
   queryParams?: Record<string, string>
 ): Promise<T> {
   const EDGE_TO_BACKEND: Record<string, string> = {
-    'engage-research':  '/api/engage/search/companies',
+    // engage-research removed — it handles multiple actions (company, prospect, search_people, etc.)
+    // that cannot map to a single backend path. Let it go to the actual edge function;
+    // invokeWithFallback provides per-action backend fallback paths.
     'engage-accounts':  '/api/engage/accounts/analyze',
     'engage-playbooks': '/api/engage/playbooks/generate',
   };
@@ -418,6 +420,25 @@ export const engageDb = {
     created_by?: string;
   }) {
     return supabase.from('engage_research_reports').insert(report).select().single();
+  },
+
+  /** Find a cached research report by type + query within the TTL window (default 7 days) */
+  async getCachedReport(orgId: string, reportType: string, query: string, ttlDays = 7) {
+    const cutoff = new Date(Date.now() - ttlDays * 24 * 60 * 60 * 1000).toISOString();
+    const { data } = await supabase
+      .from('engage_research_reports')
+      .select('*')
+      .eq('organization_id', orgId)
+      .eq('report_type', reportType)
+      .gte('created_at', cutoff)
+      .order('created_at', { ascending: false })
+      .limit(20);
+    // Match by query stored inside content.query (case-insensitive domain/name match)
+    const normalizedQuery = query.toLowerCase().replace(/^https?:\/\//, '').replace(/^www\./, '').replace(/\/.*$/, '').trim();
+    return (data || []).find((r: any) => {
+      const rq = (r.content?.query || '').toLowerCase().replace(/^https?:\/\//, '').replace(/^www\./, '').replace(/\/.*$/, '').trim();
+      return rq === normalizedQuery;
+    }) || null;
   },
 
   // ─ Outreach Drafts ─

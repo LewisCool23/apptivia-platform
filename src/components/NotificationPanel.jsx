@@ -12,23 +12,23 @@ export default function NotificationPanel() {
         case 'performance': case 'top_performer': case 'scorecard_perfect': case 'scorecard_high':
           return { icon: Trophy, bg: 'bg-yellow-100', fg: 'text-yellow-700' };
         case 'badge': case 'badge_earned': case 'rare_badge_earned': case 'badge_milestone':
-          return { icon: Award, bg: 'bg-blue-100', fg: 'text-blue-700' };
+          return { icon: Award, bg: 'bg-apptivia-coral-tone-50', fg: 'text-apptivia-coral' };
         case 'achievement': case 'achievement_earned': case 'achievement_milestone': case 'level_up': case 'skill_progress':
-          return { icon: Star, bg: 'bg-purple-100', fg: 'text-purple-700' };
+          return { icon: Star, bg: 'bg-apptivia-carbon-100', fg: 'text-apptivia-ink' };
         case 'contest': case 'contest_started': case 'contest_ending_soon': case 'contest_winner': case 'contest_top_3': case 'contest_participation':
           return { icon: Trophy, bg: 'bg-green-100', fg: 'text-green-700' };
         case 'trend': case 'momentum_gained': case 'peer_surpassed':
-          return { icon: TrendingUp, bg: 'bg-indigo-100', fg: 'text-indigo-700' };
+          return { icon: TrendingUp, bg: 'bg-apptivia-carbon-100', fg: 'text-apptivia-ink' };
         case 'streak': case 'streak_started': case 'streak_milestone': case 'streak_lost':
           return { icon: Flame, bg: 'bg-orange-100', fg: 'text-orange-700' };
         case 'integration': case 'integration_sync': case 'system_update':
-          return { icon: Plug, bg: 'bg-gray-100', fg: 'text-gray-700' };
+          return { icon: Plug, bg: 'bg-apptivia-carbon-100', fg: 'text-apptivia-carbon-700' };
         case 'coaching': case 'coaching_suggestion': case 'improvement_opportunity': case 'scorecard_low':
           return { icon: AlertTriangle, bg: 'bg-red-100', fg: 'text-red-700' };
         case 'team_achievement': case 'team_contest_win':
           return { icon: Trophy, bg: 'bg-emerald-100', fg: 'text-emerald-700' };
         default:
-          return { icon: Bell, bg: 'bg-slate-100', fg: 'text-slate-700' };
+          return { icon: Bell, bg: 'bg-apptivia-carbon-100', fg: 'text-apptivia-carbon-700' };
       }
     };
 
@@ -91,33 +91,33 @@ export default function NotificationPanel() {
         <div className="p-4 border-b">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
+              <div className="w-8 h-8 bg-apptivia-ink rounded-lg flex items-center justify-center">
                 <Bell size={16} className="text-white" />
               </div>
               <div>
-                <h2 className="font-bold text-base text-gray-900">Notifications</h2>
-                <p className="text-[11px] text-gray-500">Latest updates</p>
+                <h2 className="font-bold text-base text-apptivia-ink">Notifications</h2>
+                <p className="text-[11px] text-apptivia-carbon-500">Latest updates</p>
               </div>
             </div>
             <button
               onClick={closePanel}
-              className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-all duration-200"
+              className="p-2 text-apptivia-carbon-600 hover:bg-apptivia-carbon-100 rounded-lg transition-all duration-200"
               aria-label="Close notifications"
             >
               <X size={18} />
             </button>
           </div>
         </div>
-        <div className="px-4 pt-3 pb-2 flex items-center justify-between text-[11px] text-gray-500">
+        <div className="px-4 pt-3 pb-2 flex items-center justify-between text-[11px] text-apptivia-carbon-500">
           <span>{notifications.length} total</span>
           <div className="flex items-center gap-2">
-            <button onClick={markAllRead} className="hover:text-gray-700">Mark all read</button>
-            <button onClick={clearAll} className="hover:text-gray-700">Clear</button>
+            <button onClick={markAllRead} className="hover:text-apptivia-carbon-700">Mark all read</button>
+            <button onClick={clearAll} className="hover:text-apptivia-carbon-700">Clear</button>
           </div>
         </div>
-        <div className="p-3 text-sm text-gray-700 overflow-y-auto h-[calc(100%-120px)]">
+        <div className="p-3 text-sm text-apptivia-carbon-700 overflow-y-auto h-[calc(100%-120px)]">
           {notifications.length === 0 ? (
-            <div className="text-xs text-gray-500">No notifications yet.</div>
+            <div className="text-xs text-apptivia-carbon-500">No notifications yet.</div>
           ) : (
             <div className="space-y-2">
               {notifications.map((n) => {
@@ -129,22 +129,22 @@ export default function NotificationPanel() {
                 return (
                 <div
                   key={n.id}
-                  className={`border rounded-lg p-2 transition-all ${n.read ? 'bg-white' : 'bg-blue-50 border-blue-100'}`}
+                  className={`border rounded-lg p-2 transition-all ${n.read ? 'bg-white' : 'bg-apptivia-coral-tone-50 border-apptivia-coral-tone-100'}`}
                 >
                   <div className="flex items-start gap-2">
                     <div className={`w-7 h-7 rounded-lg flex items-center justify-center ${meta.bg} ${meta.fg} shrink-0`}>
                       <Icon size={14} />
                     </div>
                     <div className="flex-1">
-                      <div className="text-xs font-semibold text-gray-900">{n.title}</div>
+                      <div className="text-xs font-semibold text-apptivia-ink">{n.title}</div>
                       {shouldShowRep && (
-                        <div className="text-[11px] text-gray-500 mt-0.5">Rep: {repLabel}</div>
+                        <div className="text-[11px] text-apptivia-carbon-500 mt-0.5">Rep: {repLabel}</div>
                       )}
-                      <div className="text-[11px] text-gray-600 mt-0.5">{n.message}</div>
+                      <div className="text-[11px] text-apptivia-carbon-600 mt-0.5">{n.message}</div>
                       {n.link && (
                         <button
                           onClick={() => handleNavigate(n.link, n.id)}
-                          className="mt-1 text-[11px] text-blue-600 hover:underline"
+                          className="mt-1 text-[11px] text-apptivia-coral hover:underline"
                         >
                           View details
                         </button>
@@ -153,14 +153,14 @@ export default function NotificationPanel() {
                     <div className="flex items-center gap-1">
                       <button
                         onClick={() => markRead(n.id)}
-                        className="p-1 text-gray-500 hover:text-gray-700"
+                        className="p-1 text-apptivia-carbon-500 hover:text-apptivia-carbon-700"
                         aria-label="Mark read"
                       >
                         <Check size={14} />
                       </button>
                       <button
                         onClick={() => removeNotification(n.id)}
-                        className="p-1 text-gray-500 hover:text-gray-700"
+                        className="p-1 text-apptivia-carbon-500 hover:text-apptivia-carbon-700"
                         aria-label="Remove"
                       >
                         <Trash2 size={14} />

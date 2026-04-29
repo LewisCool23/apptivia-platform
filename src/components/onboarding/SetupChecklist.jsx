@@ -88,7 +88,7 @@ export default function SetupChecklist({ organizationId, userRole }) {
       {/* Floating button — positioned to the left of Aaron AI */}
       <button
         onClick={() => setPanelOpen(!panelOpen)}
-        className="fixed bottom-6 right-20 sm:right-[5.5rem] w-12 h-12 sm:w-14 sm:h-14 bg-gradient-to-br from-amber-400 via-orange-500 to-red-500 text-white rounded-full shadow-lg hover:shadow-xl flex items-center justify-center z-40 transition-all duration-300 hover:scale-110"
+        className="fixed bottom-6 right-20 sm:right-[5.5rem] w-12 h-12 sm:w-14 sm:h-14 bg-apptivia-coral text-white rounded-full shadow-lg hover:shadow-xl flex items-center justify-center z-40 transition-all duration-300 hover:scale-110"
         aria-label="Setup checklist"
       >
         <ClipboardCheck size={22} />
@@ -100,21 +100,21 @@ export default function SetupChecklist({ organizationId, userRole }) {
 
       {/* Flyout panel */}
       {panelOpen && (
-        <div className="fixed bottom-24 right-20 sm:right-[5.5rem] w-80 bg-white rounded-xl shadow-2xl border border-gray-200 z-50 animate-in slide-in-from-bottom-2 duration-200">
+        <div className="fixed bottom-24 right-20 sm:right-[5.5rem] w-80 bg-white rounded-lg shadow-2xl border border-apptivia-carbon-200 z-50 animate-in slide-in-from-bottom-2 duration-200">
           {/* Header */}
-          <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 bg-gradient-to-r from-amber-50 to-orange-50 rounded-t-xl">
+          <div className="flex items-center justify-between px-4 py-3 border-b border-apptivia-carbon-100 bg-apptivia-coral-tone-50 rounded-t-xl">
             <div className="flex items-center gap-2">
-              <ClipboardCheck size={16} className="text-orange-600" />
-              <span className="text-sm font-semibold text-gray-800">
+              <ClipboardCheck size={16} className="text-apptivia-coral" />
+              <span className="text-sm font-semibold text-apptivia-ink">
                 Complete Setup
               </span>
-              <span className="text-xs text-orange-600 font-medium bg-orange-100 px-1.5 py-0.5 rounded-full">
+              <span className="text-xs text-apptivia-coral font-medium bg-apptivia-coral-tone-50 px-1.5 py-0.5 rounded-full">
                 {activeItems.length} left
               </span>
             </div>
             <button
               onClick={() => setPanelOpen(false)}
-              className="text-gray-400 hover:text-gray-600 transition-colors"
+              className="text-apptivia-carbon-400 hover:text-apptivia-carbon-600 transition-colors"
             >
               <X size={16} />
             </button>
@@ -125,21 +125,21 @@ export default function SetupChecklist({ organizationId, userRole }) {
             {activeItems.map(item => (
               <div
                 key={item.key}
-                className="rounded-lg px-3 py-2.5 bg-gray-50 hover:bg-blue-50 transition-colors border border-gray-100"
+                className="rounded-lg px-3 py-2.5 bg-apptivia-paper hover:bg-apptivia-coral-tone-50 transition-colors border border-apptivia-carbon-100"
               >
                 <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium text-gray-800">{item.label}</span>
+                  <span className="text-sm font-medium text-apptivia-ink">{item.label}</span>
                   <button
                     onClick={() => dismissItem(item.key)}
-                    className="text-[10px] text-gray-400 hover:text-gray-600 uppercase tracking-wide"
+                    className="text-[10px] text-apptivia-carbon-400 hover:text-apptivia-carbon-600 uppercase tracking-wide"
                   >
                     Dismiss
                   </button>
                 </div>
-                <p className="text-xs text-gray-500 mt-0.5">{item.description}</p>
+                <p className="text-xs text-apptivia-carbon-500 mt-0.5">{item.description}</p>
                 <button
                   onClick={() => { navigate(item.route); setPanelOpen(false); }}
-                  className="flex items-center gap-0.5 text-xs text-blue-600 hover:text-blue-700 font-medium mt-1.5"
+                  className="flex items-center gap-0.5 text-xs text-apptivia-coral hover:text-apptivia-coral font-medium mt-1.5"
                 >
                   Configure <ChevronRight size={12} />
                 </button>

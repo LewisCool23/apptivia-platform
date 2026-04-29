@@ -10,12 +10,12 @@ export default function StepReviewLaunch({ wizardState, onGoToStep }) {
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-3 mb-2">
-        <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-lg flex items-center justify-center">
+        <div className="w-10 h-10 bg-apptivia-ink rounded-lg flex items-center justify-center">
           <Trophy size={20} className="text-white" />
         </div>
         <div>
-          <h3 className="text-lg font-semibold text-gray-900">Review & Launch</h3>
-          <p className="text-sm text-gray-500">
+          <h3 className="text-lg font-semibold text-apptivia-ink">Review & Launch</h3>
+          <p className="text-sm text-apptivia-carbon-500">
             {canLaunch
               ? 'Everything looks great! Review your setup and launch your workspace.'
               : 'Complete the required items below before launching.'}
@@ -45,8 +45,8 @@ export default function StepReviewLaunch({ wizardState, onGoToStep }) {
                 <AlertCircle size={18} className="text-red-500" />
               )}
               <div>
-                <div className="text-sm font-medium text-gray-900">{item.label}</div>
-                <div className="text-xs text-gray-500">{item.description}</div>
+                <div className="text-sm font-medium text-apptivia-ink">{item.label}</div>
+                <div className="text-xs text-apptivia-carbon-500">{item.description}</div>
               </div>
             </div>
             <div className="flex items-center gap-2">
@@ -66,7 +66,7 @@ export default function StepReviewLaunch({ wizardState, onGoToStep }) {
                   <button
                     type="button"
                     onClick={() => onGoToStep(item.stepNumber)}
-                    className="flex items-center gap-1 text-xs text-blue-600 hover:text-blue-700 font-medium"
+                    className="flex items-center gap-1 text-xs text-apptivia-coral hover:text-apptivia-coral font-medium"
                   >
                     Go to Step {item.stepNumber} <ArrowRight size={12} />
                   </button>
@@ -79,13 +79,13 @@ export default function StepReviewLaunch({ wizardState, onGoToStep }) {
 
       {/* Launch Message */}
       {canLaunch && (
-        <div className="bg-gradient-to-r from-blue-600 to-indigo-600 rounded-xl p-6 text-center text-white">
+        <div className="bg-apptivia-ink rounded-lg p-6 text-center text-white">
           <Rocket size={32} className="mx-auto mb-3 opacity-90" />
           <h4 className="text-xl font-bold mb-2">You're ready to go!</h4>
-          <p className="text-blue-100 text-sm mb-1">
+          <p className="text-apptivia-coral-tone-300 text-sm mb-1">
             Your scorecard, coaching engine, and team structure are all configured.
           </p>
-          <p className="text-blue-200 text-xs">
+          <p className="text-apptivia-coral-tone-300 text-xs">
             Click "Launch Apptivia" below to complete onboarding and start using the platform.
           </p>
         </div>

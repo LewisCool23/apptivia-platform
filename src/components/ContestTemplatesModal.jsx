@@ -111,12 +111,12 @@ export default function ContestTemplatesModal({ isOpen, onClose, onTemplateSelec
       >
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h2 className="text-2xl font-bold text-gray-900">Contest Templates</h2>
-            <p className="text-sm text-gray-500 mt-1">Choose a template to quickly create a contest</p>
+            <h2 className="text-2xl font-bold text-apptivia-ink">Contest Templates</h2>
+            <p className="text-sm text-apptivia-carbon-500 mt-1">Choose a template to quickly create a contest</p>
           </div>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 transition-colors"
+            className="text-apptivia-carbon-400 hover:text-apptivia-carbon-600 transition-colors"
           >
             <X size={24} />
           </button>
@@ -129,18 +129,18 @@ export default function ContestTemplatesModal({ isOpen, onClose, onTemplateSelec
               onClick={() => handleTemplateClick(template)}
               className={`p-4 border-2 rounded-lg cursor-pointer transition-all hover:shadow-md ${
                 selectedTemplate?.id === template.id
-                  ? 'border-blue-500 bg-blue-50'
-                  : 'border-gray-200 hover:border-blue-300'
+                  ? 'border-apptivia-coral bg-apptivia-coral-tone-50'
+                  : 'border-apptivia-carbon-200 hover:border-apptivia-coral-tone-100'
               }`}
             >
               <div className="flex items-start gap-3 mb-2">
                 <span className="text-3xl">{template.icon}</span>
                 <div className="flex-1">
-                  <h3 className="font-semibold text-gray-900">{template.name}</h3>
-                  <p className="text-xs text-gray-500 mt-1">{template.description}</p>
+                  <h3 className="font-semibold text-apptivia-ink">{template.name}</h3>
+                  <p className="text-xs text-apptivia-carbon-500 mt-1">{template.description}</p>
                 </div>
               </div>
-              <div className="mt-3 flex items-center gap-2 text-xs text-gray-600">
+              <div className="mt-3 flex items-center gap-2 text-xs text-apptivia-carbon-600">
                 <CalendarIcon size={14} />
                 <span>{template.duration} days</span>
                 <span className="mx-1">•</span>
@@ -153,32 +153,32 @@ export default function ContestTemplatesModal({ isOpen, onClose, onTemplateSelec
 
         {selectedTemplate && (
           <div className="border-t pt-6">
-            <h3 className="font-semibold text-gray-900 mb-4">Customize Contest</h3>
+            <h3 className="font-semibold text-apptivia-ink mb-4">Customize Contest</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-apptivia-carbon-700 mb-1">
                   Contest Name
                 </label>
                 <input
                   type="text"
                   value={customData.name}
                   onChange={(e) => setCustomData({ ...customData, name: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-apptivia-carbon-300 rounded-md focus:outline-none focus:ring-2 focus:ring-apptivia-coral"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-apptivia-carbon-700 mb-1">
                   Start Date
                 </label>
                 <input
                   type="date"
                   value={customData.start_date}
                   onChange={(e) => setCustomData({ ...customData, start_date: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-apptivia-carbon-300 rounded-md focus:outline-none focus:ring-2 focus:ring-apptivia-coral"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-apptivia-carbon-700 mb-1">
                   Duration (days)
                 </label>
                 <input
@@ -187,11 +187,11 @@ export default function ContestTemplatesModal({ isOpen, onClose, onTemplateSelec
                   max="90"
                   value={customData.duration}
                   onChange={(e) => setCustomData({ ...customData, duration: parseInt(e.target.value) })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-apptivia-carbon-300 rounded-md focus:outline-none focus:ring-2 focus:ring-apptivia-coral"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-apptivia-carbon-700 mb-1">
                   Reward Value (points)
                 </label>
                 <input
@@ -199,24 +199,24 @@ export default function ContestTemplatesModal({ isOpen, onClose, onTemplateSelec
                   min="0"
                   value={customData.reward_value}
                   onChange={(e) => setCustomData({ ...customData, reward_value: parseInt(e.target.value) })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-apptivia-carbon-300 rounded-md focus:outline-none focus:ring-2 focus:ring-apptivia-coral"
                 />
               </div>
             </div>
 
             <div className="flex justify-end gap-3 mt-6">
-              <p className="text-xs text-gray-500 flex items-center mr-auto">
+              <p className="text-xs text-apptivia-carbon-500 flex items-center mr-auto">
                 💡 You can add specific team members after creating the contest.
               </p>
               <button
                 onClick={() => setSelectedTemplate(null)}
-                className="px-4 py-2 text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 transition-colors"
+                className="px-4 py-2 text-apptivia-carbon-700 bg-apptivia-carbon-100 rounded-md hover:bg-apptivia-carbon-200 transition-colors"
               >
                 Back to Templates
               </button>
               <button
                 onClick={handleUseTemplate}
-                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+                className="px-4 py-2 bg-apptivia-coral text-white rounded-md hover:bg-apptivia-coral transition-colors"
               >
                 Use This Template
               </button>

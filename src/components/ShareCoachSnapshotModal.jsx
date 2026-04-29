@@ -3,6 +3,7 @@ import { X, Download, Link as LinkIcon, CheckCircle, Mail } from 'lucide-react';
 import html2canvas from 'html2canvas';
 import { backendFetch } from '../utils/backendFetch';
 import { buildCoachSnapshotEmailHtml, buildCoachSnapshotEmailText } from '../utils/emailTemplates';
+import { ApptiviaLogo } from './ApptiviaLogo';
 
 export default function ShareCoachSnapshotModal({ isOpen, onClose, coachData, scorecardData, filters }) {
   const [copied, setCopied] = useState(false);
@@ -53,7 +54,7 @@ export default function ShareCoachSnapshotModal({ isOpen, onClose, coachData, sc
 
   const handleCopyLink = () => {
     const url = `${window.location.origin}/coach`;
-    navigator.clipboard.writeText(url);
+    try { navigator.clipboard.writeText(url); } catch (e) { document.execCommand && document.execCommand('copy'); }
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
@@ -64,11 +65,20 @@ export default function ShareCoachSnapshotModal({ isOpen, onClose, coachData, sc
       return;
     }
 
+    // F21: Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const parsedRecipients = emailRecipients.split(',').map(e => e.trim()).filter(e => e);
+    const invalidEmails = parsedRecipients.filter(e => !emailRegex.test(e));
+    if (invalidEmails.length > 0) {
+      setEmailError(`Invalid email${invalidEmails.length > 1 ? 's' : ''}: ${invalidEmails.join(', ')}`);
+      return;
+    }
+
     setSending(true);
     setEmailError('');
 
     try {
-      const recipients = emailRecipients.split(',').map(e => e.trim()).filter(e => e);
+      const recipients = parsedRecipients;
       const subject = emailSubject.trim() || `Apptivia Coach Snapshot`;
       
       const emailData = { apptiviaLevel, levelPoints, averageScore, scorecardStreak, totalBadges, totalAchievements, totalMembers, allSkillsets };
@@ -93,7 +103,15 @@ export default function ShareCoachSnapshotModal({ isOpen, onClose, coachData, sc
       }, 3000);
     } catch (error) {
       console.error('Error sending email:', error);
-      setEmailError('Failed to send email. Please check your backend is running and configured correctly.');
+      // F20: Parse specific error from backend response
+      const msg = error?.message || '';
+      if (msg.includes('403') || msg.includes('Forbidden')) {
+        setEmailError('Permission denied — only managers and admins can send snapshot emails.');
+      } else if (msg.includes('400')) {
+        setEmailError('Invalid request — please check your recipients and try again.');
+      } else {
+        setEmailError('Failed to send email. Please check your backend is running and configured correctly.');
+      }
     } finally {
       setSending(false);
     }
@@ -105,34 +123,34 @@ export default function ShareCoachSnapshotModal({ isOpen, onClose, coachData, sc
       onClick={onClose}
     >
       <div 
-        className="bg-white rounded-xl shadow-2xl max-w-2xl w-full my-4 max-h-[85vh] overflow-hidden flex flex-col"
+        className="bg-white rounded-lg shadow-2xl max-w-2xl w-full my-4 max-h-[85vh] overflow-hidden flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-gray-200 flex-shrink-0">
-          <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+        <div className="flex items-center justify-between p-4 border-b border-apptivia-carbon-200 flex-shrink-0">
+          <h2 className="text-xl font-bold text-apptivia-ink flex items-center gap-2">
             <span>📋</span>
             Share Coach Snapshot
           </h2>
           <button
             onClick={onClose}
-            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+            className="p-2 hover:bg-apptivia-carbon-100 rounded-lg transition-colors"
           >
-            <X size={20} className="text-gray-500" />
+            <X size={20} className="text-apptivia-carbon-500" />
           </button>
         </div>
 
         {/* Snapshot Preview */}
-        <div className="flex-1 overflow-y-auto p-4 bg-gray-50 min-h-0">
+        <div className="flex-1 overflow-y-auto p-4 bg-apptivia-paper min-h-0">
           <div 
             ref={snapshotRef}
-            className="bg-gradient-to-br from-blue-500 via-purple-500 to-pink-500 rounded-xl p-6 text-white shadow-2xl"
+            className="bg-apptivia-ink rounded-lg p-6 text-white shadow-2xl"
           >
             {/* Header Section */}
             <div className="text-center mb-4">
               <div className="text-4xl mb-2">📋</div>
               <h3 className="text-xl font-bold">Coaching Progress Snapshot</h3>
-              <p className="text-white/80 text-sm">Apptivia Platform</p>
+              <ApptiviaLogo dark className="text-base" />
               {totalMembers > 0 && (
                 <p className="text-white/70 text-xs mt-1">Team Members: {totalMembers}</p>
               )}
@@ -206,14 +224,14 @@ export default function ShareCoachSnapshotModal({ isOpen, onClose, coachData, sc
         </div>
 
         {/* Action Buttons */}
-        <div className="border-t border-gray-200 p-4 bg-white flex-shrink-0">
+        <div className="border-t border-apptivia-carbon-200 p-4 bg-white flex-shrink-0">
           {!showEmailForm ? (
             <>
               <div className="flex flex-wrap gap-2 justify-center">
                 <button
                   onClick={handleDownload}
                   disabled={downloading}
-                  className="flex items-center gap-1.5 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="flex items-center gap-1.5 px-4 py-2 bg-apptivia-coral text-white rounded-lg text-sm font-medium hover:bg-apptivia-coral transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <Download size={16} />
                   {downloading ? 'Downloading...' : 'Download'}
@@ -221,7 +239,7 @@ export default function ShareCoachSnapshotModal({ isOpen, onClose, coachData, sc
                 
                 <button
                   onClick={handleCopyLink}
-                  className="flex items-center gap-1.5 px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 transition-colors"
+                  className="flex items-center gap-1.5 px-4 py-2 bg-apptivia-ink text-white rounded-lg text-sm font-medium hover:bg-apptivia-ink transition-colors"
                 >
                   {copied ? (
                     <>
@@ -245,14 +263,14 @@ export default function ShareCoachSnapshotModal({ isOpen, onClose, coachData, sc
                 </button>
               </div>
 
-              <p className="text-center text-xs text-gray-500 mt-2">
+              <p className="text-center text-xs text-apptivia-carbon-500 mt-2">
                 Share your coaching progress with your team!
               </p>
             </>
           ) : (
             <div className="space-y-3">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                <label className="block text-sm font-medium text-apptivia-carbon-700 mb-1.5">
                   Recipients (comma-separated emails)
                 </label>
                 <input
@@ -260,12 +278,12 @@ export default function ShareCoachSnapshotModal({ isOpen, onClose, coachData, sc
                   value={emailRecipients}
                   onChange={(e) => setEmailRecipients(e.target.value)}
                   placeholder="john@example.com, jane@example.com"
-                  className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-3 py-2 text-sm border border-apptivia-carbon-300 rounded-lg focus:ring-2 focus:ring-apptivia-coral focus:border-transparent"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                <label className="block text-sm font-medium text-apptivia-carbon-700 mb-1.5">
                   Subject (optional)
                 </label>
                 <input
@@ -273,12 +291,12 @@ export default function ShareCoachSnapshotModal({ isOpen, onClose, coachData, sc
                   value={emailSubject}
                   onChange={(e) => setEmailSubject(e.target.value)}
                   placeholder="Apptivia Coach Snapshot"
-                  className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-3 py-2 text-sm border border-apptivia-carbon-300 rounded-lg focus:ring-2 focus:ring-apptivia-coral focus:border-transparent"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                <label className="block text-sm font-medium text-apptivia-carbon-700 mb-1.5">
                   Additional notes (optional)
                 </label>
                 <textarea
@@ -286,7 +304,7 @@ export default function ShareCoachSnapshotModal({ isOpen, onClose, coachData, sc
                   onChange={(e) => setEmailNotes(e.target.value)}
                   placeholder="Add highlights or focus areas"
                   rows={3}
-                  className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-3 py-2 text-sm border border-apptivia-carbon-300 rounded-lg focus:ring-2 focus:ring-apptivia-coral focus:border-transparent"
                 />
               </div>
 
@@ -307,7 +325,7 @@ export default function ShareCoachSnapshotModal({ isOpen, onClose, coachData, sc
                 <button
                   onClick={handleSendEmail}
                   disabled={sending}
-                  className="flex-1 flex items-center justify-center gap-1.5 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="flex-1 flex items-center justify-center gap-1.5 px-4 py-2 bg-apptivia-coral text-white rounded-lg text-sm font-medium hover:bg-apptivia-coral transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <Mail size={16} />
                   {sending ? 'Sending...' : 'Send Email'}
@@ -320,13 +338,13 @@ export default function ShareCoachSnapshotModal({ isOpen, onClose, coachData, sc
                     setEmailSubject('');
                     setEmailNotes('');
                   }}
-                  className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-300 transition-colors"
+                  className="px-4 py-2 bg-apptivia-carbon-200 text-apptivia-carbon-700 rounded-lg text-sm font-medium hover:bg-apptivia-carbon-300 transition-colors"
                 >
                   Cancel
                 </button>
               </div>
 
-              <p className="text-xs text-gray-500 text-center">
+              <p className="text-xs text-apptivia-carbon-500 text-center">
                 An HTML email with coaching stats will be sent to the recipients
               </p>
             </div>

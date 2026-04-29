@@ -46,12 +46,12 @@ export default function RightFilterPanel({
         <div className="p-4 border-b">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
+              <div className="w-8 h-8 bg-apptivia-ink rounded-lg flex items-center justify-center">
                 <SlidersHorizontal size={16} className="text-white" />
               </div>
               <div>
-                <h2 className="font-bold text-base text-gray-900">{title}</h2>
-                <p className="text-[11px] text-gray-500">{subtitle}</p>
+                <h2 className="font-bold text-base text-apptivia-ink">{title}</h2>
+                <p className="text-[11px] text-apptivia-carbon-500">{subtitle}</p>
               </div>
             </div>
             <div className="flex items-center gap-2">
@@ -62,8 +62,8 @@ export default function RightFilterPanel({
                   disabled={!onReset}
                   className={`px-2.5 py-1 rounded-md text-[11px] font-semibold border transition-all ${
                     onReset
-                      ? 'border-gray-200 text-gray-700 hover:bg-gray-50'
-                      : 'border-gray-100 text-gray-300 cursor-not-allowed'
+                      ? 'border-apptivia-carbon-200 text-apptivia-carbon-700 hover:bg-apptivia-paper'
+                      : 'border-apptivia-carbon-100 text-apptivia-carbon-300 cursor-not-allowed'
                   }`}
                 >
                   {resetLabel}
@@ -71,7 +71,7 @@ export default function RightFilterPanel({
               )}
               <button
                 onClick={onClose}
-                className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-all duration-200"
+                className="p-2 text-apptivia-carbon-600 hover:bg-apptivia-carbon-100 rounded-lg transition-all duration-200"
                 aria-label="Close filters"
               >
                 <X size={18} />
@@ -79,7 +79,7 @@ export default function RightFilterPanel({
             </div>
           </div>
         </div>
-        <div className={`p-4 text-sm text-gray-700 overflow-y-auto h-[calc(100%-72px)] ${contentClassName}`}>
+        <div className={`p-4 text-sm text-apptivia-carbon-700 overflow-y-auto h-[calc(100%-72px)] ${contentClassName}`}>
           {children}
         </div>
       </aside>

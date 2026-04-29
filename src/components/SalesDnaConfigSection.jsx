@@ -59,7 +59,7 @@ export default function SalesDnaConfigSection({ organizationId, cepStages, compa
             <button
               onClick={handleSave}
               disabled={saving || !isDirty}
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 text-sm flex items-center gap-2"
+              className="px-4 py-2 bg-apptivia-coral text-white rounded-lg hover:bg-apptivia-coral disabled:opacity-50 text-sm flex items-center gap-2"
             >
               {saved ? <><Check size={14} /> Saved</> : saving ? 'Saving...' : 'Save Sales DNA'}
             </button>
@@ -79,12 +79,12 @@ export default function SalesDnaConfigSection({ organizationId, cepStages, compa
         {expanded ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
         <div>
           <h3 className="text-lg font-semibold">Sales DNA</h3>
-          <p className="text-xs text-gray-500 mt-0.5">
+          <p className="text-xs text-apptivia-carbon-500 mt-0.5">
             Define how your team sells and qualifies deals. This drives all AI coaching recommendations.
           </p>
         </div>
         {selectedPrimary && (
-          <span className="ml-auto text-xs bg-blue-50 text-blue-700 px-2 py-1 rounded-full">
+          <span className="ml-auto text-xs bg-apptivia-coral-tone-50 text-apptivia-coral px-2 py-1 rounded-full">
             {selectedPrimary.name}
           </span>
         )}
@@ -103,7 +103,7 @@ export default function SalesDnaConfigSection({ organizationId, cepStages, compa
             <button
               onClick={handleSave}
               disabled={saving || !isDirty}
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 text-sm flex items-center gap-2"
+              className="px-4 py-2 bg-apptivia-coral text-white rounded-lg hover:bg-apptivia-coral disabled:opacity-50 text-sm flex items-center gap-2"
             >
               {saved ? <><Check size={14} /> Saved</> : saving ? 'Saving...' : 'Save Sales DNA'}
             </button>
@@ -119,7 +119,7 @@ export default function SalesDnaConfigSection({ organizationId, cepStages, compa
       <>
         {/* Methodology Approach */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label className="block text-sm font-medium text-apptivia-carbon-700 mb-2">
             How does your team sell?
           </label>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
@@ -134,12 +134,12 @@ export default function SalesDnaConfigSection({ organizationId, cepStages, compa
                 })}
                 className={`border-2 rounded-lg p-3 text-left transition-all ${
                   localDna.methodology_approach === approach.key
-                    ? 'border-blue-600 bg-blue-50'
-                    : 'border-gray-200 hover:border-blue-300'
+                    ? 'border-apptivia-coral bg-apptivia-coral-tone-50'
+                    : 'border-apptivia-carbon-200 hover:border-apptivia-coral-tone-100'
                 }`}
               >
                 <div className="font-medium text-sm">{approach.label}</div>
-                <div className="text-xs text-gray-500 mt-1">{approach.description}</div>
+                <div className="text-xs text-apptivia-carbon-500 mt-1">{approach.description}</div>
               </button>
             ))}
           </div>
@@ -148,13 +148,13 @@ export default function SalesDnaConfigSection({ organizationId, cepStages, compa
         {/* Primary Methodology (for single/hybrid) */}
         {localDna.methodology_approach !== 'custom' && (
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-apptivia-carbon-700 mb-2">
               {localDna.methodology_approach === 'hybrid' ? 'Primary Methodology' : 'Sales Methodology'}
             </label>
             <select
               value={localDna.primary_methodology || ''}
               onChange={(e) => setLocalDna({ ...localDna, primary_methodology: e.target.value || null })}
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500"
+              className="w-full border border-apptivia-carbon-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-apptivia-coral"
             >
               <option value="">Select a methodology...</option>
               {SALES_METHODOLOGIES.map(m => (
@@ -162,14 +162,14 @@ export default function SalesDnaConfigSection({ organizationId, cepStages, compa
               ))}
             </select>
             {selectedPrimary && (
-              <div className="mt-2 p-3 bg-gray-50 rounded-lg text-xs">
-                <div className="font-medium text-gray-700 mb-1">Core Principles:</div>
-                <ul className="space-y-0.5 text-gray-600">
+              <div className="mt-2 p-3 bg-apptivia-paper rounded-lg text-xs">
+                <div className="font-medium text-apptivia-carbon-700 mb-1">Core Principles:</div>
+                <ul className="space-y-0.5 text-apptivia-carbon-600">
                   {selectedPrimary.core_principles.map((p, i) => (
                     <li key={i}>• {p}</li>
                   ))}
                 </ul>
-                <div className="mt-2 text-gray-500">
+                <div className="mt-2 text-apptivia-carbon-500">
                   <Sparkles size={10} className="inline mr-1" />
                   <span className="font-medium">Coaching Focus:</span> {selectedPrimary.coaching_focus}
                 </div>
@@ -181,13 +181,13 @@ export default function SalesDnaConfigSection({ organizationId, cepStages, compa
         {/* Secondary Methodology (hybrid only) */}
         {localDna.methodology_approach === 'hybrid' && (
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-apptivia-carbon-700 mb-2">
               Secondary Methodology
             </label>
             <select
               value={localDna.secondary_methodology || ''}
               onChange={(e) => setLocalDna({ ...localDna, secondary_methodology: e.target.value || null })}
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500"
+              className="w-full border border-apptivia-carbon-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-apptivia-coral"
             >
               <option value="">Select a secondary methodology...</option>
               {SALES_METHODOLOGIES.filter(m => m.key !== localDna.primary_methodology).map(m => (
@@ -195,9 +195,9 @@ export default function SalesDnaConfigSection({ organizationId, cepStages, compa
               ))}
             </select>
             {selectedSecondary && (
-              <div className="mt-2 p-3 bg-gray-50 rounded-lg text-xs">
-                <div className="font-medium text-gray-700 mb-1">Core Principles:</div>
-                <ul className="space-y-0.5 text-gray-600">
+              <div className="mt-2 p-3 bg-apptivia-paper rounded-lg text-xs">
+                <div className="font-medium text-apptivia-carbon-700 mb-1">Core Principles:</div>
+                <ul className="space-y-0.5 text-apptivia-carbon-600">
                   {selectedSecondary.core_principles.map((p, i) => (
                     <li key={i}>• {p}</li>
                   ))}
@@ -210,11 +210,11 @@ export default function SalesDnaConfigSection({ organizationId, cepStages, compa
         {/* Hybrid Stage Mapping */}
         {localDna.methodology_approach === 'hybrid' && cepStages?.length > 0 && localDna.primary_methodology && localDna.secondary_methodology && (
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-apptivia-carbon-700 mb-2">
               Stage Methodology Mapping
-              <span className="font-normal text-gray-400 ml-1">(optional)</span>
+              <span className="font-normal text-apptivia-carbon-400 ml-1">(optional)</span>
             </label>
-            <p className="text-xs text-gray-500 mb-3">
+            <p className="text-xs text-apptivia-carbon-500 mb-3">
               Optionally assign which methodology applies at each CEP stage. Unmapped stages use the primary methodology.
             </p>
             <div className="space-y-2">
@@ -222,7 +222,7 @@ export default function SalesDnaConfigSection({ organizationId, cepStages, compa
                 const existing = localDna.methodology_stage_mapping?.find(m => m.stage_key === stage.stage_key);
                 return (
                   <div key={stage.stage_key} className="flex items-center gap-3 text-sm">
-                    <span className="w-32 font-medium text-gray-700 truncate" title={stage.stage_name}>
+                    <span className="w-32 font-medium text-apptivia-carbon-700 truncate" title={stage.stage_name}>
                       {stage.stage_name}
                     </span>
                     <select
@@ -235,7 +235,7 @@ export default function SalesDnaConfigSection({ organizationId, cepStages, compa
                         }
                         setLocalDna({ ...localDna, methodology_stage_mapping: filtered });
                       }}
-                      className="flex-1 border border-gray-300 rounded px-2 py-1.5 text-xs"
+                      className="flex-1 border border-apptivia-carbon-300 rounded px-2 py-1.5 text-xs"
                     >
                       <option value="">Primary ({selectedPrimary?.name})</option>
                       <option value={localDna.secondary_methodology}>{selectedSecondary?.name}</option>
@@ -251,29 +251,29 @@ export default function SalesDnaConfigSection({ organizationId, cepStages, compa
         {localDna.methodology_approach === 'custom' && (
           <div className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-apptivia-carbon-700 mb-1">
                 Methodology Name
               </label>
               <input
                 type="text"
                 value={localDna.custom_methodology_name || ''}
                 onChange={(e) => setLocalDna({ ...localDna, custom_methodology_name: e.target.value })}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500"
+                className="w-full border border-apptivia-carbon-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-apptivia-coral"
                 placeholder="e.g., The Acme Way, Value-Led Enterprise Selling"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-apptivia-carbon-700 mb-1">
                 Core Principles
               </label>
-              <p className="text-xs text-gray-500 mb-2">
+              <p className="text-xs text-apptivia-carbon-500 mb-2">
                 Define the key principles of your proprietary methodology. These will guide all AI coaching output.
               </p>
               <div className="space-y-1.5 mb-2">
                 {(localDna.custom_methodology_principles || []).map((p, i) => (
-                  <div key={i} className="flex items-center gap-2 text-sm bg-gray-50 rounded px-3 py-1.5">
-                    <span className="text-gray-400">{i + 1}.</span>
-                    <span className="flex-1 text-gray-700">{p}</span>
+                  <div key={i} className="flex items-center gap-2 text-sm bg-apptivia-paper rounded px-3 py-1.5">
+                    <span className="text-apptivia-carbon-400">{i + 1}.</span>
+                    <span className="flex-1 text-apptivia-carbon-700">{p}</span>
                     <button
                       onClick={() => setLocalDna({
                         ...localDna,
@@ -301,7 +301,7 @@ export default function SalesDnaConfigSection({ organizationId, cepStages, compa
                       setCustomPrinciple('');
                     }
                   }}
-                  className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500"
+                  className="flex-1 border border-apptivia-carbon-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-apptivia-coral"
                   placeholder="Type a principle and press Enter"
                 />
                 <button
@@ -315,7 +315,7 @@ export default function SalesDnaConfigSection({ organizationId, cepStages, compa
                       setCustomPrinciple('');
                     }
                   }}
-                  className="px-3 py-2 bg-gray-100 rounded-lg hover:bg-gray-200 text-gray-600 text-sm"
+                  className="px-3 py-2 bg-apptivia-carbon-100 rounded-lg hover:bg-apptivia-carbon-200 text-apptivia-carbon-600 text-sm"
                 >
                   Add
                 </button>
@@ -326,7 +326,7 @@ export default function SalesDnaConfigSection({ organizationId, cepStages, compa
 
         {/* Qualification Framework */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label className="block text-sm font-medium text-apptivia-carbon-700 mb-2">
             How does your team qualify deals?
           </label>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
@@ -337,11 +337,11 @@ export default function SalesDnaConfigSection({ organizationId, cepStages, compa
                 className={`border-2 rounded-lg p-3 text-left transition-all ${
                   localDna.qualification_framework === fw.key
                     ? 'border-emerald-600 bg-emerald-50'
-                    : 'border-gray-200 hover:border-emerald-300'
+                    : 'border-apptivia-carbon-200 hover:border-emerald-300'
                 }`}
               >
                 <div className="font-semibold text-sm">{fw.name}</div>
-                <div className="text-xs text-gray-500 mt-1">{fw.short_description}</div>
+                <div className="text-xs text-apptivia-carbon-500 mt-1">{fw.short_description}</div>
               </button>
             ))}
           </div>

@@ -67,9 +67,9 @@ export const TIER_LABELS: Record<number, string> = {
 
 export const TIER_COLORS: Record<number, string> = {
   1: 'bg-red-100 text-red-700',
-  2: 'bg-blue-100 text-blue-700',
+  2: 'bg-apptivia-coral-tone-50 text-apptivia-coral',
   3: 'bg-cyan-100 text-cyan-700',
-  4: 'bg-gray-100 text-gray-600',
+  4: 'bg-apptivia-carbon-100 text-apptivia-carbon-600',
 };
 
 /**
@@ -89,13 +89,13 @@ export function getKpiTier(kpiKey: string, scorecardKpiKeys: Set<string> | strin
 
 /** Skillset categories for display (e.g., in ApptiviaLevelInfoModal) */
 export const SKILLSET_CATEGORIES = [
-  { name: 'Conversationalist', kpis: 'Talk Time, Conversations', color: 'bg-blue-500' },
-  { name: 'Call Conqueror', kpis: 'Call Connects, Meetings, Discovery, Dials', color: 'bg-green-500' },
-  { name: 'Email Warrior', kpis: 'Emails Sent, Social Touches', color: 'bg-purple-500' },
-  { name: 'Pipeline Guru', kpis: 'Sourced Opps, Pipeline, Revenue, Deals Closed', color: 'bg-orange-500' },
-  { name: 'Task Master', kpis: 'Follow-ups, Demos, Tasks, Win Rate', color: 'bg-red-500' },
-  { name: 'Scorecard Master', kpis: 'Scorecard Streaks, 100% Weeks', color: 'bg-yellow-500' },
-  { name: 'Engage Pro', kpis: 'Signals, Account Research, Outreach, Deals Influenced', color: 'bg-cyan-500' },
+  { name: 'Conversationalist', kpis: 'Talk Time, Conversations', color: 'bg-apptivia-coral' },
+  { name: 'Call Conqueror', kpis: 'Call Connects, Meetings, Discovery, Dials', color: 'bg-apptivia-success' },
+  { name: 'Email Warrior', kpis: 'Emails Sent, Social Touches', color: 'bg-apptivia-warning' },
+  { name: 'Pipeline Guru', kpis: 'Sourced Opps, Pipeline, Revenue, Deals Closed', color: 'bg-apptivia-coral-tone-700' },
+  { name: 'Task Master', kpis: 'Follow-ups, Demos, Tasks, Win Rate', color: 'bg-apptivia-carbon-700' },
+  { name: 'Scorecard Master', kpis: 'Scorecard Streaks, 100% Weeks', color: 'bg-apptivia-coral-tone-300' },
+  { name: 'Engage Pro', kpis: 'Signals, Account Research, Outreach, Deals Influenced', color: 'bg-apptivia-ink' },
 ];
 
 /**
@@ -111,11 +111,11 @@ export function getSkillsetsForKpi(kpiKey: string): string[] {
  * Skillset mastery level based on progress percentage.
  */
 export const SKILLSET_LEVEL_COLORS: Record<string, string> = {
-  Beginner: 'bg-gray-100 text-gray-600',
+  Beginner: 'bg-apptivia-carbon-100 text-apptivia-carbon-600',
   Developing: 'bg-orange-100 text-orange-700',
-  Intermediate: 'bg-blue-100 text-blue-700',
+  Intermediate: 'bg-apptivia-coral-tone-50 text-apptivia-coral',
   Advanced: 'bg-emerald-100 text-emerald-700',
-  Master: 'bg-purple-100 text-purple-700',
+  Master: 'bg-apptivia-carbon-100 text-apptivia-ink',
 };
 
 export function getSkillsetLevel(progress: number): string {
@@ -128,19 +128,19 @@ export function getSkillsetLevel(progress: number): string {
 
 /** Fallback hex colors for skillsets (used when DB color is null/empty) */
 export const SKILLSET_COLOR_MAP: Record<string, string> = {
-  conversationalist: '#3B82F6',
-  'call conqueror': '#10B981',
-  'email warrior': '#8B5CF6',
-  'pipeline guru': '#F59E0B',
-  'task master': '#EF4444',
-  'scorecard master': '#D97706',
-  'engage pro': '#06b6d4',
+  conversationalist: '#FF4D2E',
+  'call conqueror': '#16A34A',
+  'email warrior': '#F59E0B',
+  'pipeline guru': '#C8341B',
+  'task master': '#3F3F46',
+  'scorecard master': '#FF8A6B',
+  'engage pro': '#0A0A0B',
 };
 
 /** Returns the DB color or a fallback from SKILLSET_COLOR_MAP */
 export function getSkillsetColor(name: string | undefined, dbColor: string | null | undefined): string {
   if (dbColor) return dbColor;
-  return SKILLSET_COLOR_MAP[(name || '').toLowerCase()] || '#6B7280';
+  return SKILLSET_COLOR_MAP[(name || '').toLowerCase()] || '#71717A';
 }
 
 /**
@@ -229,7 +229,7 @@ export function estimateSkillsetXp(focusKpis: string[]): { skillset: string; est
   return Object.entries(skillsetXp)
     .map(([skillset, estimatedXp]) => {
       const cat = SKILLSET_CATEGORIES.find(c => c.name.toLowerCase() === skillset.toLowerCase());
-      return { skillset: cat?.name || skillset, estimatedXp, color: cat?.color || 'bg-gray-500' };
+      return { skillset: cat?.name || skillset, estimatedXp, color: cat?.color || 'bg-apptivia-carbon-500' };
     })
     .sort((a, b) => b.estimatedXp - a.estimatedXp);
 }

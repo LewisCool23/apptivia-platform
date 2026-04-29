@@ -61,6 +61,37 @@ const CONTEST_TEMPLATES = [
     reward_value: 'Team Lunch',
     participant_type: 'team',
   },
+  // F25: New KPI contest templates
+  {
+    id: 'dials-challenge',
+    name: 'Dials Challenge',
+    description: 'Reward the highest outbound dial volume.',
+    kpi_key: 'dials',
+    calculation_type: 'sum',
+    reward_type: 'prize',
+    reward_value: 'Top Dialer Award',
+    participant_type: 'individual',
+  },
+  {
+    id: 'conversations-sprint',
+    name: 'Conversations Sprint',
+    description: 'Drive meaningful conversations with prospects.',
+    kpi_key: 'conversations',
+    calculation_type: 'sum',
+    reward_type: 'gift_card',
+    reward_value: '$75 Gift Card',
+    participant_type: 'individual',
+  },
+  {
+    id: 'discovery-race',
+    name: 'Discovery Race',
+    description: 'Complete the most discovery calls in the contest period.',
+    kpi_key: 'discovery_calls',
+    calculation_type: 'sum',
+    reward_type: 'bonus',
+    reward_value: '$200 Bonus',
+    participant_type: 'individual',
+  },
 ];
 
 export default function ContestCreationModal({ isOpen, onClose, currentUserId, organizationId, contestToEdit }: ContestCreationModalProps) {
@@ -156,6 +187,24 @@ export default function ContestCreationModal({ isOpen, onClose, currentUserId, o
     if (formData.reward_type && formData.reward_type !== 'none' && !formData.reward_value) {
       toast.error('Please enter a reward value');
       return;
+    }
+
+    // F8: Block nonsensical derived KPI + sum combinations
+    const derivedKpis = ['win_rate', 'average_deal_size', 'talk_to_listen_ratio', 'interactivity_score'];
+    if (formData.calculation_type === 'sum' && derivedKpis.includes(formData.kpi_key)) {
+      toast.error('Win Rate, Average Deal Size, and ratio KPIs cannot use "Sum" scoring. Use "Average" or "Max" instead.');
+      return;
+    }
+
+    // F24: Warn if contest dates don't align with Monday-Sunday KPI periods
+    const startDay = new Date(formData.start_date).getUTCDay();
+    const endDay = new Date(formData.end_date).getUTCDay();
+    if (startDay !== 1 || endDay !== 0) { // 1=Monday, 0=Sunday
+      const proceed = window.confirm(
+        'Contest dates do not align with KPI periods (Monday–Sunday). ' +
+        'This may result in incomplete weekly scores for the first/last week. Continue anyway?'
+      );
+      if (!proceed) return;
     }
 
     try {
@@ -311,23 +360,23 @@ export default function ContestCreationModal({ isOpen, onClose, currentUserId, o
       contentClassName="pb-8"
     >
       <form onSubmit={handleSubmit} className="space-y-4">
-        <div className="bg-gradient-to-r from-blue-50 to-purple-50 border border-blue-100 rounded-lg p-4">
-          <div className="text-sm font-semibold text-blue-900">{contestToEdit ? '✏️ Edit Contest' : '🏆 Create New Contest'}</div>
-          <div className="text-xs text-blue-700 mt-1">
+        <div className="bg-apptivia-coral-tone-50 border border-apptivia-coral-tone-100 rounded-lg p-4">
+          <div className="text-sm font-semibold text-apptivia-coral-tone-700">{contestToEdit ? '✏️ Edit Contest' : '🏆 Create New Contest'}</div>
+          <div className="text-xs text-apptivia-coral mt-1">
             {contestToEdit ? 'Update contest details' : 'Launch a new competition to motivate your team'}
           </div>
         </div>
 
         {!contestToEdit && (
           <div className="bg-white border rounded-lg p-3">
-            <div className="text-xs text-gray-500 mb-2">Templates</div>
+            <div className="text-xs text-apptivia-carbon-500 mb-2">Templates</div>
             <div className="flex flex-wrap gap-2">
               {CONTEST_TEMPLATES.map((template) => (
                 <button
                   key={template.id}
                   type="button"
                   onClick={() => applyTemplate(template.id)}
-                  className="px-3 py-1.5 text-xs rounded-full bg-slate-100 text-slate-700 hover:bg-slate-200"
+                  className="px-3 py-1.5 text-xs rounded-full bg-apptivia-carbon-100 text-apptivia-carbon-700 hover:bg-apptivia-carbon-200"
                 >
                   {template.name}
                 </button>
@@ -339,14 +388,14 @@ export default function ContestCreationModal({ isOpen, onClose, currentUserId, o
           <div className="space-y-4">
             {/* Contest Name */}
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1">
+              <label className="block text-sm font-semibold text-apptivia-carbon-700 mb-1">
                 Contest Name *
               </label>
               <input
                 type="text"
                 value={formData.name}
                 onChange={(e) => updateField('name', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-apptivia-carbon-300 rounded focus:outline-none focus:ring-2 focus:ring-apptivia-coral"
                 placeholder="e.g., Q1 Pipeline Challenge"
                 required
               />
@@ -354,13 +403,13 @@ export default function ContestCreationModal({ isOpen, onClose, currentUserId, o
 
             {/* Description */}
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1">
+              <label className="block text-sm font-semibold text-apptivia-carbon-700 mb-1">
                 Description
               </label>
               <textarea
                 value={formData.description}
                 onChange={(e) => updateField('description', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-apptivia-carbon-300 rounded focus:outline-none focus:ring-2 focus:ring-apptivia-coral"
                 placeholder="Brief description of the contest"
                 rows={2}
               />
@@ -368,13 +417,13 @@ export default function ContestCreationModal({ isOpen, onClose, currentUserId, o
 
             {/* KPI Selection */}
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1">
+              <label className="block text-sm font-semibold text-apptivia-carbon-700 mb-1">
                 KPI to Track *
               </label>
               <select
                 value={formData.kpi_key}
                 onChange={(e) => updateField('kpi_key', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-apptivia-carbon-300 rounded focus:outline-none focus:ring-2 focus:ring-apptivia-coral"
                 required
               >
                 <option value="">Select a KPI...</option>
@@ -388,13 +437,13 @@ export default function ContestCreationModal({ isOpen, onClose, currentUserId, o
 
             {/* Calculation Type */}
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1">
+              <label className="block text-sm font-semibold text-apptivia-carbon-700 mb-1">
                 Calculation Method
               </label>
               <select
                 value={formData.calculation_type}
                 onChange={(e) => updateField('calculation_type', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-apptivia-carbon-300 rounded focus:outline-none focus:ring-2 focus:ring-apptivia-coral"
               >
                 <option value="sum">Total Sum</option>
                 <option value="average">Average</option>
@@ -406,26 +455,26 @@ export default function ContestCreationModal({ isOpen, onClose, currentUserId, o
             {/* Date Range */}
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1">
+                <label className="block text-sm font-semibold text-apptivia-carbon-700 mb-1">
                   Start Date *
                 </label>
                 <input
                   type="date"
                   value={formData.start_date}
                   onChange={(e) => updateField('start_date', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-apptivia-carbon-300 rounded focus:outline-none focus:ring-2 focus:ring-apptivia-coral"
                   required
                 />
               </div>
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1">
+                <label className="block text-sm font-semibold text-apptivia-carbon-700 mb-1">
                   End Date *
                 </label>
                 <input
                   type="date"
                   value={formData.end_date}
                   onChange={(e) => updateField('end_date', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-apptivia-carbon-300 rounded focus:outline-none focus:ring-2 focus:ring-apptivia-coral"
                   required
                 />
               </div>
@@ -433,13 +482,13 @@ export default function ContestCreationModal({ isOpen, onClose, currentUserId, o
 
             {/* Participant Type */}
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1">
+              <label className="block text-sm font-semibold text-apptivia-carbon-700 mb-1">
                 Participant Type
               </label>
               <select
                 value={formData.participant_type}
                 onChange={(e) => updateField('participant_type', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-apptivia-carbon-300 rounded focus:outline-none focus:ring-2 focus:ring-apptivia-coral"
               >
                 <option value="individual">Individual Competition</option>
                 <option value="team">Team Competition</option>
@@ -449,13 +498,13 @@ export default function ContestCreationModal({ isOpen, onClose, currentUserId, o
 
             {/* Reward Type */}
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1">
+              <label className="block text-sm font-semibold text-apptivia-carbon-700 mb-1">
                 Reward Type
               </label>
               <select
                 value={formData.reward_type}
                 onChange={(e) => updateField('reward_type', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-apptivia-carbon-300 rounded focus:outline-none focus:ring-2 focus:ring-apptivia-coral"
               >
                 <option value="gift_card">Gift Card</option>
                 <option value="bonus">Cash Bonus</option>
@@ -468,28 +517,28 @@ export default function ContestCreationModal({ isOpen, onClose, currentUserId, o
 
             {/* Reward Value */}
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1">
+              <label className="block text-sm font-semibold text-apptivia-carbon-700 mb-1">
                 Reward Value
               </label>
               <input
                 type="text"
                 value={formData.reward_value}
                 onChange={(e) => updateField('reward_value', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-apptivia-carbon-300 rounded focus:outline-none focus:ring-2 focus:ring-apptivia-coral"
                 placeholder="e.g., $100, 1 Day PTO"
               />
             </div>
 
             {/* Reward Description */}
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1">
+              <label className="block text-sm font-semibold text-apptivia-carbon-700 mb-1">
                 Reward Description
               </label>
               <input
                 type="text"
                 value={formData.reward_description}
                 onChange={(e) => updateField('reward_description', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-apptivia-carbon-300 rounded focus:outline-none focus:ring-2 focus:ring-apptivia-coral"
                 placeholder="e.g., $100 Amazon Gift Card"
               />
             </div>
@@ -507,8 +556,8 @@ export default function ContestCreationModal({ isOpen, onClose, currentUserId, o
           )}
 
           {/* Info Box */}
-          <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded">
-            <div className="text-sm text-blue-800">
+          <div className="mt-4 p-3 bg-apptivia-coral-tone-50 border border-apptivia-coral-tone-100 rounded">
+            <div className="text-sm text-apptivia-coral-tone-700">
               <strong>Note:</strong> All active team members will be automatically enrolled in this contest. 
               You can also add specific members later using the <strong>Add Members</strong> button on the contest card.
               Leaderboards will update in real-time based on KPI performance.
@@ -520,14 +569,14 @@ export default function ContestCreationModal({ isOpen, onClose, currentUserId, o
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 px-4 py-2 border border-gray-300 rounded hover:bg-gray-50 font-semibold"
+              className="flex-1 px-4 py-2 border border-apptivia-carbon-300 rounded hover:bg-apptivia-paper font-semibold"
               disabled={saving}
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 text-white px-4 py-2 rounded hover:from-blue-700 hover:to-purple-700 font-semibold disabled:opacity-50"
+              className="flex-1 bg-apptivia-ink text-white px-4 py-2 rounded hover:bg-apptivia-coral-tone-600 font-semibold disabled:opacity-50"
               disabled={saving || loading}
             >
               {saving ? (contestToEdit ? 'Updating...' : 'Creating...') : (contestToEdit ? 'Update Contest' : 'Create Contest')}

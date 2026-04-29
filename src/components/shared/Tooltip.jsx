@@ -35,7 +35,7 @@ export default function Tooltip({ children, text, position = 'top', className = 
         className={`absolute z-50 ${pos[position] || pos.top} pointer-events-none opacity-0 group-hover/tip:opacity-100 transition-opacity duration-150 delay-300 ${wide ? 'max-w-[280px]' : 'max-w-[220px]'} w-max`}
         role="tooltip"
       >
-        <span className="block text-[11px] leading-snug bg-gray-900 text-white rounded-lg px-2.5 py-1.5 shadow-lg whitespace-normal">
+        <span className="block text-[11px] leading-snug bg-apptivia-ink text-white rounded-lg px-2.5 py-1.5 shadow-lg whitespace-normal">
           {text}
         </span>
         <span className={`absolute w-0 h-0 ${arrow[position] || arrow.top}`} />

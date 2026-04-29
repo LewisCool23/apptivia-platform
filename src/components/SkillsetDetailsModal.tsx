@@ -99,7 +99,7 @@ export default function SkillsetDetailsModal({
         .select('*')
         .eq('skillset_id', skillsetId)
         .order('points', { ascending: true });
-      if (organizationId) achievementsQuery = achievementsQuery.eq('organization_id', organizationId);
+      // Achievements are global structural definitions (org_id = NULL after migration 157)
 
       const [achievementsRes, metricsRes, profilesRes] = await Promise.all([
         achievementsQuery,
@@ -272,20 +272,20 @@ export default function SkillsetDetailsModal({
       onClick={onClose}
     >
       <div
-        className="bg-white rounded-xl shadow-2xl max-w-6xl w-full max-h-[90vh] overflow-hidden flex flex-col"
+        className="bg-white rounded-lg shadow-2xl max-w-6xl w-full max-h-[90vh] overflow-hidden flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="px-6 py-4 border-b flex items-center justify-between" style={{ backgroundColor: resolvedColor + '20' }}>
           <div>
             <h2 className="text-2xl font-bold" style={{ color: resolvedColor }}>{skillsetName}</h2>
             <div className="mt-2 flex flex-wrap items-center gap-2">
-              <span className="text-sm text-gray-600">Detailed progress and achievements</span>
+              <span className="text-sm text-apptivia-carbon-600">Detailed progress and achievements</span>
               {kpiList.length > 0 && (
                 <div className="flex flex-wrap gap-2">
                   {kpiList.map(kpi => (
                     <span
                       key={kpi}
-                      className="px-2.5 py-1 rounded-full text-xs font-semibold bg-white/80 text-gray-700 border border-gray-200"
+                      className="px-2.5 py-1 rounded-full text-xs font-semibold bg-white/80 text-apptivia-carbon-700 border border-apptivia-carbon-200"
                     >
                       {kpi}
                     </span>
@@ -296,7 +296,7 @@ export default function SkillsetDetailsModal({
           </div>
           <button
             onClick={onClose}
-            className="text-gray-500 hover:text-gray-700 text-2xl font-bold"
+            className="text-apptivia-carbon-500 hover:text-apptivia-carbon-700 text-2xl font-bold"
           >
             ×
           </button>
@@ -308,39 +308,39 @@ export default function SkillsetDetailsModal({
           ) : (
             <div className="space-y-4">
               {highlightAchievementName && (
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-sm text-blue-800">
+                <div className="bg-apptivia-coral-tone-50 border border-apptivia-coral-tone-100 rounded-lg p-4 text-sm text-apptivia-coral-tone-700">
                   Suggested next achievement: <span className="font-semibold">{highlightAchievementName}</span>
                 </div>
               )}
               
               {/* Overall Progress Section */}
-              <div className="bg-gray-50 rounded-lg p-4">
+              <div className="bg-apptivia-paper rounded-lg p-4">
                 <h3 className="font-semibold mb-3">{audienceLabel} Overview</h3>
                 <div className="grid grid-cols-3 gap-4">
                   <div>
                     <div className="text-2xl font-bold" style={{ color: resolvedColor }}>{avgProgress}%</div>
-                    <div className="text-xs text-gray-600">Average Progress</div>
+                    <div className="text-xs text-apptivia-carbon-600">Average Progress</div>
                   </div>
                   <div>
-                    <div className="text-2xl font-bold text-gray-900">{profileProgress.length}</div>
-                    <div className="text-xs text-gray-600">Members</div>
+                    <div className="text-2xl font-bold text-apptivia-ink">{profileProgress.length}</div>
+                    <div className="text-xs text-apptivia-carbon-600">Members</div>
                   </div>
                   <div>
-                    <div className="text-2xl font-bold text-gray-900">{achievements.length}</div>
-                    <div className="text-xs text-gray-600">Total Achievements</div>
+                    <div className="text-2xl font-bold text-apptivia-ink">{achievements.length}</div>
+                    <div className="text-xs text-apptivia-carbon-600">Total Achievements</div>
                   </div>
                 </div>
               </div>
 
               {/* Tab Navigation */}
-              <div className="border-b border-gray-200">
+              <div className="border-b border-apptivia-carbon-200">
                 <div className="flex gap-4">
                   <button
                     onClick={() => setActiveTab('achievements')}
                     className={`px-4 py-2 text-sm font-semibold border-b-2 transition-colors ${
                       activeTab === 'achievements'
-                        ? 'border-current text-gray-900'
-                        : 'border-transparent text-gray-500 hover:text-gray-700'
+                        ? 'border-current text-apptivia-ink'
+                        : 'border-transparent text-apptivia-carbon-500 hover:text-apptivia-carbon-700'
                     }`}
                     style={activeTab === 'achievements' ? { borderColor: resolvedColor, color: resolvedColor } : {}}
                   >
@@ -350,8 +350,8 @@ export default function SkillsetDetailsModal({
                     onClick={() => setActiveTab('members')}
                     className={`px-4 py-2 text-sm font-semibold border-b-2 transition-colors ${
                       activeTab === 'members'
-                        ? 'border-current text-gray-900'
-                        : 'border-transparent text-gray-500 hover:text-gray-700'
+                        ? 'border-current text-apptivia-ink'
+                        : 'border-transparent text-apptivia-carbon-500 hover:text-apptivia-carbon-700'
                     }`}
                     style={activeTab === 'members' ? { borderColor: resolvedColor, color: resolvedColor } : {}}
                   >
@@ -372,37 +372,37 @@ export default function SkillsetDetailsModal({
                       return (
                       <div
                         key={achievement.id}
-                        className={`border rounded-lg p-4 transition-shadow ${isCompleted ? 'bg-green-50 border-green-200 shadow-sm' : 'hover:shadow-md'} ${isHighlighted ? 'ring-2 ring-blue-400 bg-blue-50 border-blue-200' : ''}`}
+                        className={`border rounded-lg p-4 transition-shadow ${isCompleted ? 'bg-green-50 border-green-200 shadow-sm' : 'hover:shadow-md'} ${isHighlighted ? 'ring-2 ring-apptivia-coral-tone-300 bg-apptivia-coral-tone-50 border-apptivia-coral-tone-100' : ''}`}
                       >
                         <div className="flex items-start justify-between mb-2">
                           <div className="flex-1">
                             <div className="flex items-center gap-2 mb-1 flex-wrap">
-                              <h4 className="font-semibold text-gray-900">{achievement.name}</h4>
-                              <span className={`px-2 py-1 rounded text-xs font-medium ${difficultyColors[achievement.difficulty] || 'bg-gray-100 text-gray-700'}`}>
+                              <h4 className="font-semibold text-apptivia-ink">{achievement.name}</h4>
+                              <span className={`px-2 py-1 rounded text-xs font-medium ${difficultyColors[achievement.difficulty] || 'bg-apptivia-carbon-100 text-apptivia-carbon-700'}`}>
                                 {achievement.difficulty}
                               </span>
                               {isHighlighted && (
-                                <span className="px-2 py-1 rounded text-xs font-semibold bg-blue-600 text-white">Suggested</span>
+                                <span className="px-2 py-1 rounded text-xs font-semibold bg-apptivia-coral text-white">Suggested</span>
                               )}
                               {isCompleted && (
                                 <span className="px-2 py-1 rounded text-xs font-semibold bg-green-600 text-white">Completed</span>
                               )}
                             </div>
-                            <p className="text-sm text-gray-600">{achievement.description}</p>
+                            <p className="text-sm text-apptivia-carbon-600">{achievement.description}</p>
                             {achievement.kpi_requirement && (
-                              <div className="mt-2 text-xs text-gray-500">
+                              <div className="mt-2 text-xs text-apptivia-carbon-500">
                                 Requirement: {achievement.kpi_requirement} {achievement.threshold ? `≥ ${achievement.threshold}` : ''}
                               </div>
                             )}
                           </div>
                           <div className="ml-4 text-right flex-shrink-0">
                             <div className="text-2xl font-bold" style={{ color: resolvedColor }}>{achievement.points}</div>
-                            <div className="text-xs text-gray-500">points</div>
+                            <div className="text-xs text-apptivia-carbon-500">points</div>
                           </div>
                         </div>
                         {/* Show which team members completed this */}
                         <div className="mt-2 pt-2 border-t">
-                          <div className="text-xs text-gray-500 mb-1">Completed by {totalProfiles > 0 ? `${completedCount}/${totalProfiles}` : '0'} member{totalProfiles !== 1 ? 's' : ''}:</div>
+                          <div className="text-xs text-apptivia-carbon-500 mb-1">Completed by {totalProfiles > 0 ? `${completedCount}/${totalProfiles}` : '0'} member{totalProfiles !== 1 ? 's' : ''}:</div>
                           <div className="flex flex-wrap gap-1">
                             {profileProgress
                               .filter(p => p.completedAchievements.has(achievement.id))
@@ -412,7 +412,7 @@ export default function SkillsetDetailsModal({
                                 </span>
                               ))}
                             {completedCount === 0 && (
-                              <span className="text-xs text-gray-400 italic">None yet</span>
+                              <span className="text-xs text-apptivia-carbon-400 italic">None yet</span>
                             )}
                           </div>
                         </div>
@@ -427,21 +427,21 @@ export default function SkillsetDetailsModal({
                 <div>
                   <div className="space-y-2">
                     {profileProgress.length === 0 ? (
-                      <div className="text-center py-8 text-gray-500">No member data available</div>
+                      <div className="text-center py-8 text-apptivia-carbon-500">No member data available</div>
                     ) : (
                       profileProgress.map(profile => (
                         <div key={profile.profile_id} className="border rounded-lg p-4 hover:shadow-md transition-shadow">
                           <div className="flex items-center justify-between mb-2">
                             <div>
-                              <div className="font-medium text-gray-900">{profile.profile_name}</div>
-                              <div className="text-xs text-gray-500">{profile.level}</div>
+                              <div className="font-medium text-apptivia-ink">{profile.profile_name}</div>
+                              <div className="text-xs text-apptivia-carbon-500">{profile.level}</div>
                             </div>
                             <div className="text-right">
                               <div className="font-bold text-lg" style={{ color: resolvedColor }}>{profile.progress}%</div>
-                              <div className="text-xs text-gray-500">{profile.achievements_completed} achievements</div>
+                              <div className="text-xs text-apptivia-carbon-500">{profile.achievements_completed} achievements</div>
                             </div>
                           </div>
-                          <div className="w-full bg-gray-200 rounded-full h-2">
+                          <div className="w-full bg-apptivia-carbon-200 rounded-full h-2">
                             <div className="h-2 rounded-full transition-all" style={{ width: `${profile.progress}%`, backgroundColor: resolvedColor }}></div>
                           </div>
                         </div>
@@ -454,10 +454,10 @@ export default function SkillsetDetailsModal({
           )}
         </div>
 
-        <div className="bg-gray-50 px-6 py-4 flex justify-end border-t">
+        <div className="bg-apptivia-paper px-6 py-4 flex justify-end border-t">
           <button
             onClick={onClose}
-            className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300"
+            className="px-4 py-2 bg-apptivia-carbon-200 text-apptivia-carbon-700 rounded-lg hover:bg-apptivia-carbon-300"
           >
             Close
           </button>

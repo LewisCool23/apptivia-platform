@@ -44,11 +44,11 @@ export default function BadgeAssignmentModal({ isOpen, onClose, badge }) {
           email,
           first_name,
           last_name,
+          organization_id,
           department_id,
           departments (name),
-          profile_badges!left (badge_id)
+          profile_badges!left (badge_name)
         `)
-        .eq('is_active', true)
         .order('first_name');
 
       const { data, error } = await query;
@@ -57,7 +57,7 @@ export default function BadgeAssignmentModal({ isOpen, onClose, badge }) {
 
       // Filter out profiles who already have this badge
       const filtered = (data || []).filter(profile => {
-        const hasBadge = profile.profile_badges?.some(pb => pb.badge_id === badge?.id);
+        const hasBadge = profile.profile_badges?.some(pb => pb.badge_name === badge?.badge_name);
         return !hasBadge;
       });
 
@@ -97,16 +97,24 @@ export default function BadgeAssignmentModal({ isOpen, onClose, badge }) {
 
     setSubmitting(true);
     try {
-      // Create profile_badges records
-      const records = selectedProfiles.map(profileId => ({
-        profile_id: profileId,
-        badge_id: badge.id,
-        awarded_at: new Date().toISOString(),
-      }));
+      // Create profile_badges records with denormalized badge metadata
+      const records = selectedProfiles.map(profileId => {
+        const profile = profiles.find(p => p.id === profileId);
+        return {
+          profile_id: profileId,
+          badge_type: badge.badge_type || 'special',
+          badge_name: badge.badge_name,
+          badge_description: badge.badge_description || '',
+          icon: badge.icon || '🏆',
+          color: badge.color || '#FF4D2E',
+          earned_at: new Date().toISOString(),
+          organization_id: profile?.organization_id,
+        };
+      });
 
       const { error } = await supabase
         .from('profile_badges')
-        .insert(records);
+        .upsert(records, { onConflict: 'profile_id,badge_name', ignoreDuplicates: true });
 
       if (error) throw error;
 
@@ -145,7 +153,7 @@ export default function BadgeAssignmentModal({ isOpen, onClose, badge }) {
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
       <div className="bg-white rounded-lg shadow-xl w-full max-w-3xl max-h-[90vh] flex flex-col">
         {/* Header */}
-        <div className="border-b border-gray-200 px-6 py-4 flex items-center justify-between">
+        <div className="border-b border-apptivia-carbon-200 px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div 
               className="p-2 rounded-lg text-2xl"
@@ -154,30 +162,30 @@ export default function BadgeAssignmentModal({ isOpen, onClose, badge }) {
               {badge.icon}
             </div>
             <div>
-              <h2 className="text-xl font-bold text-gray-900">Assign Badge</h2>
-              <p className="text-sm text-gray-500">{badge.badge_name}</p>
+              <h2 className="text-xl font-bold text-apptivia-ink">Assign Badge</h2>
+              <p className="text-sm text-apptivia-carbon-500">{badge.badge_name}</p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+            className="p-2 hover:bg-apptivia-carbon-100 rounded-lg transition-colors"
           >
-            <X className="w-5 h-5 text-gray-400" />
+            <X className="w-5 h-5 text-apptivia-carbon-400" />
           </button>
         </div>
 
         {/* Filters */}
-        <div className="px-6 py-4 bg-gray-50 border-b border-gray-200 space-y-3">
+        <div className="px-6 py-4 bg-apptivia-paper border-b border-apptivia-carbon-200 space-y-3">
           <div className="flex gap-3">
             {/* Search */}
             <div className="flex-1 relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-apptivia-carbon-400" />
               <input
                 type="text"
                 placeholder="Search by name or email..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                className="w-full pl-10 pr-3 py-2 border border-apptivia-carbon-300 rounded-lg focus:ring-2 focus:ring-apptivia-coral focus:border-apptivia-carbon-300"
               />
             </div>
 
@@ -185,7 +193,7 @@ export default function BadgeAssignmentModal({ isOpen, onClose, badge }) {
             <select
               value={departmentFilter}
               onChange={(e) => setDepartmentFilter(e.target.value)}
-              className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+              className="px-3 py-2 border border-apptivia-carbon-300 rounded-lg focus:ring-2 focus:ring-apptivia-coral focus:border-apptivia-carbon-300"
             >
               <option value="all">All Departments</option>
               {departments.map(dept => (
@@ -199,11 +207,11 @@ export default function BadgeAssignmentModal({ isOpen, onClose, badge }) {
             <button
               type="button"
               onClick={handleSelectAll}
-              className="text-sm text-indigo-600 hover:text-indigo-700 font-medium"
+              className="text-sm text-apptivia-ink hover:text-apptivia-ink font-medium"
             >
               {selectedProfiles.length === filteredProfiles.length ? 'Deselect All' : 'Select All'}
             </button>
-            <p className="text-sm text-gray-500">
+            <p className="text-sm text-apptivia-carbon-500">
               {selectedProfiles.length} selected · {filteredProfiles.length} available
             </p>
           </div>
@@ -213,13 +221,13 @@ export default function BadgeAssignmentModal({ isOpen, onClose, badge }) {
         <div className="flex-1 overflow-y-auto px-6 py-4">
           {loading ? (
             <div className="text-center py-12">
-              <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-gray-200 border-t-indigo-600"></div>
-              <p className="text-sm text-gray-500 mt-2">Loading profiles...</p>
+              <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-apptivia-carbon-200 border-t-indigo-600"></div>
+              <p className="text-sm text-apptivia-carbon-500 mt-2">Loading profiles...</p>
             </div>
           ) : filteredProfiles.length === 0 ? (
             <div className="text-center py-12">
-              <Users className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-              <p className="text-gray-500">
+              <Users className="w-12 h-12 text-apptivia-carbon-300 mx-auto mb-3" />
+              <p className="text-apptivia-carbon-500">
                 {searchQuery || departmentFilter !== 'all' 
                   ? 'No profiles match your filters'
                   : 'All eligible profiles already have this badge'}
@@ -236,19 +244,19 @@ export default function BadgeAssignmentModal({ isOpen, onClose, badge }) {
                     key={profile.id}
                     className={`flex items-center gap-3 p-3 rounded-lg border-2 cursor-pointer transition-all ${
                       isSelected
-                        ? 'border-indigo-500 bg-indigo-50'
-                        : 'border-gray-200 hover:border-gray-300 bg-white'
+                        ? 'border-apptivia-carbon-300 bg-apptivia-carbon-100'
+                        : 'border-apptivia-carbon-200 hover:border-apptivia-carbon-300 bg-white'
                     }`}
                   >
                     <input
                       type="checkbox"
                       checked={isSelected}
                       onChange={() => handleToggleProfile(profile.id)}
-                      className="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
+                      className="w-4 h-4 text-apptivia-ink border-apptivia-carbon-300 rounded focus:ring-apptivia-coral"
                     />
                     <div className="flex-1 min-w-0">
-                      <p className="font-medium text-gray-900 truncate">{displayName}</p>
-                      <div className="flex items-center gap-2 text-xs text-gray-500">
+                      <p className="font-medium text-apptivia-ink truncate">{displayName}</p>
+                      <div className="flex items-center gap-2 text-xs text-apptivia-carbon-500">
                         <span className="truncate">{profile.email}</span>
                         {profile.departments?.name && (
                           <>
@@ -266,10 +274,10 @@ export default function BadgeAssignmentModal({ isOpen, onClose, badge }) {
         </div>
 
         {/* Footer */}
-        <div className="border-t border-gray-200 px-6 py-4 flex items-center justify-between bg-gray-50">
-          <p className="text-sm text-gray-600">
+        <div className="border-t border-apptivia-carbon-200 px-6 py-4 flex items-center justify-between bg-apptivia-paper">
+          <p className="text-sm text-apptivia-carbon-600">
             {selectedProfiles.length > 0 && (
-              <span className="font-medium text-indigo-600">
+              <span className="font-medium text-apptivia-ink">
                 {selectedProfiles.length} {selectedProfiles.length === 1 ? 'person' : 'people'} will receive this badge
               </span>
             )}
@@ -278,7 +286,7 @@ export default function BadgeAssignmentModal({ isOpen, onClose, badge }) {
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 text-gray-700 hover:bg-gray-200 rounded-lg transition-colors"
+              className="px-4 py-2 text-apptivia-carbon-700 hover:bg-apptivia-carbon-200 rounded-lg transition-colors"
               disabled={submitting}
             >
               Cancel
@@ -286,7 +294,7 @@ export default function BadgeAssignmentModal({ isOpen, onClose, badge }) {
             <button
               onClick={handleAssignBadge}
               disabled={submitting || selectedProfiles.length === 0}
-              className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
+              className="px-4 py-2 bg-apptivia-ink text-white rounded-lg hover:bg-apptivia-ink disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
             >
               <Award className="w-4 h-4" />
               {submitting ? 'Assigning...' : `Assign Badge${selectedProfiles.length > 1 ? 's' : ''}`}

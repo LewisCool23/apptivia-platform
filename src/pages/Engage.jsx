@@ -24,8 +24,8 @@ const TABS = [
 
 const PANELS = [
   { id: 'dialpad',   icon: Phone,    label: 'Dialpad',       color: 'text-emerald-500' },
-  { id: 'contacts',  icon: UserPlus, label: 'Contacts',      color: 'text-blue-500' },
-  { id: 'activity',  icon: Activity, label: 'Activity Feed', color: 'text-purple-500' },
+  { id: 'contacts',  icon: UserPlus, label: 'Contacts',      color: 'text-apptivia-coral' },
+  { id: 'activity',  icon: Activity, label: 'Activity Feed', color: 'text-apptivia-ink' },
 ];
 
 export default function Engage() {
@@ -60,22 +60,22 @@ export default function Engage() {
 
   return (
     <DashboardLayout>
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50/30 p-4 md:p-6">
+      <div className="min-h-screen bg-apptivia-paper p-4 md:p-6">
 
         {/* Header */}
         <div className="mb-5 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-xl flex items-center justify-center shadow-lg">
+            <div className="w-10 h-10 bg-apptivia-ink rounded-lg flex items-center justify-center shadow-lg">
               <Radar size={20} className="text-white" />
             </div>
             <div>
-              <h1 className="text-xl font-bold text-gray-900">Apptivia Engage</h1>
-              <p className="text-xs text-gray-500">AI-Powered Sales Intelligence & Pipeline Operations</p>
+              <h1 className="text-xl font-bold text-apptivia-coral">Apptivia Engage</h1>
+              <p className="text-xs text-apptivia-carbon-500">AI-Powered Sales Intelligence & Pipeline Operations</p>
             </div>
           </div>
 
           {/* Right-panel icon strip */}
-          <div className="flex items-center gap-1 bg-white border border-gray-100 rounded-xl p-1 shadow-sm">
+          <div className="flex items-center gap-1 bg-white border border-apptivia-carbon-100 rounded-lg p-1 shadow-sm">
             {PANELS.map(({ id, icon: Icon, label, color }) => (
               <button
                 key={id}
@@ -83,18 +83,18 @@ export default function Engage() {
                 title={label}
                 className={`w-9 h-9 rounded-lg flex items-center justify-center transition-all ${
                   activePanel === id
-                    ? 'bg-gray-100 shadow-inner'
-                    : 'hover:bg-gray-50'
+                    ? 'bg-apptivia-carbon-100 shadow-inner'
+                    : 'hover:bg-apptivia-paper'
                 }`}
               >
-                <Icon size={15} className={activePanel === id ? color : 'text-gray-400'} />
+                <Icon size={15} className={activePanel === id ? color : 'text-apptivia-carbon-400'} />
               </button>
             ))}
           </div>
         </div>
 
         {/* Tab Navigation */}
-        <div className="flex items-center gap-1 mb-5 bg-white rounded-xl border border-gray-100 p-1">
+        <div className="flex items-center gap-1 mb-5 bg-white rounded-lg border border-apptivia-carbon-100 p-1">
           {TABS.map((tab) => {
             const isActive = activeTab === tab.id;
             return (
@@ -103,8 +103,8 @@ export default function Engage() {
                 onClick={() => setActiveTab(tab.id)}
                 className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-xs font-medium transition-all whitespace-nowrap ${
                   isActive
-                    ? 'bg-gradient-to-r from-blue-500 to-cyan-500 text-white shadow-sm'
-                    : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                    ? 'bg-apptivia-coral text-white shadow-sm'
+                    : 'text-apptivia-carbon-600 hover:bg-apptivia-paper hover:text-apptivia-ink'
                 }`}
               >
                 <tab.icon size={14} />
@@ -159,7 +159,7 @@ export default function Engage() {
             className="fixed inset-0 z-30 bg-black/5"
             onClick={() => setActivePanel(null)}
           />
-          <div className="fixed top-0 right-0 h-full w-[360px] bg-white shadow-2xl z-40 border-l border-gray-100 flex flex-col">
+          <div className="fixed top-0 right-0 h-full w-[360px] bg-white shadow-2xl z-40 border-l border-apptivia-carbon-100 flex flex-col">
             {activePanel === 'dialpad' && (
               <EngageDialpadPanel
                 onCall={dialer.startCall}
@@ -177,14 +177,14 @@ export default function Engage() {
             )}
             {activePanel === 'activity' && (
               <div className="flex flex-col h-full">
-                <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 flex-shrink-0">
+                <div className="flex items-center justify-between px-4 py-3 border-b border-apptivia-carbon-100 flex-shrink-0">
                   <div className="flex items-center gap-2">
-                    <Activity size={14} className="text-purple-500" />
-                    <h3 className="font-semibold text-gray-900 text-sm">Activity Feed</h3>
+                    <Activity size={14} className="text-apptivia-ink" />
+                    <h3 className="font-semibold text-apptivia-ink text-sm">Activity Feed</h3>
                   </div>
                   <button
                     onClick={() => setActivePanel(null)}
-                    className="text-gray-400 hover:text-gray-600 transition-colors"
+                    className="text-apptivia-carbon-400 hover:text-apptivia-carbon-600 transition-colors"
                   >
                     <X size={15} />
                   </button>
