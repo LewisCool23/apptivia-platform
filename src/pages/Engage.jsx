@@ -69,7 +69,7 @@ export default function Engage() {
               <Radar size={20} className="text-white" />
             </div>
             <div>
-              <h1 className="text-xl font-bold text-apptivia-ink">Apptivia Engage</h1>
+              <h1 className="text-xl font-bold text-apptivia-coral">Apptivia Engage</h1>
               <p className="text-xs text-apptivia-carbon-500">AI-Powered Sales Intelligence & Pipeline Operations</p>
             </div>
           </div>
