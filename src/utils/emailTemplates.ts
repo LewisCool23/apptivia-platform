@@ -270,7 +270,7 @@ export function buildScorecardSnapshotEmailHtml(data: ScorecardData, options: Sc
 
   return buildEmailWrapper(
     '📊 Weekly Scorecard Snapshot',
-    'Apptivia Platform',
+    '<span style="font-family:\'Geist\',-apple-system,BlinkMacSystemFont,sans-serif;font-weight:900;color:#F7F5F2;letter-spacing:-0.05em;">app</span><span style="font-family:\'Geist\',-apple-system,BlinkMacSystemFont,sans-serif;font-weight:500;color:#F7F5F2;letter-spacing:-0.05em;">tivia</span>',
     bodyHtml,
     {
       headerMeta,
@@ -422,7 +422,7 @@ export function buildCoachSnapshotEmailHtml(data: CoachData, options: CoachEmail
 
   return buildEmailWrapper(
     '📋 Coaching Progress Snapshot',
-    'Apptivia Platform',
+    '<span style="font-family:\'Geist\',-apple-system,BlinkMacSystemFont,sans-serif;font-weight:900;color:#F7F5F2;letter-spacing:-0.05em;">app</span><span style="font-family:\'Geist\',-apple-system,BlinkMacSystemFont,sans-serif;font-weight:500;color:#F7F5F2;letter-spacing:-0.05em;">tivia</span>',
     bodyHtml,
     {
       headerMeta,
