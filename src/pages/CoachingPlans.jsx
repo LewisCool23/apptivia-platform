@@ -1824,7 +1824,7 @@ export default function CoachingPlans() {
         {planToShare && (
           <div className="fixed inset-0 z-[60] flex items-center justify-center">
             <div className="absolute inset-0 bg-black/40" onClick={() => setPlanToShare(null)} />
-            <div className="relative w-full max-w-lg bg-white rounded-xl shadow-lg p-6 m-4">
+            <div className="relative w-full max-w-lg bg-white rounded-lg shadow-lg p-6 m-4">
               <div className="flex items-start justify-between mb-4">
                 <div>
                   <h2 className="text-lg font-semibold text-apptivia-ink">Share Coaching Plan</h2>

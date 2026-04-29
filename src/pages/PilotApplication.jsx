@@ -101,7 +101,7 @@ export default function PilotApplication() {
           <h2 className="text-2xl font-bold text-apptivia-ink text-center mb-10">What founding pilots get</h2>
           <div className="grid sm:grid-cols-2 gap-6">
             {PILOT_BENEFITS.map((b) => (
-              <div key={b.title} className="bg-white rounded-xl p-6 border border-apptivia-carbon-200 shadow-sm">
+              <div key={b.title} className="bg-white rounded-lg p-6 border border-apptivia-carbon-200 shadow-sm">
                 <div className="flex items-start gap-4">
                   <div className="w-10 h-10 bg-apptivia-coral-tone-50 rounded-lg flex items-center justify-center flex-shrink-0">
                     <b.icon size={20} className="text-apptivia-coral" />
@@ -129,7 +129,7 @@ export default function PilotApplication() {
               </p>
 
               {status === 'success' ? (
-                <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-8 text-center">
+                <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-8 text-center">
                   <div className="w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-4">
                     <CheckCircle size={32} className="text-emerald-600" />
                   </div>
@@ -259,7 +259,7 @@ export default function PilotApplication() {
 
             {/* Sidebar */}
             <div className="lg:col-span-2 space-y-8">
-              <div className="bg-apptivia-paper rounded-xl p-6 border border-apptivia-carbon-200">
+              <div className="bg-apptivia-paper rounded-lg p-6 border border-apptivia-carbon-200">
                 <h3 className="font-semibold text-apptivia-ink mb-4">Full Pro access includes</h3>
                 <ul className="space-y-3">
                   {WHAT_YOU_GET.map((item) => (
@@ -271,7 +271,7 @@ export default function PilotApplication() {
                 </ul>
               </div>
 
-              <div className="bg-apptivia-paper rounded-xl p-6 border border-apptivia-carbon-200">
+              <div className="bg-apptivia-paper rounded-lg p-6 border border-apptivia-carbon-200">
                 <h3 className="font-semibold text-apptivia-ink mb-4">Ideal pilot fit</h3>
                 <dl className="space-y-3">
                   {IDEAL_FIT.map((item) => (

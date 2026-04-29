@@ -241,7 +241,7 @@ function ActionQueuePanel({
   };
 
   return (
-    <div className="bg-gradient-to-r from-violet-50 to-purple-50 rounded-xl border border-apptivia-carbon-300 p-4 space-y-3">
+    <div className="bg-gradient-to-r from-violet-50 to-purple-50 rounded-lg border border-apptivia-carbon-300 p-4 space-y-3">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <div className="w-7 h-7 bg-gradient-to-br from-violet-500 to-purple-600 rounded-lg flex items-center justify-center">
@@ -579,7 +579,7 @@ function SignalSummaryCards({ summary }) {
   return (
     <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
       {cards.map((card) => (
-        <div key={card.label} className="bg-white rounded-xl border border-apptivia-carbon-100 p-4 hover:shadow-sm transition-shadow">
+        <div key={card.label} className="bg-white rounded-lg border border-apptivia-carbon-100 p-4 hover:shadow-sm transition-shadow">
           <div className="flex items-center justify-between mb-2">
             <span className="text-xs font-medium text-apptivia-carbon-500">{card.label}</span>
             <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${card.color}`}>
@@ -606,7 +606,7 @@ function BuyingStageFunnel({ byBuyingStage = {} }) {
   ];
 
   return (
-    <div className="bg-white rounded-xl border border-apptivia-carbon-100 p-4">
+    <div className="bg-white rounded-lg border border-apptivia-carbon-100 p-4">
       <div className="flex items-center gap-2 mb-3">
         <Layers size={16} className="text-apptivia-carbon-500" />
         <span className="text-sm font-semibold text-apptivia-carbon-700">Buying Stage Distribution</span>
@@ -749,7 +749,7 @@ const AccountCard = React.memo(function AccountCard({ group, onAction, onDismiss
   const domain = group.signals.find((s) => s.raw_data?.domain)?.raw_data?.domain || '';
 
   return (
-    <div className={`bg-white rounded-xl border ${hasHighIntent ? 'border-amber-200' : 'border-apptivia-carbon-100'} p-4 hover:shadow-sm transition-shadow`}>
+    <div className={`bg-white rounded-lg border ${hasHighIntent ? 'border-amber-200' : 'border-apptivia-carbon-100'} p-4 hover:shadow-sm transition-shadow`}>
       {/* Header */}
       <div className="flex items-start justify-between gap-3 mb-3">
         <div className="flex items-center gap-2.5">
@@ -919,7 +919,7 @@ const SignalCard = React.memo(function SignalCard({ signal, onAction, onDismiss,
   const stageStyle = signal.buying_stage_indicator ? buyingStageStyles[signal.buying_stage_indicator] : null;
 
   return (
-    <div className={`bg-white rounded-xl border ${getSignalTier(signal.signal_score, getSignalCategory(signal.signal_type)).label === 'T1' ? 'border-amber-200' : 'border-apptivia-carbon-100'} p-4 hover:shadow-sm transition-shadow ${age?.stale ? 'opacity-75' : ''}`}>
+    <div className={`bg-white rounded-lg border ${getSignalTier(signal.signal_score, getSignalCategory(signal.signal_type)).label === 'T1' ? 'border-amber-200' : 'border-apptivia-carbon-100'} p-4 hover:shadow-sm transition-shadow ${age?.stale ? 'opacity-75' : ''}`}>
       <div className="flex items-start gap-3">
         {/* Icon */}
         <div className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${iconConfig.color}`}>
@@ -1161,7 +1161,7 @@ function ScanResultsPanel({ signals, lastScanSignalIds, onAction, onDismiss, onC
   if (newSignals.length === 0) return null;
 
   return (
-    <div className="bg-gradient-to-r from-cyan-50 to-blue-50 rounded-xl border border-cyan-200 p-5">
+    <div className="bg-gradient-to-r from-cyan-50 to-blue-50 rounded-lg border border-cyan-200 p-5">
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
           <div className="w-8 h-8 bg-gradient-to-br from-cyan-500 to-blue-600 rounded-lg flex items-center justify-center">
@@ -1224,7 +1224,7 @@ function TrackingScriptModal({ isOpen, onClose, organizationId }) {
   if (!isOpen) return null;
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg mx-4 p-6">
+      <div className="bg-white rounded-lg shadow-2xl w-full max-w-lg mx-4 p-6">
         <div className="flex items-center justify-between mb-4">
           <div>
             <h2 className="text-base font-semibold text-apptivia-ink">Website Visitor Tracking</h2>
@@ -1280,7 +1280,7 @@ function WebsiteVisitorPanel({ organizationId, onDraftMessage, onEnrichCompany, 
   useEffect(() => { load(); }, [load]);
 
   return (
-    <div className="bg-white rounded-xl border border-apptivia-carbon-100 p-5">
+    <div className="bg-white rounded-lg border border-apptivia-carbon-100 p-5">
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
           <Monitor size={13} className="text-teal-500" />
@@ -1414,7 +1414,7 @@ function DailyPriorityPanel({ allSignals, companyContacts, onDraftMessage, onEnr
   if (priorityList.length === 0) return null;
 
   return (
-    <div className="bg-white rounded-xl border border-apptivia-carbon-100 p-5">
+    <div className="bg-white rounded-lg border border-apptivia-carbon-100 p-5">
       <div className="flex items-center justify-between mb-4">
         <div>
           <h3 className="text-sm font-semibold text-apptivia-ink">Today's Priority List</h3>
@@ -1520,7 +1520,7 @@ function TopCompaniesPanel({ companies, companyContacts }) {
   if (!companies.length) return null;
 
   return (
-    <div className="bg-white rounded-xl border border-apptivia-carbon-100 p-5">
+    <div className="bg-white rounded-lg border border-apptivia-carbon-100 p-5">
       <h3 className="text-sm font-semibold text-apptivia-carbon-700 mb-3">Top Signal Companies</h3>
       <div className="space-y-2">
         {companies.slice(0, 8).map((c, i) => (
@@ -1560,7 +1560,7 @@ function IcpProspectorHeader({ icpConfig, onEditIcp }) {
     ? `${icpConfig.headcount_min}–${icpConfig.headcount_max} employees`
     : 'Any headcount';
   return (
-    <div className="bg-gradient-to-r from-indigo-50 to-purple-50 border border-apptivia-carbon-300 rounded-xl p-4 flex items-start justify-between gap-3">
+    <div className="bg-gradient-to-r from-indigo-50 to-purple-50 border border-apptivia-carbon-300 rounded-lg p-4 flex items-start justify-between gap-3">
       <div className="flex items-center gap-2.5">
         <div className="w-9 h-9 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-lg flex items-center justify-center flex-shrink-0">
           <Target size={16} className="text-white" />
@@ -1584,7 +1584,7 @@ function IcpProspectorHeader({ icpConfig, onEditIcp }) {
 
 function IcpProspectorFilters({ filters, onChange, onSearch, isLoading }) {
   return (
-    <div className="bg-white rounded-xl border border-apptivia-carbon-100 p-4 space-y-3">
+    <div className="bg-white rounded-lg border border-apptivia-carbon-100 p-4 space-y-3">
       <div className="flex items-center gap-2 flex-wrap">
         <div className="relative flex-1 min-w-40">
           <Search size={12} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-apptivia-carbon-400 pointer-events-none" />
@@ -1654,7 +1654,7 @@ function IcpCompanyCard({ company, icpScore, isAlreadyAdded, existingAccountId, 
   };
 
   return (
-    <div className={`bg-white rounded-xl border ${isAlreadyAdded ? 'border-emerald-200' : 'border-apptivia-carbon-100'} p-4 hover:shadow-sm transition-shadow`}>
+    <div className={`bg-white rounded-lg border ${isAlreadyAdded ? 'border-emerald-200' : 'border-apptivia-carbon-100'} p-4 hover:shadow-sm transition-shadow`}>
       {/* Header */}
       <div className="flex items-start justify-between gap-3 mb-3">
         <div className="flex items-center gap-2.5 min-w-0">
@@ -1847,17 +1847,17 @@ function IcpProspectorView({ icp, icpConfig, onDraftMessage, onNavigateDiscover,
       />
 
       {icp.loading ? (
-        <div className="bg-white rounded-xl border border-apptivia-carbon-100 py-16 text-center">
+        <div className="bg-white rounded-lg border border-apptivia-carbon-100 py-16 text-center">
           <RefreshCw size={28} className="mx-auto text-apptivia-ink mb-3 animate-spin" />
           <p className="text-sm text-apptivia-carbon-500">Searching Apollo for ICP-matching companies...</p>
         </div>
       ) : icp.error ? (
-        <div className="bg-white rounded-xl border border-red-100 py-12 text-center px-4">
+        <div className="bg-white rounded-lg border border-red-100 py-12 text-center px-4">
           <p className="text-sm text-red-500 mb-2">Search failed: {icp.error}</p>
           <button onClick={() => icp.search()} className="text-xs text-apptivia-ink underline">Retry</button>
         </div>
       ) : icp.results.length === 0 ? (
-        <div className="bg-white rounded-xl border border-apptivia-carbon-100 py-16 text-center">
+        <div className="bg-white rounded-lg border border-apptivia-carbon-100 py-16 text-center">
           <Target size={32} className="mx-auto text-apptivia-carbon-300 mb-3" />
           <p className="text-sm text-apptivia-carbon-500 mb-1">No results yet</p>
           <p className="text-xs text-apptivia-carbon-400">
@@ -1901,7 +1901,7 @@ function IcpProspectorView({ icp, icpConfig, onDraftMessage, onNavigateDiscover,
             <button
               onClick={icp.loadMore}
               disabled={icp.loadingMore}
-              className="w-full py-2.5 text-xs font-medium text-apptivia-ink hover:text-apptivia-ink border border-dashed border-apptivia-carbon-300 hover:border-apptivia-carbon-300 rounded-xl transition-colors flex items-center justify-center gap-2"
+              className="w-full py-2.5 text-xs font-medium text-apptivia-ink hover:text-apptivia-ink border border-dashed border-apptivia-carbon-300 hover:border-apptivia-carbon-300 rounded-lg transition-colors flex items-center justify-center gap-2"
             >
               {icp.loadingMore
                 ? <><RefreshCw size={12} className="animate-spin" /> Loading more...</>
@@ -2235,7 +2235,7 @@ export default function SignalProspecting({ organizationId, userId, onCallContac
       )}
 
       {/* Signal Scanner */}
-      <div className="bg-white rounded-xl border border-apptivia-carbon-100 p-5">
+      <div className="bg-white rounded-lg border border-apptivia-carbon-100 p-5">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 bg-gradient-to-br from-cyan-500 to-blue-600 rounded-lg flex items-center justify-center">
@@ -2470,7 +2470,7 @@ export default function SignalProspecting({ organizationId, userId, onCallContac
               <span className="text-sm text-apptivia-carbon-500">Loading signals...</span>
             </div>
           ) : filteredSignals.length === 0 ? (
-            <div className="bg-white rounded-xl border border-apptivia-carbon-100 py-16 text-center">
+            <div className="bg-white rounded-lg border border-apptivia-carbon-100 py-16 text-center">
               <Radar size={32} className="mx-auto text-apptivia-carbon-300 mb-3" />
               <p className="text-sm text-apptivia-carbon-500 mb-1">No signals detected yet</p>
               <p className="text-xs text-apptivia-carbon-400">Configure Signal Prospecting in Organization Settings and run a scan</p>
@@ -2551,7 +2551,7 @@ export default function SignalProspecting({ organizationId, userId, onCallContac
             const activeTypes = signals.SIGNAL_TYPES.filter((t) => (signals.summary.byType[t.key] || 0) > 0);
             if (activeTypes.length === 0) return null;
             return (
-              <div className="bg-white rounded-xl border border-apptivia-carbon-100 p-5">
+              <div className="bg-white rounded-lg border border-apptivia-carbon-100 p-5">
                 <h3 className="text-sm font-semibold text-apptivia-carbon-700 mb-3">By Signal Type</h3>
                 <div className="space-y-2">
                   {activeTypes.map((t) => (

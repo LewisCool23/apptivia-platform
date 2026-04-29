@@ -60,7 +60,7 @@ export default function ConfirmModal({
       onClick={onClose}
     >
       <div
-        className="bg-white rounded-2xl shadow-2xl max-w-sm w-full overflow-hidden transform transition-all animate-in fade-in zoom-in-95 duration-200"
+        className="bg-white rounded-lg shadow-2xl max-w-sm w-full overflow-hidden transform transition-all animate-in fade-in zoom-in-95 duration-200"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Gradient Header */}
@@ -73,7 +73,7 @@ export default function ConfirmModal({
             <X size={18} />
           </button>
           <div className="flex items-center gap-3">
-            <div className={`p-2 rounded-xl ${config.iconBg}`}>
+            <div className={`p-2 rounded-lg ${config.iconBg}`}>
               <IconComponent size={20} className={config.iconColor} />
             </div>
             <h3 className="text-lg font-semibold text-white">{title}</h3>

@@ -1628,7 +1628,7 @@ export default function Contests() {
       />
       {shareModal.isOpen && (
         <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4 overflow-y-auto" onClick={closeShareResults}>
-          <div className="bg-white rounded-xl shadow-2xl max-w-2xl w-full my-4 max-h-[85vh] overflow-hidden flex flex-col" onClick={(e) => e.stopPropagation()}>
+          <div className="bg-white rounded-lg shadow-2xl max-w-2xl w-full my-4 max-h-[85vh] overflow-hidden flex flex-col" onClick={(e) => e.stopPropagation()}>
             {/* Header */}
             <div className="flex items-center justify-between p-4 border-b border-apptivia-carbon-200 flex-shrink-0">
               <h2 className="text-xl font-bold text-apptivia-ink flex items-center gap-2">
@@ -1642,7 +1642,7 @@ export default function Contests() {
 
             {/* Results Preview (Downloadable) */}
             <div className="flex-1 overflow-y-auto p-4 bg-apptivia-paper min-h-0">
-              <div ref={sharePreviewRef} className="bg-gradient-to-br from-blue-500 via-purple-500 to-pink-500 rounded-xl p-6 text-white shadow-2xl">
+              <div ref={sharePreviewRef} className="bg-gradient-to-br from-blue-500 via-purple-500 to-pink-500 rounded-lg p-6 text-white shadow-2xl">
                 {/* Contest Header */}
                 <div className="mb-4">
                   <h3 className="text-xl font-bold">{shareModal.contest?.name}</h3>

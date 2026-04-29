@@ -113,11 +113,11 @@ function LogCallModal({ organizationId, userId, deals, onClose, onSaved }) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col">
+      <div className="bg-white rounded-lg shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col">
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-apptivia-carbon-100">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 bg-gradient-to-br from-violet-500 to-purple-600 rounded-xl flex items-center justify-center">
+            <div className="w-9 h-9 bg-gradient-to-br from-violet-500 to-purple-600 rounded-lg flex items-center justify-center">
               <Phone size={16} className="text-white" />
             </div>
             <div>
@@ -212,7 +212,7 @@ function LogCallModal({ organizationId, userId, deals, onClose, onSaved }) {
             <button
               onClick={handleAnalyze}
               disabled={analyzing || form.notes.trim().length < 20}
-              className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-violet-500 to-purple-600 text-white rounded-xl py-2.5 text-sm font-medium hover:opacity-90 disabled:opacity-50 transition-opacity"
+              className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-violet-500 to-purple-600 text-white rounded-lg py-2.5 text-sm font-medium hover:opacity-90 disabled:opacity-50 transition-opacity"
             >
               {analyzing ? <Loader2 size={16} className="animate-spin" /> : <Zap size={16} />}
               {analyzing ? 'Analyzing…' : 'Analyze with AI'}
@@ -221,7 +221,7 @@ function LogCallModal({ organizationId, userId, deals, onClose, onSaved }) {
 
           {/* AI Analysis Results */}
           {analysis && (
-            <div className="bg-gradient-to-br from-violet-50 to-purple-50 border border-apptivia-carbon-300 rounded-xl p-4 space-y-4">
+            <div className="bg-gradient-to-br from-violet-50 to-purple-50 border border-apptivia-carbon-300 rounded-lg p-4 space-y-4">
               {/* Badges row */}
               <div className="flex items-center gap-2 flex-wrap">
                 <span className="text-xs font-semibold text-apptivia-ink mr-1">AI Analysis</span>
@@ -308,7 +308,7 @@ function LogCallModal({ organizationId, userId, deals, onClose, onSaved }) {
           <button
             onClick={handleSave}
             disabled={saving || !form.notes.trim()}
-            className="px-6 py-2 bg-gradient-to-r from-violet-500 to-purple-600 text-white rounded-xl text-sm font-medium hover:opacity-90 disabled:opacity-50 transition-opacity flex items-center gap-2"
+            className="px-6 py-2 bg-gradient-to-r from-violet-500 to-purple-600 text-white rounded-lg text-sm font-medium hover:opacity-90 disabled:opacity-50 transition-opacity flex items-center gap-2"
           >
             {saving ? <Loader2 size={14} className="animate-spin" /> : null}
             {saving ? 'Saving…' : 'Save Call Log'}
@@ -326,7 +326,7 @@ function CallLogCard({ log }) {
   const a = log.ai_analysis;
 
   return (
-    <div className="bg-white rounded-xl border border-apptivia-carbon-100 shadow-sm hover:shadow-md transition-shadow">
+    <div className="bg-white rounded-lg border border-apptivia-carbon-100 shadow-sm hover:shadow-md transition-shadow">
       <div className="px-5 py-4">
         <div className="flex items-start justify-between gap-3">
           <div className="flex items-center gap-3 min-w-0">
@@ -487,7 +487,7 @@ export default function CallIntelligence({ organizationId, userId }) {
           { label: 'Competitor Mentions', value: competitorCalls, color: 'text-amber-600' },
           { label: 'At Risk Deals', value: atRiskCalls, color: 'text-red-600' },
         ].map(stat => (
-          <div key={stat.label} className="bg-white rounded-xl border border-apptivia-carbon-100 px-4 py-3 text-center shadow-sm">
+          <div key={stat.label} className="bg-white rounded-lg border border-apptivia-carbon-100 px-4 py-3 text-center shadow-sm">
             <div className={`text-2xl font-bold ${stat.color}`}>{stat.value}</div>
             <div className="text-xs text-apptivia-carbon-500 mt-0.5">{stat.label}</div>
           </div>
@@ -501,7 +501,7 @@ export default function CallIntelligence({ organizationId, userId }) {
         </h3>
         <button
           onClick={() => setShowModal(true)}
-          className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-violet-500 to-purple-600 text-white rounded-xl text-xs font-medium hover:opacity-90 transition-opacity shadow-sm"
+          className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-violet-500 to-purple-600 text-white rounded-lg text-xs font-medium hover:opacity-90 transition-opacity shadow-sm"
         >
           <Plus size={14} />
           Log a Call
@@ -521,7 +521,7 @@ export default function CallIntelligence({ organizationId, userId }) {
           <p className="text-xs mt-1">Log your first call to unlock AI-powered conversation intelligence.</p>
           <button
             onClick={() => setShowModal(true)}
-            className="mt-4 inline-flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-violet-500 to-purple-600 text-white rounded-xl text-sm font-medium hover:opacity-90 transition-opacity"
+            className="mt-4 inline-flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-violet-500 to-purple-600 text-white rounded-lg text-sm font-medium hover:opacity-90 transition-opacity"
           >
             <Plus size={15} />
             Log Your First Call

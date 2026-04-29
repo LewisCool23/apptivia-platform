@@ -114,7 +114,7 @@ export default function BadgeModal({ isOpen, onClose, badge, profileName }) {
       onClick={onClose}
     >
       <div
-        className="bg-white rounded-2xl shadow-2xl max-w-md w-full overflow-hidden transform transition-all"
+        className="bg-white rounded-lg shadow-2xl max-w-md w-full overflow-hidden transform transition-all"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header with gradient */}

@@ -101,7 +101,7 @@ function SummaryCards({ summary }) {
   return (
     <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
       {cards.map((card) => (
-        <div key={card.label} className="bg-white rounded-xl border border-apptivia-carbon-100 p-4 hover:shadow-sm transition-shadow">
+        <div key={card.label} className="bg-white rounded-lg border border-apptivia-carbon-100 p-4 hover:shadow-sm transition-shadow">
           <div className="flex items-center justify-between mb-2">
             <span className="text-xs font-medium text-apptivia-carbon-500">{card.label}</span>
             <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${card.color}`}>
@@ -131,7 +131,7 @@ function StageFunnel({ stageBreakdown, cepStages }) {
   const maxValue = Math.max(...stages.map((s) => stageBreakdown[s.stage_key]?.value || 0), 1);
 
   return (
-    <div className="bg-white rounded-xl border border-apptivia-carbon-100 p-5">
+    <div className="bg-white rounded-lg border border-apptivia-carbon-100 p-5">
       <h3 className="text-sm font-semibold text-apptivia-carbon-700 mb-4">
         {cepStages?.length > 0 ? 'CEP Stages' : 'Pipeline Stages'}
       </h3>
@@ -214,7 +214,7 @@ function DealCepPanel({ deal, cepStages, onClose, onAdvance, onUpdateChecklist, 
   if (!currentStage || !dealStageData) {
     const nonTerminal = cepStages.filter(s => !s.is_terminal);
     return (
-      <div className="bg-white rounded-xl border border-apptivia-carbon-100 p-5">
+      <div className="bg-white rounded-lg border border-apptivia-carbon-100 p-5">
         <div className="flex items-center justify-between mb-3">
           <h3 className="text-sm font-semibold text-apptivia-carbon-700">Assign CEP Stage</h3>
           <button onClick={onClose} className="text-apptivia-carbon-400 hover:text-apptivia-carbon-600"><X size={16} /></button>
@@ -256,7 +256,7 @@ function DealCepPanel({ deal, cepStages, onClose, onAdvance, onUpdateChecklist, 
   const overExpected = currentStage.expected_days && daysInStage > currentStage.expected_days;
 
   return (
-    <div className="bg-white rounded-xl border border-apptivia-carbon-100 p-5 space-y-4">
+    <div className="bg-white rounded-lg border border-apptivia-carbon-100 p-5 space-y-4">
       {/* Header */}
       <div className="flex items-center justify-between">
         <h3 className="text-sm font-semibold text-apptivia-ink truncate">{deal.deal_name}</h3>
@@ -442,7 +442,7 @@ function DealTable({ deals, onUpdateDeal, onDeleteDeal, cepStages, hasCep, selec
   };
 
   return (
-    <div className="bg-white rounded-xl border border-apptivia-carbon-100 overflow-hidden">
+    <div className="bg-white rounded-lg border border-apptivia-carbon-100 overflow-hidden">
       <ConfirmModal
         isOpen={deleteConfirm.isOpen}
         onClose={() => setDeleteConfirm({ isOpen: false, deal: null })}
@@ -587,7 +587,7 @@ function DealTable({ deals, onUpdateDeal, onDeleteDeal, cepStages, hasCep, selec
 
 function ForecastPanel({ forecast, onGenerate, loading }) {
   return (
-    <div className="bg-white rounded-xl border border-apptivia-carbon-100 p-5">
+    <div className="bg-white rounded-lg border border-apptivia-carbon-100 p-5">
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
           <div className="w-8 h-8 bg-gradient-to-br from-violet-500 to-purple-600 rounded-lg flex items-center justify-center">

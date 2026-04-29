@@ -157,7 +157,7 @@ function SummaryCards({ summary }) {
   return (
     <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
       {cards.map((card) => (
-        <div key={card.label} className="bg-white rounded-xl border border-apptivia-carbon-100 p-4 hover:shadow-sm transition-shadow">
+        <div key={card.label} className="bg-white rounded-lg border border-apptivia-carbon-100 p-4 hover:shadow-sm transition-shadow">
           <div className="flex items-center justify-between mb-2">
             <span className="text-xs font-medium text-apptivia-carbon-500">{card.label}</span>
             <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${card.color}`}>
@@ -189,7 +189,7 @@ function BuyingCommitteePanel({ committee, onUpdate }) {
   };
 
   return (
-    <div className="bg-white rounded-xl border border-apptivia-carbon-100 overflow-hidden">
+    <div className="bg-white rounded-lg border border-apptivia-carbon-100 overflow-hidden">
       <div className="px-5 py-3 border-b border-apptivia-carbon-100 flex items-center justify-between bg-apptivia-paper/50">
         <div className="flex items-center gap-2">
           <Users size={14} className="text-apptivia-carbon-500" />
@@ -294,7 +294,7 @@ function AccountCard({ account, onSelect, icpConfig }) {
 
   return (
     <div onClick={() => onSelect(account)}
-      className="bg-white rounded-xl border border-apptivia-carbon-100 p-5 hover:shadow-md hover:border-apptivia-coral-tone-100 transition-all cursor-pointer">
+      className="bg-white rounded-lg border border-apptivia-carbon-100 p-5 hover:shadow-md hover:border-apptivia-coral-tone-100 transition-all cursor-pointer">
       <div className="flex items-start justify-between mb-3">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-lg flex items-center justify-center">
@@ -370,13 +370,13 @@ function AccountDetail({ account, onBack, onUpdate, onAnalyze, analyzing, onUpda
   return (
     <div className="space-y-4">
       {/* Header */}
-      <div className="bg-white rounded-xl border border-apptivia-carbon-100 p-5">
+      <div className="bg-white rounded-lg border border-apptivia-carbon-100 p-5">
         <button onClick={onBack} className="text-xs text-apptivia-coral hover:text-apptivia-coral font-medium flex items-center gap-1 mb-3">
           ← Back to accounts
         </button>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-xl flex items-center justify-center">
+            <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-lg flex items-center justify-center">
               <Building2 size={22} className="text-white" />
             </div>
             <div>
@@ -429,7 +429,7 @@ function AccountDetail({ account, onBack, onUpdate, onAnalyze, analyzing, onUpda
           { label: 'Intent Score', value: account.intent_score, color: 'from-amber-500 to-orange-500' },
           { label: 'Engagement Score', value: account.engagement_score, color: 'from-emerald-500 to-teal-500' },
         ].map((s) => (
-          <div key={s.label} className="bg-white rounded-xl border border-apptivia-carbon-100 p-4 text-center">
+          <div key={s.label} className="bg-white rounded-lg border border-apptivia-carbon-100 p-4 text-center">
             <span className="text-[10px] text-apptivia-carbon-400 block mb-1">{s.label}</span>
             <div className={`text-2xl font-bold bg-gradient-to-r ${s.color} bg-clip-text text-transparent`}>{s.value}</div>
             <div className="w-full bg-apptivia-carbon-100 rounded-full h-1.5 mt-2">
@@ -438,7 +438,7 @@ function AccountDetail({ account, onBack, onUpdate, onAnalyze, analyzing, onUpda
           </div>
         ))}
         {icpScore !== null && (
-          <div className="bg-white rounded-xl border border-apptivia-carbon-100 p-4 text-center">
+          <div className="bg-white rounded-lg border border-apptivia-carbon-100 p-4 text-center">
             <span className="text-[10px] text-apptivia-carbon-400 block mb-1">ICP Fit Score</span>
             <div className={`text-2xl font-bold ${icpScore >= 75 ? 'text-emerald-600' : icpScore >= 50 ? 'text-amber-600' : 'text-red-500'}`}>{icpScore}</div>
             <div className="w-full bg-apptivia-carbon-100 rounded-full h-1.5 mt-2">
@@ -454,7 +454,7 @@ function AccountDetail({ account, onBack, onUpdate, onAnalyze, analyzing, onUpda
       {/* ABM Insights Row */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         {/* Readiness Score */}
-        <div className="bg-white rounded-xl border border-apptivia-carbon-100 p-4 text-center">
+        <div className="bg-white rounded-lg border border-apptivia-carbon-100 p-4 text-center">
           <span className="text-[10px] text-apptivia-carbon-400 block mb-1">Readiness Score</span>
           <div className={`text-2xl font-bold ${account.readiness_score >= 70 ? 'text-emerald-600' : account.readiness_score >= 40 ? 'text-amber-600' : 'text-apptivia-carbon-400'}`}>
             {account.readiness_score ?? '—'}
@@ -465,7 +465,7 @@ function AccountDetail({ account, onBack, onUpdate, onAnalyze, analyzing, onUpda
         </div>
 
         {/* Buying Stage */}
-        <div className="bg-white rounded-xl border border-apptivia-carbon-100 p-4 text-center">
+        <div className="bg-white rounded-lg border border-apptivia-carbon-100 p-4 text-center">
           <span className="text-[10px] text-apptivia-carbon-400 block mb-1">Buying Stage</span>
           {account.buying_stage ? (
             <span className={`inline-flex px-3 py-1 rounded-full text-xs font-semibold ${
@@ -481,14 +481,14 @@ function AccountDetail({ account, onBack, onUpdate, onAnalyze, analyzing, onUpda
         </div>
 
         {/* Signal Velocity */}
-        <div className="bg-white rounded-xl border border-apptivia-carbon-100 p-4 text-center">
+        <div className="bg-white rounded-lg border border-apptivia-carbon-100 p-4 text-center">
           <span className="text-[10px] text-apptivia-carbon-400 block mb-1">Signal Velocity</span>
           <div className="text-xl font-bold text-apptivia-ink">{account.signal_velocity ?? '—'}</div>
           <span className="text-[10px] text-apptivia-carbon-400">signals/week</span>
         </div>
 
         {/* Tech Fit Score */}
-        <div className="bg-white rounded-xl border border-apptivia-carbon-100 p-4 text-center">
+        <div className="bg-white rounded-lg border border-apptivia-carbon-100 p-4 text-center">
           <span className="text-[10px] text-apptivia-carbon-400 block mb-1">Tech Fit Score</span>
           <div className={`text-xl font-bold ${account.tech_fit_score >= 70 ? 'text-emerald-600' : account.tech_fit_score >= 40 ? 'text-amber-600' : 'text-apptivia-carbon-400'}`}>
             {account.tech_fit_score ?? '—'}
@@ -498,7 +498,7 @@ function AccountDetail({ account, onBack, onUpdate, onAnalyze, analyzing, onUpda
 
       {/* AI Insights */}
       {(account.ai_summary || account.ai_strategy) && (
-        <div className="bg-white rounded-xl border border-apptivia-carbon-100 overflow-hidden">
+        <div className="bg-white rounded-lg border border-apptivia-carbon-100 overflow-hidden">
           <div className="bg-gradient-to-r from-orange-500 to-amber-500 px-5 py-3 flex items-center gap-2">
             <Sparkles size={14} className="text-white" />
             <span className="text-sm font-semibold text-white">AI Account Intelligence</span>
@@ -533,7 +533,7 @@ function AccountDetail({ account, onBack, onUpdate, onAnalyze, analyzing, onUpda
       )}
 
       {/* Tier Selector */}
-      <div className="bg-white rounded-xl border border-apptivia-carbon-100 p-4">
+      <div className="bg-white rounded-lg border border-apptivia-carbon-100 p-4">
         <span className="text-xs font-semibold text-apptivia-carbon-700 block mb-2">Account Tier</span>
         <div className="flex gap-2">
           {Object.entries(TIER_STYLES).map(([key, style]) => (
@@ -557,7 +557,7 @@ function AccountDetail({ account, onBack, onUpdate, onAnalyze, analyzing, onUpda
 
       {/* Signal Contacts — only shown if promoted from Signal Prospecting */}
       {signalContacts.length > 0 && (
-        <div className="bg-white rounded-xl border border-apptivia-carbon-100 p-4">
+        <div className="bg-white rounded-lg border border-apptivia-carbon-100 p-4">
           <button
             onClick={() => setShowContacts(!showContacts)}
             className="flex items-center justify-between w-full"
@@ -662,7 +662,7 @@ function CreateDealModal({ isOpen, onClose, account, organizationId, userId }) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 p-6">
+      <div className="bg-white rounded-lg shadow-2xl w-full max-w-md mx-4 p-6">
         <div className="flex items-center justify-between mb-4">
           <div>
             <h2 className="text-base font-semibold text-apptivia-ink">Create Deal</h2>
@@ -918,7 +918,7 @@ export default function AccountIntelligence({ organizationId, userId, initialAcc
       <SummaryCards summary={summary} />
 
       {error && (
-        <div className="bg-red-50 border border-red-200 rounded-xl p-4 flex items-start gap-3">
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex items-start gap-3">
           <AlertTriangle size={16} className="text-red-500 flex-shrink-0 mt-0.5" />
           <p className="text-xs text-red-600">{error}</p>
         </div>
@@ -966,8 +966,8 @@ export default function AccountIntelligence({ organizationId, userId, initialAcc
 
       {/* Account List */}
       {filteredAccounts.length === 0 ? (
-        <div className="bg-white rounded-2xl border border-apptivia-carbon-100 p-12 text-center">
-          <div className="w-16 h-16 bg-apptivia-coral-tone-50 rounded-2xl flex items-center justify-center mx-auto mb-4">
+        <div className="bg-white rounded-lg border border-apptivia-carbon-100 p-12 text-center">
+          <div className="w-16 h-16 bg-apptivia-coral-tone-50 rounded-lg flex items-center justify-center mx-auto mb-4">
             <Building2 size={28} className="text-apptivia-coral" />
           </div>
           <h3 className="text-base font-bold text-apptivia-ink mb-1">

@@ -37,7 +37,7 @@ function DemoRequestModal({ isOpen, onClose, planHint }) {
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative bg-white rounded-2xl shadow-2xl max-w-md w-full p-8 animate-in fade-in zoom-in-95">
+      <div className="relative bg-white rounded-lg shadow-2xl max-w-md w-full p-8 animate-in fade-in zoom-in-95">
         <button onClick={onClose} className="absolute top-4 right-4 text-apptivia-carbon-400 hover:text-apptivia-carbon-600">
           <X size={20} />
         </button>
@@ -228,7 +228,7 @@ export default function LandingPage() {
               { value: '57%', label: 'of sales reps miss quota annually' },
               { value: '$15B', label: 'spent on sales training with limited ROI' },
             ].map((stat, index) => (
-              <div key={index} className="bg-white/5 border border-white/10 rounded-xl p-6 text-center backdrop-blur-sm">
+              <div key={index} className="bg-white/5 border border-white/10 rounded-lg p-6 text-center backdrop-blur-sm">
                 <div className="text-3xl font-bold text-white mb-1">{stat.value}</div>
                 <div className="text-sm text-apptivia-coral-tone-300/70">{stat.label}</div>
               </div>
@@ -292,7 +292,7 @@ export default function LandingPage() {
                 bg: 'bg-pink-50',
               },
             ].map((feature, index) => (
-              <div key={index} className="bg-white border border-apptivia-carbon-200 rounded-xl p-6 hover:shadow-lg hover:border-apptivia-carbon-300 transition-all">
+              <div key={index} className="bg-white border border-apptivia-carbon-200 rounded-lg p-6 hover:shadow-lg hover:border-apptivia-carbon-300 transition-all">
                 <div className={`${feature.bg} w-12 h-12 rounded-lg flex items-center justify-center mb-4`}>
                   <feature.icon size={24} className={feature.color} />
                 </div>
@@ -321,7 +321,7 @@ export default function LandingPage() {
               { theirs: 'Outreach sends your sequences', ours: 'Apptivia tells you which signal warranted the sequence' },
               { theirs: 'Salesforce stores your data', ours: 'Apptivia turns it into scores, coaching, and action' },
             ].map((item, i) => (
-              <div key={i} className="bg-white/5 border border-white/10 rounded-xl p-5 backdrop-blur-sm">
+              <div key={i} className="bg-white/5 border border-white/10 rounded-lg p-5 backdrop-blur-sm">
                 <div className="text-sm text-apptivia-carbon-400 mb-2">{item.theirs}</div>
                 <div className="text-white font-semibold flex items-start gap-2">
                   <ArrowRight size={16} className="text-apptivia-coral-tone-300 mt-0.5 flex-shrink-0" />
@@ -390,7 +390,7 @@ export default function LandingPage() {
                 rating: 5,
               },
             ].map((testimonial, index) => (
-              <div key={index} className="bg-apptivia-paper border border-apptivia-carbon-200 rounded-xl p-6">
+              <div key={index} className="bg-apptivia-paper border border-apptivia-carbon-200 rounded-lg p-6">
                 <div className="flex gap-1 mb-4">
                   {[...Array(testimonial.rating)].map((_, i) => (
                     <Star key={i} size={16} className="text-yellow-500 fill-yellow-500" />
@@ -466,7 +466,7 @@ export default function LandingPage() {
             ].map((plan, index) => (
              <div
                 key={index}
-                className={`bg-white rounded-xl p-8 ${
+                className={`bg-white rounded-lg p-8 ${
                   plan.highlighted
                     ? 'border-2 border-apptivia-coral shadow-xl ring-1 ring-blue-100 scale-[1.02]'
                     : 'border border-apptivia-carbon-200 shadow-sm'

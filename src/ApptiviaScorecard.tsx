@@ -1054,7 +1054,7 @@ const ApptiviaScorecard: React.FC = () => {
               <StatCardSkeleton />
               <StatCardSkeleton />
             </div>
-            <div className="bg-white rounded-xl p-4 shadow-sm">
+            <div className="bg-white rounded-lg p-4 shadow-sm">
               <div className="h-6 w-64 bg-apptivia-carbon-200 rounded animate-pulse mb-4" />
               <div className="overflow-x-auto">
                 <table className="min-w-full text-xs text-left table-fixed">
@@ -1080,7 +1080,7 @@ const ApptiviaScorecard: React.FC = () => {
         {error && <div className="text-red-500 text-center py-8">Error: {error}</div>}
         
         {!loading && !error && !loadingKpis && kpiKeys.length === 0 && (
-          <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-8 text-center">
+          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-8 text-center">
             <p className="text-yellow-800 text-lg font-semibold mb-2">No Scorecard KPIs Selected</p>
             <p className="text-yellow-600 mb-4">Please select 5 KPI metrics to display on your scorecard.</p>
             <button 
@@ -1096,7 +1096,7 @@ const ApptiviaScorecard: React.FC = () => {
         )}
 
         {!loading && !error && !loadingKpis && kpiKeys.length > 0 && kpiKeys.length < 5 && (
-          <div className="bg-apptivia-coral-tone-50 border border-apptivia-coral-tone-100 rounded-xl p-4 mb-4 flex items-start gap-3">
+          <div className="bg-apptivia-coral-tone-50 border border-apptivia-coral-tone-100 rounded-lg p-4 mb-4 flex items-start gap-3">
             <span className="text-apptivia-coral text-xl">ℹ️</span>
             <div>
               <p className="text-apptivia-coral-tone-700 font-semibold">Scorecard Incomplete</p>
@@ -1672,7 +1672,7 @@ const ApptiviaScorecard: React.FC = () => {
       {/* Rep Detail Modal — 5-week trend */}
       {repDetailModal && (
         <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center" onClick={() => setRepDetailModal(null)}>
-          <div className="bg-white rounded-xl shadow-2xl w-full max-w-lg mx-4 p-5" onClick={e => e.stopPropagation()}>
+          <div className="bg-white rounded-lg shadow-2xl w-full max-w-lg mx-4 p-5" onClick={e => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-base font-semibold text-apptivia-ink">{repDetailModal.name} — 5-Week Trend</h3>
               <button type="button" onClick={() => setRepDetailModal(null)} className="text-apptivia-carbon-400 hover:text-apptivia-carbon-600" title="Close">

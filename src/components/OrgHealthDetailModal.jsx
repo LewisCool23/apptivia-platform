@@ -29,7 +29,7 @@ export default function OrgHealthDetailModal({
       onClick={onClose}
     >
       <div
-        className="bg-white rounded-xl shadow-2xl max-w-lg w-full overflow-hidden"
+        className="bg-white rounded-lg shadow-2xl max-w-lg w-full overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}

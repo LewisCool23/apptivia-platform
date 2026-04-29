@@ -196,7 +196,7 @@ export default function Meeting1On1PrepModal({
 
       <div className="fixed inset-0 z-50 flex items-center justify-center p-4 meeting-prep-overlay">
         <div className="absolute inset-0 bg-black/50 backdrop-blur-sm meeting-prep-backdrop" onClick={onClose} />
-        <div className="relative w-full max-w-3xl bg-white rounded-2xl shadow-2xl overflow-hidden max-h-[90vh] flex flex-col meeting-prep-content">
+        <div className="relative w-full max-w-3xl bg-white rounded-lg shadow-2xl overflow-hidden max-h-[90vh] flex flex-col meeting-prep-content">
 
           {/* Header */}
           <div className="bg-gradient-to-r from-blue-600 to-indigo-600 px-6 py-4 flex items-center justify-between text-white">

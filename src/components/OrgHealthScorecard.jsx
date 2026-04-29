@@ -224,7 +224,7 @@ export default function OrgHealthScorecard() {
     <div className="space-y-4">
       {/* Overall Score */}
       <div className="flex items-center gap-4 p-4 bg-white rounded-lg border border-apptivia-carbon-100">
-        <div className={`w-16 h-16 rounded-xl flex items-center justify-center text-2xl font-bold ${overall.bg} ${overall.text}`}>
+        <div className={`w-16 h-16 rounded-lg flex items-center justify-center text-2xl font-bold ${overall.bg} ${overall.text}`}>
           {overallScore}
         </div>
         <div>

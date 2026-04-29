@@ -212,7 +212,7 @@ function CepStageEditorModal({ stage, titles, onSave, onClose }) {
 
   return (
     <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
+      <div className="bg-white rounded-lg shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
         <div className="sticky top-0 bg-white px-6 py-4 border-b flex items-center justify-between z-10">
           <h3 className="text-lg font-semibold">{isNew ? 'Add Stage' : 'Edit Stage'}</h3>
           <button onClick={onClose} className="text-apptivia-carbon-400 hover:text-apptivia-carbon-600"><X size={20} /></button>
@@ -484,7 +484,7 @@ export default function CepConfigSection({ organizationId, compact = false }) {
     if (error) return <div className="text-sm text-red-500 bg-red-50 rounded-lg p-3">{error}</div>;
     if (!hasCep) {
       return (
-        <div className="bg-apptivia-paper border border-dashed border-apptivia-carbon-300 rounded-xl p-8 text-center">
+        <div className="bg-apptivia-paper border border-dashed border-apptivia-carbon-300 rounded-lg p-8 text-center">
           <div className="text-apptivia-carbon-400 mb-3">
             <Layers size={36} className="mx-auto" />
           </div>

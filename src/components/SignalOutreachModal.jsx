@@ -195,7 +195,7 @@ export default function SignalOutreachModal({ isOpen, onClose, signal, contact }
       <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose} />
 
       {/* Modal */}
-      <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-xl max-h-[90vh] flex flex-col overflow-hidden">
+      <div className="relative bg-white rounded-lg shadow-2xl w-full max-w-xl max-h-[90vh] flex flex-col overflow-hidden">
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-apptivia-carbon-100">
           <div className="flex items-center gap-2">
@@ -211,7 +211,7 @@ export default function SignalOutreachModal({ isOpen, onClose, signal, contact }
 
         <div className="overflow-y-auto flex-1 p-5 space-y-4">
           {/* Signal context */}
-          <div className="bg-apptivia-paper rounded-xl p-3 space-y-1.5">
+          <div className="bg-apptivia-paper rounded-lg p-3 space-y-1.5">
             <div className="flex items-start gap-2">
               <span className="text-base leading-none mt-0.5">{signalIcon}</span>
               <div className="flex-1 min-w-0">
@@ -314,7 +314,7 @@ export default function SignalOutreachModal({ isOpen, onClose, signal, contact }
 
           {/* Draft output */}
           {draft && !isGenerating && (
-            <div className="border border-apptivia-carbon-200 rounded-xl overflow-hidden">
+            <div className="border border-apptivia-carbon-200 rounded-lg overflow-hidden">
               <div className="flex items-center justify-between px-3 py-2 bg-apptivia-paper border-b border-apptivia-carbon-200">
                 <span className="text-[10px] font-semibold text-apptivia-carbon-500 uppercase tracking-wide flex items-center gap-1">
                   {channel === 'email' ? <Mail size={10} /> : <Linkedin size={10} />}

@@ -25,7 +25,7 @@ export const Skeleton = ({ className = '', variant = 'default' }) => {
 
 // Skeleton for stat cards
 export const StatCardSkeleton = () => (
-  <div className="bg-white rounded-xl p-4 flex flex-col items-start justify-center space-y-2">
+  <div className="bg-white rounded-lg p-4 flex flex-col items-start justify-center space-y-2">
     <Skeleton className="h-3 w-20" />
     <Skeleton className="h-6 w-32" />
     <Skeleton className="h-3 w-24" />
@@ -45,7 +45,7 @@ export const TableRowSkeleton = ({ columns = 5 }) => (
 
 // Skeleton for skillset cards
 export const SkillsetCardSkeleton = () => (
-  <div className="border-2 border-apptivia-carbon-100 rounded-xl p-6 space-y-4">
+  <div className="border-2 border-apptivia-carbon-100 rounded-lg p-6 space-y-4">
     <div className="flex items-center gap-3">
       <Skeleton className="w-12 h-12 rounded-lg" />
       <div className="flex-1 space-y-2">

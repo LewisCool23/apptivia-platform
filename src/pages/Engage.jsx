@@ -65,7 +65,7 @@ export default function Engage() {
         {/* Header */}
         <div className="mb-5 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-xl flex items-center justify-center shadow-lg">
+            <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-lg flex items-center justify-center shadow-lg">
               <Radar size={20} className="text-white" />
             </div>
             <div>
@@ -75,7 +75,7 @@ export default function Engage() {
           </div>
 
           {/* Right-panel icon strip */}
-          <div className="flex items-center gap-1 bg-white border border-apptivia-carbon-100 rounded-xl p-1 shadow-sm">
+          <div className="flex items-center gap-1 bg-white border border-apptivia-carbon-100 rounded-lg p-1 shadow-sm">
             {PANELS.map(({ id, icon: Icon, label, color }) => (
               <button
                 key={id}
@@ -94,7 +94,7 @@ export default function Engage() {
         </div>
 
         {/* Tab Navigation */}
-        <div className="flex items-center gap-1 mb-5 bg-white rounded-xl border border-apptivia-carbon-100 p-1">
+        <div className="flex items-center gap-1 mb-5 bg-white rounded-lg border border-apptivia-carbon-100 p-1">
           {TABS.map((tab) => {
             const isActive = activeTab === tab.id;
             return (

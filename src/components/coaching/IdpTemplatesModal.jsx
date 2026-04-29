@@ -30,7 +30,7 @@ export default function IdpTemplatesModal({ onClose, onSelect, organizationId })
 
   return (
     <div className="fixed inset-0 bg-black/40 z-50 flex items-start justify-center pt-10 overflow-y-auto">
-      <div className="bg-white rounded-xl shadow-xl w-full max-w-2xl mx-4 mb-10">
+      <div className="bg-white rounded-lg shadow-xl w-full max-w-2xl mx-4 mb-10">
         <div className="p-6 border-b flex items-center justify-between">
           <div>
             <h2 className="text-lg font-bold text-apptivia-ink">IDP Templates</h2>

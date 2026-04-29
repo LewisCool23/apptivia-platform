@@ -129,7 +129,7 @@ export default function SyncHistoryModal({ isOpen, onClose, loading, history, in
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={onClose}>
-      <div className="bg-white w-[95%] max-w-2xl rounded-2xl shadow-2xl p-6" onClick={(e) => e.stopPropagation()}>
+      <div className="bg-white w-[95%] max-w-2xl rounded-lg shadow-2xl p-6" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-start justify-between mb-4">
           <div>
             <h2 className="text-lg font-bold text-apptivia-ink">Sync History</h2>

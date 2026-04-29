@@ -47,7 +47,7 @@ function SequenceList({ sequences, onSelect, onNew, loading }) {
               <button
                 key={seq.id}
                 onClick={() => onSelect(seq.id)}
-                className="w-full text-left p-3 bg-white border border-apptivia-carbon-100 rounded-xl hover:border-apptivia-coral-tone-100 hover:shadow-sm transition-all group"
+                className="w-full text-left p-3 bg-white border border-apptivia-carbon-100 rounded-lg hover:border-apptivia-coral-tone-100 hover:shadow-sm transition-all group"
               >
                 <div className="flex items-center justify-between mb-1">
                   <span className="text-sm font-medium text-apptivia-ink group-hover:text-apptivia-coral">{seq.name}</span>
@@ -77,7 +77,7 @@ function StepEditor({ step, index, onChange, onRemove }) {
       <div className="absolute left-3 top-0 bottom-0 w-0.5 bg-apptivia-carbon-200" />
       <div className="absolute left-1.5 top-2 w-3 h-3 rounded-full bg-apptivia-coral border-2 border-white shadow-sm z-10" />
 
-      <div className="bg-white border border-apptivia-carbon-100 rounded-xl p-3 shadow-sm">
+      <div className="bg-white border border-apptivia-carbon-100 rounded-lg p-3 shadow-sm">
         <div className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-2">
             <span className="text-[10px] font-bold text-apptivia-carbon-400 uppercase">Step {index + 1}</span>
@@ -337,7 +337,7 @@ function SequenceDetail({ sequenceId, onBack, organizationId }) {
         </div>
 
         {steps.length === 0 ? (
-          <div className="text-center py-8 text-apptivia-carbon-400 text-xs border border-dashed border-apptivia-carbon-200 rounded-xl">
+          <div className="text-center py-8 text-apptivia-carbon-400 text-xs border border-dashed border-apptivia-carbon-200 rounded-lg">
             No steps yet. Add your first step to build the sequence.
           </div>
         ) : (
@@ -357,7 +357,7 @@ function SequenceDetail({ sequenceId, onBack, organizationId }) {
 
       {/* Enroll prospect */}
       {sequence.status === 'active' && (
-        <div className="border border-apptivia-carbon-100 rounded-xl p-3">
+        <div className="border border-apptivia-carbon-100 rounded-lg p-3">
           <h3 className="text-xs font-semibold text-apptivia-carbon-600 uppercase tracking-wider mb-2">Enroll Prospect</h3>
           <div className="flex gap-2">
             <input

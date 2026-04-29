@@ -282,7 +282,7 @@ function LeaderboardSlide({ profiles }) {
           return (
             <div
               key={rep.id}
-              className={`flex items-center gap-4 rounded-2xl p-4 transition-all ${
+              className={`flex items-center gap-4 rounded-lg p-4 transition-all ${
                 isTop3
                   ? `bg-gradient-to-r ${colors.bg} shadow-lg shadow-black/30`
                   : 'bg-white/5 border border-white/10'
@@ -362,19 +362,19 @@ function SpotlightSlide({ profiles }) {
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-8 text-center">
-        <div className="bg-white/10 rounded-2xl p-6">
+        <div className="bg-white/10 rounded-lg p-6">
           <div className="text-5xl font-black text-amber-400 tabular-nums">
             {(top.total_points || 0).toLocaleString()}
           </div>
           <div className="text-white/60 mt-1 font-medium">Total Points</div>
         </div>
-        <div className="bg-white/10 rounded-2xl p-6">
+        <div className="bg-white/10 rounded-lg p-6">
           <div className="text-5xl font-black text-apptivia-coral-tone-300 tabular-nums">
             {top.current_score || 0}%
           </div>
           <div className="text-white/60 mt-1 font-medium">Scorecard</div>
         </div>
-        <div className="bg-white/10 rounded-2xl p-6">
+        <div className="bg-white/10 rounded-lg p-6">
           <div className="text-5xl font-black text-orange-400 tabular-nums flex items-center justify-center gap-2">
             <Flame size={40} />
             {top.day_streak || 0}
@@ -386,7 +386,7 @@ function SpotlightSlide({ profiles }) {
       {(runnerUp || third) && (
         <div className="flex gap-6 items-end">
           {runnerUp && (
-            <div className="text-center bg-white/5 rounded-xl px-6 py-3">
+            <div className="text-center bg-white/5 rounded-lg px-6 py-3">
               <div className="text-3xl mb-1">{'\u{1F948}'}</div>
               <div className="text-white font-bold">{runnerUp.first_name} {runnerUp.last_name}</div>
               <div className="text-white/50 text-sm">{(runnerUp.total_points || 0).toLocaleString()} pts</div>
@@ -394,7 +394,7 @@ function SpotlightSlide({ profiles }) {
             </div>
           )}
           {third && (
-            <div className="text-center bg-white/5 rounded-xl px-6 py-3">
+            <div className="text-center bg-white/5 rounded-lg px-6 py-3">
               <div className="text-3xl mb-1">{'\u{1F949}'}</div>
               <div className="text-white font-bold">{third.first_name} {third.last_name}</div>
               <div className="text-white/50 text-sm">{(third.total_points || 0).toLocaleString()} pts</div>
@@ -435,7 +435,7 @@ function ContestsSlide({ contests }) {
           const daysLeft = end ? Math.max(0, Math.ceil((end - new Date()) / (1000 * 60 * 60 * 24))) : null;
 
           return (
-            <div key={contest.id} className="bg-white/5 border border-white/10 rounded-2xl p-6">
+            <div key={contest.id} className="bg-white/5 border border-white/10 rounded-lg p-6">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-2xl font-bold text-white">{contest.name}</h3>
                 {daysLeft !== null && (
@@ -508,7 +508,7 @@ function TeamStatsSlide({ profiles }) {
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-8">
         {stats.map(({ label, value, icon: Icon, color }) => (
-          <div key={label} className="bg-white/5 border border-white/10 rounded-2xl p-8 flex items-center gap-6">
+          <div key={label} className="bg-white/5 border border-white/10 rounded-lg p-8 flex items-center gap-6">
             <Icon size={48} className={color} />
             <div>
               <div className="text-5xl font-black text-white tabular-nums">{value}</div>
@@ -525,7 +525,7 @@ function TeamStatsSlide({ profiles }) {
             const count = levelCounts[level] || 0;
             if (count === 0) return null;
             return (
-              <div key={level} className={`flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r ${colors.bg}`}>
+              <div key={level} className={`flex items-center gap-2 px-4 py-2 rounded-lg bg-gradient-to-r ${colors.bg}`}>
                 <span className="text-white font-bold text-lg">{count}</span>
                 <span className="text-white/80 font-medium">{level}</span>
               </div>
@@ -568,7 +568,7 @@ function BadgesSlide({ recentBadges }) {
           return (
             <div
               key={b.id}
-              className={`flex items-center gap-4 bg-white/5 border rounded-2xl p-4 shadow-lg ${rc.glow}`}
+              className={`flex items-center gap-4 bg-white/5 border rounded-lg p-4 shadow-lg ${rc.glow}`}
               style={{ borderColor: rc.border }}
             >
               <div className="text-4xl flex-shrink-0">{b.icon || '\u{1F3C6}'}</div>
@@ -622,7 +622,7 @@ function ActivitySlide({ weeklyKpis, priorWeekKpis }) {
           const isDown = delta < -2;
 
           return (
-            <div key={kpi.kpi_key} className="bg-white/5 border border-white/10 rounded-2xl p-6 flex flex-col justify-center">
+            <div key={kpi.kpi_key} className="bg-white/5 border border-white/10 rounded-lg p-6 flex flex-col justify-center">
               <div className="text-white/50 text-sm font-medium mb-2 truncate">{kpi.name}</div>
               <div className="text-4xl font-black text-white tabular-nums">
                 {formatKpiValue(kpi.value, kpi.unit)}
@@ -672,7 +672,7 @@ function AchievementsSlide({ recentAchievements }) {
           const when = new Date(a.completed_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 
           return (
-            <div key={a.id} className={`flex items-center gap-4 bg-white/5 border ${dc.border} rounded-2xl p-4`}>
+            <div key={a.id} className={`flex items-center gap-4 bg-white/5 border ${dc.border} rounded-lg p-4`}>
               <div className="text-4xl flex-shrink-0">{a.achievement?.icon || '\u{1F3C5}'}</div>
               <div className="min-w-0 flex-1">
                 <div className="text-white font-bold text-lg leading-tight truncate">
@@ -735,7 +735,7 @@ function GoalProgressSlide({ weeklyKpis, profileCount }) {
 
       <div className="space-y-4 flex-1 overflow-y-auto">
         {kpisWithProgress.slice(0, 10).map((kpi) => (
-          <div key={kpi.kpi_key} className="bg-white/5 border border-white/10 rounded-xl p-4">
+          <div key={kpi.kpi_key} className="bg-white/5 border border-white/10 rounded-lg p-4">
             <div className="flex items-center justify-between mb-2">
               <span className="text-white font-semibold text-lg">{kpi.name}</span>
               <span className={`font-bold ${pctText(kpi.pct)}`}>

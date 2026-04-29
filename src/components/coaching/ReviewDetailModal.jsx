@@ -87,7 +87,7 @@ export default function ReviewDetailModal({
       }
     `}</style>
     <div className="fixed inset-0 bg-black/40 z-50 flex items-start justify-center pt-6 overflow-y-auto review-modal-overlay">
-      <div className="bg-white rounded-xl shadow-xl w-full max-w-4xl mx-4 mb-10 review-modal-content">
+      <div className="bg-white rounded-lg shadow-xl w-full max-w-4xl mx-4 mb-10 review-modal-content">
         {/* Header */}
         <div className="p-6 border-b flex items-start justify-between print:border-b-2">
           <div className="flex-1">

@@ -37,7 +37,7 @@ export default function ExportReportModal({ isOpen, onClose, onSelectFormat, tit
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={onClose}>
       <div
-        className="bg-white rounded-xl shadow-2xl w-full max-w-md mx-4 animate-fadeIn"
+        className="bg-white rounded-lg shadow-2xl w-full max-w-md mx-4 animate-fadeIn"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
@@ -58,7 +58,7 @@ export default function ExportReportModal({ isOpen, onClose, onSelectFormat, tit
                 onSelectFormat(opt.key);
                 onClose();
               }}
-              className={`w-full flex items-start gap-4 p-4 rounded-xl border-2 transition-all text-left ${opt.border} hover:shadow-md`}
+              className={`w-full flex items-start gap-4 p-4 rounded-lg border-2 transition-all text-left ${opt.border} hover:shadow-md`}
             >
               <div className={`p-2.5 rounded-lg ${opt.bg} shrink-0`}>
                 <opt.icon size={22} className={opt.color} />

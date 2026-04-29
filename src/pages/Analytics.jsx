@@ -1212,7 +1212,7 @@ export default function Analytics() {
                       viewMode="team"
                     />
                     {/* Summary conversion stats */}
-                    <div className="bg-white rounded-xl border border-apptivia-carbon-100 p-6">
+                    <div className="bg-white rounded-lg border border-apptivia-carbon-100 p-6">
                       <h3 className="text-sm font-semibold text-apptivia-ink mb-4">Conversion Rates</h3>
                       {[
                         { from: 'call_connects', to: 'meetings', label: 'Call → Meeting Rate', desc: 'How many calls result in a booked meeting' },
@@ -1508,7 +1508,7 @@ export default function Analytics() {
 
                 {/* Coached vs Uncoached Cohort Comparison */}
                 {!isPowerUser && cohortData && (
-                  <div className="bg-white rounded-xl border border-apptivia-carbon-100 p-4">
+                  <div className="bg-white rounded-lg border border-apptivia-carbon-100 p-4">
                     <h3 className="font-semibold text-apptivia-ink text-sm mb-1">Coached vs. Uncoached — KPI Impact</h3>
                     <p className="text-xs text-apptivia-carbon-400 mb-4">Last {cohortData.period_weeks || 4} weeks · Coached = received AI coaching suggestion</p>
                     <div className="grid grid-cols-2 gap-4">

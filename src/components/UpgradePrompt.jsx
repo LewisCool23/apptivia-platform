@@ -75,7 +75,7 @@ export default function UpgradePrompt({ feature, context = 'inline', variant = '
   if (context === 'modal') {
     return (
       <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
-        <div className="bg-white rounded-xl shadow-xl w-full max-w-lg">
+        <div className="bg-white rounded-lg shadow-xl w-full max-w-lg">
           <div className="p-6">
             <h2 className="text-lg font-semibold text-apptivia-ink mb-1">
               {variant === 'feature_gate' && featureLabel ? `${featureLabel} is a Pro Feature` : config.title}

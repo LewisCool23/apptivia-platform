@@ -111,7 +111,7 @@ export default function PublicIntegrations() {
             <h2 className="text-sm font-semibold text-apptivia-carbon-500 uppercase tracking-wider mb-4">{category}</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {INTEGRATIONS.filter(i => i.category === category).map(integration => (
-                <div key={integration.name} className="bg-white rounded-xl p-6 shadow-sm border border-apptivia-carbon-100 hover:shadow-md transition-shadow">
+                <div key={integration.name} className="bg-white rounded-lg p-6 shadow-sm border border-apptivia-carbon-100 hover:shadow-md transition-shadow">
                   <div className="flex items-center gap-3 mb-3">
                     <div className={`w-10 h-10 rounded-lg bg-gradient-to-br ${integration.color} flex items-center justify-center text-white font-bold text-xs`}>
                       {integration.icon}

@@ -66,7 +66,7 @@ const ProtectedRoute = ({ children, requiredRoles = [], requiredPermissions = []
     }
     return (
       <div className="min-h-screen bg-apptivia-paper flex items-center justify-center p-6">
-        <div className="bg-white border rounded-xl shadow-sm p-6 max-w-md text-center">
+        <div className="bg-white border rounded-lg shadow-sm p-6 max-w-md text-center">
           <h1 className="text-lg font-semibold text-apptivia-ink mb-2">Access denied</h1>
           <p className="text-sm text-apptivia-carbon-500">You don’t have access to this page.</p>
         </div>
@@ -84,7 +84,7 @@ const ProtectedRoute = ({ children, requiredRoles = [], requiredPermissions = []
       }
       return (
         <div className="min-h-screen bg-apptivia-paper flex items-center justify-center p-6">
-          <div className="bg-white border rounded-xl shadow-sm p-6 max-w-md text-center">
+          <div className="bg-white border rounded-lg shadow-sm p-6 max-w-md text-center">
             <h1 className="text-lg font-semibold text-apptivia-ink mb-2">Access denied</h1>
             <p className="text-sm text-apptivia-carbon-500">You don’t have permission to view this page.</p>
           </div>

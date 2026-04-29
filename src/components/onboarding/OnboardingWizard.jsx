@@ -618,7 +618,7 @@ export default function OnboardingWizard({ isOpen, onClose, onComplete, organiza
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl max-h-[90vh] flex flex-col">
+      <div className="bg-white rounded-lg shadow-2xl w-full max-w-3xl max-h-[90vh] flex flex-col">
         {/* Header */}
         <div className="px-6 pt-5 pb-4 border-b flex-shrink-0">
           <div className="flex items-center justify-between mb-4">

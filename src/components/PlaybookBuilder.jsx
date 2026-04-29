@@ -132,7 +132,7 @@ function SummaryCards({ summary }) {
   return (
     <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
       {cards.map((c) => (
-        <div key={c.label} className="bg-white rounded-xl border border-apptivia-carbon-100 p-4 hover:shadow-sm transition-shadow">
+        <div key={c.label} className="bg-white rounded-lg border border-apptivia-carbon-100 p-4 hover:shadow-sm transition-shadow">
           <div className="flex items-center justify-between mb-2">
             <span className="text-xs font-medium text-apptivia-carbon-500">{c.label}</span>
             <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${c.color}`}>
@@ -154,12 +154,12 @@ function PlaybookCard({ playbook, onSelect, onToggleStatus, onDelete }) {
 
   return (
     <div
-      className="bg-white rounded-xl border border-apptivia-carbon-100 p-5 hover:shadow-md transition-all cursor-pointer group"
+      className="bg-white rounded-lg border border-apptivia-carbon-100 p-5 hover:shadow-md transition-all cursor-pointer group"
       onClick={() => onSelect(playbook)}
     >
       <div className="flex items-start justify-between mb-3">
         <div className="flex items-center gap-3 flex-1 min-w-0">
-          <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-pink-500 rounded-xl flex items-center justify-center shrink-0">
+          <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-pink-500 rounded-lg flex items-center justify-center shrink-0">
             <BookOpen size={18} className="text-white" />
           </div>
           <div className="flex-1 min-w-0">
@@ -243,13 +243,13 @@ function PlaybookDetail({ playbook, executions, onBack, onUpdate, onStartExecuti
   return (
     <div className="space-y-4">
       {/* Header */}
-      <div className="bg-white rounded-xl border border-apptivia-carbon-100 p-5">
+      <div className="bg-white rounded-lg border border-apptivia-carbon-100 p-5">
         <button onClick={onBack} className="text-xs text-apptivia-carbon-500 hover:text-apptivia-carbon-700 flex items-center gap-1 mb-3">
           <ChevronRight size={12} className="rotate-180" /> Back to Playbooks
         </button>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-500 rounded-xl flex items-center justify-center">
+            <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-500 rounded-lg flex items-center justify-center">
               <BookOpen size={22} className="text-white" />
             </div>
             <div>
@@ -290,14 +290,14 @@ function PlaybookDetail({ playbook, executions, onBack, onUpdate, onStartExecuti
         <div className="lg:col-span-2 space-y-3">
           <h3 className="text-sm font-semibold text-apptivia-ink">Playbook Steps ({playbook.steps?.length || 0})</h3>
           {(!playbook.steps || playbook.steps.length === 0) ? (
-            <div className="bg-apptivia-paper rounded-xl p-8 text-center">
+            <div className="bg-apptivia-paper rounded-lg p-8 text-center">
               <Layers size={24} className="mx-auto mb-2 text-apptivia-carbon-300" />
               <p className="text-xs text-apptivia-carbon-400">No steps defined in this playbook.</p>
             </div>
           ) : (
             <div className="space-y-2">
               {playbook.steps.map((step, i) => (
-                <div key={i} className="bg-white rounded-xl border border-apptivia-carbon-100 overflow-hidden hover:shadow-sm transition-shadow">
+                <div key={i} className="bg-white rounded-lg border border-apptivia-carbon-100 overflow-hidden hover:shadow-sm transition-shadow">
                   <div
                     className="flex items-center gap-3 p-4 cursor-pointer"
                     onClick={() => setExpandedStep(expandedStep === i ? null : i)}
@@ -345,7 +345,7 @@ function PlaybookDetail({ playbook, executions, onBack, onUpdate, onStartExecuti
           <h3 className="text-sm font-semibold text-apptivia-ink">Execution History ({executions.length})</h3>
           <div className="space-y-2">
             {executions.length === 0 ? (
-              <div className="bg-white rounded-xl border border-apptivia-carbon-100 p-6 text-center">
+              <div className="bg-white rounded-lg border border-apptivia-carbon-100 p-6 text-center">
                 <Clock size={20} className="mx-auto mb-2 text-apptivia-carbon-300" />
                 <p className="text-xs text-apptivia-carbon-400">No executions yet</p>
               </div>
@@ -353,7 +353,7 @@ function PlaybookDetail({ playbook, executions, onBack, onUpdate, onStartExecuti
               executions.slice(0, 10).map((exec) => {
                 const st = EXEC_STATUS[exec.status] || EXEC_STATUS.running;
                 return (
-                  <div key={exec.id} className="bg-white rounded-xl border border-apptivia-carbon-100 p-4">
+                  <div key={exec.id} className="bg-white rounded-lg border border-apptivia-carbon-100 p-4">
                     <div className="flex items-center justify-between mb-2">
                       <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium ${st.bg} ${st.text}`}>{st.label}</span>
                       <span className="text-[10px] text-apptivia-carbon-400">
@@ -592,7 +592,7 @@ function NewPlaybookModal({ isOpen, onClose, onCreate }) {
 
 function PlaybookTemplateCard({ template, onUse, loading }) {
   return (
-    <div className="bg-white rounded-xl border border-apptivia-carbon-100 p-4 hover:shadow-md transition-all group">
+    <div className="bg-white rounded-lg border border-apptivia-carbon-100 p-4 hover:shadow-md transition-all group">
       <div className={`w-9 h-9 bg-gradient-to-br ${template.color} rounded-lg flex items-center justify-center mb-3 shadow-sm`}>
         <template.icon size={16} className="text-white" />
       </div>
@@ -706,7 +706,7 @@ export default function PlaybookBuilder({ organizationId, userId }) {
       <SummaryCards summary={summary} />
 
       {error && (
-        <div className="bg-red-50 border border-red-200 rounded-xl p-3 text-xs text-red-600 flex items-center gap-2">
+        <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-xs text-red-600 flex items-center gap-2">
           <XCircle size={14} /> {error}
         </div>
       )}
@@ -743,8 +743,8 @@ export default function PlaybookBuilder({ organizationId, userId }) {
 
       {/* Grid */}
       {playbooks.length === 0 ? (
-        <div className="bg-white rounded-2xl border border-apptivia-carbon-100 p-12 text-center">
-          <div className="w-16 h-16 bg-gradient-to-br from-purple-100 to-pink-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+        <div className="bg-white rounded-lg border border-apptivia-carbon-100 p-12 text-center">
+          <div className="w-16 h-16 bg-gradient-to-br from-purple-100 to-pink-100 rounded-lg flex items-center justify-center mx-auto mb-4">
             <BookOpen size={24} className="text-apptivia-ink" />
           </div>
           <h3 className="text-base font-semibold text-apptivia-ink mb-1">No Playbooks Yet</h3>

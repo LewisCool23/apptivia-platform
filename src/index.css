@@ -36,9 +36,7 @@ canvas {
 }
 
 @layer components {
-  .bg-white.rounded-lg.shadow-sm,
-  .bg-white.rounded-xl.shadow-sm,
-  .bg-white.rounded-2xl.shadow-sm {
+  .bg-white.rounded-lg.shadow-sm {
     box-shadow: 0 1px 2px rgba(10, 10, 11, 0.05), 0 0 0 1px rgba(228, 228, 231, 0.9), 0 8px 16px rgba(10, 10, 11, 0.06);
   }
 }

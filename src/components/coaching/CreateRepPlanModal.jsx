@@ -321,7 +321,7 @@ export default function CreateRepPlanModal({ isOpen, onClose, repId, repName, te
 
   return (
     <div className="fixed inset-0 bg-black/40 z-50 flex items-start justify-center pt-6 overflow-y-auto">
-      <div className="bg-white rounded-xl shadow-xl w-full max-w-4xl mx-4 mb-10">
+      <div className="bg-white rounded-lg shadow-xl w-full max-w-4xl mx-4 mb-10">
         {/* Header */}
         <div className="px-6 py-4 border-b flex items-center justify-between">
           <div>

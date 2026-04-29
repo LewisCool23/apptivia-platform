@@ -235,7 +235,7 @@ export default function PermissionsTeams() {
               </div>
             </div>
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-              <div className="bg-apptivia-paper rounded-xl p-3 border">
+              <div className="bg-apptivia-paper rounded-lg p-3 border">
                 <div className="text-xs font-semibold text-apptivia-carbon-600 mb-2">Users</div>
                 <div className="space-y-2 max-h-[420px] overflow-auto">
                   {usersList.length === 0 ? (
@@ -254,7 +254,7 @@ export default function PermissionsTeams() {
                   )}
                 </div>
               </div>
-              <div className="lg:col-span-2 bg-white rounded-xl border p-4">
+              <div className="lg:col-span-2 bg-white rounded-lg border p-4">
                 <div className="flex items-center justify-between mb-3">
                   <div>
                     <div className="text-xs text-apptivia-carbon-500">Selected user</div>

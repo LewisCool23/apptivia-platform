@@ -152,7 +152,7 @@ export default function ShareScorecardSnapshotModal({ isOpen, onClose, scorecard
       onClick={onClose}
     >
       <div 
-        className="bg-white rounded-xl shadow-2xl max-w-2xl w-full my-4 max-h-[85vh] overflow-hidden flex flex-col"
+        className="bg-white rounded-lg shadow-2xl max-w-2xl w-full my-4 max-h-[85vh] overflow-hidden flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
@@ -173,7 +173,7 @@ export default function ShareScorecardSnapshotModal({ isOpen, onClose, scorecard
         <div className="flex-1 overflow-y-auto p-4 bg-apptivia-paper min-h-0">
           <div 
             ref={snapshotRef}
-            className="bg-gradient-to-br from-blue-500 via-purple-500 to-pink-500 rounded-xl p-6 text-white shadow-2xl"
+            className="bg-gradient-to-br from-blue-500 via-purple-500 to-pink-500 rounded-lg p-6 text-white shadow-2xl"
           >
             {/* Header Section */}
             <div className="text-center mb-4">

@@ -70,9 +70,9 @@ export default function SignUp() {
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-500 via-purple-500 to-indigo-500">
       <form
         onSubmit={handleSubmit}
-        className="bg-white p-8 rounded-2xl shadow-xl w-full max-w-md flex flex-col items-center"
+        className="bg-white p-8 rounded-lg shadow-xl w-full max-w-md flex flex-col items-center"
       >
-        <div className="w-16 h-16 rounded-xl bg-gradient-to-r from-blue-500 to-purple-500 flex items-center justify-center mb-6">
+        <div className="w-16 h-16 rounded-lg bg-gradient-to-r from-blue-500 to-purple-500 flex items-center justify-center mb-6">
           <span className="text-white font-bold text-3xl">A</span>
         </div>
         <h1 className="text-2xl font-bold text-apptivia-coral mb-1 text-center">Create Your Account</h1>

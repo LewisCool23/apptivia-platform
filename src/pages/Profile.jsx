@@ -1392,7 +1392,7 @@ export default function Profile() {
                 const template = SUPPORTED_INTEGRATIONS.find(t => t.integration_type === integration.integration_type);
                 if (!template) return null;
                 return (
-                  <div key={integration.id} className="bg-apptivia-paper rounded-xl p-5 border border-apptivia-carbon-100 flex flex-col">
+                  <div key={integration.id} className="bg-apptivia-paper rounded-lg p-5 border border-apptivia-carbon-100 flex flex-col">
                     <div className="flex items-center gap-3 mb-3">
                       <div className={`w-11 h-11 bg-gradient-to-br ${template.color} rounded-lg flex items-center justify-center text-xs font-bold text-white shadow-sm`}>
                         {template.icon}
@@ -1453,7 +1453,7 @@ export default function Profile() {
                   const isError = integration?.status === 'error';
 
                   return (
-                    <div key={template.integration_type} className="bg-white rounded-xl p-5 shadow-sm border border-apptivia-carbon-100 flex flex-col hover:shadow-md transition-shadow">
+                    <div key={template.integration_type} className="bg-white rounded-lg p-5 shadow-sm border border-apptivia-carbon-100 flex flex-col hover:shadow-md transition-shadow">
                       <div className="flex items-center gap-3 mb-3">
                         <div className={`w-11 h-11 bg-gradient-to-br ${template.color} rounded-lg flex items-center justify-center text-xs font-bold text-white shadow-sm`}>
                           {template.icon}
@@ -1533,7 +1533,7 @@ export default function Profile() {
             onClick={() => setShowAdminTeamsModal(false)}
           >
             <div
-              className="bg-white w-[95%] max-w-6xl rounded-2xl shadow-2xl p-6"
+              className="bg-white w-[95%] max-w-6xl rounded-lg shadow-2xl p-6"
               onClick={(e) => e.stopPropagation()}
             >
               <div className="flex items-start justify-between mb-4">
@@ -1549,7 +1549,7 @@ export default function Profile() {
                 </button>
               </div>
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-                <div className="bg-apptivia-paper rounded-xl p-3 border">
+                <div className="bg-apptivia-paper rounded-lg p-3 border">
                   <div className="flex items-center justify-between mb-2">
                     <div className="text-xs font-semibold text-apptivia-carbon-600">Teams</div>
                     <span className="text-[10px] text-apptivia-carbon-400">Manage in Systems</span>
@@ -1571,7 +1571,7 @@ export default function Profile() {
                     )}
                   </div>
                 </div>
-                <div className="lg:col-span-2 bg-white rounded-xl border p-4">
+                <div className="lg:col-span-2 bg-white rounded-lg border p-4">
                   <div className="flex items-center justify-between mb-3">
                     <div>
                       <div className="text-xs text-apptivia-carbon-500">Team members</div>
@@ -1608,7 +1608,7 @@ export default function Profile() {
             onClick={() => setShowManagerTeamsModal(false)}
           >
             <div
-              className="bg-white w-[95%] max-w-5xl rounded-2xl shadow-2xl p-6"
+              className="bg-white w-[95%] max-w-5xl rounded-lg shadow-2xl p-6"
               onClick={(e) => e.stopPropagation()}
             >
               <div className="flex items-start justify-between mb-4">
@@ -1623,7 +1623,7 @@ export default function Profile() {
                   Close
                 </button>
               </div>
-              <div className="bg-white rounded-xl border p-4">
+              <div className="bg-white rounded-lg border p-4">
                 <div className="flex items-center justify-between mb-3">
                   <div>
                     <div className="text-xs text-apptivia-carbon-500">Team</div>
@@ -1744,7 +1744,7 @@ export default function Profile() {
       {/* Award Badge Modal */}
       {showAwardBadgeModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={() => setShowAwardBadgeModal(false)}>
-          <div className="bg-white rounded-xl shadow-2xl max-w-md w-full" onClick={(e) => e.stopPropagation()}>
+          <div className="bg-white rounded-lg shadow-2xl max-w-md w-full" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between px-6 py-4 border-b border-apptivia-carbon-200">
               <div className="flex items-center gap-2">
                 <Gift size={20} className="text-amber-500" />

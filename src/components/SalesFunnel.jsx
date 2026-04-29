@@ -61,7 +61,7 @@ export default function SalesFunnel({ kpiValues = {}, benchmarks = {}, goals = {
   const maxValue = Math.max(...FUNNEL_STAGES.map(s => kpiValues[s.key] || 0), 1);
 
   return (
-    <div className="bg-white rounded-xl border border-apptivia-carbon-100 p-6">
+    <div className="bg-white rounded-lg border border-apptivia-carbon-100 p-6">
       {/* Header */}
       <div className="flex items-center justify-between mb-5">
         <div className="flex items-center gap-2">

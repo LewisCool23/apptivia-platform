@@ -21,7 +21,7 @@ class ErrorBoundary extends React.Component {
     if (this.state.hasError) {
       return (
         <div className="min-h-screen bg-apptivia-paper flex items-center justify-center p-6">
-          <div className="bg-white border rounded-xl shadow-sm p-6 max-w-lg text-center">
+          <div className="bg-white border rounded-lg shadow-sm p-6 max-w-lg text-center">
             <h1 className="text-lg font-semibold text-apptivia-ink mb-2">Something went wrong</h1>
             <p className="text-sm text-apptivia-carbon-500 mb-3">An unexpected error occurred while rendering this page.</p>
             <button
@@ -72,7 +72,7 @@ export class PageErrorBoundary extends React.Component {
     if (this.state.hasError) {
       return (
         <div className="min-h-[60vh] flex items-center justify-center p-8">
-          <div className="bg-white border border-red-100 rounded-2xl shadow-sm p-8 max-w-md text-center">
+          <div className="bg-white border border-red-100 rounded-lg shadow-sm p-8 max-w-md text-center">
             <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
               <span className="text-2xl">⚠️</span>
             </div>

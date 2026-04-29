@@ -79,7 +79,7 @@ export default function StepReviewLaunch({ wizardState, onGoToStep }) {
 
       {/* Launch Message */}
       {canLaunch && (
-        <div className="bg-gradient-to-r from-blue-600 to-indigo-600 rounded-xl p-6 text-center text-white">
+        <div className="bg-gradient-to-r from-blue-600 to-indigo-600 rounded-lg p-6 text-center text-white">
           <Rocket size={32} className="mx-auto mb-3 opacity-90" />
           <h4 className="text-xl font-bold mb-2">You're ready to go!</h4>
           <p className="text-apptivia-coral-tone-300 text-sm mb-1">

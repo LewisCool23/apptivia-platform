@@ -42,7 +42,7 @@ export default function IdpDetailModal({ idp, onClose, onStatusChange, onMilesto
 
   return (
     <div className="fixed inset-0 bg-black/40 z-50 flex items-start justify-center pt-10 overflow-y-auto">
-      <div className="bg-white rounded-xl shadow-xl w-full max-w-3xl mx-4 mb-10">
+      <div className="bg-white rounded-lg shadow-xl w-full max-w-3xl mx-4 mb-10">
         {/* Header */}
         <div className="p-6 border-b flex items-start justify-between">
           <div className="flex-1">

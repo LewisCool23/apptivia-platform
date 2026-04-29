@@ -88,7 +88,7 @@ export default function StepChoosePlan({ wizardState, updateState }) {
               key={plan.key}
               type="button"
               onClick={() => updateState({ selectedTier: plan.key })}
-              className={`relative p-5 rounded-xl border-2 text-left transition-all ${
+              className={`relative p-5 rounded-lg border-2 text-left transition-all ${
                 isSelected
                   ? 'border-apptivia-coral bg-apptivia-coral-tone-50/50 ring-1 ring-blue-200'
                   : plan.highlighted

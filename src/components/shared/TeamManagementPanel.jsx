@@ -63,7 +63,7 @@ export default function TeamManagementPanel({
     <>
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         {/* Teams sidebar */}
-        <div className="bg-apptivia-paper rounded-xl p-3 border">
+        <div className="bg-apptivia-paper rounded-lg p-3 border">
           <div className="flex items-center justify-between mb-2">
             <div className="text-xs font-semibold text-apptivia-carbon-600">Teams</div>
             <button
@@ -91,7 +91,7 @@ export default function TeamManagementPanel({
         </div>
 
         {/* Members panel */}
-        <div className="lg:col-span-2 bg-white rounded-xl border p-4">
+        <div className="lg:col-span-2 bg-white rounded-lg border p-4">
           <div className="flex items-center justify-between mb-3">
             <div>
               <div className="text-xs text-apptivia-carbon-500">Team members</div>
@@ -150,7 +150,7 @@ export default function TeamManagementPanel({
       {/* Add Member Modal */}
       {showAddMemberModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={() => setShowAddMemberModal(false)}>
-          <div className="bg-white w-[95%] max-w-md rounded-2xl shadow-2xl p-5" onClick={(e) => e.stopPropagation()}>
+          <div className="bg-white w-[95%] max-w-md rounded-lg shadow-2xl p-5" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-start justify-between mb-4">
               <div>
                 <h3 className="text-lg font-bold text-apptivia-ink">Add Team Member</h3>
@@ -196,7 +196,7 @@ export default function TeamManagementPanel({
       {/* Remove Member Modal */}
       {showRemoveMemberModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={() => setShowRemoveMemberModal(false)}>
-          <div className="bg-white w-[95%] max-w-md rounded-2xl shadow-2xl p-5" onClick={(e) => e.stopPropagation()}>
+          <div className="bg-white w-[95%] max-w-md rounded-lg shadow-2xl p-5" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-start justify-between mb-4">
               <div>
                 <h3 className="text-lg font-bold text-apptivia-ink">Remove Team Member</h3>
@@ -242,7 +242,7 @@ export default function TeamManagementPanel({
       {/* Add Team Modal */}
       {showAddTeamModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={() => setShowAddTeamModal(false)}>
-          <div className="bg-white w-[95%] max-w-md rounded-2xl shadow-2xl p-5" onClick={(e) => e.stopPropagation()}>
+          <div className="bg-white w-[95%] max-w-md rounded-lg shadow-2xl p-5" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-start justify-between mb-4">
               <div>
                 <h3 className="text-lg font-bold text-apptivia-ink">Create New Team</h3>

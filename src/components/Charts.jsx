@@ -8,7 +8,7 @@ import {
 // Trend Line Chart for performance over time
 export const TrendChart = ({ data, dataKeys, colors, title, infoText }) => {
   return (
-    <div className="bg-white rounded-xl p-6 shadow-sm">
+    <div className="bg-white rounded-lg p-6 shadow-sm">
       <div className="flex items-center gap-2 mb-4">
         <h3 className="text-lg font-semibold">{title}</h3>
         <InfoTooltip text={infoText} />
@@ -54,7 +54,7 @@ export const TrendChart = ({ data, dataKeys, colors, title, infoText }) => {
 // Bar Chart for KPI comparison
 export const KPIBarChart = ({ data, title, infoText }) => {
   return (
-    <div className="bg-white rounded-xl p-6 shadow-sm">
+    <div className="bg-white rounded-lg p-6 shadow-sm">
       <div className="flex items-center gap-2 mb-4">
         <h3 className="text-lg font-semibold">{title}</h3>
         <InfoTooltip text={infoText} />

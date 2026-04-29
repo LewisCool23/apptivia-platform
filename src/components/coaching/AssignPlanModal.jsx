@@ -28,7 +28,7 @@ export default function AssignPlanModal({
       onClick={onClose}
     >
       <div
-        className="bg-white rounded-xl shadow-2xl max-w-md w-full"
+        className="bg-white rounded-lg shadow-2xl max-w-md w-full"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}

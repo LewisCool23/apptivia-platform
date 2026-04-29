@@ -113,7 +113,7 @@ export default function Security() {
 
         <div className="space-y-10">
           {SECURITY_SECTIONS.map((section) => (
-            <div key={section.title} className="bg-white rounded-xl p-6 shadow-sm border border-apptivia-carbon-100">
+            <div key={section.title} className="bg-white rounded-lg p-6 shadow-sm border border-apptivia-carbon-100">
               <h2 className="text-lg font-semibold text-apptivia-ink mb-4 flex items-center gap-2">
                 <span className="text-xl">{section.icon}</span>
                 {section.title}
@@ -130,7 +130,7 @@ export default function Security() {
           ))}
         </div>
 
-        <div className="mt-16 bg-apptivia-coral-tone-50 rounded-xl p-8 text-center">
+        <div className="mt-16 bg-apptivia-coral-tone-50 rounded-lg p-8 text-center">
           <h2 className="text-xl font-semibold text-apptivia-ink mb-3">Have a security question?</h2>
           <p className="text-apptivia-carbon-600 mb-4">
             If you have questions about our security practices or want to report a vulnerability, please contact our security team.

@@ -73,7 +73,7 @@ function PromptCard({ template, onDuplicate, onToggleActive, onDelete, onTest })
   const [expanded, setExpanded] = useState(false);
 
   return (
-    <div className={`bg-white rounded-xl border ${template.is_active ? 'border-apptivia-carbon-100' : 'border-red-100 opacity-60'} overflow-hidden transition-all`}>
+    <div className={`bg-white rounded-lg border ${template.is_active ? 'border-apptivia-carbon-100' : 'border-red-100 opacity-60'} overflow-hidden transition-all`}>
       {/* Header */}
       <div
         className="flex items-center justify-between px-5 py-4 cursor-pointer hover:bg-apptivia-paper/50 transition-colors"
@@ -216,7 +216,7 @@ function TestPromptModal({ template, onClose }) {
 
   return (
     <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={onClose}>
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[85vh] overflow-hidden" onClick={e => e.stopPropagation()}>
+      <div className="bg-white rounded-lg shadow-2xl w-full max-w-2xl max-h-[85vh] overflow-hidden" onClick={e => e.stopPropagation()}>
         <div className="flex items-center justify-between px-6 py-4 border-b border-apptivia-carbon-100">
           <div>
             <h3 className="text-sm font-bold text-apptivia-ink">{template.name}</h3>
@@ -318,7 +318,7 @@ function CreatePromptModal({ onClose, onSave }) {
 
   return (
     <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={onClose}>
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[85vh] overflow-hidden" onClick={e => e.stopPropagation()}>
+      <div className="bg-white rounded-lg shadow-2xl w-full max-w-2xl max-h-[85vh] overflow-hidden" onClick={e => e.stopPropagation()}>
         <div className="flex items-center justify-between px-6 py-4 border-b border-apptivia-carbon-100">
           <div>
             <h3 className="text-sm font-bold text-apptivia-ink">Create New Prompt</h3>
@@ -512,7 +512,7 @@ export default function PromptLibrary({ organizationId }) {
         isLoading={deleteConfirm.isLoading}
       />
       {/* Header Card */}
-      <div className="bg-white rounded-xl border border-apptivia-carbon-100 overflow-hidden">
+      <div className="bg-white rounded-lg border border-apptivia-carbon-100 overflow-hidden">
         <div className="bg-gradient-to-r from-violet-500 via-purple-500 to-indigo-500 px-6 py-5">
           <div className="flex items-center gap-3 mb-3">
             <div className="w-9 h-9 bg-white/20 backdrop-blur-sm rounded-lg flex items-center justify-center">
@@ -548,7 +548,7 @@ export default function PromptLibrary({ organizationId }) {
       </div>
 
       {/* Workflow guide */}
-      <div className="bg-white rounded-xl border border-apptivia-carbon-100 p-4">
+      <div className="bg-white rounded-lg border border-apptivia-carbon-100 p-4">
         <h3 className="text-xs font-bold text-apptivia-carbon-700 mb-2 flex items-center gap-1.5"><Target size={12} /> Recommended Workflow</h3>
         <div className="flex items-center gap-2 text-[11px] text-apptivia-carbon-500">
           <span className="flex items-center gap-1 px-2 py-1 bg-apptivia-coral-tone-50 text-apptivia-coral rounded-lg font-medium">1. Research</span>
@@ -616,7 +616,7 @@ export default function PromptLibrary({ organizationId }) {
       {/* Prompt Cards */}
       <div className="space-y-2">
         {filtered.length === 0 && (
-          <div className="text-center py-10 bg-white rounded-xl border border-apptivia-carbon-100">
+          <div className="text-center py-10 bg-white rounded-lg border border-apptivia-carbon-100">
             <BookOpen size={24} className="mx-auto text-apptivia-carbon-300 mb-2" />
             <p className="text-sm text-apptivia-carbon-500">No prompts match your filters</p>
             <p className="text-[11px] text-apptivia-carbon-400">Try adjusting your search or category filter</p>

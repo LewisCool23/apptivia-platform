@@ -70,7 +70,7 @@ export default function StepIntegration({ wizardState, updateState }) {
         <button
           type="button"
           onClick={() => updateState({ integrationMethod: 'crm', integrationTestStatus: null })}
-          className={`p-4 rounded-xl border-2 text-left transition-all ${
+          className={`p-4 rounded-lg border-2 text-left transition-all ${
             integrationMethod === 'crm'
               ? 'border-cyan-500 bg-cyan-50 ring-1 ring-cyan-200'
               : 'border-apptivia-carbon-200 hover:border-apptivia-carbon-300'
@@ -85,7 +85,7 @@ export default function StepIntegration({ wizardState, updateState }) {
         <button
           type="button"
           onClick={() => updateState({ integrationMethod: 'csv', selectedIntegration: null, integrationApiKey: '', integrationTestStatus: 'success' })}
-          className={`p-4 rounded-xl border-2 text-left transition-all ${
+          className={`p-4 rounded-lg border-2 text-left transition-all ${
             integrationMethod === 'csv'
               ? 'border-cyan-500 bg-cyan-50 ring-1 ring-cyan-200'
               : 'border-apptivia-carbon-200 hover:border-apptivia-carbon-300'

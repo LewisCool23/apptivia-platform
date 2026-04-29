@@ -353,7 +353,7 @@ export default function Systems() {
               const isError = integration?.status === 'error';
 
               return (
-                <div key={template.integration_type} className="bg-white rounded-xl p-5 shadow-sm border border-apptivia-carbon-100 flex flex-col hover:shadow-md transition-shadow">
+                <div key={template.integration_type} className="bg-white rounded-lg p-5 shadow-sm border border-apptivia-carbon-100 flex flex-col hover:shadow-md transition-shadow">
                   <div className="flex items-center gap-3 mb-4">
                     <div className={`w-11 h-11 bg-gradient-to-br ${template.color} rounded-lg flex items-center justify-center text-xs font-bold text-white shadow-sm`}>
                       {template.icon}
@@ -485,7 +485,7 @@ export default function Systems() {
         {/* ════════ Permissions Modal ════════ */}
         {showPermissionsModal && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={closePermissionsModal}>
-            <div className="bg-white w-[95%] max-w-6xl rounded-2xl shadow-2xl p-6" onClick={(e) => e.stopPropagation()}>
+            <div className="bg-white w-[95%] max-w-6xl rounded-lg shadow-2xl p-6" onClick={(e) => e.stopPropagation()}>
               <div className="flex items-start justify-between mb-4">
                 <div>
                   <h2 className="text-lg font-bold text-apptivia-ink">User Permissions</h2>
@@ -495,7 +495,7 @@ export default function Systems() {
               </div>
               <div className="max-h-[75vh] overflow-y-auto pr-1">
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-                  <div className="bg-apptivia-paper rounded-xl p-3 border">
+                  <div className="bg-apptivia-paper rounded-lg p-3 border">
                     <div className="text-xs font-semibold text-apptivia-carbon-600 mb-2">Users</div>
                     <div className="space-y-2 max-h-[420px] overflow-auto">
                       {usersList.length === 0 ? (
@@ -514,7 +514,7 @@ export default function Systems() {
                       )}
                     </div>
                   </div>
-                  <div className="lg:col-span-2 bg-white rounded-xl border p-4">
+                  <div className="lg:col-span-2 bg-white rounded-lg border p-4">
                     <div className="flex items-center justify-between mb-3">
                       <div>
                         <div className="text-xs text-apptivia-carbon-500">Selected user</div>
@@ -562,7 +562,7 @@ export default function Systems() {
         {/* ════════ Team Modal (from header action button) ════════ */}
         {showTeamModal && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={() => setShowTeamModal(false)}>
-            <div className="bg-white w-[95%] max-w-6xl rounded-2xl shadow-2xl p-6" onClick={(e) => e.stopPropagation()}>
+            <div className="bg-white w-[95%] max-w-6xl rounded-lg shadow-2xl p-6" onClick={(e) => e.stopPropagation()}>
               <div className="flex items-start justify-between mb-4">
                 <div>
                   <h2 className="text-lg font-bold text-apptivia-ink">{isManager ? 'Team Settings' : 'Team Management'}</h2>

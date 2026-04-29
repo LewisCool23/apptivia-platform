@@ -80,7 +80,7 @@ export default function EngageDialpadPanel({ onCall, isDeviceReady, onClose, use
             value={number}
             onChange={e => setNumber(e.target.value)}
             onKeyDown={handleKeyDown}
-            className="flex-1 text-center text-xl font-mono border border-apptivia-carbon-200 rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-emerald-300 text-apptivia-ink placeholder-gray-300"
+            className="flex-1 text-center text-xl font-mono border border-apptivia-carbon-200 rounded-lg px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-emerald-300 text-apptivia-ink placeholder-gray-300"
           />
           {number && (
             <button
@@ -98,7 +98,7 @@ export default function EngageDialpadPanel({ onCall, isDeviceReady, onClose, use
             <button
               key={key}
               onClick={() => handleKey(key)}
-              className="h-12 rounded-xl bg-apptivia-paper hover:bg-apptivia-carbon-100 active:bg-apptivia-carbon-200 text-apptivia-ink font-semibold text-lg transition-colors border border-apptivia-carbon-100"
+              className="h-12 rounded-lg bg-apptivia-paper hover:bg-apptivia-carbon-100 active:bg-apptivia-carbon-200 text-apptivia-ink font-semibold text-lg transition-colors border border-apptivia-carbon-100"
             >
               {key}
             </button>

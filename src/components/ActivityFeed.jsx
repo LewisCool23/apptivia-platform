@@ -147,7 +147,7 @@ export default function ActivityFeed({ organizationId, maxHeight = 480, compact 
 
   if (compact) {
     return (
-      <div className="bg-white rounded-xl border border-apptivia-carbon-100 shadow-sm overflow-hidden">
+      <div className="bg-white rounded-lg border border-apptivia-carbon-100 shadow-sm overflow-hidden">
         <div className="flex items-center justify-between px-4 py-3 border-b border-apptivia-carbon-100">
           <div className="flex items-center gap-2">
             <Activity size={15} className="text-apptivia-ink" />
@@ -200,7 +200,7 @@ export default function ActivityFeed({ organizationId, maxHeight = 480, compact 
       </div>
 
       {/* Feed */}
-      <div className="bg-white rounded-xl border border-apptivia-carbon-100 shadow-sm overflow-hidden">
+      <div className="bg-white rounded-lg border border-apptivia-carbon-100 shadow-sm overflow-hidden">
         {loading ? (
           <div className="flex items-center justify-center py-16 text-apptivia-carbon-400">
             <Loader2 size={24} className="animate-spin mr-2" />

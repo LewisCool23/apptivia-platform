@@ -104,7 +104,7 @@ function CompanyBriefPanel({ company, brief: rawBrief, dataSources, tokensUsed, 
   // Fallback when research returned no usable data
   if (!company && !brief) {
     return (
-      <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-5">
+      <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-5">
         <div className="flex items-center gap-2 mb-2">
           <AlertTriangle size={16} className="text-yellow-600" />
           <span className="text-sm font-semibold text-yellow-700">Company research unavailable</span>
@@ -121,7 +121,7 @@ function CompanyBriefPanel({ company, brief: rawBrief, dataSources, tokensUsed, 
     <div className="space-y-4">
       {/* Company Header */}
       {company && (
-        <div className="bg-white rounded-xl border border-apptivia-carbon-100 p-5">
+        <div className="bg-white rounded-lg border border-apptivia-carbon-100 p-5">
           <div className="flex items-start gap-4">
             {company.logo_url ? (
               <img src={company.logo_url} alt="" className="w-12 h-12 rounded-lg border border-apptivia-carbon-100 object-contain" />
@@ -171,7 +171,7 @@ function CompanyBriefPanel({ company, brief: rawBrief, dataSources, tokensUsed, 
 
       {/* AI Brief */}
       {brief && (
-        <div className="bg-white rounded-xl border border-apptivia-carbon-100 overflow-hidden">
+        <div className="bg-white rounded-lg border border-apptivia-carbon-100 overflow-hidden">
           <div className="bg-gradient-to-r from-orange-500 to-amber-500 px-5 py-3 flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Sparkles size={14} className="text-white" />
@@ -296,7 +296,7 @@ function CompanyBriefPanel({ company, brief: rawBrief, dataSources, tokensUsed, 
 
       {/* Errors */}
       {errors?.length > 0 && (
-        <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-4">
+        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
           <div className="flex items-center gap-2 mb-2">
             <AlertTriangle size={14} className="text-yellow-600" />
             <span className="text-xs font-semibold text-yellow-700">Partial Results — Some data sources had issues</span>
@@ -354,7 +354,7 @@ function ProspectBriefPanel({ prospect, brief: rawBrief, dataSources, tokensUsed
     <div className="space-y-4">
       {/* Prospect Header */}
       {prospect && (
-        <div className="bg-white rounded-xl border border-apptivia-carbon-100 p-5">
+        <div className="bg-white rounded-lg border border-apptivia-carbon-100 p-5">
           <div className="flex items-start gap-4">
             {prospect.photo_url || prospect.avatar_url ? (
               <img src={prospect.photo_url || prospect.avatar_url} alt="" className="w-14 h-14 rounded-full border-2 border-apptivia-carbon-100 object-cover" />
@@ -503,7 +503,7 @@ function ProspectBriefPanel({ prospect, brief: rawBrief, dataSources, tokensUsed
 
       {/* AI Brief */}
       {brief && (
-        <div className="bg-white rounded-xl border border-apptivia-carbon-100 overflow-hidden">
+        <div className="bg-white rounded-lg border border-apptivia-carbon-100 overflow-hidden">
           <div className="bg-gradient-to-r from-purple-500 to-pink-500 px-5 py-3 flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Sparkles size={14} className="text-white" />
@@ -602,7 +602,7 @@ function ProspectBriefPanel({ prospect, brief: rawBrief, dataSources, tokensUsed
       )}
 
       {errors?.length > 0 && (
-        <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-4">
+        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
           <div className="flex items-center gap-2 mb-2">
             <AlertTriangle size={14} className="text-yellow-600" />
             <span className="text-xs font-semibold text-yellow-700">Partial Results</span>
@@ -631,7 +631,7 @@ function OutreachDraftPanel({ draft, tokensUsed }) {
   // Multi-message format (from multi-angle template)
   if (draft.messages?.length > 0) {
     return (
-      <div className="bg-white rounded-xl border border-apptivia-carbon-100 overflow-hidden">
+      <div className="bg-white rounded-lg border border-apptivia-carbon-100 overflow-hidden">
         <div className="bg-gradient-to-r from-emerald-500 to-teal-500 px-5 py-3 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Send size={14} className="text-white" />
@@ -649,7 +649,7 @@ function OutreachDraftPanel({ draft, tokensUsed }) {
               const colors = angleColors[i % angleColors.length];
               const fullText = [msg.subject && `Subject: ${msg.subject}`, msg.body].filter(Boolean).join('\n\n');
               return (
-                <div key={i} className={`${colors.bg} ${colors.border} border rounded-xl p-4`}>
+                <div key={i} className={`${colors.bg} ${colors.border} border rounded-lg p-4`}>
                   <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center gap-2">
                       <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${colors.badge}`}>
@@ -683,7 +683,7 @@ function OutreachDraftPanel({ draft, tokensUsed }) {
 
   // Standard single-message format
   return (
-    <div className="bg-white rounded-xl border border-apptivia-carbon-100 overflow-hidden">
+    <div className="bg-white rounded-lg border border-apptivia-carbon-100 overflow-hidden">
       <div className="bg-gradient-to-r from-emerald-500 to-teal-500 px-5 py-3 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Send size={14} className="text-white" />
@@ -749,7 +749,7 @@ function OutreachModal({
 
   return (
     <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4" onClick={onClose}>
-      <div className={`bg-white rounded-2xl shadow-2xl w-full max-w-lg ${draft ? 'max-h-[85vh] overflow-y-auto' : 'overflow-visible'}`} onClick={e => e.stopPropagation()}>
+      <div className={`bg-white rounded-lg shadow-2xl w-full max-w-lg ${draft ? 'max-h-[85vh] overflow-y-auto' : 'overflow-visible'}`} onClick={e => e.stopPropagation()}>
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-apptivia-carbon-100">
           <div className="flex items-center gap-2">
@@ -1486,7 +1486,7 @@ export default function EngageDiscover({ organizationId, userId, initialSearch, 
   return (
     <div className="space-y-4">
       {/* Search Panel */}
-      <div className="bg-white rounded-xl border border-apptivia-carbon-100 overflow-hidden">
+      <div className="bg-white rounded-lg border border-apptivia-carbon-100 overflow-hidden">
         <div className="bg-gradient-to-r from-blue-500 via-cyan-500 to-teal-500 px-6 py-5">
           <div className="flex items-center gap-3 mb-3">
             <div className="w-9 h-9 bg-white/20 backdrop-blur-sm rounded-lg flex items-center justify-center">
@@ -1615,7 +1615,7 @@ export default function EngageDiscover({ organizationId, userId, initialSearch, 
 
       {/* Error */}
       {error && (
-        <div className="bg-red-50 border border-red-200 rounded-xl p-4 flex items-start gap-3">
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex items-start gap-3">
           <AlertTriangle size={16} className="text-red-500 flex-shrink-0 mt-0.5" />
           <div>
             <span className="text-sm font-semibold text-red-700 block">Research Error</span>
@@ -1626,14 +1626,14 @@ export default function EngageDiscover({ organizationId, userId, initialSearch, 
 
       {/* Company Disambiguation Picker */}
       {disambiguationLoading && (
-        <div className="bg-white rounded-xl border border-apptivia-carbon-100 p-6 text-center">
+        <div className="bg-white rounded-lg border border-apptivia-carbon-100 p-6 text-center">
           <RefreshCw size={20} className="animate-spin text-apptivia-coral mx-auto mb-2" />
           <p className="text-sm text-apptivia-carbon-600">Finding matching companies...</p>
         </div>
       )}
 
       {disambiguationResults && disambiguationResults.length > 0 && (
-        <div className="bg-white rounded-xl border border-apptivia-carbon-100 overflow-hidden">
+        <div className="bg-white rounded-lg border border-apptivia-carbon-100 overflow-hidden">
           <div className="px-5 py-3 border-b border-apptivia-carbon-100 bg-gradient-to-r from-blue-50 to-cyan-50">
             <div className="flex items-center gap-2">
               <Building2 size={14} className="text-apptivia-coral" />
@@ -1693,7 +1693,7 @@ export default function EngageDiscover({ organizationId, userId, initialSearch, 
 
       {/* Search History */}
       {!loading && searchHistory.length > 0 && (
-        <div className="bg-white rounded-xl border border-apptivia-carbon-100 overflow-hidden">
+        <div className="bg-white rounded-lg border border-apptivia-carbon-100 overflow-hidden">
           <div className="px-5 py-3 border-b border-apptivia-carbon-100 flex items-center justify-between bg-apptivia-paper/50">
             <div className="flex items-center gap-2">
               <History size={14} className="text-apptivia-carbon-500" />
@@ -1762,7 +1762,7 @@ export default function EngageDiscover({ organizationId, userId, initialSearch, 
 
       {/* Loading State */}
       {loading && (
-        <div className="bg-white rounded-xl border border-apptivia-carbon-100 p-8 text-center">
+        <div className="bg-white rounded-lg border border-apptivia-carbon-100 p-8 text-center">
           <RefreshCw size={24} className="animate-spin text-apptivia-coral mx-auto mb-3" />
           <p className="text-sm font-medium text-apptivia-carbon-700">
             {mode === 'company' ? 'Researching company...' : mode === 'people_search' ? 'Searching for people...' : 'Researching prospect...'}
@@ -1814,7 +1814,7 @@ export default function EngageDiscover({ organizationId, userId, initialSearch, 
 
           {/* Suggested Contacts — compact sidebar */}
           <div className="w-72 flex-shrink-0">
-            <div className="bg-white rounded-xl border border-apptivia-carbon-100 overflow-hidden sticky top-4">
+            <div className="bg-white rounded-lg border border-apptivia-carbon-100 overflow-hidden sticky top-4">
               <div className="px-3 py-2.5 border-b border-apptivia-carbon-100 bg-gradient-to-r from-emerald-50 to-cyan-50">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-1.5">
@@ -1960,7 +1960,7 @@ export default function EngageDiscover({ organizationId, userId, initialSearch, 
 
       {/* People Search Results */}
       {!loading && peopleSearchResults && peopleSearchResults.length > 0 && (
-        <div className="bg-white rounded-xl border border-apptivia-carbon-100 overflow-hidden">
+        <div className="bg-white rounded-lg border border-apptivia-carbon-100 overflow-hidden">
           <div className="px-5 py-4 border-b border-apptivia-carbon-100 bg-gradient-to-r from-cyan-50 to-blue-50">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
@@ -2108,7 +2108,7 @@ export default function EngageDiscover({ organizationId, userId, initialSearch, 
 
       {/* People search empty state */}
       {!loading && peopleSearchResults && peopleSearchResults.length === 0 && (
-        <div className="bg-white rounded-xl border border-apptivia-carbon-100 p-8 text-center">
+        <div className="bg-white rounded-lg border border-apptivia-carbon-100 p-8 text-center">
           <Users size={24} className="text-apptivia-carbon-300 mx-auto mb-3" />
           <p className="text-sm font-medium text-apptivia-carbon-600">No people found</p>
           <p className="text-xs text-apptivia-carbon-400 mt-1">
@@ -2121,7 +2121,7 @@ export default function EngageDiscover({ organizationId, userId, initialSearch, 
 
       {/* Outreach Generator — inline only for company-only research (prospect uses modal) */}
       {canGenerateOutreach && !prospectResult && (
-        <div className="bg-white rounded-xl border border-apptivia-carbon-100 p-5">
+        <div className="bg-white rounded-lg border border-apptivia-carbon-100 p-5">
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
               <Send size={14} className="text-emerald-500" />
@@ -2211,8 +2211,8 @@ export default function EngageDiscover({ organizationId, userId, initialSearch, 
 
       {/* Empty State */}
       {!loading && !hasResults && !error && (
-        <div className="bg-white rounded-xl border border-apptivia-carbon-100 p-10 text-center">
-          <div className="w-14 h-14 bg-gradient-to-br from-blue-100 to-cyan-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+        <div className="bg-white rounded-lg border border-apptivia-carbon-100 p-10 text-center">
+          <div className="w-14 h-14 bg-gradient-to-br from-blue-100 to-cyan-100 rounded-lg flex items-center justify-center mx-auto mb-4">
             <Search size={24} className="text-apptivia-coral" />
           </div>
           <h3 className="text-sm font-semibold text-apptivia-carbon-700 mb-1">Ready to Research</h3>

@@ -99,7 +99,7 @@ export default function PromptTemplateSelector({
 
       {/* Dropdown */}
       {open && (
-        <div className="absolute z-50 mt-1 w-full min-w-[300px] bg-white rounded-xl border border-apptivia-carbon-200 shadow-lg overflow-hidden">
+        <div className="absolute z-50 mt-1 w-full min-w-[300px] bg-white rounded-lg border border-apptivia-carbon-200 shadow-lg overflow-hidden">
           {/* Search */}
           <div className="px-3 py-2 border-b border-apptivia-carbon-100">
             <div className="relative">

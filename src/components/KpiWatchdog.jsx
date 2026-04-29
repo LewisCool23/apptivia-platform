@@ -74,7 +74,7 @@ function WatchdogSummary({ summary }) {
   return (
     <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
       {cards.map((card) => (
-        <div key={card.label} className="bg-white rounded-xl border border-apptivia-carbon-100 p-4 hover:shadow-sm transition-shadow">
+        <div key={card.label} className="bg-white rounded-lg border border-apptivia-carbon-100 p-4 hover:shadow-sm transition-shadow">
           <div className="flex items-center justify-between mb-2">
             <span className="text-xs font-medium text-apptivia-carbon-500">{card.label}</span>
             <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${card.color}`}>
@@ -94,7 +94,7 @@ function AnalysisProgress({ steps, isAnalyzing }) {
   if (steps.length === 0) return null;
 
   return (
-    <div className="bg-white rounded-xl border border-apptivia-carbon-100 p-5">
+    <div className="bg-white rounded-lg border border-apptivia-carbon-100 p-5">
       <div className="flex items-center gap-2 mb-3">
         {isAnalyzing ? (
           <RefreshCw size={14} className="text-apptivia-coral animate-spin" />
@@ -138,7 +138,7 @@ function AnomalyCard({ anomaly, onAcknowledge, onDismiss, onResolve }) {
   const SevIcon = severity.icon;
 
   return (
-    <div className={`rounded-xl border p-4 ${severity.bg} ${severity.border} hover:shadow-sm transition-shadow`}>
+    <div className={`rounded-lg border p-4 ${severity.bg} ${severity.border} hover:shadow-sm transition-shadow`}>
       <div className="flex items-start gap-3">
         {/* Severity icon */}
         <div className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 bg-white/60`}>
@@ -265,7 +265,7 @@ function KpiBreakdown({ byKpi }) {
   if (!entries.length) return null;
 
   return (
-    <div className="bg-white rounded-xl border border-apptivia-carbon-100 p-5">
+    <div className="bg-white rounded-lg border border-apptivia-carbon-100 p-5">
       <h3 className="text-sm font-semibold text-apptivia-carbon-700 mb-3">Anomalies by KPI</h3>
       <div className="space-y-2">
         {entries.map(([key, count]) => (
@@ -430,7 +430,7 @@ export default function KpiWatchdog({ organizationId, userId, filterProfileIds }
               <span className="text-sm text-apptivia-carbon-500">Loading anomalies...</span>
             </div>
           ) : filteredAnomalies.length === 0 ? (
-            <div className="bg-white rounded-xl border border-apptivia-carbon-100 py-16 text-center">
+            <div className="bg-white rounded-lg border border-apptivia-carbon-100 py-16 text-center">
               <Shield size={32} className="mx-auto text-emerald-300 mb-3" />
               <p className="text-sm text-apptivia-carbon-500 mb-1">
                 {watchdog.anomalies.length === 0 ? 'No anomalies detected' : 'No anomalies match current filters'}
@@ -446,7 +446,7 @@ export default function KpiWatchdog({ organizationId, userId, filterProfileIds }
               {groupedByRep.map((group) => {
                 const isOpen = expandedRep === group.profileId;
                 return (
-                  <div key={group.profileId} className={`rounded-xl border transition-colors ${
+                  <div key={group.profileId} className={`rounded-lg border transition-colors ${
                     isOpen ? 'border-red-200 bg-red-50/20' : 'border-apptivia-carbon-100 bg-white hover:bg-apptivia-paper/50'
                   }`}>
                     {/* Accordion header */}
@@ -517,7 +517,7 @@ export default function KpiWatchdog({ organizationId, userId, filterProfileIds }
           <KpiBreakdown byKpi={watchdog.summary.byKpi} />
 
           {/* Quick Info */}
-          <div className="bg-white rounded-xl border border-apptivia-carbon-100 p-5">
+          <div className="bg-white rounded-lg border border-apptivia-carbon-100 p-5">
             <h3 className="text-sm font-semibold text-apptivia-carbon-700 mb-3">How It Works</h3>
             <div className="space-y-3">
               <div className="flex items-start gap-2">

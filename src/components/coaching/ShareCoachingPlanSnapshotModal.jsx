@@ -92,7 +92,7 @@ export default function ShareCoachingPlanSnapshotModal({ isOpen, onClose, plan, 
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 overflow-y-auto py-8">
-      <div className="bg-white rounded-xl shadow-xl w-full max-w-lg mx-4">
+      <div className="bg-white rounded-lg shadow-xl w-full max-w-lg mx-4">
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-apptivia-carbon-100">
           <h3 className="text-base font-semibold text-apptivia-ink">Share Coaching Plan</h3>
@@ -103,7 +103,7 @@ export default function ShareCoachingPlanSnapshotModal({ isOpen, onClose, plan, 
 
         {/* Snapshot Card */}
         <div className="px-6 py-4">
-          <div ref={snapshotRef} className="bg-gradient-to-br from-blue-600 via-indigo-600 to-purple-700 rounded-xl p-6 text-white">
+          <div ref={snapshotRef} className="bg-gradient-to-br from-blue-600 via-indigo-600 to-purple-700 rounded-lg p-6 text-white">
             <div className="flex items-center justify-between mb-4">
               <div>
                 <p className="text-xs font-medium text-apptivia-coral-tone-300 uppercase tracking-wide">Coaching Plan</p>
