@@ -11,22 +11,20 @@ import { jsPDF } from 'jspdf';
 import html2canvas from 'html2canvas';
 import { formatKpiValue, type KpiUnitMap } from './exportUtils';
 
-// ── Brand constants ─────────────────────────────────────────
+// ── Apptivia brand constants ────────────────────────────────
 const BRAND = {
-  gradient: 'linear-gradient(135deg, #3b82f6 0%, #8b5cf6 50%, #ec4899 100%)',
-  blue: '#3b82f6',
-  purple: '#8b5cf6',
-  pink: '#ec4899',
-  green: '#10b981',
-  amber: '#f59e0b',
-  red: '#ef4444',
-  gray50: '#f9fafb',
-  gray100: '#f3f4f6',
-  gray200: '#e5e7eb',
-  gray500: '#6b7280',
-  gray700: '#374151',
-  gray900: '#111827',
+  ink: '#0A0A0B',
+  coral: '#FF4D2E',
+  paper: '#F7F5F2',
+  carbon200: '#E4E4E7',
+  carbon500: '#71717A',
+  carbon700: '#3F3F46',
+  success: '#16A34A',
+  warning: '#F59E0B',
+  error: '#C8341B',
 };
+
+const HEADER_BG = BRAND.coral;
 
 const today = () => new Date().toISOString().split('T')[0];
 
@@ -34,7 +32,7 @@ const today = () => new Date().toISOString().split('T')[0];
 
 function brandedHeader(title: string, subtitle?: string): string {
   return `
-    <div style="background:${BRAND.gradient};color:white;padding:28px 32px;border-radius:12px 12px 0 0;text-align:center;">
+    <div style="background:${HEADER_BG};color:white;padding:28px 32px;border-radius:12px 12px 0 0;text-align:center;">
       <div style="font-size:28px;font-weight:800;letter-spacing:-0.5px;margin-bottom:2px;">Apptivia</div>
       <div style="font-size:11px;opacity:0.85;letter-spacing:1px;text-transform:uppercase;margin-bottom:12px;">Sales Performance Intelligence</div>
       <div style="font-size:18px;font-weight:700;">${title}</div>
@@ -46,7 +44,7 @@ function brandedFooter(): string {
   return `
     <div style="padding:16px 32px;background:#f9fafb;border-top:1px solid #e5e7eb;border-radius:0 0 12px 12px;text-align:center;">
       <div style="font-size:10px;color:#9ca3af;">
-        Generated on ${new Date().toLocaleString()} &nbsp;|&nbsp; Powered by <strong style="color:${BRAND.purple};">Apptivia</strong>
+        Generated on ${new Date().toLocaleString()} &nbsp;|&nbsp; Powered by <strong style="color:${BRAND.ink};">Apptivia</strong>
       </div>
     </div>`;
 }
@@ -54,16 +52,16 @@ function brandedFooter(): string {
 function statBox(label: string, value: string | number, color?: string): string {
   return `
     <div style="flex:1;background:#f9fafb;border-radius:8px;padding:12px 16px;text-align:center;min-width:100px;">
-      <div style="font-size:22px;font-weight:700;color:${color || BRAND.gray900};">${value}</div>
-      <div style="font-size:10px;color:${BRAND.gray500};margin-top:2px;text-transform:uppercase;letter-spacing:0.5px;">${label}</div>
+      <div style="font-size:22px;font-weight:700;color:${color || BRAND.ink};">${value}</div>
+      <div style="font-size:10px;color:${BRAND.carbon500};margin-top:2px;text-transform:uppercase;letter-spacing:0.5px;">${label}</div>
     </div>`;
 }
 
 function scoreColor(score: number): string {
-  if (score >= 90) return BRAND.green;
-  if (score >= 70) return BRAND.blue;
-  if (score >= 50) return BRAND.amber;
-  return BRAND.red;
+  if (score >= 90) return BRAND.success;
+  if (score >= 70) return BRAND.coral;
+  if (score >= 50) return BRAND.warning;
+  return BRAND.error;
 }
 
 function tableRow(cells: string[], isHeader = false): string {
@@ -159,27 +157,27 @@ export async function exportScorecardToPDF(data: any, filters?: any): Promise<vo
       <div style="display:flex;gap:12px;margin-bottom:24px;">
         ${statBox('Team Avg', (data.teamAverage || 0) + '%', scoreColor(data.teamAverage || 0))}
         ${statBox('Reps Tracked', rows.length)}
-        ${statBox('Above Target', data.aboveTarget || 0, BRAND.green)}
-        ${statBox('Need Coaching', data.needCoaching || 0, BRAND.red)}
+        ${statBox('Above Target', data.aboveTarget || 0, BRAND.success)}
+        ${statBox('Need Coaching', data.needCoaching || 0, BRAND.error)}
       </div>
 
       <!-- Score Distribution -->
       <div style="margin-bottom:24px;">
-        <div style="font-size:13px;font-weight:600;color:${BRAND.gray900};margin-bottom:10px;">Score Distribution</div>
+        <div style="font-size:13px;font-weight:600;color:${BRAND.ink};margin-bottom:10px;">Score Distribution</div>
         ${buildDistribution(rows)}
       </div>
 
       <!-- Full Rep Table -->
-      <div style="font-size:13px;font-weight:600;color:${BRAND.gray900};margin-bottom:10px;">Rep Performance</div>
+      <div style="font-size:13px;font-weight:600;color:${BRAND.ink};margin-bottom:10px;">Rep Performance</div>
       <table style="width:100%;border-collapse:collapse;">
         ${tableRow(['#', 'Rep', 'Team', 'Score', ...kpiKeys.map(prettify)], true)}
         ${repRows}
       </table>
 
       ${data.topPerformer ? `
-      <div style="margin-top:20px;padding:12px 16px;background:#ecfdf5;border-left:4px solid ${BRAND.green};border-radius:6px;">
-        <div style="font-size:11px;color:${BRAND.green};font-weight:600;">Top Performer</div>
-        <div style="font-size:14px;font-weight:700;color:${BRAND.gray900};">${data.topPerformer.name} — ${data.topPerformer.score}%</div>
+      <div style="margin-top:20px;padding:12px 16px;background:#ecfdf5;border-left:4px solid ${BRAND.success};border-radius:6px;">
+        <div style="font-size:11px;color:${BRAND.success};font-weight:600;">Top Performer</div>
+        <div style="font-size:14px;font-weight:700;color:${BRAND.ink};">${data.topPerformer.name} — ${data.topPerformer.score}%</div>
       </div>` : ''}
     </div>
     ${brandedFooter()}`;
@@ -189,10 +187,10 @@ export async function exportScorecardToPDF(data: any, filters?: any): Promise<vo
 
 function buildDistribution(rows: any[]): string {
   const buckets = [
-    { label: 'Excellent (90+)', color: BRAND.green, count: 0 },
-    { label: 'Good (70-89)', color: BRAND.blue, count: 0 },
-    { label: 'Fair (50-69)', color: BRAND.amber, count: 0 },
-    { label: 'Poor (<50)', color: BRAND.red, count: 0 },
+    { label: 'Excellent (90+)', color: BRAND.success, count: 0 },
+    { label: 'Good (70-89)', color: BRAND.coral, count: 0 },
+    { label: 'Fair (50-69)', color: BRAND.warning, count: 0 },
+    { label: 'Poor (<50)', color: BRAND.error, count: 0 },
   ];
   rows.forEach((r: any) => {
     const s = r.apptivityScore || 0;
@@ -206,11 +204,11 @@ function buildDistribution(rows: any[]): string {
     const pct = Math.round((b.count / total) * 100);
     return `
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;">
-        <div style="width:120px;font-size:11px;color:${BRAND.gray700};">${b.label}</div>
+        <div style="width:120px;font-size:11px;color:${BRAND.carbon700};">${b.label}</div>
         <div style="flex:1;background:#f3f4f6;border-radius:4px;height:16px;overflow:hidden;">
           <div style="width:${pct}%;background:${b.color};height:100%;border-radius:4px;transition:width 0.3s;"></div>
         </div>
-        <div style="width:40px;text-align:right;font-size:11px;font-weight:600;color:${BRAND.gray700};">${b.count}</div>
+        <div style="width:40px;text-align:right;font-size:11px;font-weight:600;color:${BRAND.carbon700};">${b.count}</div>
       </div>`;
   }).join('');
 }
@@ -226,7 +224,7 @@ export async function exportAnalyticsToPDF(data: any, aggregateKPIs: any, filter
 
   // Aggregate KPIs section — format values using unit metadata
   const aggRows = Array.isArray(aggregateKPIs)
-    ? aggregateKPIs.map((k: any) => `<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #f3f4f6;"><span style="font-size:12px;color:${BRAND.gray700};">${k.name}</span><span style="font-size:12px;font-weight:600;">${formatKpiValue(k.total, k.unit || kpiUnits[k.key])}</span></div>`).join('')
+    ? aggregateKPIs.map((k: any) => `<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #f3f4f6;"><span style="font-size:12px;color:${BRAND.carbon700};">${k.name}</span><span style="font-size:12px;font-weight:600;">${formatKpiValue(k.total, k.unit || kpiUnits[k.key])}</span></div>`).join('')
     : '';
 
   // Chunk KPIs into groups of 5 to prevent horizontal overflow
@@ -251,7 +249,7 @@ export async function exportAnalyticsToPDF(data: any, aggregateKPIs: any, filter
     const sectionLabel = kpiChunks.length > 1 ? ` (${chunkIndex + 1} of ${kpiChunks.length})` : '';
     return `
       <div style="margin-bottom:24px;">
-        <div style="font-size:13px;font-weight:600;color:${BRAND.gray900};margin-bottom:10px;">Rep Performance${sectionLabel}</div>
+        <div style="font-size:13px;font-weight:600;color:${BRAND.ink};margin-bottom:10px;">Rep Performance${sectionLabel}</div>
         <table style="width:100%;border-collapse:collapse;">
           ${tableRow(['#', 'Rep', 'Team', 'Score', ...chunk.map(prettify)], true)}
           ${chunkRepRows}
@@ -270,7 +268,7 @@ export async function exportAnalyticsToPDF(data: any, aggregateKPIs: any, filter
 
       ${aggRows ? `
       <div style="margin-bottom:24px;">
-        <div style="font-size:13px;font-weight:600;color:${BRAND.gray900};margin-bottom:10px;">Aggregate KPIs</div>
+        <div style="font-size:13px;font-weight:600;color:${BRAND.ink};margin-bottom:10px;">Aggregate KPIs</div>
         <div style="background:#f9fafb;border-radius:8px;padding:12px 16px;">${aggRows}</div>
       </div>` : ''}
 
@@ -291,9 +289,9 @@ export async function exportCoachToPDF(data: any, filters?: any): Promise<void> 
       s.skillset_name || 'Unknown',
       `<div style="display:flex;align-items:center;gap:8px;">
         <div style="flex:1;background:#f3f4f6;border-radius:4px;height:12px;overflow:hidden;min-width:80px;">
-          <div style="width:${Math.min(s.progress || 0, 100)}%;background:${BRAND.purple};height:100%;border-radius:4px;"></div>
+          <div style="width:${Math.min(s.progress || 0, 100)}%;background:${BRAND.ink};height:100%;border-radius:4px;"></div>
         </div>
-        <span style="font-size:11px;font-weight:600;color:${BRAND.gray700};">${Math.round(s.progress || 0)}%</span>
+        <span style="font-size:11px;font-weight:600;color:${BRAND.carbon700};">${Math.round(s.progress || 0)}%</span>
       </div>`,
       `${s.achievements_completed || 0}`,
       `${s.points || 0}`,
@@ -305,8 +303,8 @@ export async function exportCoachToPDF(data: any, filters?: any): Promise<void> 
     <div style="padding:24px 32px;">
       <div style="display:flex;gap:12px;margin-bottom:24px;">
         ${statBox('Avg Score', (data.avgScore || 0) + '%', scoreColor(data.avgScore || 0))}
-        ${statBox('Total Badges', data.totalBadges || 0, BRAND.purple)}
-        ${statBox('Achievements', data.totalAchievements || 0, BRAND.blue)}
+        ${statBox('Total Badges', data.totalBadges || 0, BRAND.ink)}
+        ${statBox('Achievements', data.totalAchievements || 0, BRAND.coral)}
         ${statBox('Total Points', data.totalPoints || 0)}
       </div>
 
@@ -317,7 +315,7 @@ export async function exportCoachToPDF(data: any, filters?: any): Promise<void> 
         ${statBox('Next Level', (data.pointsToNextLevel || 0) + ' pts')}
       </div>
 
-      <div style="font-size:13px;font-weight:600;color:${BRAND.gray900};margin-bottom:10px;">Skillset Progress</div>
+      <div style="font-size:13px;font-weight:600;color:${BRAND.ink};margin-bottom:10px;">Skillset Progress</div>
       <table style="width:100%;border-collapse:collapse;">
         ${tableRow(['Skillset', 'Progress', 'Achievements', 'Points'], true)}
         ${skillsetRows}
@@ -340,11 +338,11 @@ export async function exportContestToPDF(contest: any): Promise<void> {
       `<strong>${entry.profile_name || 'Unknown'}</strong>`,
       entry.team_name || '-',
       `<strong>${entry.score || 0}</strong>`,
-      entry.rank_change != null ? (entry.rank_change > 0 ? `<span style="color:${BRAND.green};">▲ ${entry.rank_change}</span>` : entry.rank_change < 0 ? `<span style="color:${BRAND.red};">▼ ${Math.abs(entry.rank_change)}</span>` : '-') : '-',
+      entry.rank_change != null ? (entry.rank_change > 0 ? `<span style="color:${BRAND.success};">▲ ${entry.rank_change}</span>` : entry.rank_change < 0 ? `<span style="color:${BRAND.error};">▼ ${Math.abs(entry.rank_change)}</span>` : '-') : '-',
     ])
   ).join('');
 
-  const statusColor = contest.status === 'active' ? BRAND.green : contest.status === 'completed' ? BRAND.blue : BRAND.amber;
+  const statusColor = contest.status === 'active' ? BRAND.success : contest.status === 'completed' ? BRAND.coral : BRAND.warning;
 
   const html = `
     ${brandedHeader('Contest Report', contest.name || 'Contest')}
@@ -359,11 +357,11 @@ export async function exportContestToPDF(contest: any): Promise<void> {
       <div style="display:flex;gap:12px;margin-bottom:24px;">
         ${statBox('Start', contest.start_date?.split('T')[0] || '-')}
         ${statBox('End', contest.end_date?.split('T')[0] || '-')}
-        ${contest.winner_name ? statBox('Winner', contest.winner_name, BRAND.green) : ''}
-        ${contest.reward_value ? statBox('Reward', contest.reward_value, BRAND.purple) : ''}
+        ${contest.winner_name ? statBox('Winner', contest.winner_name, BRAND.success) : ''}
+        ${contest.reward_value ? statBox('Reward', contest.reward_value, BRAND.ink) : ''}
       </div>
 
-      <div style="font-size:13px;font-weight:600;color:${BRAND.gray900};margin-bottom:10px;">Leaderboard</div>
+      <div style="font-size:13px;font-weight:600;color:${BRAND.ink};margin-bottom:10px;">Leaderboard</div>
       <table style="width:100%;border-collapse:collapse;">
         ${tableRow(['Rank', 'Participant', 'Team', 'Score', 'Change'], true)}
         ${lbRows}
@@ -393,10 +391,10 @@ export async function exportBadgesToPDF(badges: any[], profile: any): Promise<vo
 
   const badgeCards = earnedBadges.map((b: any) => `
     <div style="display:inline-block;width:calc(33% - 12px);margin:6px;background:#f9fafb;border-radius:8px;padding:12px;border-left:3px solid ${rarityColor(b.rarity || 'common')};vertical-align:top;">
-      <div style="font-size:12px;font-weight:700;color:${BRAND.gray900};margin-bottom:2px;">${b.badge_name || b.name || 'Badge'}</div>
-      <div style="font-size:10px;color:${BRAND.gray500};margin-bottom:4px;">${b.badge_type || b.category || ''}</div>
+      <div style="font-size:12px;font-weight:700;color:${BRAND.ink};margin-bottom:2px;">${b.badge_name || b.name || 'Badge'}</div>
+      <div style="font-size:10px;color:${BRAND.carbon500};margin-bottom:4px;">${b.badge_type || b.category || ''}</div>
       <div style="font-size:10px;color:${rarityColor(b.rarity || 'common')};font-weight:600;text-transform:capitalize;">${b.rarity || 'Common'}</div>
-      ${b.earned_at ? `<div style="font-size:9px;color:${BRAND.gray500};margin-top:2px;">Earned: ${new Date(b.earned_at).toLocaleDateString()}</div>` : ''}
+      ${b.earned_at ? `<div style="font-size:9px;color:${BRAND.carbon500};margin-top:2px;">Earned: ${new Date(b.earned_at).toLocaleDateString()}</div>` : ''}
     </div>
   `).join('');
 
@@ -406,13 +404,13 @@ export async function exportBadgesToPDF(badges: any[], profile: any): Promise<vo
     ${brandedHeader('Badge Collection', profileName)}
     <div style="padding:24px 32px;">
       <div style="display:flex;gap:12px;margin-bottom:24px;">
-        ${statBox('Total Earned', earnedBadges.length, BRAND.purple)}
+        ${statBox('Total Earned', earnedBadges.length, BRAND.ink)}
         ${statBox('Legendary', earnedBadges.filter((b: any) => b.rarity === 'legendary').length, '#f59e0b')}
-        ${statBox('Epic', earnedBadges.filter((b: any) => b.rarity === 'epic').length, BRAND.purple)}
-        ${statBox('Rare', earnedBadges.filter((b: any) => b.rarity === 'rare').length, BRAND.blue)}
+        ${statBox('Epic', earnedBadges.filter((b: any) => b.rarity === 'epic').length, BRAND.ink)}
+        ${statBox('Rare', earnedBadges.filter((b: any) => b.rarity === 'rare').length, BRAND.coral)}
       </div>
 
-      <div style="font-size:13px;font-weight:600;color:${BRAND.gray900};margin-bottom:12px;">Earned Badges</div>
+      <div style="font-size:13px;font-weight:600;color:${BRAND.ink};margin-bottom:12px;">Earned Badges</div>
       <div style="font-size:0;">
         ${badgeCards || '<div style="font-size:12px;color:#6b7280;padding:20px;text-align:center;">No badges earned yet.</div>'}
       </div>
