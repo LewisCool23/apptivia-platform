@@ -158,7 +158,7 @@ export default function SignalOutreachModal({ isOpen, onClose, signal, contact }
           title: 'Outreach Draft Generated',
           description: `${channel === 'email' ? 'Email' : 'LinkedIn'} ${style.label} draft for ${signal.company_name || 'Unknown'}`,
           icon: channel === 'email' ? '✉️' : '💼',
-          color: '#8b5cf6',
+          color: '#FF4D2E',
         }).then(() => {}, () => {});
       }
     } catch (err) {
