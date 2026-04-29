@@ -659,7 +659,7 @@ export default function Profile() {
         badge_name: awardBadgeForm.badge_name,
         badge_description: badgeDef?.badge_description || '',
         icon: badgeDef?.icon || '🏆',
-        color: badgeDef?.color || '#3B82F6',
+        color: badgeDef?.color || '#FF4D2E',
         badge_type: badgeDef?.badge_type || 'special',
         points: badgeDef?.points || 0,
         earned_at: new Date().toISOString(),
@@ -1203,7 +1203,7 @@ export default function Profile() {
                         className={`rounded-lg p-4 text-center border-2 transition-all hover:scale-105 cursor-pointer hover:shadow-lg ${
                           badge.is_featured ? 'bg-gradient-to-br from-amber-50 to-yellow-50 shadow-md' : 'bg-white'
                         }`}
-                        style={{ borderColor: badge.color || '#e5e7eb' }}
+                        style={{ borderColor: badge.color || '#E4E4E7' }}
                       >
                         <Tooltip text={badge.badge_description} position="bottom" wide>
                           <div className="cursor-pointer">
@@ -1266,7 +1266,7 @@ export default function Profile() {
                 <div className="space-y-2">
                   {achievements.map((achievement) => {
                     const pct = Math.round(achievement.progress || 0);
-                    const color = achievement.skillset?.color || '#3B82F6';
+                    const color = achievement.skillset?.color || '#FF4D2E';
                     return (
                       <div
                         key={achievement.id}
