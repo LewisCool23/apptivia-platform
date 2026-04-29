@@ -23,7 +23,7 @@ export default function ViewAllBadgesModal({ isOpen, onClose, userId, refreshKey
     badge_name: badge.badge_name || badge.name || 'Unnamed Badge',
     badge_description: badge.badge_description || badge.description || '',
     icon: badge.icon || '🏆',
-    color: badge.color || '#3B82F6',
+    color: badge.color || '#FF4D2E',
     category: badge.category || badge.badge_type || badge.type || 'custom',
     rarity: badge.rarity || (badge.is_rare ? 'rare' : 'common'),
     badge_type: badge.badge_type || badge.type || 'custom',
@@ -140,7 +140,7 @@ export default function ViewAllBadgesModal({ isOpen, onClose, userId, refreshKey
     switch (rarity?.toLowerCase()) {
       case 'legendary': return '#FFD700';  // Gold
       case 'epic': return '#9333ea';       // Purple
-      case 'rare': return '#3b82f6';       // Blue
+      case 'rare': return '#FF4D2E';       // Coral
       case 'common': return '#6b7280';     // Gray
       default: return '#e5e7eb';
     }
@@ -289,7 +289,7 @@ export default function ViewAllBadgesModal({ isOpen, onClose, userId, refreshKey
                     className={`rounded-lg p-4 text-center border-2 transition-all hover:scale-105 cursor-pointer ${
                       earned ? `bg-white ${rarityGlow}` : 'bg-apptivia-paper opacity-60'
                     }`}
-                    style={{ borderColor: earned ? rarityColor : '#d1d5db' }}
+                    style={{ borderColor: earned ? rarityColor : '#D4D4D8' }}
                     title={badge.badge_description}
                   >
                     {isCustom && (
