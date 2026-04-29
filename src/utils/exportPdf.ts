@@ -42,8 +42,8 @@ function brandedHeader(title: string, subtitle?: string): string {
 
 function brandedFooter(): string {
   return `
-    <div style="padding:16px 32px;background:#f9fafb;border-top:1px solid #e5e7eb;border-radius:0 0 12px 12px;text-align:center;">
-      <div style="font-size:10px;color:#9ca3af;">
+    <div style="padding:16px 32px;background:#F7F5F2;border-top:1px solid #E4E4E7;border-radius:0 0 12px 12px;text-align:center;">
+      <div style="font-size:10px;color:#71717A;">
         Generated on ${new Date().toLocaleString()} &nbsp;|&nbsp; Powered by <strong style="color:${BRAND.ink};">Apptivia</strong>
       </div>
     </div>`;
@@ -51,7 +51,7 @@ function brandedFooter(): string {
 
 function statBox(label: string, value: string | number, color?: string): string {
   return `
-    <div style="flex:1;background:#f9fafb;border-radius:8px;padding:12px 16px;text-align:center;min-width:100px;">
+    <div style="flex:1;background:#F7F5F2;border-radius:8px;padding:12px 16px;text-align:center;min-width:100px;">
       <div style="font-size:22px;font-weight:700;color:${color || BRAND.ink};">${value}</div>
       <div style="font-size:10px;color:${BRAND.carbon500};margin-top:2px;text-transform:uppercase;letter-spacing:0.5px;">${label}</div>
     </div>`;
@@ -67,8 +67,8 @@ function scoreColor(score: number): string {
 function tableRow(cells: string[], isHeader = false): string {
   const tag = isHeader ? 'th' : 'td';
   const style = isHeader
-    ? 'padding:8px 12px;text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:0.5px;color:#6b7280;border-bottom:2px solid #e5e7eb;'
-    : 'padding:8px 12px;font-size:12px;color:#374151;border-bottom:1px solid #f3f4f6;';
+    ? 'padding:8px 12px;text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:0.5px;color:#71717A;border-bottom:2px solid #E4E4E7;'
+    : 'padding:8px 12px;font-size:12px;color:#3F3F46;border-bottom:1px solid #F7F5F2;';
   return `<tr>${cells.map(c => `<${tag} style="${style}">${c}</${tag}>`).join('')}</tr>`;
 }
 
@@ -175,7 +175,7 @@ export async function exportScorecardToPDF(data: any, filters?: any): Promise<vo
       </table>
 
       ${data.topPerformer ? `
-      <div style="margin-top:20px;padding:12px 16px;background:#ecfdf5;border-left:4px solid ${BRAND.success};border-radius:6px;">
+      <div style="margin-top:20px;padding:12px 16px;background:#F0FDF4;border-left:4px solid ${BRAND.success};border-radius:6px;">
         <div style="font-size:11px;color:${BRAND.success};font-weight:600;">Top Performer</div>
         <div style="font-size:14px;font-weight:700;color:${BRAND.ink};">${data.topPerformer.name} — ${data.topPerformer.score}%</div>
       </div>` : ''}
@@ -205,7 +205,7 @@ function buildDistribution(rows: any[]): string {
     return `
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;">
         <div style="width:120px;font-size:11px;color:${BRAND.carbon700};">${b.label}</div>
-        <div style="flex:1;background:#f3f4f6;border-radius:4px;height:16px;overflow:hidden;">
+        <div style="flex:1;background:#E4E4E7;border-radius:4px;height:16px;overflow:hidden;">
           <div style="width:${pct}%;background:${b.color};height:100%;border-radius:4px;transition:width 0.3s;"></div>
         </div>
         <div style="width:40px;text-align:right;font-size:11px;font-weight:600;color:${BRAND.carbon700};">${b.count}</div>
@@ -224,7 +224,7 @@ export async function exportAnalyticsToPDF(data: any, aggregateKPIs: any, filter
 
   // Aggregate KPIs section — format values using unit metadata
   const aggRows = Array.isArray(aggregateKPIs)
-    ? aggregateKPIs.map((k: any) => `<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #f3f4f6;"><span style="font-size:12px;color:${BRAND.carbon700};">${k.name}</span><span style="font-size:12px;font-weight:600;">${formatKpiValue(k.total, k.unit || kpiUnits[k.key])}</span></div>`).join('')
+    ? aggregateKPIs.map((k: any) => `<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #F7F5F2;"><span style="font-size:12px;color:${BRAND.carbon700};">${k.name}</span><span style="font-size:12px;font-weight:600;">${formatKpiValue(k.total, k.unit || kpiUnits[k.key])}</span></div>`).join('')
     : '';
 
   // Chunk KPIs into groups of 5 to prevent horizontal overflow
@@ -269,7 +269,7 @@ export async function exportAnalyticsToPDF(data: any, aggregateKPIs: any, filter
       ${aggRows ? `
       <div style="margin-bottom:24px;">
         <div style="font-size:13px;font-weight:600;color:${BRAND.ink};margin-bottom:10px;">Aggregate KPIs</div>
-        <div style="background:#f9fafb;border-radius:8px;padding:12px 16px;">${aggRows}</div>
+        <div style="background:#F7F5F2;border-radius:8px;padding:12px 16px;">${aggRows}</div>
       </div>` : ''}
 
       ${kpiChunks.map((chunk, idx) => buildChunkTable(chunk, idx)).join('')}
@@ -288,7 +288,7 @@ export async function exportCoachToPDF(data: any, filters?: any): Promise<void> 
     tableRow([
       s.skillset_name || 'Unknown',
       `<div style="display:flex;align-items:center;gap:8px;">
-        <div style="flex:1;background:#f3f4f6;border-radius:4px;height:12px;overflow:hidden;min-width:80px;">
+        <div style="flex:1;background:#E4E4E7;border-radius:4px;height:12px;overflow:hidden;min-width:80px;">
           <div style="width:${Math.min(s.progress || 0, 100)}%;background:${BRAND.ink};height:100%;border-radius:4px;"></div>
         </div>
         <span style="font-size:11px;font-weight:600;color:${BRAND.carbon700};">${Math.round(s.progress || 0)}%</span>
@@ -382,15 +382,15 @@ export async function exportBadgesToPDF(badges: any[], profile: any): Promise<vo
   const rarityColor = (r: string) => {
     switch (r) {
       case 'legendary': return '#f59e0b';
-      case 'epic': return '#8b5cf6';
-      case 'rare': return '#3b82f6';
-      case 'uncommon': return '#10b981';
-      default: return '#6b7280';
+      case 'epic': return '#9333ea';
+      case 'rare': return '#FF4D2E';
+      case 'uncommon': return '#16A34A';
+      default: return '#71717A';
     }
   };
 
   const badgeCards = earnedBadges.map((b: any) => `
-    <div style="display:inline-block;width:calc(33% - 12px);margin:6px;background:#f9fafb;border-radius:8px;padding:12px;border-left:3px solid ${rarityColor(b.rarity || 'common')};vertical-align:top;">
+    <div style="display:inline-block;width:calc(33% - 12px);margin:6px;background:#F7F5F2;border-radius:8px;padding:12px;border-left:3px solid ${rarityColor(b.rarity || 'common')};vertical-align:top;">
       <div style="font-size:12px;font-weight:700;color:${BRAND.ink};margin-bottom:2px;">${b.badge_name || b.name || 'Badge'}</div>
       <div style="font-size:10px;color:${BRAND.carbon500};margin-bottom:4px;">${b.badge_type || b.category || ''}</div>
       <div style="font-size:10px;color:${rarityColor(b.rarity || 'common')};font-weight:600;text-transform:capitalize;">${b.rarity || 'Common'}</div>
@@ -412,7 +412,7 @@ export async function exportBadgesToPDF(badges: any[], profile: any): Promise<vo
 
       <div style="font-size:13px;font-weight:600;color:${BRAND.ink};margin-bottom:12px;">Earned Badges</div>
       <div style="font-size:0;">
-        ${badgeCards || '<div style="font-size:12px;color:#6b7280;padding:20px;text-align:center;">No badges earned yet.</div>'}
+        ${badgeCards || '<div style="font-size:12px;color:#71717A;padding:20px;text-align:center;">No badges earned yet.</div>'}
       </div>
     </div>
     ${brandedFooter()}`;
