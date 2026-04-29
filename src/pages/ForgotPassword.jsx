@@ -19,13 +19,24 @@ export default function ForgotPassword() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-500 via-purple-500 to-indigo-500">
+    <div className="min-h-screen relative bg-apptivia-ink flex items-center justify-center">
+      {/* Decorative gradient overlay - Option B subtle Carbon + Coral glow */}
+      <div
+        className="absolute inset-0 pointer-events-none"
+        style={{
+          background: `
+            radial-gradient(ellipse at top right, #27272A 0%, transparent 60%),
+            radial-gradient(ellipse at bottom left, rgba(255, 77, 46, 0.08) 0%, transparent 50%)
+          `,
+        }}
+      />
+      <div className="relative z-10">
       <form
         onSubmit={handleSubmit}
         className="bg-white p-8 rounded-lg shadow-xl w-full max-w-md flex flex-col items-center"
       >
-        <div className="w-16 h-16 rounded-lg bg-gradient-to-r from-blue-500 to-purple-500 flex items-center justify-center mb-6">
-          <span className="text-white font-bold text-3xl">A</span>
+        <div className="text-center mb-6">
+          <span className="font-display font-black text-3xl tracking-tight text-apptivia-ink">app</span><span className="font-display font-medium text-3xl tracking-tight text-apptivia-coral">tivia</span>
         </div>
         <h1 className="text-2xl font-bold text-apptivia-coral mb-2 text-center">Forgot your password?</h1>
         <p className="text-apptivia-carbon-500 mb-4 text-center text-sm">Enter your email address and we'll send you a link to reset your password.</p>
@@ -33,7 +44,7 @@ export default function ForgotPassword() {
           <label className="block mb-1 font-medium">Email Address</label>
           <input
             type="email"
-            className="w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
+            className="w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-apptivia-coral"
             required
             value={email}
             onChange={(e) => setEmail(e.target.value)}
@@ -42,7 +53,7 @@ export default function ForgotPassword() {
         </div>
         <button
           type="submit"
-          className="w-full bg-gradient-to-r from-blue-500 to-purple-500 text-white py-2.5 rounded-lg font-semibold hover:from-blue-600 hover:to-purple-600 transition text-sm mb-4"
+          className="w-full bg-apptivia-coral hover:bg-apptivia-coral-tone-600 text-apptivia-paper py-2.5 rounded-lg font-semibold transition text-sm mb-4"
         >
           Send reset email
         </button>
@@ -51,6 +62,7 @@ export default function ForgotPassword() {
           <a href="/login" className="text-apptivia-coral hover:underline">Back to login</a>
         </div>
       </form>
+      </div>
     </div>
   );
 }
