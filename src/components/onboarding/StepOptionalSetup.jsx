@@ -71,7 +71,7 @@ export default function StepOptionalSetup({ wizardState, updateState }) {
                     type="checkbox"
                     checked={wallboardSettings.slides[key]?.enabled ?? true}
                     onChange={(e) => updateSlide(key, 'enabled', e.target.checked)}
-                    className="rounded border-apptivia-carbon-300 text-apptivia-coral focus:ring-blue-500"
+                    className="rounded border-apptivia-carbon-300 text-apptivia-coral focus:ring-apptivia-coral"
                   />
                   <span className="text-sm text-apptivia-carbon-700">{label}</span>
                 </label>
@@ -93,7 +93,7 @@ export default function StepOptionalSetup({ wizardState, updateState }) {
                 type="checkbox"
                 checked={wallboardSettings.celebrations}
                 onChange={(e) => updateState({ wallboardSettings: { ...wallboardSettings, celebrations: e.target.checked } })}
-                className="rounded border-apptivia-carbon-300 text-apptivia-coral focus:ring-blue-500"
+                className="rounded border-apptivia-carbon-300 text-apptivia-coral focus:ring-apptivia-coral"
               />
               <span className="text-sm text-apptivia-carbon-700">Celebration overlays (confetti for level-ups, badges, wins)</span>
             </div>

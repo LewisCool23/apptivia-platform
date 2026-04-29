@@ -130,7 +130,7 @@ export default function ScheduleReportModal({ isOpen, onClose, onSuccess, editRe
             <select
               value={formData.report_type}
               onChange={(e) => setFormData({ ...formData, report_type: e.target.value })}
-              className="w-full px-3 py-2 border border-apptivia-carbon-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-apptivia-carbon-300 rounded-md focus:outline-none focus:ring-2 focus:ring-apptivia-coral"
             >
               <option value="scorecard">Scorecard Summary</option>
               <option value="analytics">Analytics Report</option>
@@ -149,7 +149,7 @@ export default function ScheduleReportModal({ isOpen, onClose, onSuccess, editRe
               <select
                 value={formData.frequency}
                 onChange={(e) => setFormData({ ...formData, frequency: e.target.value })}
-                className="w-full px-3 py-2 border border-apptivia-carbon-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-apptivia-carbon-300 rounded-md focus:outline-none focus:ring-2 focus:ring-apptivia-coral"
               >
                 <option value="daily">Daily</option>
                 <option value="weekly">Weekly</option>
@@ -165,7 +165,7 @@ export default function ScheduleReportModal({ isOpen, onClose, onSuccess, editRe
                 <select
                   value={formData.day_of_week}
                   onChange={(e) => setFormData({ ...formData, day_of_week: e.target.value })}
-                  className="w-full px-3 py-2 border border-apptivia-carbon-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-apptivia-carbon-300 rounded-md focus:outline-none focus:ring-2 focus:ring-apptivia-coral"
                 >
                   <option value="monday">Monday</option>
                   <option value="tuesday">Tuesday</option>
@@ -188,7 +188,7 @@ export default function ScheduleReportModal({ isOpen, onClose, onSuccess, editRe
               type="time"
               value={formData.time}
               onChange={(e) => setFormData({ ...formData, time: e.target.value })}
-              className="w-full px-3 py-2 border border-apptivia-carbon-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-apptivia-carbon-300 rounded-md focus:outline-none focus:ring-2 focus:ring-apptivia-coral"
             />
           </div>
 
@@ -201,7 +201,7 @@ export default function ScheduleReportModal({ isOpen, onClose, onSuccess, editRe
               type="text"
               value={formData.recipients}
               onChange={(e) => setFormData({ ...formData, recipients: e.target.value })}
-              className="w-full px-3 py-2 border border-apptivia-carbon-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-apptivia-carbon-300 rounded-md focus:outline-none focus:ring-2 focus:ring-apptivia-coral"
               placeholder="email1@example.com, email2@example.com"
               required
             />
@@ -216,7 +216,7 @@ export default function ScheduleReportModal({ isOpen, onClose, onSuccess, editRe
                 type="checkbox"
                 checked={formData.include_charts}
                 onChange={(e) => setFormData({ ...formData, include_charts: e.target.checked })}
-                className="rounded border-apptivia-carbon-300 text-apptivia-coral focus:ring-blue-500"
+                className="rounded border-apptivia-carbon-300 text-apptivia-coral focus:ring-apptivia-coral"
               />
               Include charts and visualizations
             </label>
@@ -225,7 +225,7 @@ export default function ScheduleReportModal({ isOpen, onClose, onSuccess, editRe
                 type="checkbox"
                 checked={formData.include_summary}
                 onChange={(e) => setFormData({ ...formData, include_summary: e.target.checked })}
-                className="rounded border-apptivia-carbon-300 text-apptivia-coral focus:ring-blue-500"
+                className="rounded border-apptivia-carbon-300 text-apptivia-coral focus:ring-apptivia-coral"
               />
               Include executive summary
             </label>

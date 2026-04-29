@@ -64,7 +64,7 @@ export default function EngageContactsPanel({ organizationId, onCallContact, onC
             placeholder="Search contacts..."
             value={search}
             onChange={e => setSearch(e.target.value)}
-            className="w-full pl-7 pr-3 py-1.5 text-xs border border-apptivia-carbon-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-300"
+            className="w-full pl-7 pr-3 py-1.5 text-xs border border-apptivia-carbon-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-apptivia-coral-tone-300"
           />
         </div>
       </div>

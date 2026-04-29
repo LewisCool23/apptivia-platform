@@ -136,7 +136,7 @@ function LogCallModal({ organizationId, userId, deals, onClose, onSaved }) {
             <div>
               <label className="block text-xs font-medium text-apptivia-carbon-600 mb-1">Contact Name</label>
               <input
-                className="w-full border border-apptivia-carbon-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-400"
+                className="w-full border border-apptivia-carbon-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-apptivia-coral-tone-300"
                 placeholder="Jane Smith"
                 value={form.contact_name}
                 onChange={e => setForm(f => ({ ...f, contact_name: e.target.value }))}
@@ -145,7 +145,7 @@ function LogCallModal({ organizationId, userId, deals, onClose, onSaved }) {
             <div>
               <label className="block text-xs font-medium text-apptivia-carbon-600 mb-1">Linked Deal (optional)</label>
               <select
-                className="w-full border border-apptivia-carbon-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-400 bg-white"
+                className="w-full border border-apptivia-carbon-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-apptivia-coral-tone-300 bg-white"
                 value={form.deal_id}
                 onChange={e => setForm(f => ({ ...f, deal_id: e.target.value }))}
               >
@@ -163,7 +163,7 @@ function LogCallModal({ organizationId, userId, deals, onClose, onSaved }) {
               <label className="block text-xs font-medium text-apptivia-carbon-600 mb-1">Call Date & Time</label>
               <input
                 type="datetime-local"
-                className="w-full border border-apptivia-carbon-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-400"
+                className="w-full border border-apptivia-carbon-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-apptivia-coral-tone-300"
                 value={form.call_date}
                 onChange={e => setForm(f => ({ ...f, call_date: e.target.value }))}
               />
@@ -173,7 +173,7 @@ function LogCallModal({ organizationId, userId, deals, onClose, onSaved }) {
               <input
                 type="number"
                 min="1"
-                className="w-full border border-apptivia-carbon-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-400"
+                className="w-full border border-apptivia-carbon-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-apptivia-coral-tone-300"
                 placeholder="30"
                 value={form.duration_minutes}
                 onChange={e => setForm(f => ({ ...f, duration_minutes: e.target.value }))}
@@ -182,7 +182,7 @@ function LogCallModal({ organizationId, userId, deals, onClose, onSaved }) {
             <div>
               <label className="block text-xs font-medium text-apptivia-carbon-600 mb-1">Direction</label>
               <select
-                className="w-full border border-apptivia-carbon-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-400 bg-white"
+                className="w-full border border-apptivia-carbon-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-apptivia-coral-tone-300 bg-white"
                 value={form.call_direction}
                 onChange={e => setForm(f => ({ ...f, call_direction: e.target.value }))}
               >
@@ -198,7 +198,7 @@ function LogCallModal({ organizationId, userId, deals, onClose, onSaved }) {
               Call Notes / Transcript <span className="text-red-400">*</span>
             </label>
             <textarea
-              className="w-full border border-apptivia-carbon-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-400 resize-none"
+              className="w-full border border-apptivia-carbon-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-apptivia-coral-tone-300 resize-none"
               rows={6}
               placeholder="Paste call notes, key talking points, or a transcript excerpt…"
               value={form.notes}

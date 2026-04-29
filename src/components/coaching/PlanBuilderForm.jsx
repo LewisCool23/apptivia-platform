@@ -88,7 +88,7 @@ export default function PlanBuilderForm({
                 <select
                   value={planFor?.memberId || ''}
                   onChange={(e) => handlePersonChange(e.target.value)}
-                  className="w-full border border-apptivia-carbon-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full border border-apptivia-carbon-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-apptivia-coral focus:border-transparent"
                 >
                   <option value="">Select a manager...</option>
                   {(managers || []).map(m => (
@@ -108,7 +108,7 @@ export default function PlanBuilderForm({
                 <select
                   value={planFor?.memberId || ''}
                   onChange={(e) => handlePersonChange(e.target.value)}
-                  className="w-full border border-apptivia-carbon-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full border border-apptivia-carbon-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-apptivia-coral focus:border-transparent"
                 >
                   <option value="">Select a team member...</option>
                   {repMembers.map(m => (
@@ -151,7 +151,7 @@ export default function PlanBuilderForm({
             value={planForm.name}
             onChange={(e) => setPlanForm({ ...planForm, name: e.target.value })}
             disabled={inputDisabled}
-            className={`w-full border border-apptivia-carbon-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent ${inputDisabled ? 'bg-apptivia-paper text-apptivia-carbon-400' : ''}`}
+            className={`w-full border border-apptivia-carbon-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-apptivia-coral focus:border-transparent ${inputDisabled ? 'bg-apptivia-paper text-apptivia-carbon-400' : ''}`}
             placeholder="e.g., Q1 Pipeline Acceleration Plan"
           />
         </div>
@@ -165,7 +165,7 @@ export default function PlanBuilderForm({
               value={planForm.date_range_start}
               onChange={(e) => setPlanForm({ ...planForm, date_range_start: e.target.value })}
               disabled={inputDisabled}
-              className={`w-full border border-apptivia-carbon-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent ${inputDisabled ? 'bg-apptivia-paper text-apptivia-carbon-400' : ''}`}
+              className={`w-full border border-apptivia-carbon-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-apptivia-coral focus:border-transparent ${inputDisabled ? 'bg-apptivia-paper text-apptivia-carbon-400' : ''}`}
             />
           </div>
           <div>
@@ -175,7 +175,7 @@ export default function PlanBuilderForm({
               value={planForm.date_range_end}
               onChange={(e) => setPlanForm({ ...planForm, date_range_end: e.target.value })}
               disabled={inputDisabled}
-              className={`w-full border border-apptivia-carbon-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent ${inputDisabled ? 'bg-apptivia-paper text-apptivia-carbon-400' : ''}`}
+              className={`w-full border border-apptivia-carbon-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-apptivia-coral focus:border-transparent ${inputDisabled ? 'bg-apptivia-paper text-apptivia-carbon-400' : ''}`}
             />
           </div>
         </div>
@@ -198,7 +198,7 @@ export default function PlanBuilderForm({
                   value={goal}
                   onChange={(e) => updateArrayField('goals', index, e.target.value)}
                   disabled={inputDisabled}
-                  className={`flex-1 border border-apptivia-carbon-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent ${inputDisabled ? 'bg-apptivia-paper text-apptivia-carbon-400' : ''}`}
+                  className={`flex-1 border border-apptivia-carbon-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-apptivia-coral focus:border-transparent ${inputDisabled ? 'bg-apptivia-paper text-apptivia-carbon-400' : ''}`}
                   placeholder="e.g., Increase pipeline by 25% this quarter"
                 />
                 {planForm.goals.length > 1 && !inputDisabled && (
@@ -228,7 +228,7 @@ export default function PlanBuilderForm({
                   value={kpi}
                   onChange={(e) => handleFocusKpiChange(index, e.target.value)}
                   disabled={inputDisabled}
-                  className={`flex-1 border border-apptivia-carbon-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent ${inputDisabled ? 'bg-apptivia-paper text-apptivia-carbon-400' : ''}`}
+                  className={`flex-1 border border-apptivia-carbon-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-apptivia-coral focus:border-transparent ${inputDisabled ? 'bg-apptivia-paper text-apptivia-carbon-400' : ''}`}
                 >
                   <option value="">Select a KPI...</option>
                   {availableKPIs.map(k => (
@@ -287,7 +287,7 @@ export default function PlanBuilderForm({
                   value={action}
                   onChange={(e) => updateArrayField('action_items', index, e.target.value)}
                   disabled={inputDisabled}
-                  className={`flex-1 border border-apptivia-carbon-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent ${inputDisabled ? 'bg-apptivia-paper text-apptivia-carbon-400' : ''}`}
+                  className={`flex-1 border border-apptivia-carbon-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-apptivia-coral focus:border-transparent ${inputDisabled ? 'bg-apptivia-paper text-apptivia-carbon-400' : ''}`}
                   placeholder={`Action item ${index + 1}`}
                 />
                 {planForm.action_items.length > 1 && !inputDisabled && (
@@ -318,7 +318,7 @@ export default function PlanBuilderForm({
                   value={metric}
                   onChange={(e) => updateArrayField('success_metrics', index, e.target.value)}
                   disabled={inputDisabled}
-                  className={`flex-1 border border-apptivia-carbon-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent ${inputDisabled ? 'bg-apptivia-paper text-apptivia-carbon-400' : ''}`}
+                  className={`flex-1 border border-apptivia-carbon-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-apptivia-coral focus:border-transparent ${inputDisabled ? 'bg-apptivia-paper text-apptivia-carbon-400' : ''}`}
                   placeholder="e.g., Achieve 20% conversion rate"
                 />
                 {planForm.success_metrics.length > 1 && !inputDisabled && (
@@ -339,7 +339,7 @@ export default function PlanBuilderForm({
             onChange={(e) => setPlanForm({ ...planForm, notes: e.target.value })}
             disabled={inputDisabled}
             rows={4}
-            className={`w-full border border-apptivia-carbon-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent ${inputDisabled ? 'bg-apptivia-paper text-apptivia-carbon-400' : ''}`}
+            className={`w-full border border-apptivia-carbon-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-apptivia-coral focus:border-transparent ${inputDisabled ? 'bg-apptivia-paper text-apptivia-carbon-400' : ''}`}
             placeholder="Additional notes or context..."
           />
         </div>

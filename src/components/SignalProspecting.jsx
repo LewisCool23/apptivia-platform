@@ -400,7 +400,7 @@ function ActionQueuePanel({
                       placeholder="Optional: tell us more..."
                       value={dismissReason}
                       onChange={(e) => setDismissReason(e.target.value)}
-                      className="w-full text-xs text-apptivia-carbon-700 border border-apptivia-carbon-200 rounded-md px-2.5 py-1.5 focus:outline-none focus:ring-1 focus:ring-violet-300 placeholder-gray-400"
+                      className="w-full text-xs text-apptivia-carbon-700 border border-apptivia-carbon-200 rounded-md px-2.5 py-1.5 focus:outline-none focus:ring-1 focus:ring-apptivia-coral-tone-300 placeholder-gray-400"
                     />
                   )}
                   <div className="flex items-center justify-between">
@@ -438,7 +438,7 @@ function ActionQueuePanel({
                         type="text"
                         value={editSubject[item.id] ?? item.draft_email_subject}
                         onChange={(e) => setEditSubject(prev => ({ ...prev, [item.id]: e.target.value }))}
-                        className="w-full text-xs text-apptivia-ink font-medium border border-apptivia-carbon-200 rounded-md px-2.5 py-1.5 focus:outline-none focus:ring-1 focus:ring-violet-300"
+                        className="w-full text-xs text-apptivia-ink font-medium border border-apptivia-carbon-200 rounded-md px-2.5 py-1.5 focus:outline-none focus:ring-1 focus:ring-apptivia-coral-tone-300"
                       />
                     </div>
                   )}
@@ -449,7 +449,7 @@ function ActionQueuePanel({
                         value={editBody[item.id] ?? item.draft_email_body}
                         onChange={(e) => setEditBody(prev => ({ ...prev, [item.id]: e.target.value }))}
                         rows={6}
-                        className="w-full text-xs text-apptivia-carbon-700 border border-apptivia-carbon-200 rounded-md p-2 resize-y focus:outline-none focus:ring-1 focus:ring-violet-300"
+                        className="w-full text-xs text-apptivia-carbon-700 border border-apptivia-carbon-200 rounded-md p-2 resize-y focus:outline-none focus:ring-1 focus:ring-apptivia-coral-tone-300"
                       />
                     </div>
                   )}
@@ -1593,7 +1593,7 @@ function IcpProspectorFilters({ filters, onChange, onSearch, isLoading }) {
             onChange={e => onChange({ keywords: e.target.value })}
             onKeyDown={e => e.key === 'Enter' && onSearch()}
             placeholder="Keyword or industry..."
-            className="w-full text-xs border border-apptivia-carbon-200 rounded-lg pl-7 pr-3 py-1.5 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-300"
+            className="w-full text-xs border border-apptivia-carbon-200 rounded-lg pl-7 pr-3 py-1.5 bg-white focus:outline-none focus:ring-2 focus:ring-apptivia-coral-tone-300"
           />
         </div>
         <label className="flex items-center gap-1.5 text-xs text-apptivia-carbon-500 cursor-pointer select-none">
@@ -2393,7 +2393,7 @@ export default function SignalProspecting({ organizationId, userId, onCallContac
                 onFocus={() => setShowAutocomplete(true)}
                 onBlur={() => setTimeout(() => setShowAutocomplete(false), 150)}
                 placeholder="Search company or signal..."
-                className="text-xs border border-apptivia-carbon-200 rounded-lg pl-7 pr-3 py-1.5 bg-white focus:outline-none focus:ring-2 focus:ring-blue-300 w-48"
+                className="text-xs border border-apptivia-carbon-200 rounded-lg pl-7 pr-3 py-1.5 bg-white focus:outline-none focus:ring-2 focus:ring-apptivia-coral-tone-300 w-48"
               />
               {searchQuery && (
                 <button
@@ -2423,7 +2423,7 @@ export default function SignalProspecting({ organizationId, userId, onCallContac
             <select
               value={filterType}
               onChange={(e) => setFilterType(e.target.value)}
-              className="text-xs border border-apptivia-carbon-200 rounded-lg px-2 py-1.5 bg-white focus:outline-none focus:ring-2 focus:ring-blue-300"
+              className="text-xs border border-apptivia-carbon-200 rounded-lg px-2 py-1.5 bg-white focus:outline-none focus:ring-2 focus:ring-apptivia-coral-tone-300"
             >
               <option value="all">All Types</option>
               {signals.SIGNAL_TYPES.map((t) => (
@@ -2433,7 +2433,7 @@ export default function SignalProspecting({ organizationId, userId, onCallContac
             <select
               value={filterStatus}
               onChange={(e) => setFilterStatus(e.target.value)}
-              className="text-xs border border-apptivia-carbon-200 rounded-lg px-2 py-1.5 bg-white focus:outline-none focus:ring-2 focus:ring-blue-300"
+              className="text-xs border border-apptivia-carbon-200 rounded-lg px-2 py-1.5 bg-white focus:outline-none focus:ring-2 focus:ring-apptivia-coral-tone-300"
             >
               <option value="all">All Statuses</option>
               <option value="new">New</option>

@@ -682,7 +682,7 @@ function CreateDealModal({ isOpen, onClose, account, organizationId, userId }) {
                 value={form.deal_name}
                 onChange={e => setForm(f => ({ ...f, deal_name: e.target.value }))}
                 placeholder="e.g. CloudEagle.ai — Discovery"
-                className="w-full text-sm border border-apptivia-carbon-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-300"
+                className="w-full text-sm border border-apptivia-carbon-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-apptivia-coral-tone-300"
                 required
               />
             </div>
@@ -695,7 +695,7 @@ function CreateDealModal({ isOpen, onClose, account, organizationId, userId }) {
                   value={form.deal_value}
                   onChange={e => setForm(f => ({ ...f, deal_value: e.target.value }))}
                   placeholder="0"
-                  className="w-full text-sm border border-apptivia-carbon-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-300"
+                  className="w-full text-sm border border-apptivia-carbon-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-apptivia-coral-tone-300"
                 />
               </div>
               <div>
@@ -704,7 +704,7 @@ function CreateDealModal({ isOpen, onClose, account, organizationId, userId }) {
                   type="date"
                   value={form.close_date}
                   onChange={e => setForm(f => ({ ...f, close_date: e.target.value }))}
-                  className="w-full text-sm border border-apptivia-carbon-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-300"
+                  className="w-full text-sm border border-apptivia-carbon-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-apptivia-coral-tone-300"
                 />
               </div>
             </div>
@@ -776,7 +776,7 @@ function NewAccountModal({ isOpen, onClose, onCreate }) {
               value={form.account_name}
               onChange={(e) => setForm(p => ({ ...p, account_name: e.target.value }))}
               placeholder="e.g., Acme Corp"
-              className="w-full px-3 py-2 border border-apptivia-carbon-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-3 py-2 border border-apptivia-carbon-300 rounded-md text-sm focus:ring-2 focus:ring-apptivia-coral focus:border-transparent"
               required
             />
           </div>
@@ -787,7 +787,7 @@ function NewAccountModal({ isOpen, onClose, onCreate }) {
                 value={form.domain}
                 onChange={(e) => setForm(p => ({ ...p, domain: e.target.value }))}
                 placeholder="acme.com"
-                className="w-full px-3 py-2 border border-apptivia-carbon-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-3 py-2 border border-apptivia-carbon-300 rounded-md text-sm focus:ring-2 focus:ring-apptivia-coral focus:border-transparent"
               />
             </div>
             <div>
@@ -796,7 +796,7 @@ function NewAccountModal({ isOpen, onClose, onCreate }) {
                 value={form.industry}
                 onChange={(e) => setForm(p => ({ ...p, industry: e.target.value }))}
                 placeholder="e.g., SaaS"
-                className="w-full px-3 py-2 border border-apptivia-carbon-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-3 py-2 border border-apptivia-carbon-300 rounded-md text-sm focus:ring-2 focus:ring-apptivia-coral focus:border-transparent"
               />
             </div>
           </div>

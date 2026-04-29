@@ -332,7 +332,7 @@ export default function ConfigurePanel({
                           onChange={(e) => {
                             updateConfig(config.key, 'goal', parseFloat(e.target.value) || 0);
                           }}
-                          className="w-full px-2 py-1.5 border border-apptivia-carbon-300 rounded text-xs focus:ring-2 focus:ring-blue-500 focus:border-apptivia-coral"
+                          className="w-full px-2 py-1.5 border border-apptivia-carbon-300 rounded text-xs focus:ring-2 focus:ring-apptivia-coral focus:border-apptivia-coral"
                           min="0"
                           step="1"
                         />
@@ -345,7 +345,7 @@ export default function ConfigurePanel({
                           onChange={(e) => {
                             updateConfig(config.key, 'weight', (parseFloat(e.target.value) || 0) / 100);
                           }}
-                          className="w-full px-2 py-1.5 border border-apptivia-carbon-300 rounded text-xs focus:ring-2 focus:ring-blue-500 focus:border-apptivia-coral"
+                          className="w-full px-2 py-1.5 border border-apptivia-carbon-300 rounded text-xs focus:ring-2 focus:ring-apptivia-coral focus:border-apptivia-coral"
                           min="0"
                           max="100"
                           step="1"
@@ -361,7 +361,7 @@ export default function ConfigurePanel({
                         <select
                           value={selectedAddKey}
                           onChange={(e) => setSelectedAddKey(e.target.value)}
-                          className="w-full px-2 py-1.5 border border-apptivia-carbon-300 rounded text-xs focus:ring-2 focus:ring-blue-500 focus:border-apptivia-coral"
+                          className="w-full px-2 py-1.5 border border-apptivia-carbon-300 rounded text-xs focus:ring-2 focus:ring-apptivia-coral focus:border-apptivia-coral"
                         >
                           <option value="">Select a KPI...</option>
                           {availableKpis.map((kpi) => (

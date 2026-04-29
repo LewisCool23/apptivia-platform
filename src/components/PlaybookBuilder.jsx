@@ -435,7 +435,7 @@ function GeneratePlaybookModal({ isOpen, onClose, onGenerate, generating }) {
               value={scenario}
               onChange={(e) => setScenario(e.target.value)}
               rows={3}
-              className="w-full px-3 py-2 border border-apptivia-carbon-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+              className="w-full px-3 py-2 border border-apptivia-carbon-300 rounded-md text-sm focus:ring-2 focus:ring-apptivia-coral focus:border-transparent resize-none"
               placeholder="e.g., Re-engage churned enterprise customers from last quarter who were using our premium tier..."
               required
             />
@@ -446,7 +446,7 @@ function GeneratePlaybookModal({ isOpen, onClose, onGenerate, generating }) {
               <input
                 value={targetRole}
                 onChange={(e) => setTargetRole(e.target.value)}
-                className="w-full px-3 py-2 border border-apptivia-carbon-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-3 py-2 border border-apptivia-carbon-300 rounded-md text-sm focus:ring-2 focus:ring-apptivia-coral focus:border-transparent"
                 placeholder="e.g., VP Sales"
               />
             </div>
@@ -455,7 +455,7 @@ function GeneratePlaybookModal({ isOpen, onClose, onGenerate, generating }) {
               <input
                 value={industry}
                 onChange={(e) => setIndustry(e.target.value)}
-                className="w-full px-3 py-2 border border-apptivia-carbon-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-3 py-2 border border-apptivia-carbon-300 rounded-md text-sm focus:ring-2 focus:ring-apptivia-coral focus:border-transparent"
                 placeholder="e.g., SaaS"
               />
             </div>
@@ -532,7 +532,7 @@ function NewPlaybookModal({ isOpen, onClose, onCreate }) {
             <input
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="w-full px-3 py-2 border border-apptivia-carbon-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-3 py-2 border border-apptivia-carbon-300 rounded-md text-sm focus:ring-2 focus:ring-apptivia-coral focus:border-transparent"
               placeholder="e.g., Enterprise Win-Back Playbook"
               required
             />
@@ -543,7 +543,7 @@ function NewPlaybookModal({ isOpen, onClose, onCreate }) {
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               rows={2}
-              className="w-full px-3 py-2 border border-apptivia-carbon-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+              className="w-full px-3 py-2 border border-apptivia-carbon-300 rounded-md text-sm focus:ring-2 focus:ring-apptivia-coral focus:border-transparent resize-none"
               placeholder="When and how to use this playbook..."
             />
           </div>

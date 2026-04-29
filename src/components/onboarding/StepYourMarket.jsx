@@ -143,7 +143,7 @@ function TagField({ label, hint, items, onAdd, onRemove, placeholder, tagClass =
               onChange={(e) => { setValue(e.target.value); if (hasSuggestions) setIsOpen(true); }}
               onFocus={() => { if (hasSuggestions) setIsOpen(true); }}
               onKeyDown={handleKeyDown}
-              className={`w-full px-3 py-2 border border-apptivia-carbon-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-apptivia-coral ${hasSuggestions ? 'pr-8' : ''}`}
+              className={`w-full px-3 py-2 border border-apptivia-carbon-300 rounded-lg text-sm focus:ring-2 focus:ring-apptivia-coral focus:border-apptivia-coral ${hasSuggestions ? 'pr-8' : ''}`}
               placeholder={placeholder}
             />
             {hasSuggestions && (
@@ -285,7 +285,7 @@ export default function StepYourMarket({ wizardState, updateState }) {
               type="number"
               value={icpConfig.headcount_min}
               onChange={(e) => updateIcp('headcount_min', e.target.value)}
-              className="w-full px-3 py-2 border border-apptivia-carbon-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-apptivia-carbon-300 rounded-lg text-sm focus:ring-2 focus:ring-apptivia-coral"
               placeholder="50"
             />
           </div>
@@ -295,7 +295,7 @@ export default function StepYourMarket({ wizardState, updateState }) {
               type="number"
               value={icpConfig.headcount_max}
               onChange={(e) => updateIcp('headcount_max', e.target.value)}
-              className="w-full px-3 py-2 border border-apptivia-carbon-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-apptivia-carbon-300 rounded-lg text-sm focus:ring-2 focus:ring-apptivia-coral"
               placeholder="500"
             />
           </div>
@@ -308,7 +308,7 @@ export default function StepYourMarket({ wizardState, updateState }) {
               type="number"
               value={icpConfig.revenue_min_m}
               onChange={(e) => updateIcp('revenue_min_m', e.target.value)}
-              className="w-full px-3 py-2 border border-apptivia-carbon-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-apptivia-carbon-300 rounded-lg text-sm focus:ring-2 focus:ring-apptivia-coral"
               placeholder="5"
             />
           </div>
@@ -318,7 +318,7 @@ export default function StepYourMarket({ wizardState, updateState }) {
               type="number"
               value={icpConfig.revenue_max_m}
               onChange={(e) => updateIcp('revenue_max_m', e.target.value)}
-              className="w-full px-3 py-2 border border-apptivia-carbon-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-apptivia-carbon-300 rounded-lg text-sm focus:ring-2 focus:ring-apptivia-coral"
               placeholder="100"
             />
           </div>

@@ -196,7 +196,7 @@ export default function AddTeamMembersModal({
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search by name, email, or team..."
-              className="w-full pl-9 pr-3 py-2 text-sm border border-apptivia-carbon-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-apptivia-coral"
+              className="w-full pl-9 pr-3 py-2 text-sm border border-apptivia-carbon-200 rounded-lg focus:ring-2 focus:ring-apptivia-coral focus:border-apptivia-coral"
             />
           </div>
           <div className="flex items-center justify-between">
@@ -205,7 +205,7 @@ export default function AddTeamMembersModal({
                 type="checkbox"
                 checked={showMyTeamOnly}
                 onChange={(e) => setShowMyTeamOnly(e.target.checked)}
-                className="rounded border-apptivia-carbon-300 text-apptivia-coral focus:ring-blue-500"
+                className="rounded border-apptivia-carbon-300 text-apptivia-coral focus:ring-apptivia-coral"
               />
               My direct reports only
             </label>

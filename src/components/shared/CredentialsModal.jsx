@@ -47,7 +47,7 @@ export default function CredentialsModal({ providerType, onClose, onConnect, err
                 placeholder={field.placeholder}
                 value={values[field.key] || ''}
                 onChange={(e) => setValues(prev => ({ ...prev, [field.key]: e.target.value }))}
-                className="w-full px-3 py-2 border border-apptivia-carbon-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-apptivia-coral outline-none"
+                className="w-full px-3 py-2 border border-apptivia-carbon-300 rounded-lg text-sm focus:ring-2 focus:ring-apptivia-coral focus:border-apptivia-coral outline-none"
               />
             </div>
           ))}

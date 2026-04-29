@@ -585,7 +585,7 @@ export default function ConfigureModal({ isOpen, onClose, onSave, currentUserId 
                                     const index = kpiConfigs.findIndex(k => k.key === config.key);
                                     updateConfig(index, 'goal', parseFloat(e.target.value) || 0);
                                   }}
-                                  className="w-24 px-3 py-2 border border-apptivia-carbon-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-apptivia-coral text-sm"
+                                  className="w-24 px-3 py-2 border border-apptivia-carbon-300 rounded-lg focus:ring-2 focus:ring-apptivia-coral focus:border-apptivia-coral text-sm"
                                   min="0"
                                   step="1"
                                 />
@@ -601,7 +601,7 @@ export default function ConfigureModal({ isOpen, onClose, onSave, currentUserId 
                                       const index = kpiConfigs.findIndex(k => k.key === config.key);
                                       updateConfig(index, 'weight', (parseFloat(e.target.value) || 0) / 100);
                                     }}
-                                    className="w-20 px-3 py-2 border border-apptivia-carbon-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-apptivia-coral text-sm"
+                                    className="w-20 px-3 py-2 border border-apptivia-carbon-300 rounded-lg focus:ring-2 focus:ring-apptivia-coral focus:border-apptivia-coral text-sm"
                                     min="0"
                                     max="100"
                                     step="1"
@@ -619,7 +619,7 @@ export default function ConfigureModal({ isOpen, onClose, onSave, currentUserId 
                                       const index = kpiConfigs.findIndex(k => k.key === config.key);
                                       updateConfig(index, 'unit', e.target.value);
                                     }}
-                                    className="px-3 py-2 border border-apptivia-carbon-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-sm"
+                                    className="px-3 py-2 border border-apptivia-carbon-300 rounded-lg focus:ring-2 focus:ring-apptivia-coral text-sm"
                                   >
                                     {units.map(u => (
                                       <option key={u} value={u}>{u}</option>
@@ -799,7 +799,7 @@ export default function ConfigureModal({ isOpen, onClose, onSave, currentUserId 
                       value={newKpi.key}
                       onChange={(e) => setNewKpi({ ...newKpi, key: e.target.value.toLowerCase().replace(/\s+/g, '_') })}
                       placeholder="e.g., custom_metric"
-                      className="w-full px-4 py-2 border border-apptivia-carbon-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-apptivia-coral"
+                      className="w-full px-4 py-2 border border-apptivia-carbon-300 rounded-lg focus:ring-2 focus:ring-apptivia-coral focus:border-apptivia-coral"
                     />
                     <p className="text-xs text-apptivia-carbon-500 mt-1">Unique identifier (lowercase, underscores)</p>
                   </div>
@@ -813,7 +813,7 @@ export default function ConfigureModal({ isOpen, onClose, onSave, currentUserId 
                       value={newKpi.name}
                       onChange={(e) => setNewKpi({ ...newKpi, name: e.target.value })}
                       placeholder="e.g., Custom Sales Metric"
-                      className="w-full px-4 py-2 border border-apptivia-carbon-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-apptivia-coral"
+                      className="w-full px-4 py-2 border border-apptivia-carbon-300 rounded-lg focus:ring-2 focus:ring-apptivia-coral focus:border-apptivia-coral"
                     />
                     <p className="text-xs text-apptivia-carbon-500 mt-1">Display name for the KPI</p>
                   </div>
@@ -825,7 +825,7 @@ export default function ConfigureModal({ isOpen, onClose, onSave, currentUserId 
                     value={newKpi.description}
                     onChange={(e) => setNewKpi({ ...newKpi, description: e.target.value })}
                     placeholder="Describe what this metric measures..."
-                    className="w-full px-4 py-2 border border-apptivia-carbon-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-apptivia-coral"
+                    className="w-full px-4 py-2 border border-apptivia-carbon-300 rounded-lg focus:ring-2 focus:ring-apptivia-coral focus:border-apptivia-coral"
                     rows={3}
                   />
                 </div>
@@ -836,7 +836,7 @@ export default function ConfigureModal({ isOpen, onClose, onSave, currentUserId 
                     <select
                       value={newKpi.category}
                       onChange={(e) => setNewKpi({ ...newKpi, category: e.target.value })}
-                      className="w-full px-4 py-2 border border-apptivia-carbon-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-apptivia-coral"
+                      className="w-full px-4 py-2 border border-apptivia-carbon-300 rounded-lg focus:ring-2 focus:ring-apptivia-coral focus:border-apptivia-coral"
                     >
                       <option value="activity">Activity</option>
                       <option value="engagement">Engagement</option>
@@ -851,7 +851,7 @@ export default function ConfigureModal({ isOpen, onClose, onSave, currentUserId 
                     <select
                       value={newKpi.unit}
                       onChange={(e) => setNewKpi({ ...newKpi, unit: e.target.value })}
-                      className="w-full px-4 py-2 border border-apptivia-carbon-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-apptivia-coral"
+                      className="w-full px-4 py-2 border border-apptivia-carbon-300 rounded-lg focus:ring-2 focus:ring-apptivia-coral focus:border-apptivia-coral"
                     >
                       <option value="count">Count</option>
                       <option value="minutes">Minutes</option>
@@ -870,7 +870,7 @@ export default function ConfigureModal({ isOpen, onClose, onSave, currentUserId 
                       type="number"
                       value={newKpi.goal}
                       onChange={(e) => setNewKpi({ ...newKpi, goal: parseFloat(e.target.value) || 0 })}
-                      className="w-full px-4 py-2 border border-apptivia-carbon-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-apptivia-coral"
+                      className="w-full px-4 py-2 border border-apptivia-carbon-300 rounded-lg focus:ring-2 focus:ring-apptivia-coral focus:border-apptivia-coral"
                       min="0"
                       step="1"
                     />
@@ -882,7 +882,7 @@ export default function ConfigureModal({ isOpen, onClose, onSave, currentUserId 
                       type="number"
                       value={Math.round(newKpi.weight * 100)}
                       onChange={(e) => setNewKpi({ ...newKpi, weight: (parseFloat(e.target.value) || 0) / 100 })}
-                      className="w-full px-4 py-2 border border-apptivia-carbon-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-apptivia-coral"
+                      className="w-full px-4 py-2 border border-apptivia-carbon-300 rounded-lg focus:ring-2 focus:ring-apptivia-coral focus:border-apptivia-coral"
                       min="0"
                       max="100"
                       step="1"

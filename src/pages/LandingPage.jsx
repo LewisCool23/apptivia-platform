@@ -71,7 +71,7 @@ function DemoRequestModal({ isOpen, onClose, planHint }) {
                   required
                   value={form.name}
                   onChange={(e) => setForm(f => ({ ...f, name: e.target.value }))}
-                  className="w-full px-3 py-2.5 border border-apptivia-carbon-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-apptivia-coral text-sm"
+                  className="w-full px-3 py-2.5 border border-apptivia-carbon-300 rounded-lg focus:ring-2 focus:ring-apptivia-coral focus:border-apptivia-coral text-sm"
                   placeholder="Your full name"
                 />
               </div>
@@ -82,7 +82,7 @@ function DemoRequestModal({ isOpen, onClose, planHint }) {
                   required
                   value={form.email}
                   onChange={(e) => setForm(f => ({ ...f, email: e.target.value }))}
-                  className="w-full px-3 py-2.5 border border-apptivia-carbon-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-apptivia-coral text-sm"
+                  className="w-full px-3 py-2.5 border border-apptivia-carbon-300 rounded-lg focus:ring-2 focus:ring-apptivia-coral focus:border-apptivia-coral text-sm"
                   placeholder="you@company.com"
                 />
               </div>
@@ -92,7 +92,7 @@ function DemoRequestModal({ isOpen, onClose, planHint }) {
                   type="text"
                   value={form.company}
                   onChange={(e) => setForm(f => ({ ...f, company: e.target.value }))}
-                  className="w-full px-3 py-2.5 border border-apptivia-carbon-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-apptivia-coral text-sm"
+                  className="w-full px-3 py-2.5 border border-apptivia-carbon-300 rounded-lg focus:ring-2 focus:ring-apptivia-coral focus:border-apptivia-coral text-sm"
                   placeholder="Company name"
                 />
               </div>
@@ -101,7 +101,7 @@ function DemoRequestModal({ isOpen, onClose, planHint }) {
                 <select
                   value={form.teamSize}
                   onChange={(e) => setForm(f => ({ ...f, teamSize: e.target.value }))}
-                  className="w-full px-3 py-2.5 border border-apptivia-carbon-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-apptivia-coral text-sm text-apptivia-carbon-700"
+                  className="w-full px-3 py-2.5 border border-apptivia-carbon-300 rounded-lg focus:ring-2 focus:ring-apptivia-coral focus:border-apptivia-coral text-sm text-apptivia-carbon-700"
                 >
                   <option value="">Select team size</option>
                   <option value="1-10">1-10 reps</option>
@@ -117,7 +117,7 @@ function DemoRequestModal({ isOpen, onClose, planHint }) {
                   value={form.message}
                   onChange={(e) => setForm(f => ({ ...f, message: e.target.value }))}
                   rows={2}
-                  className="w-full px-3 py-2.5 border border-apptivia-carbon-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-apptivia-coral text-sm resize-none"
+                  className="w-full px-3 py-2.5 border border-apptivia-carbon-300 rounded-lg focus:ring-2 focus:ring-apptivia-coral focus:border-apptivia-coral text-sm resize-none"
                   placeholder="Current tools, pain points, goals..."
                 />
               </div>
@@ -468,7 +468,7 @@ export default function LandingPage() {
                 key={index}
                 className={`bg-white rounded-lg p-8 ${
                   plan.highlighted
-                    ? 'border-2 border-apptivia-coral shadow-xl ring-1 ring-blue-100 scale-[1.02]'
+                    ? 'border-2 border-apptivia-coral shadow-xl ring-1 ring-apptivia-coral-tone-100 scale-[1.02]'
                     : 'border border-apptivia-carbon-200 shadow-sm'
                 }`}
               >

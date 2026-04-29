@@ -175,7 +175,7 @@ export default function BadgeCreationModal({ isOpen, onClose, onBadgeCreated }) 
               required
               value={formData.badge_name}
               onChange={(e) => setFormData({ ...formData, badge_name: e.target.value })}
-              className="w-full px-3 py-2 border border-apptivia-carbon-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-apptivia-carbon-300"
+              className="w-full px-3 py-2 border border-apptivia-carbon-300 rounded-lg focus:ring-2 focus:ring-apptivia-coral focus:border-apptivia-carbon-300"
               placeholder="e.g., Sales Superstar"
               maxLength={100}
             />
@@ -189,7 +189,7 @@ export default function BadgeCreationModal({ isOpen, onClose, onBadgeCreated }) 
             <textarea
               value={formData.badge_description}
               onChange={(e) => setFormData({ ...formData, badge_description: e.target.value })}
-              className="w-full px-3 py-2 border border-apptivia-carbon-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-apptivia-carbon-300"
+              className="w-full px-3 py-2 border border-apptivia-carbon-300 rounded-lg focus:ring-2 focus:ring-apptivia-coral focus:border-apptivia-carbon-300"
               placeholder="What makes this badge special?"
               rows={3}
               maxLength={500}
@@ -220,7 +220,7 @@ export default function BadgeCreationModal({ isOpen, onClose, onBadgeCreated }) 
                 type="text"
                 value={formData.icon}
                 onChange={(e) => setFormData({ ...formData, icon: e.target.value })}
-                className="p-3 text-2xl text-center rounded-lg border-2 border-apptivia-carbon-200 focus:border-apptivia-carbon-300 focus:ring-2 focus:ring-indigo-500"
+                className="p-3 text-2xl text-center rounded-lg border-2 border-apptivia-carbon-200 focus:border-apptivia-carbon-300 focus:ring-2 focus:ring-apptivia-coral"
                 maxLength={2}
               />
             </div>
@@ -258,7 +258,7 @@ export default function BadgeCreationModal({ isOpen, onClose, onBadgeCreated }) 
             <select
               value={formData.badge_type}
               onChange={(e) => setFormData({ ...formData, badge_type: e.target.value })}
-              className="w-full px-3 py-2 border border-apptivia-carbon-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-apptivia-carbon-300"
+              className="w-full px-3 py-2 border border-apptivia-carbon-300 rounded-lg focus:ring-2 focus:ring-apptivia-coral focus:border-apptivia-carbon-300"
             >
               {badgeTypes.map((type) => (
                 <option key={type.value} value={type.value}>
@@ -277,7 +277,7 @@ export default function BadgeCreationModal({ isOpen, onClose, onBadgeCreated }) 
               type="number"
               value={formData.points}
               onChange={(e) => setFormData({ ...formData, points: e.target.value })}
-              className="w-full px-3 py-2 border border-apptivia-carbon-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-apptivia-carbon-300"
+              className="w-full px-3 py-2 border border-apptivia-carbon-300 rounded-lg focus:ring-2 focus:ring-apptivia-coral focus:border-apptivia-carbon-300"
               min="0"
               step="10"
             />
@@ -291,7 +291,7 @@ export default function BadgeCreationModal({ isOpen, onClose, onBadgeCreated }) 
               id="is_rare"
               checked={formData.is_rare}
               onChange={(e) => setFormData({ ...formData, is_rare: e.target.checked })}
-              className="w-4 h-4 text-apptivia-ink border-apptivia-carbon-300 rounded focus:ring-indigo-500"
+              className="w-4 h-4 text-apptivia-ink border-apptivia-carbon-300 rounded focus:ring-apptivia-coral"
             />
             <label htmlFor="is_rare" className="ml-2 text-sm text-apptivia-carbon-700">
               Mark as rare badge (highlights special accomplishments)

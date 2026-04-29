@@ -319,7 +319,7 @@ export default function ShareScorecardSnapshotModal({ isOpen, onClose, scorecard
                   value={emailRecipients}
                   onChange={(e) => setEmailRecipients(e.target.value)}
                   placeholder="john@example.com, jane@example.com"
-                  className="w-full px-3 py-2 text-sm border border-apptivia-carbon-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-3 py-2 text-sm border border-apptivia-carbon-300 rounded-lg focus:ring-2 focus:ring-apptivia-coral focus:border-transparent"
                 />
               </div>
 
@@ -332,7 +332,7 @@ export default function ShareScorecardSnapshotModal({ isOpen, onClose, scorecard
                   value={emailSubject}
                   onChange={(e) => setEmailSubject(e.target.value)}
                   placeholder="Apptivia Weekly Scorecard Snapshot"
-                  className="w-full px-3 py-2 text-sm border border-apptivia-carbon-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-3 py-2 text-sm border border-apptivia-carbon-300 rounded-lg focus:ring-2 focus:ring-apptivia-coral focus:border-transparent"
                 />
               </div>
 
@@ -345,7 +345,7 @@ export default function ShareScorecardSnapshotModal({ isOpen, onClose, scorecard
                   onChange={(e) => setEmailNotes(e.target.value)}
                   placeholder="Add highlights or focus areas for the week ahead"
                   rows={3}
-                  className="w-full px-3 py-2 text-sm border border-apptivia-carbon-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-3 py-2 text-sm border border-apptivia-carbon-300 rounded-lg focus:ring-2 focus:ring-apptivia-coral focus:border-transparent"
                 />
               </div>
 

@@ -163,7 +163,7 @@ export default function ContestTemplatesModal({ isOpen, onClose, onTemplateSelec
                   type="text"
                   value={customData.name}
                   onChange={(e) => setCustomData({ ...customData, name: e.target.value })}
-                  className="w-full px-3 py-2 border border-apptivia-carbon-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-apptivia-carbon-300 rounded-md focus:outline-none focus:ring-2 focus:ring-apptivia-coral"
                 />
               </div>
               <div>
@@ -174,7 +174,7 @@ export default function ContestTemplatesModal({ isOpen, onClose, onTemplateSelec
                   type="date"
                   value={customData.start_date}
                   onChange={(e) => setCustomData({ ...customData, start_date: e.target.value })}
-                  className="w-full px-3 py-2 border border-apptivia-carbon-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-apptivia-carbon-300 rounded-md focus:outline-none focus:ring-2 focus:ring-apptivia-coral"
                 />
               </div>
               <div>
@@ -187,7 +187,7 @@ export default function ContestTemplatesModal({ isOpen, onClose, onTemplateSelec
                   max="90"
                   value={customData.duration}
                   onChange={(e) => setCustomData({ ...customData, duration: parseInt(e.target.value) })}
-                  className="w-full px-3 py-2 border border-apptivia-carbon-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-apptivia-carbon-300 rounded-md focus:outline-none focus:ring-2 focus:ring-apptivia-coral"
                 />
               </div>
               <div>
@@ -199,7 +199,7 @@ export default function ContestTemplatesModal({ isOpen, onClose, onTemplateSelec
                   min="0"
                   value={customData.reward_value}
                   onChange={(e) => setCustomData({ ...customData, reward_value: parseInt(e.target.value) })}
-                  className="w-full px-3 py-2 border border-apptivia-carbon-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-apptivia-carbon-300 rounded-md focus:outline-none focus:ring-2 focus:ring-apptivia-coral"
                 />
               </div>
             </div>

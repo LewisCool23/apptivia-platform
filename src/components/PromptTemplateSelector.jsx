@@ -77,7 +77,7 @@ export default function PromptTemplateSelector({
         type="button"
         onClick={() => setOpen(!open)}
         className={`w-full flex items-center justify-between gap-2 px-3 py-2 text-xs border rounded-lg bg-white transition-all ${
-          open ? 'border-apptivia-carbon-300 ring-2 ring-violet-100' : 'border-apptivia-carbon-200 hover:border-apptivia-carbon-300'
+          open ? 'border-apptivia-carbon-300 ring-2 ring-apptivia-coral-tone-100' : 'border-apptivia-carbon-200 hover:border-apptivia-carbon-300'
         }`}
       >
         <div className="flex items-center gap-2 min-w-0 truncate">
@@ -109,7 +109,7 @@ export default function PromptTemplateSelector({
                 value={search}
                 onChange={e => setSearch(e.target.value)}
                 placeholder="Search prompts..."
-                className="w-full text-xs pl-8 pr-6 py-1.5 border border-apptivia-carbon-100 rounded-lg focus:outline-none focus:ring-1 focus:ring-violet-200"
+                className="w-full text-xs pl-8 pr-6 py-1.5 border border-apptivia-carbon-100 rounded-lg focus:outline-none focus:ring-1 focus:ring-apptivia-coral-tone-100"
                 autoFocus
               />
               {search && (

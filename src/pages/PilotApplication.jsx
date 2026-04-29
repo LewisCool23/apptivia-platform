@@ -148,7 +148,7 @@ export default function PilotApplication() {
                         required
                         value={form.name}
                         onChange={(e) => setForm(f => ({ ...f, name: e.target.value }))}
-                        className="w-full px-3 py-2.5 border border-apptivia-carbon-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-apptivia-coral text-sm"
+                        className="w-full px-3 py-2.5 border border-apptivia-carbon-300 rounded-lg focus:ring-2 focus:ring-apptivia-coral focus:border-apptivia-coral text-sm"
                         placeholder="Your name"
                       />
                     </div>
@@ -159,7 +159,7 @@ export default function PilotApplication() {
                         required
                         value={form.email}
                         onChange={(e) => setForm(f => ({ ...f, email: e.target.value }))}
-                        className="w-full px-3 py-2.5 border border-apptivia-carbon-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-apptivia-coral text-sm"
+                        className="w-full px-3 py-2.5 border border-apptivia-carbon-300 rounded-lg focus:ring-2 focus:ring-apptivia-coral focus:border-apptivia-coral text-sm"
                         placeholder="you@company.com"
                       />
                     </div>
@@ -173,7 +173,7 @@ export default function PilotApplication() {
                         required
                         value={form.company}
                         onChange={(e) => setForm(f => ({ ...f, company: e.target.value }))}
-                        className="w-full px-3 py-2.5 border border-apptivia-carbon-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-apptivia-coral text-sm"
+                        className="w-full px-3 py-2.5 border border-apptivia-carbon-300 rounded-lg focus:ring-2 focus:ring-apptivia-coral focus:border-apptivia-coral text-sm"
                         placeholder="Company name"
                       />
                     </div>
@@ -183,7 +183,7 @@ export default function PilotApplication() {
                         required
                         value={form.teamSize}
                         onChange={(e) => setForm(f => ({ ...f, teamSize: e.target.value }))}
-                        className="w-full px-3 py-2.5 border border-apptivia-carbon-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-apptivia-coral text-sm text-apptivia-carbon-700"
+                        className="w-full px-3 py-2.5 border border-apptivia-carbon-300 rounded-lg focus:ring-2 focus:ring-apptivia-coral focus:border-apptivia-coral text-sm text-apptivia-carbon-700"
                       >
                         <option value="">Select size</option>
                         <option value="5-10">5-10 reps</option>
@@ -200,7 +200,7 @@ export default function PilotApplication() {
                     <select
                       value={form.crm}
                       onChange={(e) => setForm(f => ({ ...f, crm: e.target.value }))}
-                      className="w-full px-3 py-2.5 border border-apptivia-carbon-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-apptivia-coral text-sm text-apptivia-carbon-700"
+                      className="w-full px-3 py-2.5 border border-apptivia-carbon-300 rounded-lg focus:ring-2 focus:ring-apptivia-coral focus:border-apptivia-coral text-sm text-apptivia-carbon-700"
                     >
                       <option value="">Select CRM</option>
                       <option value="Salesforce">Salesforce</option>
@@ -218,7 +218,7 @@ export default function PilotApplication() {
                       value={form.biggestPain}
                       onChange={(e) => setForm(f => ({ ...f, biggestPain: e.target.value }))}
                       rows={3}
-                      className="w-full px-3 py-2.5 border border-apptivia-carbon-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-apptivia-coral text-sm resize-none"
+                      className="w-full px-3 py-2.5 border border-apptivia-carbon-300 rounded-lg focus:ring-2 focus:ring-apptivia-coral focus:border-apptivia-coral text-sm resize-none"
                       placeholder="e.g., We don't know which reps need coaching until it's too late..."
                     />
                   </div>
@@ -231,7 +231,7 @@ export default function PilotApplication() {
                       type="text"
                       value={form.currentTools}
                       onChange={(e) => setForm(f => ({ ...f, currentTools: e.target.value }))}
-                      className="w-full px-3 py-2.5 border border-apptivia-carbon-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-apptivia-coral text-sm"
+                      className="w-full px-3 py-2.5 border border-apptivia-carbon-300 rounded-lg focus:ring-2 focus:ring-apptivia-coral focus:border-apptivia-coral text-sm"
                       placeholder="e.g., Outreach, Gong, SalesLoft..."
                     />
                   </div>

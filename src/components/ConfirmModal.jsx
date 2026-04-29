@@ -90,7 +90,7 @@ export default function ConfirmModal({
           <button
             onClick={onClose}
             disabled={isLoading}
-            className="px-4 py-2 text-sm font-medium text-apptivia-carbon-700 bg-apptivia-carbon-100 hover:bg-apptivia-carbon-200 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-gray-300 disabled:opacity-50"
+            className="px-4 py-2 text-sm font-medium text-apptivia-carbon-700 bg-apptivia-carbon-100 hover:bg-apptivia-carbon-200 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-apptivia-carbon-300 disabled:opacity-50"
           >
             {cancelText}
           </button>

@@ -1577,7 +1577,7 @@ export default function EngageDiscover({ organizationId, userId, initialSearch, 
                     ? 'Enter a technology or software name (e.g., Ambition, Gong, Salesloft, Outreach)'
                     : 'Enter email, LinkedIn URL, or "First Last at Company"'
                 }
-                className="w-full pl-10 pr-4 py-3 rounded-lg bg-white text-sm text-apptivia-ink placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-300 shadow-sm"
+                className="w-full pl-10 pr-4 py-3 rounded-lg bg-white text-sm text-apptivia-ink placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-apptivia-coral-tone-300 shadow-sm"
                 disabled={loading}
               />
             </div>

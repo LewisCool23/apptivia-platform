@@ -84,7 +84,7 @@ export default function EditProfileModal({ isOpen, onClose, profile, onSuccess }
                 type="text"
                 value={formData.first_name}
                 onChange={(e) => setFormData({ ...formData, first_name: e.target.value })}
-                className="w-full px-3 py-2 border border-apptivia-carbon-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-apptivia-carbon-300 rounded-md focus:outline-none focus:ring-2 focus:ring-apptivia-coral"
                 required
               />
             </div>
@@ -96,7 +96,7 @@ export default function EditProfileModal({ isOpen, onClose, profile, onSuccess }
                 type="text"
                 value={formData.last_name}
                 onChange={(e) => setFormData({ ...formData, last_name: e.target.value })}
-                className="w-full px-3 py-2 border border-apptivia-carbon-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-apptivia-carbon-300 rounded-md focus:outline-none focus:ring-2 focus:ring-apptivia-coral"
                 required
               />
             </div>
@@ -110,7 +110,7 @@ export default function EditProfileModal({ isOpen, onClose, profile, onSuccess }
               type="text"
               value={formData.title}
               onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-              className="w-full px-3 py-2 border border-apptivia-carbon-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-apptivia-carbon-300 rounded-md focus:outline-none focus:ring-2 focus:ring-apptivia-coral"
               placeholder="e.g., Sales Representative"
             />
           </div>
@@ -123,7 +123,7 @@ export default function EditProfileModal({ isOpen, onClose, profile, onSuccess }
               type="text"
               value={formData.department}
               onChange={(e) => setFormData({ ...formData, department: e.target.value })}
-              className="w-full px-3 py-2 border border-apptivia-carbon-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-apptivia-carbon-300 rounded-md focus:outline-none focus:ring-2 focus:ring-apptivia-coral"
               placeholder="e.g., Sales"
             />
           </div>
@@ -136,7 +136,7 @@ export default function EditProfileModal({ isOpen, onClose, profile, onSuccess }
               type="tel"
               value={formData.phone}
               onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-              className="w-full px-3 py-2 border border-apptivia-carbon-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-apptivia-carbon-300 rounded-md focus:outline-none focus:ring-2 focus:ring-apptivia-coral"
               placeholder="(555) 123-4567"
             />
           </div>

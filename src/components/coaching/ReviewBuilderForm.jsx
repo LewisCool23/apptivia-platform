@@ -72,7 +72,7 @@ export default function ReviewBuilderForm({
                 onClick={() => handleTypeChange(t.id)}
                 className={`flex-1 border rounded-lg p-3 text-left transition-all ${
                   form.review_type === t.id
-                    ? 'border-apptivia-coral bg-apptivia-coral-tone-50 ring-1 ring-blue-200'
+                    ? 'border-apptivia-coral bg-apptivia-coral-tone-50 ring-1 ring-apptivia-coral-tone-100'
                     : 'border-apptivia-carbon-200 hover:border-apptivia-carbon-300'
                 }`}
               >

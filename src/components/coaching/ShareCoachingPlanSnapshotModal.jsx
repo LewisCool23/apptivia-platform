@@ -216,21 +216,21 @@ export default function ShareCoachingPlanSnapshotModal({ isOpen, onClose, plan, 
                 value={emailRecipients}
                 onChange={e => setEmailRecipients(e.target.value)}
                 placeholder="recipient@email.com, another@email.com"
-                className="w-full border border-apptivia-carbon-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full border border-apptivia-carbon-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-apptivia-coral focus:border-transparent"
               />
               <input
                 type="text"
                 value={emailSubject}
                 onChange={e => setEmailSubject(e.target.value)}
                 placeholder={`Subject: Coaching Plan — ${plan.name}`}
-                className="w-full border border-apptivia-carbon-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full border border-apptivia-carbon-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-apptivia-coral focus:border-transparent"
               />
               <textarea
                 value={emailNotes}
                 onChange={e => setEmailNotes(e.target.value)}
                 rows={2}
                 placeholder="Optional notes..."
-                className="w-full border border-apptivia-carbon-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full border border-apptivia-carbon-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-apptivia-coral focus:border-transparent"
               />
               {emailError && <p className="text-xs text-red-600">{emailError}</p>}
               <div className="flex gap-2">

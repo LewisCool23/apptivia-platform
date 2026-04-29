@@ -565,7 +565,7 @@ function DashboardLayout({ children }) {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               onFocus={() => searchQuery && setShowSearchResults(true)}
-              className="w-full pl-9 pr-3 py-2 text-sm border border-apptivia-carbon-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-apptivia-coral"
+              className="w-full pl-9 pr-3 py-2 text-sm border border-apptivia-carbon-200 rounded-lg focus:ring-2 focus:ring-apptivia-coral focus:border-apptivia-coral"
             />
             {searchQuery && (
               <button

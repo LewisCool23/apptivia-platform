@@ -238,7 +238,7 @@ function TestPromptModal({ template, onClose }) {
                     value={vars[v] || ''}
                     onChange={e => setVars(prev => ({ ...prev, [v]: e.target.value }))}
                     placeholder={`Enter ${v.toLowerCase().replace(/_/g, ' ')}...`}
-                    className="w-full text-xs border border-apptivia-carbon-200 rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-blue-200"
+                    className="w-full text-xs border border-apptivia-carbon-200 rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-apptivia-coral-tone-100"
                   />
                 </div>
               ))}
@@ -332,13 +332,13 @@ function CreatePromptModal({ onClose, onSave }) {
             <div>
               <label className="text-[10px] text-apptivia-carbon-400 uppercase font-medium block mb-1">Name *</label>
               <input type="text" value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
-                className="w-full text-xs border border-apptivia-carbon-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-200"
+                className="w-full text-xs border border-apptivia-carbon-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-apptivia-coral-tone-100"
                 placeholder="First Email — Pain Point" />
             </div>
             <div>
               <label className="text-[10px] text-apptivia-carbon-400 uppercase font-medium block mb-1">Key (auto-generated)</label>
               <input type="text" value={form.key} onChange={e => setForm(f => ({ ...f, key: e.target.value }))}
-                className="w-full text-xs border border-apptivia-carbon-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-200"
+                className="w-full text-xs border border-apptivia-carbon-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-apptivia-coral-tone-100"
                 placeholder="first_email_pain_point" />
             </div>
           </div>
@@ -347,14 +347,14 @@ function CreatePromptModal({ onClose, onSave }) {
             <div>
               <label className="text-[10px] text-apptivia-carbon-400 uppercase font-medium block mb-1">Category</label>
               <select value={form.category} onChange={e => setForm(f => ({ ...f, category: e.target.value }))}
-                className="w-full text-xs border border-apptivia-carbon-200 rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-blue-200">
+                className="w-full text-xs border border-apptivia-carbon-200 rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-apptivia-coral-tone-100">
                 {Object.entries(CATEGORY_META).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
               </select>
             </div>
             <div>
               <label className="text-[10px] text-apptivia-carbon-400 uppercase font-medium block mb-1">AI Model</label>
               <select value={form.ai_model} onChange={e => setForm(f => ({ ...f, ai_model: e.target.value }))}
-                className="w-full text-xs border border-apptivia-carbon-200 rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-blue-200">
+                className="w-full text-xs border border-apptivia-carbon-200 rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-apptivia-coral-tone-100">
                 <option value="chatgpt">ChatGPT</option>
                 <option value="claude">Claude</option>
                 <option value="any">Any</option>
@@ -363,7 +363,7 @@ function CreatePromptModal({ onClose, onSave }) {
             <div>
               <label className="text-[10px] text-apptivia-carbon-400 uppercase font-medium block mb-1">Channel</label>
               <select value={form.channel} onChange={e => setForm(f => ({ ...f, channel: e.target.value }))}
-                className="w-full text-xs border border-apptivia-carbon-200 rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-blue-200">
+                className="w-full text-xs border border-apptivia-carbon-200 rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-apptivia-coral-tone-100">
                 <option value="">None</option>
                 <option value="email">Email</option>
                 <option value="linkedin">LinkedIn</option>
@@ -375,21 +375,21 @@ function CreatePromptModal({ onClose, onSave }) {
           <div>
             <label className="text-[10px] text-apptivia-carbon-400 uppercase font-medium block mb-1">Description</label>
             <input type="text" value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
-              className="w-full text-xs border border-apptivia-carbon-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-200"
+              className="w-full text-xs border border-apptivia-carbon-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-apptivia-coral-tone-100"
               placeholder="Brief description of what this prompt does..." />
           </div>
 
           <div>
             <label className="text-[10px] text-apptivia-carbon-400 uppercase font-medium block mb-1">System Prompt</label>
             <textarea value={form.system_prompt} onChange={e => setForm(f => ({ ...f, system_prompt: e.target.value }))}
-              rows={3} className="w-full text-xs border border-apptivia-carbon-200 rounded-lg px-3 py-2 font-mono focus:outline-none focus:ring-2 focus:ring-blue-200"
+              rows={3} className="w-full text-xs border border-apptivia-carbon-200 rounded-lg px-3 py-2 font-mono focus:outline-none focus:ring-2 focus:ring-apptivia-coral-tone-100"
               placeholder="System-level instructions (sent as system message)..." />
           </div>
 
           <div>
             <label className="text-[10px] text-apptivia-carbon-400 uppercase font-medium block mb-1">Prompt Template *</label>
             <textarea value={form.user_prompt} onChange={e => setForm(f => ({ ...f, user_prompt: e.target.value }))}
-              rows={6} className="w-full text-xs border border-apptivia-carbon-200 rounded-lg px-3 py-2 font-mono focus:outline-none focus:ring-2 focus:ring-blue-200"
+              rows={6} className="w-full text-xs border border-apptivia-carbon-200 rounded-lg px-3 py-2 font-mono focus:outline-none focus:ring-2 focus:ring-apptivia-coral-tone-100"
               placeholder="Use {{VARIABLE}} placeholders for dynamic content..." />
           </div>
 
@@ -397,13 +397,13 @@ function CreatePromptModal({ onClose, onSave }) {
             <div>
               <label className="text-[10px] text-apptivia-carbon-400 uppercase font-medium block mb-1">Variables (comma-separated)</label>
               <input type="text" value={form.variables} onChange={e => setForm(f => ({ ...f, variables: e.target.value }))}
-                className="w-full text-xs border border-apptivia-carbon-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-200"
+                className="w-full text-xs border border-apptivia-carbon-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-apptivia-coral-tone-100"
                 placeholder="COMPANY, PROSPECT, ANGLE" />
             </div>
             <div>
               <label className="text-[10px] text-apptivia-carbon-400 uppercase font-medium block mb-1">Tags (comma-separated)</label>
               <input type="text" value={form.tags} onChange={e => setForm(f => ({ ...f, tags: e.target.value }))}
-                className="w-full text-xs border border-apptivia-carbon-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-200"
+                className="w-full text-xs border border-apptivia-carbon-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-apptivia-coral-tone-100"
                 placeholder="research, outreach, cold-email" />
             </div>
           </div>
@@ -412,13 +412,13 @@ function CreatePromptModal({ onClose, onSave }) {
             <div>
               <label className="text-[10px] text-apptivia-carbon-400 uppercase font-medium block mb-1">Max Tokens</label>
               <input type="number" value={form.max_tokens} onChange={e => setForm(f => ({ ...f, max_tokens: parseInt(e.target.value) || 1000 }))}
-                className="w-full text-xs border border-apptivia-carbon-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-200" />
+                className="w-full text-xs border border-apptivia-carbon-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-apptivia-coral-tone-100" />
             </div>
             <div>
               <label className="text-[10px] text-apptivia-carbon-400 uppercase font-medium block mb-1">Temperature</label>
               <input type="number" step="0.1" min="0" max="1" value={form.temperature}
                 onChange={e => setForm(f => ({ ...f, temperature: parseFloat(e.target.value) || 0.7 }))}
-                className="w-full text-xs border border-apptivia-carbon-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-200" />
+                className="w-full text-xs border border-apptivia-carbon-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-apptivia-coral-tone-100" />
             </div>
           </div>
 
@@ -582,7 +582,7 @@ export default function PromptLibrary({ organizationId }) {
         <select
           value={categoryFilter}
           onChange={e => setCategoryFilter(e.target.value)}
-          className="text-xs border border-apptivia-carbon-200 rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-blue-200"
+          className="text-xs border border-apptivia-carbon-200 rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-apptivia-coral-tone-100"
         >
           <option value="all">All Categories</option>
           {Object.entries(CATEGORY_META).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
@@ -592,7 +592,7 @@ export default function PromptLibrary({ organizationId }) {
         <select
           value={modelFilter}
           onChange={e => setModelFilter(e.target.value)}
-          className="text-xs border border-apptivia-carbon-200 rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-blue-200"
+          className="text-xs border border-apptivia-carbon-200 rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-apptivia-coral-tone-100"
         >
           <option value="all">All Models</option>
           <option value="chatgpt">ChatGPT</option>

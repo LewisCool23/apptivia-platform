@@ -84,7 +84,7 @@ function StepEditor({ step, index, onChange, onRemove }) {
             <select
               value={step.channel}
               onChange={(e) => onChange({ ...step, channel: e.target.value })}
-              className="text-xs border border-apptivia-carbon-200 rounded-md px-2 py-1 focus:ring-1 focus:ring-blue-300"
+              className="text-xs border border-apptivia-carbon-200 rounded-md px-2 py-1 focus:ring-1 focus:ring-apptivia-coral-tone-300"
             >
               {CHANNEL_OPTIONS.map(ch => (
                 <option key={ch.value} value={ch.value}>{ch.label}</option>
@@ -114,7 +114,7 @@ function StepEditor({ step, index, onChange, onRemove }) {
             placeholder="Email subject..."
             value={step.subject || ''}
             onChange={(e) => onChange({ ...step, subject: e.target.value })}
-            className="w-full text-xs border border-apptivia-carbon-200 rounded-lg px-3 py-1.5 mb-2 focus:ring-1 focus:ring-blue-300 focus:border-apptivia-coral-tone-100"
+            className="w-full text-xs border border-apptivia-carbon-200 rounded-lg px-3 py-1.5 mb-2 focus:ring-1 focus:ring-apptivia-coral-tone-300 focus:border-apptivia-coral-tone-100"
           />
         )}
 
@@ -123,7 +123,7 @@ function StepEditor({ step, index, onChange, onRemove }) {
           value={step.body || ''}
           onChange={(e) => onChange({ ...step, body: e.target.value })}
           rows={3}
-          className="w-full text-xs border border-apptivia-carbon-200 rounded-lg px-3 py-2 focus:ring-1 focus:ring-blue-300 focus:border-apptivia-coral-tone-100 resize-none"
+          className="w-full text-xs border border-apptivia-carbon-200 rounded-lg px-3 py-2 focus:ring-1 focus:ring-apptivia-coral-tone-300 focus:border-apptivia-coral-tone-100 resize-none"
         />
 
         <div className="flex items-center gap-3 mt-2">
@@ -366,7 +366,7 @@ function SequenceDetail({ sequenceId, onBack, organizationId }) {
               value={enrollEmail}
               onChange={(e) => setEnrollEmail(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleEnroll()}
-              className="flex-1 text-xs border border-apptivia-carbon-200 rounded-lg px-3 py-1.5 focus:ring-1 focus:ring-blue-300"
+              className="flex-1 text-xs border border-apptivia-carbon-200 rounded-lg px-3 py-1.5 focus:ring-1 focus:ring-apptivia-coral-tone-300"
             />
             <button
               onClick={handleEnroll}
@@ -447,7 +447,7 @@ export default function SequenceBuilder({ organizationId, userId }) {
             value={newName}
             onChange={(e) => setNewName(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleCreate()}
-            className="flex-1 text-sm border border-apptivia-carbon-200 rounded-lg px-3 py-2 focus:ring-1 focus:ring-blue-300"
+            className="flex-1 text-sm border border-apptivia-carbon-200 rounded-lg px-3 py-2 focus:ring-1 focus:ring-apptivia-coral-tone-300"
           />
           <button onClick={handleCreate} className="px-3 py-2 bg-apptivia-coral text-white text-xs rounded-lg hover:bg-apptivia-coral">Create</button>
           <button onClick={() => setCreating(false)} className="text-apptivia-carbon-400 hover:text-apptivia-carbon-600"><X size={16} /></button>

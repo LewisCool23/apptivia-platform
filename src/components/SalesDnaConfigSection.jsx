@@ -154,7 +154,7 @@ export default function SalesDnaConfigSection({ organizationId, cepStages, compa
             <select
               value={localDna.primary_methodology || ''}
               onChange={(e) => setLocalDna({ ...localDna, primary_methodology: e.target.value || null })}
-              className="w-full border border-apptivia-carbon-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500"
+              className="w-full border border-apptivia-carbon-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-apptivia-coral"
             >
               <option value="">Select a methodology...</option>
               {SALES_METHODOLOGIES.map(m => (
@@ -187,7 +187,7 @@ export default function SalesDnaConfigSection({ organizationId, cepStages, compa
             <select
               value={localDna.secondary_methodology || ''}
               onChange={(e) => setLocalDna({ ...localDna, secondary_methodology: e.target.value || null })}
-              className="w-full border border-apptivia-carbon-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500"
+              className="w-full border border-apptivia-carbon-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-apptivia-coral"
             >
               <option value="">Select a secondary methodology...</option>
               {SALES_METHODOLOGIES.filter(m => m.key !== localDna.primary_methodology).map(m => (
@@ -258,7 +258,7 @@ export default function SalesDnaConfigSection({ organizationId, cepStages, compa
                 type="text"
                 value={localDna.custom_methodology_name || ''}
                 onChange={(e) => setLocalDna({ ...localDna, custom_methodology_name: e.target.value })}
-                className="w-full border border-apptivia-carbon-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500"
+                className="w-full border border-apptivia-carbon-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-apptivia-coral"
                 placeholder="e.g., The Acme Way, Value-Led Enterprise Selling"
               />
             </div>
@@ -301,7 +301,7 @@ export default function SalesDnaConfigSection({ organizationId, cepStages, compa
                       setCustomPrinciple('');
                     }
                   }}
-                  className="flex-1 border border-apptivia-carbon-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500"
+                  className="flex-1 border border-apptivia-carbon-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-apptivia-coral"
                   placeholder="Type a principle and press Enter"
                 />
                 <button

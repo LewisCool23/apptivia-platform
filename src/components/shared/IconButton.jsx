@@ -42,7 +42,7 @@ export default function IconButton({
       <button
         type="button"
         aria-label={ariaLabel}
-        className={`inline-flex items-center justify-center rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-blue-300 ${sizeClasses[size]} ${variantClasses[variant]} ${className}`}
+        className={`inline-flex items-center justify-center rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-apptivia-coral-tone-300 ${sizeClasses[size]} ${variantClasses[variant]} ${className}`}
         {...rest}
       >
         <Icon className={iconSizes[size]} />

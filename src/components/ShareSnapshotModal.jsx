@@ -272,7 +272,7 @@ export default function ShareSnapshotModal({ isOpen, onClose, userData }) {
                   value={emailRecipients}
                   onChange={(e) => setEmailRecipients(e.target.value)}
                   placeholder="john@example.com, jane@example.com"
-                  className="w-full px-3 py-2 text-sm border border-apptivia-carbon-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-3 py-2 text-sm border border-apptivia-carbon-300 rounded-lg focus:ring-2 focus:ring-apptivia-coral focus:border-transparent"
                 />
               </div>
 
@@ -285,7 +285,7 @@ export default function ShareSnapshotModal({ isOpen, onClose, userData }) {
                   value={emailSubject}
                   onChange={(e) => setEmailSubject(e.target.value)}
                   placeholder={`${name}'s Achievement Snapshot - Apptivia Platform`}
-                  className="w-full px-3 py-2 text-sm border border-apptivia-carbon-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-3 py-2 text-sm border border-apptivia-carbon-300 rounded-lg focus:ring-2 focus:ring-apptivia-coral focus:border-transparent"
                 />
               </div>
 

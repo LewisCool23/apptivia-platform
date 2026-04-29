@@ -45,7 +45,7 @@ export default function StepSalesDna({ wizardState, updateState }) {
               onClick={() => update('methodology_approach', opt.key)}
               className={`p-3 rounded-lg border text-left transition-all text-sm ${
                 salesDna.methodology_approach === opt.key
-                  ? 'border-apptivia-carbon-300 bg-apptivia-carbon-100 ring-1 ring-purple-200'
+                  ? 'border-apptivia-carbon-300 bg-apptivia-carbon-100 ring-1 ring-apptivia-coral-tone-100'
                   : 'border-apptivia-carbon-200 hover:border-apptivia-carbon-300'
               }`}
             >
@@ -65,7 +65,7 @@ export default function StepSalesDna({ wizardState, updateState }) {
           <select
             value={salesDna.primary_methodology || ''}
             onChange={(e) => update('primary_methodology', e.target.value)}
-            className="w-full px-3 py-2.5 border border-apptivia-carbon-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-apptivia-carbon-300 text-sm"
+            className="w-full px-3 py-2.5 border border-apptivia-carbon-300 rounded-lg focus:ring-2 focus:ring-apptivia-coral focus:border-apptivia-carbon-300 text-sm"
           >
             <option value="">Select a methodology</option>
             {SALES_METHODOLOGIES.map(m => (
@@ -90,7 +90,7 @@ export default function StepSalesDna({ wizardState, updateState }) {
           <select
             value={salesDna.secondary_methodology || ''}
             onChange={(e) => update('secondary_methodology', e.target.value)}
-            className="w-full px-3 py-2.5 border border-apptivia-carbon-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-apptivia-carbon-300 text-sm"
+            className="w-full px-3 py-2.5 border border-apptivia-carbon-300 rounded-lg focus:ring-2 focus:ring-apptivia-coral focus:border-apptivia-carbon-300 text-sm"
           >
             <option value="">Select secondary methodology</option>
             {SALES_METHODOLOGIES
@@ -113,7 +113,7 @@ export default function StepSalesDna({ wizardState, updateState }) {
               type="text"
               value={salesDna.custom_methodology_name || ''}
               onChange={(e) => update('custom_methodology_name', e.target.value)}
-              className="w-full px-3 py-2.5 border border-apptivia-carbon-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-apptivia-carbon-300 text-sm"
+              className="w-full px-3 py-2.5 border border-apptivia-carbon-300 rounded-lg focus:ring-2 focus:ring-apptivia-coral focus:border-apptivia-carbon-300 text-sm"
               placeholder="e.g. The Acme Way"
             />
           </div>
@@ -125,7 +125,7 @@ export default function StepSalesDna({ wizardState, updateState }) {
               value={(salesDna.custom_methodology_principles || []).join('\n')}
               onChange={(e) => update('custom_methodology_principles', e.target.value.split('\n').filter(Boolean))}
               rows={4}
-              className="w-full px-3 py-2.5 border border-apptivia-carbon-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-apptivia-carbon-300 text-sm resize-none"
+              className="w-full px-3 py-2.5 border border-apptivia-carbon-300 rounded-lg focus:ring-2 focus:ring-apptivia-coral focus:border-apptivia-carbon-300 text-sm resize-none"
               placeholder="e.g. Always lead with value&#10;Ask 3 discovery questions before presenting"
             />
             <p className="text-xs text-apptivia-carbon-400 mt-1">These principles guide Aaron AI's coaching context</p>
@@ -146,7 +146,7 @@ export default function StepSalesDna({ wizardState, updateState }) {
               onClick={() => update('qualification_framework', f.key)}
               className={`p-3 rounded-lg border text-left transition-all text-sm ${
                 salesDna.qualification_framework === f.key
-                  ? 'border-apptivia-carbon-300 bg-apptivia-carbon-100 ring-1 ring-purple-200'
+                  ? 'border-apptivia-carbon-300 bg-apptivia-carbon-100 ring-1 ring-apptivia-coral-tone-100'
                   : 'border-apptivia-carbon-200 hover:border-apptivia-carbon-300'
               }`}
             >
@@ -189,7 +189,7 @@ export default function StepSalesDna({ wizardState, updateState }) {
                     updated[i] = { ...updated[i], stage_name: e.target.value };
                     updateState({ cepStages: updated });
                   }}
-                  className="flex-1 px-2 py-1.5 border border-apptivia-carbon-200 rounded text-sm focus:ring-1 focus:ring-indigo-300 focus:border-apptivia-carbon-300"
+                  className="flex-1 px-2 py-1.5 border border-apptivia-carbon-200 rounded text-sm focus:ring-1 focus:ring-apptivia-coral-tone-300 focus:border-apptivia-carbon-300"
                 />
                 <span className="text-xs text-apptivia-carbon-400 flex-shrink-0 w-8">{stage.win_probability}%</span>
               </div>

@@ -32,7 +32,7 @@ export default function StepOrgInfo({ wizardState, updateState, onError }) {
             type="text"
             value={orgData.name}
             onChange={(e) => update('name', e.target.value)}
-            className="w-full px-3 py-2.5 border border-apptivia-carbon-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-apptivia-coral text-sm"
+            className="w-full px-3 py-2.5 border border-apptivia-carbon-300 rounded-lg focus:ring-2 focus:ring-apptivia-coral focus:border-apptivia-coral text-sm"
             placeholder="Acme Corp"
           />
         </div>
@@ -44,7 +44,7 @@ export default function StepOrgInfo({ wizardState, updateState, onError }) {
           <select
             value={orgData.industry}
             onChange={(e) => update('industry', e.target.value)}
-            className="w-full px-3 py-2.5 border border-apptivia-carbon-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-apptivia-coral text-sm"
+            className="w-full px-3 py-2.5 border border-apptivia-carbon-300 rounded-lg focus:ring-2 focus:ring-apptivia-coral focus:border-apptivia-coral text-sm"
           >
             <option value="">Select your industry</option>
             {INDUSTRY_OPTIONS.map(opt => (
@@ -63,7 +63,7 @@ export default function StepOrgInfo({ wizardState, updateState, onError }) {
               type="text"
               value={orgData.primary_contact_name}
               onChange={(e) => update('primary_contact_name', e.target.value)}
-              className="w-full px-3 py-2.5 border border-apptivia-carbon-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-apptivia-coral text-sm"
+              className="w-full px-3 py-2.5 border border-apptivia-carbon-300 rounded-lg focus:ring-2 focus:ring-apptivia-coral focus:border-apptivia-coral text-sm"
               placeholder="Jane Doe"
             />
           </div>
@@ -75,7 +75,7 @@ export default function StepOrgInfo({ wizardState, updateState, onError }) {
               type="email"
               value={orgData.primary_contact_email}
               onChange={(e) => update('primary_contact_email', e.target.value)}
-              className="w-full px-3 py-2.5 border border-apptivia-carbon-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-apptivia-coral text-sm"
+              className="w-full px-3 py-2.5 border border-apptivia-carbon-300 rounded-lg focus:ring-2 focus:ring-apptivia-coral focus:border-apptivia-coral text-sm"
               placeholder="jane@acme.com"
             />
           </div>
@@ -88,7 +88,7 @@ export default function StepOrgInfo({ wizardState, updateState, onError }) {
           <select
             value={wizardState.adminTitle || ''}
             onChange={(e) => updateState({ adminTitle: e.target.value })}
-            className="w-full px-3 py-2.5 border border-apptivia-carbon-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-apptivia-coral text-sm"
+            className="w-full px-3 py-2.5 border border-apptivia-carbon-300 rounded-lg focus:ring-2 focus:ring-apptivia-coral focus:border-apptivia-coral text-sm"
           >
             <option value="">Select your title</option>
             {titles.map(t => (

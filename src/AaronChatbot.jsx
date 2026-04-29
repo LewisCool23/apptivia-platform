@@ -1513,7 +1513,7 @@ const AaronChatbot = ({ isOpen, onClose }) => {
                     value={inputValue}
                     onChange={(e) => setInputValue(e.target.value)}
                     disabled={connectionStatus === 'reconnecting' || connectionStatus === 'failed'}
-                    className="flex-1 px-3 py-2 rounded-lg border border-apptivia-carbon-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="flex-1 px-3 py-2 rounded-lg border border-apptivia-carbon-300 text-sm focus:outline-none focus:ring-2 focus:ring-apptivia-coral focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed"
                     maxLength={MAX_MESSAGE_LENGTH}
                   />
                   <button

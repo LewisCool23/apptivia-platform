@@ -381,7 +381,7 @@ export default function Meeting1On1PrepModal({
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
                 placeholder="Add your notes before or during the 1:1..."
-                className="w-full border rounded-lg p-3 text-xs text-apptivia-carbon-700 resize-none h-24 focus:outline-none focus:ring-2 focus:ring-blue-300"
+                className="w-full border rounded-lg p-3 text-xs text-apptivia-carbon-700 resize-none h-24 focus:outline-none focus:ring-2 focus:ring-apptivia-coral-tone-300"
               />
             </div>
 
@@ -397,7 +397,7 @@ export default function Meeting1On1PrepModal({
                 <textarea
                   value={synopsisText}
                   onChange={(e) => setSynopsisText(e.target.value)}
-                  className="w-full border rounded-lg p-3 text-xs text-apptivia-carbon-700 resize-none h-48 focus:outline-none focus:ring-2 focus:ring-blue-300 bg-white font-mono"
+                  className="w-full border rounded-lg p-3 text-xs text-apptivia-carbon-700 resize-none h-48 focus:outline-none focus:ring-2 focus:ring-apptivia-coral-tone-300 bg-white font-mono"
                 />
                 <div className="flex items-center justify-between mt-3">
                   <button

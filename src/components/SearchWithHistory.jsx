@@ -201,7 +201,7 @@ export default function SearchWithHistory({
           onFocus={() => setIsFocused(true)}
           onKeyDown={handleKeyDown}
           placeholder={placeholder}
-          className={`w-full ${showIcon ? 'pl-9' : 'pl-3'} ${showClear && value ? 'pr-8' : 'pr-3'} py-2 text-sm border border-apptivia-carbon-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-apptivia-coral ${inputClassName}`}
+          className={`w-full ${showIcon ? 'pl-9' : 'pl-3'} ${showClear && value ? 'pr-8' : 'pr-3'} py-2 text-sm border border-apptivia-carbon-200 rounded-lg focus:ring-2 focus:ring-apptivia-coral focus:border-apptivia-coral ${inputClassName}`}
           autoComplete="off"
         />
         {showClear && value && (

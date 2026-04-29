@@ -254,7 +254,7 @@ export default function SignalOutreachModal({ isOpen, onClose, signal, contact }
                 <select
                   value={channel}
                   onChange={(e) => setChannel(e.target.value)}
-                  className="w-full text-xs border border-apptivia-carbon-200 rounded-lg px-2.5 py-1.5 bg-white appearance-none focus:outline-none focus:ring-2 focus:ring-purple-300 pr-6"
+                  className="w-full text-xs border border-apptivia-carbon-200 rounded-lg px-2.5 py-1.5 bg-white appearance-none focus:outline-none focus:ring-2 focus:ring-apptivia-coral-tone-300 pr-6"
                 >
                   <option value="email">✉ Email</option>
                   <option value="linkedin">in LinkedIn</option>

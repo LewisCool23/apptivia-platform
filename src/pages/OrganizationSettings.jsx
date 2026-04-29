@@ -39,7 +39,7 @@ function SignalTagField({ label, hint, items, value, onChange, onAdd, onRemove, 
           onChange={(e) => onChange(e.target.value)}
           onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); onAdd(); } }}
           placeholder={placeholder}
-          className="flex-1 border border-apptivia-carbon-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-apptivia-coral"
+          className="flex-1 border border-apptivia-carbon-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-apptivia-coral focus:border-apptivia-coral"
         />
         <button type="button" onClick={onAdd} className="px-3 py-2 bg-apptivia-carbon-100 rounded-lg hover:bg-apptivia-carbon-200 text-apptivia-carbon-600">
           <Plus size={14} />
@@ -165,7 +165,7 @@ function SubscriptionTab({ organization, members, teams, setMessage }) {
               Enterprise: ['Everything in Pro', 'Custom integrations', 'SSO & audit log', 'API access', 'Dedicated support', 'SLA guarantee'],
             };
             return (
-              <div key={tier} className={`border rounded-lg p-5 ${isCurrent ? 'border-apptivia-coral bg-apptivia-coral-tone-50/30 ring-1 ring-blue-200' : 'border-apptivia-carbon-200'} ${tier === 'Pro' && !isCurrent ? 'border-apptivia-carbon-300' : ''}`}>
+              <div key={tier} className={`border rounded-lg p-5 ${isCurrent ? 'border-apptivia-coral bg-apptivia-coral-tone-50/30 ring-1 ring-apptivia-coral-tone-100' : 'border-apptivia-carbon-200'} ${tier === 'Pro' && !isCurrent ? 'border-apptivia-carbon-300' : ''}`}>
                 <div className="flex items-center justify-between mb-2">
                   <h4 className="font-semibold text-lg">{TIER_DISPLAY[tier]}</h4>
                   {isCurrent && <span className="text-xs bg-apptivia-coral-tone-50 text-apptivia-coral px-2 py-0.5 rounded-full">Current</span>}
@@ -949,7 +949,7 @@ export default function OrganizationSettings() {
           <div className="flex gap-2 items-center">
             <div className="relative">
               <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-apptivia-carbon-400" />
-              <input type="text" placeholder="Search..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} onFocus={() => searchQuery && setShowSearchResults(true)} className="w-64 pl-9 pr-8 py-2 text-sm border border-apptivia-carbon-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-apptivia-coral" />
+              <input type="text" placeholder="Search..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} onFocus={() => searchQuery && setShowSearchResults(true)} className="w-64 pl-9 pr-8 py-2 text-sm border border-apptivia-carbon-200 rounded-lg focus:ring-2 focus:ring-apptivia-coral focus:border-apptivia-coral" />
               {searchQuery && (
                 <button onClick={() => { setSearchQuery(''); setSearchResults([]); setShowSearchResults(false); }} className="absolute right-2 top-1/2 -translate-y-1/2 text-apptivia-carbon-400 hover:text-apptivia-carbon-600"><X size={14} /></button>
               )}
@@ -1059,7 +1059,7 @@ export default function OrganizationSettings() {
                       type="text"
                       value={organization?.name || ''}
                       onChange={(e) => setOrganization({ ...organization, name: e.target.value })}
-                      className="w-full px-3 py-2 border border-apptivia-carbon-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2 border border-apptivia-carbon-300 rounded-lg focus:ring-2 focus:ring-apptivia-coral"
                       required
                     />
                   </div>
@@ -1071,7 +1071,7 @@ export default function OrganizationSettings() {
                     <select
                       value={organization?.industry || ''}
                       onChange={(e) => setOrganization({ ...organization, industry: e.target.value })}
-                      className="w-full px-3 py-2 border border-apptivia-carbon-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2 border border-apptivia-carbon-300 rounded-lg focus:ring-2 focus:ring-apptivia-coral"
                     >
                       <option value="">Select industry</option>
                       {INDUSTRY_OPTIONS.map((ind) => (
@@ -1088,7 +1088,7 @@ export default function OrganizationSettings() {
                       type="text"
                       value={organization?.primary_contact_name || ''}
                       onChange={(e) => setOrganization({ ...organization, primary_contact_name: e.target.value })}
-                      className="w-full px-3 py-2 border border-apptivia-carbon-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2 border border-apptivia-carbon-300 rounded-lg focus:ring-2 focus:ring-apptivia-coral"
                     />
                   </div>
 
@@ -1100,7 +1100,7 @@ export default function OrganizationSettings() {
                       type="email"
                       value={organization?.primary_contact_email || ''}
                       onChange={(e) => setOrganization({ ...organization, primary_contact_email: e.target.value })}
-                      className="w-full px-3 py-2 border border-apptivia-carbon-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2 border border-apptivia-carbon-300 rounded-lg focus:ring-2 focus:ring-apptivia-coral"
                     />
                   </div>
                 </div>
@@ -1133,7 +1133,7 @@ export default function OrganizationSettings() {
                         value={icpConfig.target_industries}
                         onChange={(e) => setIcpConfig(c => ({ ...c, target_industries: e.target.value }))}
                         placeholder="e.g. SaaS, Financial Services, Technology"
-                        className="w-full px-3 py-2 border border-apptivia-carbon-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-sm"
+                        className="w-full px-3 py-2 border border-apptivia-carbon-300 rounded-lg focus:ring-2 focus:ring-apptivia-coral text-sm"
                       />
                     </div>
 
@@ -1145,7 +1145,7 @@ export default function OrganizationSettings() {
                           value={icpConfig.headcount_min}
                           onChange={(e) => setIcpConfig(c => ({ ...c, headcount_min: e.target.value }))}
                           placeholder="e.g. 50"
-                          className="w-full px-3 py-2 border border-apptivia-carbon-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-sm"
+                          className="w-full px-3 py-2 border border-apptivia-carbon-300 rounded-lg focus:ring-2 focus:ring-apptivia-coral text-sm"
                         />
                       </div>
                       <div>
@@ -1155,7 +1155,7 @@ export default function OrganizationSettings() {
                           value={icpConfig.headcount_max}
                           onChange={(e) => setIcpConfig(c => ({ ...c, headcount_max: e.target.value }))}
                           placeholder="e.g. 5000"
-                          className="w-full px-3 py-2 border border-apptivia-carbon-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-sm"
+                          className="w-full px-3 py-2 border border-apptivia-carbon-300 rounded-lg focus:ring-2 focus:ring-apptivia-coral text-sm"
                         />
                       </div>
                     </div>
@@ -1168,7 +1168,7 @@ export default function OrganizationSettings() {
                           value={icpConfig.revenue_min_m}
                           onChange={(e) => setIcpConfig(c => ({ ...c, revenue_min_m: e.target.value }))}
                           placeholder="e.g. 5"
-                          className="w-full px-3 py-2 border border-apptivia-carbon-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-sm"
+                          className="w-full px-3 py-2 border border-apptivia-carbon-300 rounded-lg focus:ring-2 focus:ring-apptivia-coral text-sm"
                         />
                       </div>
                       <div>
@@ -1178,7 +1178,7 @@ export default function OrganizationSettings() {
                           value={icpConfig.revenue_max_m}
                           onChange={(e) => setIcpConfig(c => ({ ...c, revenue_max_m: e.target.value }))}
                           placeholder="e.g. 500"
-                          className="w-full px-3 py-2 border border-apptivia-carbon-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-sm"
+                          className="w-full px-3 py-2 border border-apptivia-carbon-300 rounded-lg focus:ring-2 focus:ring-apptivia-coral text-sm"
                         />
                       </div>
                     </div>
@@ -1190,7 +1190,7 @@ export default function OrganizationSettings() {
                         value={icpConfig.target_technologies}
                         onChange={(e) => setIcpConfig(c => ({ ...c, target_technologies: e.target.value }))}
                         placeholder="e.g. Salesforce, HubSpot, Outreach, Slack"
-                        className="w-full px-3 py-2 border border-apptivia-carbon-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-sm"
+                        className="w-full px-3 py-2 border border-apptivia-carbon-300 rounded-lg focus:ring-2 focus:ring-apptivia-coral text-sm"
                       />
                     </div>
 
@@ -1343,7 +1343,7 @@ export default function OrganizationSettings() {
                               value={newCustomSignal.signal_name}
                               onChange={e => setNewCustomSignal(s => ({ ...s, signal_name: e.target.value }))}
                               placeholder="e.g. Researching Sales Tools"
-                              className="w-full px-3 py-1.5 border border-apptivia-carbon-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500"
+                              className="w-full px-3 py-1.5 border border-apptivia-carbon-300 rounded-lg text-sm focus:ring-2 focus:ring-apptivia-coral"
                             />
                           </div>
                           <div>
@@ -1353,7 +1353,7 @@ export default function OrganizationSettings() {
                               value={newCustomSignal.signal_key}
                               onChange={e => setNewCustomSignal(s => ({ ...s, signal_key: e.target.value }))}
                               placeholder="e.g. researching_sales_tools"
-                              className="w-full px-3 py-1.5 border border-apptivia-carbon-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 font-mono"
+                              className="w-full px-3 py-1.5 border border-apptivia-carbon-300 rounded-lg text-sm focus:ring-2 focus:ring-apptivia-coral font-mono"
                             />
                           </div>
                         </div>
@@ -1363,7 +1363,7 @@ export default function OrganizationSettings() {
                             <select
                               value={newCustomSignal.category}
                               onChange={e => setNewCustomSignal(s => ({ ...s, category: e.target.value }))}
-                              className="w-full px-3 py-1.5 border border-apptivia-carbon-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500"
+                              className="w-full px-3 py-1.5 border border-apptivia-carbon-300 rounded-lg text-sm focus:ring-2 focus:ring-apptivia-coral"
                             >
                               <option value="buyer_intent">Buyer Intent</option>
                               <option value="interest">Interest</option>
@@ -1378,7 +1378,7 @@ export default function OrganizationSettings() {
                               max="100"
                               value={newCustomSignal.default_score}
                               onChange={e => setNewCustomSignal(s => ({ ...s, default_score: e.target.value }))}
-                              className="w-full px-3 py-1.5 border border-apptivia-carbon-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500"
+                              className="w-full px-3 py-1.5 border border-apptivia-carbon-300 rounded-lg text-sm focus:ring-2 focus:ring-apptivia-coral"
                             />
                           </div>
                           <div>
@@ -1386,7 +1386,7 @@ export default function OrganizationSettings() {
                             <select
                               value={newCustomSignal.default_strength}
                               onChange={e => setNewCustomSignal(s => ({ ...s, default_strength: e.target.value }))}
-                              className="w-full px-3 py-1.5 border border-apptivia-carbon-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500"
+                              className="w-full px-3 py-1.5 border border-apptivia-carbon-300 rounded-lg text-sm focus:ring-2 focus:ring-apptivia-coral"
                             >
                               <option value="low">Low</option>
                               <option value="medium">Medium</option>
@@ -1402,7 +1402,7 @@ export default function OrganizationSettings() {
                             value={newCustomSignal.description}
                             onChange={e => setNewCustomSignal(s => ({ ...s, description: e.target.value }))}
                             placeholder="What this signal means and why it matters"
-                            className="w-full px-3 py-1.5 border border-apptivia-carbon-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500"
+                            className="w-full px-3 py-1.5 border border-apptivia-carbon-300 rounded-lg text-sm focus:ring-2 focus:ring-apptivia-coral"
                           />
                         </div>
                         <div className="flex justify-end gap-2">
@@ -2182,7 +2182,7 @@ export default function OrganizationSettings() {
                   </div>
                   <label className="relative inline-flex items-center cursor-pointer">
                     <input type="checkbox" defaultChecked className="sr-only peer" />
-                    <div className="w-11 h-6 bg-apptivia-carbon-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-apptivia-carbon-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-apptivia-coral"></div>
+                    <div className="w-11 h-6 bg-apptivia-carbon-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-apptivia-coral-tone-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-apptivia-carbon-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-apptivia-coral"></div>
                   </label>
                 </div>
               ))}
@@ -2206,7 +2206,7 @@ export default function OrganizationSettings() {
               onChange={(e) => setInviteEmails(e.target.value)}
               placeholder="user@example.com&#10;another@example.com"
               rows={4}
-              className="w-full border border-apptivia-carbon-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-apptivia-coral mb-3"
+              className="w-full border border-apptivia-carbon-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-apptivia-coral focus:border-apptivia-coral mb-3"
             />
 
             <div className="grid grid-cols-3 gap-3 mb-4">
@@ -2282,7 +2282,7 @@ export default function OrganizationSettings() {
                   value={teamHook.newTeamName}
                   onChange={(e) => teamHook.setNewTeamName(e.target.value)}
                   placeholder="e.g. Enterprise Sales"
-                  className="w-full border border-apptivia-carbon-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-apptivia-coral"
+                  className="w-full border border-apptivia-carbon-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-apptivia-coral focus:border-apptivia-coral"
                 />
               </div>
               <div>
@@ -2292,7 +2292,7 @@ export default function OrganizationSettings() {
                   value={teamHook.newTeamDescription}
                   onChange={(e) => teamHook.setNewTeamDescription(e.target.value)}
                   placeholder="Brief team description"
-                  className="w-full border border-apptivia-carbon-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-apptivia-coral"
+                  className="w-full border border-apptivia-carbon-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-apptivia-coral focus:border-apptivia-coral"
                 />
               </div>
               <div>
@@ -2300,7 +2300,7 @@ export default function OrganizationSettings() {
                 <select
                   value={teamHook.newTeamManagerId}
                   onChange={(e) => teamHook.setNewTeamManagerId(e.target.value)}
-                  className="w-full border border-apptivia-carbon-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-apptivia-coral"
+                  className="w-full border border-apptivia-carbon-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-apptivia-coral focus:border-apptivia-coral"
                 >
                   <option value="">No manager assigned</option>
                   {teamHook.allProfiles
@@ -2464,7 +2464,7 @@ export default function OrganizationSettings() {
                   placeholder="Search by name or email..."
                   value={addUsersSearch}
                   onChange={(e) => setAddUsersSearch(e.target.value)}
-                  className="w-full pl-9 pr-3 py-2 text-sm border border-apptivia-carbon-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-apptivia-coral"
+                  className="w-full pl-9 pr-3 py-2 text-sm border border-apptivia-carbon-300 rounded-md focus:ring-2 focus:ring-apptivia-coral focus:border-apptivia-coral"
                 />
               </div>
             </div>

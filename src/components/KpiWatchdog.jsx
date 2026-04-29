@@ -402,7 +402,7 @@ export default function KpiWatchdog({ organizationId, userId, filterProfileIds }
             <select
               value={filterSeverity}
               onChange={(e) => setFilterSeverity(e.target.value)}
-              className="text-xs border border-apptivia-carbon-200 rounded-lg px-2 py-1.5 bg-white focus:outline-none focus:ring-2 focus:ring-blue-300"
+              className="text-xs border border-apptivia-carbon-200 rounded-lg px-2 py-1.5 bg-white focus:outline-none focus:ring-2 focus:ring-apptivia-coral-tone-300"
             >
               <option value="all">All Severities</option>
               <option value="critical">Critical</option>
@@ -413,7 +413,7 @@ export default function KpiWatchdog({ organizationId, userId, filterProfileIds }
             <select
               value={filterStatus}
               onChange={(e) => setFilterStatus(e.target.value)}
-              className="text-xs border border-apptivia-carbon-200 rounded-lg px-2 py-1.5 bg-white focus:outline-none focus:ring-2 focus:ring-blue-300"
+              className="text-xs border border-apptivia-carbon-200 rounded-lg px-2 py-1.5 bg-white focus:outline-none focus:ring-2 focus:ring-apptivia-coral-tone-300"
             >
               <option value="all">All Statuses</option>
               <option value="active">Active</option>

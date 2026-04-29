@@ -1071,7 +1071,7 @@ export default function Contests() {
                 value={globalSearchQuery}
                 onChange={(e) => setGlobalSearchQuery(e.target.value)}
                 onFocus={() => globalSearchQuery && setShowGlobalSearchResults(true)}
-                className="w-64 pl-9 pr-8 py-2 text-sm border border-apptivia-carbon-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-apptivia-coral"
+                className="w-64 pl-9 pr-8 py-2 text-sm border border-apptivia-carbon-200 rounded-lg focus:ring-2 focus:ring-apptivia-coral focus:border-apptivia-coral"
               />
               {globalSearchQuery && (
                 <button
@@ -1723,7 +1723,7 @@ export default function Contests() {
                       onChange={(e) => setShareNotes(e.target.value)}
                       rows={2}
                       placeholder="Add a brief summary and next steps for the team."
-                      className="w-full border border-apptivia-carbon-200 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-apptivia-coral"
+                      className="w-full border border-apptivia-carbon-200 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-apptivia-coral focus:border-apptivia-coral"
                     />
                   </div>
                   <div className="flex flex-wrap gap-2 justify-center">
@@ -1758,7 +1758,7 @@ export default function Contests() {
                       value={shareRecipients}
                       onChange={(e) => setShareRecipients(e.target.value)}
                       placeholder="rep@company.com, rep2@company.com"
-                      className="w-full px-3 py-2 text-sm border border-apptivia-carbon-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      className="w-full px-3 py-2 text-sm border border-apptivia-carbon-300 rounded-lg focus:ring-2 focus:ring-apptivia-coral focus:border-transparent"
                     />
                     {shareRecipients.split(',').filter(r => r.trim()).length > 50 && (
                       <p className="text-xs text-red-500 mt-1">Maximum 50 recipients per email. Only the first 50 will receive the message.</p>

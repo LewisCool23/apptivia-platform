@@ -463,7 +463,7 @@ function DealTable({ deals, onUpdateDeal, onDeleteDeal, cepStages, hasCep, selec
           <select
             value={filterStage}
             onChange={(e) => setFilterStage(e.target.value)}
-            className="text-xs border border-apptivia-carbon-200 rounded-lg px-2 py-1.5 bg-white text-apptivia-carbon-600 focus:outline-none focus:ring-2 focus:ring-blue-300"
+            className="text-xs border border-apptivia-carbon-200 rounded-lg px-2 py-1.5 bg-white text-apptivia-carbon-600 focus:outline-none focus:ring-2 focus:ring-apptivia-coral-tone-300"
           >
             <option value="all">All Stages</option>
             {stageOptions.map(s => (
@@ -695,7 +695,7 @@ function NewDealModal({ onSave, onClose, cepStages }) {
               type="text"
               value={form.deal_name}
               onChange={(e) => setForm((f) => ({ ...f, deal_name: e.target.value }))}
-              className="w-full px-3 py-2 border border-apptivia-carbon-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-apptivia-carbon-300 rounded-md focus:outline-none focus:ring-2 focus:ring-apptivia-coral"
               placeholder="e.g. Acme Corp — Enterprise License"
               autoFocus
             />
@@ -708,7 +708,7 @@ function NewDealModal({ onSave, onClose, cepStages }) {
                 type="number"
                 value={form.deal_value}
                 onChange={(e) => setForm((f) => ({ ...f, deal_value: e.target.value }))}
-                className="w-full px-3 py-2 border border-apptivia-carbon-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-apptivia-carbon-300 rounded-md focus:outline-none focus:ring-2 focus:ring-apptivia-coral"
                 placeholder="25000"
               />
             </div>
@@ -718,7 +718,7 @@ function NewDealModal({ onSave, onClose, cepStages }) {
                 type="date"
                 value={form.close_date}
                 onChange={(e) => setForm((f) => ({ ...f, close_date: e.target.value }))}
-                className="w-full px-3 py-2 border border-apptivia-carbon-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-apptivia-carbon-300 rounded-md focus:outline-none focus:ring-2 focus:ring-apptivia-coral"
               />
             </div>
           </div>
@@ -736,7 +736,7 @@ function NewDealModal({ onSave, onClose, cepStages }) {
                     probability: sel?.win_probability ?? f.probability,
                   }));
                 }}
-                className="w-full px-3 py-2 border border-apptivia-carbon-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-apptivia-carbon-300 rounded-md focus:outline-none focus:ring-2 focus:ring-apptivia-coral"
               >
                 {stageOptions.map(s => (
                   <option key={s.stage_key} value={s.stage_key}>{s.stage_name}</option>
@@ -751,7 +751,7 @@ function NewDealModal({ onSave, onClose, cepStages }) {
                 max="100"
                 value={form.probability}
                 onChange={(e) => setForm((f) => ({ ...f, probability: parseInt(e.target.value) || 0 }))}
-                className="w-full px-3 py-2 border border-apptivia-carbon-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-apptivia-carbon-300 rounded-md focus:outline-none focus:ring-2 focus:ring-apptivia-coral"
               />
             </div>
           </div>
@@ -761,7 +761,7 @@ function NewDealModal({ onSave, onClose, cepStages }) {
             <select
               value={form.forecast_category}
               onChange={(e) => setForm((f) => ({ ...f, forecast_category: e.target.value }))}
-              className="w-full px-3 py-2 border border-apptivia-carbon-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-apptivia-carbon-300 rounded-md focus:outline-none focus:ring-2 focus:ring-apptivia-coral"
             >
               <option value="commit">Commit</option>
               <option value="best_case">Best Case</option>

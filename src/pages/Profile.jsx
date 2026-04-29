@@ -765,7 +765,7 @@ export default function Profile() {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 onFocus={() => searchQuery && setShowSearchResults(true)}
-                className="w-64 pl-9 pr-8 py-2 text-sm border border-apptivia-carbon-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-apptivia-coral"
+                className="w-64 pl-9 pr-8 py-2 text-sm border border-apptivia-carbon-200 rounded-lg focus:ring-2 focus:ring-apptivia-coral focus:border-apptivia-coral"
               />
               {searchQuery && (
                 <button
@@ -1355,7 +1355,7 @@ export default function Profile() {
                     value={slackWebhookUrl}
                     onChange={e => setSlackWebhookUrl(e.target.value)}
                     placeholder="https://hooks.slack.com/services/..."
-                    className="w-full px-3 py-2 text-sm border border-apptivia-carbon-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-apptivia-coral"
+                    className="w-full px-3 py-2 text-sm border border-apptivia-carbon-300 rounded-lg focus:ring-2 focus:ring-apptivia-coral focus:border-apptivia-coral"
                   />
                   <p className="text-[10px] text-apptivia-carbon-400 mt-1">
                     <a href="https://api.slack.com/messaging/webhooks" target="_blank" rel="noopener noreferrer" className="text-apptivia-coral hover:underline">How to create an incoming webhook</a>
@@ -1760,7 +1760,7 @@ export default function Profile() {
                 <select
                   value={awardBadgeForm.badge_name}
                   onChange={(e) => setAwardBadgeForm(prev => ({ ...prev, badge_name: e.target.value }))}
-                  className="w-full px-3 py-2 text-sm border border-apptivia-carbon-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-3 py-2 text-sm border border-apptivia-carbon-300 rounded-lg focus:ring-2 focus:ring-apptivia-coral focus:border-transparent"
                 >
                   <option value="">Select a badge...</option>
                   {availableBadgeDefs.map((b) => (
@@ -1773,7 +1773,7 @@ export default function Profile() {
                 <select
                   value={awardBadgeForm.profile_id}
                   onChange={(e) => setAwardBadgeForm(prev => ({ ...prev, profile_id: e.target.value }))}
-                  className="w-full px-3 py-2 text-sm border border-apptivia-carbon-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-3 py-2 text-sm border border-apptivia-carbon-300 rounded-lg focus:ring-2 focus:ring-apptivia-coral focus:border-transparent"
                 >
                   <option value="">Select a member...</option>
                   {editableProfiles.filter(p => !['admin', 'manager'].includes(normalizeRole(p.role))).map((p) => (

@@ -192,7 +192,7 @@ export default function CoachingPlanTemplatesModal({ isOpen, onClose, onTemplate
                   onClick={() => handleTemplateClick(template)}
                   className={`p-4 border-2 rounded-lg cursor-pointer transition-all hover:shadow-md ${
                     selectedTemplate?.id === template.id
-                      ? 'border-apptivia-coral bg-apptivia-coral-tone-50 ring-2 ring-blue-200'
+                      ? 'border-apptivia-coral bg-apptivia-coral-tone-50 ring-2 ring-apptivia-coral-tone-100'
                       : 'border-apptivia-carbon-200 hover:border-apptivia-coral-tone-100'
                   }`}
                 >
@@ -258,7 +258,7 @@ export default function CoachingPlanTemplatesModal({ isOpen, onClose, onTemplate
                   type="text"
                   value={customData.name}
                   onChange={(e) => setCustomData({ ...customData, name: e.target.value })}
-                  className="w-full border border-apptivia-carbon-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full border border-apptivia-carbon-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-apptivia-coral focus:border-transparent"
                   placeholder="Enter plan name"
                 />
               </div>
@@ -269,7 +269,7 @@ export default function CoachingPlanTemplatesModal({ isOpen, onClose, onTemplate
                 <select
                   value={customData.duration_days}
                   onChange={(e) => handleDurationChange(parseInt(e.target.value))}
-                  className="w-full border border-apptivia-carbon-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full border border-apptivia-carbon-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-apptivia-coral focus:border-transparent"
                 >
                   <option value={7}>1 week (7 days)</option>
                   <option value={14}>2 weeks (14 days)</option>
@@ -285,7 +285,7 @@ export default function CoachingPlanTemplatesModal({ isOpen, onClose, onTemplate
                   type="date"
                   value={customData.date_range_start}
                   onChange={(e) => handleStartDateChange(e.target.value)}
-                  className="w-full border border-apptivia-carbon-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full border border-apptivia-carbon-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-apptivia-coral focus:border-transparent"
                 />
               </div>
               <div>

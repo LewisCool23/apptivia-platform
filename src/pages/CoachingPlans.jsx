@@ -1425,7 +1425,7 @@ export default function CoachingPlans() {
           <div className="flex gap-2 items-center">
             <div className="relative">
               <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-apptivia-carbon-400" />
-              <input type="text" placeholder="Search..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} onFocus={() => searchQuery && setShowSearchResults(true)} className="w-64 pl-9 pr-8 py-2 text-sm border border-apptivia-carbon-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-apptivia-coral" />
+              <input type="text" placeholder="Search..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} onFocus={() => searchQuery && setShowSearchResults(true)} className="w-64 pl-9 pr-8 py-2 text-sm border border-apptivia-carbon-200 rounded-lg focus:ring-2 focus:ring-apptivia-coral focus:border-apptivia-coral" />
               {searchQuery && <button onClick={() => { setSearchQuery(''); setSearchResults([]); setShowSearchResults(false); }} className="absolute right-2 top-1/2 -translate-y-1/2 text-apptivia-carbon-400 hover:text-apptivia-carbon-600"><X size={14} /></button>}
               {showSearchResults && searchResults.length > 0 && (
                 <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-apptivia-carbon-200 rounded-lg shadow-lg max-h-96 overflow-y-auto z-50">
@@ -1843,7 +1843,7 @@ export default function CoachingPlans() {
                     value={shareEmail}
                     onChange={(e) => setShareEmail(e.target.value)}
                     placeholder="email@example.com"
-                    className="w-full border border-apptivia-carbon-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full border border-apptivia-carbon-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-apptivia-coral focus:border-transparent"
                   />
                   <p className="text-xs text-apptivia-carbon-400 mt-1">Separate multiple emails with commas</p>
                 </div>
@@ -1854,7 +1854,7 @@ export default function CoachingPlans() {
                     onChange={(e) => setShareNotes(e.target.value)}
                     placeholder="Add any additional context or instructions..."
                     rows={3}
-                    className="w-full border border-apptivia-carbon-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-y"
+                    className="w-full border border-apptivia-carbon-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-apptivia-coral focus:border-transparent resize-y"
                   />
                 </div>
                 <p className="text-xs text-apptivia-coral bg-apptivia-coral-tone-50 rounded p-2">

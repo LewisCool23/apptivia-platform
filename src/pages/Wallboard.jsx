@@ -1018,7 +1018,7 @@ export default function Wallboard() {
             <select
               value={selectedTeamId || ''}
               onChange={(e) => setSelectedTeamId(e.target.value || null)}
-              className="bg-white/5 border border-white/10 text-white rounded-lg px-3 py-1.5 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none cursor-pointer"
+              className="bg-white/5 border border-white/10 text-white rounded-lg px-3 py-1.5 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-apptivia-coral appearance-none cursor-pointer"
             >
               <option value="" className="bg-apptivia-ink">All Teams</option>
               {teams.map(t => (

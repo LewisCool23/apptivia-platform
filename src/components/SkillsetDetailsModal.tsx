@@ -372,7 +372,7 @@ export default function SkillsetDetailsModal({
                       return (
                       <div
                         key={achievement.id}
-                        className={`border rounded-lg p-4 transition-shadow ${isCompleted ? 'bg-green-50 border-green-200 shadow-sm' : 'hover:shadow-md'} ${isHighlighted ? 'ring-2 ring-blue-400 bg-apptivia-coral-tone-50 border-apptivia-coral-tone-100' : ''}`}
+                        className={`border rounded-lg p-4 transition-shadow ${isCompleted ? 'bg-green-50 border-green-200 shadow-sm' : 'hover:shadow-md'} ${isHighlighted ? 'ring-2 ring-apptivia-coral-tone-300 bg-apptivia-coral-tone-50 border-apptivia-coral-tone-100' : ''}`}
                       >
                         <div className="flex items-start justify-between mb-2">
                           <div className="flex-1">

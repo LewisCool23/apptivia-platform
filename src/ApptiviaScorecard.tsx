@@ -938,7 +938,7 @@ const ApptiviaScorecard: React.FC = () => {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 onFocus={() => searchQuery && setShowSearchResults(true)}
-                className="w-64 pl-9 pr-8 py-2 text-sm border border-apptivia-carbon-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-apptivia-coral"
+                className="w-64 pl-9 pr-8 py-2 text-sm border border-apptivia-carbon-200 rounded-lg focus:ring-2 focus:ring-apptivia-coral focus:border-apptivia-coral"
               />
               {searchQuery && (
                 <button
@@ -1334,7 +1334,7 @@ const ApptiviaScorecard: React.FC = () => {
               </div>
             </div>
 
-            <div className="bg-white rounded-lg p-3 shadow-sm mb-4 ring-1 ring-blue-100/80 shadow-blue-100/40">
+            <div className="bg-white rounded-lg p-3 shadow-sm mb-4 ring-1 ring-apptivia-coral-tone-100/80 shadow-blue-100/40">
               <div className="flex items-center justify-between gap-2">
                 <div className="flex items-center gap-2">
                   <h2 className="text-base font-semibold">{isPowerUser ? 'My Scorecard Snapshot' : 'Team Performance Scorecard'}</h2>
@@ -1440,7 +1440,7 @@ const ApptiviaScorecard: React.FC = () => {
                           ? (idx === 0 ? '🏆' : idx === 1 ? '🥈' : idx === 2 ? '🥉' : '')
                           : '';
                         const isFocused = focusedRowIdx === idx;
-                        const rowClass = isFocused ? 'bg-apptivia-coral-tone-50 ring-1 ring-blue-300' : scoreRowBg(row.apptivityScore);
+                        const rowClass = isFocused ? 'bg-apptivia-coral-tone-50 ring-1 ring-apptivia-coral-tone-300' : scoreRowBg(row.apptivityScore);
                         const scoreColor = scoreTextColor(row.apptivityScore);
                         return (
                           <tr key={row.profile_id} className={`${rowClass} transition-all duration-200 hover:bg-apptivia-paper hover:shadow-sm`}>

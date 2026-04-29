@@ -112,7 +112,7 @@ export default function StepTeamStructure({ wizardState, updateState, profile })
                 type="text"
                 value={dept.name}
                 onChange={(e) => updateDepartment(i, e.target.value)}
-                className="flex-1 px-3 py-2 border border-apptivia-carbon-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-apptivia-coral"
+                className="flex-1 px-3 py-2 border border-apptivia-carbon-300 rounded-lg text-sm focus:ring-2 focus:ring-apptivia-coral focus:border-apptivia-coral"
                 placeholder="e.g. Sales, Marketing, Customer Success"
               />
               {departments.length > 1 && (
@@ -156,7 +156,7 @@ export default function StepTeamStructure({ wizardState, updateState, profile })
                       type="text"
                       value={team.name}
                       onChange={(e) => updateTeam(team._idx, 'name', e.target.value)}
-                      className="flex-1 px-3 py-2 border border-apptivia-carbon-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-apptivia-coral"
+                      className="flex-1 px-3 py-2 border border-apptivia-carbon-300 rounded-lg text-sm focus:ring-2 focus:ring-apptivia-coral focus:border-apptivia-coral"
                       placeholder="Team name"
                     />
                     <select
@@ -219,21 +219,21 @@ export default function StepTeamStructure({ wizardState, updateState, profile })
                   type="email"
                   value={member.email}
                   onChange={(e) => updateMember(i, 'email', e.target.value)}
-                  className="col-span-5 px-3 py-2 border border-apptivia-carbon-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500"
+                  className="col-span-5 px-3 py-2 border border-apptivia-carbon-300 rounded-lg text-sm focus:ring-2 focus:ring-apptivia-coral"
                   placeholder="email@company.com"
                 />
                 <input
                   type="text"
                   value={member.first_name}
                   onChange={(e) => updateMember(i, 'first_name', e.target.value)}
-                  className="col-span-3 px-3 py-2 border border-apptivia-carbon-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500"
+                  className="col-span-3 px-3 py-2 border border-apptivia-carbon-300 rounded-lg text-sm focus:ring-2 focus:ring-apptivia-coral"
                   placeholder="First"
                 />
                 <input
                   type="text"
                   value={member.last_name}
                   onChange={(e) => updateMember(i, 'last_name', e.target.value)}
-                  className="col-span-3 px-3 py-2 border border-apptivia-carbon-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500"
+                  className="col-span-3 px-3 py-2 border border-apptivia-carbon-300 rounded-lg text-sm focus:ring-2 focus:ring-apptivia-coral"
                   placeholder="Last"
                 />
                 <button
