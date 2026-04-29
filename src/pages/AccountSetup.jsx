@@ -145,24 +145,35 @@ export default function AccountSetup() {
   // Show loader while auth state or profile is loading
   if (isLoading || !profileLoaded) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-500 via-purple-500 to-indigo-500 flex items-center justify-center">
+      <div className="min-h-screen bg-apptivia-ink flex items-center justify-center">
         <div className="text-center">
-          <Loader className="animate-spin text-white mx-auto mb-4" size={48} />
-          <p className="text-white/80">Loading...</p>
+          <Loader className="animate-spin text-apptivia-paper mx-auto mb-4" size={48} />
+          <p className="text-apptivia-paper/80">Loading...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-500 via-purple-500 to-indigo-500">
+    <div className="min-h-screen relative bg-apptivia-ink flex items-center justify-center">
+      {/* Decorative gradient overlay - Option B subtle Carbon + Coral glow */}
+      <div
+        className="absolute inset-0 pointer-events-none"
+        style={{
+          background: `
+            radial-gradient(ellipse at top right, #27272A 0%, transparent 60%),
+            radial-gradient(ellipse at bottom left, rgba(255, 77, 46, 0.08) 0%, transparent 50%)
+          `,
+        }}
+      />
+      <div className="relative z-10">
       <form
         onSubmit={handleSubmit}
         className="bg-white p-8 rounded-lg shadow-xl w-full max-w-md flex flex-col items-center"
       >
         {/* Brand logo */}
-        <div className="w-16 h-16 rounded-lg bg-gradient-to-r from-blue-500 to-purple-500 flex items-center justify-center mb-6">
-          <span className="text-white font-bold text-3xl">A</span>
+        <div className="text-center mb-6">
+          <span className="font-display font-black text-3xl tracking-tight text-apptivia-ink">app</span><span className="font-display font-medium text-3xl tracking-tight text-apptivia-coral">tivia</span>
         </div>
 
         <h1 className="text-2xl font-bold text-apptivia-coral mb-2 text-center">
@@ -188,7 +199,7 @@ export default function AccountSetup() {
               type="text"
               value={formData.first_name}
               onChange={handleChange('first_name')}
-              className="w-full border border-apptivia-carbon-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200"
+              className="w-full border border-apptivia-carbon-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-apptivia-coral transition-all duration-200"
               required
               autoFocus
               placeholder="Jane"
@@ -202,7 +213,7 @@ export default function AccountSetup() {
               type="text"
               value={formData.last_name}
               onChange={handleChange('last_name')}
-              className="w-full border border-apptivia-carbon-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200"
+              className="w-full border border-apptivia-carbon-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-apptivia-coral transition-all duration-200"
               required
               placeholder="Doe"
             />
@@ -219,7 +230,7 @@ export default function AccountSetup() {
               type={showPassword ? 'text' : 'password'}
               value={formData.password}
               onChange={handleChange('password')}
-              className="w-full border border-apptivia-carbon-300 rounded-md px-3 py-2 pr-10 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200"
+              className="w-full border border-apptivia-carbon-300 rounded-md px-3 py-2 pr-10 focus:outline-none focus:ring-2 focus:ring-apptivia-coral transition-all duration-200"
               required
               minLength={8}
               placeholder="Min. 8 characters"
@@ -245,7 +256,7 @@ export default function AccountSetup() {
               type={showConfirmPassword ? 'text' : 'password'}
               value={formData.confirmPassword}
               onChange={handleChange('confirmPassword')}
-              className="w-full border border-apptivia-carbon-300 rounded-md px-3 py-2 pr-10 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200"
+              className="w-full border border-apptivia-carbon-300 rounded-md px-3 py-2 pr-10 focus:outline-none focus:ring-2 focus:ring-apptivia-coral transition-all duration-200"
               required
               minLength={8}
               placeholder="Re-enter password"
@@ -265,11 +276,12 @@ export default function AccountSetup() {
         <button
           type="submit"
           disabled={isSubmitting}
-          className="w-full bg-gradient-to-r from-blue-500 to-purple-500 text-white py-2.5 rounded-lg font-semibold hover:from-blue-600 hover:to-purple-600 transition-all duration-300 text-sm hover:shadow-lg hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+          className="w-full bg-apptivia-coral hover:bg-apptivia-coral-tone-600 text-apptivia-paper py-2.5 rounded-lg font-semibold transition-all duration-300 text-sm hover:shadow-lg hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
         >
           {isSubmitting ? 'Setting up your account...' : 'Complete Setup'}
         </button>
       </form>
+      </div>
     </div>
   );
 }
