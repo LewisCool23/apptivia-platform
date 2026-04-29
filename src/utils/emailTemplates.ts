@@ -74,8 +74,10 @@ export function buildEmailWrapper(
 <body>
   <div class="container">
     <div class="header">
-      <h1 style="margin: 0 0 5px 0;">${title}</h1>
-      <p style="margin: 0; opacity: 0.9;">${subtitle}</p>
+      <div style="font-size:28px;letter-spacing:-0.5px;margin-bottom:2px;"><span style="font-family:'Geist',-apple-system,BlinkMacSystemFont,sans-serif;font-weight:900;color:#F7F5F2;letter-spacing:-0.05em;">app</span><span style="font-family:'Geist',-apple-system,BlinkMacSystemFont,sans-serif;font-weight:500;color:#F7F5F2;letter-spacing:-0.05em;">tivia</span></div>
+      <div style="font-size:11px;opacity:0.85;letter-spacing:1px;text-transform:uppercase;margin-bottom:12px;">Sales Performance Intelligence</div>
+      <h1 style="margin: 0 0 5px 0;font-size:18px;">${title}</h1>
+      <p style="margin: 0; opacity: 0.9;font-size:12px;">${subtitle}</p>
       ${headerMeta || ''}
     </div>
     ${bodyHtml}
@@ -270,7 +272,7 @@ export function buildScorecardSnapshotEmailHtml(data: ScorecardData, options: Sc
 
   return buildEmailWrapper(
     '📊 Weekly Scorecard Snapshot',
-    '<span style="font-family:\'Geist\',-apple-system,BlinkMacSystemFont,sans-serif;font-weight:900;color:#F7F5F2;letter-spacing:-0.05em;">app</span><span style="font-family:\'Geist\',-apple-system,BlinkMacSystemFont,sans-serif;font-weight:500;color:#F7F5F2;letter-spacing:-0.05em;">tivia</span>',
+    'Team Performance',
     bodyHtml,
     {
       headerMeta,
@@ -422,7 +424,7 @@ export function buildCoachSnapshotEmailHtml(data: CoachData, options: CoachEmail
 
   return buildEmailWrapper(
     '📋 Coaching Progress Snapshot',
-    '<span style="font-family:\'Geist\',-apple-system,BlinkMacSystemFont,sans-serif;font-weight:900;color:#F7F5F2;letter-spacing:-0.05em;">app</span><span style="font-family:\'Geist\',-apple-system,BlinkMacSystemFont,sans-serif;font-weight:500;color:#F7F5F2;letter-spacing:-0.05em;">tivia</span>',
+    'Coaching & Development',
     bodyHtml,
     {
       headerMeta,
