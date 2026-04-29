@@ -408,9 +408,7 @@ function DashboardLayout({ children }) {
                 aria-label="Expand sidebar"
                 title="Expand sidebar"
               >
-                <div className="w-7 h-7 bg-apptivia-ink rounded-lg flex items-center justify-center">
-                  <span className="text-white font-bold text-xs">A</span>
-                </div>
+                <ApptiviaMark className="w-7 h-7 rounded-lg" />
               </button>
             )}
             {sidebarOpen && (
