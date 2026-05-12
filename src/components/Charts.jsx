@@ -90,7 +90,7 @@ export const KPIBarChart = ({ data, title, infoText }) => {
 
 // Donut Chart for score distribution
 export const ScoreDistributionChart = ({ data, title, infoText, footer = null }) => {
-  const COLORS = ['#16A34A', '#F59E0B', '#C8341B', '#71717A'];
+  const COLORS = ['#16A34A', '#F59E0B', '#FF8A6B', '#FF4D2E'];
   const RADIAN = Math.PI / 180;
   const innerRadius = 50;
   const outerRadius = 70;

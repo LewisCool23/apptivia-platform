@@ -242,10 +242,10 @@ export function buildScorecardSnapshotEmailHtml(data: ScorecardData, options: Sc
   if (kpiScores && kpiScores.length > 0) {
     const kpiRows = kpiScores.map(kpi => {
       const color = kpi.percentage >= 80 ? EMAIL_COLORS.success : kpi.percentage >= 50 ? EMAIL_COLORS.warning : EMAIL_COLORS.error;
-      return `<div style="display: flex; justify-content: space-between; padding: 8px 12px; border-bottom: 1px solid #F7F5F2; font-size: 14px;">
-        <span>${kpi.label}</span>
-        <span style="font-weight: bold; color: ${color};">${kpi.percentage}%</span>
-      </div>`;
+      return `<table style="width: 100%; border-collapse: collapse;"><tr>
+        <td style="padding: 8px 12px; border-bottom: 1px solid #F7F5F2; font-size: 14px; text-align: left;">${kpi.label}</td>
+        <td style="padding: 8px 12px; border-bottom: 1px solid #F7F5F2; font-size: 14px; text-align: right; font-weight: bold; color: ${color};">${kpi.percentage}%</td>
+      </tr></table>`;
     }).join('');
 
     bodyHtml += `<div style="margin: 20px 0;">
@@ -687,6 +687,95 @@ export interface EnrichedPlanContent {
   plainText: string;
   context: EnrichedPlanContext;
   createdAt: string;
+}
+
+// ═════════════════════════════════════════════════════════════════════
+// PIPELINE FORECAST EMAIL
+// ═════════════════════════════════════════════════════════════════════
+
+interface ForecastEmailData {
+  totalPipeline: number;
+  weightedValue: number;
+  dealCount: number;
+  atRiskCount: number;
+  closingThisMonth: number;
+  forecastText: string;
+}
+
+interface ForecastEmailOptions {
+  notes?: string;
+}
+
+function formatCurrency(val: number): string {
+  if (val >= 1_000_000) return `$${(val / 1_000_000).toFixed(1)}M`;
+  if (val >= 1_000) return `$${(val / 1_000).toFixed(0)}K`;
+  return `$${val.toLocaleString()}`;
+}
+
+/** Convert basic markdown to inline HTML for emails */
+function markdownToEmailHtml(text: string): string {
+  // Escape HTML entities first
+  let html = text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  // Headers (### → h4, ## → h3)
+  html = html.replace(/^### (.+)$/gm, '<h4 style="margin: 12px 0 4px 0; font-size: 14px; font-weight: 700; color: #18181b;">$1</h4>');
+  html = html.replace(/^## (.+)$/gm, '<h3 style="margin: 14px 0 6px 0; font-size: 15px; font-weight: 700; color: #18181b;">$1</h3>');
+  // Bold
+  html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+  // Bullet lists (- item or * item)
+  html = html.replace(/^[-*] (.+)$/gm, '<li style="margin: 2px 0; padding-left: 4px;">$1</li>');
+  html = html.replace(/(<li[^>]*>.*<\/li>\n?)+/g, (match) => `<ul style="margin: 6px 0; padding-left: 18px; list-style: disc;">${match}</ul>`);
+  // Numbered lists (1. item)
+  html = html.replace(/^\d+\. (.+)$/gm, '<li style="margin: 2px 0; padding-left: 4px;">$1</li>');
+  // Double newlines → paragraph breaks
+  html = html.replace(/\n\n/g, '<br/><br/>');
+  // Single newlines (not already handled) → <br/>
+  html = html.replace(/\n/g, '<br/>');
+  return html;
+}
+
+export function buildForecastEmailHtml(data: ForecastEmailData, options: ForecastEmailOptions = {}): string {
+  const stats = buildStatGrid([
+    { value: formatCurrency(data.totalPipeline), label: `Total Pipeline · ${data.dealCount} deals` },
+    { value: formatCurrency(data.weightedValue), label: 'Weighted Value', color: EMAIL_COLORS.success },
+    { value: String(data.atRiskCount), label: 'At Risk Deals', color: EMAIL_COLORS.error },
+    { value: String(data.closingThisMonth), label: 'Closing This Month' },
+  ], 2);
+
+  const forecastSection = `
+    <div style="margin: 20px 0;">
+      <h3 style="margin: 0 0 10px 0; font-size: 16px;">🔮 AI Pipeline Analysis</h3>
+      <div style="background: ${EMAIL_COLORS.paper}; padding: 16px; border-radius: 8px; border-left: 4px solid ${EMAIL_COLORS.coral}; font-size: 14px; line-height: 1.7; color: ${EMAIL_COLORS.carbon700};">
+        ${markdownToEmailHtml(data.forecastText)}
+      </div>
+    </div>
+  `;
+
+  return buildEmailWrapper(
+    '📊 Pipeline Forecast',
+    'AI-Powered Pipeline Analysis',
+    stats + forecastSection,
+    {
+      ctaUrl: `${typeof window !== 'undefined' ? window.location.origin : 'https://apptivia.app'}/engage?tab=pipeline`,
+      ctaLabel: 'View Pipeline',
+      notesHtml: options.notes?.replace(/\n/g, '<br/>'),
+      footerLabel: 'Apptivia Engage — Pipeline Intelligence',
+    },
+  );
+}
+
+export function buildForecastEmailText(data: ForecastEmailData, options: ForecastEmailOptions = {}): string {
+  let text = 'APPTIVIA PIPELINE FORECAST\n';
+  text += '═══════════════════════════\n\n';
+  text += `Total Pipeline: ${formatCurrency(data.totalPipeline)} (${data.dealCount} deals)\n`;
+  text += `Weighted Value: ${formatCurrency(data.weightedValue)}\n`;
+  text += `At Risk: ${data.atRiskCount}\n`;
+  text += `Closing This Month: ${data.closingThisMonth}\n\n`;
+  text += '--- AI ANALYSIS ---\n\n';
+  text += data.forecastText + '\n';
+  if (options.notes) {
+    text += '\n--- NOTES ---\n' + options.notes + '\n';
+  }
+  return text;
 }
 
 export function buildEnrichedContent(plainText: string, context: EnrichedPlanContext): string {

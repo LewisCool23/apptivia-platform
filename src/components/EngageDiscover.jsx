@@ -898,6 +898,10 @@ export default function EngageDiscover({ organizationId, userId, initialSearch, 
   const [savedContactIds, setSavedContactIds] = useState(new Set());
   const [savingContact, setSavingContact] = useState(false);
 
+  // Add to Buying Committee
+  const [committeeAccounts, setCommitteeAccounts] = useState(null);
+  const [committeeModal, setCommitteeModal] = useState(null); // { person } or null
+
   // Pre-load saved contact IDs from DB so "Saved" state persists across page refreshes
   useEffect(() => {
     if (!organizationId) return;
@@ -913,6 +917,28 @@ export default function EngageDiscover({ organizationId, userId, initialSearch, 
         }
       });
   }, [organizationId]);
+
+  // Fetch accounts for Committee + feature (lazy, cached)
+  const fetchCommitteeAccounts = useCallback(async () => {
+    if (committeeAccounts) return committeeAccounts;
+    const { data } = await supabase
+      .from('engage_accounts')
+      .select('id, account_name, domain, buying_committee')
+      .eq('organization_id', organizationId)
+      .order('account_name');
+    const list = data || [];
+    setCommitteeAccounts(list);
+    return list;
+  }, [organizationId, committeeAccounts]);
+
+  const openCommitteeModal = useCallback(async (person) => {
+    const accts = await fetchCommitteeAccounts();
+    if (accts.length === 0) {
+      setError('No accounts found. Add accounts in Account Intelligence first.');
+      return;
+    }
+    setCommitteeModal({ person });
+  }, [fetchCommitteeAccounts]);
 
   // Company disambiguation
   const [disambiguationResults, setDisambiguationResults] = useState(null);
@@ -1487,7 +1513,7 @@ export default function EngageDiscover({ organizationId, userId, initialSearch, 
     <div className="space-y-4">
       {/* Search Panel */}
       <div className="bg-white rounded-lg border border-apptivia-carbon-100 overflow-hidden">
-        <div className="bg-apptivia-ink px-6 py-5">
+        <div className="bg-apptivia-coral px-6 py-5">
           <div className="flex items-center gap-3 mb-3">
             <div className="w-9 h-9 bg-white/20 backdrop-blur-sm rounded-lg flex items-center justify-center">
               <Sparkles size={16} className="text-white" />
@@ -2090,6 +2116,13 @@ export default function EngageDiscover({ organizationId, userId, initialSearch, 
                           >
                             <Eye size={13} />
                           </button>
+                          <button
+                            onClick={() => openCommitteeModal({ name, title, email, organization: org })}
+                            className="text-apptivia-carbon-300 hover:text-emerald-600 transition-colors"
+                            title="Add to Buying Committee"
+                          >
+                            <UserPlus size={13} />
+                          </button>
                         </div>
                       </td>
                     </tr>
@@ -2237,6 +2270,174 @@ export default function EngageDiscover({ organizationId, userId, initialSearch, 
           </div>
         </div>
       )}
+
+      {/* Add to Buying Committee Modal */}
+      {committeeModal && committeeAccounts && (
+        <AddToCommitteeModal
+          person={committeeModal.person}
+          accounts={committeeAccounts}
+          onClose={() => setCommitteeModal(null)}
+          onAdded={(accountId, updatedCommittee) => {
+            setCommitteeAccounts(prev => prev.map(a =>
+              a.id === accountId ? { ...a, buying_committee: updatedCommittee } : a
+            ));
+          }}
+        />
+      )}
+    </div>
+  );
+}
+
+// ── Add to Buying Committee Modal ─────────────────────────
+
+function AddToCommitteeModal({ person, accounts, onClose, onAdded }) {
+  const [selectedAccountId, setSelectedAccountId] = useState('');
+  const [role, setRole] = useState('influencer');
+  const [influence, setInfluence] = useState('medium');
+  const [search, setSearch] = useState('');
+  const [adding, setAdding] = useState(false);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState(false);
+
+  // Pre-select account if person's company matches
+  useEffect(() => {
+    if (!person?.organization || accounts.length === 0) return;
+    const org = person.organization.toLowerCase();
+    const match = accounts.find(a =>
+      a.account_name.toLowerCase().includes(org) ||
+      org.includes(a.account_name.toLowerCase()) ||
+      (a.domain && org.includes(a.domain.toLowerCase()))
+    );
+    if (match) setSelectedAccountId(match.id);
+  }, [person, accounts]);
+
+  const filtered = search
+    ? accounts.filter(a => a.account_name.toLowerCase().includes(search.toLowerCase()))
+    : accounts;
+
+  const handleAdd = async () => {
+    if (!selectedAccountId) { setError('Please select an account.'); return; }
+    const account = accounts.find(a => a.id === selectedAccountId);
+    if (!account) return;
+
+    const newMember = {
+      name: person.name || '',
+      title: person.title || '',
+      email: person.email || '',
+      role,
+      influence_level: influence,
+    };
+
+    const currentCommittee = Array.isArray(account.buying_committee) ? account.buying_committee : [];
+
+    // Check for duplicates by name+email
+    const isDupe = currentCommittee.some(m =>
+      (m.email && m.email === newMember.email) ||
+      (m.name && m.name.toLowerCase() === newMember.name.toLowerCase())
+    );
+    if (isDupe) { setError('This person is already on the buying committee.'); return; }
+
+    const updated = [...currentCommittee, newMember];
+    setAdding(true);
+    setError('');
+
+    const { error: dbError } = await supabase
+      .from('engage_accounts')
+      .update({ buying_committee: updated, updated_at: new Date().toISOString() })
+      .eq('id', selectedAccountId);
+
+    if (dbError) {
+      setError(dbError.message);
+      setAdding(false);
+      return;
+    }
+
+    onAdded(selectedAccountId, updated);
+    setSuccess(true);
+    setTimeout(() => onClose(), 1500);
+  };
+
+  const ROLES = [
+    { value: 'decision_maker', label: 'Decision Maker' },
+    { value: 'champion', label: 'Champion' },
+    { value: 'influencer', label: 'Influencer' },
+    { value: 'blocker', label: 'Blocker' },
+    { value: 'user', label: 'End User' },
+  ];
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={onClose}>
+      <div className="bg-white rounded-lg shadow-2xl w-full max-w-sm mx-4 p-5" onClick={e => e.stopPropagation()}>
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <h3 className="text-sm font-semibold text-apptivia-ink">Add to Buying Committee</h3>
+            <p className="text-[10px] text-apptivia-carbon-400 mt-0.5">{person.name}{person.title ? ` · ${person.title}` : ''}</p>
+          </div>
+          <button onClick={onClose} className="text-apptivia-carbon-400 hover:text-apptivia-carbon-600"><X size={14} /></button>
+        </div>
+
+        {success ? (
+          <div className="flex items-center justify-center gap-2 py-6 text-emerald-600">
+            <Check size={16} /> <span className="text-sm font-medium">Added to committee!</span>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            <div>
+              <label className="block text-[10px] font-semibold text-apptivia-carbon-500 mb-1">ACCOUNT</label>
+              <input
+                value={search} onChange={e => setSearch(e.target.value)}
+                placeholder="Search accounts..."
+                className="w-full px-2.5 py-1.5 border border-apptivia-carbon-200 rounded-lg text-xs mb-1"
+              />
+              <div className="max-h-[120px] overflow-y-auto border border-apptivia-carbon-100 rounded-lg">
+                {filtered.length === 0 ? (
+                  <div className="p-3 text-center text-[10px] text-apptivia-carbon-400">No accounts found</div>
+                ) : filtered.map(a => (
+                  <button
+                    key={a.id}
+                    onClick={() => { setSelectedAccountId(a.id); setSearch(''); }}
+                    className={`w-full text-left px-3 py-2 text-xs hover:bg-apptivia-paper transition-colors flex items-center justify-between ${
+                      selectedAccountId === a.id ? 'bg-apptivia-coral-tone-50 text-apptivia-coral font-semibold' : 'text-apptivia-carbon-700'
+                    }`}
+                  >
+                    <span>{a.account_name}</span>
+                    {a.domain && <span className="text-[9px] text-apptivia-carbon-400">{a.domain}</span>}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-[10px] font-semibold text-apptivia-carbon-500 mb-1">ROLE</label>
+                <select value={role} onChange={e => setRole(e.target.value)}
+                  className="w-full px-2.5 py-1.5 border border-apptivia-carbon-200 rounded-lg text-xs bg-white">
+                  {ROLES.map(r => <option key={r.value} value={r.value}>{r.label}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="block text-[10px] font-semibold text-apptivia-carbon-500 mb-1">INFLUENCE</label>
+                <select value={influence} onChange={e => setInfluence(e.target.value)}
+                  className="w-full px-2.5 py-1.5 border border-apptivia-carbon-200 rounded-lg text-xs bg-white">
+                  <option value="high">High</option>
+                  <option value="medium">Medium</option>
+                  <option value="low">Low</option>
+                </select>
+              </div>
+            </div>
+
+            {error && <p className="text-[10px] text-red-600">{error}</p>}
+
+            <div className="flex gap-2 pt-1">
+              <button onClick={onClose} className="flex-1 py-1.5 text-xs text-apptivia-carbon-500 border border-apptivia-carbon-200 rounded-lg hover:bg-apptivia-paper">Cancel</button>
+              <button onClick={handleAdd} disabled={adding || !selectedAccountId}
+                className="flex-1 py-1.5 text-xs font-semibold text-white bg-apptivia-coral rounded-lg hover:bg-apptivia-coral/90 disabled:opacity-50">
+                {adding ? 'Adding...' : 'Add to Committee'}
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

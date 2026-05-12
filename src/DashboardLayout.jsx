@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useLocation, useNavigate, Link } from 'react-router-dom';
 import { useAuth } from './AuthContext';
 import { supabase } from './supabaseClient';
-import { Home, Trophy, Gamepad2, BarChart3, Settings, User, Menu, LogOut, X, Zap, Building2, ChevronDown, ChevronRight, Search, Radar, Monitor, Sparkles, Clock, FlaskConical } from 'lucide-react';
+import { Home, Trophy, Gamepad2, BarChart3, Settings, User, Menu, LogOut, X, Zap, Building2, ChevronDown, ChevronRight, Search, Radar, Monitor, Sparkles, Clock, FlaskConical, BookOpen } from 'lucide-react';
 import NotificationPanel from './components/NotificationPanel';
 import AaronChatbot from './AaronChatbot';
 import SetupChecklist from './components/onboarding/SetupChecklist';
@@ -17,7 +17,8 @@ const navigation = [
   { id: 'wallboard', name: 'Wallboard', icon: Monitor, route: '/wallboard', description: 'TV leaderboard display' },
   { id: 'contests', name: 'Contests', icon: Gamepad2, route: '/contests', description: 'Sales competitions' },
   { id: 'analytics', name: 'Analytics', icon: BarChart3, route: '/analytics', description: 'Advanced insights' },
-  { 
+  { id: 'resources', name: 'Resources', icon: BookOpen, route: '/resources', description: 'Sales playbooks & frameworks' },
+  {
     id: 'systems', 
     name: 'Systems', 
     icon: Settings, 
@@ -323,7 +324,18 @@ function DashboardLayout({ children }) {
   const activeRoute = location.pathname;
 
   const [chatbotOpen, setChatbotOpen] = useState(false);
+  const [aaronInitialPrompt, setAaronInitialPrompt] = useState(null);
   const [expandedMenus, setExpandedMenus] = useState({});
+
+  // Listen for "open-aaron" custom events from any component
+  React.useEffect(() => {
+    const handler = (e) => {
+      setAaronInitialPrompt(e.detail?.prompt || null);
+      setChatbotOpen(true);
+    };
+    window.addEventListener('open-aaron', handler);
+    return () => window.removeEventListener('open-aaron', handler);
+  }, []);
   
   const navPermissions = {
     dashboard: 'view_dashboard',
@@ -333,6 +345,7 @@ function DashboardLayout({ children }) {
     wallboard: 'view_coach',
     contests: 'view_contests',
     analytics: 'view_analytics',
+    resources: 'view_resources',
     integrations: 'view_systems',
     organization: 'view_systems',
     'permissions-teams': 'view_systems',
@@ -391,8 +404,8 @@ function DashboardLayout({ children }) {
         hidden lg:flex
         bg-white shadow-lg transition-all duration-300 flex-col fixed left-0 top-0 bottom-0 h-screen
       `}>
-        <div className="px-3 py-2 border-b">
-          <div className="relative flex items-center mb-2">
+        <div className={`${sidebarOpen ? 'px-3' : 'px-0'} py-2 border-b`}>
+          <div className={`relative flex items-center mb-2 ${sidebarOpen ? '' : 'justify-center'}`}>
             {sidebarOpen ? (
               <div className="flex items-center gap-2">
                 <ApptiviaMark className="w-7 h-7 rounded-lg" />
@@ -404,7 +417,7 @@ function DashboardLayout({ children }) {
             ) : (
               <button
                 onClick={() => setSidebarOpen(true)}
-                className="flex items-center gap-2"
+                className="flex items-center justify-center"
                 aria-label="Expand sidebar"
                 title="Expand sidebar"
               >
@@ -422,8 +435,8 @@ function DashboardLayout({ children }) {
             )}
           </div>
           {/* User Info Section */}
-          <div className="flex items-center gap-2 mt-1 mb-1">
-            <div className="w-7 h-7 bg-apptivia-coral rounded-full flex items-center justify-center">
+          <div className={`flex items-center ${sidebarOpen ? 'gap-2' : 'justify-center'} mt-1 mb-1`}>
+            <div className="w-7 h-7 bg-apptivia-coral rounded-full flex items-center justify-center flex-shrink-0">
               <span className="text-white font-bold text-xs">{getProfileInitials()}</span>
             </div>
             {sidebarOpen && (
@@ -434,7 +447,7 @@ function DashboardLayout({ children }) {
             )}
           </div>
         </div>
-        <nav className="flex-1 px-3 py-2 overflow-y-auto">
+        <nav className={`flex-1 ${sidebarOpen ? 'px-3' : 'px-0'} py-2 overflow-y-auto`}>
           <div className="space-y-1">
             {filteredNavigation.map(item => (
               <div key={item.id}>
@@ -443,7 +456,7 @@ function DashboardLayout({ children }) {
                   <div>
                     <button
                       onClick={() => sidebarOpen ? toggleSubmenu(item.id) : navigate(item.route)}
-                      className={`w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-left text-xs transition-all duration-200 hover:scale-[1.02] ${
+                      className={`w-full flex items-center ${sidebarOpen ? 'gap-2.5 px-2.5' : 'justify-center px-0'} py-1.5 rounded-lg text-left text-xs transition-all duration-200 hover:scale-[1.02] ${
                         activeRoute === item.route
                           ? 'bg-apptivia-coral text-white shadow-md'
                           : 'text-apptivia-carbon-700 hover:bg-apptivia-carbon-100'
@@ -484,7 +497,7 @@ function DashboardLayout({ children }) {
                   // Regular item without submenu
                   <button
                     onClick={() => navigate(item.route)}
-                    className={`w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-left text-xs transition-all duration-200 hover:scale-[1.02] ${
+                    className={`w-full flex items-center ${sidebarOpen ? 'gap-2.5 px-2.5' : 'justify-center px-0'} py-1.5 rounded-lg text-left text-xs transition-all duration-200 hover:scale-[1.02] ${
                       activeRoute === item.route
                         ? 'bg-apptivia-coral text-white shadow-md'
                         : 'text-apptivia-carbon-700 hover:bg-apptivia-carbon-100'
@@ -503,7 +516,7 @@ function DashboardLayout({ children }) {
             ))}
           </div>
         </nav>
-        <div className="mt-auto px-3 py-2 border-t">
+        <div className={`mt-auto ${sidebarOpen ? 'px-3' : 'px-0'} py-2 border-t`}>
           <button
             onClick={async () => { await logout(); navigate('/login'); }}
             className="w-full flex items-center gap-2 justify-center p-1.5 text-red-600 hover:bg-red-50 rounded-lg font-medium text-xs transition-all duration-200 hover:scale-[1.02]"
@@ -698,7 +711,7 @@ function DashboardLayout({ children }) {
       {!chatbotOpen && (
         <button
           onClick={() => setChatbotOpen(true)}
-          className="fixed bottom-6 right-6 w-12 h-12 sm:w-14 sm:h-14 bg-apptivia-coral text-white rounded-full shadow-lg hover:shadow-xl flex items-center justify-center z-40 transition-all duration-300 hover:scale-110 group"
+          className="fixed bottom-6 right-6 w-12 h-12 sm:w-14 sm:h-14 bg-apptivia-coral text-white rounded-full fab-3d flex items-center justify-center z-40 transition-all duration-300 hover:scale-110 group"
           aria-label="Open Aaron AI Coach"
         >
           <div className="relative">
@@ -707,7 +720,7 @@ function DashboardLayout({ children }) {
           </div>
         </button>
       )}
-      <AaronChatbot isOpen={chatbotOpen} onClose={() => setChatbotOpen(false)} />
+      <AaronChatbot isOpen={chatbotOpen} onClose={() => { setChatbotOpen(false); setAaronInitialPrompt(null); }} initialPrompt={aaronInitialPrompt} />
       <NotificationPanel />
     </div>
   );

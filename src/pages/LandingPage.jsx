@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Activity, Trophy, CheckCircle, ArrowRight, Star, BarChart3, Brain, Target, TrendingUp, X } from 'lucide-react';
+import { Activity, Trophy, CheckCircle, ArrowRight, BarChart3, Brain, Target, TrendingUp, X } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import AskAIFooter from '../components/AskAIFooter';
 import { ApptiviaLogo } from '../components/ApptiviaLogo';
@@ -198,13 +198,12 @@ export default function LandingPage() {
               <span className="text-apptivia-coral-tone-300 text-sm font-medium">Sales Performance Intelligence Platform</span>
             </div>
             <h1 className="text-5xl md:text-6xl font-bold text-white mb-6 leading-tight">
-              Your reps spend 70% of their day
-              <span className="text-apptivia-coral"> not selling.</span>
-              <br />We fix that.
+              Stop coaching by gut. See
+              <span className="text-apptivia-coral"> who needs help on what</span> — by Monday morning.
             </h1>
             <p className="text-xl text-apptivia-coral-tone-300/80 mb-10 max-w-2xl mx-auto leading-relaxed">
-              Apptivia turns fragmented sales data into scorecards, AI coaching, and signal-driven action — in one platform.
-              We don't replace your CRM. We make the humans using it better.
+              Apptivia is the closed-loop layer between your CRM, your dialer, and your reps' Monday morning.
+              We don't replace the tools you have. We make the humans using them better.
             </p>
             <div className="flex gap-4 justify-center">
               <Link
@@ -242,9 +241,9 @@ export default function LandingPage() {
       <section id="features" className="py-20 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold text-apptivia-ink mb-4">Everything Your Sales Team Needs</h2>
+            <h2 className="text-4xl font-bold text-apptivia-ink mb-4">One platform. Six layers. The closed-loop performance system your stack has been missing.</h2>
             <p className="text-xl text-apptivia-carbon-600">
-              One platform that replaces the spreadsheets, dashboards, and manual coaching
+              Scorecard sees the problem. Aaron coaches the rep. Engage triggers the next move. Contests keep score. The CRM you already have stays where it is.
             </p>
           </div>
 
@@ -253,21 +252,21 @@ export default function LandingPage() {
               {
                 icon: BarChart3,
                 title: 'Real-Time Scorecard',
-                description: 'Every rep gets a performance score updated weekly. Configurable KPI weighting, goal pacing, and anomaly detection built in.',
+                description: 'Every rep gets a performance score updated weekly. KPI Watchdog flags anomalies on rolling 4-week trends — so you catch the slip in Week 3, not Week 13.',
                 color: 'text-apptivia-coral',
                 bg: 'bg-apptivia-coral-tone-50',
               },
               {
                 icon: Brain,
                 title: 'Aaron AI Coach',
-                description: '14 coaching frameworks, live KPI injection, Sales DNA methodology awareness. Not a generic chatbot — a domain-specific coaching engine.',
+                description: '14 coaching frameworks, live KPI injection, your sales methodology baked in. Aaron knows your pipeline. Not a generic chatbot — a domain-specific coaching engine.',
                 color: 'text-apptivia-ink',
                 bg: 'bg-apptivia-carbon-100',
               },
               {
                 icon: Target,
-                title: 'Signal Prospecting',
-                description: '45 buying signals across 3 tiers identify high-intent accounts. AI drafts personalized outreach with human-in-the-loop approval.',
+                title: 'Apptivia Engage',
+                description: '45 buying signals. AI-drafted outreach. Human approval queue. Engage tells you which signal warranted the sequence — not just that one fired.',
                 color: 'text-apptivia-ink',
                 bg: 'bg-apptivia-carbon-100',
               },
@@ -281,14 +280,14 @@ export default function LandingPage() {
               {
                 icon: Activity,
                 title: 'CRM Integrations',
-                description: 'Connect Salesforce, HubSpot, Apollo, Outreach, Gong and more. Automatic KPI tracking — no manual data entry.',
+                description: '10 integrations live. Salesforce, HubSpot, Apollo, Outreach, Gong, SalesLoft, Marketo, and more. 35 KPIs pulled and normalized automatically. Your CRM stays where it is.',
                 color: 'text-emerald-600',
                 bg: 'bg-emerald-50',
               },
               {
                 icon: TrendingUp,
                 title: 'Coaching Plans & IDPs',
-                description: 'AI-generated coaching plans from live KPI data. Individual development plans with milestone tracking and performance reviews.',
+                description: 'AI-generated coaching plans built from live KPI data. Belief-demolition methodology. Baseline — final KPI delta tracked per plan, so you can prove what coaching actually moved.',
                 color: 'text-pink-600',
                 bg: 'bg-pink-50',
               },
@@ -311,7 +310,7 @@ export default function LandingPage() {
           <div className="text-center mb-16">
             <h2 className="text-4xl font-bold text-white mb-4">Above Your Stack, Not Beside It</h2>
             <p className="text-xl text-apptivia-coral-tone-300/70 max-w-2xl mx-auto">
-              Apptivia doesn't compete with your tools. It makes the people using them measurably better.
+              We don't compete with your stack. We make the humans using it measurably better — and tell you which ones need help.
             </p>
           </div>
 
@@ -331,6 +330,16 @@ export default function LandingPage() {
               </div>
             ))}
           </div>
+          {/* 5th pair — centered below the 2x2 grid */}
+          <div className="max-w-md mx-auto mt-6">
+            <div className="bg-white/5 border border-white/10 rounded-lg p-5 backdrop-blur-sm">
+              <div className="text-sm text-apptivia-carbon-400 mb-2">Salesloft sends your sequences</div>
+              <div className="text-white font-semibold flex items-start gap-2">
+                <ArrowRight size={16} className="text-apptivia-coral-tone-300 mt-0.5 flex-shrink-0" />
+                Apptivia measures whether the reps sending them are getting better at it
+              </div>
+            </div>
+          </div>
         </div>
       </section>
 
@@ -339,7 +348,7 @@ export default function LandingPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
             <h2 className="text-4xl font-bold text-apptivia-ink mb-4">Up and Running in 10 Minutes</h2>
-            <p className="text-xl text-apptivia-carbon-600">No implementation consultants. No 6-month rollouts.</p>
+            <p className="text-xl text-apptivia-carbon-600">No implementation consultants. No 6-month rollouts. Your first scorecard before your first coffee.</p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
@@ -362,64 +371,18 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Social Proof */}
-      <section className="py-20 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold text-apptivia-ink mb-4">Built for Sales Teams That Want to Win</h2>
-            <p className="text-xl text-apptivia-carbon-600">What sales leaders are saying about Apptivia</p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {[
-              {
-                quote: "We went from spreadsheet chaos to real-time visibility in one afternoon. My reps actually check their scores now — they're competing with themselves.",
-                author: 'Sarah Chen',
-                title: 'VP of Sales, B2B SaaS (22 reps)',
-                rating: 5,
-              },
-              {
-                quote: "Aaron caught a performance dip in one of my top reps before I did. The coaching nudge fired, I had the 1-on-1, and we course-corrected in a week. That's the value.",
-                author: 'Marcus Williams',
-                title: 'Sales Director, Tech Services (35 reps)',
-                rating: 5,
-              },
-              {
-                quote: "The signal prospecting alone paid for the platform. My SDRs went from cold-blasting to reaching out when companies actually show buying intent.",
-                author: 'Emily Rodriguez',
-                title: 'Head of Sales Ops, Growth-Stage SaaS',
-                rating: 5,
-              },
-            ].map((testimonial, index) => (
-              <div key={index} className="bg-apptivia-paper border border-apptivia-carbon-200 rounded-lg p-6">
-                <div className="flex gap-1 mb-4">
-                  {[...Array(testimonial.rating)].map((_, i) => (
-                    <Star key={i} size={16} className="text-yellow-500 fill-yellow-500" />
-                  ))}
-                </div>
-                <p className="text-apptivia-carbon-700 mb-4 text-sm leading-relaxed">"{testimonial.quote}"</p>
-                <div>
-                  <div className="font-semibold text-apptivia-ink text-sm">{testimonial.author}</div>
-                  <div className="text-xs text-apptivia-carbon-500">{testimonial.title}</div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
       {/* Pricing Section */}
       <section id="pricing" className="py-20 bg-apptivia-paper">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold text-apptivia-ink mb-4">Simple Per-Seat Pricing</h2>
+            <h2 className="text-4xl font-bold text-apptivia-ink mb-4">Productized RevOps</h2>
             <p className="text-xl text-apptivia-carbon-600">Pay for what you use. Scale as your team grows.</p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
             {[
               {
-                name: 'Starter',
+                name: 'Performance Visibility — Starter',
                 price: '$19',
                 unit: '/seat/mo',
                 description: 'Visibility and engagement for your sales team',
@@ -434,7 +397,7 @@ export default function LandingPage() {
                 ],
               },
               {
-                name: 'Pro',
+                name: 'Performance Acceleration — Pro',
                 price: '$49',
                 unit: '/seat/mo',
                 description: 'Full platform with AI coaching and prospecting',
@@ -450,7 +413,7 @@ export default function LandingPage() {
                 highlighted: true,
               },
               {
-                name: 'Enterprise',
+                name: 'Revenue Infrastructure — Enterprise',
                 price: 'Custom',
                 unit: '',
                 description: 'For organizations with advanced requirements',
@@ -467,15 +430,15 @@ export default function LandingPage() {
             ].map((plan, index) => (
              <div
                 key={index}
-                className={`bg-white rounded-lg p-8 ${
+                className={`bg-white rounded-lg p-8 relative ${
                   plan.highlighted
                     ? 'border-2 border-apptivia-coral shadow-xl ring-1 ring-apptivia-coral-tone-100 scale-[1.02]'
                     : 'border border-apptivia-carbon-200 shadow-sm'
                 }`}
               >
                 {plan.highlighted && (
-                  <div className="bg-apptivia-coral text-white text-xs font-semibold px-3 py-1 rounded-full inline-block mb-4">
-                    MOST POPULAR
+                  <div className="absolute top-4 right-4 bg-apptivia-coral text-white text-xs font-semibold px-3 py-1 rounded-full">
+                    MOST VALUE
                   </div>
                 )}
                 <h3 className="text-2xl font-bold text-apptivia-ink mb-2">{plan.name}</h3>
@@ -515,8 +478,8 @@ export default function LandingPage() {
       {/* CTA Section */}
       <section id="get-started" className="py-20 bg-apptivia-ink relative overflow-hidden">
         <div className="absolute inset-0 " />
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative">
-          <h2 className="text-4xl font-bold text-white mb-4">Your sales manager costs $10K/month.</h2>
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative">
+          <h2 className="text-3xl sm:text-4xl font-bold text-white mb-4 whitespace-nowrap">Catch the performance slip in Week 3. Not Week 13.</h2>
           <p className="text-xl text-apptivia-coral-tone-300 mb-4">
             Apptivia gives every rep a personal AI coach, real-time scorecard, and prospecting intelligence.
           </p>

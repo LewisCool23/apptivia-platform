@@ -8,7 +8,8 @@ export default function EditProfileModal({ isOpen, onClose, profile, onSuccess }
     last_name: '',
     title: '',
     department: '',
-    phone: ''
+    phone: '',
+    email_signature: ''
   });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
@@ -20,7 +21,8 @@ export default function EditProfileModal({ isOpen, onClose, profile, onSuccess }
         last_name: profile.last_name || '',
         title: profile.title || '',
         department: profile.department || '',
-        phone: profile.phone || ''
+        phone: profile.phone || '',
+        email_signature: profile.email_signature || ''
       });
     }
   }, [profile]);
@@ -139,6 +141,20 @@ export default function EditProfileModal({ isOpen, onClose, profile, onSuccess }
               className="w-full px-3 py-2 border border-apptivia-carbon-300 rounded-md focus:outline-none focus:ring-2 focus:ring-apptivia-coral"
               placeholder="(555) 123-4567"
             />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-apptivia-carbon-700 mb-1">
+              Email Signature
+            </label>
+            <textarea
+              value={formData.email_signature}
+              onChange={(e) => setFormData({ ...formData, email_signature: e.target.value })}
+              className="w-full px-3 py-2 border border-apptivia-carbon-300 rounded-md focus:outline-none focus:ring-2 focus:ring-apptivia-coral text-sm"
+              placeholder={"Best regards,\nYour Name\nYour Title"}
+              rows={4}
+            />
+            <p className="text-xs text-apptivia-carbon-400 mt-1">Appended to AI-generated email drafts. Leave blank for auto-generated signature.</p>
           </div>
 
           <div className="flex justify-end gap-3 mt-6">

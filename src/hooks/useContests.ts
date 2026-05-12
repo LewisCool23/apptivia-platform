@@ -7,6 +7,7 @@ export interface ContestLeaderboardEntry {
   rank: number;
   previous_rank: number | null;
   score: number;
+  secondary_score: number | null;
   profile_id: string;
   profile_name: string;
   profile_email?: string | null;
@@ -25,6 +26,7 @@ export interface Contest {
   name: string;
   description: string;
   kpi_key: string;
+  secondary_kpi_key: string | null;
   calculation_type: string;
   status: 'active' | 'upcoming' | 'completed' | 'cancelled' | 'archived';
   start_date: string;
@@ -198,6 +200,7 @@ export function useContests(currentUserId?: string, organizationId?: string) {
           rank: entry.rank,
           previous_rank: entry.previous_rank,
           score: entry.score,
+          secondary_score: entry.secondary_score ?? null,
           profile_id: entry.profile_id,
           profile_name: getProfileDisplayName(entry.profile),
           profile_email: entry.profile?.email || null,
@@ -242,6 +245,7 @@ export function useContests(currentUserId?: string, organizationId?: string) {
           name: contest.name,
           description: contest.description,
           kpi_key: contest.kpi_key,
+          secondary_kpi_key: contest.secondary_kpi_key || null,
           calculation_type: contest.calculation_type,
           status: computedStatus as Contest['status'],
           start_date: contest.start_date,

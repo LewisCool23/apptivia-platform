@@ -9,7 +9,7 @@ const { createClient } = require('@supabase/supabase-js');
 const { rateLimit, ipKeyGenerator } = require('express-rate-limit');
 const crypto = require('crypto');
 const { sendEmail, verifyConnection } = require('./emailService');
-const { generateReport, computeNextScheduledAt } = require('./reportTemplates');
+const { generateReport, computeNextScheduledAt, buildEmailWrapper } = require('./reportTemplates');
 const engage = require('./engageService');
 const integrations = require('./integrationService');
 const Stripe = require('stripe');
@@ -569,7 +569,7 @@ app.post('/api/aaron/coaching-action', loadProfile, requireFeature('coach'), asy
         ];
         if (managerName) descParts.push(`Assigned by: ${managerName}`);
         if (metadata?.aaron_message) {
-          descParts.push(`\nAaron Coaching Context:\n${metadata.aaron_message.slice(0, 1000)}`);
+          descParts.push(`\nAaron Coaching Context:\n${metadata.aaron_message}`);
         }
 
         // Smart due date: meetings = 3 days, follow-ups = 7 days, default = 1 day
@@ -1592,7 +1592,7 @@ app.post('/api/contact/demo-request', demoRequestLimiter, async (req, res) => {
 });
 
 // ─── Pilot Application (public, no auth) ──────────────────────────────────────
-const pilotApplyLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 5, keyGenerator: ipKeyGenerator, message: { error: 'Too many requests — try again later' } });
+const pilotApplyLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 10, keyGenerator: ipKeyGenerator, message: { error: 'Too many requests — try again later' } });
 app.post('/api/contact/pilot-apply', pilotApplyLimiter, async (req, res) => {
   try {
     const { name, email, company, teamSize, crm, biggestPain, currentTools } = req.body || {};
@@ -1622,10 +1622,11 @@ app.post('/api/contact/pilot-apply', pilotApplyLimiter, async (req, res) => {
 
     const sb = getSupabaseAdmin();
     if (sb) {
-      await sb.from('demo_requests').insert({
+      const { error: dbErr } = await sb.from('demo_requests').insert({
         name, email, company: company || null, team_size: teamSize || null,
         message: `[PILOT APPLICATION] CRM: ${crm || 'N/A'} | Pain: ${biggestPain || 'N/A'} | Tools: ${currentTools || 'N/A'}`,
-      }).catch(() => {});
+      });
+      if (dbErr) console.error('Pilot application DB insert failed:', dbErr.message);
     }
 
     console.log(`[Pilot Apply] ${name} <${email}>${company ? ` — ${company}` : ''} (${teamSize || '?'} reps, ${crm || 'no CRM'})`);
@@ -2949,6 +2950,63 @@ app.post('/api/send-coaching-plan', loadProfile, requireMinRole('manager'), requ
   }
 });
 
+// POST /api/coaching/share-agenda — Send branded 1:1 prep email to a rep
+app.post('/api/coaching/share-agenda', loadProfile, requireMinRole('manager'), async (req, res) => {
+  try {
+    const { repId, agendaText, managerName, additionalRecipients, subject: customSubject, notes: managerNotes } = req.body || {};
+    if (!repId || !agendaText) return res.status(400).json({ error: 'repId and agendaText are required.' });
+
+    const sb = getSupabaseAdmin();
+    const { data: repProfile } = await sb.from('profiles').select('email, first_name, last_name').eq('id', repId).single();
+    if (!repProfile?.email) return res.status(400).json({ error: 'Rep does not have an email address.' });
+
+    const repName = [repProfile.first_name, repProfile.last_name].filter(Boolean).join(' ') || 'there';
+    const frontendUrl = process.env.FRONTEND_URL || 'https://apptivia.app';
+    const agendaHtmlBody = agendaText
+      // Bold section headers before converting newlines
+      .replace(/^(Discussion Topics:|Action Items to Follow Up:|Action Items:|Manager Notes:)/gm, '<strong>$1</strong>')
+      .replace(/\n/g, '<br>');
+
+    const bodyHtml = `
+      <p style="margin: 0 0 6px; font-size: 14px; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px;">1:1 Prep from ${managerName || 'Your Manager'}</p>
+      <p style="margin: 0 0 16px; font-size: 16px; color: #111827;">Hi <strong>${repName}</strong>,</p>
+      <p style="margin: 0 0 20px; font-size: 14px; color: #374151; line-height: 1.6;">${managerName || 'Your manager'} has prepared a 1:1 agenda for your upcoming meeting. Review the details below so you can come prepared.</p>
+      <div style="background: #F7F5F2; border-left: 4px solid #FF4D2E; border-radius: 8px; padding: 16px; margin: 0 0 20px;">
+        <p style="margin: 0 0 8px; font-size: 12px; font-weight: 700; color: #FF4D2E; text-transform: uppercase; letter-spacing: 0.5px;">Agenda</p>
+        <p style="margin: 0; font-size: 13px; color: #374151; line-height: 1.7; white-space: pre-wrap;">${agendaHtmlBody}</p>
+      </div>
+    `;
+
+    const notesBlock = managerNotes ? managerNotes.replace(/\n/g, '<br/>') : undefined;
+    const html = buildEmailWrapper('📋 1:1 Meeting Prep', `Prepared by ${managerName || 'Your Manager'}`, bodyHtml, {
+      ctaUrl: `${frontendUrl}/coach`,
+      ctaLabel: 'Open Apptivia Coach',
+      notesHtml: notesBlock,
+      footerLabel: 'Apptivia Coach — 1:1 Prep',
+    });
+
+    const notesText = managerNotes ? `\nNote from ${managerName || 'Manager'}:\n${managerNotes}\n` : '';
+    const text = `1:1 Prep from ${managerName || 'Your Manager'}\n\nHi ${repName},\n\n${managerName || 'Your manager'} has prepared a 1:1 agenda for your upcoming meeting:\n${notesText}\n${agendaText}\n\nOpen Apptivia: ${frontendUrl}`;
+
+    // Combine rep email + any additional recipients
+    const allRecipients = [repProfile.email, ...(Array.isArray(additionalRecipients) ? additionalRecipients : [])].filter(Boolean);
+    const emailSubject = customSubject || `1:1 Prep from ${managerName || 'Your Manager'} — Apptivia`;
+
+    await sendEmail({
+      recipients: allRecipients,
+      subject: emailSubject,
+      html,
+      text,
+    });
+
+    console.log(`[share-agenda] Email sent to ${allRecipients.join(', ')} from ${managerName}`);
+    return res.json({ ok: true });
+  } catch (err) {
+    console.error('[share-agenda] Error:', err.message);
+    return res.status(500).json({ error: 'Failed to send agenda email.', detail: err.message });
+  }
+});
+
 app.post('/api/send-contest-results', loadProfile, requireMinRole('manager'), requireFeature('contests'), async (req, res) => {
   try {
     const { recipients, subject, body } = req.body || {};
@@ -3412,6 +3470,11 @@ app.post('/api/engage/research/company', aiLimiter, loadProfile, requireFeature(
         .then(({ error }) => { if (error) console.warn('Cache write failed:', error.message); });
     }
 
+    // Real-time KPI increment: company researched → accounts_researched + ai_content_generated
+    incrementEngageKpi(req.user.id, 'accounts_researched', 1);
+    incrementEngageKpi(req.user.id, 'ai_content_generated', 1);
+    logEngageActivity(orgId, req.user.id, 'account.researched', 'Account Researched', `Researched company: ${domain}`, '🔍', '#FF4D2E');
+
     return res.json({ ok: true, cached: false, ...result });
   } catch (err) {
     console.error('Engage company research error:', err.message);
@@ -3423,6 +3486,11 @@ app.post('/api/engage/research/company', aiLimiter, loadProfile, requireFeature(
 app.post('/api/engage/research/prospect', aiLimiter, loadProfile, async (req, res) => {
   try {
     const result = await engage.researchProspect(req.body);
+
+    // Real-time KPI increment: prospect researched → ai_content_generated
+    incrementEngageKpi(req.user.id, 'ai_content_generated', 1);
+    logEngageActivity(req.userProfile?.organization_id, req.user.id, 'prospect.researched', 'Prospect Researched', `Researched prospect: ${req.body.name || req.body.email || 'Unknown'}`, '👤', '#FF4D2E');
+
     return res.json({ ok: true, ...result });
   } catch (err) {
     console.error('Engage prospect research error:', err.message);
@@ -3438,6 +3506,7 @@ app.post('/api/engage/outreach/draft', aiLimiter, loadProfile, requireFeature('e
     const result = await engage.generateOutreachDraft(prospect, company_brief || {}, {
       channel, tone, template_system_prompt, template_user_prompt,
     });
+    incrementEngageKpi(req.user.id, 'ai_content_generated', 1);
     return res.json({ ok: true, ...result });
   } catch (err) {
     console.error('Engage outreach draft error:', err.message);
@@ -3474,7 +3543,7 @@ app.get('/api/engage/status', (req, res) => {
 // ── Phase 1 Workflow Routes ─────────────────────────────────
 
 // Pipeline Operator — AI Forecast Generation (streaming SSE, coach+ access, AI rate limited)
-app.post('/api/engage/pipeline/forecast', aiLimiter, loadProfile, requireMinRole('coach'), async (req, res) => {
+app.post('/api/engage/pipeline/forecast', aiLimiter, loadProfile, requireMinRole('power_user'), async (req, res) => {
   try {
     const { deals, summary } = req.body;
     if (!deals || !summary) return res.status(400).json({ error: 'deals and summary are required' });
@@ -3539,6 +3608,8 @@ ${deals.map(d => `- ${d.deal_name}: $${d.deal_value?.toLocaleString()} | Stage: 
     });
 
     stream.on('finalMessage', () => {
+      incrementEngageKpi(req.user.id, 'ai_content_generated', 1);
+      logEngageActivity(req.userProfile?.organization_id, req.user.id, 'forecast.generated', 'AI Forecast Generated', `Pipeline forecast for ${summary?.totalDeals || deals?.length || 0} deals`, '📊', '#10b981');
       res.write(`data: ${JSON.stringify({ done: true, full: fullText })}\n\n`);
       res.end();
     });
@@ -3559,6 +3630,68 @@ ${deals.map(d => `- ${d.deal_name}: $${d.deal_value?.toLocaleString()} | Stage: 
     }
     res.write(`data: ${JSON.stringify({ error: err.message })}\n\n`);
     res.end();
+  }
+});
+
+// Account Intelligence — AI Analysis (power_user+ access, AI rate limited)
+app.post('/api/engage/analyze-account', aiLimiter, loadProfile, requireMinRole('power_user'), async (req, res) => {
+  try {
+    const { account, signals, deals } = req.body || {};
+    if (!account || !account.id) return res.status(400).json({ error: 'account is required' });
+
+    const client = getAnthropic();
+    const systemPrompt = `You are a senior account strategist in Apptivia, a sales performance platform.
+Analyze the provided account data, intent signals, and pipeline deals to produce actionable intelligence.
+
+Return a JSON object with these exact fields:
+{
+  "summary": "2-3 sentence executive summary of the account's current state and opportunity",
+  "strategy": "Recommended next-best-action strategy in 2-3 sentences",
+  "risk_factors": ["array of 1-4 specific risk strings, or empty array if none"],
+  "account_score": <integer 0-100 representing overall account health/fit>,
+  "intent_score": <integer 0-100 representing buying intent level>
+}
+
+Scoring guidelines:
+- account_score: based on fit (company size, industry match, tech stack), engagement level, deal progression
+- intent_score: based on signal recency, signal strength, deal activity, multi-threading
+
+Be specific, actionable, and concise. Reference data points from the input.` + AI_STYLE_RULE;
+
+    const userMessage = `Account: ${account.account_name}
+Domain: ${account.domain || 'Unknown'}
+Industry: ${account.industry || 'Unknown'}
+Employee Count: ${account.employee_count || 'Unknown'}
+Current Score: ${account.account_score || 'Not scored'}
+Current Intent: ${account.intent_score || 'Not scored'}
+Status: ${account.status || 'active'}
+Buying Committee: ${account.buying_committee?.length || 0} members
+
+Intent Signals (${(signals || []).length}):
+${(signals || []).slice(0, 10).map(s => `- ${s.signal_type}: score ${s.signal_score} (${s.detected_at || 'recent'})`).join('\n') || 'None detected'}
+
+Pipeline Deals (${(deals || []).length}):
+${(deals || []).slice(0, 5).map(d => `- ${d.deal_name}: $${d.deal_value?.toLocaleString()} | Stage: ${d.stage} | Prob: ${d.probability}%`).join('\n') || 'No active deals'}`;
+
+    const msg = await client.messages.create({
+      model: 'claude-sonnet-4-20250514',
+      max_tokens: 600,
+      system: systemPrompt,
+      messages: [{ role: 'user', content: userMessage }],
+    });
+
+    const text = msg.content?.[0]?.text || '';
+    // Extract JSON from response (handle markdown code fences)
+    const jsonMatch = text.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) return res.status(500).json({ error: 'AI returned invalid response format' });
+
+    const result = JSON.parse(jsonMatch[0]);
+    incrementEngageKpi(req.user.id, 'ai_content_generated', 1);
+    logEngageActivity(req.userProfile?.organization_id, req.user.id, 'account.analyzed', 'Account Analyzed', `AI analysis for ${account.account_name || account.domain || 'account'}`, '🧠', '#8b5cf6');
+    return res.json(result);
+  } catch (err) {
+    console.error('Account analysis error:', err.message);
+    return res.status(500).json({ error: err.message });
   }
 });
 
@@ -4408,8 +4541,10 @@ ${webContext}`,
     const text = response.content[0]?.text || '{}';
     try {
       const analysis = JSON.parse(text);
+      incrementEngageKpi(req.user.id, 'ai_content_generated', 1);
       return res.json({ ok: true, ...analysis });
     } catch {
+      incrementEngageKpi(req.user.id, 'ai_content_generated', 1);
       return res.json({ ok: true, summary: text, strategy: '', risk_factors: [], opportunities: [] });
     }
   } catch (err) {
@@ -4448,8 +4583,12 @@ Return ONLY a valid JSON array with objects having: account_name, account_score,
     const text = response.content[0]?.text || '[]';
     try {
       const scores = JSON.parse(text);
+      incrementEngageKpi(req.user.id, 'ai_content_generated', 1);
+      logEngageActivity(req.userProfile?.organization_id, req.user.id, 'account.scored', 'Accounts Scored', `Scored ${accounts.length} account${accounts.length > 1 ? 's' : ''}`, '📈', '#f59e0b');
       return res.json({ ok: true, scores: Array.isArray(scores) ? scores : [] });
     } catch {
+      incrementEngageKpi(req.user.id, 'ai_content_generated', 1);
+      logEngageActivity(req.userProfile?.organization_id, req.user.id, 'account.scored', 'Accounts Scored', `Scored ${accounts.length} account${accounts.length > 1 ? 's' : ''}`, '📈', '#f59e0b');
       return res.json({ ok: true, scores: [] });
     }
   } catch (err) {
@@ -4497,8 +4636,12 @@ ${industry ? `Industry: ${industry}` : ''}`,
     const text = response.content[0]?.text || '{}';
     try {
       const playbook = JSON.parse(text);
+      incrementEngageKpi(req.user.id, 'ai_content_generated', 1);
+      logEngageActivity(req.userProfile?.organization_id, req.user.id, 'playbook.generated', 'Playbook Generated', `Generated playbook: ${req.body.scenario || 'custom'}`, '📋', '#6366f1');
       return res.json({ ok: true, ...playbook });
     } catch {
+      incrementEngageKpi(req.user.id, 'ai_content_generated', 1);
+      logEngageActivity(req.userProfile?.organization_id, req.user.id, 'playbook.generated', 'Playbook Generated', `Generated playbook: ${req.body.scenario || 'custom'}`, '📋', '#6366f1');
       return res.json({ ok: true, name: 'Generated Playbook', description: text, steps: [], tags: [] });
     }
   } catch (err) {
@@ -4812,10 +4955,14 @@ async function runAutoQualification(orgId) {
       .map(c => c.toLowerCase().trim())
       .filter(Boolean);
 
+    const excludeIndustries = (org?.signal_config?.exclude_industries || [])
+      .map(e => e.toLowerCase().trim())
+      .filter(Boolean);
+
     // Get all 'new' signals for this org (signal_type needed for tier classification)
     const { data: signals } = await sb
       .from('engage_intent_signals')
-      .select('id, company_name, signal_score, signal_type')
+      .select('id, company_name, signal_score, signal_type, raw_data')
       .eq('organization_id', orgId)
       .eq('status', 'new');
 
@@ -4824,9 +4971,14 @@ async function runAutoQualification(orgId) {
     const toDismisSids = signals
       .filter(s => {
         const name = (s.company_name || '').toLowerCase();
+        const industry = (s.raw_data?.industry || '').toLowerCase();
         const isCompetitor = competitors.some(c => name.includes(c));
         const isTooWeak = (s.signal_score || 0) < SIGNAL_MIN_SCORE;
-        return isCompetitor || isTooWeak;
+        const isExcludedByName = excludeIndustries.length > 0 &&
+          excludeIndustries.some(ex => name.includes(ex));
+        const isExcludedByIndustry = excludeIndustries.length > 0 && industry &&
+          excludeIndustries.some(ex => industry.includes(ex) || ex.includes(industry));
+        return isCompetitor || isTooWeak || isExcludedByName || isExcludedByIndustry;
       })
       .map(s => s.id);
 
@@ -6164,6 +6316,59 @@ async function runBadgeAutoAward() {
     console.error('[badge-check] Error:', err.message);
     return { awarded: 0, notified: 0 };
   }
+}
+
+// ── Real-time KPI increment for Engage activities ───────────────────────────
+// Lightweight helper that upserts a single KPI value for the current week.
+// Called inline from action endpoints so reps see KPI updates immediately.
+async function incrementEngageKpi(profileId, kpiKey, delta = 1) {
+  try {
+    const sb = getSupabaseAdmin();
+    if (!sb || !profileId) return;
+    // Look up the kpi_id from key
+    const { data: metric } = await sb.from('kpi_metrics').select('id').eq('key', kpiKey).single();
+    if (!metric?.id) return;
+    // Current week boundaries (Mon–Sun)
+    const now = new Date();
+    const day = now.getDay();
+    const mon = new Date(now);
+    mon.setDate(now.getDate() - ((day + 6) % 7));
+    mon.setHours(0, 0, 0, 0);
+    const sun = new Date(mon);
+    sun.setDate(mon.getDate() + 6);
+    const periodStart = mon.toISOString().split('T')[0];
+    const periodEnd = sun.toISOString().split('T')[0];
+    // Check for existing row
+    const { data: existing } = await sb.from('kpi_values')
+      .select('id, value')
+      .eq('profile_id', profileId).eq('kpi_id', metric.id).eq('period_start', periodStart)
+      .maybeSingle();
+    if (existing) {
+      await sb.from('kpi_values').update({ value: (existing.value || 0) + delta }).eq('id', existing.id);
+    } else {
+      await sb.from('kpi_values').insert({ profile_id: profileId, kpi_id: metric.id, value: delta, period_start: periodStart, period_end: periodEnd });
+    }
+  } catch (err) {
+    console.error(`[engage-kpi-increment] Error incrementing ${kpiKey} for ${profileId}:`, err.message);
+  }
+}
+
+// Fire-and-forget activity logging helper
+function logEngageActivity(orgId, actorId, eventType, title, description, icon, color) {
+  try {
+    const sb = getSupabaseAdmin();
+    if (!sb || !orgId) return;
+    sb.from('engage_activity_events').insert({
+      organization_id: orgId,
+      actor_id: actorId || undefined,
+      event_type: eventType,
+      title,
+      description: description || null,
+      icon: icon || '📌',
+      color: color || '#FF4D2E',
+      source: 'system',
+    }).then(() => {}, (err) => console.error('[activity-log] Insert failed:', err.message));
+  } catch {}
 }
 
 // ── Autopilot: Sync Engage KPI Values ───────────────────────────────────────
@@ -9170,7 +9375,7 @@ app.post('/api/engage/action-queue/:id/dismiss', loadProfile, requireMinRole('ma
   }
 });
 
-// POST /api/engage/action-queue/:id/send — send with edits, capture diff
+// POST /api/engage/action-queue/:id/send — send via Gmail API, capture diff
 app.post('/api/engage/action-queue/:id/send', loadProfile, async (req, res) => {
   try {
     const sb = getSupabaseAdmin();
@@ -9178,18 +9383,78 @@ app.post('/api/engage/action-queue/:id/send', loadProfile, async (req, res) => {
 
     const orgId = req.userProfile?.organization_id;
     const { id } = req.params;
-    const { sent_subject, sent_body } = req.body || {};
+    const { sent_subject, sent_body, recipient_email } = req.body || {};
 
     if (!sent_body) return res.status(400).json({ error: 'sent_body required' });
 
-    // Fetch original draft to compute diff
+    // Fetch original draft + signal_id to compute diff and resolve recipient
     const { data: action, error: fetchErr } = await sb
       .from('engage_signal_actions')
-      .select('draft_email_subject, draft_email_body')
+      .select('draft_email_subject, draft_email_body, signal_id')
       .eq('id', id)
       .eq('organization_id', orgId)
       .single();
     if (fetchErr || !action) return res.status(404).json({ error: 'Action not found' });
+
+    // Resolve recipient email: explicit param > prospect chain
+    let resolvedRecipient = recipient_email;
+    if (!resolvedRecipient && action.signal_id) {
+      const { data: signal } = await sb
+        .from('engage_intent_signals')
+        .select('prospect_id')
+        .eq('id', action.signal_id)
+        .maybeSingle();
+      if (signal?.prospect_id) {
+        const { data: prospect } = await sb
+          .from('engage_prospects')
+          .select('email')
+          .eq('id', signal.prospect_id)
+          .maybeSingle();
+        resolvedRecipient = prospect?.email;
+      }
+    }
+    if (!resolvedRecipient) {
+      return res.status(400).json({ error: 'Recipient email required. No email found for this prospect.', code: 'NO_RECIPIENT_EMAIL' });
+    }
+
+    // Look up user's personal Google integration
+    const { data: googleInteg } = await sb
+      .from('integrations')
+      .select('*')
+      .eq('organization_id', orgId)
+      .eq('integration_type', 'google_calendar')
+      .eq('profile_id', req.user.id)
+      .eq('status', 'connected')
+      .maybeSingle();
+
+    if (!googleInteg) {
+      return res.status(400).json({ error: 'Google not connected. Connect Google in Settings > Integrations.', code: 'NO_GOOGLE_INTEGRATION' });
+    }
+
+    // Verify gmail.send scope was granted
+    const hasGmailScope = googleInteg.scopes &&
+      googleInteg.scopes.some(s => s.includes('gmail.send'));
+    if (!hasGmailScope) {
+      return res.status(403).json({ error: 'Gmail send permission not granted. Please reconnect Google in Settings to enable email sending.', code: 'MISSING_GMAIL_SCOPE' });
+    }
+
+    // Refresh token if needed
+    const freshInteg = await integrations.ensureFreshToken(sb, googleInteg);
+    const accessToken = freshInteg.decryptedCreds.access_token;
+
+    // Send via Gmail API
+    const googleProvider = integrations.getProvider('google_calendar');
+    const senderName = req.userProfile.full_name || req.userProfile.first_name || 'Apptivia User';
+    const senderEmail = req.userProfile.email;
+    const finalSubject = sent_subject || action.draft_email_subject;
+
+    const gmailResult = await googleProvider.gmail.send(accessToken, {
+      to: resolvedRecipient,
+      subject: finalSubject,
+      body: sent_body,
+      fromName: senderName,
+      fromEmail: senderEmail,
+    });
 
     // Compute structural diff
     const edit_diff = computeEditDiff(action.draft_email_body, sent_body);
@@ -9198,21 +9463,126 @@ app.post('/api/engage/action-queue/:id/send', loadProfile, async (req, res) => {
       .from('engage_signal_actions')
       .update({
         status: 'sent',
-        sent_subject: sent_subject || action.draft_email_subject,
+        sent_subject: finalSubject,
         sent_body,
         edit_diff,
         sent_at: new Date().toISOString(),
         actioned_at: new Date().toISOString(),
         actioned_by: req.user.id,
+        recipient_email: resolvedRecipient,
+        gmail_message_id: gmailResult.id || null,
       })
       .eq('id', id)
       .eq('organization_id', orgId);
 
     if (error) return res.status(500).json({ error: error.message });
-    return res.json({ ok: true, edit_diff });
+
+    // Real-time KPI increments: outreach sent
+    incrementEngageKpi(req.user.id, 'ai_content_generated', 1);
+    incrementEngageKpi(req.user.id, 'outreach_drafts_sent', 1);
+    logEngageActivity(orgId, req.user.id, 'outreach.sent', 'Outreach Sent via Gmail', `Email sent to ${resolvedRecipient || 'recipient'}`, '✉️', '#10b981');
+
+    // KPI: emails_sent — count Gmail sends on the user's scorecard
+    try {
+      await integrations.upsertKpiValue(sb, {
+        profileId: req.user.id,
+        kpiKey: 'emails_sent',
+        increment: 1,
+        source: 'google_calendar',
+        externalEventId: `google_calendar:gmail:${gmailResult.id}:emails_sent`,
+        weekStart: integrations.getWeekStart(),
+      }, googleInteg);
+    } catch (kpiErr) {
+      console.error('[action-queue/send] emails_sent KPI upsert failed:', kpiErr.message);
+    }
+
+    // Mark parent signal as actioned + increment signals_actioned KPI
+    if (action.signal_id) {
+      await sb.from('engage_intent_signals')
+        .update({ status: 'actioned', actioned_by: req.user.id })
+        .eq('id', action.signal_id)
+        .eq('organization_id', orgId)
+        .neq('status', 'actioned');
+      incrementEngageKpi(req.user.id, 'engage_signals_actioned', 1);
+    }
+
+    return res.json({ ok: true, edit_diff, gmail_message_id: gmailResult.id });
   } catch (err) {
     console.error('[action-queue/send] Unhandled error:', err.message);
-    return res.status(500).json({ error: 'Internal server error' });
+    return res.status(500).json({ error: err.message || 'Internal server error' });
+  }
+});
+
+// POST /api/engage/gmail/send — ad-hoc Gmail send from draft modal
+app.post('/api/engage/gmail/send', loadProfile, async (req, res) => {
+  try {
+    const sb = getSupabaseAdmin();
+    if (!sb) return res.status(503).json({ error: 'Service unavailable' });
+
+    const orgId = req.userProfile?.organization_id;
+    const { to, subject, body } = req.body || {};
+
+    if (!to) return res.status(400).json({ error: 'Recipient email (to) required' });
+    if (!body) return res.status(400).json({ error: 'Email body required' });
+
+    // Look up user's personal Google integration
+    const { data: googleInteg } = await sb
+      .from('integrations')
+      .select('*')
+      .eq('organization_id', orgId)
+      .eq('integration_type', 'google_calendar')
+      .eq('profile_id', req.user.id)
+      .eq('status', 'connected')
+      .maybeSingle();
+
+    if (!googleInteg) {
+      return res.status(400).json({ error: 'Google not connected. Connect Google in Settings > Integrations.', code: 'NO_GOOGLE_INTEGRATION' });
+    }
+
+    const hasGmailScope = googleInteg.scopes &&
+      googleInteg.scopes.some(s => s.includes('gmail.send'));
+    if (!hasGmailScope) {
+      return res.status(403).json({ error: 'Gmail send permission not granted. Reconnect Google in Settings to enable email sending.', code: 'MISSING_GMAIL_SCOPE' });
+    }
+
+    const freshInteg = await integrations.ensureFreshToken(sb, googleInteg);
+    const accessToken = freshInteg.decryptedCreds.access_token;
+
+    const googleProvider = integrations.getProvider('google_calendar');
+    const senderName = req.userProfile.full_name || req.userProfile.first_name || 'Apptivia User';
+    const senderEmail = req.userProfile.email;
+
+    const gmailResult = await googleProvider.gmail.send(accessToken, {
+      to,
+      subject: subject || '(no subject)',
+      body,
+      fromName: senderName,
+      fromEmail: senderEmail,
+    });
+
+    // KPI: emails_sent
+    try {
+      await integrations.upsertKpiValue(sb, {
+        profileId: req.user.id,
+        kpiKey: 'emails_sent',
+        increment: 1,
+        source: 'google_calendar',
+        externalEventId: `google_calendar:gmail:${gmailResult.id}:emails_sent`,
+        weekStart: integrations.getWeekStart(),
+      }, googleInteg);
+    } catch (kpiErr) {
+      console.error('[gmail/send] emails_sent KPI upsert failed:', kpiErr.message);
+    }
+
+    // Real-time KPI increments: outreach sent from draft modal
+    incrementEngageKpi(req.user.id, 'outreach_drafts_sent', 1);
+    incrementEngageKpi(req.user.id, 'ai_content_generated', 1);
+    logEngageActivity(req.userProfile?.organization_id, req.user.id, 'outreach.sent', 'Email Sent via Gmail', `Email sent to ${to}`, '✉️', '#10b981');
+
+    return res.json({ ok: true, gmail_message_id: gmailResult.id });
+  } catch (err) {
+    console.error('[gmail/send] Unhandled error:', err.message);
+    return res.status(500).json({ error: err.message || 'Internal server error' });
   }
 });
 
@@ -9550,6 +9920,9 @@ app.post('/api/engage/signals/:id/outcome', loadProfile, async (req, res) => {
       .eq('id', id)
       .eq('organization_id', orgId);
     if (error) return res.status(500).json({ error: error.message });
+
+    // Real-time KPI increment: signal outcome recorded → engage_signals_actioned
+    incrementEngageKpi(req.user.id, 'engage_signals_actioned', 1);
 
     // 3. Record in outcomes table for learning/analytics (won/lost only)
     if (outcome === 'won' || outcome === 'lost') {
@@ -9910,7 +10283,7 @@ app.post('/api/integrations/my', loadProfile, async (req, res) => {
     if (!integration_type) return res.status(400).json({ error: 'integration_type is required' });
 
     // Permission check: connect_own_integrations
-    const userRole = req.userProfile?.role;
+    const userRole = normalizeRole(req.userProfile?.role);
     const { data: override } = await sb
       .from('user_permission_overrides')
       .select('granted')
@@ -10325,7 +10698,7 @@ app.get('/api/integrations/oauth/:provider/init-personal', loadProfile, async (r
     if (!sb) return res.status(503).json({ error: 'Service unavailable' });
 
     // Permission check: connect_own_integrations
-    const userRole = req.userProfile?.role;
+    const userRole = normalizeRole(req.userProfile?.role);
     const { data: override } = await sb
       .from('user_permission_overrides')
       .select('granted')

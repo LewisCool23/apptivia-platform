@@ -319,4 +319,13 @@ function getWeekStart(fromDate) {
   return monday.toISOString().split('T')[0];
 }
 
-module.exports = { KPI_CANONICAL, buildKpiMapping, getWeekStart };
+/**
+ * Source priority for KPIs synced by multiple providers.
+ * Lower index = higher priority. A lower-priority source is skipped
+ * if any higher-priority source is connected for the same org.
+ */
+const KPI_SOURCE_PRIORITY = {
+  meetings: ['salesforce', 'hubspot', 'apollo', 'microsoft_outlook', 'google_calendar'],
+};
+
+module.exports = { KPI_CANONICAL, KPI_SOURCE_PRIORITY, buildKpiMapping, getWeekStart };

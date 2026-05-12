@@ -1,9 +1,10 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Bell, Check, Trash2, X, Trophy, Award, TrendingUp, AlertTriangle, Flame, Plug, Star } from 'lucide-react';
 import { useNotifications } from '../contexts/NotificationContext';
 import { useAuth } from '../AuthContext';
 import { ROLES } from '../constants/roles';
+import SharedAgendaModal from './SharedAgendaModal';
 
 export default function NotificationPanel() {
     const getTypeIcon = (type) => {
@@ -45,6 +46,7 @@ export default function NotificationPanel() {
   } = useNotifications();
 
   const showRep = role === ROLES.ADMIN || role === ROLES.MANAGER;
+  const [agendaModal, setAgendaModal] = useState(null); // { agendaText, managerName }
 
   const formatRepName = (value) => {
     if (!value) return 'Unknown';
@@ -140,8 +142,20 @@ export default function NotificationPanel() {
                       {shouldShowRep && (
                         <div className="text-[11px] text-apptivia-carbon-500 mt-0.5">Rep: {repLabel}</div>
                       )}
-                      <div className="text-[11px] text-apptivia-carbon-600 mt-0.5">{n.message}</div>
-                      {n.link && (
+                      <div className="text-[11px] text-apptivia-carbon-600 mt-0.5">
+                        {n.title === '1:1 Prep Shared' ? 'Your manager shared a 1:1 prep with you.' : n.message}
+                      </div>
+                      {n.title === '1:1 Prep Shared' ? (
+                        <button
+                          onClick={() => {
+                            markRead(n.id);
+                            setAgendaModal({ agendaText: n.message, managerName: null });
+                          }}
+                          className="mt-1 text-[11px] text-apptivia-coral hover:underline font-medium"
+                        >
+                          View 1:1 Prep
+                        </button>
+                      ) : n.link && (
                         <button
                           onClick={() => handleNavigate(n.link, n.id)}
                           className="mt-1 text-[11px] text-apptivia-coral hover:underline"
@@ -173,6 +187,12 @@ export default function NotificationPanel() {
           )}
         </div>
       </aside>
+      <SharedAgendaModal
+        isOpen={!!agendaModal}
+        onClose={() => setAgendaModal(null)}
+        agendaText={agendaModal?.agendaText || ''}
+        managerName={agendaModal?.managerName}
+      />
     </>
   );
 }

@@ -3,7 +3,7 @@ import { Phone, Mail, ExternalLink, Search, X, UserPlus } from 'lucide-react';
 import { supabase } from '../supabaseClient';
 import Tooltip from './shared/Tooltip';
 
-export default function EngageContactsPanel({ organizationId, onCallContact, onClose, refreshKey }) {
+export default function EngageContactsPanel({ organizationId, onCallContact, onClose, refreshKey, onSeeAll }) {
   const [contacts, setContacts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -50,9 +50,19 @@ export default function EngageContactsPanel({ organizationId, onCallContact, onC
           <h3 className="font-semibold text-apptivia-ink text-sm">Saved Contacts</h3>
           <span className="text-[10px] bg-apptivia-carbon-100 text-apptivia-carbon-500 px-1.5 py-0.5 rounded-full">{contacts.length}</span>
         </div>
+        <div className="flex items-center gap-2">
+          {onSeeAll && (
+            <button
+              onClick={onSeeAll}
+              className="text-[10px] font-medium text-apptivia-coral hover:underline"
+            >
+              See All
+            </button>
+          )}
         <button onClick={onClose} className="text-apptivia-carbon-400 hover:text-apptivia-carbon-600 transition-colors">
           <X size={15} />
         </button>
+        </div>
       </div>
 
       {/* Search */}

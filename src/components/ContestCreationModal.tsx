@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import RightFilterPanel from './RightFilterPanel';
+import ConfirmModal from './ConfirmModal';
 import { supabase } from '../supabaseClient';
 import { useToast } from '../contexts/ToastContext';
 import { useNotifications } from '../contexts/NotificationContext';
@@ -101,11 +102,13 @@ export default function ContestCreationModal({ isOpen, onClose, currentUserId, o
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState('');
   const [kpiOptions, setKpiOptions] = useState<KPIOption[]>([]);
+  const [showDateWarning, setShowDateWarning] = useState(false);
   
   const [formData, setFormData] = useState({
     name: '',
     description: '',
     kpi_key: '',
+    secondary_kpi_key: '',
     calculation_type: 'sum',
     start_date: '',
     end_date: '',
@@ -125,6 +128,7 @@ export default function ContestCreationModal({ isOpen, onClose, currentUserId, o
           name: contestToEdit.name || '',
           description: contestToEdit.description || '',
           kpi_key: contestToEdit.kpi_key || '',
+          secondary_kpi_key: contestToEdit.secondary_kpi_key || '',
           calculation_type: contestToEdit.calculation_type || 'sum',
           start_date: contestToEdit.start_date?.split('T')[0] || '',
           end_date: contestToEdit.end_date?.split('T')[0] || '',
@@ -141,6 +145,7 @@ export default function ContestCreationModal({ isOpen, onClose, currentUserId, o
           name: '',
           description: '',
           kpi_key: '',
+          secondary_kpi_key: '',
           calculation_type: 'sum',
           start_date: today.toISOString().split('T')[0],
           end_date: nextWeek.toISOString().split('T')[0],
@@ -179,8 +184,8 @@ export default function ContestCreationModal({ isOpen, onClose, currentUserId, o
       return;
     }
 
-    if (new Date(formData.end_date) <= new Date(formData.start_date)) {
-      toast.error('End date must be after start date');
+    if (new Date(formData.end_date) < new Date(formData.start_date)) {
+      toast.error('End date must be on or after start date');
       return;
     }
 
@@ -200,13 +205,14 @@ export default function ContestCreationModal({ isOpen, onClose, currentUserId, o
     const startDay = new Date(formData.start_date).getUTCDay();
     const endDay = new Date(formData.end_date).getUTCDay();
     if (startDay !== 1 || endDay !== 0) { // 1=Monday, 0=Sunday
-      const proceed = window.confirm(
-        'Contest dates do not align with KPI periods (Monday–Sunday). ' +
-        'This may result in incomplete weekly scores for the first/last week. Continue anyway?'
-      );
-      if (!proceed) return;
+      setShowDateWarning(true);
+      return;
     }
 
+    submitContest();
+  };
+
+  const submitContest = async () => {
     try {
       setSaving(true);
       setMessage('');
@@ -220,6 +226,7 @@ export default function ContestCreationModal({ isOpen, onClose, currentUserId, o
             name: formData.name,
             description: formData.description,
             kpi_key: formData.kpi_key,
+            secondary_kpi_key: formData.secondary_kpi_key || null,
             calculation_type: formData.calculation_type,
             status: new Date(formData.start_date) > new Date() ? 'upcoming' : 'active',
             start_date: formData.start_date,
@@ -254,6 +261,7 @@ export default function ContestCreationModal({ isOpen, onClose, currentUserId, o
             name: formData.name,
             description: formData.description,
             kpi_key: formData.kpi_key,
+            secondary_kpi_key: formData.secondary_kpi_key || null,
             calculation_type: formData.calculation_type,
             status: new Date(formData.start_date) > new Date() ? 'upcoming' : 'active',
             start_date: formData.start_date,
@@ -435,6 +443,28 @@ export default function ContestCreationModal({ isOpen, onClose, currentUserId, o
               </select>
             </div>
 
+            {/* Secondary KPI (optional) */}
+            <div>
+              <label className="block text-sm font-semibold text-apptivia-carbon-700 mb-1">
+                Secondary KPI <span className="font-normal text-apptivia-carbon-400">(optional, display only)</span>
+              </label>
+              <select
+                value={formData.secondary_kpi_key}
+                onChange={(e) => updateField('secondary_kpi_key', e.target.value)}
+                className="w-full px-3 py-2 border border-apptivia-carbon-300 rounded focus:outline-none focus:ring-2 focus:ring-apptivia-coral"
+              >
+                <option value="">None</option>
+                {kpiOptions.filter(kpi => kpi.key !== formData.kpi_key).map(kpi => (
+                  <option key={kpi.key} value={kpi.key}>
+                    {kpi.name}
+                  </option>
+                ))}
+              </select>
+              {formData.secondary_kpi_key && (
+                <p className="text-[11px] text-apptivia-carbon-400 mt-1">Tracked on the leaderboard but does not affect ranking</p>
+              )}
+            </div>
+
             {/* Calculation Type */}
             <div>
               <label className="block text-sm font-semibold text-apptivia-carbon-700 mb-1">
@@ -583,6 +613,16 @@ export default function ContestCreationModal({ isOpen, onClose, currentUserId, o
             </button>
           </div>
       </form>
+      <ConfirmModal
+        isOpen={showDateWarning}
+        onClose={() => setShowDateWarning(false)}
+        onConfirm={() => { setShowDateWarning(false); submitContest(); }}
+        title="KPI Period Misalignment"
+        message="Contest dates do not align with KPI periods (Monday–Sunday). This may result in incomplete weekly scores for the first/last week. Continue anyway?"
+        confirmText="Continue"
+        cancelText="Adjust Dates"
+        variant="warning"
+      />
     </RightFilterPanel>
   );
 }

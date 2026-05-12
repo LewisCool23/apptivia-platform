@@ -1,10 +1,11 @@
-import React, { useMemo, useState } from 'react';
-import { X, Printer, TrendingUp, TrendingDown, Minus, CheckCircle, AlertTriangle, FileText, Send, Check } from 'lucide-react';
+import React, { useMemo, useState, useRef, useEffect } from 'react';
+import { X, Printer, TrendingUp, TrendingDown, Minus, CheckCircle, AlertTriangle, FileText, Send, Check, Mail, Edit3, Eye, Copy } from 'lucide-react';
 import { KPI_GUIDANCE, buildLabel, LAGGING_THRESHOLD } from '../constants/kpiGuidance';
 import { getKpiTier, TIER_LABELS, TIER_COLORS } from '../constants/skillsets';
 import FeedbackThumb from './shared/FeedbackThumb';
 import { useNotifications } from '../contexts/NotificationContext';
 import { useAuth } from '../AuthContext';
+import { backendFetch } from '../utils/backendFetch';
 
 export default function Meeting1On1PrepModal({
   isOpen,
@@ -17,13 +18,22 @@ export default function Meeting1On1PrepModal({
   repNames,
   scorecardKpiKeys,
   onBuildRepPlan,
+  repActivePlans,
+  onViewRepPlan,
+  onViewDevPlan,
 }) {
   const [notes, setNotes] = useState('');
   const [showSharePreview, setShowSharePreview] = useState(false);
   const [synopsisText, setSynopsisText] = useState('');
   const [shared, setShared] = useState(false);
   const [copiedAgenda, setCopiedAgenda] = useState(false);
+  const [editMode, setEditMode] = useState(false);
+  const [emailRecipients, setEmailRecipients] = useState('');
+  const [emailSubject, setEmailSubject] = useState('');
+  const [emailNotes, setEmailNotes] = useState('');
+  const [emailError, setEmailError] = useState('');
 
+  const shareRef = useRef(null);
   const { addNotification } = useNotifications();
   const { profile } = useAuth();
 
@@ -137,37 +147,106 @@ export default function Meeting1On1PrepModal({
     return lines.join('\n');
   }, [repName, laggingKpis, strengths, actionItems, notes]);
 
+  // Parse synopsis into structured sections for styled preview
+  const parseSynopsis = (text) => {
+    const sections = { header: '', date: '', topics: [], actions: [], managerNotes: '', closing: '' };
+    const lines = text.split('\n');
+    let current = '';
+    lines.forEach(line => {
+      const trimmed = line.trim();
+      if (!trimmed || trimmed === '---') {
+        if (trimmed === '---') current = 'closing';
+        return;
+      }
+      if (lines.indexOf(line) === 0) { sections.header = trimmed; return; }
+      if (lines.indexOf(line) === 1 && !trimmed.startsWith('Discussion')) { sections.date = trimmed; return; }
+      if (trimmed === 'Discussion Topics:') { current = 'topics'; return; }
+      if (trimmed.startsWith('Action Items')) { current = 'actions'; return; }
+      if (trimmed === 'Manager Notes:') { current = 'notes'; return; }
+      if (trimmed.startsWith('Is there anything')) { sections.closing = trimmed; return; }
+      if (current === 'topics') sections.topics.push(trimmed.replace(/^\d+\.\s*/, ''));
+      else if (current === 'actions') sections.actions.push(trimmed.replace(/^\d+\.\s*/, ''));
+      else if (current === 'notes') sections.managerNotes += (sections.managerNotes ? '\n' : '') + trimmed;
+    });
+    return sections;
+  };
+
   const handleOpenSharePreview = () => {
     setSynopsisText(generateSynopsis);
     setShowSharePreview(true);
+    setEditMode(false);
     setShared(false);
     setCopiedAgenda(false);
+    setEmailError('');
+    // Pre-fill email fields
+    setEmailSubject(`1:1 Prep — ${repName} — ${new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}`);
+    setEmailNotes('');
+    // Auto-scroll to the share section after render
+    setTimeout(() => shareRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100);
   };
 
+  const [sending, setSending] = useState(false);
+
   const handleShareAgenda = async () => {
-    if (!repId || !profile) return;
+    if (!repId || !profile || sending) return;
+    setEmailError('');
 
-    // Send in-app notification to the rep
-    await addNotification({
-      type: 'coaching',
-      title: '1:1 Agenda Shared',
-      message: synopsisText.length > 300 ? synopsisText.slice(0, 297) + '...' : synopsisText,
-      link: '/coach',
-      ownerId: repId,
-      organizationId: profile.organization_id,
-      dedupeKey: `agenda-${repId}-${new Date().toISOString().split('T')[0]}`,
-      priority: 3,
-    });
+    // Validate recipients if provided (optional — rep email is always included server-side)
+    const extraRecipients = emailRecipients.trim()
+      ? emailRecipients.split(',').map(e => e.trim()).filter(Boolean)
+      : [];
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const invalid = extraRecipients.filter(e => !emailRegex.test(e));
+    if (invalid.length > 0) {
+      setEmailError(`Invalid email${invalid.length > 1 ? 's' : ''}: ${invalid.join(', ')}`);
+      return;
+    }
 
-    // Copy to clipboard
+    setSending(true);
+
+    try {
+      // 1. Send branded email to the rep (+ any additional recipients)
+      const managerName = [profile.first_name, profile.last_name].filter(Boolean).join(' ') || 'Your Manager';
+      await backendFetch('/api/coaching/share-agenda', {
+        repId,
+        agendaText: synopsisText,
+        managerName,
+        additionalRecipients: extraRecipients,
+        subject: emailSubject || undefined,
+        notes: emailNotes || undefined,
+      });
+
+      // 2. Send simplified in-app notification (full text stored for modal view)
+      await addNotification({
+        type: 'coaching',
+        title: '1:1 Prep Shared',
+        message: synopsisText,
+        link: '/coach',
+        ownerId: repId,
+        organizationId: profile.organization_id,
+        dedupeKey: `agenda-${repId}-${new Date().toISOString().split('T')[0]}`,
+        priority: 3,
+      });
+
+      setShared(true);
+      setTimeout(() => {
+        setShared(false);
+        setShowSharePreview(false);
+      }, 3000);
+    } catch (err) {
+      console.error('Share agenda failed:', err);
+      setEmailError('Failed to send email. Please try again.');
+    } finally {
+      setSending(false);
+    }
+  };
+
+  const handleCopyAgenda = async () => {
     try {
       await navigator.clipboard.writeText(synopsisText);
       setCopiedAgenda(true);
       setTimeout(() => setCopiedAgenda(false), 2000);
-    } catch { /* clipboard may fail in some environments */ }
-
-    setShared(true);
-    setTimeout(() => setShared(false), 3000);
+    } catch { /* clipboard may fail */ }
   };
 
   // Auto-assessment
@@ -213,16 +292,44 @@ export default function Meeting1On1PrepModal({
                 <Send size={14} />
                 Share Agenda
               </button>
-              {onBuildRepPlan && (
-                <button
-                  onClick={() => onBuildRepPlan(repId, repName)}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/20 hover:bg-white/30 transition-colors text-xs font-medium"
-                  title="Build a coaching plan for this rep"
-                >
-                  <FileText size={14} />
-                  Build Rep Plan
-                </button>
-              )}
+              {(() => {
+                const hasCoaching = repActivePlans?.coaching?.length > 0;
+                const hasDevPlan = repActivePlans?.devPlans?.length > 0;
+                if (hasCoaching && onViewRepPlan) {
+                  return (
+                    <button
+                      onClick={() => onViewRepPlan(repId, repActivePlans.coaching[0])}
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/20 hover:bg-white/30 transition-colors text-xs font-medium"
+                      title="View active coaching plan"
+                    >
+                      <FileText size={14} />
+                      View Active Plan
+                    </button>
+                  );
+                }
+                if (hasDevPlan && onViewDevPlan) {
+                  return (
+                    <button
+                      onClick={() => onViewDevPlan(repId, repActivePlans.devPlans[0])}
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/20 hover:bg-white/30 transition-colors text-xs font-medium"
+                      title="View development plan"
+                    >
+                      <FileText size={14} />
+                      View Dev Plan
+                    </button>
+                  );
+                }
+                return onBuildRepPlan ? (
+                  <button
+                    onClick={() => onBuildRepPlan(repId, repName)}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/20 hover:bg-white/30 transition-colors text-xs font-medium"
+                    title="Build a coaching plan for this rep"
+                  >
+                    <FileText size={14} />
+                    Build Rep Plan
+                  </button>
+                ) : null;
+              })()}
               <button onClick={handlePrint} className="p-2 rounded-lg bg-white/20 hover:bg-white/30 transition-colors" title="Print agenda">
                 <Printer size={18} />
               </button>
@@ -385,53 +492,163 @@ export default function Meeting1On1PrepModal({
               />
             </div>
 
-            {/* 6. Share Agenda Preview */}
-            {showSharePreview && (
-              <div className="border-2 border-apptivia-coral-tone-100 rounded-lg p-4 bg-apptivia-coral-tone-50/50 no-print">
-                <h3 className="text-sm font-semibold text-apptivia-ink mb-3 flex items-center gap-2">
-                  <span className="w-6 h-6 rounded-full bg-apptivia-coral text-white flex items-center justify-center text-xs font-bold">
-                    <Send size={12} />
-                  </span>
-                  Preview Agenda for {repName}
-                </h3>
-                <textarea
-                  value={synopsisText}
-                  onChange={(e) => setSynopsisText(e.target.value)}
-                  className="w-full border rounded-lg p-3 text-xs text-apptivia-carbon-700 resize-none h-48 focus:outline-none focus:ring-2 focus:ring-apptivia-coral-tone-300 bg-white font-mono"
-                />
-                <div className="flex items-center justify-between mt-3">
-                  <button
-                    onClick={() => setShowSharePreview(false)}
-                    className="text-xs text-apptivia-carbon-500 hover:text-apptivia-carbon-700"
-                  >
-                    Cancel
-                  </button>
-                  <div className="flex items-center gap-2">
-                    {shared && (
-                      <span className="text-xs text-green-600 font-medium flex items-center gap-1">
-                        <Check size={12} /> Sent & Copied!
-                      </span>
+            {/* 6. Share Agenda */}
+            {showSharePreview && (() => {
+              const parsed = parseSynopsis(synopsisText);
+              return (
+                <div ref={shareRef} className="border-2 border-apptivia-coral-tone-100 rounded-lg overflow-hidden bg-white no-print">
+                  {/* Preview Header */}
+                  <div className="bg-apptivia-ink px-4 py-3 flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Send size={14} className="text-apptivia-coral" />
+                      <span className="text-sm font-semibold text-white">Share Agenda</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <button
+                        onClick={() => setEditMode(false)}
+                        className={`text-[10px] px-2 py-1 rounded flex items-center gap-1 ${!editMode ? 'bg-white/20 text-white' : 'text-white/60 hover:text-white'}`}
+                      >
+                        <Eye size={10} /> Preview
+                      </button>
+                      <button
+                        onClick={() => setEditMode(true)}
+                        className={`text-[10px] px-2 py-1 rounded flex items-center gap-1 ${editMode ? 'bg-white/20 text-white' : 'text-white/60 hover:text-white'}`}
+                      >
+                        <Edit3 size={10} /> Edit
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Agenda Content — Preview or Edit */}
+                  <div className="p-4 max-h-[280px] overflow-y-auto border-b border-apptivia-carbon-100">
+                    {editMode ? (
+                      <textarea
+                        value={synopsisText}
+                        onChange={(e) => setSynopsisText(e.target.value)}
+                        className="w-full border rounded-lg p-3 text-xs text-apptivia-carbon-700 resize-none h-48 focus:outline-none focus:ring-2 focus:ring-apptivia-coral-tone-300 bg-white"
+                      />
+                    ) : (
+                      <div className="space-y-3">
+                        {/* Header */}
+                        <div className="border-b border-apptivia-carbon-100 pb-2">
+                          <h4 className="text-sm font-bold text-apptivia-ink">{parsed.header}</h4>
+                          {parsed.date && <p className="text-[11px] text-apptivia-carbon-500 mt-0.5">{parsed.date}</p>}
+                        </div>
+                        {/* Discussion Topics */}
+                        {parsed.topics.length > 0 && (
+                          <div>
+                            <p className="text-[10px] font-semibold text-apptivia-coral uppercase tracking-wide mb-1.5">Discussion Topics</p>
+                            <ol className="space-y-1.5 list-decimal list-inside">
+                              {parsed.topics.map((t, i) => (
+                                <li key={i} className="text-xs text-apptivia-carbon-700 leading-relaxed">{t}</li>
+                              ))}
+                            </ol>
+                          </div>
+                        )}
+                        {/* Action Items */}
+                        {parsed.actions.length > 0 && (
+                          <div>
+                            <p className="text-[10px] font-semibold text-apptivia-ink uppercase tracking-wide mb-1.5">Action Items</p>
+                            <ol className="space-y-1 list-decimal list-inside">
+                              {parsed.actions.map((a, i) => (
+                                <li key={i} className="text-xs text-apptivia-carbon-700">{a}</li>
+                              ))}
+                            </ol>
+                          </div>
+                        )}
+                        {/* Manager Notes */}
+                        {parsed.managerNotes && (
+                          <div className="bg-apptivia-carbon-50 rounded p-2">
+                            <p className="text-[10px] font-semibold text-apptivia-carbon-500 uppercase tracking-wide mb-1">Manager Notes</p>
+                            <p className="text-xs text-apptivia-carbon-700">{parsed.managerNotes}</p>
+                          </div>
+                        )}
+                        {/* Closing */}
+                        {parsed.closing && (
+                          <p className="text-xs text-apptivia-carbon-500 italic pt-1 border-t border-apptivia-carbon-100">{parsed.closing}</p>
+                        )}
+                      </div>
                     )}
-                    <button
-                      onClick={handleShareAgenda}
-                      disabled={shared}
-                      className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-semibold text-white transition-colors ${
-                        shared ? 'bg-green-500' : 'bg-apptivia-coral hover:bg-apptivia-coral'
-                      }`}
-                    >
-                      {shared ? (
-                        <><Check size={14} /> Shared</>
-                      ) : (
-                        <><Send size={14} /> Send to {repName?.split(' ')[0] || 'Rep'} & Copy</>
-                      )}
-                    </button>
+                  </div>
+
+                  {/* Email Form */}
+                  <div className="p-4 space-y-3 bg-apptivia-carbon-50/50">
+                    <div>
+                      <label className="block text-[11px] font-medium text-apptivia-carbon-600 mb-1">
+                        Additional Recipients (optional, comma-separated)
+                      </label>
+                      <input
+                        type="text"
+                        value={emailRecipients}
+                        onChange={(e) => setEmailRecipients(e.target.value)}
+                        placeholder="vp@company.com, teamlead@company.com"
+                        className="w-full px-3 py-1.5 text-xs border border-apptivia-carbon-200 rounded-lg focus:ring-2 focus:ring-apptivia-coral focus:border-transparent"
+                      />
+                      <p className="text-[10px] text-apptivia-carbon-400 mt-0.5">{repName}'s email is included automatically</p>
+                    </div>
+                    <div>
+                      <label className="block text-[11px] font-medium text-apptivia-carbon-600 mb-1">Subject</label>
+                      <input
+                        type="text"
+                        value={emailSubject}
+                        onChange={(e) => setEmailSubject(e.target.value)}
+                        className="w-full px-3 py-1.5 text-xs border border-apptivia-carbon-200 rounded-lg focus:ring-2 focus:ring-apptivia-coral focus:border-transparent"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[11px] font-medium text-apptivia-carbon-600 mb-1">Additional notes (optional)</label>
+                      <textarea
+                        value={emailNotes}
+                        onChange={(e) => setEmailNotes(e.target.value)}
+                        placeholder="Add context or highlights for this prep"
+                        rows={2}
+                        className="w-full px-3 py-1.5 text-xs border border-apptivia-carbon-200 rounded-lg focus:ring-2 focus:ring-apptivia-coral focus:border-transparent"
+                      />
+                    </div>
+
+                    {emailError && (
+                      <div className="p-2 bg-red-50 border border-red-200 rounded-lg text-red-700 text-xs">{emailError}</div>
+                    )}
+
+                    {shared && (
+                      <div className="p-2 bg-green-50 border border-green-200 rounded-lg text-green-700 text-xs flex items-center gap-2">
+                        <CheckCircle size={14} /> Email sent successfully!
+                      </div>
+                    )}
+
+                    <div className="flex items-center justify-between">
+                      <button
+                        onClick={() => setShowSharePreview(false)}
+                        className="text-xs text-apptivia-carbon-500 hover:text-apptivia-carbon-700"
+                      >
+                        Cancel
+                      </button>
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={handleCopyAgenda}
+                          className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium border border-apptivia-carbon-200 text-apptivia-carbon-600 hover:bg-apptivia-carbon-100 transition-colors"
+                        >
+                          {copiedAgenda ? <><Check size={12} /> Copied!</> : <><Copy size={12} /> Copy</>}
+                        </button>
+                        <button
+                          onClick={handleShareAgenda}
+                          disabled={shared || sending}
+                          className={`flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-xs font-semibold text-white transition-colors ${
+                            shared ? 'bg-green-500' : 'bg-apptivia-coral hover:bg-apptivia-coral/90'
+                          } ${sending ? 'opacity-70 cursor-wait' : ''}`}
+                        >
+                          <Mail size={12} />
+                          {sending ? 'Sending...' : 'Send Email'}
+                        </button>
+                      </div>
+                    </div>
+                    <p className="text-[10px] text-apptivia-carbon-400 text-center">
+                      A branded HTML email with the agenda will be sent to {repName} and any additional recipients
+                    </p>
                   </div>
                 </div>
-                <p className="text-[10px] text-apptivia-carbon-400 mt-2">
-                  This will send an in-app notification to {repName?.split(' ')[0] || 'the rep'} and copy the full agenda to your clipboard.
-                </p>
-              </div>
-            )}
+              );
+            })()}
           </div>
         </div>
       </div>

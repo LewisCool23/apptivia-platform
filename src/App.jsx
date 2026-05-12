@@ -38,6 +38,7 @@ const Wallboard        = React.lazy(() => import('./pages/Wallboard'));
 const ForgotPassword   = React.lazy(() => import('./pages/ForgotPassword'));
 const UpdatePassword   = React.lazy(() => import('./pages/UpdatePassword'));
 const PilotDashboard   = React.lazy(() => import('./pages/PilotDashboard'));
+const Resources        = React.lazy(() => import('./pages/Resources'));
 
 // ── Simple page-level loading fallback ──────────────────────────────────────
 function PageLoader() {
@@ -98,6 +99,9 @@ const AppRoutes = () => {
         />
         <Route path="/analytics"
           element={<PBR permissions={['view_analytics']}><Analytics /></PBR>}
+        />
+        <Route path="/resources"
+          element={<PBR permissions={['view_resources']}><Resources /></PBR>}
         />
         <Route path="/systems"
           element={<PBR permissions={['view_systems']}><Systems /></PBR>}

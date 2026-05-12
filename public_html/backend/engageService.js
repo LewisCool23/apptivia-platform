@@ -209,7 +209,7 @@ async function enrichPeopleBatch(apiKey, people) {
     }).catch((err) => {
       // Apollo requires webhook_url for reveal_phone_number on some plans — retry without
       if (err.message?.includes('webhook_url') || err.message?.includes('reveal_phone_number')) {
-        console.warn(`Apollo reveal_phone_number requires webhook for ${person.first_name} ${person.last_name} — retrying without`);
+        console.warn(`Apollo reveal_phone_number requires webhook for ${person.first_name} ${person.last_name || ''} — retrying without`);
         delete matchBody.reveal_phone_number;
         return fetchJson(`${APOLLO_BASE}/people/match`, {
           method: 'POST',

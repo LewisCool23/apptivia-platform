@@ -78,6 +78,13 @@ export function computeIcpScoreForApolloCompany(
   icpConfig: any,
 ): number | null {
   if (!icpConfig?.enabled) return null;
+
+  // Hard exclude — if company matches an excluded industry, return 0 (filtered out)
+  if (icpConfig.exclude_industries?.length) {
+    const ind = company.industry || '';
+    if (ind && industryFuzzyMatch(ind, icpConfig.exclude_industries as string[])) return 0;
+  }
+
   const w = icpConfig.weights ?? {
     industry: 20, headcount: 20, revenue: 15, technology: 15,
     geography: 15, company_age: 10, keywords: 5,
@@ -88,19 +95,21 @@ export function computeIcpScoreForApolloCompany(
   // 1. Industry — fuzzy match against Apollo's taxonomy
   if (icpConfig.target_industries?.length) {
     const wt = w.industry ?? 20;
-    maxScore += wt;
     const ind = company.industry || '';
-    if (ind && industryFuzzyMatch(ind, icpConfig.target_industries as string[])) score += wt;
+    if (ind) {
+      maxScore += wt;
+      if (industryFuzzyMatch(ind, icpConfig.target_industries as string[])) score += wt;
+    }
   }
 
   // 2. Headcount — Apollo search may use either field name
   if (icpConfig.headcount_min || icpConfig.headcount_max) {
     const wt = w.headcount ?? 20;
-    maxScore += wt;
     const emp = company.estimated_num_employees || company.num_employees || 0;
-    const hcMin = icpConfig.headcount_min || 0;
-    const hcMax = icpConfig.headcount_max || Infinity;
     if (emp) {
+      maxScore += wt;
+      const hcMin = icpConfig.headcount_min || 0;
+      const hcMax = icpConfig.headcount_max || Infinity;
       if (emp >= hcMin && emp <= hcMax) score += wt;
       else if (emp >= hcMin * 0.5 && emp <= hcMax * 2) score += wt * 0.5;
     }
@@ -109,7 +118,6 @@ export function computeIcpScoreForApolloCompany(
   // 3. Revenue — enriched via Apollo /organizations/enrich
   if (icpConfig.revenue_min_m || icpConfig.revenue_max_m) {
     const wt = w.revenue ?? 15;
-    maxScore += wt;
     const revStr = company.annual_revenue_printed || '';
     const revNum = company.annual_revenue || 0;
     let revM = 0;
@@ -120,6 +128,7 @@ export function computeIcpScoreForApolloCompany(
       revM = revNum / 1_000_000;
     }
     if (revM) {
+      maxScore += wt;
       const revMin = icpConfig.revenue_min_m || 0;
       const revMax = icpConfig.revenue_max_m || Infinity;
       if (revM >= revMin && revM <= revMax) score += wt;
@@ -130,11 +139,11 @@ export function computeIcpScoreForApolloCompany(
   // 4. Technology — enriched via Apollo /organizations/enrich
   if (icpConfig.target_technologies?.length) {
     const wt = w.technology ?? 15;
-    maxScore += wt;
     const techNames = (company.technologies || []).map((t: any) =>
       (typeof t === 'string' ? t : t?.name || '').toLowerCase(),
     );
     if (techNames.length) {
+      maxScore += wt;
       const match = (icpConfig.target_technologies as string[]).some(tech =>
         techNames.some((t: string) => t.includes(tech.toLowerCase())),
       );
@@ -145,9 +154,9 @@ export function computeIcpScoreForApolloCompany(
   // 5. Geography — country from search results
   if (icpConfig.target_countries?.length) {
     const wt = w.geography ?? 15;
-    maxScore += wt;
     const companyCountry = (company.country || '').toLowerCase();
     if (companyCountry) {
+      maxScore += wt;
       const match = (icpConfig.target_countries as string[]).some(c =>
         companyCountry.includes(c.toLowerCase()) || c.toLowerCase().includes(companyCountry),
       );
@@ -158,9 +167,9 @@ export function computeIcpScoreForApolloCompany(
   // 6. Company Age — founded_year from search results
   if (icpConfig.company_age_min !== undefined || icpConfig.company_age_max !== undefined) {
     const wt = w.company_age ?? 10;
-    maxScore += wt;
     const foundedYear = company.founded_year;
     if (foundedYear) {
+      maxScore += wt;
       const age = new Date().getFullYear() - foundedYear;
       const ageMin = icpConfig.company_age_min ?? 0;
       const ageMax = icpConfig.company_age_max ?? 100;
@@ -172,9 +181,9 @@ export function computeIcpScoreForApolloCompany(
   // 7. Keywords — matched against Apollo company keyword tags
   if (icpConfig.target_keywords?.length) {
     const wt = w.keywords ?? 5;
-    maxScore += wt;
     const companyKeywords = (company.keywords || []).map((k: string) => k.toLowerCase());
     if (companyKeywords.length) {
+      maxScore += wt;
       const matches = (icpConfig.target_keywords as string[]).filter(kw =>
         companyKeywords.some(ck => ck.includes(kw.toLowerCase())),
       ).length;
@@ -212,11 +221,38 @@ export interface ApolloCompany {
   country?: string;
 }
 
+// Normalize Apollo's response fields to our ApolloCompany interface.
+// Apollo mixed_companies/search returns field names like organization_revenue,
+// organization_country, etc. that differ from our expected shape.
+function normalizeApolloCompany(raw: any): ApolloCompany {
+  return {
+    id: raw.id,
+    name: raw.name,
+    website_url: raw.website_url,
+    primary_domain: raw.primary_domain || raw.domain,
+    industry: raw.industry,
+    estimated_num_employees: raw.estimated_num_employees || raw.num_employees || undefined,
+    annual_revenue_printed: raw.annual_revenue_printed || raw.organization_revenue_printed || undefined,
+    annual_revenue: raw.annual_revenue || raw.organization_revenue || undefined,
+    technologies: raw.technologies,
+    founded_year: raw.founded_year,
+    keywords: raw.keywords,
+    short_description: raw.short_description,
+    logo_url: raw.logo_url,
+    linkedin_url: raw.linkedin_url,
+    city: raw.city || raw.organization_city,
+    state: raw.state || raw.organization_state,
+    country: raw.country || raw.organization_country,
+  };
+}
+
 export interface IcpProspectorFilters {
   keywords: string;
   locations: string[];
   useIndustryKeywords: boolean;
 }
+
+type IcpStatus = 'ready' | 'no_config' | 'not_enabled' | 'no_dimensions';
 
 interface IcpProspectorState {
   results: ApolloCompany[];
@@ -232,6 +268,7 @@ interface IcpProspectorState {
   existingAccountMap: Record<string, string>;
   companyContacts: Record<string, any[]>;
   enrichingCompanies: string[];
+  icpStatus: IcpStatus;
 }
 
 // ---------------------------------------------------------------------------
@@ -239,7 +276,24 @@ interface IcpProspectorState {
 // ---------------------------------------------------------------------------
 const PAGE_SIZE = 10;
 
-export function useIcpProspector(organizationId: string, icpConfig: any) {
+export function useIcpProspector(organizationId: string, icpConfig: any, signalConfig?: any) {
+  // Diagnose ICP config status
+  const getIcpStatus = useCallback((cfg: any): IcpStatus => {
+    if (!cfg) return 'no_config';
+    if (!cfg.enabled) return 'not_enabled';
+    const hasDimensions = !!(
+      cfg.target_industries?.length ||
+      cfg.headcount_min || cfg.headcount_max ||
+      cfg.revenue_min_m || cfg.revenue_max_m ||
+      cfg.target_technologies?.length ||
+      cfg.target_countries?.length ||
+      cfg.company_age_min || cfg.company_age_max ||
+      cfg.target_keywords?.length
+    );
+    if (!hasDimensions) return 'no_dimensions';
+    return 'ready';
+  }, []);
+
   const [state, setState] = useState<IcpProspectorState>({
     results: [],
     icpScores: {},
@@ -254,6 +308,7 @@ export function useIcpProspector(organizationId: string, icpConfig: any) {
     existingAccountMap: {},
     companyContacts: {},
     enrichingCompanies: [],
+    icpStatus: 'no_config',
   });
 
   const enrichingRef = useRef<Set<string>>(new Set());
@@ -263,15 +318,15 @@ export function useIcpProspector(organizationId: string, icpConfig: any) {
     [],
   );
 
-  // Seed locations from icp_config when it loads
+  // Seed locations + compute ICP status when config loads
   useEffect(() => {
-    if (icpConfig?.icp_regions?.length) {
-      setState(prev => ({
-        ...prev,
-        filters: { ...prev.filters, locations: icpConfig.icp_regions },
-      }));
-    }
-  }, [icpConfig]);
+    const status = getIcpStatus(icpConfig);
+    setState(prev => ({
+      ...prev,
+      icpStatus: status,
+      ...(icpConfig?.icp_regions?.length ? { filters: { ...prev.filters, locations: icpConfig.icp_regions } } : {}),
+    }));
+  }, [icpConfig, getIcpStatus]);
 
   // Load existing accounts to flag "already added" companies
   const loadExistingAccounts = useCallback(async () => {
@@ -343,9 +398,12 @@ export function useIcpProspector(organizationId: string, icpConfig: any) {
         f.keyword_tags = [currentFilters.keywords];
       }
       if (currentFilters.locations?.length) f.locations = currentFilters.locations;
+      // Pass exclusion list so the edge function can post-filter
+      const excludeList = signalConfig?.exclude_industries || icpConfig?.exclude_industries || [];
+      if (excludeList.length) f.exclude_industries = excludeList;
       return f;
     },
-    [icpConfig, expandToApolloTerms],
+    [icpConfig, signalConfig, expandToApolloTerms],
   );
 
   const scoreResults = useCallback(
@@ -418,12 +476,28 @@ export function useIcpProspector(organizationId: string, icpConfig: any) {
       const currentFilters = overrideFilters
         ? { ...state.filters, ...overrideFilters }
         : state.filters;
-      patch({ loading: true, error: null, results: [], currentPage: 1, hasMore: false, icpScores: {} });
+      // Validate ICP config before searching
+      const status = getIcpStatus(icpConfig);
+      if (status === 'no_config') {
+        patch({ loading: false, error: 'ICP profile not configured. Go to Org Settings → ICP to set up your Ideal Customer Profile.', icpStatus: status });
+        return;
+      }
+      if (status === 'not_enabled') {
+        patch({ loading: false, error: 'ICP profile is disabled. Enable it in Org Settings → ICP.', icpStatus: status });
+        return;
+      }
+      if (status === 'no_dimensions') {
+        patch({ loading: false, error: 'ICP profile has no targeting criteria. Add at least one dimension (industries, headcount, revenue, etc.) in Org Settings → ICP.', icpStatus: status });
+        return;
+      }
+      patch({ loading: true, error: null, results: [], currentPage: 1, hasMore: false, icpScores: {}, icpStatus: status });
       try {
         const apolloFilters = buildApolloFilters(1, currentFilters);
         const resp = await engageApi.searchCompanies(apolloFilters as any);
-        const companies: ApolloCompany[] =
-          resp?.data?.organizations ?? resp?.data?.companies ?? [];
+        // Apollo returns results in both 'accounts' and 'organizations' arrays — merge and normalize
+        const rawOrgs = resp?.data?.organizations ?? resp?.data?.companies ?? [];
+        const rawAccts = resp?.data?.accounts ?? [];
+        const companies: ApolloCompany[] = [...rawOrgs, ...rawAccts].map(normalizeApolloCompany);
         const total = resp?.data?.pagination?.total_entries ?? companies.length;
         const scores = scoreResults(companies);
         // Filter out companies with 0 or null ICP Fit — they don't match the ICP
@@ -440,6 +514,10 @@ export function useIcpProspector(organizationId: string, icpConfig: any) {
           hasMore: companies.length === PAGE_SIZE,
           totalResults: total,
           filters: currentFilters,
+          // If Apollo returned results but all were filtered out, surface that
+          error: companies.length > 0 && passing.length === 0
+            ? `Found ${companies.length} companies but none matched your ICP criteria. Try adjusting your ICP filters.`
+            : null,
         });
         enrichInBackground(companies);
       } catch (err: any) {
@@ -457,8 +535,9 @@ export function useIcpProspector(organizationId: string, icpConfig: any) {
     try {
       const apolloFilters = buildApolloFilters(nextPage, state.filters);
       const resp = await engageApi.searchCompanies(apolloFilters as any);
-      const companies: ApolloCompany[] =
-        resp?.data?.organizations ?? resp?.data?.companies ?? [];
+      const rawOrgs = resp?.data?.organizations ?? resp?.data?.companies ?? [];
+      const rawAccts = resp?.data?.accounts ?? [];
+      const companies: ApolloCompany[] = [...rawOrgs, ...rawAccts].map(normalizeApolloCompany);
       const newScores = scoreResults(companies);
       setState(prev => {
         const allScores = { ...prev.icpScores, ...newScores };
@@ -577,6 +656,20 @@ export function useIcpProspector(organizationId: string, icpConfig: any) {
     },
     [organizationId, state, patch],
   );
+
+  // Auto-enrich first ~10 ICP companies when results load
+  const autoEnrichedRef = useRef<Set<string>>(new Set());
+  useEffect(() => {
+    if (!state.results.length || state.loading) return;
+    const toEnrich = state.results.slice(0, 10).filter(c => {
+      const key = c.primary_domain || c.name;
+      return key && !autoEnrichedRef.current.has(key) && state.companyContacts[key] === undefined;
+    });
+    if (!toEnrich.length) return;
+    toEnrich.forEach(c => autoEnrichedRef.current.add(c.primary_domain || c.name));
+    // Fire enrichment calls in parallel (non-blocking)
+    toEnrich.forEach(c => enrichCompanyContacts(c));
+  }, [state.results, state.loading, state.companyContacts, enrichCompanyContacts]);
 
   return {
     ...state,

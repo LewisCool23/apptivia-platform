@@ -13,6 +13,7 @@ import { supabase } from '../supabaseClient';
 import { useIntegrations } from '../hooks/useIntegrations';
 import { useTeamManagement } from '../hooks/useTeamManagement';
 import { SUPPORTED_INTEGRATIONS, API_KEY_PROVIDERS } from '../constants/integrations';
+import IntegrationLogo from '../components/IntegrationLogo';
 import { ROLES } from '../constants/roles';
 import SyncHistoryModal from '../components/shared/SyncHistoryModal';
 import DisconnectConfirmModal from '../components/shared/DisconnectConfirmModal';
@@ -355,9 +356,7 @@ export default function Systems() {
               return (
                 <div key={template.integration_type} className="bg-white rounded-lg p-5 shadow-sm border border-apptivia-carbon-100 flex flex-col hover:shadow-md transition-shadow">
                   <div className="flex items-center gap-3 mb-4">
-                    <div className={`w-11 h-11 bg-gradient-to-br ${template.color} rounded-lg flex items-center justify-center text-xs font-bold text-white shadow-sm`}>
-                      {template.icon}
-                    </div>
+                    <IntegrationLogo type={template.integration_type} size={44} />
                     <div className="flex-1 min-w-0">
                       <div className="font-semibold text-apptivia-ink">{template.display_name}</div>
                       <div className="text-xs text-apptivia-carbon-500 truncate">{template.description}</div>

@@ -88,7 +88,7 @@ export default function SetupChecklist({ organizationId, userRole }) {
       {/* Floating button — positioned to the left of Aaron AI */}
       <button
         onClick={() => setPanelOpen(!panelOpen)}
-        className="fixed bottom-6 right-20 sm:right-[5.5rem] w-12 h-12 sm:w-14 sm:h-14 bg-apptivia-coral text-white rounded-full shadow-lg hover:shadow-xl flex items-center justify-center z-40 transition-all duration-300 hover:scale-110"
+        className="fixed bottom-6 right-20 sm:right-[5.5rem] w-12 h-12 sm:w-14 sm:h-14 bg-apptivia-coral text-white rounded-full fab-3d flex items-center justify-center z-40 transition-all duration-300 hover:scale-110"
         aria-label="Setup checklist"
       >
         <ClipboardCheck size={22} />

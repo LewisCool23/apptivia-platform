@@ -3,12 +3,12 @@ import { useNavigate } from 'react-router-dom';
 import {
   Radar, Zap, AlertTriangle, TrendingUp, Search, RefreshCw,
   Eye, EyeOff, CheckCircle, XCircle, ExternalLink, Sparkles, Filter,
-  ChevronDown, Target, Building2, Briefcase, DollarSign,
+  ChevronDown, ChevronRight, Target, Building2, Briefcase, DollarSign,
   Newspaper, Settings, X, Users, UserCheck, Rocket,
   Trophy, Mic, Star, Megaphone, TrendingDown, Layers, Trash2,
   Mail, Phone, Linkedin, UserPlus, Loader, MessageSquare, Clock,
   FileText, ThumbsDown, MessageCircle, Monitor,
-  Flame, BarChart2, ArrowRight, CheckCheck, Copy
+  Flame, BarChart2, ArrowRight, CheckCheck, Copy, Plus
 } from 'lucide-react';
 import { supabase } from '../supabaseClient';
 import { useSignalProspecting } from '../hooks/useSignalProspecting';
@@ -17,6 +17,7 @@ import { useIcpProspector } from '../hooks/useIcpProspector';
 import ConfirmModal from './ConfirmModal';
 import Tooltip from './shared/Tooltip';
 import SignalOutreachModal from './SignalOutreachModal';
+import QuickAddSignalModal from './QuickAddSignalModal';
 
 const SIGNAL_ICONS = {
   // === BUYER INTENT (Highest Value) ===
@@ -143,6 +144,12 @@ function ActionQueuePanel({
   onApprove, onDismiss, onSend,
   onExpandToPlay, onFetchSteps, onUpdateStep, actionSteps, expandingActionId,
 }) {
+  const [collapsed, setCollapsed] = useState(() => {
+    try { return localStorage.getItem('engage_action_queue_collapsed') !== 'false'; } catch { return true; }
+  });
+  const toggleCollapsed = () => {
+    setCollapsed(prev => { const next = !prev; try { localStorage.setItem('engage_action_queue_collapsed', String(next)); } catch {} return next; });
+  };
   const [expandedId, setExpandedId] = useState(null);
   const [bulkProcessing, setBulkProcessing] = useState(false);
   // Dismissal state per item
@@ -152,7 +159,9 @@ function ActionQueuePanel({
   // Editable draft state per item
   const [editSubject, setEditSubject] = useState({});
   const [editBody, setEditBody] = useState({});
+  const [editRecipient, setEditRecipient] = useState({});
   const [sendingId, setSendingId] = useState(null);
+  const [sendError, setSendError] = useState({});
   // [SPEC 09] Play selector state
   const [showPlaySelector, setShowPlaySelector] = useState(null);
 
@@ -225,16 +234,25 @@ function ActionQueuePanel({
 
   const handleSend = async (item) => {
     setSendingId(item.id);
+    setSendError(prev => { const n = { ...prev }; delete n[item.id]; return n; });
     try {
       const subject = editSubject[item.id] ?? item.draft_email_subject ?? '';
       const body = editBody[item.id] ?? item.draft_email_body ?? '';
-      await onSend(item.id, subject, body);
+      const recipient = editRecipient[item.id] ?? '';
+      await onSend(item.id, subject, body, recipient || undefined);
       // Clear edit state for this item
       setEditSubject(prev => { const n = { ...prev }; delete n[item.id]; return n; });
       setEditBody(prev => { const n = { ...prev }; delete n[item.id]; return n; });
+      setEditRecipient(prev => { const n = { ...prev }; delete n[item.id]; return n; });
       setExpandedId(null);
     } catch (err) {
       console.error('Send error:', err);
+      let msg = 'Failed to send email';
+      try {
+        const parsed = JSON.parse(err?.message || '{}');
+        msg = parsed.error || msg;
+      } catch { msg = err?.message || msg; }
+      setSendError(prev => ({ ...prev, [item.id]: msg }));
     } finally {
       setSendingId(null);
     }
@@ -242,13 +260,14 @@ function ActionQueuePanel({
 
   return (
     <div className="bg-apptivia-coral-tone-50 rounded-lg border border-apptivia-carbon-300 p-4 space-y-3">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between cursor-pointer" onClick={toggleCollapsed}>
         <div className="flex items-center gap-2">
           <div className="w-7 h-7 bg-apptivia-ink rounded-lg flex items-center justify-center">
             <Zap size={12} className="text-white" />
           </div>
           <div>
             <div className="flex items-center gap-2">
+              {collapsed ? <ChevronRight size={14} className="text-apptivia-carbon-500" /> : <ChevronDown size={14} className="text-apptivia-carbon-500" />}
               <h3 className="text-sm font-semibold text-apptivia-ink">Action Queue</h3>
               {actionQueue.length > 0 && (
                 <span className="inline-flex items-center px-1.5 py-0.5 rounded-full bg-apptivia-ink text-white text-[10px] font-bold">
@@ -271,8 +290,8 @@ function ActionQueuePanel({
           </div>
         </div>
         {/* Bulk actions */}
-        {actionQueue.length > 1 && !bulkProcessing && (
-          <div className="flex items-center gap-1.5">
+        {!collapsed && actionQueue.length > 1 && !bulkProcessing && (
+          <div className="flex items-center gap-1.5" onClick={e => e.stopPropagation()}>
             <button
               onClick={handleBulkApprove}
               className="text-[10px] font-medium px-2 py-1 rounded-md bg-emerald-50 text-emerald-700 hover:bg-emerald-100 transition-colors flex items-center gap-1"
@@ -294,13 +313,13 @@ function ActionQueuePanel({
         )}
       </div>
 
-      {actionQueueLoading && (
+      {!collapsed && actionQueueLoading && (
         <div className="flex items-center gap-2 text-xs text-apptivia-ink py-1">
           <Loader size={12} className="animate-spin" /> Loading action queue...
         </div>
       )}
 
-      <div className="space-y-2 max-h-[400px] overflow-y-auto pr-1">
+      {!collapsed && <div className="space-y-2 max-h-[400px] overflow-y-auto pr-1">
         {actionQueue.map((item) => {
           const signal = item.signal;
           const isExpanded = expandedId === item.id;
@@ -431,9 +450,19 @@ function ActionQueuePanel({
               {/* ── Expanded editable draft ── */}
               {isExpanded && !isDismissing && (
                 <div className="ml-0 space-y-2 border-t border-apptivia-carbon-300 pt-2">
+                  <div>
+                    <p className="text-[10px] font-semibold text-apptivia-carbon-500 uppercase tracking-wide mb-0.5">To</p>
+                    <input
+                      type="email"
+                      placeholder="recipient@company.com"
+                      value={editRecipient[item.id] ?? ''}
+                      onChange={(e) => setEditRecipient(prev => ({ ...prev, [item.id]: e.target.value }))}
+                      className="w-full text-xs text-apptivia-ink font-medium border border-apptivia-carbon-200 rounded-md px-2.5 py-1.5 focus:outline-none focus:ring-1 focus:ring-apptivia-coral-tone-300"
+                    />
+                  </div>
                   {item.draft_email_subject && (
                     <div>
-                      <p className="text-[10px] font-semibold text-apptivia-carbon-500 uppercase tracking-wide mb-0.5">Email Subject</p>
+                      <p className="text-[10px] font-semibold text-apptivia-carbon-500 uppercase tracking-wide mb-0.5">Subject</p>
                       <input
                         type="text"
                         value={editSubject[item.id] ?? item.draft_email_subject}
@@ -444,7 +473,7 @@ function ActionQueuePanel({
                   )}
                   {item.draft_email_body && (
                     <div>
-                      <p className="text-[10px] font-semibold text-apptivia-carbon-500 uppercase tracking-wide mb-0.5">Email Body</p>
+                      <p className="text-[10px] font-semibold text-apptivia-carbon-500 uppercase tracking-wide mb-0.5">Body</p>
                       <textarea
                         value={editBody[item.id] ?? item.draft_email_body}
                         onChange={(e) => setEditBody(prev => ({ ...prev, [item.id]: e.target.value }))}
@@ -464,6 +493,11 @@ function ActionQueuePanel({
                       />
                     </div>
                   )}
+                  {sendError[item.id] && (
+                    <p className="text-[11px] text-red-600 bg-red-50 border border-red-200 rounded-md px-2.5 py-1.5">
+                      {sendError[item.id]}
+                    </p>
+                  )}
                   <div className="flex items-center justify-between pt-1">
                     <p className="text-[10px] text-apptivia-ink italic">Aaron will learn from your edits</p>
                     <button
@@ -474,7 +508,7 @@ function ActionQueuePanel({
                       {isSending ? (
                         <><Loader size={10} className="animate-spin" /> Sending...</>
                       ) : (
-                        <><Mail size={10} /> Send with Edits</>
+                        <><Mail size={10} /> Send via Gmail</>
                       )}
                     </button>
                   </div>
@@ -561,7 +595,7 @@ function ActionQueuePanel({
             </div>
           );
         })}
-      </div>
+      </div>}
     </div>
   );
 }
@@ -600,8 +634,8 @@ function BuyingStageFunnel({ byBuyingStage = {} }) {
   if (total === 0) return null;
 
   const stages = [
-    { key: 'awareness', label: 'Awareness', color: 'bg-sky-500', bgColor: 'bg-sky-50', textColor: 'text-sky-700' },
-    { key: 'consideration', label: 'Consideration', color: 'bg-amber-500', bgColor: 'bg-amber-50', textColor: 'text-amber-700' },
+    { key: 'awareness', label: 'Awareness', color: 'bg-apptivia-coral', bgColor: 'bg-apptivia-coral-tone-50', textColor: 'text-apptivia-coral' },
+    { key: 'consideration', label: 'Consideration', color: 'bg-amber-400', bgColor: 'bg-amber-50', textColor: 'text-amber-700' },
     { key: 'decision', label: 'Decision', color: 'bg-emerald-500', bgColor: 'bg-emerald-50', textColor: 'text-emerald-700' },
   ];
 
@@ -611,7 +645,7 @@ function BuyingStageFunnel({ byBuyingStage = {} }) {
         <Layers size={16} className="text-apptivia-carbon-500" />
         <span className="text-sm font-semibold text-apptivia-carbon-700">Buying Stage Distribution</span>
       </div>
-      <div className="flex items-center gap-2 h-8 rounded-lg overflow-hidden">
+      <div className="flex items-center h-8 rounded-lg overflow-hidden">
         {stages.map(stage => {
           const count = byBuyingStage[stage.key] || 0;
           const pct = total > 0 ? Math.round((count / total) * 100) : 0;
@@ -644,7 +678,7 @@ function BuyingStageFunnel({ byBuyingStage = {} }) {
 
 // ── Signal Contacts Section ───────────────────────────────
 
-function SignalContactsSection({ companyName, contacts, isEnriching, onEnrich, onCallContact }) {
+function SignalContactsSection({ companyName, contacts, isEnriching, onEnrich, onCallContact, onEmailContact, onResearchContact }) {
   if (contacts && contacts.length > 0) {
     return (
       <div className="mt-2 pt-2 border-t border-apptivia-carbon-100">
@@ -666,9 +700,9 @@ function SignalContactsSection({ companyName, contacts, isEnriching, onEnrich, o
               <div className="flex items-center gap-1 opacity-50 group-hover/contact:opacity-100 transition-opacity">
                 {person.email && (
                   <button
-                    onClick={() => navigator.clipboard.writeText(person.email)}
+                    onClick={() => onEmailContact ? onEmailContact(person) : navigator.clipboard.writeText(person.email)}
                     className="text-apptivia-coral-tone-300 hover:text-apptivia-coral transition-colors"
-                    title={`Copy email: ${person.email}`}
+                    title={onEmailContact ? `Draft email to ${person.name || person.email}` : `Copy email: ${person.email}`}
                   >
                     <Mail size={10} />
                   </button>
@@ -695,6 +729,15 @@ function SignalContactsSection({ companyName, contacts, isEnriching, onEnrich, o
                   >
                     <Linkedin size={10} />
                   </a>
+                )}
+                {onResearchContact && (
+                  <button
+                    onClick={() => onResearchContact(person)}
+                    className="text-apptivia-coral-tone-300 hover:text-apptivia-coral transition-colors"
+                    title={`Research ${person.name || 'prospect'}`}
+                  >
+                    <Eye size={10} />
+                  </button>
                 )}
               </div>
             </div>
@@ -742,7 +785,7 @@ const BUYING_STAGE_BADGE = {
   decision:      { bg: 'bg-emerald-50', text: 'text-emerald-700' },
 };
 
-const AccountCard = React.memo(function AccountCard({ group, onAction, onDismiss, onResearchCompany, onFindCustomers, onFindContactsAtCompany, contacts, isEnriching, onEnrichCompany, onDraftMessage, companyContacts, enrichingCompanies, onPromoteToAccount, promotedAccountInfo, isPromoting, onCallContact, onClaimAccount }) {
+const AccountCard = React.memo(function AccountCard({ group, onAction, onDismiss, onResearchCompany, onFindCustomers, onFindContactsAtCompany, contacts, isEnriching, onEnrichCompany, onDraftMessage, companyContacts, enrichingCompanies, onPromoteToAccount, promotedAccountInfo, isPromoting, onCallContact, onClaimAccount, onResearchContact }) {
   const [expanded, setExpanded] = useState(false);
   const topSignal = group.signals[0];
   const hasHighIntent = group.signals.some((s) => getSignalTier(s.signal_score, getSignalCategory(s.signal_type)).label === 'T1');
@@ -876,6 +919,8 @@ const AccountCard = React.memo(function AccountCard({ group, onAction, onDismiss
         isEnriching={enrichingCompanies?.includes(group.name)}
         onEnrich={onEnrichCompany}
         onCallContact={onCallContact}
+        onEmailContact={(person) => onDraftMessage?.(topSignal || { company_name: group.name, signal_type: 'icp_prospector', title: group.name }, person)}
+        onResearchContact={onResearchContact}
       />
 
       {/* Expanded signals */}
@@ -903,7 +948,7 @@ const AccountCard = React.memo(function AccountCard({ group, onAction, onDismiss
 
 // ── Signal Card ───────────────────────────────────────────
 
-const SignalCard = React.memo(function SignalCard({ signal, onAction, onDismiss, onResearchCompany, onFindCustomers, onFindContactsAtCompany, contacts, isEnriching, onEnrichCompany, onDraftMessage, onCallContact, onMarkOutcome }) {
+const SignalCard = React.memo(function SignalCard({ signal, onAction, onDismiss, onResearchCompany, onFindCustomers, onFindContactsAtCompany, contacts, isEnriching, onEnrichCompany, onDraftMessage, onCallContact, onMarkOutcome, onResearchContact }) {
   const [expanded, setExpanded] = useState(false);
   const iconConfig = SIGNAL_ICONS[signal.signal_type] || SIGNAL_ICONS.competitor_engagement;
   const IconComp = iconConfig.icon;
@@ -1057,6 +1102,8 @@ const SignalCard = React.memo(function SignalCard({ signal, onAction, onDismiss,
               isEnriching={isEnriching}
               onEnrich={onEnrichCompany}
               onCallContact={onCallContact}
+              onEmailContact={(person) => onDraftMessage?.(signal, person)}
+              onResearchContact={onResearchContact}
             />
           )}
         </div>
@@ -1635,8 +1682,7 @@ function IcpProspectorFilters({ filters, onChange, onSearch, isLoading }) {
   );
 }
 
-function IcpCompanyCard({ company, icpScore, isAlreadyAdded, existingAccountId, contacts, isEnriching, isAdding, onResearch, onFindContacts, onEnrichContacts, onAddToAccounts, onDraftMessage, onViewInAccounts, onCallContact }) {
-  const [showContacts, setShowContacts] = useState(false);
+function IcpCompanyCard({ company, icpScore, isAlreadyAdded, existingAccountId, contacts, isEnriching, isAdding, onResearch, onFindContacts, onEnrichContacts, onAddToAccounts, onDraftMessage, onViewInAccounts, onCallContact, onResearchContact }) {
   const key = company.primary_domain || company.name;
   const location = [company.city, company.state, company.country].filter(Boolean).join(', ');
   const scoreColor = icpScore >= 75
@@ -1645,13 +1691,6 @@ function IcpCompanyCard({ company, icpScore, isAlreadyAdded, existingAccountId, 
       ? 'bg-amber-50 text-amber-700'
       : 'bg-apptivia-paper text-apptivia-carbon-500';
   const techList = (company.technologies || []).map(t => typeof t === 'string' ? t : t?.name).filter(Boolean);
-
-  const handleToggleContacts = () => {
-    if (!showContacts && !contacts) {
-      onEnrichContacts();
-    }
-    setShowContacts(v => !v);
-  };
 
   return (
     <div className={`bg-white rounded-lg border ${isAlreadyAdded ? 'border-emerald-200' : 'border-apptivia-carbon-100'} p-4 hover:shadow-sm transition-shadow`}>
@@ -1718,7 +1757,7 @@ function IcpCompanyCard({ company, icpScore, isAlreadyAdded, existingAccountId, 
         <button onClick={onResearch} className="inline-flex items-center gap-1 text-[10px] font-medium px-2 py-1 rounded-md bg-apptivia-coral-tone-50 text-apptivia-coral hover:bg-apptivia-coral-tone-50 transition-colors">
           <Search size={9} /> Research
         </button>
-        <button onClick={handleToggleContacts} className="inline-flex items-center gap-1 text-[10px] font-medium px-2 py-1 rounded-md bg-teal-50 text-teal-700 hover:bg-teal-100 transition-colors">
+        <button onClick={onFindContacts} className="inline-flex items-center gap-1 text-[10px] font-medium px-2 py-1 rounded-md bg-teal-50 text-teal-700 hover:bg-teal-100 transition-colors">
           <UserPlus size={9} /> Find Contacts
         </button>
         {isAlreadyAdded ? (
@@ -1736,72 +1775,34 @@ function IcpCompanyCard({ company, icpScore, isAlreadyAdded, existingAccountId, 
         </button>
       </div>
 
-      {/* Contacts expansion */}
-      {showContacts && (
-        <div className="mt-2 pt-2 border-t border-apptivia-carbon-100">
-          {isEnriching ? (
-            <div className="flex items-center gap-1.5 text-[10px] text-apptivia-carbon-400">
-              <Loader size={10} className="animate-spin" /> Finding contacts...
-            </div>
-          ) : contacts?.length > 0 ? (
-            <div className="space-y-1.5">
-              {contacts.map((c, i) => (
-                <div key={c.id || i} className="flex items-center gap-2 text-[10px]">
-                  <div className="w-5 h-5 rounded-full bg-apptivia-carbon-200 flex items-center justify-center text-apptivia-carbon-600 text-[8px] font-bold flex-shrink-0">
-                    {(c.name || c.first_name || '?')[0]?.toUpperCase()}
-                  </div>
-                  <div className="min-w-0">
-                    <span className="font-medium text-apptivia-ink">{c.name || `${c.first_name} ${c.last_name}`.trim()}</span>
-                    {c.title && <span className="text-apptivia-carbon-400 ml-1">· {c.title}</span>}
-                  </div>
-                  {c.email && (
-                    <button onClick={() => navigator.clipboard.writeText(c.email)} className="ml-auto text-apptivia-carbon-400 hover:text-apptivia-coral transition-colors flex-shrink-0" title={c.email}>
-                      <Mail size={9} />
-                    </button>
-                  )}
-                  {c.phone && (
-                    <button
-                      onClick={() => onCallContact
-                        ? onCallContact({ name: c.name || `${c.first_name || ''} ${c.last_name || ''}`.trim(), phone: c.phone, company_name: company.name })
-                        : navigator.clipboard.writeText(c.phone)
-                      }
-                      className="text-apptivia-carbon-400 hover:text-emerald-500 transition-colors flex-shrink-0"
-                      title={onCallContact ? `Call ${c.name || c.phone}` : c.phone}
-                    >
-                      <Phone size={9} />
-                    </button>
-                  )}
-                  {c.linkedin_url && (
-                    <a href={c.linkedin_url} target="_blank" rel="noreferrer" className="text-apptivia-carbon-400 hover:text-apptivia-coral transition-colors flex-shrink-0">
-                      <Linkedin size={9} />
-                    </a>
-                  )}
-                </div>
-              ))}
-            </div>
-          ) : (
-            <p className="text-[10px] text-apptivia-carbon-400">No contacts found for this company.</p>
-          )}
-        </div>
-      )}
+      {/* Contacts — always visible, matching Signal Accounts layout */}
+      <SignalContactsSection
+        companyName={company.name}
+        contacts={contacts}
+        isEnriching={isEnriching}
+        onEnrich={onEnrichContacts}
+        onCallContact={onCallContact}
+        onEmailContact={(person) => onDraftMessage?.(person)}
+        onResearchContact={onResearchContact}
+      />
     </div>
   );
 }
 
-function IcpProspectorView({ icp, icpConfig, onDraftMessage, onNavigateDiscover, onNavigateAccounts, onCallContact }) {
+function IcpProspectorView({ icp, icpConfig, onDraftMessage, onNavigateDiscover, onNavigateAccounts, onCallContact, onResearchContact }) {
   const navigate = useNavigate();
   const [addingCompany, setAddingCompany] = useState(null);
 
-  // Auto-search on first mount when ICP config is available
+  // Auto-search on first mount when ICP config is valid
   useEffect(() => {
-    if (icpConfig && icp.results.length === 0 && !icp.loading) {
+    if (icpConfig?.enabled && icp.icpStatus === 'ready' && icp.results.length === 0 && !icp.loading && !icp.error) {
       icp.search();
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [icpConfig]);
+  }, [icpConfig, icp.icpStatus]);
 
   const handleResearch = (company) => {
-    onNavigateDiscover?.({ mode: 'company', query: company.name });
+    onNavigateDiscover?.({ mode: 'company', query: company.primary_domain || company.name });
   };
 
   const handleAddToAccounts = async (company) => {
@@ -1811,9 +1812,9 @@ function IcpProspectorView({ icp, icpConfig, onDraftMessage, onNavigateDiscover,
     setAddingCompany(null);
   };
 
-  const handleDraftMessage = (company) => {
+  const handleDraftMessage = (company, contactOverride) => {
     const key = company.primary_domain || company.name;
-    const contact = icp.companyContacts[key]?.[0] || null;
+    const contact = contactOverride || icp.companyContacts[key]?.[0] || null;
     const adaptedSignal = {
       company_name: company.name,
       signal_type: 'icp_prospector',
@@ -1857,14 +1858,24 @@ function IcpProspectorView({ icp, icpConfig, onDraftMessage, onNavigateDiscover,
           <button onClick={() => icp.search()} className="text-xs text-apptivia-ink underline">Retry</button>
         </div>
       ) : icp.results.length === 0 ? (
-        <div className="bg-white rounded-lg border border-apptivia-carbon-100 py-16 text-center">
+        <div className="bg-white rounded-lg border border-apptivia-carbon-100 py-16 text-center px-6">
           <Target size={32} className="mx-auto text-apptivia-carbon-300 mb-3" />
-          <p className="text-sm text-apptivia-carbon-500 mb-1">No results yet</p>
-          <p className="text-xs text-apptivia-carbon-400">
-            {icpConfig?.enabled
-              ? 'Click "Search ICP Companies" to find matching prospects'
-              : 'Configure your ICP in Organization Settings, then search'}
+          <p className="text-sm text-apptivia-carbon-500 mb-1">
+            {icp.icpStatus === 'no_config' ? 'ICP profile not configured'
+              : icp.icpStatus === 'not_enabled' ? 'ICP profile is disabled'
+              : icp.icpStatus === 'no_dimensions' ? 'No targeting criteria set'
+              : 'No results yet'}
           </p>
+          <p className="text-xs text-apptivia-carbon-400">
+            {icp.icpStatus === 'ready'
+              ? 'Click "Search ICP Companies" to find matching prospects'
+              : 'Configure your Ideal Customer Profile in Org Settings → ICP, then search'}
+          </p>
+          {icp.icpStatus !== 'ready' && (
+            <button onClick={() => navigate('/organization-settings')} className="mt-3 text-xs text-apptivia-coral hover:underline">
+              Go to Org Settings
+            </button>
+          )}
         </div>
       ) : (
         <>
@@ -1889,9 +1900,10 @@ function IcpProspectorView({ icp, icpConfig, onDraftMessage, onNavigateDiscover,
                   onFindContacts={() => handleFindContactsAtCompany(company.name, company.primary_domain)}
                   onEnrichContacts={() => icp.enrichCompanyContacts(company)}
                   onAddToAccounts={() => handleAddToAccounts(company)}
-                  onDraftMessage={() => handleDraftMessage(company)}
+                  onDraftMessage={(contactOverride) => handleDraftMessage(company, contactOverride)}
                   onViewInAccounts={() => handleViewInAccounts(company)}
                   onCallContact={onCallContact}
+                  onResearchContact={onResearchContact}
                 />
               );
             })}
@@ -1919,7 +1931,7 @@ function IcpProspectorView({ icp, icpConfig, onDraftMessage, onNavigateDiscover,
 export default function SignalProspecting({ organizationId, userId, onCallContact, onNavigateDiscover, onNavigateAccounts }) {
   const navigate = useNavigate();
   const signals = useSignalProspecting(organizationId, userId);
-  const icp = useIcpProspector(organizationId, signals.orgIcpConfig);
+  const icp = useIcpProspector(organizationId, signals.orgIcpConfig, signals.orgSignalConfig);
   const [filterType, setFilterType] = useState('all');
   const [filterStatus, setFilterStatus] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
@@ -1928,6 +1940,7 @@ export default function SignalProspecting({ organizationId, userId, onCallContac
   const [hideStale, setHideStale] = useState(false);
   const [hidePromoted, setHidePromoted] = useState(false);
   const [outreachModal, setOutreachModal] = useState(null); // { signal, contact } | null
+  const [showQuickAdd, setShowQuickAdd] = useState(false);
   // promotedAccounts: Record<companyName, { id, name }> — populated from DB + local promotes
   const [promotedAccounts, setPromotedAccounts] = useState({});
   const [promotingCompany, setPromotingCompany] = useState(null); // name of company being promoted
@@ -2026,6 +2039,12 @@ export default function SignalProspecting({ organizationId, userId, onCallContac
   const handleResearchCompany = (companyName) => {
     if (onNavigateDiscover) {
       onNavigateDiscover({ mode: 'company', query: companyName });
+    }
+  };
+
+  const handleResearchProspect = (person) => {
+    if (onNavigateDiscover) {
+      onNavigateDiscover({ mode: 'prospect', query: person.name || person.first_name || '' });
     }
   };
 
@@ -2185,6 +2204,13 @@ export default function SignalProspecting({ organizationId, userId, onCallContac
         isLoading={isDismissing}
       />
 
+      {/* Quick Add Signal Modal */}
+      <QuickAddSignalModal
+        isOpen={showQuickAdd}
+        onClose={() => setShowQuickAdd(false)}
+        onSubmit={(data) => signals.addManualSignal(data)}
+      />
+
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -2259,14 +2285,23 @@ export default function SignalProspecting({ organizationId, userId, onCallContac
             </div>
           </div>
           <div className="flex flex-col items-end gap-1">
-            <button
-              onClick={() => signals.runSignalScan()}
-              disabled={signals.isScanning || !signals.hasOrgSignalConfig}
-              className="inline-flex items-center gap-1.5 text-xs font-medium px-4 py-2 rounded-lg bg-apptivia-coral text-white hover:bg-apptivia-coral-tone-600 disabled:opacity-40 transition-all shadow-sm"
-            >
-              {signals.isScanning ? <RefreshCw size={12} className="animate-spin" /> : <Search size={12} />}
-              {signals.isScanning ? 'Scanning...' : 'Scan Now'}
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setShowQuickAdd(true)}
+                className="inline-flex items-center gap-1.5 text-xs font-medium px-3 py-2 rounded-lg border border-apptivia-coral text-apptivia-coral hover:bg-apptivia-coral hover:text-white transition-all"
+              >
+                <Plus size={12} />
+                Quick Add
+              </button>
+              <button
+                onClick={() => signals.runSignalScan()}
+                disabled={signals.isScanning || !signals.hasOrgSignalConfig}
+                className="inline-flex items-center gap-1.5 text-xs font-medium px-4 py-2 rounded-lg bg-apptivia-coral text-white hover:bg-apptivia-coral-tone-600 disabled:opacity-40 transition-all shadow-sm"
+              >
+                {signals.isScanning ? <RefreshCw size={12} className="animate-spin" /> : <Search size={12} />}
+                {signals.isScanning ? 'Scanning...' : 'Scan Now'}
+              </button>
+            </div>
             {signals.lastScanAt && (
               <p className="text-[10px] text-apptivia-carbon-400">
                 Last: {timeAgo(signals.lastScanAt)}
@@ -2293,23 +2328,7 @@ export default function SignalProspecting({ organizationId, userId, onCallContac
         )}
       </div>
 
-      {/* Scan Results — shown after a scan completes with new signals */}
-      {signals.lastScanSignalIds.length > 0 && (
-        <ScanResultsPanel
-          signals={signals.signals}
-          lastScanSignalIds={signals.lastScanSignalIds}
-          onAction={handleAction}
-          onDismiss={handleDismiss}
-          onClear={signals.clearLastScan}
-          onResearchCompany={handleResearchCompany}
-          onFindCustomers={handleFindCustomers}
-          onFindContactsAtCompany={handleFindContactsAtCompany}
-          companyContacts={signals.companyContacts}
-          enrichingCompanies={signals.enrichingCompanies}
-          onEnrichCompany={signals.enrichCompanyContacts}
-          onDraftMessage={handleDraftMessage}
-        />
-      )}
+      {/* Scan Results panel removed — signals appear directly in the list */}
 
       {/* Action Queue — AI-drafted outreach awaiting approval */}
       <ActionQueuePanel
@@ -2464,18 +2483,7 @@ export default function SignalProspecting({ organizationId, userId, onCallContac
           </div>
 
           {/* Signal / Account List */}
-          {signals.loading && !signals.signals.length ? (
-            <div className="flex items-center justify-center py-16">
-              <RefreshCw size={20} className="animate-spin text-apptivia-coral-tone-300 mr-2" />
-              <span className="text-sm text-apptivia-carbon-500">Loading signals...</span>
-            </div>
-          ) : filteredSignals.length === 0 ? (
-            <div className="bg-white rounded-lg border border-apptivia-carbon-100 py-16 text-center">
-              <Radar size={32} className="mx-auto text-apptivia-carbon-300 mb-3" />
-              <p className="text-sm text-apptivia-carbon-500 mb-1">No signals detected yet</p>
-              <p className="text-xs text-apptivia-carbon-400">Configure Signal Prospecting in Organization Settings and run a scan</p>
-            </div>
-          ) : viewMode === 'icp' ? (
+          {viewMode === 'icp' ? (
             <IcpProspectorView
               icp={icp}
               icpConfig={signals.orgIcpConfig}
@@ -2483,9 +2491,21 @@ export default function SignalProspecting({ organizationId, userId, onCallContac
               onNavigateDiscover={onNavigateDiscover}
               onNavigateAccounts={onNavigateAccounts}
               onCallContact={onCallContact}
+              onResearchContact={handleResearchProspect}
             />
+          ) : signals.loading && !signals.signals.length ? (
+            <div className="flex items-center justify-center py-16">
+              <RefreshCw size={20} className="animate-spin text-apptivia-coral-tone-300 mr-2" />
+              <span className="text-sm text-apptivia-carbon-500">Loading signals...</span>
+            </div>
           ) : viewMode === 'accounts' ? (
-            <div className="space-y-2">
+            accountGroups.length === 0 ? (
+              <div className="bg-white rounded-lg border border-apptivia-carbon-100 py-16 text-center">
+                <Radar size={32} className="mx-auto text-apptivia-carbon-300 mb-3" />
+                <p className="text-sm text-apptivia-carbon-500 mb-1">No signal accounts yet</p>
+                <p className="text-xs text-apptivia-carbon-400">Run a scan to discover companies</p>
+              </div>
+            ) : <div className="space-y-2">
               {accountGroups.map((group) => (
                 <AccountCard
                   key={group.name}
@@ -2504,8 +2524,15 @@ export default function SignalProspecting({ organizationId, userId, onCallContac
                   isPromoting={promotingCompany === group.name}
                   onCallContact={onCallContact}
                   onClaimAccount={handleClaimAccount}
+                  onResearchContact={handleResearchProspect}
                 />
               ))}
+            </div>
+          ) : filteredSignals.length === 0 ? (
+            <div className="bg-white rounded-lg border border-apptivia-carbon-100 py-16 text-center">
+              <Radar size={32} className="mx-auto text-apptivia-carbon-300 mb-3" />
+              <p className="text-sm text-apptivia-carbon-500 mb-1">No signals match your filters</p>
+              <p className="text-xs text-apptivia-carbon-400">Try adjusting filters or run a new scan</p>
             </div>
           ) : (
             <div className="space-y-2">
@@ -2524,6 +2551,7 @@ export default function SignalProspecting({ organizationId, userId, onCallContac
                   onDraftMessage={handleDraftMessage}
                   onCallContact={onCallContact}
                   onMarkOutcome={handleMarkOutcome}
+                  onResearchContact={handleResearchProspect}
                 />
               ))}
             </div>

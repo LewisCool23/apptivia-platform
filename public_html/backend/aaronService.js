@@ -120,6 +120,28 @@ const AARON_FRAMEWORKS = {
     oneLiner: 'Prospecting fundamentals — research-based openers, multi-touch cadences, voicemail + email combos.',
     triggers: ['prospect', 'outbound', 'cold call', 'pipeline', 'fill the funnel', 'opener', 'voicemail', 'email sequence', 'cadence', 'touch pattern', 'response rate', 'connect rate'],
     fullDefinition: `[FRAMEWORK: Apptivia Prospecting Playbook]\nCoach on prospecting fundamentals: research-based openers, multi-touch cadences, buyer-centric messaging, voicemail + email combos, pattern interrupt techniques. Focus on making outreach about the prospect's challenges, not the product. Suggest specific opener templates and cadence structures.`,
+    detailedPlaybook: `[PLAYBOOK: Apptivia Prospecting Playbook — Templates & Scripts]
+
+5-TOUCH CADENCE:
+Day 1: Personalized email — reference a specific trigger event. Subject line under 6 words.
+Day 3: LinkedIn connection request — 1-sentence note referencing the email topic.
+Day 5: Phone call — use Research-Based Opener. Leave voicemail if no answer.
+Day 8: Value-add email — share a relevant case study or insight. No pitch.
+Day 12: Breakup email — "Closing the loop" with a direct CTA.
+
+OPENER SCRIPTS:
+- Trigger: "I noticed [company] just [event]. When that happens, teams like yours typically face [challenge]. Is that on your radar?"
+- Referral: "I was talking to [similar company], and they mentioned [pain point]. Curious if you're seeing the same thing."
+- Insight: "[Industry stat]. Most [title]s I talk to are concerned about [implication]. How is your team handling it?"
+
+VOICEMAIL (30s max): Hook (their name + company detail, 5s) → Relevance (challenge their role faces, 10s) → CTA ("I'll send a quick email," 10s) → Contact Info (5s). Never pitch in voicemail.
+
+EMAIL RULES: Subject 1-6 words, lowercase. Body 3 short paragraphs: about THEM (trigger/pain) → bridge to relevance → single CTA. If you could send it to 10 people unchanged, it's not personalized enough.
+
+PATTERN INTERRUPTS:
+- Reversal: "This isn't a sales pitch — I genuinely don't know if we can help yet."
+- Permission: "Can I take 27 seconds to explain why I called, and you decide if it's worth continuing?"
+- Peer proof: "We just helped [similar company] solve [problem]. Thought it might be relevant."`,
   },
   sandler: {
     name: 'Apptivia Pain Discovery',
@@ -127,6 +149,27 @@ const AARON_FRAMEWORKS = {
     oneLiner: 'Pain funnel questioning, upfront agreements, Budget/Decision/Pain triangle, reverse selling techniques.',
     triggers: ['pain', 'budget', 'decision', 'qualify', 'pain funnel', 'negative reverse', 'upfront contract', 'thermometer', 'bonding rapport'],
     fullDefinition: `[FRAMEWORK: Apptivia Pain Discovery]\nCoach on structured pain discovery: Pain Funnel questioning (surface → impact → personal), upfront agreements to set expectations, Budget step, Decision process mapping, reverse selling to get honest answers. Help reps move past "happy ears" to real qualification using the pain/budget/decision triangle.`,
+    detailedPlaybook: `[PLAYBOOK: Apptivia Pain Discovery — Templates & Scripts]
+
+PAIN FUNNEL — 7 QUESTIONS (in order):
+1. "Tell me more about that..." (open the door)
+2. "Can you be more specific? Give me an example." (vague → concrete)
+3. "How long has this been going on?" (duration = severity)
+4. "What have you tried to do about it?" (prior attempts = frustration)
+5. "Did that work?" (likely no — builds gap acknowledgment)
+6. "How much do you think that has cost you?" (quantify in dollars/time)
+7. "How do you feel about that?" (personal/emotional impact — urgency lives here)
+
+UPFRONT AGREEMENT SCRIPT: "Here's what I'd like to accomplish today — [agenda]. At the end, one of three things will happen: you'll say yes, you'll say no, or we'll agree on a clear next step. Any of those is fine. Does that work?" Eliminates think-it-overs, sets mutual expectations, gives permission to say no.
+
+BUDGET/DECISION/PAIN TRIANGLE:
+- Pain FIRST: Never discuss budget until pain is quantified.
+- Budget: "If we could solve [quantified pain], what investment would make sense relative to the [$ cost] you're losing?"
+- Decision: "Walk me through how your org has made decisions like this before. Who else would need to weigh in?"
+- Red flag: If they can't articulate pain in dollar terms, you haven't gone deep enough.
+
+HAPPY EARS WARNING SIGNS: They say "great" but won't commit to a next step with a date. They agree with everything without pushback. They won't introduce you to other stakeholders. Pain is generic ("need efficiency") without specifics. They keep rescheduling.
+Antidote: Negative reverse — "It sounds like this might not be a priority right now. Am I reading that right?"`,
   },
   meddpicc: {
     name: 'Apptivia Deal Qualification',
@@ -134,6 +177,21 @@ const AARON_FRAMEWORKS = {
     oneLiner: 'B2B deal qualification — Metrics, Economic Buyer, Decision Criteria/Process, Paper Process, Pain, Champion, Competition.',
     triggers: ['champion', 'economic buyer', 'decision criteria', 'decision process', 'metrics', 'identify pain', 'paper process', 'competition', 'implicate', 'qualification'],
     fullDefinition: `[FRAMEWORK: Apptivia Deal Qualification]\nCoach on rigorous deal qualification: Metrics (quantified value), Economic Buyer (power), Decision Criteria, Decision Process, Paper Process, Identify Pain, Champion (who sells internally), Competition. Help the rep assess deal health by checking each element. Flag gaps and coach on how to fill them.`,
+    detailedPlaybook: `[PLAYBOOK: Apptivia Deal Qualification — Scorecard & Tests]
+
+MEDDPICC SCORECARD (rate each 1-5):
+- Metrics: Can they quantify expected outcome? 5=specific numbers agreed. 1=vague "improvement."
+- Economic Buyer: Identified AND met the budget authority? 5=direct relationship. 1=unknown.
+- Decision Criteria: Know what they'll evaluate? 5=written criteria you helped shape. 1=guessing.
+- Decision Process: Know every step to signature? 5=mapped with timeline. 1="they'll let us know."
+- Paper Process: Legal, procurement, security mapped? 5=all stakeholders identified. 1=haven't discussed.
+- Identify Pain: Pain quantified and personal? 5=champion feels it daily. 1=nice-to-have.
+- Champion: Someone selling internally? 5=actively advocating. 1=no internal ally.
+- Competition: Know who else they're evaluating? 5=differentiated on key criteria. 1=blind.
+
+CHAMPION VALIDATION — 5 TESTS: (1) Can they get you a meeting with the Economic Buyer? (2) Do others defer to their opinion? (3) Do they personally benefit from this succeeding? (4) Do they share competitive intel and real timelines? (5) Do they tell you how to win, not just what to present? If 3+ answers are no, you have a coach, not a champion.
+
+DEAL HEALTH: Green (35-40)=all covered, forecast as Commit. Yellow (25-34)=1-2 gaps, action plan needed this week, forecast Best Case. Red (<25)=multiple unknowns, do NOT forecast, requires intervention or disqualification. Any deal Yellow 2+ weeks without improvement → Red.`,
   },
   spin: {
     name: 'Apptivia Discovery Method',
@@ -141,6 +199,25 @@ const AARON_FRAMEWORKS = {
     oneLiner: 'Situation → Problem → Implication → Need-Payoff question progression for discovery calls.',
     triggers: ['situation question', 'problem question', 'implication', 'need-payoff', 'discovery call', 'discovery meeting', 'questioning technique', 'open-ended question'],
     fullDefinition: `[FRAMEWORK: Apptivia Discovery Method]\nCoach on structured question progression: Situation (context), Problem (explicit difficulties), Implication (consequences of inaction), Need-Payoff (value of solving). Help reps craft specific questions for each stage. Emphasize moving beyond context-gathering to uncovering business impact quickly.`,
+    detailedPlaybook: `[PLAYBOOK: Apptivia Discovery Method — Question Bank & Structure]
+
+SPIN QUESTION BANK:
+Situation: "Walk me through how your team currently handles [process]." / "What tools are you using today?" / "How is your team structured?"
+Problem: "What's the biggest challenge with that approach?" / "Where does the process break down?" / "What are reps complaining about most?"
+Implication: "When that happens, what's the impact on revenue/pipeline?" / "How does that affect hitting quarterly goals?" / "If this doesn't get fixed, what happens in 6 months?"
+Need-Payoff: "If you could solve that, what would it mean for [metric]?" / "How would the team's day change if [pain] went away?" / "What would hitting [target] consistently be worth?"
+
+DISCOVERY CALL STRUCTURE (45 min):
+0-5: Upfront agreement + agenda. Confirm time, attendees, goal.
+5-10: Situation (max 3 questions — pre-call research should cover most context).
+10-25: Problem + Implication — spend 60% of time here. This is where value is created.
+25-35: Need-Payoff — help them articulate desired future state in their own words.
+35-40: Recap pain and desired outcome. Confirm alignment.
+40-45: Specific next steps — date, attendees, agenda. Send invite before hanging up.
+
+10-MINUTE RULE: Get through Situation questions in first 10 minutes max. If still asking context questions at minute 15, you're losing the meeting. Pre-call research eliminates most S questions.
+
+DISCOVERY DEBRIEF (fill within 30 min): Confirmed Pain (their exact words), Business Impact ($ or time), Decision Landscape (who/timeline/alternatives), Unknowns (what to validate next), Next Step (action, person, date).`,
   },
   challenger: {
     name: 'Apptivia Insight Selling',
@@ -148,6 +225,28 @@ const AARON_FRAMEWORKS = {
     oneLiner: 'Teach (commercial insight), Tailor (stakeholder-specific), Take Control (constructive tension toward decision).',
     triggers: ['teach', 'tailor', 'take control', 'commercial insight', 'reframe', 'constructive tension', 'insight selling', 'provocative'],
     fullDefinition: `[FRAMEWORK: Apptivia Insight Selling]\nCoach on the insight-led approach: Teach (share commercial insight that reframes thinking), Tailor (adapt message to each stakeholder), Take Control (drive toward decision with constructive tension). Help reps develop provocative insights and challenge the status quo without being aggressive.`,
+    detailedPlaybook: `[PLAYBOOK: Apptivia Insight Selling — Teaching Pitch & Tailoring]
+
+TEACHING PITCH — 6 STEPS:
+1. Warmer: "Most [title]s I talk to are dealing with [common problem]."
+2. Reframe: "What we're finding is that the real issue isn't [what they think] — it's [unexpected root cause]."
+3. Rational Drowning: Show 2-3 data points that make the problem feel bigger than they realized.
+4. Emotional Impact: "For someone in your role, this means [consequence that affects them directly]."
+5. New Way: "The companies getting ahead are doing [approach]." (No product mention yet.)
+6. Your Solution: Only now connect your product to the new way.
+
+STAKEHOLDER TAILORING:
+- VP Sales/CRO: Lead with quota attainment, pipeline predictability, rep productivity. They care about forecast accuracy and revenue.
+- Sales Manager: Lead with coaching efficiency, time savings, rep development visibility. Less admin, better team.
+- RevOps/Sales Ops: Lead with data integrity, process consistency, stack consolidation. Fewer tools, better reporting.
+- CFO/Finance: Lead with cost per rep, ROI timeline, payback period. Unit economics, not features.
+Never present the same deck to different stakeholders.
+
+CONSTRUCTIVE TENSION — 3 LEVELS:
+Level 1 (Gentle): "That's a common approach. What we see is it works until [scale]. Have you noticed that?"
+Level 2 (Data): "When we looked at [X companies], ones doing it that way had [Y% worse outcome]. What's your experience?"
+Level 3 (Direct): "I'd push back on that. Here's why: [evidence]. The risk of staying the current course is [consequence]."
+Match tension to relationship depth. Level 1 on first call. Level 3 only after trust.`,
   },
   gapSelling: {
     name: 'Apptivia Gap Analysis',
@@ -155,6 +254,29 @@ const AARON_FRAMEWORKS = {
     oneLiner: 'Map Current State → Impact → Root Cause → Future State → Solution. Bigger gap = more urgency.',
     triggers: ['gap', 'current state', 'future state', 'impact', 'root cause', 'business problem', 'technical problem', 'impact chain'],
     fullDefinition: `[FRAMEWORK: Apptivia Gap Analysis]\nCoach on identifying the gap between current state and desired future state. Help reps map: Current State (what's broken) → Impact (business consequences) → Root Cause → Future State (what good looks like) → Solution (how to bridge). The bigger the gap, the more urgency and budget available.`,
+    detailedPlaybook: `[PLAYBOOK: Apptivia Gap Analysis — Mapping & Impact Chain]
+
+CURRENT → FUTURE STATE MAPPING:
+Current State: "Describe your sales process step by step today." / "What does a typical rep's day look like?" / "How do you measure rep performance?"
+Future State: "Wave a magic wand — what does this look like in 12 months?" / "What metrics would you be hitting?" / "How would workflow change?"
+Document both in the prospect's own language. Their words carry more weight in the business case.
+
+IMPACT CHAIN WORKSHEET:
+Level 1 — Immediate: "Reps spend 40% of time on admin tasks."
+Level 2 — Department: "40% less selling time → pipeline consistently short."
+Level 3 — Company: "Pipeline shortage → missed quarterly targets → affects valuation."
+Level 4 — Dollar: "20 reps × $150K OTE × 40% unproductive = $1.2M/year wasted."
+Always get to Level 4. A gap without a dollar figure is just an opinion.
+
+ROOT CAUSE — ADAPTED 5 WHYS:
+Why 1: "Why is pipeline short?" → Reps not prospecting enough.
+Why 2: "Why not prospecting?" → Too much admin and CRM work.
+Why 3: "Why so much admin?" → No automation, manual data entry.
+Why 4: "Why no automation?" → Tools don't integrate, team doesn't trust data.
+Why 5: "Why don't they trust data?" → Scoring subjective, no single source of truth.
+Now you've found the root cause (data trust) vs the symptom (pipeline).
+
+GAP SIZE = URGENCY: Small gap (current is "okay") = nice-to-have, likely stalls. Medium gap (friction) = important but competes with other priorities, need hard numbers. Large gap (current is failing) = must-fix, budget will be found, compress the timeline.`,
   },
   valueFramework: {
     name: 'Apptivia Value Selling',
@@ -162,6 +284,28 @@ const AARON_FRAMEWORKS = {
     oneLiner: 'ROI calculation, business case structure, cost of inaction, payback period — anchor to value not price.',
     triggers: ['value', 'roi', 'business case', 'pricing', 'discount', 'negotiat', 'cost justify', 'payback period', 'total cost', 'value prop'],
     fullDefinition: `[FRAMEWORK: Apptivia Value Selling]\nCoach on building and defending value: ROI calculation, business case structure, cost of inaction, payback period analysis. Help reps avoid discounting by anchoring to value delivered. Suggest approaches for presenting price in context of total value and cost of the problem.`,
+    detailedPlaybook: `[PLAYBOOK: Apptivia Value Selling — ROI & Business Case]
+
+ROI CALCULATOR — 3 VALUE DRIVERS:
+1. Time Savings: Hours saved/rep/week × hourly cost × reps × 52. Example: 5h × $50 × 20 reps × 52 = $260K/yr.
+2. Revenue Uplift: Incremental deals/rep/quarter × avg deal size × reps. Example: 2 × $30K × 20 = $1.2M/yr.
+3. Cost Avoidance: Tools eliminated + headcount avoided + churn reduced. Example: 3 tools ($15K each) + 1 analyst ($80K) = $125K/yr.
+Total Value = sum of all three. Present: "Conservative estimate is [$X]. Investment is [$Y], giving [Z]x return in year one."
+
+BUSINESS CASE STRUCTURE:
+Page 1 — Executive Summary: Problem (their words), proposed solution, expected ROI, timeline.
+Page 2 — Current State Cost: Quantified pain from discovery. Direct costs AND opportunity costs.
+Page 3 — Future State Value: What changes, by how much, over what timeline. Conservative assumptions.
+Page 4 — Investment & Payback: Pricing, implementation timeline, payback period (target: under 6 months).
+Build it WITH the champion, not FOR them. Co-create in their language.
+
+COST OF INACTION: Monthly bleed × 12 = Annual waste. "You're losing [$X/month]. Over 12 months, that's [$12X] — assuming the problem doesn't get worse." Present cost of inaction BEFORE your price. Anchor to what they're losing, not what you charge.
+
+DISCOUNT DEFENSE:
+- "I can adjust scope to fit budget. Which capabilities would you remove?" (reframes discount as scope reduction)
+- "At this price, you get [X]x return. Where else can you invest [$price] and get [X]x back?"
+- "I can offer a lower rate for annual prepay. Would a 12-month commitment work?"
+Never discount without getting something: faster close, case study, multi-year, expanded deployment.`,
   },
   objectionHandling: {
     name: 'Apptivia Objection Playbook',
@@ -169,6 +313,29 @@ const AARON_FRAMEWORKS = {
     oneLiner: 'Acknowledge → Clarify → Respond → Confirm. Listen-Explore-Respond model. Real vs smokescreen objections.',
     triggers: ['objection', 'pushback', 'concern', 'not interested', 'too expensive', 'already have', 'think about it', 'no budget', 'timing', 'competitor', 'ghosting', 'gone dark'],
     fullDefinition: `[FRAMEWORK: Apptivia Objection Playbook]\nCoach on structured objection handling: Acknowledge → Clarify → Respond → Confirm. Help reps distinguish between real objections (budget, authority, need, timing) and smokescreens. Provide specific language patterns for common objections. Use the Listen → Acknowledge → Explore → Respond progression.`,
+    detailedPlaybook: `[PLAYBOOK: Apptivia Objection Playbook — Scripts & Diagnostics]
+
+TOP 10 OBJECTION RESPONSES:
+"Too expensive": "Help me understand — too expensive compared to what? The cost of the problem, another solution, or your budget?"
+"We have a solution": "Most companies we work with had something in place. What prompted this meeting? What's not working?"
+"Not a priority": "What IS top priority? How does [their pain] rank against it?"
+"Need to think about it": "What specifically do you need to think through — fit, budget, or something else?"
+"Send me info": "What specific question are you trying to answer? I might address it right now."
+"Locked into a contract": "When does it renew? Let's plan ahead so you have options."
+"Need to talk to my boss": "Would it help if I joined to answer financial or technical questions?"
+"Competitor does X better": "You're right, they're strong in [X]. We differentiate in [Y]. For your use case, here's why [Y] matters more."
+"Tried this before and it failed": "What went wrong? Our approach to [concern] is different because [reason]."
+"Just send a proposal": "I could, but I'd be guessing. Can we spend 15 minutes so the proposal addresses your actual priorities?"
+
+REAL VS SMOKESCREEN — 3 TESTS:
+1. "If we solved [objection], would you move forward?" Yes = real. They pivot to another objection = smokescreen.
+2. "Scale of 1-10, how significant is this?" Below 5 = smokescreen. Above 7 = real.
+3. "Is this a dealbreaker or something we can work through?" Forces commitment to severity.
+
+GONE-DARK RECOVERY:
+Breakup: "Haven't heard back — I'll close out my notes. If anything changes, you know where to find me."
+Value Drop: "Came across [insight] and thought of your team. Regardless of where we stand, this might be useful."
+Direct: "Quick yes, no, or not yet? Any answer is fine — just want to make sure I'm not missing something."`,
   },
   coaching: {
     name: 'Apptivia Coaching Method',
@@ -176,6 +343,30 @@ const AARON_FRAMEWORKS = {
     oneLiner: 'Observe → Diagnose → Prescribe → Follow-up. Situation-Behavior-Impact feedback. 70-20-10 development.',
     triggers: ['coach', 'mentor', '1:1', 'one on one', 'performance review', 'feedback', 'develop', 'training', 'skill gap', 'ride along', 'call review', 'pipeline review'],
     fullDefinition: `[FRAMEWORK: Apptivia Coaching Method]\nCoach on effective sales coaching: Observe → Diagnose → Prescribe → Follow-up. Help managers identify coachable moments, deliver feedback using Situation-Behavior-Impact structure, and create development plans. Focus on one skill at a time. Apply the 70-20-10 development model (experience, exposure, education).`,
+    detailedPlaybook: `[PLAYBOOK: Apptivia Coaching Method — ODPF Cycle & Templates]
+
+ODPF COACHING CYCLE:
+Observe: Listen to calls, review pipeline, analyze KPI data. Coach on evidence, not assumptions.
+Diagnose: Find the root cause. "Low close rate" could be qualification, discovery, objection handling, or demos. Pinpoint which.
+Prescribe: ONE specific action. "This week, ask Pain Funnel question #6 on every discovery call." Not three things. One.
+Follow-Up: Check in within 5 business days. Did they do it? What happened? Adjust based on results.
+Rule: A rep can only improve one skill at a time. Overloading kills progress.
+
+SBI FEEDBACK TEMPLATE:
+Situation: "In your call with [prospect] on [date]..."
+Behavior: "I noticed you [specific action] — for example, you asked [exact question or skipped X step]."
+Impact: "The result was [what happened]. The prospect [reaction/outcome]."
+Forward: "Next time, try [alternative]. Here's what that sounds like: [script]."
+Delivery: 1 positive SBI for every 1 developmental. Lead with what they did well.
+
+1-ON-1 AGENDA (30 min):
+0-5: Rep-led update — what they're proud of, what they're stuck on. Their agenda first.
+5-15: Pipeline review — pick 2-3 deals, mini MEDDPICC check. Coach on gaps.
+15-25: Skill development — review last week's prescribed action. Roleplay or listen to call snippet.
+25-30: Agree on 1 action item. Write it down. Both accountable.
+Never use 1-on-1s for status updates. That's what CRM and dashboards are for.
+
+SKILL PROGRESSION: Level 1 (Awareness) → Level 2 (Application with support) → Level 3 (Consistent independent use) → Level 4 (Mastery, can coach others). Focus on one skill until Level 3 before adding another.`,
   },
   forecastAccuracy: {
     name: 'Apptivia Pipeline Intelligence',
@@ -183,6 +374,26 @@ const AARON_FRAMEWORKS = {
     oneLiner: 'Pipeline coverage (3-4x), stage verification, commit/best-case categories, velocity formula.',
     triggers: ['forecast', 'pipeline', 'coverage', 'weighted', 'commit', 'best case', 'upside', 'close date', 'slip', 'push', 'pipeline velocity', 'win rate', 'average deal size', 'sales cycle'],
     fullDefinition: `[FRAMEWORK: Apptivia Pipeline Intelligence]\nCoach on forecast discipline: pipeline coverage ratio (3-4x), stage verification, commit vs best case categories, close date hygiene. Help identify deals that should move stages, stalled opportunities, and pipeline gaps by segment/rep/timeframe. Pipeline velocity = (Opportunities × Win Rate × Deal Size) / Sales Cycle.`,
+    detailedPlaybook: `[PLAYBOOK: Apptivia Pipeline Intelligence — Formulas & Checklists]
+
+COVERAGE FORMULA: Required Pipeline = Quota × Multiplier. Standard: 3.5x mid-market, 4-5x enterprise. Example: $200K quota × 3.5 = $700K weighted pipeline needed. Segment by source: 40% outbound, 30% inbound, 20% expansion, 10% partner. Coverage below 3x = red flag, immediate prospecting sprint.
+
+VELOCITY FORMULA: Velocity = (Opportunities × Win Rate × Avg Deal Size) / Sales Cycle Length. Example: (50 × 25% × $30K) / 45 days = $8,333/day. To increase: improve ANY of the 4 levers. Track weekly — trending down = early warning.
+
+STAGE VERIFICATION CRITERIA:
+Stage 1 — Prospecting: ICP fit identified, named contact, initial outreach attempted.
+Stage 2 — Discovery: Meeting completed, pain identified and acknowledged by prospect.
+Stage 3 — Qualification: MEDDPICC score ≥ 20, champion identified, budget range discussed.
+Stage 4 — Proposal: Business case presented, pricing shared, decision criteria confirmed.
+Stage 5 — Negotiation: Verbal agreement, paper process underway, close within 30 days.
+Deals MUST meet ALL criteria for a stage. No optimistic staging.
+
+WEEKLY HYGIENE CHECKLIST:
+- Stale deals: No activity in 14+ days → update or downstage. No exceptions.
+- Close date: Pushed 2+ times → move to Upside, not Commit.
+- Stage regression: Deal moved backward? Why? Coach on what happened.
+- New pipeline: Enough new Stage 1/2 to cover what we'll close or lose?
+- Forecast categories: Commit (90%+), Best Case (60-90%), Upside (30-60%), Pipeline (<30%). Review every Monday.`,
   },
   timeManagement: {
     name: 'Apptivia Productivity System',
@@ -190,6 +401,33 @@ const AARON_FRAMEWORKS = {
     oneLiner: 'Time blocking, territory planning, A/B/C account prioritization, CRM hygiene, selling-time ratio.',
     triggers: ['productivity', 'time management', 'priorit', 'efficiency', 'admin time', 'selling time', 'activity', 'territory', 'planning', 'time block', 'crm hygiene', 'data entry'],
     fullDefinition: `[FRAMEWORK: Apptivia Productivity System]\nCoach on maximizing selling time: time blocking for prospecting/admin/deals, territory planning, A/B/C account prioritization, CRM hygiene habits, meeting preparation. Help reps identify and eliminate time sinks. Every hour should map to pipeline generation or deal advancement.`,
+    detailedPlaybook: `[PLAYBOOK: Apptivia Productivity System — Time Blocks & Prioritization]
+
+DAILY TIME BLOCK TEMPLATE:
+8:00-8:30: Morning prep — review pipeline, check signals/alerts, plan the day.
+8:30-11:00: PROSPECTING BLOCK — outbound, follow-ups, LinkedIn. No meetings. This is highest-ROI time.
+11:00-12:00: Discovery/demo meetings — schedule buyer meetings mid-day.
+12:00-1:00: Lunch + learning — listen to one call recording or read one article.
+1:00-3:00: Deal work — proposals, follow-ups, champion coaching, internal alignment.
+3:00-4:00: Admin block — CRM hygiene, pipeline notes, forecast updates. Batch all admin here.
+4:00-5:00: Next-day prep — pre-call research, email sequences, weekly goal check.
+Protect the 8:30-11:00 block. It's the single highest-ROI time slot.
+
+A/B/C ACCOUNT TIERING:
+A-Tier (top 20%): Best ICP fit + active signals + budget confirmed. Touch 3-5x/week. Personal, high-effort.
+B-Tier (middle 40%): Good fit + some signals, no confirmed budget. Touch 1-2x/week. Semi-personalized.
+C-Tier (bottom 40%): Marginal fit or no signals. Touch 1x/week max via sequence. Nurture only.
+Re-tier monthly. A-Tier that goes dark → B. C-Tier with funding round → A.
+Rule: 60% of time on A-Tier. Equal time on all accounts = leaving money on the table.
+
+WEEKLY PLANNING (Sunday 30 min or Monday 8:00):
+1. Review: What did I accomplish? What carried over? Activity win rate?
+2. Pipeline: Which deals advance? Which need action? Any at risk?
+3. Prospecting: How many new activities to hit pipeline targets? Block the time.
+4. Top 3: Most important things this week. Write them down.
+5. Calendar audit: Cancel/shorten any meeting that doesn't advance a deal or generate pipeline.
+
+CRM RULES: Update every deal within 24 hours of activity. Minimum fields: next step, next step date, close date, amount, stage, champion. Notes: Date + Action + Outcome + Next Step.`,
   },
   socialSelling: {
     name: 'Apptivia Social Playbook',
@@ -197,6 +435,27 @@ const AARON_FRAMEWORKS = {
     oneLiner: 'Profile optimization, comment-first engagement, content cadence, warm intros, social selling index improvement.',
     triggers: ['linkedin', 'social', 'personal brand', 'content', 'engagement', 'networking', 'thought leader', 'inbound', 'warm intro', 'referral'],
     fullDefinition: `[FRAMEWORK: Apptivia Social Playbook]\nCoach on social selling strategy: profile optimization, content sharing cadence, engagement tactics (comment-first approach), warm introduction requests, trigger event monitoring. Help reps build a personal brand that drives inbound interest. Focus on social selling index improvement.`,
+    detailedPlaybook: `[PLAYBOOK: Apptivia Social Playbook — LinkedIn & Personal Brand]
+
+PROFILE OPTIMIZATION:
+- Headline: Lead with value, not title. "Helping [ICP] solve [pain]" > "Account Executive at [Company]."
+- Banner: Custom graphic with value prop. Not the default blue.
+- About: First person. P1=who you help. P2=how. P3=proof/results. End with CTA.
+- Featured: Pin best content — case study, customer story, insight, or video.
+- Activity: Recent posts/comments are your live portfolio. If last 5 are reposts, you need to create.
+
+5-BEFORE-1 RULE: Before sending a DM or connection request, engage with 5 of their posts. Comments > Likes. Write 2+ sentence comments that add perspective or ask questions. Spread over 1-2 weeks (not 5 comments in one day). When you connect, reference a specific post: "Loved your take on [topic] last week."
+
+CONTENT CADENCE (3 posts/week):
+Post 1 — Industry Insight: Share a stat or trend for your ICP. Add your perspective in 2-3 sentences.
+Post 2 — Story: Specific win, lesson learned, or customer conversation (anonymized). People remember stories.
+Post 3 — Engagement: Ask a question, run a poll, or share a hot take. Aim for comments, not likes.
+Format: Short paragraphs (1-2 sentences). Line breaks. First line = hook. No hashtag spam.
+
+WARM INTRO TEMPLATES:
+To mutual connection: "I saw you're connected to [prospect]. I think we could help their team with [challenge]. Would you make an intro?"
+To customer: "You've seen firsthand how [result]. I'm trying to help [similar company]. Would you introduce me to [name]?"
+Post-intro: "[Connection] suggested I reach out. They mentioned your team is [dealing with X]. Worth a 15-minute call?"`,
   },
   accountPlanning: {
     name: 'Apptivia Account Strategy',
@@ -204,6 +463,29 @@ const AARON_FRAMEWORKS = {
     oneLiner: 'Stakeholder mapping, multi-threading, land-and-expand, whitespace analysis, executive engagement.',
     triggers: ['account plan', 'strategic account', 'land and expand', 'whitespace', 'org chart', 'multi-thread', 'executive sponsor', 'power map', 'influence map', 'buying committee'],
     fullDefinition: `[FRAMEWORK: Apptivia Account Strategy]\nCoach on account strategy: stakeholder mapping (power/influence grid), multi-threading across the buying committee, land-and-expand plays, whitespace analysis, executive engagement strategy. Help reps build account plans that identify expansion opportunities and reduce single-thread risk.`,
+    detailedPlaybook: `[PLAYBOOK: Apptivia Account Strategy — Power Maps & Expansion]
+
+POWER MAP (Influence × Support grid):
+Q1 — High Influence, High Support: Your champion. Protect them, arm with internal selling materials.
+Q2 — High Influence, Low Support: Your blocker. Understand concerns, tailor message to what they care about.
+Q3 — Low Influence, High Support: Your coach. Good for intel but can't make decisions.
+Q4 — Low Influence, Low Support: Monitor only. Don't invest time unless their influence changes.
+Update the map after every meeting. Roles and support shift.
+
+MULTI-THREADING: Every deal over $25K needs 3+ contacts across 2+ departments. Single-threaded = fragile.
+Thread 1 — Economic Buyer: Signs the check. Build relationship through champion intros.
+Thread 2 — Technical Evaluator: Tests/validates. Win with product depth and integration proof.
+Thread 3 — End User/Champion: Uses it daily. Win with ease of use and direct workflow value.
+If champion leaves — this is #1 risk. Multi-threading is your insurance. Start in Stage 2, not Stage 4.
+
+LAND-AND-EXPAND:
+Land: Start small — one team, one use case, clear ROI. Prove value in 90 days.
+Expand trigger 1: First team hits measurable results → use as internal case study.
+Expand trigger 2: Adjacent team notices → warm intro from champion.
+Expand trigger 3: Executive sees aggregate impact → sponsors org-wide rollout.
+Timeline: Land (Q1) → Prove (Q2) → 2nd team (Q3) → Enterprise agreement (Q4).
+
+WHITESPACE MATRIX: Products/features (columns) × Departments (rows). Fill in: what they use, what they don't, what competitor fills each gap. Score cells by deal size × conversion likelihood. Focus on highest scores. Revisit quarterly — new hires and budget cycles create new whitespace.`,
   },
   closingTechniques: {
     name: 'Apptivia Close Plan',
@@ -211,6 +493,34 @@ const AARON_FRAMEWORKS = {
     oneLiner: 'Mutual Action Plans, paper process navigation, procurement readiness, trial close techniques.',
     triggers: ['close', 'closing', 'proposal', 'contract', 'signature', 'procurement', 'legal review', 'mutual action plan', 'map', 'paper process', 'terms', 'redline'],
     fullDefinition: `[FRAMEWORK: Apptivia Close Plan]\nCoach on closing mechanics: Mutual Action Plans (MAP), paper process navigation, procurement/legal readiness, trial close techniques, creating urgency without pressure. Help reps build close plans that account for all stakeholders and internal processes. Apply the "give to get" negotiation principle.`,
+    detailedPlaybook: `[PLAYBOOK: Apptivia Close Plan — MAPs, Paper Process & Negotiation]
+
+MUTUAL ACTION PLAN (MAP):
+Shared document with: Milestone, Owner (buyer + seller), Due Date, Status.
+Key milestones: Technical eval → Business case approval → Security/legal review → Commercial negotiation → Contract execution → Implementation kickoff.
+Review on every call: "According to our plan, [milestone] is due [date]. Are we on track?"
+Work backward from go-live: "To be live by [date], we need implementation by [date], which means contracts signed by [date]."
+
+PAPER PROCESS CHECKLIST:
+- Identify ALL approvers early: Procurement, Legal, Security, Finance, IT. Don't discover new ones at the 11th hour.
+- Security review: Ask "Do you need a security questionnaire or SOC 2?" in Stage 3, not Stage 5.
+- Legal: Send contract early: "Here's our standard agreement. If legal needs changes, let's start now so it doesn't delay."
+- Procurement: "Is there a PO process? Typical turnaround?" Many companies need 2-4 weeks for PO.
+- Budget cycle: "When does your fiscal year start? If we need this year's budget, what's the approval deadline?"
+
+TRIAL CLOSE QUESTIONS:
+"Based on what you've seen, does this solve the problem you described?"
+"Is there anything preventing you from moving forward?"
+"If we address [concern], would you be comfortable committing?"
+"Scale of 1-10, how confident this is the right solution? What would make it a 10?"
+"What would need to be true to start implementation next month?"
+Use throughout the process, not just at the end. They surface objections early.
+
+GIVE-TO-GET:
+Give: Extended trial, extra onboarding, QBRs, custom integrations, flexible terms.
+Get: Multi-year, case study, reference calls, expanded deployment, faster signature.
+Never give without getting. "I can include [X] at no cost if we commit to [Y]-year agreement."
+Walk-away signals: >20% discount with no trade, removing success metrics, can't articulate internal business case.`,
   },
 };
 
@@ -429,7 +739,10 @@ When suggesting navigation, use markdown links so the user can click directly:
     prompt += '\n\n=== ACTIVE FRAMEWORKS FOR THIS CONVERSATION ===';
     for (const key of frameworkKeys) {
       const fw = AARON_FRAMEWORKS[key];
-      if (fw) prompt += '\n\n' + fw.fullDefinition;
+      if (fw) {
+        prompt += '\n\n' + fw.fullDefinition;
+        if (fw.detailedPlaybook) prompt += '\n\n' + fw.detailedPlaybook;
+      }
     }
     if (frameworkKeys.length > 1) {
       prompt += '\n\nIMPORTANT: When multiple frameworks apply, seamlessly weave their principles together in your response. Don\'t list framework names to the user — just apply the coaching naturally and specifically.';

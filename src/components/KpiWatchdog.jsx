@@ -150,7 +150,7 @@ function AnomalyCard({ anomaly, onAcknowledge, onDismiss, onResolve }) {
           <div className="flex items-center gap-2 mb-1 flex-wrap">
             <h4 className="text-sm font-semibold text-apptivia-ink">{anomaly.kpi_name}</h4>
             <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded-full ${severity.badge}`}>
-              {anomaly.severity.toUpperCase()}
+              {anomalyType.label}
             </span>
             <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded-full ${statusStyle.bg} ${statusStyle.text}`}>
               {statusStyle.label}

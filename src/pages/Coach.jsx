@@ -134,6 +134,7 @@ export default function Coach() {
   const [buildPlanFor, setBuildPlanFor] = useState(null); // { repId, repName }
   const [startReviewFor, setStartReviewFor] = useState(null); // { repId, repName }
   const [managerTeamMembers, setManagerTeamMembers] = useState([]);
+  const [repActivePlans, setRepActivePlans] = useState({}); // { [repId]: { coaching: [], devPlans: [] } }
 
   useEffect(() => {
     if (filtersInitialized) return;
@@ -628,6 +629,57 @@ export default function Coach() {
     return () => { cancelled = true; };
   }, [isManager, isAdmin, profile?.organization_id, profile?.team_id]);
 
+  // Fetch active coaching plans + dev plans for all team reps (manager/admin only)
+  useEffect(() => {
+    if ((!isManager && !isAdmin) || managerTeamMembers.length === 0) return;
+    let cancelled = false;
+    const repIds = managerTeamMembers.map(m => m.id);
+    const fetchRepPlans = async () => {
+      const planMap = {};
+      repIds.forEach(id => { planMap[id] = { coaching: [], devPlans: [] }; });
+
+      // Fetch active coaching plan assignments
+      const { data: assignments } = await supabase
+        .from('coaching_plan_assignments')
+        .select('plan_id, assigned_to, status')
+        .in('assigned_to', repIds)
+        .in('status', ['active', 'in_progress']);
+      if (cancelled) return;
+
+      if (assignments?.length) {
+        const planIds = assignments.map(a => a.plan_id);
+        const { data: plans } = await supabase
+          .from('coaching_plans')
+          .select('id, name, focus_kpis, action_items, success_metrics, goals, notes, content, visibility, date_range_start, date_range_end, assigned_to, created_at, plan_type')
+          .in('id', planIds);
+        if (cancelled) return;
+        (assignments || []).forEach(a => {
+          const plan = (plans || []).find(p => p.id === a.plan_id);
+          if (plan && planMap[a.assigned_to]) {
+            planMap[a.assigned_to].coaching.push({ ...plan, _assignment: a });
+          }
+        });
+      }
+
+      // Fetch active development plans
+      const { data: devPlans } = await supabase
+        .from('individual_development_plans')
+        .select('id, name, status, profile_id, plan_type, period_start, period_end, focus_kpis, milestones, career_goals, development_areas, action_items, resources, success_criteria, notes, baseline_kpi_snapshot, created_at')
+        .in('profile_id', repIds)
+        .in('status', ['active', 'in_progress', 'draft']);
+      if (cancelled) return;
+      (devPlans || []).forEach(dp => {
+        if (planMap[dp.profile_id]) {
+          planMap[dp.profile_id].devPlans.push(dp);
+        }
+      });
+
+      if (!cancelled) setRepActivePlans(planMap);
+    };
+    fetchRepPlans().catch(err => console.error('Error fetching rep plans:', err));
+    return () => { cancelled = true; };
+  }, [isManager, isAdmin, managerTeamMembers, refreshTrigger]);
+
   // IDP milestone toggle from detail modal
   const handleIdpMilestoneToggle = async (milestoneIdx, newStatus) => {
     if (!viewIdpDetail) return;
@@ -1094,7 +1146,7 @@ export default function Coach() {
                 <div className="w-full mt-4 pt-4 border-t border-white border-opacity-10 flex justify-between items-center">
                   <Tooltip text={isPowerUser ? "Your weighted average KPI attainment for the current period" : "Weighted average of all KPI attainment percentages for the current period"} position="right">
                     <div className="flex flex-col items-center min-w-[60px] cursor-help">
-                      <div className="text-lg font-bold">{data.avgScore}%</div>
+                      <div className="text-lg font-bold">{isPowerUser ? data.avgScore : (scorecardData?.teamAverage ?? data.avgScore)}%</div>
                       <div className="text-xs text-white/80">{isPowerUser ? 'Score' : 'Avg Score'}</div>
                     </div>
                   </Tooltip>
@@ -1169,6 +1221,9 @@ export default function Coach() {
             scorecardKpiKeys={scorecardData?.scorecardKpiKeys || []}
             onBuildPlan={(repId, repName) => setBuildPlanFor({ repId, repName })}
             onStartReview={(repId, repName) => setStartReviewFor({ repId, repName })}
+            repActivePlans={repActivePlans}
+            onViewRepPlan={(repId, plan) => setViewPlanDetail(plan)}
+            onViewDevPlan={(repId, plan) => setViewIdpDetail(plan)}
           />
         )}
 

@@ -403,6 +403,7 @@ export default function OrganizationSettings() {
     revenue_min_m: '',
     revenue_max_m: '',
     target_technologies: '',
+    exclude_industries: [],
   });
 
   // Signal prospecting config — stored in organizations.signal_config
@@ -412,6 +413,7 @@ export default function OrganizationSettings() {
     job_titles_to_track: [],
     competitors: [],
     tech_stack_churning: [],
+    exclude_industries: [],
   });
   const [newSignalItems, setNewSignalItems] = useState({
     pain_point: '',
@@ -419,6 +421,7 @@ export default function OrganizationSettings() {
     job_title: '',
     competitor: '',
     churn_tech: '',
+    exclude_industry: '',
   });
 
   const addSignalItem = (field, inputKey) => {
@@ -453,10 +456,13 @@ export default function OrganizationSettings() {
   const [loadingSignalLibrary, setLoadingSignalLibrary] = useState(false);
   const [savingSignal, setSavingSignal] = useState(false);
   const [showAddSignalForm, setShowAddSignalForm] = useState(false);
+  const [editingScoreId, setEditingScoreId] = useState(null);
+  const [editingScoreValue, setEditingScoreValue] = useState('');
   // Collapsible section states
   const [expandedSections, setExpandedSections] = useState({
     buyerIntent: true,
     competitorIntel: true,
+    exclusionFilters: true,
     customSignals: true,
     universalCompany: false,
     universalInterest: false,
@@ -558,6 +564,33 @@ export default function OrganizationSettings() {
     }
   };
 
+  const updateSignalScore = async (defId, newScore, isCustom = false) => {
+    const score = Math.max(0, Math.min(100, parseInt(newScore) || 0));
+    setSavingSignal(true);
+    try {
+      if (isCustom) {
+        // Custom signal — update default_score directly
+        await supabase.from('engage_org_signal_configs').update({ default_score: score }).eq('id', defId);
+      } else {
+        // Universal signal — create/update score_override
+        const existing = signalLibrary.orgConfigs.find(c => c.signal_definition_id === defId);
+        if (existing) {
+          await supabase.from('engage_org_signal_configs').update({ score_override: score }).eq('id', existing.id);
+        } else {
+          await supabase.from('engage_org_signal_configs').insert({
+            organization_id: organization.id,
+            signal_definition_id: defId,
+            is_enabled: true,
+            score_override: score,
+          });
+        }
+      }
+      await loadSignalLibrary();
+    } finally {
+      setSavingSignal(false);
+    }
+  };
+
   const addCustomSignal = async () => {
     if (!newCustomSignal.signal_key.trim() || !newCustomSignal.signal_name.trim()) return;
     setSavingSignal(true);
@@ -603,6 +636,7 @@ export default function OrganizationSettings() {
       revenue_min_m: c.revenue_min_m ?? '',
       revenue_max_m: c.revenue_max_m ?? '',
       target_technologies: (c.target_technologies || []).join(', '),
+      exclude_industries: c.exclude_industries || [],
     });
   }, [organization?.id]);
 
@@ -618,6 +652,7 @@ export default function OrganizationSettings() {
       job_titles_to_track: c.job_titles_to_track || [],
       competitors: c.competitors || [],
       tech_stack_churning: c.tech_stack_churning || [],
+      exclude_industries: c.exclude_industries || [],
     });
   }, [organization?.id]);
 
@@ -644,6 +679,7 @@ export default function OrganizationSettings() {
       revenue_min_m: icpConfig.revenue_min_m !== '' ? parseFloat(icpConfig.revenue_min_m) : null,
       revenue_max_m: icpConfig.revenue_max_m !== '' ? parseFloat(icpConfig.revenue_max_m) : null,
       target_technologies: icpConfig.target_technologies.split(',').map(s => s.trim()).filter(Boolean),
+      exclude_industries: signalConfig.exclude_industries || [],
       weights: { industry: 30, headcount: 25, revenue: 25, technology: 20 },
     };
 
@@ -1314,6 +1350,32 @@ export default function OrganizationSettings() {
                       </div>
                     )}
                   </div>
+                  {/* Exclusion Filters — collapsible */}
+                  <div className="rounded-lg border border-rose-200/60 overflow-hidden">
+                    <button
+                      type="button"
+                      onClick={() => toggleSection('exclusionFilters')}
+                      className="w-full flex items-center justify-between px-4 py-2.5 bg-rose-50/60 hover:bg-rose-100/40 transition-colors"
+                    >
+                      <h4 className="text-xs font-bold text-rose-800 uppercase tracking-wide">Exclusion Filters</h4>
+                      {expandedSections.exclusionFilters ? <ChevronDown size={14} className="text-rose-400" /> : <ChevronRight size={14} className="text-rose-400" />}
+                    </button>
+                    {expandedSections.exclusionFilters && (
+                      <div className="px-4 py-3 space-y-4 bg-white/50">
+                        <SignalTagField
+                          label="Excluded Industries"
+                          hint="Companies in these industries will be skipped during signal scans and ICP scoring. Staffing/recruiting firms are a common exclusion."
+                          items={signalConfig.exclude_industries}
+                          value={newSignalItems.exclude_industry}
+                          onChange={(v) => setNewSignalItems(s => ({ ...s, exclude_industry: v }))}
+                          onAdd={() => addSignalItem('exclude_industries', 'exclude_industry')}
+                          onRemove={(i) => removeSignalItem('exclude_industries', i)}
+                          placeholder="e.g. Staffing and Recruiting, Human Resources"
+                          tagClass="bg-rose-100 text-rose-700"
+                        />
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
 
@@ -1456,7 +1518,36 @@ export default function OrganizationSettings() {
                                           {cfg.description && <p className="text-xs text-apptivia-carbon-500 mt-0.5 truncate">{cfg.description}</p>}
                                         </div>
                                         <div className="flex items-center gap-3 ml-3 shrink-0">
-                                          <span className="text-xs text-apptivia-carbon-400">Score {cfg.default_score}</span>
+                                          {editingScoreId === cfg.id ? (
+                                            <input
+                                              type="number"
+                                              min={0}
+                                              max={100}
+                                              value={editingScoreValue}
+                                              onChange={(e) => setEditingScoreValue(e.target.value)}
+                                              onBlur={() => {
+                                                if (editingScoreValue !== '' && parseInt(editingScoreValue) !== cfg.default_score) {
+                                                  updateSignalScore(cfg.id, editingScoreValue, true);
+                                                }
+                                                setEditingScoreId(null);
+                                              }}
+                                              onKeyDown={(e) => {
+                                                if (e.key === 'Enter') { e.target.blur(); }
+                                                if (e.key === 'Escape') { setEditingScoreId(null); }
+                                              }}
+                                              autoFocus
+                                              className="w-14 text-xs text-center border border-apptivia-coral rounded px-1 py-0.5 focus:ring-1 focus:ring-apptivia-coral"
+                                            />
+                                          ) : (
+                                            <button
+                                              type="button"
+                                              onClick={() => { setEditingScoreId(cfg.id); setEditingScoreValue(cfg.default_score); }}
+                                              className="text-xs text-apptivia-carbon-400 cursor-pointer hover:text-apptivia-coral transition-colors"
+                                              title="Click to edit score"
+                                            >
+                                              Score {cfg.default_score}
+                                            </button>
+                                          )}
                                           <button
                                             type="button"
                                             onClick={() => !savingSignal && deleteCustomSignal(cfg.id)}
@@ -1516,7 +1607,36 @@ export default function OrganizationSettings() {
                                       {def.description && <p className="text-xs text-apptivia-carbon-500 mt-0.5 truncate">{def.description}</p>}
                                     </div>
                                     <div className="flex items-center gap-3 ml-3 shrink-0">
-                                      <span className="text-xs text-apptivia-carbon-400">Score {def.default_score}</span>
+                                      {editingScoreId === def.id ? (
+                                        <input
+                                          type="number"
+                                          min={0}
+                                          max={100}
+                                          value={editingScoreValue}
+                                          onChange={(e) => setEditingScoreValue(e.target.value)}
+                                          onBlur={() => {
+                                            if (editingScoreValue !== '' && parseInt(editingScoreValue) !== def.default_score) {
+                                              updateSignalScore(def.id, editingScoreValue, false);
+                                            }
+                                            setEditingScoreId(null);
+                                          }}
+                                          onKeyDown={(e) => {
+                                            if (e.key === 'Enter') { e.target.blur(); }
+                                            if (e.key === 'Escape') { setEditingScoreId(null); }
+                                          }}
+                                          autoFocus
+                                          className="w-14 text-xs text-center border border-apptivia-coral rounded px-1 py-0.5 focus:ring-1 focus:ring-apptivia-coral"
+                                        />
+                                      ) : (
+                                        <button
+                                          type="button"
+                                          onClick={() => { setEditingScoreId(def.id); setEditingScoreValue(override?.score_override ?? def.default_score); }}
+                                          className={`text-xs cursor-pointer hover:text-apptivia-coral transition-colors ${override?.score_override != null ? 'text-apptivia-coral font-semibold' : 'text-apptivia-carbon-400'}`}
+                                          title="Click to edit score"
+                                        >
+                                          Score {override?.score_override ?? def.default_score}
+                                        </button>
+                                      )}
                                       <div
                                         onClick={() => !savingSignal && toggleUniversalSignal(def.id, isEnabled)}
                                         className={`relative w-9 h-5 rounded-full transition-colors cursor-pointer ${isEnabled ? 'bg-apptivia-coral' : 'bg-apptivia-carbon-300'} ${savingSignal ? 'opacity-50 pointer-events-none' : ''}`}

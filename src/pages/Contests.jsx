@@ -808,6 +808,11 @@ export default function Contests() {
                   {formatKpiKey(contest.kpi_key)}
                 </span>
               )}
+              {contest.secondary_kpi_key && (
+                <span className="px-2 py-0.5 bg-apptivia-carbon-100 text-apptivia-carbon-600 rounded-full font-medium">
+                  {getKpiDisplayName(contest.secondary_kpi_key)}
+                </span>
+              )}
             </div>
           </div>
         </div>
@@ -1625,6 +1630,7 @@ export default function Contests() {
         participants={leaderboardModal.contest?.participants || []}
         currentUserId={user?.id}
         status={leaderboardModal.contest?.status}
+        secondaryKpiName={leaderboardModal.contest?.secondary_kpi_key ? (kpiNameByKey[leaderboardModal.contest.secondary_kpi_key] || leaderboardModal.contest.secondary_kpi_key) : null}
       />
       {shareModal.isOpen && (
         <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4 overflow-y-auto" onClick={closeShareResults}>

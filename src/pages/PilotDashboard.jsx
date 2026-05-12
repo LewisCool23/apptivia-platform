@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "../supabaseClient";
 
 // ── Constants ────────────────────────────────────────────────────────────────
@@ -303,6 +304,7 @@ function StatBar({ label, value, max, color = "#FF4D2E" }) {
 
 // ── Main Component ───────────────────────────────────────────────────────────
 export default function PilotDashboard() {
+  const navigate = useNavigate();
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -314,11 +316,14 @@ export default function PilotDashboard() {
     setError(null);
     try {
       const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) {
+        throw new Error("Not authenticated. Please log in and try again.");
+      }
       const res = await fetch(`${API_BASE}/api/pilot/adoption-signals?days=${window}`, {
         credentials: "include",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${session?.access_token}`,
+          Authorization: `Bearer ${session.access_token}`,
         },
       });
       const text = await res.text();
@@ -327,6 +332,12 @@ export default function PilotDashboard() {
         json = JSON.parse(text);
       } catch {
         throw new Error("Server returned an unexpected response. Ensure you are logged in as an admin.");
+      }
+      if (res.status === 401) {
+        throw new Error("Session expired. Please log out and log back in.");
+      }
+      if (res.status === 403) {
+        throw new Error("Admin access required. This dashboard is restricted to admin users.");
       }
       if (!res.ok) {
         throw new Error(json?.error || `HTTP ${res.status}`);
@@ -399,15 +410,22 @@ export default function PilotDashboard() {
             alignItems: "flex-start", flexWrap: "wrap", gap: 16,
           }}>
             <div>
-              <div style={{
-                fontFamily: "'Geist Mono', monospace",
-                fontSize: 10,
-                color: "rgba(247,245,242,0.5)",
-                letterSpacing: "0.2em",
-                textTransform: "uppercase",
-                marginBottom: 6,
-              }}>
-                Apptivia · Pilot Program
+              <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 8 }}>
+                <span style={{ fontFamily: "'Geist', sans-serif", fontSize: 20, letterSpacing: "-0.03em" }}>
+                  <span style={{ fontWeight: 900, color: "#F7F5F2" }}>app</span>
+                  <span style={{ fontWeight: 500, color: "#FF4D2E" }}>tivia</span>
+                </span>
+                <span style={{
+                  fontFamily: "'Geist Mono', monospace",
+                  fontSize: 9,
+                  color: "rgba(247,245,242,0.4)",
+                  letterSpacing: "0.15em",
+                  textTransform: "uppercase",
+                  borderLeft: "1px solid rgba(247,245,242,0.15)",
+                  paddingLeft: 12,
+                }}>
+                  Sales Performance Intelligence
+                </span>
               </div>
               <h1 style={{
                 margin: 0,
@@ -427,6 +445,25 @@ export default function PilotDashboard() {
               }}>
                 Demand validation · May – July 2026
               </p>
+              <button
+                onClick={() => navigate('/scorecard')}
+                style={{
+                  marginTop: 10,
+                  padding: "5px 12px",
+                  borderRadius: 4,
+                  border: "1px solid #27272A",
+                  background: "transparent",
+                  color: "rgba(247,245,242,0.5)",
+                  fontFamily: "'Geist Mono', monospace",
+                  fontSize: 11,
+                  letterSpacing: "0.05em",
+                  cursor: "pointer",
+                }}
+                onMouseEnter={e => e.currentTarget.style.color = "#FF4D2E"}
+                onMouseLeave={e => e.currentTarget.style.color = "rgba(247,245,242,0.5)"}
+              >
+                ← Back to Scorecard
+              </button>
             </div>
 
             {/* Controls */}

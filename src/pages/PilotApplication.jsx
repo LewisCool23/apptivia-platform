@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Activity, CheckCircle, ArrowRight, Shield, Clock, Zap, Users, X } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { ApptiviaLogo } from '../components/ApptiviaLogo';
 
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || '';
 
@@ -44,7 +45,7 @@ export default function PilotApplication() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(form),
       });
-      setStatus(res.ok ? 'success' : 'error');
+      setStatus(res.ok ? 'success' : res.status === 429 ? 'rate_limited' : 'error');
     } catch {
       setStatus('error');
     }
@@ -58,7 +59,7 @@ export default function PilotApplication() {
           <div className="flex justify-between items-center h-16">
             <Link to="/" className="flex items-center gap-2">
               <Activity size={32} className="text-apptivia-coral" />
-              <span className="text-2xl font-bold text-apptivia-ink">Apptivia</span>
+              <ApptiviaLogo className="text-2xl" />
             </Link>
             <div className="flex items-center gap-4">
               <Link to="/login" className="px-4 py-2 text-apptivia-carbon-700 hover:text-apptivia-ink font-medium text-sm">
@@ -239,6 +240,9 @@ export default function PilotApplication() {
                   {status === 'error' && (
                     <p className="text-red-600 text-sm">Something went wrong. Please try again or email sean@apptivia.app directly.</p>
                   )}
+                  {status === 'rate_limited' && (
+                    <p className="text-amber-600 text-sm">You've submitted multiple applications. Please wait a few minutes and try again.</p>
+                  )}
 
                   <button
                     type="submit"
@@ -292,7 +296,7 @@ export default function PilotApplication() {
         <div className="max-w-5xl mx-auto px-4 text-center text-sm">
           <div className="flex items-center justify-center gap-2 mb-3">
             <Activity size={20} className="text-apptivia-coral" />
-            <span className="text-white font-semibold">Apptivia</span>
+            <ApptiviaLogo className="text-base" dark />
           </div>
           <p className="mb-4">Sales performance intelligence for teams that want to win.</p>
           <div className="flex justify-center gap-6 text-xs">

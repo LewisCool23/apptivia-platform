@@ -716,7 +716,7 @@ OptionChips.displayName = 'OptionChips';
 
 const STARTER_PRESET_LABELS = ['Coach Me', 'My Performance'];
 
-const AaronChatbot = ({ isOpen, onClose }) => {
+const AaronChatbot = ({ isOpen, onClose, initialPrompt }) => {
   const navigate = useNavigate();
   const { user, profile, role } = useAuth();
   const { plan: billingPlan, status: billingStatus } = useBilling();
@@ -1153,6 +1153,19 @@ const AaronChatbot = ({ isOpen, onClose }) => {
     if (isTyping) return; // don't stack requests
     sendMessage(preset.prompt, preset.label);
   }, [isTyping, sendMessage]);
+
+  // Auto-send initialPrompt when chatbot opens with a pre-seeded prompt
+  const initialPromptSentRef = useRef(null);
+  useEffect(() => {
+    if (!isOpen || !initialPrompt) return;
+    if (initialPromptSentRef.current === initialPrompt) return; // already sent this prompt
+    // Wait for any typing indicator to clear, then send
+    if (isTyping) return; // will re-run when isTyping turns false
+    initialPromptSentRef.current = initialPrompt;
+    // Longer delay to ensure socket connection is ready
+    const t = setTimeout(() => sendMessage(initialPrompt), 600);
+    return () => clearTimeout(t);
+  }, [isOpen, initialPrompt, isTyping, sendMessage]);
 
   // Keyboard shortcut: Escape to collapse / minimize / close
   useEffect(() => {

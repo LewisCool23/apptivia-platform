@@ -8,18 +8,21 @@
 
 'use strict';
 
-// ── Brand Colors ─────────────────────────────────────────────────────
+// ── Brand Colors (Apptivia Brand Foundation v1.2) ────────────────────
 const COLORS = {
-  blue: '#3b82f6',
-  purple: '#8b5cf6',
-  pink: '#ec4899',
-  green: '#10b981',
-  amber: '#f59e0b',
-  red: '#ef4444',
+  ink: '#0A0A0B',
+  coral: '#FF4D2E',
+  paper: '#F7F5F2',
+  carbon700: '#3F3F46',
+  carbon500: '#71717A',
+  carbon200: '#E4E4E7',
+  green: '#16A34A',
+  amber: '#F59E0B',
+  red: '#C8341B',
   gray: '#6b7280',
   lightGray: '#f3f4f6',
+  bgNotes: '#FFF5F2',
 };
-const GRADIENT = 'linear-gradient(135deg, #3b82f6 0%, #8b5cf6 50%, #ec4899 100%)';
 const FRONTEND_URL = process.env.FRONTEND_URL || 'https://apptivia.app';
 
 // ── Email Template Primitives ────────────────────────────────────────
@@ -30,10 +33,10 @@ function buildEmailWrapper(title, subtitle, bodyHtml, options = {}) {
   const year = new Date().getFullYear();
   const ctaBlock = ctaUrl && ctaLabel
     ? `<div style="text-align: center; margin: 30px 0;">
-        <a href="${ctaUrl}" style="display: inline-block; background: ${GRADIENT}; color: white; padding: 12px 30px; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 14px;">${ctaLabel}</a>
+        <a href="${ctaUrl}" style="display: inline-block; background: ${COLORS.coral}; color: white; padding: 12px 30px; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 14px;">${ctaLabel}</a>
       </div>` : '';
   const notesBlock = notesHtml
-    ? `<div style="background: #e0f2fe; padding: 15px; border-radius: 8px; margin: 20px 0;">
+    ? `<div style="background: ${COLORS.bgNotes}; padding: 15px; border-radius: 8px; margin: 20px 0;">
         <strong>Notes:</strong><br/>${notesHtml}
       </div>` : '';
 
@@ -43,43 +46,30 @@ function buildEmailWrapper(title, subtitle, bodyHtml, options = {}) {
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
-    body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0; background-color: #f9fafb; }
+    body { font-family: Arial, sans-serif; line-height: 1.6; color: ${COLORS.carbon700}; margin: 0; padding: 0; }
     .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-    .email-card { background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 12px rgba(0,0,0,0.06); }
-    .header { background: ${GRADIENT}; color: white; padding: 32px 30px; text-align: center; }
-    .stat-box { background: ${COLORS.lightGray}; padding: 20px; border-radius: 8px; text-align: center; }
+    .header { background: ${COLORS.coral}; color: white; padding: 30px; border-radius: 10px; text-align: center; }
+    .stat-box { background: ${COLORS.paper}; padding: 20px; border-radius: 8px; text-align: center; }
     .section { margin: 20px 0; }
-    .section-title { font-size: 16px; font-weight: bold; margin: 0 0 10px 0; color: #111827; }
-    .footer { text-align: center; color: ${COLORS.gray}; font-size: 11px; padding: 24px 30px; background: #f9fafb; border-top: 1px solid #e5e7eb; }
+    .section-title { font-size: 16px; font-weight: bold; margin: 0 0 10px 0; color: ${COLORS.ink}; }
+    .footer { text-align: center; color: ${COLORS.carbon500}; font-size: 12px; margin-top: 30px; border-top: 1px solid ${COLORS.carbon200}; padding-top: 20px; }
   </style>
 </head>
 <body>
   <div class="container">
-    <div class="email-card">
-      <div class="header">
-        <div style="font-size: 26px; font-weight: 800; letter-spacing: -0.5px; margin-bottom: 2px;">Apptivia</div>
-        <div style="font-size: 10px; opacity: 0.8; letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 16px;">Sales Performance Intelligence</div>
-        <h1 style="margin: 0 0 5px 0; font-size: 20px;">${title}</h1>
-        <p style="margin: 0; opacity: 0.9; font-size: 13px;">${subtitle}</p>
-        ${headerMeta || ''}
-      </div>
-      <div style="padding: 24px 28px;">
-        ${bodyHtml}
-        ${notesBlock}
-        ${ctaBlock}
-      </div>
-      <div class="footer">
-        <div style="font-size: 16px; font-weight: 800; letter-spacing: -0.3px; margin-bottom: 6px;">
-          <span style="color: ${COLORS.blue};">App</span><span style="color: ${COLORS.purple};">ti</span><span style="color: ${COLORS.pink};">via</span>
-        </div>
-        <p style="margin: 0 0 8px 0;">Generated on ${date} &nbsp;&bull;&nbsp; ${footerLabel || 'Powered by Apptivia'}</p>
-        <p style="margin: 0;">
-          <a href="${FRONTEND_URL}" style="color: ${COLORS.blue}; text-decoration: none;">Open Dashboard</a>
-          &nbsp;&bull;&nbsp;
-          <a href="${FRONTEND_URL}/settings" style="color: ${COLORS.blue}; text-decoration: none;">Manage Reports</a>
-        </p>
-        <p style="margin: 8px 0 0 0; color: #9ca3af; font-size: 10px;">&copy; ${year} Apptivia. All rights reserved.</p>
-      </div>
+    <div class="header">
+      <div style="font-size:28px;letter-spacing:-0.5px;margin-bottom:2px;"><span style="font-family:'Geist',-apple-system,BlinkMacSystemFont,sans-serif;font-weight:900;color:${COLORS.paper};letter-spacing:-0.05em;">app</span><span style="font-family:'Geist',-apple-system,BlinkMacSystemFont,sans-serif;font-weight:500;color:${COLORS.paper};letter-spacing:-0.05em;">tivia</span></div>
+      <div style="font-size:11px;opacity:0.85;letter-spacing:1px;text-transform:uppercase;margin-bottom:12px;">Sales Performance Intelligence</div>
+      <h1 style="margin: 0 0 5px 0; font-size: 18px;">${title}</h1>
+      <p style="margin: 0; opacity: 0.9; font-size: 12px;">${subtitle}</p>
+      ${headerMeta || ''}
+    </div>
+    ${bodyHtml}
+    ${notesBlock}
+    ${ctaBlock}
+    <div class="footer">
+      <p style="margin: 0 0 5px 0;">Generated on ${date}</p>
+      <p style="margin: 0;">${footerLabel || 'Apptivia Platform'}</p>
     </div>
   </div>
 </body>
@@ -91,9 +81,9 @@ function buildStatGrid(stats, columns = 2) {
   for (let i = 0; i < stats.length; i += columns) {
     const cells = stats.slice(i, i + columns).map(s => `
       <td style="width: ${Math.round(100 / columns)}%; padding: 8px;">
-        <div style="background: ${COLORS.lightGray}; padding: 16px; border-radius: 8px; text-align: center;">
-          <div style="font-size: 28px; font-weight: bold; color: ${s.color || COLORS.blue};">${s.value}</div>
-          <div style="font-size: 13px; color: ${COLORS.gray};">${s.label}</div>
+        <div style="background: ${COLORS.paper}; padding: 16px; border-radius: 8px; text-align: center;">
+          <div style="font-size: 28px; font-weight: bold; color: ${s.color || COLORS.coral};">${s.value}</div>
+          <div style="font-size: 13px; color: ${COLORS.carbon500};">${s.label}</div>
         </div>
       </td>
     `).join('');
@@ -111,7 +101,7 @@ function buildListSection(icon, title, items, style = 'bullet', borderColor) {
     ).join('');
   } else if (style === 'card') {
     listHtml = items.map(item =>
-      `<div style="background: #f9fafb; padding: 12px 15px; border-radius: 8px; margin-bottom: 8px; border-left: 4px solid ${borderColor || COLORS.blue}; font-size: 14px;">${item}</div>`
+      `<div style="background: ${COLORS.paper}; padding: 12px 15px; border-radius: 8px; margin-bottom: 8px; border-left: 4px solid ${borderColor || COLORS.coral}; font-size: 14px;">${item}</div>`
     ).join('');
   } else {
     listHtml = items.map(item =>
@@ -591,7 +581,7 @@ async function generateCoachReport(sb, orgId, opts) {
   let bodyHtml = '';
   bodyHtml += buildStatGrid([
     { value: planCounts.total, label: 'Total Plans' },
-    { value: planCounts.active, label: 'Active', color: COLORS.blue },
+    { value: planCounts.active, label: 'Active', color: COLORS.coral },
     { value: planCounts.completed, label: 'Completed', color: COLORS.green },
     { value: planCounts.overdue, label: 'Overdue', color: planCounts.overdue > 0 ? COLORS.red : COLORS.gray },
   ]);
@@ -608,7 +598,7 @@ async function generateCoachReport(sb, orgId, opts) {
     bodyHtml += buildListSection('📈', 'Skillset Milestones (80%+)', skillsetHighlights.map(s => {
       const name = `${s.profile?.first_name || ''} ${s.profile?.last_name || ''}`.trim() || 'Team Member';
       return `<strong>${s.skillset?.name || 'Skillset'}</strong> — ${name} (${s.progress}%)`;
-    }), 'card', COLORS.purple);
+    }), 'card', COLORS.coral);
   }
 
   if (planCounts.total === 0 && recentBadges.length === 0) {
@@ -664,7 +654,7 @@ async function generateContestsReport(sb, orgId, opts) {
   bodyHtml += buildStatGrid([
     { value: active.length, label: 'Active Contests', color: COLORS.green },
     { value: completed.length, label: 'Completed (7d)' },
-    { value: upcoming.length, label: 'Upcoming', color: COLORS.blue },
+    { value: upcoming.length, label: 'Upcoming', color: COLORS.coral },
   ], 3);
 
   if (active.length > 0) {
@@ -829,4 +819,5 @@ async function generateReport(sb, report) {
 module.exports = {
   generateReport,
   computeNextScheduledAt,
+  buildEmailWrapper,
 };

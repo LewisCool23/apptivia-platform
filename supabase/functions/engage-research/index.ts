@@ -169,7 +169,7 @@ async function apolloSearchCompanies(filters: any) {
 
   const body: any = {
     page: filters.page || 1,
-    per_page: Math.min(filters.per_page || 25, 25),
+    per_page: Math.min(filters.per_page || 50, 50),
   };
   if (filters.employee_ranges?.length) {
     body.organization_num_employees_ranges = filters.employee_ranges;
@@ -585,6 +585,23 @@ Deno.serve(async (req: Request) => {
 
     if (action === 'search_companies') {
       const data = await apolloSearchCompanies(body);
+      // Post-Apollo industry exclusion — mirrors engage-signals filter
+      if (body.exclude_industries?.length) {
+        const excludeLower = body.exclude_industries.map((e: string) => e.toLowerCase().trim());
+        const allCompanies = data?.organizations || data?.accounts || [];
+        const before = allCompanies.length;
+        const filtered = allCompanies.filter((co: any) => {
+          const ind = (co.industry || '').toLowerCase();
+          const name = (co.name || '').toLowerCase();
+          const matchesIndustry = ind && excludeLower.some((ex: string) => ind.includes(ex) || ex.includes(ind));
+          const matchesName = excludeLower.some((ex: string) => name.includes(ex));
+          return !matchesIndustry && !matchesName;
+        });
+        const excluded = before - filtered.length;
+        console.log(`[engage-research] ICP industry filter: ${before} companies, ${filtered.length} survived, ${excluded} excluded. Exclusions: ${body.exclude_industries.join(', ')}`);
+        if (data?.organizations) data.organizations = filtered;
+        if (data?.accounts) data.accounts = filtered;
+      }
       return jsonResp({ ok: true, data });
     }
 

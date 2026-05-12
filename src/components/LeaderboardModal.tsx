@@ -5,6 +5,7 @@ interface LeaderboardEntry {
   rank: number;
   previous_rank: number | null;
   score: number;
+  secondary_score?: number | null;
   profile_id: string;
   profile_name: string;
   team_name: string | null;
@@ -25,6 +26,7 @@ interface LeaderboardModalProps {
   participants?: ParticipantEntry[];
   currentUserId?: string;
   status?: 'active' | 'upcoming' | 'completed' | 'cancelled';
+  secondaryKpiName?: string | null;
 }
 
 export default function LeaderboardModal({
@@ -34,7 +36,8 @@ export default function LeaderboardModal({
   leaderboard,
   participants = [],
   currentUserId,
-  status = 'active'
+  status = 'active',
+  secondaryKpiName,
 }: LeaderboardModalProps) {
   if (!isOpen) return null;
 
@@ -142,6 +145,11 @@ export default function LeaderboardModal({
                   {/* Score */}
                   <div className="flex flex-col items-end">
                     <div className="font-bold text-xl text-apptivia-coral">{typeof entry.score === 'number' ? entry.score.toLocaleString(undefined, { maximumFractionDigits: 1 }) : entry.score}</div>
+                    {secondaryKpiName && entry.secondary_score != null && (
+                      <div className="text-xs text-apptivia-carbon-500">
+                        {secondaryKpiName}: {entry.secondary_score.toLocaleString(undefined, { maximumFractionDigits: 1 })}
+                      </div>
+                    )}
                     {entry.rank <= 3 && (
                       <div className="text-xs text-apptivia-carbon-500">
                         {entry.rank === 1 ? '1st Place' : entry.rank === 2 ? '2nd Place' : '3rd Place'}

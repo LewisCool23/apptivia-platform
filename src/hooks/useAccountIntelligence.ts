@@ -339,15 +339,11 @@ export function useAccountIntelligence(organizationId: string, userId?: string) 
         .ilike('deal_name', `%${account.account_name}%`)
         .limit(5);
 
-      const { data, error } = await supabase.functions.invoke('engage-accounts', {
-        body: {
-          action: 'analyze',
-          account,
-          signals: signals || [],
-          deals: deals || [],
-        },
+      const data = await backendFetch('/api/engage/analyze-account', {
+        account,
+        signals: signals || [],
+        deals: deals || [],
       });
-      if (error) throw new Error(error.message);
       if (data?.error) throw new Error(data.error);
 
       // Save AI analysis back to account
@@ -360,8 +356,8 @@ export function useAccountIntelligence(organizationId: string, userId?: string) 
         updated_at: new Date().toISOString(),
       }).eq('id', accountId);
 
-      patch({ analyzing: false });
       await fetchAccounts();
+      patch({ analyzing: false });
       return data;
     } catch (err: any) {
       patch({ error: err.message, analyzing: false });

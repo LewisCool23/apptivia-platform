@@ -4,7 +4,7 @@ import {
   ChevronDown, ChevronUp, Plus, Edit3, Trash2, Eye, AlertTriangle,
   Globe, Mail, Linkedin, DollarSign, BarChart3, Filter,
   User, Star, X, ArrowRight, Briefcase, MapPin, Zap, Crown,
-  Phone, Loader, CheckCircle
+  Phone, Loader, CheckCircle, Search, UserPlus
 } from 'lucide-react';
 import { useAccountIntelligence } from '../hooks/useAccountIntelligence';
 import { supabase } from '../supabaseClient';
@@ -173,7 +173,7 @@ function SummaryCards({ summary }) {
 
 // ── Buying Committee Panel ───────────────────────────────
 
-function BuyingCommitteePanel({ committee, onUpdate }) {
+function BuyingCommitteePanel({ committee, onUpdate, onFindContacts }) {
   const [adding, setAdding] = useState(false);
   const [newMember, setNewMember] = useState({ role: 'influencer', name: '', title: '', influence_level: 'medium', email: '' });
 
@@ -196,10 +196,18 @@ function BuyingCommitteePanel({ committee, onUpdate }) {
           <span className="text-sm font-bold text-apptivia-ink">Buying Committee</span>
           <span className="text-[10px] text-apptivia-carbon-400">({committee.length})</span>
         </div>
-        <button onClick={() => setAdding(true)}
-          className="flex items-center gap-1 px-2.5 py-1 bg-apptivia-coral text-white rounded-lg text-[10px] font-medium hover:bg-apptivia-coral transition-colors">
-          <Plus size={10} /> Add
-        </button>
+        <div className="flex items-center gap-1.5">
+          {onFindContacts && (
+            <button onClick={onFindContacts}
+              className="flex items-center gap-1 px-2.5 py-1 bg-apptivia-paper text-apptivia-carbon-600 rounded-lg text-[10px] font-medium hover:bg-apptivia-carbon-100 transition-colors">
+              <Search size={10} /> Find Contacts
+            </button>
+          )}
+          <button onClick={() => setAdding(true)}
+            className="flex items-center gap-1 px-2.5 py-1 bg-apptivia-coral text-white rounded-lg text-[10px] font-medium hover:bg-apptivia-coral transition-colors">
+            <Plus size={10} /> Add
+          </button>
+        </div>
       </div>
 
       <div className="divide-y divide-gray-50">
@@ -287,7 +295,7 @@ function BuyingCommitteePanel({ committee, onUpdate }) {
 
 // ── Account Card ─────────────────────────────────────────
 
-function AccountCard({ account, onSelect, icpConfig }) {
+function AccountCard({ account, onSelect, icpConfig, onNavigateDiscover }) {
   const tier = TIER_STYLES[account.tier] || TIER_STYLES.untiered;
   const status = STATUS_STYLES[account.status] || STATUS_STYLES.active;
   const icpScore = useMemo(() => computeIcpScore(account, icpConfig), [account, icpConfig]);
@@ -353,22 +361,68 @@ function AccountCard({ account, onSelect, icpConfig }) {
           {account.territory && <><MapPin size={8} className="ml-2" /> {account.territory}</>}
         </div>
       )}
+
+      {onNavigateDiscover && (
+        <div className="mt-3 pt-3 border-t border-apptivia-carbon-50 flex items-center gap-2">
+          <button
+            onClick={(e) => { e.stopPropagation(); onNavigateDiscover({ mode: 'company', query: account.domain || account.account_name }); }}
+            className="flex items-center gap-1 px-2.5 py-1.5 bg-apptivia-paper text-apptivia-carbon-600 rounded-lg text-[10px] font-medium hover:bg-apptivia-carbon-100 transition-colors"
+          >
+            <Search size={10} /> Research
+          </button>
+          <button
+            onClick={(e) => { e.stopPropagation(); onNavigateDiscover({ mode: 'people_search', findPeopleMode: 'company', query: account.domain || account.account_name }); }}
+            className="flex items-center gap-1 px-2.5 py-1.5 bg-apptivia-paper text-apptivia-carbon-600 rounded-lg text-[10px] font-medium hover:bg-apptivia-carbon-100 transition-colors"
+          >
+            <UserPlus size={10} /> Find Contacts
+          </button>
+        </div>
+      )}
     </div>
   );
 }
 
 // ── Account Detail View ──────────────────────────────────
 
-function AccountDetail({ account, onBack, onUpdate, onAnalyze, analyzing, onUpdateCommittee, onDelete, icpConfig, organizationId, userId }) {
+function AccountDetail({ account, onBack, onUpdate, onAnalyze, analyzing, onUpdateCommittee, onDelete, icpConfig, organizationId, userId, onNavigateDiscover }) {
   const icpScore = useMemo(() => computeIcpScore(account, icpConfig), [account, icpConfig]);
   const tier = TIER_STYLES[account.tier] || TIER_STYLES.untiered;
   const status = STATUS_STYLES[account.status] || STATUS_STYLES.active;
   const [showCreateDeal, setShowCreateDeal] = useState(false);
   const [showContacts, setShowContacts] = useState(false);
+  const [analysisMsg, setAnalysisMsg] = useState(null); // { type: 'success'|'error', text }
   const signalContacts = account.metadata?.signal_contacts || [];
+
+  const handleAnalyze = async () => {
+    setAnalysisMsg({ type: 'info', text: 'Analyzing account with AI...' });
+    try {
+      await onAnalyze(account.id);
+      setAnalysisMsg({ type: 'success', text: 'AI analysis complete — scores and insights updated.' });
+      setTimeout(() => setAnalysisMsg(null), 5000);
+    } catch (err) {
+      setAnalysisMsg({ type: 'error', text: `Analysis failed: ${err.message || 'Unknown error'}` });
+    }
+  };
 
   return (
     <div className="space-y-4">
+      {/* AI Analysis Status Banner */}
+      {analysisMsg && (
+        <div className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-xs font-medium ${
+          analysisMsg.type === 'success' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' :
+          analysisMsg.type === 'error' ? 'bg-red-50 text-red-700 border border-red-200' :
+          'bg-blue-50 text-blue-700 border border-blue-200'
+        }`}>
+          {analysisMsg.type === 'success' ? <CheckCircle size={14} /> :
+           analysisMsg.type === 'error' ? <AlertTriangle size={14} /> :
+           <Loader size={14} className="animate-spin" />}
+          {analysisMsg.text}
+          {analysisMsg.type !== 'info' && (
+            <button onClick={() => setAnalysisMsg(null)} className="ml-auto"><X size={12} /></button>
+          )}
+        </div>
+      )}
+
       {/* Header */}
       <div className="bg-white rounded-lg border border-apptivia-carbon-100 p-5">
         <button onClick={onBack} className="text-xs text-apptivia-coral hover:text-apptivia-coral font-medium flex items-center gap-1 mb-3">
@@ -392,6 +446,18 @@ function AccountDetail({ account, onBack, onUpdate, onAnalyze, analyzing, onUpda
             </div>
           </div>
           <div className="flex items-center gap-2">
+            {onNavigateDiscover && (
+              <>
+                <button onClick={() => onNavigateDiscover({ mode: 'company', query: account.domain || account.account_name })}
+                  className="flex items-center gap-1.5 px-3 py-2 bg-apptivia-paper text-apptivia-carbon-600 rounded-lg text-xs font-medium hover:bg-apptivia-carbon-100 transition-all">
+                  <Search size={14} /> Research
+                </button>
+                <button onClick={() => onNavigateDiscover({ mode: 'people_search', findPeopleMode: 'company', query: account.domain || account.account_name })}
+                  className="flex items-center gap-1.5 px-3 py-2 bg-apptivia-paper text-apptivia-carbon-600 rounded-lg text-xs font-medium hover:bg-apptivia-carbon-100 transition-all">
+                  <UserPlus size={14} /> Find Contacts
+                </button>
+              </>
+            )}
             <button onClick={() => setShowCreateDeal(true)}
               className="flex items-center gap-1.5 px-3 py-2 bg-emerald-50 text-emerald-700 rounded-lg text-xs font-medium hover:bg-emerald-100 transition-all">
               <DollarSign size={14} /> Create Deal
@@ -406,7 +472,7 @@ function AccountDetail({ account, onBack, onUpdate, onAnalyze, analyzing, onUpda
             >
               <Trash2 size={14} /> Delete
             </button>
-            <button onClick={() => onAnalyze(account.id)} disabled={analyzing}
+            <button onClick={handleAnalyze} disabled={analyzing}
               className="flex items-center gap-1.5 px-4 py-2 bg-gradient-to-r from-orange-500 to-amber-500 text-white rounded-lg text-xs font-semibold hover:from-orange-600 hover:to-amber-600 disabled:opacity-50 transition-all shadow-sm">
               {analyzing ? <RefreshCw size={14} className="animate-spin" /> : <Sparkles size={14} />}
               {analyzing ? 'Analyzing...' : 'AI Analysis'}
@@ -553,6 +619,7 @@ function AccountDetail({ account, onBack, onUpdate, onAnalyze, analyzing, onUpda
       <BuyingCommitteePanel
         committee={account.buying_committee || []}
         onUpdate={(committee) => onUpdateCommittee(account.id, committee)}
+        onFindContacts={onNavigateDiscover ? () => onNavigateDiscover({ mode: 'people_search', findPeopleMode: 'company', query: account.domain || account.account_name }) : undefined}
       />
 
       {/* Signal Contacts — only shown if promoted from Signal Prospecting */}
@@ -841,7 +908,7 @@ function NewAccountModal({ isOpen, onClose, onCreate }) {
 
 // ── Main Component ───────────────────────────────────────
 
-export default function AccountIntelligence({ organizationId, userId, initialAccountId, onInitialAccountConsumed }) {
+export default function AccountIntelligence({ organizationId, userId, initialAccountId, onInitialAccountConsumed, onNavigateDiscover }) {
   const {
     accounts, summary, activeAccount, loading, analyzing, error,
     fetchAccounts, createAccount, updateAccount, deleteAccount,
@@ -909,6 +976,7 @@ export default function AccountIntelligence({ organizationId, userId, initialAcc
         icpConfig={icpConfig}
         organizationId={organizationId}
         userId={userId}
+        onNavigateDiscover={onNavigateDiscover}
       />
     );
   }
@@ -994,7 +1062,7 @@ export default function AccountIntelligence({ organizationId, userId, initialAcc
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
           {filteredAccounts.map((account) => (
-            <AccountCard key={account.id} account={account} onSelect={handleSelectAccount} icpConfig={icpConfig} />
+            <AccountCard key={account.id} account={account} onSelect={handleSelectAccount} icpConfig={icpConfig} onNavigateDiscover={onNavigateDiscover} />
           ))}
         </div>
       )}

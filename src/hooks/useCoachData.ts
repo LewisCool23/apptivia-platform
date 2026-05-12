@@ -469,7 +469,7 @@ export function useCoachData(
           });
 
           const avgProgress = totalMembers > 0 ? Math.round(progressSum / totalMembers) : 0;
-          const avgAchievements = totalMembers > 0 ? Math.round(achievementsSum / totalMembers) : 0;
+          const avgAchievements = totalMembers > 0 ? achievementsSum : 0;
           const avgPoints = totalMembers > 0 ? Math.round(pointsSum / totalMembers) : 0;
 
           totalAchievementCount += achievementsSum;

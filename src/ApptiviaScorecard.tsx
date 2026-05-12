@@ -1,6 +1,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { X, Search } from 'lucide-react';
+import { X, Search, Sparkles } from 'lucide-react';
+import { openAaronWithPrompt } from './utils/openAaron';
 import DashboardLayout from './DashboardLayout';
 import ScorecardFilters from './components/ScorecardFilters';
 import RightFilterPanel from './components/RightFilterPanel';
@@ -1275,7 +1276,7 @@ const ApptiviaScorecard: React.FC = () => {
                     <div className="flex items-center gap-1"><span className="inline-block w-2.5 h-2.5 rounded bg-green-500" /> 90%+</div>
                     <div className="flex items-center gap-1"><span className="inline-block w-2.5 h-2.5 rounded bg-yellow-400" /> 80–89%</div>
                     <div className="flex items-center gap-1"><span className="inline-block w-2.5 h-2.5 rounded bg-orange-400" /> 60–79%</div>
-                    <div className="flex items-center gap-1"><span className="inline-block w-2.5 h-2.5 rounded bg-red-500" /> &lt;60%</div>
+                    <div className="flex items-center gap-1"><span className="inline-block w-2.5 h-2.5 rounded bg-apptivia-coral" /> &lt;60%</div>
                   </div>
                   <div className="flex-1 overflow-x-auto overflow-y-auto min-h-0">
                     <table className="w-full text-xs">
@@ -1340,26 +1341,58 @@ const ApptiviaScorecard: React.FC = () => {
                   <h2 className="text-base font-semibold">{isPowerUser ? 'My Scorecard Snapshot' : 'Team Performance Scorecard'}</h2>
                   <InfoTooltip text="Detailed KPI values and scorecard percentages for the current selection." />
                 </div>
-                {!isPowerUser && (
-                  <div className="flex items-center gap-2">
-                    {canViewAnalytics && (
-                      <button
-                        onClick={() => navigate('/analytics', { state: { filters: { dateRange: filters.dateRange, departments: filters.departments, teams: filters.teams, members: filters.members } } })}
-                        className="px-3 py-1.5 rounded-md text-xs font-semibold bg-apptivia-coral-tone-50 text-apptivia-coral hover:bg-apptivia-coral-tone-50"
-                      >
-                        View Analytics
-                      </button>
-                    )}
-                    {canViewContests && (
-                      <button
-                        onClick={() => navigate('/contests')}
-                        className="px-3 py-1.5 rounded-md text-xs font-semibold bg-green-50 text-green-700 hover:bg-green-100"
-                      >
-                        Team Contests
-                      </button>
-                    )}
-                  </div>
-                )}
+                <div className="flex items-center gap-2">
+                  {!isPowerUser && canViewAnalytics && (
+                    <button
+                      onClick={() => navigate('/analytics', { state: { filters: { dateRange: filters.dateRange, departments: filters.departments, teams: filters.teams, members: filters.members } } })}
+                      className="px-3 py-1.5 rounded-md text-xs font-semibold bg-apptivia-coral-tone-50 text-apptivia-coral hover:bg-apptivia-coral-tone-50"
+                    >
+                      View Analytics
+                    </button>
+                  )}
+                  {!isPowerUser && canViewContests && (
+                    <button
+                      onClick={() => navigate('/contests')}
+                      className="px-3 py-1.5 rounded-md text-xs font-semibold bg-green-50 text-green-700 hover:bg-green-100"
+                    >
+                      Team Contests
+                    </button>
+                  )}
+                  <button
+                    onClick={() => {
+                      const rows = data.rows || [];
+                      const teamAvg = data.teamAverage ?? 0;
+                      if (isPowerUser) {
+                        const myRow = rows.find((r: any) => String(r.profile_id) === String(userId));
+                        const myScore = myRow?.apptivityScore ?? 0;
+                        const weakKpis = myRow?.kpis ? Object.entries(myRow.kpis)
+                          .map(([k, v]: [string, any]) => ({ key: k, pct: Number(v?.percentage || 0) }))
+                          .filter(e => e.pct < 80)
+                          .sort((a, b) => a.pct - b.pct)
+                          .slice(0, 3)
+                          .map(e => `${e.key.replace(/_/g, ' ')} (${e.pct}%)`)
+                          .join(', ') : '';
+                        openAaronWithPrompt(`My current Apptivia Score is ${myScore}%. ${weakKpis ? `My weakest KPIs are: ${weakKpis}.` : ''} What should I focus on this week to improve my performance?`);
+                      } else {
+                        const lagging = rows.filter((r: any) => (r.apptivityScore || 0) < 80);
+                        const laggingDetails = lagging.slice(0, 5).map((r: any) => {
+                          const weakest = Object.entries(r.kpis || {})
+                            .map(([k, v]: [string, any]) => ({ key: k, pct: Number(v?.percentage || 0) }))
+                            .filter(e => e.pct < 80)
+                            .sort((a, b) => a.pct - b.pct)
+                            .slice(0, 1)
+                            .map(e => e.key.replace(/_/g, ' '));
+                          return `${r.name} (${r.apptivityScore || 0}%${weakest.length ? `, weakest: ${weakest[0]}` : ''})`;
+                        }).join(', ');
+                        openAaronWithPrompt(`Team average score is ${teamAvg}%. ${lagging.length} of ${rows.length} reps are below 80%: ${laggingDetails}. What coaching strategies should I prioritize this week to lift team performance?`);
+                      }
+                    }}
+                    className="px-3 py-1.5 rounded-md text-xs font-semibold bg-purple-50 text-purple-600 hover:bg-purple-100 flex items-center gap-1"
+                  >
+                    <Sparkles size={12} />
+                    Ask Aaron
+                  </button>
+                </div>
               </div>
               <div className="flex items-center justify-between gap-3 mb-2">
                 <div className="text-xs text-apptivia-carbon-500">

@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from 'react';
-import { AlertTriangle, CalendarCheck, ChevronDown, ChevronUp, TrendingDown, TrendingUp, Users, Target, ClipboardList, FileText } from 'lucide-react';
+import { AlertTriangle, CalendarCheck, ChevronDown, ChevronUp, TrendingDown, TrendingUp, Users, Target, ClipboardList, FileText, Sparkles } from 'lucide-react';
+import { openAaronWithPrompt } from '../utils/openAaron';
 import InfoTooltip from './InfoTooltip';
 import Meeting1On1PrepModal from './Meeting1On1PrepModal';
 import { KPI_GUIDANCE, buildLabel, LAGGING_THRESHOLD, DECLINING_TREND_THRESHOLD } from '../constants/kpiGuidance';
@@ -12,7 +13,7 @@ import FeedbackThumb from './shared/FeedbackThumb';
  * to surface persistent weaknesses, declining reps, and recent changes.
  * KPIs are prioritized by tier: Scorecard Priority > Core Skill > Engage Adoption > Other.
  */
-export default function DataDrivenPlaybook({ scorecardData, lastWeekScorecardData, coachData, historicalScores, repNames, scorecardKpiKeys, onStartReview, onBuildPlan }) {
+export default function DataDrivenPlaybook({ scorecardData, lastWeekScorecardData, coachData, historicalScores, repNames, scorecardKpiKeys, onStartReview, onBuildPlan, repActivePlans, onViewRepPlan, onViewDevPlan }) {
   const [expandedSection, setExpandedSection] = useState(null);
   const [prepRepId, setPrepRepId] = useState(null);
 
@@ -92,11 +93,21 @@ export default function DataDrivenPlaybook({ scorecardData, lastWeekScorecardDat
           if (entries.length > 0) weakestKpi = entries[0];
           if (entries.length > 1) secondWeakestEntry = entries[1];
 
-          // Strongest KPI for balanced view
+          // Strongest KPI for balanced view — must meet LAGGING_THRESHOLD to qualify as a real strength
           const allEntries = Object.entries(repRow.kpis)
-            .map(([k, v]) => ({ key: k, percentage: Number(v?.percentage || 0) }));
-          const best = allEntries.sort((a, b) => b.percentage - a.percentage)[0];
-          if (best && best.percentage > 0) {
+            .map(([k, v]) => ({ key: k, percentage: Number(v?.percentage || 0) }))
+            .filter(e => {
+              if (e.percentage < LAGGING_THRESHOLD) return false;
+              // Don't show conversation-quality ratios as strength when talk_time is near-zero
+              if (e.key === 'talk_to_listen_ratio' || e.key === 'longest_monologue_sec' || e.key === 'longest_monologue') {
+                const talkTime = Number(repRow.kpis?.talk_time?.percentage || 0);
+                if (talkTime < 5) return false;
+              }
+              return true;
+            })
+            .sort((a, b) => b.percentage - a.percentage);
+          const best = allEntries[0];
+          if (best) {
             const bestTeamAvg = kpiStats.find(s => s.key === best.key)?.avgPercentage || 0;
             strongestKpi = {
               key: best.key,
@@ -178,10 +189,12 @@ export default function DataDrivenPlaybook({ scorecardData, lastWeekScorecardDat
     const priorities = [];
     lagging.slice(0, 3).forEach(kpi => {
       const tierLabel = TIER_LABELS[kpi.tier];
+      const tip = KPI_GUIDANCE[kpi.key]?.tips?.[0];
       priorities.push({
         type: 'kpi',
         text: `Improve ${kpi.label}`,
         detail: `${tierLabel} — Team avg ${kpi.avgPercentage}%, ${kpi.belowTargetCount} rep${kpi.belowTargetCount !== 1 ? 's' : ''} below target`,
+        tip: tip || null,
         tier: kpi.tier,
       });
     });
@@ -190,7 +203,7 @@ export default function DataDrivenPlaybook({ scorecardData, lastWeekScorecardDat
       priorities.push({
         type: 'reps',
         text: 'Schedule 1:1s with declining reps',
-        detail: decliningReps.map(r => `${r.name.split(' ')[0]} (${r.trendDelta > 0 ? '+' : ''}${r.trendDelta}%)`).join(', '),
+        detail: decliningReps.map(r => `${r.name.split(' ')[0]} (${r.trendDelta > 0 ? '+' : ''}${r.trendDelta}%${r.weakestKpi ? `, weakest: ${r.weakestKpi.label}` : ''})`).join(', '),
       });
     }
     const lowAvgReps = repsNeedingCoaching.filter(r => r.avg5w < LAGGING_THRESHOLD && r.trendDelta >= DECLINING_TREND_THRESHOLD);
@@ -198,7 +211,7 @@ export default function DataDrivenPlaybook({ scorecardData, lastWeekScorecardDat
       priorities.push({
         type: 'reps',
         text: 'Coach reps with low 5-week averages',
-        detail: lowAvgReps.map(r => `${r.name.split(' ')[0]} (${r.avg5w}% avg)`).join(', '),
+        detail: lowAvgReps.map(r => `${r.name.split(' ')[0]} (${r.avg5w}% avg${r.weakestKpi ? `, focus: ${r.weakestKpi.label}` : ''})`).join(', '),
       });
     }
 
@@ -249,10 +262,10 @@ export default function DataDrivenPlaybook({ scorecardData, lastWeekScorecardDat
       </div>
 
       {/* Section 1: Team Weakness Analysis */}
-      <div className="border rounded-lg mb-3 overflow-hidden">
+      <div className={`rounded-lg border transition-colors mb-2 ${expandedSection === 'weaknesses' ? 'border-red-200 bg-red-50/30' : 'border-apptivia-carbon-100 bg-red-50/10 hover:bg-red-50/30'}`}>
         <button
           onClick={() => toggleSection('weaknesses')}
-          className="w-full flex items-center justify-between px-3 py-2.5 bg-red-50 hover:bg-red-100 transition-colors text-left"
+          className="w-full flex items-center justify-between px-4 py-3 text-left"
         >
           <div className="flex items-center gap-2">
             <AlertTriangle size={16} className="text-red-500" />
@@ -264,9 +277,9 @@ export default function DataDrivenPlaybook({ scorecardData, lastWeekScorecardDat
           {expandedSection === 'weaknesses' ? <ChevronUp size={16} className="text-apptivia-carbon-400" /> : <ChevronDown size={16} className="text-apptivia-carbon-400" />}
         </button>
         {expandedSection === 'weaknesses' && (
-          <div className="px-3 py-2 space-y-2">
+          <div className="px-4 pb-4 space-y-2">
             {lagging.length === 0 ? (
-              <div className="text-xs text-emerald-600 bg-emerald-50 border border-emerald-100 rounded p-2">
+              <div className="text-xs text-emerald-600 bg-emerald-50 border border-emerald-100 rounded-lg p-3">
                 {`All team KPIs are at or above ${LAGGING_THRESHOLD}% target. Focus on maintaining momentum.`}
               </div>
             ) : (
@@ -274,7 +287,7 @@ export default function DataDrivenPlaybook({ scorecardData, lastWeekScorecardDat
                 const guidance = KPI_GUIDANCE[kpi.key];
                 const tierColor = TIER_COLORS[kpi.tier] || TIER_COLORS[4];
                 return (
-                  <div key={kpi.key} className="border rounded-lg p-3">
+                  <div key={kpi.key} className="border border-red-100 bg-red-50/50 rounded-lg p-3">
                     <div className="flex items-center justify-between mb-1">
                       <div className="flex items-center gap-2">
                         <span className="text-xs font-semibold text-apptivia-ink">{kpi.label}</span>
@@ -304,7 +317,16 @@ export default function DataDrivenPlaybook({ scorecardData, lastWeekScorecardDat
                         <ul className="text-[11px] text-apptivia-carbon-600 space-y-0.5 list-disc list-inside">
                           {guidance.tips.slice(0, 3).map((tip, i) => <li key={i}>{tip}</li>)}
                         </ul>
-                        <div className="mt-1.5 flex justify-end">
+                        <div className="mt-1.5 flex items-center justify-between">
+                          <button
+                            onClick={() => openAaronWithPrompt(
+                              `As a manager, my team's biggest weakness is ${kpi.label} at ${kpi.avgPercentage}% average (${kpi.belowTargetCount} of ${rows.length} reps below target). The diagnosis is: ${guidance.diagnosis}. Key coaching question: ${guidance.coachingQuestion}. What specific coaching exercises or techniques should I use in team meetings and 1:1s to improve this KPI?`
+                            )}
+                            className="flex items-center gap-1 px-2 py-1 text-[10px] font-medium text-purple-600 border border-purple-200 rounded hover:bg-purple-50 transition-colors"
+                          >
+                            <Sparkles size={12} />
+                            Ask Aaron
+                          </button>
                           <FeedbackThumb featureArea="playbook_insight" contentKey={`weakness_${kpi.key}`} context={{ kpi: kpi.key, type: 'team_weakness' }} />
                         </div>
                       </>
@@ -318,10 +340,10 @@ export default function DataDrivenPlaybook({ scorecardData, lastWeekScorecardDat
       </div>
 
       {/* Section 2: Rep-Specific Coaching (trend-driven) */}
-      <div className="border rounded-lg mb-3 overflow-hidden">
+      <div className={`rounded-lg border transition-colors mb-2 ${expandedSection === 'reps' ? 'border-orange-200 bg-orange-50/30' : 'border-apptivia-carbon-100 bg-orange-50/10 hover:bg-orange-50/30'}`}>
         <button
           onClick={() => toggleSection('reps')}
-          className="w-full flex items-center justify-between px-3 py-2.5 bg-orange-50 hover:bg-orange-100 transition-colors text-left"
+          className="w-full flex items-center justify-between px-4 py-3 text-left"
         >
           <div className="flex items-center gap-2">
             <Users size={16} className="text-orange-500" />
@@ -333,9 +355,9 @@ export default function DataDrivenPlaybook({ scorecardData, lastWeekScorecardDat
           {expandedSection === 'reps' ? <ChevronUp size={16} className="text-apptivia-carbon-400" /> : <ChevronDown size={16} className="text-apptivia-carbon-400" />}
         </button>
         {expandedSection === 'reps' && (
-          <div className="px-3 py-2 space-y-2">
+          <div className="px-4 pb-4 space-y-2">
             {repsNeedingCoaching.length === 0 ? (
-              <div className="text-xs text-emerald-600 bg-emerald-50 border border-emerald-100 rounded p-2">
+              <div className="text-xs text-emerald-600 bg-emerald-50 border border-emerald-100 rounded-lg p-3">
                 {hasTrendData
                   ? 'All reps are trending stable or improving. Great team performance!'
                   : `All reps are scoring above ${LAGGING_THRESHOLD}%. Great team performance!`}
@@ -364,10 +386,10 @@ export default function DataDrivenPlaybook({ scorecardData, lastWeekScorecardDat
                 const teamAvg = firstRep.teamAvgForWeakest;
 
                 return (
-                  <div key={groupKey} className="border rounded-lg overflow-hidden">
+                  <div key={groupKey} className="border border-orange-100 bg-orange-50/50 rounded-lg overflow-hidden">
                     {/* Group header — shared KPI + action */}
                     {groupLabel && (
-                      <div className="px-3 py-2 bg-orange-50 border-b">
+                      <div className="px-3 py-2 bg-orange-50/70 border-b border-orange-100">
                         <div className="flex items-center gap-2 mb-1">
                           <Target size={13} className="text-orange-500 flex-shrink-0" />
                           <span className="text-xs font-semibold text-apptivia-ink">{groupLabel}</span>
@@ -376,14 +398,14 @@ export default function DataDrivenPlaybook({ scorecardData, lastWeekScorecardDat
                           <span className="text-[10px] text-orange-600 font-medium ml-auto">{reps.length} rep{reps.length !== 1 ? 's' : ''}</span>
                         </div>
                         {guidance && (
-                          <div className="text-[11px] text-apptivia-carbon-600 bg-white rounded px-2 py-1.5 border border-apptivia-carbon-100">
+                          <div className="text-[11px] text-apptivia-carbon-600 bg-white rounded px-2 py-1.5 border border-orange-100">
                             <span className="font-medium text-apptivia-carbon-700">Action:</span> {guidance.tips[0]}
                           </div>
                         )}
                       </div>
                     )}
                     {/* Individual rep rows */}
-                    <div className="divide-y divide-gray-100">
+                    <div className="divide-y divide-orange-50">
                       {reps.map(rep => (
                         <div key={rep.repId} className="px-3 py-2.5 flex items-start gap-3">
                           <div className="w-7 h-7 rounded-full bg-orange-100 flex items-center justify-center text-orange-600 text-[10px] font-bold flex-shrink-0 mt-0.5">
@@ -441,15 +463,42 @@ export default function DataDrivenPlaybook({ scorecardData, lastWeekScorecardDat
                                   <CalendarCheck size={12} />
                                   Prep 1:1
                                 </button>
-                                {onBuildPlan && (
-                                  <button
-                                    onClick={() => onBuildPlan(rep.repId, repNames?.[rep.repId] || 'Rep')}
-                                    className="flex items-center gap-1 px-2 py-1 text-[10px] font-medium text-emerald-600 border border-emerald-200 rounded hover:bg-emerald-50 transition-colors"
-                                  >
-                                    <FileText size={12} />
-                                    Build Plan
-                                  </button>
-                                )}
+                                {(() => {
+                                  const plans = repActivePlans?.[rep.repId];
+                                  const hasCoaching = plans?.coaching?.length > 0;
+                                  const hasDevPlan = plans?.devPlans?.length > 0;
+                                  if (hasCoaching && onViewRepPlan) {
+                                    return (
+                                      <button
+                                        onClick={() => onViewRepPlan(rep.repId, plans.coaching[0])}
+                                        className="flex items-center gap-1 px-2 py-1 text-[10px] font-medium text-emerald-600 border border-emerald-200 rounded hover:bg-emerald-50 transition-colors"
+                                      >
+                                        <FileText size={12} />
+                                        View Active Plan
+                                      </button>
+                                    );
+                                  }
+                                  if (hasDevPlan && onViewDevPlan) {
+                                    return (
+                                      <button
+                                        onClick={() => onViewDevPlan(rep.repId, plans.devPlans[0])}
+                                        className="flex items-center gap-1 px-2 py-1 text-[10px] font-medium text-blue-600 border border-blue-200 rounded hover:bg-blue-50 transition-colors"
+                                      >
+                                        <FileText size={12} />
+                                        View Dev Plan
+                                      </button>
+                                    );
+                                  }
+                                  return onBuildPlan ? (
+                                    <button
+                                      onClick={() => onBuildPlan(rep.repId, repNames?.[rep.repId] || 'Rep')}
+                                      className="flex items-center gap-1 px-2 py-1 text-[10px] font-medium text-emerald-600 border border-emerald-200 rounded hover:bg-emerald-50 transition-colors"
+                                    >
+                                      <FileText size={12} />
+                                      Build Plan
+                                    </button>
+                                  ) : null;
+                                })()}
                                 {onStartReview && (
                                   <button
                                     onClick={() => onStartReview(rep.repId, repNames?.[rep.repId] || 'Rep')}
@@ -459,6 +508,15 @@ export default function DataDrivenPlaybook({ scorecardData, lastWeekScorecardDat
                                     Start Review
                                   </button>
                                 )}
+                                <button
+                                  onClick={() => openAaronWithPrompt(
+                                    `As a manager, I need coaching advice for ${rep.name}. Their weakest KPI is ${rep.weakestKpi?.label || 'unknown'} at ${rep.weakestKpi?.percentage || 0}% (team avg: ${rep.teamAvgForWeakest || 0}%). ${rep.secondWeakestKpi ? `Also lagging: ${rep.secondWeakestKpi.label} (${rep.secondWeakestKpi.percentage}%).` : ''} Their 5-week avg score is ${rep.avg5w}% with a ${rep.trendDelta >= 0 ? '+' : ''}${rep.trendDelta}% trend. What specific actions should I take in my next 1:1?`
+                                  )}
+                                  className="flex items-center gap-1 px-2 py-1 text-[10px] font-medium text-purple-600 border border-purple-200 rounded hover:bg-purple-50 transition-colors"
+                                >
+                                  <Sparkles size={12} />
+                                  Ask Aaron
+                                </button>
                               </div>
                               <FeedbackThumb featureArea="playbook_insight" contentKey={`rep_${rep.repId}_${rep.weakestKpi?.key}`} context={{ type: 'rep_action' }} />
                             </div>
@@ -475,10 +533,10 @@ export default function DataDrivenPlaybook({ scorecardData, lastWeekScorecardDat
       </div>
 
       {/* Section 3: What Changed Recently (5-week trend) */}
-      <div className="border rounded-lg mb-3 overflow-hidden">
+      <div className={`rounded-lg border transition-colors mb-2 ${expandedSection === 'changes' ? 'border-apptivia-coral-tone-100 bg-apptivia-coral-tone-50/30' : 'border-apptivia-carbon-100 bg-apptivia-coral-tone-50/10 hover:bg-apptivia-coral-tone-50/30'}`}>
         <button
           onClick={() => toggleSection('changes')}
-          className="w-full flex items-center justify-between px-3 py-2.5 bg-apptivia-coral-tone-50 hover:bg-apptivia-coral-tone-50 transition-colors text-left"
+          className="w-full flex items-center justify-between px-4 py-3 text-left"
         >
           <div className="flex items-center gap-2">
             {recentChanges.length > 0 && recentChanges[0].delta >= 0
@@ -490,13 +548,13 @@ export default function DataDrivenPlaybook({ scorecardData, lastWeekScorecardDat
           {expandedSection === 'changes' ? <ChevronUp size={16} className="text-apptivia-carbon-400" /> : <ChevronDown size={16} className="text-apptivia-carbon-400" />}
         </button>
         {expandedSection === 'changes' && (
-          <div className="px-3 py-2">
+          <div className="px-4 pb-4">
             {recentChanges.length === 0 ? (
-              <div className="text-xs text-apptivia-carbon-500 p-2">Need at least 2 weeks of data for trend comparison.</div>
+              <div className="text-xs text-apptivia-carbon-500 p-3">Need at least 2 weeks of data for trend comparison.</div>
             ) : (
               <div className="space-y-2">
                 {recentChanges.map((item, i) => (
-                  <div key={i} className={`flex items-center justify-between text-xs border rounded p-2 ${item.type === 'team' ? 'bg-apptivia-coral-tone-50 border-apptivia-coral-tone-100' : ''}`}>
+                  <div key={i} className={`flex items-center justify-between text-xs rounded-lg p-2 ${item.type === 'team' ? 'bg-apptivia-coral-tone-50 border border-apptivia-coral-tone-100' : 'border border-apptivia-carbon-100'}`}>
                     <div className="flex items-center gap-2">
                       <span className={`font-medium ${item.type === 'team' ? 'text-apptivia-coral-tone-700' : 'text-apptivia-ink'}`}>{item.label}</span>
                       {item.type === 'team' && <span className="text-[9px] px-1.5 py-0.5 rounded bg-apptivia-coral-tone-50 text-apptivia-coral">Team</span>}
@@ -523,10 +581,10 @@ export default function DataDrivenPlaybook({ scorecardData, lastWeekScorecardDat
       </div>
 
       {/* Section 4: Priority Actions */}
-      <div className="border rounded-lg overflow-hidden">
+      <div className={`rounded-lg border transition-colors ${expandedSection === 'priorities' ? 'border-apptivia-carbon-200 bg-apptivia-carbon-50/30' : 'border-apptivia-carbon-100 bg-apptivia-carbon-50/10 hover:bg-apptivia-carbon-50/30'}`}>
         <button
           onClick={() => toggleSection('priorities')}
-          className="w-full flex items-center justify-between px-3 py-2.5 bg-apptivia-carbon-100 hover:bg-apptivia-carbon-100 transition-colors text-left"
+          className="w-full flex items-center justify-between px-4 py-3 text-left"
         >
           <div className="flex items-center gap-2">
             <Target size={16} className="text-apptivia-ink" />
@@ -535,22 +593,38 @@ export default function DataDrivenPlaybook({ scorecardData, lastWeekScorecardDat
           {expandedSection === 'priorities' ? <ChevronUp size={16} className="text-apptivia-carbon-400" /> : <ChevronDown size={16} className="text-apptivia-carbon-400" />}
         </button>
         {expandedSection === 'priorities' && (
-          <div className="px-3 py-2">
+          <div className="px-4 pb-4">
             {priorities.length === 0 ? (
-              <div className="text-xs text-emerald-600 bg-emerald-50 border border-emerald-100 rounded p-2">
+              <div className="text-xs text-emerald-600 bg-emerald-50 border border-emerald-100 rounded-lg p-3">
                 Team is performing well across the 5-week trend. Focus on consistency and celebrate wins.
               </div>
             ) : (
-              <div className="space-y-1.5">
+              <div className="space-y-2.5">
                 {priorities.map((p, i) => (
                   <div key={i} className="flex items-start gap-2 text-xs">
                     <span className="text-apptivia-ink font-bold mt-0.5">{i + 1}.</span>
                     <div>
                       <span className="font-medium text-apptivia-ink">{p.text}</span>
                       <span className="text-apptivia-carbon-500"> — {p.detail}</span>
+                      {p.tip && (
+                        <div className="mt-0.5 text-[10px] text-apptivia-carbon-400 italic">
+                          Tip: {p.tip}
+                        </div>
+                      )}
                     </div>
                   </div>
                 ))}
+                <div className="pt-1 flex justify-end">
+                  <button
+                    onClick={() => openAaronWithPrompt(
+                      `As a manager, here are my team's priority issues: ${priorities.map((p, i) => `${i + 1}. ${p.text} (${p.detail})`).join('; ')}. Give me a concrete coaching game plan for this week.`
+                    )}
+                    className="flex items-center gap-1 px-2.5 py-1 text-[10px] font-medium text-purple-600 border border-purple-200 rounded hover:bg-purple-50 transition-colors"
+                  >
+                    <Sparkles size={12} />
+                    Ask Aaron for a Game Plan
+                  </button>
+                </div>
               </div>
             )}
           </div>
@@ -571,6 +645,15 @@ export default function DataDrivenPlaybook({ scorecardData, lastWeekScorecardDat
         onBuildRepPlan={(repId, repName) => {
           setPrepRepId(null);
           onBuildPlan?.(repId, repName);
+        }}
+        repActivePlans={repActivePlans?.[prepRepId]}
+        onViewRepPlan={(repId, plan) => {
+          setPrepRepId(null);
+          onViewRepPlan?.(repId, plan);
+        }}
+        onViewDevPlan={(repId, plan) => {
+          setPrepRepId(null);
+          onViewDevPlan?.(repId, plan);
         }}
       />
     </div>

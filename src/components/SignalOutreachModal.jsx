@@ -97,6 +97,30 @@ export default function SignalOutreachModal({ isOpen, onClose, signal, contact }
   const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState(null);
   const [copied, setCopied] = useState(false);
+  const [editSubject, setEditSubject] = useState('');
+  const [editBody, setEditBody] = useState('');
+  const [recipientEmail, setRecipientEmail] = useState('');
+  const [isSending, setIsSending] = useState(false);
+  const [sendSuccess, setSendSuccess] = useState(false);
+  const [sendError, setSendError] = useState(null);
+  const [userSignature, setUserSignature] = useState('');
+
+  // Fetch user profile signature on mount
+  useEffect(() => {
+    (async () => {
+      try {
+        const { supabase } = await import('../supabaseClient');
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+        const { data } = await supabase.from('profiles').select('first_name, last_name, title, email_signature').eq('id', user.id).single();
+        if (data?.email_signature) {
+          setUserSignature(data.email_signature);
+        } else if (data?.first_name) {
+          setUserSignature(`Best regards,\n${data.first_name}${data.last_name ? ' ' + data.last_name : ''}${data.title ? '\n' + data.title : ''}`);
+        }
+      } catch {}
+    })();
+  }, []);
 
   // Reset state when modal opens — pre-select style by buying stage
   useEffect(() => {
@@ -106,6 +130,11 @@ export default function SignalOutreachModal({ isOpen, onClose, signal, contact }
       setVariants({});
       setError(null);
       setCopied(false);
+      setEditSubject('');
+      setEditBody('');
+      setRecipientEmail(contact?.email || '');
+      setSendSuccess(false);
+      setSendError(null);
     }
   }, [isOpen, signal?.id]);
 
@@ -147,6 +176,12 @@ export default function SignalOutreachModal({ isOpen, onClose, signal, contact }
       });
       const content = result?.content || null;
       setVariants(prev => ({ ...prev, [style.key]: content }));
+      if (content) {
+        setEditSubject(content.subject || '');
+        setEditBody((content.body || '') + (userSignature ? '\n\n' + userSignature : ''));
+        setSendSuccess(false);
+        setSendError(null);
+      }
 
       // Fire-and-forget: log to Activity Feed
       if (signal.organization_id) {
@@ -168,16 +203,50 @@ export default function SignalOutreachModal({ isOpen, onClose, signal, contact }
     }
   };
 
+  // Sync edit fields when switching style variants — auto-generate if not yet cached
+  useEffect(() => {
+    const d = variants[activeStyle];
+    if (d) {
+      setEditSubject(d.subject || '');
+      setEditBody((d.body || '') + (userSignature ? '\n\n' + userSignature : ''));
+      setSendSuccess(false);
+      setSendError(null);
+    } else if (signal && !isGenerating) {
+      handleGenerate(activeStyle);
+    }
+  }, [activeStyle]); // eslint-disable-line react-hooks/exhaustive-deps
+
   const draft = variants[activeStyle] || null;
 
   const handleCopy = () => {
-    if (!draft) return;
-    const text = channel === 'email' && draft.subject
-      ? `Subject: ${draft.subject}\n\n${draft.body}`
-      : draft.body || '';
+    const text = channel === 'email' && editSubject
+      ? `Subject: ${editSubject}\n\n${editBody}`
+      : editBody || '';
+    if (!text) return;
     navigator.clipboard.writeText(text);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handleSendGmail = async () => {
+    if (!recipientEmail || !editBody) return;
+    setIsSending(true);
+    setSendError(null);
+    try {
+      const { backendFetch } = await import('../utils/backendFetch');
+      await backendFetch('/api/engage/gmail/send', {
+        to: recipientEmail,
+        subject: editSubject,
+        body: editBody,
+      });
+      setSendSuccess(true);
+    } catch (err) {
+      let msg = 'Failed to send email';
+      try { const p = JSON.parse(err?.message || '{}'); msg = p.error || msg; } catch { msg = err?.message || msg; }
+      setSendError(msg);
+    } finally {
+      setIsSending(false);
+    }
   };
 
   if (!isOpen || !signal) return null;
@@ -241,10 +310,14 @@ export default function SignalOutreachModal({ isOpen, onClose, signal, contact }
             {/* To */}
             <div>
               <label className="text-[10px] font-semibold text-apptivia-carbon-500 uppercase tracking-wide block mb-1">To</label>
-              <div className="text-xs text-apptivia-carbon-700 bg-apptivia-paper rounded-lg px-2.5 py-1.5 truncate">
-                {contact?.name || <span className="text-apptivia-carbon-400 italic">Company only</span>}
-                {contact?.title && <span className="text-apptivia-carbon-400 block text-[9px]">{contact.title}</span>}
-              </div>
+              <input
+                type="email"
+                value={recipientEmail}
+                onChange={(e) => setRecipientEmail(e.target.value)}
+                placeholder="email@company.com"
+                className="w-full text-xs border border-apptivia-carbon-200 rounded-lg px-2.5 py-1.5 bg-white focus:outline-none focus:ring-2 focus:ring-apptivia-coral-tone-300"
+              />
+              {contact?.name && <span className="text-[9px] text-apptivia-carbon-400 mt-0.5 block">{contact.name}{contact?.title ? ` · ${contact.title}` : ''}</span>}
             </div>
 
             {/* Channel */}
@@ -312,7 +385,14 @@ export default function SignalOutreachModal({ isOpen, onClose, signal, contact }
             </div>
           )}
 
-          {/* Draft output */}
+          {/* Send error */}
+          {sendError && (
+            <div className="bg-red-50 border border-red-200 text-red-700 text-xs rounded-lg px-3 py-2">
+              {sendError}
+            </div>
+          )}
+
+          {/* Draft output — editable */}
           {draft && !isGenerating && (
             <div className="border border-apptivia-carbon-200 rounded-lg overflow-hidden">
               <div className="flex items-center justify-between px-3 py-2 bg-apptivia-paper border-b border-apptivia-carbon-200">
@@ -320,32 +400,54 @@ export default function SignalOutreachModal({ isOpen, onClose, signal, contact }
                   {channel === 'email' ? <Mail size={10} /> : <Linkedin size={10} />}
                   {channel === 'email' ? 'Email Draft' : 'LinkedIn Message'}
                 </span>
-                <button
-                  onClick={handleCopy}
-                  className={`inline-flex items-center gap-1 text-[10px] font-medium px-2 py-0.5 rounded transition-colors ${
-                    copied ? 'text-emerald-600 bg-emerald-50' : 'text-apptivia-carbon-500 hover:text-apptivia-carbon-700 hover:bg-apptivia-carbon-100'
-                  }`}
-                >
-                  {copied ? <Check size={9} /> : <Copy size={9} />}
-                  {copied ? 'Copied!' : 'Copy'}
-                </button>
+                <div className="flex items-center gap-1.5">
+                  {channel === 'email' && (
+                    <button
+                      onClick={handleSendGmail}
+                      disabled={isSending || !recipientEmail || !editBody || sendSuccess}
+                      className={`inline-flex items-center gap-1 text-[10px] font-medium px-2 py-0.5 rounded transition-colors ${
+                        sendSuccess ? 'text-emerald-600 bg-emerald-50' : 'text-apptivia-coral hover:bg-apptivia-coral-tone-50 disabled:opacity-40'
+                      }`}
+                    >
+                      {isSending ? <RefreshCw size={9} className="animate-spin" /> : sendSuccess ? <Check size={9} /> : <Mail size={9} />}
+                      {isSending ? 'Sending...' : sendSuccess ? 'Sent!' : 'Send via Gmail'}
+                    </button>
+                  )}
+                  <button
+                    onClick={handleCopy}
+                    className={`inline-flex items-center gap-1 text-[10px] font-medium px-2 py-0.5 rounded transition-colors ${
+                      copied ? 'text-emerald-600 bg-emerald-50' : 'text-apptivia-carbon-500 hover:text-apptivia-carbon-700 hover:bg-apptivia-carbon-100'
+                    }`}
+                  >
+                    {copied ? <Check size={9} /> : <Copy size={9} />}
+                    {copied ? 'Copied!' : 'Copy'}
+                  </button>
+                </div>
               </div>
 
               <div className="p-3 space-y-2">
-                {channel === 'email' && draft.subject && (
+                {channel === 'email' && (
                   <div>
                     <span className="text-[10px] font-semibold text-apptivia-carbon-400 uppercase">Subject</span>
-                    <p className="text-xs font-medium text-apptivia-ink mt-0.5">{draft.subject}</p>
+                    <input
+                      type="text"
+                      value={editSubject}
+                      onChange={(e) => setEditSubject(e.target.value)}
+                      className="w-full text-xs font-medium text-apptivia-ink mt-0.5 border border-apptivia-carbon-200 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-apptivia-coral-tone-300"
+                    />
                   </div>
                 )}
-                {draft.body && (
-                  <div>
-                    {channel === 'email' && draft.subject && (
-                      <span className="text-[10px] font-semibold text-apptivia-carbon-400 uppercase">Body</span>
-                    )}
-                    <p className="text-xs text-apptivia-carbon-700 whitespace-pre-wrap leading-relaxed mt-0.5">{draft.body}</p>
-                  </div>
-                )}
+                <div>
+                  {channel === 'email' && (
+                    <span className="text-[10px] font-semibold text-apptivia-carbon-400 uppercase">Body</span>
+                  )}
+                  <textarea
+                    value={editBody}
+                    onChange={(e) => setEditBody(e.target.value)}
+                    rows={8}
+                    className="w-full text-xs text-apptivia-carbon-700 leading-relaxed mt-0.5 border border-apptivia-carbon-200 rounded px-2 py-1.5 resize-y focus:outline-none focus:ring-1 focus:ring-apptivia-coral-tone-300"
+                  />
+                </div>
                 {draft.personalization_points?.length > 0 && (
                   <div className="pt-2 border-t border-apptivia-carbon-100">
                     <span className="text-[10px] font-semibold text-apptivia-ink uppercase">Personalization notes</span>

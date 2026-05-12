@@ -16,6 +16,7 @@
 'use strict';
 
 const crypto = require('crypto');
+const { KPI_SOURCE_PRIORITY } = require('./providers/kpiCanonical');
 
 // ── Helpers ──────────────────────────────────────────────────
 
@@ -236,14 +237,20 @@ async function ensureFreshToken(sb, integration) {
   const creds = decryptCredentials(integration.credentials);
 
   if (!integration.token_expires_at) {
-    return { ...integration, decryptedCreds: creds };
-  }
+    // No expiry tracked — if provider supports refresh and has a refresh_token, proactively refresh
+    const providerCheck = getProvider(integration.integration_type);
+    if (providerCheck?.refreshToken && creds.refresh_token) {
+      // Fall through to refresh logic below
+    } else {
+      return { ...integration, decryptedCreds: creds };
+    }
+  } else {
+    const expiresAt = new Date(integration.token_expires_at);
+    const bufferMs = 5 * 60 * 1000;
 
-  const expiresAt = new Date(integration.token_expires_at);
-  const bufferMs = 5 * 60 * 1000;
-
-  if (Date.now() < expiresAt.getTime() - bufferMs) {
-    return { ...integration, decryptedCreds: creds };
+    if (Date.now() < expiresAt.getTime() - bufferMs) {
+      return { ...integration, decryptedCreds: creds };
+    }
   }
 
   // Token needs refresh
@@ -282,6 +289,28 @@ async function ensureFreshToken(sb, integration) {
     }).eq('id', integration.id);
     throw err;
   }
+}
+
+// ── Source-Priority Dedup ─────────────────────────────────────
+
+/**
+ * Check if a higher-priority source is connected for a given KPI.
+ * E.g., if Salesforce is connected, skip meetings KPI from Google Calendar.
+ */
+async function shouldSkipKpiSource(sb, orgId, kpiKey, currentSource) {
+  const priorityList = KPI_SOURCE_PRIORITY[kpiKey];
+  if (!priorityList) return false;
+  const currentIdx = priorityList.indexOf(currentSource);
+  if (currentIdx <= 0) return false; // Highest priority or not in list
+  const higherSources = priorityList.slice(0, currentIdx);
+  const { data } = await sb.from('integrations')
+    .select('id')
+    .eq('organization_id', orgId)
+    .in('integration_type', higherSources)
+    .eq('status', 'connected')
+    .eq('is_enabled', true)
+    .limit(1);
+  return data?.length > 0;
 }
 
 // ── Sync Engine ──────────────────────────────────────────────
@@ -351,9 +380,27 @@ async function runIntegrationSync(sb, integrationId, entityTypes) {
 
       console.log(`[sync:${integration.integration_type}:${entityType}] ${records.length} records fetched, ${kpiMappings.length} KPI mappings generated`);
 
+      // Source-priority dedup: skip KPI mappings if a higher-priority source exists
+      const filteredMappings = [];
+      const skippedByPriority = new Set();
+      const skipCache = {};
+      for (const mapping of kpiMappings) {
+        if (!(mapping.kpiKey in skipCache)) {
+          skipCache[mapping.kpiKey] = await shouldSkipKpiSource(sb, integration.organization_id, mapping.kpiKey, integration.integration_type);
+        }
+        if (skipCache[mapping.kpiKey]) {
+          skippedByPriority.add(mapping.kpiKey);
+        } else {
+          filteredMappings.push(mapping);
+        }
+      }
+      if (skippedByPriority.size > 0) {
+        console.log(`[sync:${integration.integration_type}] Skipped KPIs [${[...skippedByPriority].join(', ')}] — higher-priority source connected`);
+      }
+
       // Process KPI mappings from synced records
       let dupesSkipped = 0;
-      for (const mapping of kpiMappings) {
+      for (const mapping of filteredMappings) {
         try {
           const wasNew = await upsertKpiValue(sb, mapping, integration);
           if (wasNew === false) {
@@ -1240,6 +1287,21 @@ async function notifySyncFailure(sb, integration, errors) {
  * Called by event triggers in server.js.
  */
 async function enqueuePush(sb, { organizationId, integrationId, entityType, entityId, action, payload, triggeredBy, sourceEvent, scheduledAt }) {
+  // Deduplicate: skip if a pending/retry/processing item already exists for the same entity + action
+  if (entityId) {
+    const { data: existing } = await sb.from('integration_push_queue')
+      .select('id')
+      .eq('integration_id', integrationId)
+      .eq('entity_id', entityId)
+      .eq('action', action || 'log_activity')
+      .in('status', ['pending', 'retry', 'processing'])
+      .limit(1);
+
+    if (existing?.length > 0) {
+      return { skipped: true };
+    }
+  }
+
   const { error } = await sb.from('integration_push_queue').insert({
     organization_id: organizationId,
     integration_id:  integrationId,
@@ -1311,10 +1373,22 @@ async function processPushQueue(sb) {
     const startMs = Date.now();
     try {
       // Ensure token is fresh
-      const freshIntegration = await ensureFreshToken(sb, integration);
+      let freshIntegration = await ensureFreshToken(sb, integration);
 
-      // Execute push
-      const result = await pushMethod(freshIntegration, item.payload);
+      // Execute push — retry once on 401 after force-refreshing token
+      let result;
+      try {
+        result = await pushMethod(freshIntegration, item.payload);
+      } catch (pushErr) {
+        const is401 = pushErr.message?.includes('401') || pushErr.message?.includes('INVALID_SESSION') || pushErr.status === 401;
+        if (!is401) throw pushErr;
+
+        // Force token refresh: clear token_expires_at so ensureFreshToken re-authenticates
+        console.log(`[push:process] 401 on ${item.action}/${item.entity_type} — force-refreshing token`);
+        await sb.from('integrations').update({ token_expires_at: new Date(0).toISOString() }).eq('id', integration.id);
+        freshIntegration = await ensureFreshToken(sb, { ...integration, token_expires_at: new Date(0).toISOString() });
+        result = await pushMethod(freshIntegration, item.payload);
+      }
       const durationMs = Date.now() - startMs;
       const externalId = result?.id || result?.external_id || item.external_id;
 

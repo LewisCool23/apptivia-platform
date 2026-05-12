@@ -791,10 +791,12 @@ export function useSignalProspecting(organizationId: string, userId?: string) {
     actionId: string,
     sent_subject: string,
     sent_body: string,
+    recipient_email?: string,
   ) => {
     await backendFetch(`/api/engage/action-queue/${actionId}/send`, {
       sent_subject,
       sent_body,
+      recipient_email,
     });
     await fetchActionQueue();
   }, [fetchActionQueue]);
@@ -918,6 +920,7 @@ export function useSignalProspecting(organizationId: string, userId?: string) {
             job_titles_to_track: sigCfg.job_titles_to_track?.length > 0 ? sigCfg.job_titles_to_track : prev.scanConfig.job_titles_to_track,
             competitors: sigCfg.competitors?.length > 0 ? sigCfg.competitors : prev.scanConfig.competitors,
             tech_stack_churning: sigCfg.tech_stack_churning?.length > 0 ? sigCfg.tech_stack_churning : prev.scanConfig.tech_stack_churning,
+            exclude_industries: sigCfg.exclude_industries || [],
           };
         }
 
@@ -970,6 +973,42 @@ export function useSignalProspecting(organizationId: string, userId?: string) {
     fetchActionQueue();
   }, [fetchSignals, fetchOrgIcp, fetchSignalDefinitions, fetchActionQueue]);
 
+  // ── Manual signal creation (Quick Add) ──────────────────────────────────
+  const addManualSignal = useCallback(async (data: {
+    company_name: string;
+    signal_type: string;
+    signal_score?: number;
+    description?: string;
+    source_platform?: string;
+    source_url?: string;
+  }) => {
+    if (!organizationId || !data.company_name || !data.signal_type) return null;
+    const score = data.signal_score ?? 80;
+    const strength = score >= 80 ? 'high' : score >= 60 ? 'medium' : 'low';
+    const typeLabel = SIGNAL_TYPES.find(t => t.key === data.signal_type)?.label || data.signal_type;
+    const { data: inserted, error } = await supabase
+      .from('engage_intent_signals')
+      .insert({
+        organization_id: organizationId,
+        company_name: data.company_name.trim(),
+        signal_type: data.signal_type,
+        signal_score: score,
+        signal_strength: strength,
+        title: `${data.company_name.trim()} — ${typeLabel}`,
+        description: data.description || null,
+        source_platform: data.source_platform || 'linkedin',
+        source_url: data.source_url || null,
+        status: 'new',
+        detected_at: new Date().toISOString(),
+        raw_data: { source: 'manual_quick_add' },
+      })
+      .select()
+      .single();
+    if (error) { console.error('[addManualSignal]', error.message); return null; }
+    await fetchSignals();
+    return inserted;
+  }, [organizationId, fetchSignals]);
+
   return {
     ...state,
     fetchSignals,
@@ -989,6 +1028,7 @@ export function useSignalProspecting(organizationId: string, userId?: string) {
     dismissAction,
     sendAction,
     markSignalOutcome,
+    addManualSignal,
     // [SPEC 09] Multi-step plays
     expandToPlay,
     fetchActionSteps,

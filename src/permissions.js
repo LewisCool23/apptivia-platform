@@ -63,6 +63,11 @@ export const PERMISSIONS = [
     description: 'Access the analytics dashboard and advanced reporting.'
   },
   {
+    key: 'view_resources',
+    label: 'View Resources',
+    description: 'Access sales playbooks, frameworks, and coaching reference material.'
+  },
+  {
     key: 'view_systems',
     label: 'View Systems',
     description: 'Access integrations and systems settings.'
@@ -211,6 +216,7 @@ export const ROLE_DEFAULT_PERMISSIONS = {
     'view_engage',
     'view_contests',
     'view_analytics',
+    'view_resources',
     'view_systems',
     'view_profile',
     'configure_scorecard',
@@ -246,6 +252,7 @@ export const ROLE_DEFAULT_PERMISSIONS = {
     'view_engage',
     'view_contests',
     'view_analytics',
+    'view_resources',
     'view_systems',
     'view_profile',
     'configure_scorecard',
@@ -274,6 +281,7 @@ export const ROLE_DEFAULT_PERMISSIONS = {
     'view_engage',
     'view_contests',
     'view_analytics',
+    'view_resources',
     'view_profile',
     'view_team_data',
     'view_team_snapshot',
@@ -293,6 +301,8 @@ export const ROLE_DEFAULT_PERMISSIONS = {
     'view_coach',
     'view_engage',
     'view_contests',
+    'view_analytics',
+    'view_resources',
     'view_profile',
     'view_own_data',
     'join_contests',

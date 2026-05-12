@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { X, Zap, Award, Target, TrendingUp, Star, ChevronRight, Trophy, BookOpen } from 'lucide-react';
+import { X, Zap, Award, Target, TrendingUp, Star, ChevronRight, Trophy, BookOpen, Activity } from 'lucide-react';
 import { SKILLSET_CATEGORIES } from '../constants/skillsets';
+import { ApptiviaLogo } from './ApptiviaLogo';
 
 const APPTIVIA_LEVELS = [
   { name: 'Developing', range: '0 – 999 pts', color: 'bg-apptivia-carbon-300', bg: 'bg-apptivia-carbon-100', border: 'border-apptivia-carbon-300', text: 'text-apptivia-carbon-700', icon: '🌱', description: 'Building foundational habits and early KPI consistency.' },
@@ -38,6 +39,10 @@ export default function ApptiviaLevelInfoModal({ isOpen, onClose }) {
         <div className="bg-apptivia-ink px-6 py-5">
           <div className="flex items-start justify-between">
             <div>
+              <div className="flex items-center gap-2 mb-1">
+                <Activity size={20} className="text-apptivia-coral" />
+                <ApptiviaLogo className="text-lg" dark />
+              </div>
               <h2 className="text-lg font-bold text-white">How Apptivia Levels Work</h2>
               <p className="text-white/80 text-xs mt-0.5">From daily activity to mastery — your progression journey</p>
             </div>

@@ -644,11 +644,30 @@ async function createMeeting(integration, data) {
 async function logActivity(integration, data) {
   const creds = integration.decryptedCreds;
 
+  // Build subject from explicit field or derive from payload type
+  let subject = data.subject || data.title;
+  if (!subject && data.type) {
+    const label = data.type.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+    subject = data.deal_name ? `${label}: ${data.deal_name}` : label;
+  }
+
+  // Build description from payload fields
+  let description = data.description || '';
+  if (!description && data.type) {
+    const parts = [];
+    if (data.deal_name) parts.push(`Deal: ${data.deal_name}`);
+    if (data.deal_value) parts.push(`Value: $${Number(data.deal_value).toLocaleString()}`);
+    if (data.days_inactive) parts.push(`Days Inactive: ${data.days_inactive}`);
+    if (data.stage) parts.push(`Stage: ${data.stage}`);
+    parts.push(`Source: Apptivia (${data.type})`);
+    description = parts.join('\n');
+  }
+
   const taskBody = {
-    Subject: data.subject || data.title,
+    Subject: subject || 'Apptivia Activity',
     Status: 'Completed',
     ActivityDate: data.date || new Date().toISOString().split('T')[0],
-    Description: data.description || '',
+    Description: description,
   };
   if (data.durationMinutes) taskBody.CallDurationInSeconds = data.durationMinutes * 60;
 

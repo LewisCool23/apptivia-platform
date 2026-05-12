@@ -104,11 +104,34 @@ export default function OrgHealthScorecard() {
             : Promise.resolve({ data: [] }),
         ]);
 
-        // 1. Team Performance: avg of recent KPI values vs goals (simplified)
+        // 1. Team Performance: compare KPI values vs org goals
+        // Fetch org KPI goals for comparison
+        const { data: orgGoals } = await supabase
+          .from('kpi_org_configs').select('kpi_id, goal')
+          .eq('organization_id', orgId).eq('is_active', true).not('goal', 'is', null);
+        const goalMap = {};
+        (orgGoals || []).forEach(g => { if (g.goal > 0) goalMap[g.kpi_id] = g.goal; });
+
+        let performanceScore = 0;
+        if (recentScores?.length) {
+          // Group values by kpi_id and compute avg pct-of-goal per KPI
+          const kpiVals = {};
+          recentScores.forEach(r => {
+            if (!kpiVals[r.kpi_id]) kpiVals[r.kpi_id] = [];
+            kpiVals[r.kpi_id].push(r.value || 0);
+          });
+          const kpiPcts = Object.entries(kpiVals).map(([kpiId, vals]) => {
+            const avg = vals.reduce((s, v) => s + v, 0) / vals.length;
+            const goal = goalMap[kpiId];
+            return goal ? Math.min(100, Math.round((avg / goal) * 100)) : null;
+          }).filter(p => p !== null);
+          performanceScore = kpiPcts.length > 0
+            ? Math.round(kpiPcts.reduce((s, p) => s + p, 0) / kpiPcts.length)
+            : 0;
+        }
         const avgVal = recentScores?.length
           ? recentScores.reduce((s, r) => s + (r.value || 0), 0) / recentScores.length
           : 0;
-        const performanceScore = Math.min(100, Math.round(avgVal > 0 ? Math.min(avgVal / 1.5, 100) : 0));
 
         // 2. Configuration: 5 checks: has ≥3 KPIs, has ≥5 scorecard, has teams, has reps, has ≥1 active KPI
         const configChecks = [
@@ -131,9 +154,9 @@ export default function OrgHealthScorecard() {
         const badgeScore = Math.min(50, Math.round(((badgeAwardCount || 0) / Math.max(1, reps)) * 10));
         const engagementScore = Math.min(100, contestScore + badgeScore);
 
-        // 5. Outbound Motion: signals detected + sequences running
-        const signalScore = Math.min(60, Math.round(((signalCount || 0) / Math.max(1, reps * 5)) * 60));
-        const seqScore = Math.min(40, (sequenceCount || 0) * 20);
+        // 5. Outbound Motion: signals detected (primary) + sequences (minor weight)
+        const signalScore = Math.min(80, Math.round(((signalCount || 0) / Math.max(1, reps * 5)) * 80));
+        const seqScore = Math.min(20, (sequenceCount || 0) * 10);
         const outboundScore = Math.min(100, signalScore + seqScore);
 
         if (!cancelled) {

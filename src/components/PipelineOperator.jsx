@@ -3,10 +3,13 @@ import {
   DollarSign, AlertTriangle, TrendingUp, Calendar, ChevronDown,
   ChevronUp, Sparkles, Plus, ArrowRight, BarChart3, Clock,
   Target, Filter, RefreshCw, ExternalLink, User, X, Trash2,
-  CheckSquare, Square, AlertCircle, Layers
+  CheckSquare, Square, AlertCircle, Layers, Mail, MessageSquare, Send, Loader
 } from 'lucide-react';
 import { usePipelineOperator } from '../hooks/usePipelineOperator';
 import { useCepConfig } from '../hooks/useCepConfig';
+import { openAaronWithPrompt } from '../utils/openAaron';
+import { backendFetch } from '../utils/backendFetch';
+import { buildForecastEmailHtml, buildForecastEmailText } from '../utils/emailTemplates';
 import ConfirmModal from './ConfirmModal';
 
 // ── Legacy stage colors (fallback when no CEP) ──────────────
@@ -583,39 +586,170 @@ function DealTable({ deals, onUpdateDeal, onDeleteDeal, cepStages, hasCep, selec
   );
 }
 
+// ── Share Forecast Modal ─────────────────────────────────
+
+function ShareForecastModal({ forecast, summary, onClose }) {
+  const [recipients, setRecipients] = useState('');
+  const [subject, setSubject] = useState('Apptivia Pipeline Forecast');
+  const [notes, setNotes] = useState('');
+  const [sending, setSending] = useState(false);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState(false);
+
+  const handleSend = async () => {
+    if (!recipients.trim()) { setError('Please enter at least one recipient.'); return; }
+    const emailList = recipients.split(',').map(e => e.trim()).filter(Boolean);
+    const emailRx = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const invalid = emailList.filter(e => !emailRx.test(e));
+    if (invalid.length > 0) { setError(`Invalid email${invalid.length > 1 ? 's' : ''}: ${invalid.join(', ')}`); return; }
+
+    setSending(true);
+    setError('');
+    try {
+      const data = {
+        totalPipeline: summary?.totalValue || 0,
+        weightedValue: summary?.weightedValue || 0,
+        dealCount: summary?.dealCount || 0,
+        atRiskCount: summary?.atRiskCount || 0,
+        closingThisMonth: summary?.closingThisMonth || 0,
+        forecastText: forecast,
+      };
+      const html = buildForecastEmailHtml(data, { notes: notes || undefined });
+      const text = buildForecastEmailText(data, { notes: notes || undefined });
+
+      await backendFetch('/api/send-snapshot', { recipients: emailList, subject, html, text });
+      setSuccess(true);
+      setTimeout(() => { onClose(); }, 2000);
+    } catch (err) {
+      const msg = err?.message || '';
+      if (msg.includes('403') || msg.includes('Forbidden')) {
+        setError('Permission denied — only managers and admins can share forecasts.');
+      } else {
+        setError('Failed to send email. Please try again.');
+      }
+    } finally {
+      setSending(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={onClose}>
+      <div className="bg-white rounded-lg shadow-2xl w-full max-w-md mx-4 p-6" onClick={e => e.stopPropagation()}>
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-2">
+            <Mail size={16} className="text-apptivia-coral" />
+            <h2 className="text-base font-semibold text-apptivia-ink">Share Forecast</h2>
+          </div>
+          <button onClick={onClose} className="text-apptivia-carbon-400 hover:text-apptivia-carbon-600"><X size={16} /></button>
+        </div>
+
+        {success ? (
+          <div className="flex items-center justify-center gap-2 py-8 text-emerald-600">
+            <CheckSquare size={18} /> <span className="text-sm font-medium">Forecast shared!</span>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            <div>
+              <label className="block text-xs font-medium text-apptivia-carbon-600 mb-1">Recipients (comma-separated)</label>
+              <input
+                value={recipients} onChange={e => setRecipients(e.target.value)}
+                placeholder="manager@company.com, exec@company.com"
+                className="w-full text-sm border border-apptivia-carbon-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-apptivia-coral-tone-300"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-apptivia-carbon-600 mb-1">Subject</label>
+              <input
+                value={subject} onChange={e => setSubject(e.target.value)}
+                className="w-full text-sm border border-apptivia-carbon-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-apptivia-coral-tone-300"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-apptivia-carbon-600 mb-1">Additional notes (optional)</label>
+              <textarea
+                value={notes} onChange={e => setNotes(e.target.value)}
+                rows={2} placeholder="Add context or highlights..."
+                className="w-full text-sm border border-apptivia-carbon-200 rounded-lg px-3 py-2 resize-none focus:outline-none focus:ring-2 focus:ring-apptivia-coral-tone-300"
+              />
+            </div>
+            {error && <p className="text-xs text-red-600">{error}</p>}
+            <div className="flex gap-2 pt-1">
+              <button onClick={onClose} className="flex-1 py-2 text-sm text-apptivia-carbon-500 border border-apptivia-carbon-200 rounded-lg hover:bg-apptivia-paper">Cancel</button>
+              <button onClick={handleSend} disabled={sending}
+                className="flex-1 py-2 text-sm font-semibold text-white bg-apptivia-coral rounded-lg hover:bg-apptivia-coral/90 disabled:opacity-50 flex items-center justify-center gap-2">
+                {sending ? <><Loader size={13} className="animate-spin" /> Sending...</> : <><Send size={13} /> Send Forecast</>}
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 // ── AI Forecast Panel ─────────────────────────────────────
 
-function ForecastPanel({ forecast, onGenerate, loading }) {
+function ForecastPanel({ forecast, onGenerate, loading, summary }) {
+  const [showShare, setShowShare] = useState(false);
+
   return (
-    <div className="bg-white rounded-lg border border-apptivia-carbon-100 p-5">
-      <div className="flex items-center justify-between mb-4">
+    <div className="bg-white rounded-lg border border-apptivia-carbon-100 p-5 flex flex-col h-full overflow-hidden">
+      <div className="flex items-center justify-between mb-4 flex-shrink-0">
         <div className="flex items-center gap-2">
           <div className="w-8 h-8 bg-apptivia-ink rounded-lg flex items-center justify-center">
             <Sparkles size={14} className="text-white" />
           </div>
           <h3 className="text-sm font-semibold text-apptivia-carbon-700">AI Forecast</h3>
         </div>
-        <button
-          onClick={onGenerate}
-          disabled={loading}
-          className="inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg bg-apptivia-carbon-100 text-apptivia-ink hover:bg-apptivia-carbon-100 transition-colors disabled:opacity-50"
-        >
-          {loading ? <RefreshCw size={12} className="animate-spin" /> : <Sparkles size={12} />}
-          {loading ? 'Analyzing...' : 'Generate Forecast'}
-        </button>
+        <div className="flex items-center gap-1.5">
+          {forecast && (
+            <>
+              <button
+                onClick={() => openAaronWithPrompt(
+                  `I just generated an AI pipeline forecast. Here's the analysis:\n\n${forecast}\n\nBased on this forecast, what are the top 3 actions I should take this week to improve my pipeline health and close more deals?`
+                )}
+                className="inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg bg-apptivia-ink text-white hover:bg-apptivia-ink/90 shadow-sm transition-colors"
+              >
+                <MessageSquare size={12} /> Ask Aaron
+              </button>
+              <button
+                onClick={() => setShowShare(true)}
+                className="inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg bg-apptivia-paper text-apptivia-carbon-600 hover:bg-apptivia-carbon-100 shadow-sm transition-colors"
+              >
+                <Mail size={12} /> Share
+              </button>
+            </>
+          )}
+          <button
+            onClick={onGenerate}
+            disabled={loading}
+            className="inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg bg-apptivia-coral text-white hover:bg-apptivia-coral/90 shadow-sm transition-colors disabled:opacity-50"
+          >
+            {loading ? <RefreshCw size={12} className="animate-spin" /> : <Sparkles size={12} />}
+            {loading ? 'Analyzing...' : 'Generate Forecast'}
+          </button>
+        </div>
       </div>
 
       {forecast ? (
-        <div className="prose prose-sm max-w-none">
-          <div className="bg-apptivia-carbon-100/50 rounded-lg p-4 text-sm text-apptivia-carbon-700 leading-relaxed whitespace-pre-wrap">
-            {forecast}
-          </div>
+        <div className="flex-1 min-h-0 overflow-y-auto bg-apptivia-carbon-100/50 rounded-lg p-4 text-sm text-apptivia-carbon-700 leading-relaxed whitespace-pre-wrap">
+          {forecast}
         </div>
       ) : (
-        <div className="text-center py-8">
-          <BarChart3 size={28} className="mx-auto text-apptivia-carbon-300 mb-2" />
-          <p className="text-xs text-apptivia-carbon-400">Click "Generate Forecast" to get an AI-powered pipeline analysis</p>
+        <div className="flex-1 flex items-center justify-center">
+          <div className="text-center">
+            <BarChart3 size={28} className="mx-auto text-apptivia-carbon-300 mb-2" />
+            <p className="text-xs text-apptivia-carbon-400">Click "Generate Forecast" to get an AI-powered pipeline analysis</p>
+          </div>
         </div>
+      )}
+
+      {showShare && (
+        <ShareForecastModal
+          forecast={forecast}
+          summary={summary}
+          onClose={() => setShowShare(false)}
+        />
       )}
     </div>
   );
@@ -866,23 +1000,26 @@ export default function PipelineOperator({ organizationId, userId }) {
             <div className="lg:col-span-1">
               <StageFunnel stageBreakdown={pipeline.summary.stageBreakdown} cepStages={cepConfig.activeStages} />
             </div>
-            <div className="lg:col-span-2">
-              {resolvedSelectedDeal && hasCep ? (
-                <DealCepPanel
-                  deal={resolvedSelectedDeal}
-                  cepStages={cepConfig.activeStages}
-                  onClose={() => setSelectedDeal(null)}
-                  onAdvance={pipeline.advanceDealStage}
-                  onUpdateChecklist={pipeline.updateDealChecklist}
-                  onAssignStage={pipeline.assignCepStage}
-                />
-              ) : (
-                <ForecastPanel
-                  forecast={pipeline.aiForecast}
-                  onGenerate={pipeline.generateForecast}
-                  loading={pipeline.loading}
-                />
-              )}
+            <div className="lg:col-span-2 lg:relative">
+              <div className="lg:absolute lg:inset-0">
+                {resolvedSelectedDeal && hasCep ? (
+                  <DealCepPanel
+                    deal={resolvedSelectedDeal}
+                    cepStages={cepConfig.activeStages}
+                    onClose={() => setSelectedDeal(null)}
+                    onAdvance={pipeline.advanceDealStage}
+                    onUpdateChecklist={pipeline.updateDealChecklist}
+                    onAssignStage={pipeline.assignCepStage}
+                  />
+                ) : (
+                  <ForecastPanel
+                    forecast={pipeline.aiForecast}
+                    onGenerate={pipeline.generateForecast}
+                    loading={pipeline.loading}
+                    summary={pipeline.summary}
+                  />
+                )}
+              </div>
             </div>
           </div>
 

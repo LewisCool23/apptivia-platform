@@ -48,6 +48,7 @@ export default function Analytics() {
   const [benchmarksLoading, setBenchmarksLoading] = useState(false);
   const [benchmarksError, setBenchmarksError] = useState(null);
 
+  const userId = profile?.id || user?.id;
   const defaultFilters = useMemo(() => {
     if (isAdmin) {
       return {
@@ -65,13 +66,21 @@ export default function Analytics() {
         members: [],
       };
     }
+    if (isPowerUser) {
+      return {
+        dateRange: 'Last Week',
+        departments: [],
+        teams: [],
+        members: userId ? [userId] : [],
+      };
+    }
     return {
       dateRange: 'Last Week',
       departments: [],
       teams: [],
       members: [],
     };
-  }, [isAdmin, isManager, isCoach, teamId]);
+  }, [isAdmin, isManager, isCoach, isPowerUser, teamId, userId]);
 
   const [filters, setFilters] = useState(defaultFilters);
   const [filtersInitialized, setFiltersInitialized] = useState(false);
@@ -226,11 +235,19 @@ export default function Analytics() {
         const orgId = profile?.organization_id || user?.organization_id;
         if (!orgId) { setEngageStats(null); setEngageLoading(false); return; }
 
-        const [acctRes] = await Promise.all([
+        const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
+
+        const [acctRes, signalRes, actionRes, draftRes] = await Promise.all([
           supabase.from('engage_accounts').select('id, account_score, tier, status', { count: 'exact' }).eq('organization_id', orgId),
+          supabase.from('engage_intent_signals').select('id, status, signal_type, detected_at', { count: 'exact' }).eq('organization_id', orgId).gte('detected_at', thirtyDaysAgo),
+          supabase.from('engage_signal_actions').select('id, status, channel, created_at').eq('organization_id', orgId).gte('created_at', thirtyDaysAgo),
+          supabase.from('engage_outreach_drafts').select('id, status, channel, created_at').eq('organization_id', orgId).gte('created_at', thirtyDaysAgo),
         ]);
 
         const accounts = acctRes.data || [];
+        const signals = signalRes.data || [];
+        const actions = actionRes.data || [];
+        const drafts = draftRes.data || [];
 
         const tier1 = accounts.filter(a => a.tier === 'tier_1').length;
         const tier2 = accounts.filter(a => a.tier === 'tier_2').length;
@@ -246,12 +263,51 @@ export default function Analytics() {
           { name: 'Untiered', score: accounts.filter(a => a.tier === 'untiered').length },
         ].filter(d => d.score > 0);
 
+        // Signal activity
+        const signalsActioned = signals.filter(s => s.status === 'actioned').length;
+        const signalActionRate = signals.length > 0 ? Math.round((signalsActioned / signals.length) * 100) : 0;
+
+        // Signal type breakdown
+        const signalTypeCounts = {};
+        signals.forEach(s => { signalTypeCounts[s.signal_type] = (signalTypeCounts[s.signal_type] || 0) + 1; });
+        const signalTypeBreakdown = Object.entries(signalTypeCounts)
+          .map(([name, score]) => ({ name: name.replace(/_/g, ' '), score }))
+          .sort((a, b) => b.score - a.score)
+          .slice(0, 6);
+
+        // Action queue throughput
+        const actionsSent = actions.filter(a => a.status === 'sent').length;
+        const actionsApproved = actions.filter(a => a.status === 'approved').length;
+        const actionsDismissed = actions.filter(a => a.status === 'dismissed').length;
+        const actionsPending = actions.filter(a => a.status === 'pending').length;
+
+        // Outreach by channel
+        const channelCounts = {};
+        [...actions, ...drafts].forEach(d => {
+          const ch = d.channel || 'email';
+          channelCounts[ch] = (channelCounts[ch] || 0) + 1;
+        });
+        const outreachByChannel = Object.entries(channelCounts)
+          .map(([name, score]) => ({ name: name.charAt(0).toUpperCase() + name.slice(1), score }))
+          .sort((a, b) => b.score - a.score);
+
         if (mounted) {
           const stats = {
             totalAccounts: accounts.length,
             tier1, tier2, tier3,
             avgAccountScore,
             accountTiers,
+            // Signal activity
+            totalSignals: signals.length,
+            signalsActioned,
+            signalActionRate,
+            signalTypeBreakdown,
+            // Action queue
+            actionsSent, actionsApproved, actionsDismissed, actionsPending,
+            totalActions: actions.length,
+            // Outreach
+            totalDrafts: drafts.length,
+            outreachByChannel,
           };
           setEngageStats(stats);
           engageCacheRef.current = stats;
@@ -467,6 +523,15 @@ export default function Analytics() {
   );
 
   const handleFiltersChange = (nextFilters) => {
+    if (isPowerUser) {
+      setFilters({
+        ...nextFilters,
+        members: userId ? [userId] : [],
+        teams: [],
+        departments: [],
+      });
+      return;
+    }
     if (isManager || isCoach) {
       setFilters({
         ...nextFilters,
@@ -805,7 +870,7 @@ export default function Analytics() {
         <div className="flex items-start justify-between mb-4">
           <div>
             <div className="flex items-center gap-2 mb-1">
-              <h1 className="text-2xl font-bold text-apptivia-coral">Analytics Dashboard</h1>
+              <h1 className="text-2xl font-bold text-apptivia-coral">{isPowerUser ? 'My Analytics' : 'Analytics Dashboard'}</h1>
               <InfoTooltip text="Performance analytics across the selected timeframe and audience." />
             </div>
             <p className="text-apptivia-carbon-500 text-sm">Advanced reporting and insights</p>
@@ -1137,7 +1202,7 @@ export default function Analytics() {
                             <tr key={metric.key} className="border-b border-apptivia-carbon-100 hover:bg-apptivia-paper/50">
                               <td className="py-2.5 px-3">
                                 <div className="font-medium text-apptivia-ink">{metric.name}</div>
-                                {metric.description && <div className="text-[10px] text-apptivia-carbon-400 mt-0.5 truncate max-w-[200px]">{metric.description}</div>}
+                                {metric.description && <div className="text-[10px] text-apptivia-carbon-400 mt-0.5 line-clamp-2" title={metric.description}>{metric.description}</div>}
                               </td>
                               <td className="py-2.5 px-3">
                                 <span className="text-xs text-apptivia-carbon-500 capitalize">{(metric.category || 'general').replace(/_/g, ' ')}</span>
@@ -1300,8 +1365,8 @@ export default function Analytics() {
                 )}
                 {!engageLoading && engageStats && (
                   <>
-                    {/* Summary Cards */}
-                    <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                    {/* Summary Cards — Row 1: Accounts */}
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                       <div className="bg-white rounded-lg p-3 shadow-sm border-l-4 border-apptivia-carbon-300">
                         <div className="text-xs text-apptivia-carbon-500">Accounts</div>
                         <div className="text-lg font-bold text-apptivia-ink">{engageStats.totalAccounts}</div>
@@ -1315,6 +1380,34 @@ export default function Analytics() {
                         <div className="text-xs text-apptivia-carbon-500">Tier 2 / Tier 3</div>
                         <div className="text-lg font-bold text-cyan-600">{engageStats.tier2} / {engageStats.tier3}</div>
                       </div>
+                      <div className="bg-white rounded-lg p-3 shadow-sm border-l-4 border-purple-400">
+                        <div className="text-xs text-apptivia-carbon-500">AI Drafts Generated</div>
+                        <div className="text-lg font-bold text-purple-600">{engageStats.totalDrafts}</div>
+                        <div className="text-[11px] text-apptivia-carbon-400">Last 30 days</div>
+                      </div>
+                    </div>
+
+                    {/* Summary Cards — Row 2: Signal Activity */}
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                      <div className="bg-white rounded-lg p-3 shadow-sm border-l-4 border-amber-400">
+                        <div className="text-xs text-apptivia-carbon-500">Signals Detected</div>
+                        <div className="text-lg font-bold text-apptivia-ink">{engageStats.totalSignals}</div>
+                        <div className="text-[11px] text-apptivia-carbon-400">Last 30 days</div>
+                      </div>
+                      <div className="bg-white rounded-lg p-3 shadow-sm border-l-4 border-green-500">
+                        <div className="text-xs text-apptivia-carbon-500">Signals Actioned</div>
+                        <div className="text-lg font-bold text-green-600">{engageStats.signalsActioned}</div>
+                        <div className="text-[11px] text-apptivia-carbon-400">{engageStats.signalActionRate}% action rate</div>
+                      </div>
+                      <div className="bg-white rounded-lg p-3 shadow-sm border-l-4 border-blue-400">
+                        <div className="text-xs text-apptivia-carbon-500">Outreach Sent</div>
+                        <div className="text-lg font-bold text-blue-600">{engageStats.actionsSent}</div>
+                      </div>
+                      <div className="bg-white rounded-lg p-3 shadow-sm border-l-4 border-red-300">
+                        <div className="text-xs text-apptivia-carbon-500">Dismissed</div>
+                        <div className="text-lg font-bold text-red-500">{engageStats.actionsDismissed}</div>
+                        <div className="text-[11px] text-apptivia-carbon-400">{engageStats.actionsPending} pending</div>
+                      </div>
                     </div>
 
                     {/* Charts */}
@@ -1326,16 +1419,37 @@ export default function Analytics() {
                           data={engageStats.accountTiers}
                         />
                       )}
+                      {engageStats.signalTypeBreakdown.length > 0 && (
+                        <TeamPerformanceChart
+                          title="Signals by Type"
+                          infoText="Intent signals detected in the last 30 days, grouped by signal type."
+                          data={engageStats.signalTypeBreakdown}
+                        />
+                      )}
                     </div>
 
-                    {/* Detailed Metrics */}
-                    <div className="grid grid-cols-1 md:grid-cols-1 gap-3">
+                    {/* Outreach by Channel + Action Queue Throughput */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                       <div className="bg-white rounded-lg p-3 shadow-sm">
-                        <div className="text-xs text-apptivia-carbon-500 mb-2 font-semibold">Account Tiers</div>
+                        <div className="text-xs text-apptivia-carbon-500 mb-2 font-semibold">Outreach by Channel</div>
                         <div className="space-y-1.5 text-xs">
-                          <div className="flex justify-between"><span className="text-apptivia-carbon-600">Tier 1</span><span className="font-medium text-apptivia-ink">{engageStats.tier1}</span></div>
-                          <div className="flex justify-between"><span className="text-apptivia-carbon-600">Tier 2</span><span className="font-medium text-apptivia-coral">{engageStats.tier2}</span></div>
-                          <div className="flex justify-between"><span className="text-apptivia-carbon-600">Tier 3</span><span className="font-medium text-apptivia-carbon-600">{engageStats.tier3}</span></div>
+                          {engageStats.outreachByChannel.length > 0 ? engageStats.outreachByChannel.map(ch => (
+                            <div key={ch.name} className="flex justify-between">
+                              <span className="text-apptivia-carbon-600">{ch.name}</span>
+                              <span className="font-medium text-apptivia-ink">{ch.score}</span>
+                            </div>
+                          )) : (
+                            <div className="text-apptivia-carbon-400 text-center py-2">No outreach data yet</div>
+                          )}
+                        </div>
+                      </div>
+                      <div className="bg-white rounded-lg p-3 shadow-sm">
+                        <div className="text-xs text-apptivia-carbon-500 mb-2 font-semibold">Action Queue (30 days)</div>
+                        <div className="space-y-1.5 text-xs">
+                          <div className="flex justify-between"><span className="text-apptivia-carbon-600">Sent</span><span className="font-medium text-green-600">{engageStats.actionsSent}</span></div>
+                          <div className="flex justify-between"><span className="text-apptivia-carbon-600">Approved</span><span className="font-medium text-blue-600">{engageStats.actionsApproved}</span></div>
+                          <div className="flex justify-between"><span className="text-apptivia-carbon-600">Dismissed</span><span className="font-medium text-red-500">{engageStats.actionsDismissed}</span></div>
+                          <div className="flex justify-between"><span className="text-apptivia-carbon-600">Pending</span><span className="font-medium text-apptivia-carbon-600">{engageStats.actionsPending}</span></div>
                         </div>
                       </div>
                     </div>

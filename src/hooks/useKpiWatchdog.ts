@@ -344,7 +344,7 @@ export function useKpiWatchdog(organizationId: string, userId?: string) {
             });
           }
 
-          // Detect spikes exceeding threshold (positive anomaly — info level)
+          // Detect spikes exceeding threshold (positive anomaly)
           if (deviationPct >= ANOMALY_SPIKE_THRESHOLD) {
             anomalies.push({
               organization_id: organizationId,
@@ -352,7 +352,7 @@ export function useKpiWatchdog(organizationId: string, userId?: string) {
               kpi_key: metric.key,
               kpi_name: metric.name,
               anomaly_type: 'spike',
-              severity: 'info',
+              severity: 'positive',
               current_value: Math.round(current * 10) / 10,
               previous_value: Math.round(previous * 10) / 10,
               rolling_avg: Math.round(rollingAvg * 10) / 10,

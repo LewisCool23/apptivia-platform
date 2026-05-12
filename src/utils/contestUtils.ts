@@ -83,7 +83,7 @@ export async function updateContestLeaderboard(contestId: string): Promise<Leade
     // Fetch contest details
     const { data: contest, error: contestError } = await supabase
       .from('active_contests')
-      .select('id, kpi_key, calculation_type, participant_type, start_date, end_date')
+      .select('id, kpi_key, secondary_kpi_key, calculation_type, participant_type, start_date, end_date')
       .eq('id', contestId)
       .single();
 
@@ -225,6 +225,52 @@ export async function updateContestLeaderboard(contestId: string): Promise<Leade
 
       if (upsertError) {
         console.error('Error batch updating leaderboard:', upsertError);
+      }
+    }
+
+    // Compute secondary KPI scores (display only) if configured
+    if (contest.secondary_kpi_key && upsertData.length > 0) {
+      try {
+        const { data: secMetric } = await supabase
+          .from('kpi_metrics')
+          .select('id')
+          .eq('key', contest.secondary_kpi_key)
+          .single();
+
+        if (secMetric) {
+          const { data: secValues } = await supabase
+            .from('kpi_values')
+            .select('profile_id, value')
+            .in('profile_id', participantIds)
+            .eq('kpi_id', secMetric.id)
+            .lte('period_start', contest.end_date)
+            .gte('period_end', contest.start_date);
+
+          const secByProfile: Record<string, number[]> = {};
+          for (const sv of (secValues || [])) {
+            if (!secByProfile[sv.profile_id]) secByProfile[sv.profile_id] = [];
+            secByProfile[sv.profile_id].push(Number(sv.value));
+          }
+
+          for (const entry of rankedScores) {
+            const vals = secByProfile[entry.profile_id] || [];
+            let secScore = 0;
+            switch (contest.calculation_type) {
+              case 'sum': secScore = vals.reduce((s, v) => s + v, 0); break;
+              case 'average': secScore = vals.length > 0 ? vals.reduce((s, v) => s + v, 0) / vals.length : 0; break;
+              case 'max': secScore = vals.length > 0 ? Math.max(...vals) : 0; break;
+              case 'count': secScore = vals.length; break;
+              default: secScore = vals.reduce((s, v) => s + v, 0);
+            }
+            await supabase
+              .from('contest_leaderboards')
+              .update({ secondary_score: Math.round(secScore * 100) / 100 })
+              .eq('contest_id', contestId)
+              .eq('profile_id', entry.profile_id);
+          }
+        }
+      } catch (secErr) {
+        console.warn('Secondary KPI score calculation failed:', secErr);
       }
     }
 

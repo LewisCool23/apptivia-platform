@@ -12,6 +12,8 @@ import { useTwilioDialer } from '../hooks/useTwilioDialer';
 import TwilioDialerWidget from '../components/TwilioDialerWidget';
 import EngageContactsPanel from '../components/EngageContactsPanel';
 import EngageDialpadPanel from '../components/EngageDialpadPanel';
+import SavedContactsModal from '../components/SavedContactsModal';
+import EngageActivityModal from '../components/EngageActivityModal';
 import SequenceBuilder from '../components/SequenceBuilder';
 
 const TABS = [
@@ -19,7 +21,6 @@ const TABS = [
   { id: 'discover', label: 'Discover',            icon: Search,    description: 'AI-powered prospect & company research' },
   { id: 'accounts', label: 'Accounts',            icon: Building2, description: 'Account-based intelligence & scoring' },
   { id: 'pipeline',   label: 'Pipeline Operator',   icon: DollarSign,  description: 'Monitor deals, flag risks, AI forecasts' },
-  { id: 'sequences',  label: 'Sequences',           icon: ListOrdered, description: 'Multi-step outreach cadences' },
 ];
 
 const PANELS = [
@@ -40,6 +41,8 @@ export default function Engage() {
   );
   const [activePanel, setActivePanel] = useState(null);
   const [contactsRefreshKey, setContactsRefreshKey] = useState(0);
+  const [showContactsModal, setShowContactsModal] = useState(false);
+  const [showActivityModal, setShowActivityModal] = useState(false);
 
   // Cross-tab context
   const [discoverContext, setDiscoverContext] = useState(null);
@@ -141,13 +144,11 @@ export default function Engage() {
               userId={user?.id}
               initialAccountId={accountsContext?.accountId}
               onInitialAccountConsumed={() => setAccountsContext(null)}
+              onNavigateDiscover={(ctx) => { setDiscoverContext(ctx); setActiveTab('discover'); }}
             />
           )}
           {activeTab === 'pipeline' && (
             <PipelineOperator organizationId={organizationId} userId={user?.id} />
-          )}
-          {activeTab === 'sequences' && (
-            <SequenceBuilder organizationId={organizationId} userId={user?.id} />
           )}
         </div>
       </div>
@@ -173,6 +174,7 @@ export default function Engage() {
                 onCallContact={dialer.startCall}
                 onClose={() => setActivePanel(null)}
                 refreshKey={contactsRefreshKey}
+                onSeeAll={() => setShowContactsModal(true)}
               />
             )}
             {activePanel === 'activity' && (
@@ -182,12 +184,20 @@ export default function Engage() {
                     <Activity size={14} className="text-apptivia-ink" />
                     <h3 className="font-semibold text-apptivia-ink text-sm">Activity Feed</h3>
                   </div>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => setShowActivityModal(true)}
+                      className="text-[10px] font-medium text-apptivia-coral hover:underline"
+                    >
+                      View All
+                    </button>
                   <button
                     onClick={() => setActivePanel(null)}
                     className="text-apptivia-carbon-400 hover:text-apptivia-carbon-600 transition-colors"
                   >
                     <X size={15} />
                   </button>
+                  </div>
                 </div>
                 <div className="flex-1 overflow-y-auto">
                   <ActivityFeed organizationId={organizationId} />
@@ -197,6 +207,32 @@ export default function Engage() {
           </div>
         </>
       )}
+
+      {/* Saved Contacts Modal */}
+      <SavedContactsModal
+        isOpen={showContactsModal}
+        onClose={() => setShowContactsModal(false)}
+        organizationId={organizationId}
+        onCallContact={dialer.startCall}
+        onResearchContact={(contact) => {
+          setShowContactsModal(false);
+          setDiscoverContext({ mode: 'prospect', query: contact.full_name || contact.first_name || '' });
+          setActiveTab('discover');
+        }}
+        onDraftOutreach={(contact) => {
+          setShowContactsModal(false);
+          // Navigate to signals tab to use draft outreach there
+          setDiscoverContext({ mode: 'prospect', query: contact.full_name || contact.first_name || '' });
+          setActiveTab('discover');
+        }}
+      />
+
+      {/* Engage Activity Modal */}
+      <EngageActivityModal
+        isOpen={showActivityModal}
+        onClose={() => setShowActivityModal(false)}
+        organizationId={organizationId}
+      />
 
       {/* Twilio floating call widget */}
       <TwilioDialerWidget

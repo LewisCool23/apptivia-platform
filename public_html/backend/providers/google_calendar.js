@@ -11,7 +11,7 @@ module.exports = {
       client_id: process.env.GOOGLE_CLIENT_ID,
       redirect_uri: redirectUri,
       response_type: 'code',
-      scope: 'https://www.googleapis.com/auth/calendar.readonly',
+      scope: 'https://www.googleapis.com/auth/calendar.readonly https://www.googleapis.com/auth/gmail.send',
       access_type: 'offline',
       prompt: 'consent',
       state,
@@ -38,6 +38,7 @@ module.exports = {
       refresh_token: data.refresh_token,
       expires_in: data.expires_in,
       token_type: 'Bearer',
+      scope: data.scope,
     };
   },
 
@@ -124,6 +125,31 @@ module.exports = {
       }));
 
       return { records: events, nextCursor: new Date().toISOString(), kpiMappings, calendarEvents };
+    },
+  },
+
+  gmail: {
+    send: async (accessToken, { to, subject, body, fromName, fromEmail }) => {
+      const message = [
+        `From: "${fromName}" <${fromEmail}>`,
+        `To: ${to}`,
+        `Subject: ${subject}`,
+        'MIME-Version: 1.0',
+        'Content-Type: text/plain; charset=utf-8',
+        '',
+        body,
+      ].join('\r\n');
+      const raw = Buffer.from(message).toString('base64url');
+      const res = await fetch('https://gmail.googleapis.com/gmail/v1/users/me/messages/send', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ raw }),
+      });
+      if (!res.ok) {
+        const errText = await res.text().catch(() => '');
+        throw new Error(`Gmail send failed: ${res.status} ${errText}`);
+      }
+      return res.json();
     },
   },
 };

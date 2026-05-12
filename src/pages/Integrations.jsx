@@ -8,6 +8,7 @@ import { useNotifications } from '../contexts/NotificationContext';
 import { useIntegrations } from '../hooks/useIntegrations';
 import { backendFetch } from '../utils/backendFetch';
 import { SUPPORTED_INTEGRATIONS, API_KEY_PROVIDERS } from '../constants/integrations';
+import IntegrationLogo from '../components/IntegrationLogo';
 import SyncHistoryModal from '../components/shared/SyncHistoryModal';
 import DisconnectConfirmModal from '../components/shared/DisconnectConfirmModal';
 import CredentialsModal from '../components/shared/CredentialsModal';
@@ -184,9 +185,7 @@ export default function Integrations() {
                 <div key={template.integration_type} className="bg-white rounded-lg p-5 shadow-sm border border-apptivia-carbon-100 flex flex-col hover:shadow-md transition-shadow">
                   {/* Header */}
                   <div className="flex items-center gap-3 mb-4">
-                    <div className={`w-11 h-11 ${template.color} rounded-lg flex items-center justify-center text-xs font-bold text-white shadow-sm`}>
-                      {template.icon}
-                    </div>
+                    <IntegrationLogo type={template.integration_type} size={44} className="rounded-lg shadow-sm overflow-hidden" />
                     <div className="flex-1 min-w-0">
                       <div className="font-semibold text-apptivia-ink">{template.display_name}</div>
                       <div className="text-xs text-apptivia-carbon-500 truncate">{template.description}</div>

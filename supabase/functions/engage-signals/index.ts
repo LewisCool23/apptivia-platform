@@ -40,7 +40,7 @@ async function fetchWithTimeout(url: string, options: RequestInit = {}, timeoutM
 async function apolloSearchCompanies(filters: any = {}) {
   const key = Deno.env.get('APOLLO_API_KEY');
   if (!key) throw new Error('APOLLO_API_KEY not configured');
-  const body: any = { page: 1, per_page: 25 };
+  const body: any = { page: 1, per_page: 50 };
   if (filters.employee_ranges?.length) body.organization_num_employees_ranges = filters.employee_ranges;
   if (filters.keywords) body.q_organization_keyword_tags = Array.isArray(filters.keywords) ? filters.keywords : [filters.keywords];
   if (filters.locations?.length)      body.organization_locations = filters.locations;
@@ -108,6 +108,10 @@ Deno.serve(async (req: Request) => {
     const { organization_id, config } = await req.json();
     if (!organization_id) return jsonResp({ error: 'organization_id is required' }, 400);
     if (!config)          return jsonResp({ error: 'config is required' }, 400);
+
+    console.log(`[engage-signals] Config keys received:`, Object.keys(config));
+    console.log(`[engage-signals] icp_industries:`, config.icp_industries);
+    console.log(`[engage-signals] exclude_industries:`, config.exclude_industries);
 
     const errors: any[] = [];
 
@@ -281,14 +285,37 @@ Deno.serve(async (req: Request) => {
       }
     }
 
+    // ── Industry exclusion — filter out companies in excluded industries ──────
+    // This runs BEFORE Tavily/Claude to save API spend on companies we don't want.
+    // Checks BOTH Apollo's industry field AND company name as fallback (some companies
+    // have blank industry but their name reveals they're staffing/recruiting/etc.).
+    let excludedCount = 0;
+    if (config.exclude_industries?.length && companies.length > 0) {
+      const excludeLower = config.exclude_industries.map((e: string) => e.toLowerCase().trim());
+      const before = companies.length;
+      companies = companies.filter((co: any) => {
+        const ind = (co.industry || '').toLowerCase();
+        const name = (co.name || '').toLowerCase();
+        const matchesIndustry = ind && excludeLower.some((ex: string) => ind.includes(ex) || ex.includes(ind));
+        const matchesName = excludeLower.some((ex: string) => name.includes(ex));
+        return !matchesIndustry && !matchesName;
+      });
+      excludedCount = before - companies.length;
+      console.log(`[engage-signals] Industry filter: Apollo returned ${before}, ${before - excludedCount} survived, ${excludedCount} excluded. Exclusion list: ${config.exclude_industries.join(', ')}`);
+    }
+
     if (companies.length === 0) {
       return jsonResp({
         ok: true, signals_found: 0, signals_saved: 0, signals: [], errors,
-        message: 'No ICP companies found — see debug for Apollo response details.',
+        message: excludedCount > 0
+          ? `Apollo found ${excludedCount} companies but all were in excluded industries.`
+          : 'No ICP companies found — see debug for Apollo response details.',
         debug: {
           apollo_key_present: !!Deno.env.get('APOLLO_API_KEY'),
           apollo_key_length: Deno.env.get('APOLLO_API_KEY')?.length || 0,
           apollo_attempts: apolloAttempts,
+          excluded_by_industry: excludedCount,
+          exclude_industries: config.exclude_industries || [],
           config_received: {
             headcount_min: config.headcount_min,
             headcount_max: config.headcount_max,
@@ -352,6 +379,14 @@ Deno.serve(async (req: Request) => {
       return { terms, hint: s.signal_key };
     }).filter((q: any) => q.terms.length > 5);
 
+    // Build negative search terms if staffing-related industries are excluded
+    const hasStaffingExclusion = config.exclude_industries?.some((e: string) =>
+      /staffing|recruiting|human resources|talent acquisition|outsourcing/i.test(e)
+    );
+    const antiStaffingTerms = hasStaffingExclusion
+      ? ' -staffing -"staffing agency" -"recruitment firm" -recruiter -"talent acquisition"'
+      : '';
+
     // Process companies in batches of 3 (= 9-15 parallel Tavily calls per batch, under rate limits)
     const BATCH_SIZE = 3;
     let companiesProcessed = 0;
@@ -372,7 +407,7 @@ Deno.serve(async (req: Request) => {
           // ── 3 consolidated queries (was 5 — saves ~40% time per company) ────────
           { q: `"${name}" funding OR raised OR acquisition OR "new VP" OR "new CRO" OR "joins as" 2025 2026`, hint: 'funding' },
           { q: `"${name}" site:reddit.com OR site:g2.com OR site:capterra.com review OR "looking for" OR switching`, hint: 'reddit_buying_intent' },
-          { q: `"${name}" expansion OR "product launch" OR partnership OR "rapid growth" OR hiring 2025 2026`, hint: 'hiring_velocity' },
+          { q: `"${name}" expansion OR "product launch" OR partnership OR "rapid growth" OR hiring 2025 2026${antiStaffingTerms}`, hint: 'hiring_velocity' },
           // ── Org custom signal queries (limit to 2) ─────────────────────────────
           ...customQueries.slice(0, 2).map(cq => ({
             q: `"${name}" ${cq.terms} 2025 2026`,
@@ -441,6 +476,7 @@ Disambiguation — use the MOST SPECIFIC type:
 For sec_filing signals, also return signal_subtype (one of: acquisition, ai_investment, leadership_change, restructuring, ipo_prep, pe_investment, annual_report, quarterly_report).
 For reddit types, also return signal_subtype describing the specific topic (e.g. "seeking CRM alternative").
 For glassdoor signals, also return signal_subtype with a brief description of the feedback theme.${customSignalBlock}
+${config.exclude_industries?.length ? `IMPORTANT: If a result is clearly from a company in an excluded industry (staffing agency, recruitment firm, RPO provider, talent acquisition vendor, etc.), set signal_score to 0 — exclude it entirely. These are vendors, not buyers.\nExcluded industries: ${config.exclude_industries.join(', ')}` : ''}
 ICP pain points — score signals matching these themes 10 points higher:
 ${config.pain_points?.length ? config.pain_points.slice(0, 8).map((p: string) => `- ${p}`).join('\n') : '(none set)'}
 Org competitors — treat any mention of these as competitor_complaint, competitor_engagement, or competitor_comparison:
@@ -560,6 +596,7 @@ Return: [{"index":N,"signal_type":"...","signal_subtype":"..."(optional),"signal
       ok: true,
       companies_scanned: companiesProcessed,
       apollo_total: companies.length,
+      excluded_by_industry: excludedCount,
       signals_found: signals.length,
       signals_saved: signalsSaved || signals.length,
       signals: savedSignals.length > 0 ? savedSignals : signals,
