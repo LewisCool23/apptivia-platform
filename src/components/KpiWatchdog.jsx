@@ -393,7 +393,7 @@ export default function KpiWatchdog({ organizationId, userId, filterProfileIds }
       <WatchdogSummary summary={watchdog.summary} />
 
       {/* Main Content */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 items-start">
         {/* Anomaly Feed */}
         <div className="lg:col-span-2 space-y-3">
           {/* Filters */}

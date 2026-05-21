@@ -2,10 +2,12 @@ import React, { useState, useRef } from 'react';
 import { X, Download, Link as LinkIcon, CheckCircle, Mail } from 'lucide-react';
 import html2canvas from 'html2canvas';
 import { backendFetch } from '../utils/backendFetch';
-import { buildScorecardSnapshotEmailHtml, buildScorecardSnapshotEmailText } from '../utils/emailTemplates';
+import { buildScorecardSnapshotEmailHtml, buildScorecardSnapshotEmailText, buildFullScorecardEmailHtml, buildFullScorecardEmailText } from '../utils/emailTemplates';
 import { ApptiviaLogo } from './ApptiviaLogo';
+import { useModalBehavior } from '../hooks/useModalBehavior';
 
 export default function ShareScorecardSnapshotModal({ isOpen, onClose, scorecardData, filters, historicalScores, kpiMetrics, periodStart, periodEnd, scorecardRows }) {
+  useModalBehavior(isOpen, onClose);
   const [copied, setCopied] = useState(false);
   const [downloading, setDownloading] = useState(false);
   const [showEmailForm, setShowEmailForm] = useState(false);
@@ -15,6 +17,7 @@ export default function ShareScorecardSnapshotModal({ isOpen, onClose, scorecard
   const [sending, setSending] = useState(false);
   const [emailSuccess, setEmailSuccess] = useState(false);
   const [emailError, setEmailError] = useState('');
+  const [shareMode, setShareMode] = useState('summary'); // 'summary' | 'full'
   const snapshotRef = useRef(null);
 
   if (!isOpen || !scorecardData) return null;
@@ -73,8 +76,11 @@ export default function ShareScorecardSnapshotModal({ isOpen, onClose, scorecard
     setEmailError('');
 
     try {
-      const subject = emailSubject.trim() || `Apptivia Weekly Scorecard Snapshot`;
-      
+      const defaultSubject = shareMode === 'full'
+        ? 'Apptivia Full Scorecard Report'
+        : 'Apptivia Weekly Scorecard Snapshot';
+      const subject = emailSubject.trim() || defaultSubject;
+
       const emailData = { teamAverage, totalMembers, dateRange, topPerformers, needsImprovement, scoreDistribution };
 
       // Build 5-week trend data from historical scores
@@ -113,8 +119,31 @@ export default function ShareScorecardSnapshotModal({ isOpen, onClose, scorecard
         kpiScores,
         exactDateRange,
       };
-      const html = buildScorecardSnapshotEmailHtml(emailData, emailOpts);
-      const text = buildScorecardSnapshotEmailText(emailData, emailOpts);
+
+      let html, text;
+      if (shareMode === 'full' && scorecardRows?.length > 0) {
+        // Full scorecard with per-rep table
+        const kpiKeys = (kpiMetrics || []).map(m => m.key);
+        const kpiLabels = {};
+        (kpiMetrics || []).forEach(m => { kpiLabels[m.key] = m.name || m.key; });
+        const fullData = {
+          ...emailData,
+          rows: scorecardRows.map(r => ({
+            name: r.name || r.full_name || 'Rep',
+            team_name: r.team_name || '',
+            apptivityScore: r.apptivityScore || 0,
+            kpis: r.kpis || {},
+          })),
+          scorecardKpiKeys: kpiKeys,
+          kpiLabels,
+        };
+        html = buildFullScorecardEmailHtml(fullData, emailOpts);
+        text = buildFullScorecardEmailText(fullData, emailOpts);
+      } else {
+        // Summary snapshot
+        html = buildScorecardSnapshotEmailHtml(emailData, emailOpts);
+        text = buildScorecardSnapshotEmailText(emailData, emailOpts);
+      }
 
       await backendFetch('/api/send-snapshot', {
         recipients,
@@ -311,6 +340,24 @@ export default function ShareScorecardSnapshotModal({ isOpen, onClose, scorecard
             </>
           ) : (
             <div className="space-y-3">
+              {/* Summary / Full toggle */}
+              <div className="flex rounded-lg border border-apptivia-carbon-300 overflow-hidden">
+                <button
+                  type="button"
+                  onClick={() => setShareMode('summary')}
+                  className={`flex-1 px-3 py-1.5 text-sm font-medium transition-colors ${shareMode === 'summary' ? 'bg-apptivia-ink text-white' : 'bg-white text-apptivia-carbon-600 hover:bg-apptivia-carbon-50'}`}
+                >
+                  Summary
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShareMode('full')}
+                  className={`flex-1 px-3 py-1.5 text-sm font-medium transition-colors ${shareMode === 'full' ? 'bg-apptivia-ink text-white' : 'bg-white text-apptivia-carbon-600 hover:bg-apptivia-carbon-50'}`}
+                >
+                  Full Scorecard
+                </button>
+              </div>
+
               <div>
                 <label className="block text-sm font-medium text-apptivia-carbon-700 mb-1.5">
                   Recipients (comma-separated emails)
@@ -332,7 +379,7 @@ export default function ShareScorecardSnapshotModal({ isOpen, onClose, scorecard
                   type="text"
                   value={emailSubject}
                   onChange={(e) => setEmailSubject(e.target.value)}
-                  placeholder="Apptivia Weekly Scorecard Snapshot"
+                  placeholder={shareMode === 'full' ? 'Apptivia Full Scorecard Report' : 'Apptivia Weekly Scorecard Snapshot'}
                   className="w-full px-3 py-2 text-sm border border-apptivia-carbon-300 rounded-lg focus:ring-2 focus:ring-apptivia-coral focus:border-transparent"
                 />
               </div>
@@ -379,6 +426,7 @@ export default function ShareScorecardSnapshotModal({ isOpen, onClose, scorecard
                     setEmailRecipients('');
                     setEmailSubject('');
                     setEmailNotes('');
+                    setShareMode('summary');
                   }}
                   className="px-4 py-2 bg-apptivia-carbon-200 text-apptivia-carbon-700 rounded-lg text-sm font-medium hover:bg-apptivia-carbon-300 transition-colors"
                 >
@@ -387,7 +435,9 @@ export default function ShareScorecardSnapshotModal({ isOpen, onClose, scorecard
               </div>
 
               <p className="text-xs text-apptivia-carbon-500 text-center">
-                An HTML email with scorecard stats will be sent to the recipients
+                {shareMode === 'full'
+                  ? 'Full scorecard with per-rep table will be sent to the recipients'
+                  : 'An HTML email with scorecard stats will be sent to the recipients'}
               </p>
             </div>
           )}

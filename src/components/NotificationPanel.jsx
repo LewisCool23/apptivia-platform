@@ -62,16 +62,7 @@ export default function NotificationPanel() {
     if (!link) return;
     markRead(id);
     closePanel();
-
-    const [path, hash] = link.split('#');
-    if (path) navigate(path);
-
-    if (hash) {
-      setTimeout(() => {
-        const el = document.getElementById(hash);
-        if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      }, 150);
-    }
+    navigate(link);
   };
 
   return (

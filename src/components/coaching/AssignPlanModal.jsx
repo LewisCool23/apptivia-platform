@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { X, UserPlus, AlertTriangle } from 'lucide-react';
 import { LEADERSHIP_ROLES } from '../../constants/roles';
+import { useModalBehavior } from '../../hooks/useModalBehavior';
 
 export default function AssignPlanModal({
   plan,
@@ -10,6 +11,7 @@ export default function AssignPlanModal({
   onSave,
   onClose,
 }) {
+  useModalBehavior(!!plan, onClose);
   const [saving, setSaving] = useState(false);
 
   const handleSave = async () => {

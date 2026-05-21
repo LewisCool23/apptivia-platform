@@ -1,8 +1,10 @@
 import React from 'react';
 import { X, FileText } from 'lucide-react';
 import ApptiviaLogo from './ApptiviaLogo';
+import { useModalBehavior } from '../hooks/useModalBehavior';
 
 export default function SharedAgendaModal({ isOpen, onClose, agendaText, managerName }) {
+  useModalBehavior(isOpen, onClose);
   if (!isOpen) return null;
 
   return (

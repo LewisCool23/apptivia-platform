@@ -79,11 +79,11 @@ export default function OrgHealthScorecard() {
             .eq('organization_id', orgId).eq('show_on_scorecard', true),
           supabase.from('teams').select('*', { count: 'exact', head: true }).eq('organization_id', orgId),
           supabase.from('coaching_plans').select('*', { count: 'exact', head: true })
-            .eq('organization_id', orgId).eq('status', 'active'),
+            .eq('organization_id', orgId).in('status', ['active', 'in_progress', 'pending_review']),
           supabase.from('individual_development_plans').select('*', { count: 'exact', head: true })
-            .eq('organization_id', orgId).in('status', ['active', 'in_progress']),
+            .eq('organization_id', orgId).in('status', ['active', 'in_progress', 'pending_review']),
           supabase.from('contests').select('*', { count: 'exact', head: true })
-            .eq('organization_id', orgId).eq('status', 'active'),
+            .eq('organization_id', orgId).in('status', ['active', 'running', 'completed']),
           // Badge count — org-scoped via repIds
           repIds.length > 0
             ? supabase.from('user_badges').select('*', { count: 'exact', head: true })
@@ -143,9 +143,9 @@ export default function OrgHealthScorecard() {
         ];
         const configurationScore = Math.round((configChecks.filter(Boolean).length / configChecks.length) * 100);
 
-        // 3. Coaching: has plans for ≥25% of reps, has IDPs for ≥10% of reps
+        // 3. Coaching: has plans for ≥10% of reps (lowered from 25%), has IDPs for ≥10% of reps
         const reps = repCount || 1;
-        const coachingRatio = Math.min(1, (coachingPlanCount || 0) / Math.max(1, reps * 0.25));
+        const coachingRatio = Math.min(1, (coachingPlanCount || 0) / Math.max(1, reps * 0.1));
         const idpRatio = Math.min(1, (idpCount || 0) / Math.max(1, reps * 0.1));
         const coachingScore = Math.round(((coachingRatio + idpRatio) / 2) * 100);
 

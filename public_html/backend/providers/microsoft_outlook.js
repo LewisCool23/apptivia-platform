@@ -12,7 +12,7 @@ module.exports = {
       client_id: process.env.MICROSOFT_CLIENT_ID,
       redirect_uri: redirectUri,
       response_type: 'code',
-      scope: 'Calendars.Read Mail.Read offline_access',
+      scope: 'Calendars.ReadWrite Mail.Read OnlineMeetings.ReadWrite offline_access',
       state,
     });
     return `https://login.microsoftonline.com/common/oauth2/v2.0/authorize?${params}`;
@@ -166,6 +166,45 @@ module.exports = {
       }
 
       return { records: emails, nextCursor: new Date().toISOString(), kpiMappings };
+    },
+  },
+
+  push: {
+    createMeeting: async (freshIntegration, eventData) => {
+      const token = freshIntegration.decryptedCreds.access_token;
+      const body = {
+        subject: eventData.title,
+        body: { contentType: 'text', content: eventData.description || '' },
+        start: { dateTime: eventData.startTime, timeZone: eventData.timeZone || 'Eastern Standard Time' },
+        end: { dateTime: eventData.endTime, timeZone: eventData.timeZone || 'Eastern Standard Time' },
+        attendees: (eventData.attendees || []).map(a => ({
+          emailAddress: { address: a.email, name: a.name || undefined },
+          type: 'required',
+        })),
+      };
+      if (eventData.location) body.location = { displayName: eventData.location };
+      // Add Microsoft Teams meeting if requested
+      if (eventData.addVideoConference) {
+        body.isOnlineMeeting = true;
+        body.onlineMeetingProvider = 'teamsForBusiness';
+      }
+      const res = await fetch(`${GRAPH_BASE}/me/events`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+      if (!res.ok) {
+        const errText = await res.text().catch(() => '');
+        throw new Error(`Microsoft Calendar create failed: ${res.status} ${errText}`);
+      }
+      const evt = await res.json();
+      const teamsLink = evt.onlineMeeting?.joinUrl || null;
+      return {
+        externalId: evt.id,
+        webLink: evt.webLink || null,
+        meetLink: teamsLink,
+        raw: evt,
+      };
     },
   },
 };

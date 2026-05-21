@@ -11,7 +11,7 @@ module.exports = {
       client_id: process.env.GOOGLE_CLIENT_ID,
       redirect_uri: redirectUri,
       response_type: 'code',
-      scope: 'https://www.googleapis.com/auth/calendar.readonly https://www.googleapis.com/auth/gmail.send',
+      scope: 'https://www.googleapis.com/auth/calendar https://www.googleapis.com/auth/gmail.send',
       access_type: 'offline',
       prompt: 'consent',
       state,
@@ -125,6 +125,51 @@ module.exports = {
       }));
 
       return { records: events, nextCursor: new Date().toISOString(), kpiMappings, calendarEvents };
+    },
+  },
+
+  push: {
+    createMeeting: async (freshIntegration, eventData) => {
+      const token = freshIntegration.decryptedCreds.access_token;
+      const body = {
+        summary: eventData.title,
+        description: eventData.description || '',
+        start: eventData.allDay
+          ? { date: eventData.startTime.slice(0, 10) }
+          : { dateTime: eventData.startTime, timeZone: eventData.timeZone || 'America/New_York' },
+        end: eventData.allDay
+          ? { date: eventData.endTime.slice(0, 10) }
+          : { dateTime: eventData.endTime, timeZone: eventData.timeZone || 'America/New_York' },
+        attendees: (eventData.attendees || []).map(a => ({ email: a.email, displayName: a.name || undefined })),
+      };
+      if (eventData.location) body.location = eventData.location;
+      // Add Google Meet video conferencing if requested
+      if (eventData.addVideoConference) {
+        body.conferenceData = {
+          createRequest: {
+            requestId: `apptivia-${Date.now()}`,
+            conferenceSolutionKey: { type: 'hangoutsMeet' },
+          },
+        };
+      }
+      const url = `${GOOGLE_BASE}/calendar/v3/calendars/primary/events?conferenceDataVersion=1`;
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+      if (!res.ok) {
+        const errText = await res.text().catch(() => '');
+        throw new Error(`Google Calendar create failed: ${res.status} ${errText}`);
+      }
+      const evt = await res.json();
+      const meetLink = evt.conferenceData?.entryPoints?.find(e => e.entryPointType === 'video')?.uri || null;
+      return {
+        externalId: evt.id,
+        webLink: evt.htmlLink || null,
+        meetLink,
+        raw: evt,
+      };
     },
   },
 

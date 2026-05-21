@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { X, Calendar, Clock, Mail, FileText } from 'lucide-react';
 import { backendFetch } from '../utils/backendFetch';
+import { useModalBehavior } from '../hooks/useModalBehavior';
 
 const INITIAL_FORM = {
   report_type: 'scorecard',
@@ -14,6 +15,7 @@ const INITIAL_FORM = {
 };
 
 export default function ScheduleReportModal({ isOpen, onClose, onSuccess, editReport = null }) {
+  useModalBehavior(isOpen, onClose);
   const [formData, setFormData] = useState(INITIAL_FORM);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');

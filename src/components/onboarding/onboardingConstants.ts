@@ -115,6 +115,31 @@ export interface SignalConfig {
   tech_stack_churning: string[];
 }
 
+export interface IcpProfileDraft {
+  name: string;
+  description: string;
+  icp_config: {
+    enabled: boolean;
+    target_industries: string[];
+    headcount_min: number | null;
+    headcount_max: number | null;
+    revenue_min_m: number | null;
+    revenue_max_m: number | null;
+    target_technologies: string[];
+    exclude_industries: string[];
+    weights: { industry: number; headcount: number; revenue: number; technology: number };
+  };
+  signal_config: {
+    pain_points: string[];
+    solution_keywords: string[];
+    job_titles_to_track: string[];
+    competitors: string[];
+    tech_stack_churning: string[];
+    exclude_industries: string[];
+  };
+  is_default: boolean;
+}
+
 export interface WallboardSlide {
   enabled: boolean;
   duration: number;
@@ -136,6 +161,7 @@ export interface WizardState {
   selectedTemplate: string | null;
   icpConfig: IcpConfig;
   signalConfig: SignalConfig;
+  icpProfiles?: IcpProfileDraft[];
   selectedTier: string;
   selectedIntegration: any;
   integrationApiKey: string;
@@ -192,8 +218,13 @@ export function validateOrgInfo(data: OrgData): string | null {
 }
 
 export function validateSalesDna(salesDna: any): string | null {
-  if (!salesDna.qualification_framework)
-    return 'Please select a qualification framework (BANT, MEDDIC, or MEDDPICC)';
+  if (salesDna.qualification_framework === 'custom') {
+    if (!salesDna.custom_qualification_name?.trim()) return 'Please enter your custom qualification framework name';
+    if (!salesDna.custom_qualification_criteria?.length || salesDna.custom_qualification_criteria.length < 2)
+      return 'Custom framework needs at least 2 criteria';
+  } else if (!salesDna.qualification_framework) {
+    return 'Please select a qualification framework';
+  }
   if (salesDna.methodology_approach === 'custom') {
     if (!salesDna.custom_methodology_name?.trim())
       return 'Please enter your custom methodology name';
@@ -246,7 +277,29 @@ export function validateKpiGoals(goals: KpiGoal[]): string | null {
 export function validateMarket(
   icpConfig: IcpConfig,
   signalConfig: SignalConfig,
+  icpProfiles?: IcpProfileDraft[],
 ): string | null {
+  // Multi-profile validation: if profiles exist, validate them instead
+  if (icpProfiles && icpProfiles.length > 0) {
+    const hasValidProfile = icpProfiles.some(
+      (p) =>
+        p.icp_config.target_industries.length > 0 &&
+        p.signal_config.pain_points.length > 0,
+    );
+    if (!hasValidProfile)
+      return 'At least one ICP profile must have 1+ target industry and 1+ pain point';
+    // Validate headcount ranges on each profile
+    for (const p of icpProfiles) {
+      if (
+        p.icp_config.headcount_min != null &&
+        p.icp_config.headcount_max != null &&
+        p.icp_config.headcount_min > p.icp_config.headcount_max
+      )
+        return `Profile "${p.name}": headcount minimum cannot be greater than maximum`;
+    }
+    return null;
+  }
+  // Single-profile fallback (backward compat)
   if (!icpConfig.target_industries || icpConfig.target_industries.length === 0) return 'At least one target industry is required';
   if (
     icpConfig.headcount_min && icpConfig.headcount_max &&

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { X, Target, Calendar, BookOpen, Crown, MessageCircle, Rocket } from 'lucide-react';
 import { supabase } from '../../supabaseClient';
 import { idpPlanTypes } from './idpStatusConfig';
+import { useModalBehavior } from '../../hooks/useModalBehavior';
 
 const iconMap = {
   crown: Crown,
@@ -11,6 +12,7 @@ const iconMap = {
 };
 
 export default function IdpTemplatesModal({ onClose, onSelect, organizationId }) {
+  useModalBehavior(true, onClose);
   const [templates, setTemplates] = useState([]);
   const [loading, setLoading] = useState(true);
 

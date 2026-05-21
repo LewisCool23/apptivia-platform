@@ -5,6 +5,7 @@ import { useAuth } from '../../AuthContext';
 import { useToast } from '../../contexts/ToastContext';
 import { aggregateReviewData } from '../../utils/reviewDataAggregator';
 import ReviewBuilderForm from './ReviewBuilderForm';
+import { useModalBehavior } from '../../hooks/useModalBehavior';
 
 const emptyForm = () => ({
   title: '',
@@ -15,6 +16,7 @@ const emptyForm = () => ({
 });
 
 export default function CreateReviewModal({ isOpen, onClose, repId, repName, teamMembers, onReviewCreated }) {
+  useModalBehavior(isOpen, onClose);
   const { profile } = useAuth();
   const toast = useToast();
   const orgId = profile?.organization_id;

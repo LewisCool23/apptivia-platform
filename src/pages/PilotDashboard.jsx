@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "../supabaseClient";
 
 // ── Constants ────────────────────────────────────────────────────────────────
-const API_BASE = import.meta.env.VITE_API_URL || "";
+const API_BASE = import.meta.env.VITE_BACKEND_URL || "";
 
 const WINDOW_OPTIONS = [
   { label: "30d", value: 30 },
@@ -17,21 +17,21 @@ const VALIDATION_META = [
     key: "q1_adoption",
     assumption: "Riskiest Assumption #1",
     label: "Platform Adoption",
-    description: "Managers check Apptivia unprompted after Week 2",
-    metric: "coaching_suggestions_sent",
-    metricLabel: "Coaching Suggestions Sent",
-    threshold: 5,
-    thresholdLabel: "≥5 to confirm",
+    description: "Managers & reps return to Apptivia unprompted — measured by distinct active users and Aaron AI engagement",
+    metric: "active_users",
+    metricLabel: "Active Users",
+    threshold: 3,
+    thresholdLabel: "≥3 to confirm",
   },
   {
     key: "q2_behavior_change",
     assumption: "Riskiest Assumption #2",
     label: "AI Behavior Change",
-    description: "AI coaching nudges actually change rep KPI performance",
-    metric: "outreach_drafts_approved",
-    metricLabel: "Outreach Drafts Approved",
-    threshold: 3,
-    thresholdLabel: "≥3 to confirm",
+    description: "Team uses AI coaching tools — coaching plans created, IDPs drafted, Aaron AI conversations",
+    metric: "ai_coaching_activities",
+    metricLabel: "AI Coaching Activities",
+    threshold: 5,
+    thresholdLabel: "≥5 to confirm",
   },
   {
     key: "q3_willingness_to_pay",
@@ -360,10 +360,13 @@ export default function PilotDashboard() {
   const healthScore = (() => {
     if (!data) return 0;
     let score = 0;
-    if ((signals?.coaching_suggestions_sent || 0) >= 5) score += 34;
-    else if ((signals?.coaching_suggestions_sent || 0) > 0) score += 17;
-    if ((signals?.outreach_drafts_approved || 0) >= 3) score += 33;
-    else if ((signals?.outreach_drafts_approved || 0) > 0) score += 16;
+    // Card 1: Platform Adoption (active users)
+    if ((signals?.active_users || 0) >= 3) score += 34;
+    else if ((signals?.active_users || 0) > 0) score += 17;
+    // Card 2: AI Behavior Change (coaching activities)
+    if ((signals?.ai_coaching_activities || 0) >= 5) score += 33;
+    else if ((signals?.ai_coaching_activities || 0) > 0) score += 16;
+    // Card 3: Plan Conversion
     if (subscription?.converted_to_paid) score += 33;
     else if (subscription?.trial_active) score += 10;
     return score;
@@ -699,21 +702,45 @@ export default function PilotDashboard() {
 
           <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
             <StatBar
-              label="Coaching Suggestions Sent"
-              value={signals?.coaching_suggestions_sent ?? 0}
-              max={Math.max(10, signals?.coaching_suggestions_sent ?? 0)}
+              label="Active Users"
+              value={signals?.active_users ?? 0}
+              max={Math.max(10, signals?.active_users ?? 0)}
               color="#FF4D2E"
             />
             <StatBar
-              label="Outreach Drafts Approved"
-              value={signals?.outreach_drafts_approved ?? 0}
-              max={Math.max(10, signals?.outreach_drafts_approved ?? 0)}
+              label="Aaron AI Conversations"
+              value={signals?.aaron_conversations ?? 0}
+              max={Math.max(10, signals?.aaron_conversations ?? 0)}
+              color="#FF4D2E"
+            />
+            <StatBar
+              label="Aaron AI Messages"
+              value={signals?.aaron_messages ?? 0}
+              max={Math.max(50, signals?.aaron_messages ?? 0)}
               color="#F7F5F2"
             />
             <StatBar
-              label="IDP Drafts Reviewed"
-              value={signals?.idp_drafts_reviewed ?? 0}
-              max={Math.max(10, signals?.idp_drafts_reviewed ?? 0)}
+              label="Coaching Plans Created"
+              value={signals?.coaching_plans_created ?? 0}
+              max={Math.max(10, signals?.coaching_plans_created ?? 0)}
+              color="#F7F5F2"
+            />
+            <StatBar
+              label="IDPs Drafted"
+              value={signals?.idp_drafts_created ?? 0}
+              max={Math.max(10, signals?.idp_drafts_created ?? 0)}
+              color="#71717A"
+            />
+            <StatBar
+              label="Coaching Suggestions Sent"
+              value={signals?.coaching_suggestions_sent ?? 0}
+              max={Math.max(10, signals?.coaching_suggestions_sent ?? 0)}
+              color="#71717A"
+            />
+            <StatBar
+              label="Outreach Drafts Created"
+              value={signals?.outreach_drafts_created ?? 0}
+              max={Math.max(10, signals?.outreach_drafts_created ?? 0)}
               color="#71717A"
             />
           </div>

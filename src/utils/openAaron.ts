@@ -3,6 +3,6 @@
  * Uses a custom DOM event so any component can trigger it
  * without prop drilling through DashboardLayout.
  */
-export function openAaronWithPrompt(prompt: string) {
-  window.dispatchEvent(new CustomEvent('open-aaron', { detail: { prompt } }));
+export function openAaronWithPrompt(prompt: string, targetRepName?: string) {
+  window.dispatchEvent(new CustomEvent('open-aaron', { detail: { prompt, targetRepName } }));
 }

@@ -2,8 +2,10 @@ import React, { useState, useRef } from 'react';
 import { Upload, Download, Users, FileText, AlertCircle, CheckCircle, X } from 'lucide-react';
 import { supabase } from '../supabaseClient';
 import { useAuth } from '../AuthContext';
+import { useModalBehavior } from '../hooks/useModalBehavior';
 
 export default function UserImportModal({ isOpen, onClose, onImportComplete }) {
+  useModalBehavior(isOpen, onClose);
   const { profile } = useAuth();
   const [step, setStep] = useState(1); // 1=upload, 2=review, 3=importing, 4=complete
   const [file, setFile] = useState(null);

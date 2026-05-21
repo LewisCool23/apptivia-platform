@@ -323,14 +323,35 @@ function DashboardLayout({ children }) {
   // Determine active nav item
   const activeRoute = location.pathname;
 
+  // Derive page context for Aaron AI presets
+  const [aaronPageExtra, setAaronPageExtra] = useState({});
+  React.useEffect(() => {
+    const handler = (e) => setAaronPageExtra(e.detail || {});
+    window.addEventListener('aaron-page-context', handler);
+    return () => window.removeEventListener('aaron-page-context', handler);
+  }, []);
+
+  const aaronPageContext = React.useMemo(() => {
+    const path = location.pathname;
+    let page = 'dashboard';
+    if (path.startsWith('/engage')) page = 'engage';
+    else if (path.startsWith('/coach')) page = 'coach';
+    else if (path.startsWith('/contests')) page = 'contests';
+    else if (path.startsWith('/analytics')) page = 'analytics';
+    else if (path.startsWith('/wallboard')) page = 'wallboard';
+    return { page, ...aaronPageExtra };
+  }, [location.pathname, aaronPageExtra]);
+
   const [chatbotOpen, setChatbotOpen] = useState(false);
   const [aaronInitialPrompt, setAaronInitialPrompt] = useState(null);
+  const [aaronTargetRepName, setAaronTargetRepName] = useState(null);
   const [expandedMenus, setExpandedMenus] = useState({});
 
   // Listen for "open-aaron" custom events from any component
   React.useEffect(() => {
     const handler = (e) => {
       setAaronInitialPrompt(e.detail?.prompt || null);
+      setAaronTargetRepName(e.detail?.targetRepName || null);
       setChatbotOpen(true);
     };
     window.addEventListener('open-aaron', handler);
@@ -720,7 +741,7 @@ function DashboardLayout({ children }) {
           </div>
         </button>
       )}
-      <AaronChatbot isOpen={chatbotOpen} onClose={() => { setChatbotOpen(false); setAaronInitialPrompt(null); }} initialPrompt={aaronInitialPrompt} />
+      <AaronChatbot isOpen={chatbotOpen} onClose={() => { setChatbotOpen(false); setAaronInitialPrompt(null); setAaronTargetRepName(null); }} initialPrompt={aaronInitialPrompt} targetRepName={aaronTargetRepName} pageContext={aaronPageContext} />
       <NotificationPanel />
     </div>
   );

@@ -17,12 +17,15 @@ function timeAgo(ts) {
 }
 
 const EVENT_FILTERS = [
-  { id: 'all',     label: 'All' },
-  { id: 'deal',    label: 'Deals' },
-  { id: 'call',    label: 'Calls' },
-  { id: 'badge',   label: 'Badges' },
-  { id: 'signal',  label: 'Signals' },
-  { id: 'outreach',label: 'Outreach' },
+  { id: 'all',      label: 'All' },
+  { id: 'deal',     label: 'Deals' },
+  { id: 'call',     label: 'Calls' },
+  { id: 'badge',    label: 'Badges' },
+  { id: 'signal',   label: 'Signals' },
+  { id: 'outreach', label: 'Outreach' },
+  { id: 'calendar', label: 'Calendar' },
+  { id: 'contact',  label: 'Contacts' },
+  { id: 'account',  label: 'Accounts' },
 ];
 
 // ── Activity Event Card ───────────────────────────────────────────────────────
@@ -173,7 +176,7 @@ export default function ActivityFeed({ organizationId, maxHeight = 480, compact 
   }
 
   return (
-    <div className="space-y-4 px-4 py-3">
+    <div className="flex flex-col h-full px-4 py-3 gap-4">
       {/* Filters */}
       <div className="flex items-center gap-2 flex-wrap">
         <Filter size={14} className="text-apptivia-carbon-400 flex-shrink-0" />
@@ -213,7 +216,7 @@ export default function ActivityFeed({ organizationId, maxHeight = 480, compact 
             <p className="text-xs text-apptivia-carbon-400 mt-1">Events appear here as your team works deals, logs calls, and earns badges.</p>
           </div>
         ) : (
-          <div className="divide-y divide-gray-50 overflow-y-auto" style={{ maxHeight: 600 }}>
+          <div className="flex-1 divide-y divide-gray-50 overflow-y-auto">
             {events.map(e => <EventItem key={e.id} event={e} isNew={newEventIds.has(e.id)} />)}
           </div>
         )}

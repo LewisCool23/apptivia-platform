@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { X, CheckCircle, AlertCircle, Loader2, RefreshCw, Send } from 'lucide-react';
 import { backendFetch } from '../../utils/backendFetch';
+import { useModalBehavior } from '../../hooks/useModalBehavior';
 
 const CRM_TYPES = ['salesforce', 'hubspot'];
 
@@ -123,6 +124,7 @@ function CrmPushSection({ integrationId }) {
 }
 
 export default function SyncHistoryModal({ isOpen, onClose, loading, history, integration }) {
+  useModalBehavior(isOpen, onClose);
   if (!isOpen) return null;
 
   const isCrm = integration && CRM_TYPES.includes(integration.integration_type);

@@ -6,11 +6,13 @@ import { useToast } from '../../contexts/ToastContext';
 import { buildLabel } from '../../constants/kpiGuidance';
 import { getMonday } from '../../utils/dateUtils';
 import { calcPct } from '../../utils/kpiCalc';
+import { useModalBehavior } from '../../hooks/useModalBehavior';
 
 // getMonday + calcPct imported from shared utils (X1/X3 fix)
 const fmt = d => d.toISOString().split('T')[0];
 
 export default function RequestCoachingPlanModal({ isOpen, onClose }) {
+  useModalBehavior(isOpen, onClose);
   const { user, profile } = useAuth();
   const toast = useToast();
   const [message, setMessage] = useState('');

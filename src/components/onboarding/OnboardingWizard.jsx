@@ -111,6 +111,7 @@ export default function OnboardingWizard({ isOpen, onClose, onComplete, organiza
       if (draft.selectedTemplate) restored.selectedTemplate = draft.selectedTemplate;
       if (draft.icpConfig) restored.icpConfig = draft.icpConfig;
       if (draft.signalConfig) restored.signalConfig = draft.signalConfig;
+      if (draft.icpProfiles) restored.icpProfiles = draft.icpProfiles;
       if (draft.selectedTier) restored.selectedTier = draft.selectedTier;
       if (draft.integrationMethod) restored.integrationMethod = draft.integrationMethod;
       if (draft.wallboardSettings) restored.wallboardSettings = draft.wallboardSettings;
@@ -365,7 +366,7 @@ export default function OnboardingWizard({ isOpen, onClose, onComplete, organiza
 
   // Step 5: Your Market
   const saveMarket = async () => {
-    const { icpConfig, signalConfig } = wizardState;
+    const { icpConfig, signalConfig, icpProfiles } = wizardState;
     // Safely coerce to arrays (handles old string-format drafts)
     const industries = Array.isArray(icpConfig.target_industries)
       ? icpConfig.target_industries
@@ -385,11 +386,31 @@ export default function OnboardingWizard({ isOpen, onClose, onComplete, organiza
       weights: { industry: 30, headcount: 25, revenue: 25, technology: 20 },
     };
 
+    // Save org-level ICP + signal config (backward compat — default profile data)
     const { error: err } = await supabase.from('organizations').update({
       icp_config: icpData,
       signal_config: signalConfig,
     }).eq('id', organizationId);
     if (err) throw new Error(err.message);
+
+    // Persist multi-profile ICP data via backend API
+    if (icpProfiles && icpProfiles.length > 0) {
+      for (let i = 0; i < icpProfiles.length; i++) {
+        const draft = icpProfiles[i];
+        try {
+          await backendFetch('/api/engage/icp-profiles', {
+            name: draft.name || `ICP Profile ${i + 1}`,
+            description: draft.description || '',
+            icp_config: draft.icp_config,
+            signal_config: draft.signal_config,
+            is_default: draft.is_default,
+            sort_order: i,
+          });
+        } catch (profileErr) {
+          console.warn(`Failed to save ICP profile "${draft.name}":`, profileErr.message);
+        }
+      }
+    }
   };
 
   // Step 6: Subscription Plan — save preference for post-trial; don't overwrite active trial

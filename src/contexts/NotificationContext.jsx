@@ -46,7 +46,15 @@ export function NotificationProvider({ children }) {
     const channel = supabase
       .channel(`notifications:${profileId}`)
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'notifications', filter: `profile_id=eq.${profileId}` },
-        (payload) => { setNotifications(prev => [payload.new, ...prev]); })
+        (payload) => {
+          const n = payload.new;
+          setNotifications(prev => [n, ...prev]);
+          // Fire celebration overlay for qualifying notification types
+          const CELEBRATION_TYPES = ['badge_earned', 'rare_badge_earned', 'achievement_earned', 'contest_winner', 'contest_top_3'];
+          if (CELEBRATION_TYPES.includes(n.type)) {
+            window.dispatchEvent(new CustomEvent('apptivia:celebration', { detail: n }));
+          }
+        })
       .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'notifications', filter: `profile_id=eq.${profileId}` },
         (payload) => { setNotifications(prev => prev.map(n => n.id === payload.new.id ? payload.new : n)); })
       .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'notifications', filter: `profile_id=eq.${profileId}` },
@@ -168,6 +176,7 @@ export function NotificationProvider({ children }) {
         ((n.type === 'coaching' || n.type === 'coaching_suggestion') && n.audience === 'team') ? 'group-coaching-team' :
         ((n.type === 'contest' || n.type === 'contest_started') && n.title === 'Rank change') ? 'group-contest-rank' :
         ((n.type === 'achievement' || n.type === 'achievement_earned')) ? 'group-achievements' :
+        ((n.type === 'badge' || n.type === 'badge_earned' || n.type === 'rare_badge_earned')) ? 'group-badges' :
         null;
 
       // Normalize DB field names for the panel (read/createdAt/link/message compat)
@@ -189,6 +198,9 @@ export function NotificationProvider({ children }) {
             _groupedItems: [normalized],
             _isGrouped: true,
           };
+          // Ensure grouped badges link to the badges tab
+          if (groupKey === 'group-badges') groups[groupKey].link = '/profile?tab=badges';
+          if (groupKey === 'group-achievements') groups[groupKey].link = '/profile?tab=skillset-progress';
           result.push(groups[groupKey]);
         } else {
           groups[groupKey]._groupedItems.push(normalized);
@@ -197,6 +209,7 @@ export function NotificationProvider({ children }) {
             'group-coaching-team': `${count} coaching alerts this period`,
             'group-contest-rank': `${count} contest rank changes`,
             'group-achievements': `${count} achievements earned`,
+            'group-badges': `${count} badges earned`,
           };
           groups[groupKey].message = groupMessages[groupKey] || `${count} notifications`;
           groups[groupKey].read = groups[groupKey]._groupedItems.every(item => item.read);

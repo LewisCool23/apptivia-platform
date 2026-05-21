@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Upload, Download, Database, FileText, AlertCircle, CheckCircle, X, AlertTriangle } from 'lucide-react';
 import { supabase } from '../supabaseClient';
 import { backendFetch } from '../utils/backendFetch';
+import { useModalBehavior } from '../hooks/useModalBehavior';
 
 function parseCSVLine(line) {
   const result = [];
@@ -24,6 +25,7 @@ function parseCSVLine(line) {
 }
 
 export default function KpiImportModal({ isOpen, onClose, onImportComplete, organizationId }) {
+  useModalBehavior(isOpen, onClose);
   const [step, setStep] = useState(1);
   const [file, setFile] = useState(null);
   const [parsedData, setParsedData] = useState([]);

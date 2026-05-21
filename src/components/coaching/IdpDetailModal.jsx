@@ -2,6 +2,7 @@ import React from 'react';
 import { X, Target, Calendar, CheckCircle2, Circle, Clock, BookOpen, Award, ArrowRight } from 'lucide-react';
 import { idpStatusConfig, idpPlanTypes } from './idpStatusConfig';
 import { buildLabel } from '../../constants/kpiGuidance';
+import { useModalBehavior } from '../../hooks/useModalBehavior';
 
 const levelColors = {
   none: 'bg-apptivia-carbon-200 text-apptivia-carbon-600',
@@ -12,6 +13,7 @@ const levelColors = {
 };
 
 export default function IdpDetailModal({ idp, onClose, onStatusChange, onMilestoneToggle, canManage, teamMembers }) {
+  useModalBehavior(!!idp, onClose);
   if (!idp) return null;
 
   const assignedRep = (teamMembers || []).find(m => m.id === idp.profile_id);

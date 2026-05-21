@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../supabaseClient';
 import { SKILLSET_KPI_MAP, difficultyRank, getSkillsetLevel, getSkillsetColor } from '../constants/skillsets';
+import { useModalBehavior } from '../hooks/useModalBehavior';
 
 interface SkillsetDetailsModalProps {
   isOpen: boolean;
@@ -48,6 +49,7 @@ export default function SkillsetDetailsModal({
   selectedDepartments = [],
   highlightAchievementName = null
 }: SkillsetDetailsModalProps) {
+  useModalBehavior(isOpen, onClose);
   const [achievements, setAchievements] = useState<Achievement[]>([]);
   const [profileProgress, setProfileProgress] = useState<ProfileProgress[]>([]);
   const [loading, setLoading] = useState(false);

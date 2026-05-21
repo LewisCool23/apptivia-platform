@@ -11,6 +11,7 @@ import { backendFetch } from '../utils/backendFetch';
 import { useTeamManagement } from '../hooks/useTeamManagement';
 import CepConfigSection from '../components/CepConfigSection';
 import SalesDnaConfigSection from '../components/SalesDnaConfigSection';
+import { useIcpProfiles } from '../hooks/useIcpProfiles';
 import ScheduleReportModal from '../components/ScheduleReportModal';
 import { useKpiTemplates } from '../hooks/useKpiTemplates';
 import KpiImportModal from '../components/KpiImportModal';
@@ -267,6 +268,11 @@ export default function OrganizationSettings() {
   // 4C: KPI Role Templates
   const kpiTemplates = useKpiTemplates(profile?.organization_id || null);
   const [applyingTemplate, setApplyingTemplate] = useState(null);
+
+  // ICP Profiles hook
+  const icpProfilesHook = useIcpProfiles(profile?.organization_id || null);
+  const [editProfileName, setEditProfileName] = useState('');
+  const [editProfileDesc, setEditProfileDesc] = useState('');
 
   // Data Import state
   const [showKpiImport, setShowKpiImport] = useState(false);
@@ -622,12 +628,12 @@ export default function OrganizationSettings() {
     }
   };
 
-  // Sync icpConfig when organization row loads
+  // Sync icpConfig from active ICP profile (or org-level fallback)
   useEffect(() => {
-    if (!organization?.icp_config) return;
-    const c = typeof organization.icp_config === 'string'
-      ? JSON.parse(organization.icp_config)
-      : organization.icp_config;
+    const p = icpProfilesHook.activeProfile;
+    const raw = p ? p.icp_config : organization?.icp_config;
+    if (!raw && !p) return;
+    const c = typeof raw === 'string' ? JSON.parse(raw) : (raw || {});
     setIcpConfig({
       enabled: c.enabled ?? false,
       target_industries: (c.target_industries || []).join(', '),
@@ -638,14 +644,18 @@ export default function OrganizationSettings() {
       target_technologies: (c.target_technologies || []).join(', '),
       exclude_industries: c.exclude_industries || [],
     });
-  }, [organization?.id]);
+    if (p) {
+      setEditProfileName(p.name || '');
+      setEditProfileDesc(p.description || '');
+    }
+  }, [icpProfilesHook.activeProfile, organization?.id]);
 
-  // Sync signalConfig when organization row loads
+  // Sync signalConfig from active ICP profile (or org-level fallback)
   useEffect(() => {
-    if (!organization?.signal_config) return;
-    const c = typeof organization.signal_config === 'string'
-      ? JSON.parse(organization.signal_config)
-      : organization.signal_config;
+    const p = icpProfilesHook.activeProfile;
+    const raw = p ? p.signal_config : organization?.signal_config;
+    if (!raw && !p) return;
+    const c = typeof raw === 'string' ? JSON.parse(raw) : (raw || {});
     setSignalConfig({
       pain_points: c.pain_points || [],
       solution_keywords: c.solution_keywords || [],
@@ -654,7 +664,7 @@ export default function OrganizationSettings() {
       tech_stack_churning: c.tech_stack_churning || [],
       exclude_industries: c.exclude_industries || [],
     });
-  }, [organization?.id]);
+  }, [icpProfilesHook.activeProfile, organization?.id]);
 
   // Sync wallboardSettings when organization row loads
   useEffect(() => {
@@ -684,6 +694,7 @@ export default function OrganizationSettings() {
     };
 
     try {
+      // Save org-level fields (name, industry, wallboard) to organizations table
       const { error } = await supabase
         .from('organizations')
         .update({
@@ -691,13 +702,31 @@ export default function OrganizationSettings() {
           industry: organization.industry,
           primary_contact_name: organization.primary_contact_name,
           primary_contact_email: organization.primary_contact_email,
-          icp_config: builtIcpConfig,
-          signal_config: signalConfig,
           settings: { ...(organization.settings || {}), wallboard: wallboardSettings },
         })
         .eq('id', organization.id);
 
       if (error) throw error;
+
+      // Save ICP + signal config to active profile (or create one)
+      const ap = icpProfilesHook.activeProfile;
+      if (ap?.id) {
+        await icpProfilesHook.updateProfile(ap.id, {
+          name: editProfileName || ap.name,
+          description: editProfileDesc || null,
+          icp_config: builtIcpConfig,
+          signal_config: signalConfig,
+        });
+      } else {
+        await icpProfilesHook.createProfile({
+          name: editProfileName || 'Default Profile',
+          description: editProfileDesc || null,
+          icp_config: builtIcpConfig,
+          signal_config: signalConfig,
+          is_default: true,
+        });
+      }
+
       setMessage({ type: 'success', text: 'Settings saved successfully' });
     } catch (error) {
       console.error('Error saving:', error);
@@ -1140,6 +1169,107 @@ export default function OrganizationSettings() {
                     />
                   </div>
                 </div>
+              </div>
+
+              {/* ICP Profiles */}
+              <div className="border-t pt-6">
+                <div className="flex items-center justify-between mb-4">
+                  <div>
+                    <h3 className="text-lg font-semibold">ICP Profiles</h3>
+                    <p className="text-xs text-apptivia-carbon-500 mt-0.5">Manage multiple Ideal Customer Profiles for different market segments. Each profile has its own ICP criteria and signal configuration.</p>
+                  </div>
+                </div>
+
+                {/* Profile tab bar */}
+                {!icpProfilesHook.loading && (
+                  <div className="flex items-center gap-2 mb-4 overflow-x-auto pb-1">
+                    {icpProfilesHook.profiles.map(p => (
+                      <button
+                        key={p.id}
+                        type="button"
+                        onClick={() => icpProfilesHook.setActiveProfileId(p.id)}
+                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm whitespace-nowrap transition-colors ${
+                          icpProfilesHook.activeProfileId === p.id
+                            ? 'bg-apptivia-coral text-white'
+                            : 'bg-apptivia-carbon-100 text-apptivia-carbon-600 hover:bg-apptivia-carbon-200'
+                        }`}
+                      >
+                        {p.is_default && <span className="text-xs">★</span>}
+                        {p.name}
+                      </button>
+                    ))}
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        const np = await icpProfilesHook.createProfile({
+                          name: 'New Profile',
+                          icp_config: {},
+                          signal_config: {},
+                          is_default: false,
+                        });
+                        if (np?.id) icpProfilesHook.setActiveProfileId(np.id);
+                      }}
+                      className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-sm text-apptivia-coral border border-dashed border-apptivia-coral hover:bg-apptivia-coral-tone-50 transition-colors"
+                    >
+                      <Plus size={14} /> New Profile
+                    </button>
+                  </div>
+                )}
+
+                {/* Profile name & description */}
+                {icpProfilesHook.activeProfile && (
+                  <div className="space-y-3 mb-4">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-apptivia-carbon-700 mb-1">Profile Name</label>
+                        <input
+                          type="text"
+                          value={editProfileName}
+                          onChange={(e) => setEditProfileName(e.target.value)}
+                          placeholder="e.g. Enterprise, Mid-Market, SMB"
+                          className="w-full px-3 py-2 border border-apptivia-carbon-300 rounded-lg focus:ring-2 focus:ring-apptivia-coral text-sm"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-apptivia-carbon-700 mb-1">Description</label>
+                        <input
+                          type="text"
+                          value={editProfileDesc}
+                          onChange={(e) => setEditProfileDesc(e.target.value)}
+                          placeholder="Optional description for this profile"
+                          className="w-full px-3 py-2 border border-apptivia-carbon-300 rounded-lg focus:ring-2 focus:ring-apptivia-coral text-sm"
+                        />
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      {icpProfilesHook.activeProfile.is_default ? (
+                        <span className="text-xs text-emerald-600 font-medium">★ Default Profile</span>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={async () => {
+                            await icpProfilesHook.updateProfile(icpProfilesHook.activeProfile.id, { is_default: true });
+                          }}
+                          className="text-xs text-apptivia-carbon-500 hover:text-apptivia-coral transition-colors"
+                        >
+                          ★ Set as Default
+                        </button>
+                      )}
+                      {!icpProfilesHook.activeProfile.is_default && icpProfilesHook.profiles.length > 1 && (
+                        <button
+                          type="button"
+                          onClick={async () => {
+                            if (!window.confirm(`Delete "${icpProfilesHook.activeProfile.name}"? This cannot be undone.`)) return;
+                            await icpProfilesHook.deleteProfile(icpProfilesHook.activeProfile.id);
+                          }}
+                          className="text-xs text-red-500 hover:text-red-700 transition-colors ml-auto"
+                        >
+                          Delete Profile
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* ICP Configuration */}

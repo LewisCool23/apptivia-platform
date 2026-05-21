@@ -10,6 +10,7 @@ import { buildEnrichedContent } from '../../utils/emailTemplates';
 import PlanBuilderForm from './PlanBuilderForm';
 import CoachingPlanTemplatesModal from '../CoachingPlanTemplatesModal';
 import { LEADERSHIP_ROLES } from '../../constants/roles';
+import { useModalBehavior } from '../../hooks/useModalBehavior';
 
 const DEFAULT_KPIS = [
   'pipeline_created', 'sourced_opps', 'call_connects', 'meetings',
@@ -43,6 +44,7 @@ const kpiSuggestions = {
 };
 
 export default function CreateRepPlanModal({ isOpen, onClose, repId, repName, teamMembers, onPlanCreated }) {
+  useModalBehavior(isOpen, onClose);
   const { user, profile } = useAuth();
   const toast = useToast();
 

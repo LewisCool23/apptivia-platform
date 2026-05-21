@@ -4,6 +4,7 @@ import ConfirmModal from './ConfirmModal';
 import { supabase } from '../supabaseClient';
 import { useToast } from '../contexts/ToastContext';
 import { useNotifications } from '../contexts/NotificationContext';
+import { useModalBehavior } from '../hooks/useModalBehavior';
 
 const useNotificationsTyped = useNotifications as () => { addNotification: (n: Record<string, unknown>) => void };
 
@@ -96,6 +97,7 @@ const CONTEST_TEMPLATES = [
 ];
 
 export default function ContestCreationModal({ isOpen, onClose, currentUserId, organizationId, contestToEdit }: ContestCreationModalProps) {
+  useModalBehavior(isOpen, onClose);
   const toast = useToast();
   const { addNotification } = useNotificationsTyped();
   const [loading, setLoading] = useState(false);

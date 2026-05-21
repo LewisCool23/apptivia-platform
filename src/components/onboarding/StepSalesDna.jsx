@@ -1,5 +1,5 @@
-import React from 'react';
-import { Compass, Check } from 'lucide-react';
+import React, { useState } from 'react';
+import { Compass, Check, Info } from 'lucide-react';
 import {
   SALES_METHODOLOGIES,
   QUALIFICATION_FRAMEWORKS,
@@ -13,6 +13,9 @@ export default function StepSalesDna({ wizardState, updateState }) {
   const update = (field, value) => {
     updateState({ salesDna: { ...salesDna, [field]: value } });
   };
+
+  const [customCriterionLabel, setCustomCriterionLabel] = useState('');
+  const [customCriterionDesc, setCustomCriterionDesc] = useState('');
 
   return (
     <div className="space-y-6">
@@ -138,12 +141,19 @@ export default function StepSalesDna({ wizardState, updateState }) {
         <label className="block text-sm font-medium text-apptivia-carbon-700 mb-2">
           Qualification Framework <span className="text-red-500">*</span>
         </label>
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           {QUALIFICATION_FRAMEWORKS.map(f => (
             <button
               key={f.key}
               type="button"
-              onClick={() => update('qualification_framework', f.key)}
+              onClick={() => {
+                const updates = { qualification_framework: f.key };
+                if (f.key !== 'custom') {
+                  updates.custom_qualification_name = null;
+                  updates.custom_qualification_criteria = [];
+                }
+                updateState({ salesDna: { ...salesDna, ...updates } });
+              }}
               className={`p-3 rounded-lg border text-left transition-all text-sm ${
                 salesDna.qualification_framework === f.key
                   ? 'border-apptivia-carbon-300 bg-apptivia-carbon-100 ring-1 ring-apptivia-coral-tone-100'
@@ -156,15 +166,128 @@ export default function StepSalesDna({ wizardState, updateState }) {
                   <Check size={14} className="text-apptivia-ink" />
                 )}
               </div>
-              <div className="text-xs text-apptivia-carbon-500 mt-1">
-                {f.criteria.map(c => c.label).join(' / ')}
-              </div>
+              {f.criteria.length > 0 && (
+                <div className="text-xs text-apptivia-carbon-500 mt-1">
+                  {f.criteria.map(c => c.label).join(' / ')}
+                </div>
+              )}
+              {f.key === 'custom' && (
+                <div className="text-xs text-apptivia-carbon-500 mt-1">
+                  Define your own criteria
+                </div>
+              )}
             </button>
           ))}
         </div>
         <p className="text-xs text-apptivia-carbon-400 mt-2">
           This framework auto-configures exit criteria on your pipeline Qualification stage
         </p>
+
+        {/* Custom Qualification Framework Builder */}
+        {salesDna.qualification_framework === 'custom' && (
+          <div className="mt-3 p-4 bg-emerald-50 rounded-lg border border-emerald-100 space-y-3">
+            <div>
+              <label className="block text-sm font-medium text-emerald-800 mb-1">Framework Name</label>
+              <input
+                type="text"
+                value={salesDna.custom_qualification_name || ''}
+                onChange={(e) => update('custom_qualification_name', e.target.value)}
+                className="w-full border border-emerald-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none"
+                placeholder="e.g. PACT, VALUE, IMPACT"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-emerald-800 mb-1">
+                Qualification Criteria <span className="font-normal text-emerald-600">(min 2)</span>
+              </label>
+              <p className="text-xs text-emerald-600 mb-2">
+                Define the criteria your team must confirm to qualify a deal. These auto-populate CEP exit criteria and guide AI coaching.
+              </p>
+              <div className="space-y-1.5 mb-2">
+                {(salesDna.custom_qualification_criteria || []).map((c, i) => (
+                  <div key={i} className="flex items-start gap-2 text-sm bg-white rounded-lg px-3 py-2 border border-emerald-100">
+                    <Check size={10} className="text-emerald-600 mt-1 shrink-0" />
+                    <div className="flex-1 min-w-0">
+                      <span className="font-medium text-emerald-800">{c.label}</span>
+                      {c.description && <span className="text-emerald-600 ml-1">— {c.description}</span>}
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => updateState({
+                        salesDna: {
+                          ...salesDna,
+                          custom_qualification_criteria: (salesDna.custom_qualification_criteria || []).filter((_, idx) => idx !== i),
+                        },
+                      })}
+                      className="text-red-400 hover:text-red-600 text-xs shrink-0"
+                    >
+                      Remove
+                    </button>
+                  </div>
+                ))}
+              </div>
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={customCriterionLabel}
+                  onChange={(e) => setCustomCriterionLabel(e.target.value)}
+                  className="w-32 border border-emerald-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500 outline-none"
+                  placeholder="Label"
+                />
+                <input
+                  type="text"
+                  value={customCriterionDesc}
+                  onChange={(e) => setCustomCriterionDesc(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && customCriterionLabel.trim()) {
+                      e.preventDefault();
+                      const key = customCriterionLabel.trim().toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '');
+                      updateState({
+                        salesDna: {
+                          ...salesDna,
+                          custom_qualification_criteria: [
+                            ...(salesDna.custom_qualification_criteria || []),
+                            { key, label: customCriterionLabel.trim(), description: customCriterionDesc.trim() },
+                          ],
+                        },
+                      });
+                      setCustomCriterionLabel('');
+                      setCustomCriterionDesc('');
+                    }
+                  }}
+                  className="flex-1 border border-emerald-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500 outline-none"
+                  placeholder="Description (press Enter to add)"
+                />
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (customCriterionLabel.trim()) {
+                      const key = customCriterionLabel.trim().toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '');
+                      updateState({
+                        salesDna: {
+                          ...salesDna,
+                          custom_qualification_criteria: [
+                            ...(salesDna.custom_qualification_criteria || []),
+                            { key, label: customCriterionLabel.trim(), description: customCriterionDesc.trim() },
+                          ],
+                        },
+                      });
+                      setCustomCriterionLabel('');
+                      setCustomCriterionDesc('');
+                    }
+                  }}
+                  className="px-3 py-2 bg-emerald-100 rounded-lg hover:bg-emerald-200 text-emerald-700 text-sm"
+                >
+                  Add
+                </button>
+              </div>
+            </div>
+            <div className="text-emerald-600 text-xs">
+              <Info size={10} className="inline mr-1" />
+              These criteria will auto-populate your CEP Qualification stage exit criteria and guide all AI coaching.
+            </div>
+          </div>
+        )}
       </div>
 
       {/* CEP Pipeline Configuration */}

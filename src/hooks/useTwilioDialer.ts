@@ -175,6 +175,16 @@ export function useTwilioDialer(
         console.error('[TwilioDialer] Call log insert error:', insertErr.message);
       }
 
+      // Track call KPI on scorecard (non-blocking)
+      if (!insertErr && durationSeconds > 0) {
+        import('../utils/backendFetch').then(({ backendFetch }) => {
+          backendFetch('/api/engage/calls/track-kpi', {
+            durationSeconds,
+            callSid: callSid || undefined,
+          }).catch(() => {}); // fire-and-forget
+        }).catch(() => {});
+      }
+
       // Update last_called_at on the prospect row if we have a prospect_id
       if (contact.prospect_id) {
         await supabase

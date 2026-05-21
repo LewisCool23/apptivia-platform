@@ -3,7 +3,7 @@ import {
   Search, Building2, Users, Mail, Linkedin, Globe, Sparkles,
   RefreshCw, ExternalLink, ChevronDown, ChevronUp, Copy, Check,
   AlertTriangle, TrendingUp, Target, Briefcase, DollarSign,
-  Star, Clock, Send, MessageSquare, BookOpen, Trash2, History, Eye,
+  Star, Clock, Send, BookOpen, Trash2, History, Eye,
   Phone, UserPlus, Cpu, ArrowRight, ChevronRight, Bookmark, BookmarkCheck,
   MapPin, Twitter, PhoneCall, ClipboardList, X, FileText
 } from 'lucide-react';
@@ -11,7 +11,8 @@ import { engageApi, engageDb } from '../utils/engageApi';
 import PromptTemplateSelector from './PromptTemplateSelector';
 import { supabase } from '../supabaseClient';
 
-// ── Broad default titles for people search ───────────────────
+// ── Default titles/seniority are now resolved server-side via ICP profiles ───
+// These are only used as client-side fallback for technology search mode
 const DEFAULT_PEOPLE_TITLES = [
   'VP Sales', 'VP of Sales', 'Vice President of Sales',
   'Director of Sales', 'Director Sales', 'Head of Sales',
@@ -27,6 +28,13 @@ const DEFAULT_PEOPLE_TITLES = [
   'VP of Growth', 'Head of Growth',
 ];
 const DEFAULT_PEOPLE_SENIORITY = ['owner', 'founder', 'c_suite', 'partner', 'vp', 'head', 'director', 'manager', 'senior'];
+
+const PERSONA_MODES = [
+  { key: 'icp', label: 'ICP Personas', icon: 'Target', desc: 'Uses your configured job titles' },
+  { key: 'leadership', label: 'Leadership', icon: 'Briefcase', desc: 'C-suite, VP, Director' },
+  { key: 'all', label: 'All Contacts', icon: 'Users', desc: 'No title/seniority filter' },
+  { key: 'custom', label: 'Custom', icon: 'ClipboardList', desc: 'Specify your own titles' },
+];
 
 // ── Helpers ──────────────────────────────────────────────────
 
@@ -86,7 +94,7 @@ function CopyButton({ text }) {
 // ── Company Brief Panel ──────────────────────────────────────
 
 function CompanyBriefPanel({ company, brief: rawBrief, dataSources, tokensUsed, errors }) {
-  const [expanded, setExpanded] = useState({ findings: true, talking: true, news: false, funding: false, competitors: false, risks: false });
+  const [expanded, setExpanded] = useState({ findings: true, outreach: true, tech: false, news: false, funding: false, competitors: false, risks: false });
   const toggle = (key) => setExpanded((prev) => ({ ...prev, [key]: !prev[key] }));
 
   // If brief arrived as a JSON string, try to parse it
@@ -213,27 +221,60 @@ function CompanyBriefPanel({ company, brief: rawBrief, dataSources, tokensUsed, 
               </CollapsibleSection>
             )}
 
-            {brief.talking_points?.length > 0 && (
-              <CollapsibleSection title="Talking Points" icon={MessageSquare} expanded={expanded.talking} onToggle={() => toggle('talking')}>
-                <ul className="space-y-1.5">
-                  {brief.talking_points.map((p, i) => (
-                    <li key={i} className="text-xs text-apptivia-carbon-700 flex items-start gap-2">
-                      <span className="text-emerald-500 mt-0.5">✓</span> {p}
-                    </li>
-                  ))}
-                </ul>
+            {/* Outreach Strategy */}
+            {(brief.talking_points?.length > 0 || brief.outreach_angles?.length > 0) && (
+              <CollapsibleSection title="Outreach Strategy" icon={Target} expanded={expanded.outreach} onToggle={() => toggle('outreach')}>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {brief.talking_points?.length > 0 && (
+                    <div>
+                      <span className="text-[10px] uppercase font-semibold text-apptivia-carbon-400 block mb-2">Talking Points</span>
+                      <ul className="space-y-1.5">
+                        {brief.talking_points.map((p, i) => (
+                          <li key={i} className="text-xs text-apptivia-carbon-700 flex items-start gap-2">
+                            <span className="text-emerald-500 mt-0.5 flex-shrink-0">{'\u2713'}</span> {p}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                  <div>
+                    {brief.outreach_angles?.length > 0 && (
+                      <div>
+                        <span className="text-[10px] uppercase font-semibold text-apptivia-carbon-400 block mb-2">Approach Angles</span>
+                        <ul className="space-y-1">
+                          {brief.outreach_angles.slice(0, 3).map((a, i) => (
+                            <li key={i} className="text-xs text-apptivia-carbon-700 flex items-start gap-2">
+                              <span className="text-apptivia-coral mt-0.5 flex-shrink-0">{'\u2022'}</span> {a}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                    {brief.best_channel && (
+                      <div className="flex items-center gap-2 mt-2">
+                        <span className="text-[10px] font-medium text-apptivia-carbon-500">Best Channel:</span>
+                        <span className="text-xs font-semibold text-apptivia-ink capitalize">{brief.best_channel}</span>
+                      </div>
+                    )}
+                    {brief.best_time_to_reach && (
+                      <div className="flex items-center gap-2">
+                        <span className="text-[10px] font-medium text-apptivia-carbon-500">Best Timing:</span>
+                        <span className="text-xs font-semibold text-apptivia-ink">{brief.best_time_to_reach}</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
               </CollapsibleSection>
             )}
 
             {brief.tech_stack?.length > 0 && (
-              <div>
-                <span className="text-xs font-medium text-apptivia-carbon-500 mb-2 block">Tech Stack</span>
+              <CollapsibleSection title="Tech Stack" icon={Briefcase} expanded={expanded.tech} onToggle={() => toggle('tech')}>
                 <div className="flex flex-wrap gap-1.5">
                   {brief.tech_stack.map((t, i) => (
                     <span key={i} className="px-2 py-0.5 bg-cyan-50 text-cyan-700 text-[10px] font-medium rounded-full">{t}</span>
                   ))}
                 </div>
-              </div>
+              </CollapsibleSection>
             )}
 
             {brief.competitors?.length > 0 && (
@@ -895,8 +936,18 @@ export default function EngageDiscover({ organizationId, userId, initialSearch, 
   // People search results (multiple prospects from Apollo)
   const [peopleSearchResults, setPeopleSearchResults] = useState(null);
   const [peopleSearchFilters, setPeopleSearchFilters] = useState(null);
+  const [personaMode, setPersonaMode] = useState('all');
+  const [customPersonaTitles, setCustomPersonaTitles] = useState('');
   const [savedContactIds, setSavedContactIds] = useState(new Set());
   const [savingContact, setSavingContact] = useState(false);
+
+  // Save to Accounts
+  const [savedAccountId, setSavedAccountId] = useState(null);
+  const [savingAccount, setSavingAccount] = useState(false);
+
+  // Suggested contacts (shown after company research) — declared early for saveToAccounts
+  const [suggestedContacts, setSuggestedContacts] = useState(null);
+  const [suggestedContactsLoading, setSuggestedContactsLoading] = useState(false);
 
   // Add to Buying Committee
   const [committeeAccounts, setCommitteeAccounts] = useState(null);
@@ -940,13 +991,73 @@ export default function EngageDiscover({ organizationId, userId, initialSearch, 
     setCommitteeModal({ person });
   }, [fetchCommitteeAccounts]);
 
+  // Check if company is already saved as an account when results load
+  useEffect(() => {
+    if (!companyResult?.company || !organizationId) { setSavedAccountId(null); return; }
+    const domain = (companyResult.company.domain || companyResult.company.primary_domain || '').replace(/^https?:\/\//, '').replace(/^www\./, '').replace(/\/.*$/, '').trim().toLowerCase();
+    const name = (companyResult.company.name || '').toLowerCase();
+    if (!domain && !name) return;
+    supabase
+      .from('engage_accounts')
+      .select('id')
+      .eq('organization_id', organizationId)
+      .or([domain && `domain.eq.${domain}`, name && `account_name.ilike.${name}`].filter(Boolean).join(','))
+      .limit(1)
+      .then(({ data }) => {
+        setSavedAccountId(data?.[0]?.id || null);
+      });
+  }, [companyResult, organizationId]);
+
+  const saveToAccounts = useCallback(async () => {
+    if (!companyResult?.company || !organizationId || savingAccount) return;
+    setSavingAccount(true);
+    try {
+      const co = companyResult.company;
+      const domain = (co.domain || co.primary_domain || '').replace(/^https?:\/\//, '').replace(/^www\./, '').replace(/\/.*$/, '').trim();
+      const { data, error: err } = await supabase
+        .from('engage_accounts')
+        .insert({
+          organization_id: organizationId,
+          account_name: co.name || domain,
+          domain: domain || null,
+          industry: co.industry || null,
+          tier: 'untiered',
+          status: 'active',
+          source: 'company_research',
+          metadata: {
+            signal_contacts: suggestedContacts || [],
+            employee_count: co.estimated_num_employees || null,
+            revenue: co.annual_revenue_printed || co.annual_revenue || null,
+            description: co.short_description || co.description || null,
+            logo_url: co.logo_url || null,
+            linkedin_url: co.linkedin_url || null,
+            website_url: co.website_url || null,
+          },
+        })
+        .select('id')
+        .single();
+      if (err) throw err;
+      setSavedAccountId(data.id);
+      // Log activity
+      engageDb.logActivityEvent({
+        organization_id: organizationId,
+        actor_id: userId || undefined,
+        event_type: 'account.created',
+        title: `Saved ${co.name || domain} to Accounts`,
+        description: 'Promoted from Discover company research',
+        metadata: { account_id: data.id, source: 'discover_research' },
+      });
+    } catch (err) {
+      console.error('[EngageDiscover] Save to accounts failed:', err);
+      setError(`Failed to save account: ${err.message}`);
+    } finally {
+      setSavingAccount(false);
+    }
+  }, [companyResult, organizationId, userId, savingAccount, suggestedContacts]);
+
   // Company disambiguation
   const [disambiguationResults, setDisambiguationResults] = useState(null);
   const [disambiguationLoading, setDisambiguationLoading] = useState(false);
-
-  // Suggested contacts (shown after company research)
-  const [suggestedContacts, setSuggestedContacts] = useState(null);
-  const [suggestedContactsLoading, setSuggestedContactsLoading] = useState(false);
 
   // Find People sub-mode: 'company' (by domain) or 'technology' (by tech name)
   const [findPeopleMode, setFindPeopleMode] = useState('technology');
@@ -1148,6 +1259,13 @@ export default function EngageDiscover({ organizationId, userId, initialSearch, 
       // Only save report if we have at least one FK (CHECK constraint requires it)
       if (!companyId && !prospectId) return;
 
+      // Compute subject_domain for matching on account pages
+      const subjectDomain = searchType === 'company'
+        ? (result?.company?.domain || query || '').replace(/^https?:\/\//, '').replace(/^www\./, '').replace(/\/.*$/, '').trim()
+        : searchType === 'prospect'
+          ? (result?.prospect?.organization?.primary_domain || '').replace(/^https?:\/\//, '').replace(/^www\./, '').replace(/\/.*$/, '').trim()
+          : '';
+
       await engageDb.saveReport({
         organization_id: organizationId,
         report_type: searchType,
@@ -1159,7 +1277,22 @@ export default function EngageDiscover({ organizationId, userId, initialSearch, 
         data_sources: content.data_sources,
         tokens_used: result?.tokens_used || 0,
         created_by: userId || undefined,
+        subject_name: title,
+        subject_domain: subjectDomain || undefined,
       });
+
+      // Log activity event so research appears in Activity Feed and Account Activity
+      const eventType = searchType === 'company' ? 'account.researched' : searchType === 'prospect' ? 'prospect.researched' : 'people.searched';
+      engageDb.logActivityEvent({
+        organization_id: organizationId,
+        actor_id: userId || undefined,
+        event_type: eventType,
+        title: `Researched ${title}`,
+        description: `Via Discover (${(content.data_sources || []).join(', ') || 'research'})`,
+        icon: '\uD83D\uDD0D',
+        color: '#FF4D2E',
+      }).catch(() => { /* non-blocking */ });
+
       await fetchSearchHistory();
     } catch {
       // non-blocking
@@ -1378,10 +1511,17 @@ export default function EngageDiscover({ organizationId, userId, initialSearch, 
         }
       } else if (mode === 'people_search') {
         if (findPeopleMode === 'company') {
-          // Find people at a specific company domain — pass ICP title filters if provided
+          // Find people at a specific company domain — persona-based filtering
           const domain = searchInput.trim();
           const companyOpts = {};
-          if (peopleSearchFilters?.titles?.length) companyOpts.titles = peopleSearchFilters.titles;
+          if (peopleSearchFilters?.titles?.length) {
+            companyOpts.titles = peopleSearchFilters.titles;
+          } else {
+            companyOpts.persona = personaMode;
+            if (personaMode === 'custom' && customPersonaTitles.trim()) {
+              companyOpts.customTitles = customPersonaTitles.split(',').map(t => t.trim()).filter(Boolean);
+            }
+          }
           if (peopleSearchFilters?.seniority?.length) companyOpts.seniority = peopleSearchFilters.seniority;
           const { _cached, people } = await fetchPeopleWithCache(domain, Object.keys(companyOpts).length ? companyOpts : undefined);
           setPeopleSearchResults(people);
@@ -1560,28 +1700,62 @@ export default function EngageDiscover({ organizationId, userId, initialSearch, 
 
           {/* Find People Sub-Mode Toggle */}
           {mode === 'people_search' && (
-            <div className="flex items-center gap-2 mb-3">
-              <span className="text-[10px] text-white/60 uppercase font-medium mr-1">Search by:</span>
-              <button
-                onClick={() => { setFindPeopleMode('technology'); setSearchInput(''); setPeopleSearchResults(null); }}
-                className={`flex items-center gap-1 px-2.5 py-1 rounded text-[11px] font-medium transition-all ${
-                  findPeopleMode === 'technology'
-                    ? 'bg-white/30 text-white shadow-sm'
-                    : 'bg-white/10 text-white/60 hover:bg-white/20'
-                }`}
-              >
-                <Cpu size={10} /> Technology
-              </button>
-              <button
-                onClick={() => { setFindPeopleMode('company'); setSearchInput(''); setPeopleSearchResults(null); }}
-                className={`flex items-center gap-1 px-2.5 py-1 rounded text-[11px] font-medium transition-all ${
-                  findPeopleMode === 'company'
-                    ? 'bg-white/30 text-white shadow-sm'
-                    : 'bg-white/10 text-white/60 hover:bg-white/20'
-                }`}
-              >
-                <Building2 size={10} /> Company Domain
-              </button>
+            <div className="space-y-2 mb-3">
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] text-white/60 uppercase font-medium mr-1">Search by:</span>
+                <button
+                  onClick={() => { setFindPeopleMode('technology'); setSearchInput(''); setPeopleSearchResults(null); }}
+                  className={`flex items-center gap-1 px-2.5 py-1 rounded text-[11px] font-medium transition-all ${
+                    findPeopleMode === 'technology'
+                      ? 'bg-white/30 text-white shadow-sm'
+                      : 'bg-white/10 text-white/60 hover:bg-white/20'
+                  }`}
+                >
+                  <Cpu size={10} /> Technology
+                </button>
+                <button
+                  onClick={() => { setFindPeopleMode('company'); setSearchInput(''); setPeopleSearchResults(null); }}
+                  className={`flex items-center gap-1 px-2.5 py-1 rounded text-[11px] font-medium transition-all ${
+                    findPeopleMode === 'company'
+                      ? 'bg-white/30 text-white shadow-sm'
+                      : 'bg-white/10 text-white/60 hover:bg-white/20'
+                  }`}
+                >
+                  <Building2 size={10} /> Company Domain
+                </button>
+              </div>
+              {/* Persona Mode Selector */}
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] text-white/60 uppercase font-medium mr-1">Personas:</span>
+                {PERSONA_MODES.map(pm => (
+                  <button
+                    key={pm.key}
+                    onClick={() => setPersonaMode(pm.key)}
+                    title={pm.desc}
+                    className={`flex items-center gap-1 px-2.5 py-1 rounded text-[11px] font-medium transition-all ${
+                      personaMode === pm.key
+                        ? 'bg-white/30 text-white shadow-sm'
+                        : 'bg-white/10 text-white/60 hover:bg-white/20'
+                    }`}
+                  >
+                    {pm.key === 'icp' && <Target size={10} />}
+                    {pm.key === 'leadership' && <Briefcase size={10} />}
+                    {pm.key === 'all' && <Users size={10} />}
+                    {pm.key === 'custom' && <ClipboardList size={10} />}
+                    {pm.label}
+                  </button>
+                ))}
+              </div>
+              {/* Custom titles input */}
+              {personaMode === 'custom' && (
+                <input
+                  type="text"
+                  value={customPersonaTitles}
+                  onChange={(e) => setCustomPersonaTitles(e.target.value)}
+                  placeholder="e.g. Project Manager, VDC Leader, Preconstruction Manager"
+                  className="w-full px-3 py-2 rounded-lg bg-white/10 text-white text-xs placeholder-white/40 border border-white/20 focus:outline-none focus:ring-1 focus:ring-white/40"
+                />
+              )}
             </div>
           )}
 
@@ -1821,6 +1995,30 @@ export default function EngageDiscover({ organizationId, userId, initialSearch, 
           >
             <RefreshCw size={11} /> Refresh with new data
           </button>
+        </div>
+      )}
+
+      {/* Save to Accounts bar */}
+      {!loading && companyResult && (
+        <div className="flex items-center justify-between bg-white border border-apptivia-carbon-100 rounded-lg px-4 py-2.5">
+          <div className="flex items-center gap-2">
+            <Building2 size={14} className="text-apptivia-ink" />
+            <span className="text-sm font-medium text-apptivia-ink">{companyResult.company?.name || 'Company'}</span>
+          </div>
+          {savedAccountId ? (
+            <span className="flex items-center gap-1.5 text-xs font-medium text-emerald-600 bg-emerald-50 px-3 py-1.5 rounded-lg">
+              <Check size={12} /> Saved to Accounts
+            </span>
+          ) : (
+            <button
+              onClick={saveToAccounts}
+              disabled={savingAccount}
+              className="flex items-center gap-1.5 text-xs font-medium text-white bg-apptivia-coral hover:bg-apptivia-coral-tone-700 disabled:opacity-50 px-3 py-1.5 rounded-lg transition-colors"
+            >
+              {savingAccount ? <RefreshCw size={12} className="animate-spin" /> : <Bookmark size={12} />}
+              {savingAccount ? 'Saving...' : 'Save to Accounts'}
+            </button>
+          )}
         </div>
       )}
 
@@ -2150,78 +2348,6 @@ export default function EngageDiscover({ organizationId, userId, initialSearch, 
               : 'Try a different technology name or broaden your search'}
           </p>
         </div>
-      )}
-
-      {/* Outreach Generator — inline only for company-only research (prospect uses modal) */}
-      {canGenerateOutreach && !prospectResult && (
-        <div className="bg-white rounded-lg border border-apptivia-carbon-100 p-5">
-          <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center gap-2">
-              <Send size={14} className="text-emerald-500" />
-              <span className="text-sm font-semibold text-apptivia-carbon-700">Generate AI Outreach</span>
-            </div>
-          </div>
-
-          {/* Prompt Template Selector */}
-          <div className="mb-3">
-            <label className="text-[10px] text-apptivia-carbon-400 uppercase font-medium block mb-1">Prompt Template</label>
-            <PromptTemplateSelector
-              category="outreach"
-              value={selectedTemplate?.id}
-              onChange={(template) => setSelectedTemplate(template)}
-              placeholder="Use library prompt or default..."
-            />
-            {selectedTemplate && (
-              <p className="text-[10px] text-apptivia-ink mt-1 flex items-center gap-1">
-                <BookOpen size={10} /> Using: {selectedTemplate.name}
-              </p>
-            )}
-          </div>
-
-          <div className="flex items-center gap-3">
-            <div>
-              <label className="text-[10px] text-apptivia-carbon-400 uppercase font-medium block mb-1">Channel</label>
-              <select
-                value={outreachChannel}
-                onChange={(e) => setOutreachChannel(e.target.value)}
-                className="text-xs border border-apptivia-carbon-200 rounded-lg px-3 py-1.5 bg-white focus:outline-none focus:ring-2 focus:ring-emerald-200"
-              >
-                <option value="email">Email</option>
-                <option value="linkedin">LinkedIn</option>
-              </select>
-            </div>
-            <div>
-              <label className="text-[10px] text-apptivia-carbon-400 uppercase font-medium block mb-1">Tone</label>
-              <select
-                value={outreachTone}
-                onChange={(e) => setOutreachTone(e.target.value)}
-                className="text-xs border border-apptivia-carbon-200 rounded-lg px-3 py-1.5 bg-white focus:outline-none focus:ring-2 focus:ring-emerald-200"
-              >
-                <option value="professional">Professional</option>
-                <option value="casual">Casual</option>
-                <option value="direct">Direct</option>
-                <option value="consultative">Consultative</option>
-              </select>
-            </div>
-            <div className="flex-1" />
-            <button
-              onClick={handleGenerateOutreach}
-              disabled={outreachLoading}
-              className="px-4 py-2 bg-emerald-500 text-white rounded-lg text-xs font-semibold hover:opacity-90 transition-opacity disabled:opacity-50 flex items-center gap-2"
-            >
-              {outreachLoading ? (
-                <><RefreshCw size={12} className="animate-spin" /> Generating...</>
-              ) : (
-                <><Sparkles size={12} /> Generate Draft</>
-              )}
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* Outreach Draft — inline only for company research */}
-      {outreachDraft && !prospectResult && (
-        <OutreachDraftPanel draft={outreachDraft} tokensUsed={outreachTokens} />
       )}
 
       {/* Outreach Modal — for prospect research */}

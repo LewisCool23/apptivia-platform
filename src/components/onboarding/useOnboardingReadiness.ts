@@ -66,11 +66,21 @@ export function useOnboardingReadiness(state: WizardState): ReadinessItem[] {
       {
         key: 'market',
         label: 'Your Market',
-        description: 'ICP profile and buyer signals',
-        status:
-          state.icpConfig.target_industries.length > 0 && state.signalConfig.pain_points.length > 0
+        description: state.icpProfiles && state.icpProfiles.length > 1
+          ? `${state.icpProfiles.length} ICP profiles and buyer signals`
+          : 'ICP profile and buyer signals',
+        status: (() => {
+          // Multi-profile check
+          if (state.icpProfiles && state.icpProfiles.length > 0) {
+            return state.icpProfiles.some(
+              p => p.icp_config.target_industries.length > 0 && p.signal_config.pain_points.length > 0
+            ) ? 'complete' : 'incomplete';
+          }
+          // Single-profile fallback
+          return state.icpConfig.target_industries.length > 0 && state.signalConfig.pain_points.length > 0
             ? 'complete'
-            : 'incomplete',
+            : 'incomplete';
+        })(),
         mandatory: true,
         stepNumber: 5,
       },

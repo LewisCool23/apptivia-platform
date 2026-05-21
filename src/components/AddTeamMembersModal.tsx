@@ -4,6 +4,7 @@ import { supabase } from '../supabaseClient';
 import { useToast } from '../contexts/ToastContext';
 import { useAuth } from '../AuthContext';
 import { ROLES } from '../constants/roles';
+import { useModalBehavior } from '../hooks/useModalBehavior';
 
 interface Profile {
   id: string;
@@ -32,6 +33,7 @@ export default function AddTeamMembersModal({
   existingParticipantIds,
   onMembersAdded,
 }: AddTeamMembersModalProps) {
+  useModalBehavior(isOpen, onClose);
   const toast = useToast();
   const { user, role } = useAuth();
   const [profiles, setProfiles] = useState<Profile[]>([]);

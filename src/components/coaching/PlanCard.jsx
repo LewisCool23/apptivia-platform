@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { Target, Edit, Trash2, UserPlus, Users, TrendingUp, TrendingDown, Mail, Share2 } from 'lucide-react';
+import { Target, Edit, Trash2, UserPlus, Users, TrendingUp, TrendingDown, Mail } from 'lucide-react';
 import { statusConfig } from './planStatusConfig';
 import { estimateSkillsetXp } from '../../constants/skillsets';
 import { parseEnrichedContent } from '../../utils/emailTemplates';
@@ -19,7 +19,6 @@ export default function PlanCard({
   onAssign,
   onDelete,
   onShare,
-  onSnapshot,
 }) {
   const planStatus = getPlanStatus(plan);
   const isOverdue = plan.date_range_end && new Date() > new Date(plan.date_range_end) && planStatus !== 'completed';
@@ -185,22 +184,13 @@ export default function PlanCard({
           </button>
         )}
         {(canCreatePlans || canManagePlans) && (
-          <>
-            <button
-              onClick={() => onSnapshot && onSnapshot(plan)}
-              className="flex items-center justify-center gap-1 px-3 py-1.5 text-xs font-semibold text-apptivia-ink border border-apptivia-carbon-300 rounded-md hover:bg-apptivia-carbon-100"
-              title="Share Snapshot"
-            >
-              <Share2 size={14} />
-            </button>
-            <button
-              onClick={() => onShare(plan)}
-              className="flex items-center justify-center gap-1 px-3 py-1.5 text-xs font-semibold text-apptivia-coral border border-apptivia-coral-tone-100 rounded-md hover:bg-apptivia-coral-tone-50"
-              title="Share via Email"
-            >
-              <Mail size={14} />
-            </button>
-          </>
+          <button
+            onClick={() => onShare(plan)}
+            className="flex items-center justify-center gap-1 px-3 py-1.5 text-xs font-semibold text-apptivia-coral border border-apptivia-coral-tone-100 rounded-md hover:bg-apptivia-coral-tone-50"
+            title="Share via Email"
+          >
+            <Mail size={14} />
+          </button>
         )}
         {canCreatePlans && (
           <button

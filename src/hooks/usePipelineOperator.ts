@@ -188,6 +188,12 @@ export function usePipelineOperator(
       let commitValue = 0, bestCaseValue = 0;
       let closingThisMonth = 0, closingThisMonthValue = 0;
 
+      // Build CEP stage-id → stage-key lookup for accurate breakdown
+      const cepIdToKey: Record<string, string> = {};
+      if (cepStages && cepStages.length > 0) {
+        cepStages.forEach(s => { cepIdToKey[s.id] = s.stage_key; });
+      }
+
       deals.forEach((d) => {
         totalValue += d.deal_value;
         weightedValue += d.deal_value * (d.probability / 100);
@@ -200,7 +206,11 @@ export function usePipelineOperator(
           closingThisMonthValue += d.deal_value;
         }
 
-        const stage = d.stage || 'discovery';
+        // Resolve stage key: prefer cep_stage_id lookup, fallback to stage text
+        let stage = d.stage || 'discovery';
+        if (d.cep_stage_id && cepIdToKey[d.cep_stage_id]) {
+          stage = cepIdToKey[d.cep_stage_id];
+        }
         if (!stageBreakdown[stage]) stageBreakdown[stage] = { count: 0, value: 0 };
         stageBreakdown[stage].count++;
         stageBreakdown[stage].value += d.deal_value;

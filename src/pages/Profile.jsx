@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useAuth } from '../AuthContext';
 import { Edit, Camera, Award, TrendingUp, Search, X, Gift, CheckCircle, AlertCircle, Loader2, Clock, Key, RefreshCw, Building2 } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import DashboardLayout from '../DashboardLayout';
 import RightFilterPanel from '../components/RightFilterPanel';
 import PageActionBar from '../components/PageActionBar';
@@ -64,12 +64,26 @@ export default function Profile() {
     role: '',
     secondary_role: '',
     team_id: '',
-    segment: ''
+    segment: '',
+    email_signature: ''
   });
   const [profileSaving, setProfileSaving] = useState(false);
   const [profileError, setProfileError] = useState('');
   const [profileSuccess, setProfileSuccess] = useState('');
-  const [activeTab, setActiveTab] = useState('profile-details');
+  const [searchParams] = useSearchParams();
+  const tabFromUrl = searchParams.get('tab');
+  const validTabIds = ['profile-details', 'skillset-progress', 'badges', 'notifications', 'integrations'];
+  const [activeTab, setActiveTab] = useState(
+    tabFromUrl && validTabIds.includes(tabFromUrl) ? tabFromUrl : 'profile-details'
+  );
+
+  // React to URL query param changes (e.g., navigating from notification panel)
+  useEffect(() => {
+    if (tabFromUrl && validTabIds.includes(tabFromUrl)) {
+      setActiveTab(tabFromUrl);
+    }
+  }, [tabFromUrl]);
+
   const [showEditProfileModal, setShowEditProfileModal] = useState(false);
   const [showChangePasswordModal, setShowChangePasswordModal] = useState(false);
   const { openPanel, addNotification, unreadCount } = useNotifications();
@@ -297,7 +311,8 @@ export default function Profile() {
       role: normalizeRole(activeProfile.role),
       secondary_role: activeProfile.secondary_role || '',
       team_id: activeProfile.team_id ? String(activeProfile.team_id) : '',
-      segment: activeProfile.segment || ''
+      segment: activeProfile.segment || '',
+      email_signature: activeProfile.email_signature || ''
     });
     setProfileError('');
     setProfileSuccess('');
@@ -318,7 +333,8 @@ export default function Profile() {
       role: normalizeRole(activeProfile.role),
       secondary_role: activeProfile.secondary_role || '',
       team_id: activeProfile.team_id ? String(activeProfile.team_id) : '',
-      segment: activeProfile.segment || ''
+      segment: activeProfile.segment || '',
+      email_signature: activeProfile.email_signature || ''
     });
     setProfileError('');
     setProfileSuccess('');
@@ -332,6 +348,7 @@ export default function Profile() {
     const payload = {
       first_name: profileForm.first_name?.trim() || null,
       last_name: profileForm.last_name?.trim() || null,
+      email_signature: profileForm.email_signature?.trim() || null,
     };
     // Only admins can edit title, department, role, team, secondary_role, segment
     if (canEditAnyProfile) {
@@ -1078,6 +1095,17 @@ export default function Profile() {
                     />
                   </div>
                 )}
+                <div className="md:col-span-2">
+                  <label className="block text-xs text-apptivia-carbon-500 mb-1">Email Signature</label>
+                  <textarea
+                    value={profileForm.email_signature}
+                    onChange={(e) => handleProfileFieldChange('email_signature', e.target.value)}
+                    className="w-full border rounded px-3 py-2 text-sm font-mono"
+                    rows={4}
+                    placeholder="Your email signature (used in outreach emails)"
+                    disabled={profileSaving}
+                  />
+                </div>
                 <div className="md:col-span-2 flex items-center justify-between">
                   <div className="text-xs">
                     {profileError && <div className="text-red-500">{profileError}</div>}

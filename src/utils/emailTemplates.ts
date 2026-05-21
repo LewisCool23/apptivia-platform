@@ -329,6 +329,160 @@ export function buildScorecardSnapshotEmailText(data: ScorecardData, options: Sc
 }
 
 // ═════════════════════════════════════════════════════════════════════
+// FULL SCORECARD EMAIL (matches PDF export layout)
+// ═════════════════════════════════════════════════════════════════════
+
+interface FullScorecardRow {
+  name: string;
+  team_name: string;
+  apptivityScore: number;
+  kpis: Record<string, { value?: number; percentage: number }>;
+}
+
+interface FullScorecardEmailData extends ScorecardData {
+  rows: FullScorecardRow[];
+  scorecardKpiKeys: string[];
+  kpiLabels?: Record<string, string>;
+}
+
+function emailScoreColor(score: number): string {
+  if (score >= 90) return EMAIL_COLORS.success;
+  if (score >= 70) return EMAIL_COLORS.coral;
+  if (score >= 50) return EMAIL_COLORS.warning;
+  return EMAIL_COLORS.error;
+}
+
+function prettifyKpiKey(k: string): string {
+  return k.replace(/_/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase());
+}
+
+export function buildFullScorecardEmailHtml(data: FullScorecardEmailData, options: ScorecardEmailOptions = {}): string {
+  const { teamAverage, totalMembers, scoreDistribution, rows, scorecardKpiKeys, kpiLabels } = data;
+  const { exactDateRange } = options;
+
+  const headerMeta = exactDateRange
+    ? `<div style="margin-top: 10px; padding: 6px 16px; background: rgba(255,255,255,0.15); border-radius: 6px; display: inline-block;">
+        <span style="font-size: 14px;">${exactDateRange.start} — ${exactDateRange.end}</span>
+      </div>`
+    : `<p style="font-size: 14px; opacity: 0.9; margin: 5px 0 0 0;">${totalMembers} Team Members</p>`;
+
+  // Stats grid
+  let bodyHtml = buildStatGrid([
+    { value: `${teamAverage}%`, label: 'Team Average', color: emailScoreColor(teamAverage) },
+    { value: `${totalMembers}`, label: 'Reps Tracked' },
+    { value: `${scoreDistribution.excellent}`, label: 'Above Target', color: EMAIL_COLORS.success },
+    { value: `${scoreDistribution.poor}`, label: 'Need Coaching', color: EMAIL_COLORS.error },
+  ]);
+
+  // Score Distribution
+  bodyHtml += `<div style="margin: 20px 0; background: #F7F5F2; padding: 15px; border-radius: 8px;">
+    <h3 style="margin: 0 0 10px 0; font-size: 16px;">Score Distribution</h3>
+    <table style="width: 100%; border-collapse: collapse;">
+      <tr>
+        <td style="width: 25%; text-align: center; padding: 8px;">
+          <div style="font-size: 20px; font-weight: bold; color: ${EMAIL_COLORS.success};">${scoreDistribution.excellent}</div>
+          <div style="font-size: 11px; color: ${EMAIL_COLORS.carbon500};">Excellent</div>
+        </td>
+        <td style="width: 25%; text-align: center; padding: 8px;">
+          <div style="font-size: 20px; font-weight: bold; color: ${EMAIL_COLORS.coral};">${scoreDistribution.good}</div>
+          <div style="font-size: 11px; color: ${EMAIL_COLORS.carbon500};">Good</div>
+        </td>
+        <td style="width: 25%; text-align: center; padding: 8px;">
+          <div style="font-size: 20px; font-weight: bold; color: ${EMAIL_COLORS.warning};">${scoreDistribution.fair}</div>
+          <div style="font-size: 11px; color: ${EMAIL_COLORS.carbon500};">Fair</div>
+        </td>
+        <td style="width: 25%; text-align: center; padding: 8px;">
+          <div style="font-size: 20px; font-weight: bold; color: ${EMAIL_COLORS.error};">${scoreDistribution.poor}</div>
+          <div style="font-size: 11px; color: ${EMAIL_COLORS.carbon500};">Needs Focus</div>
+        </td>
+      </tr>
+    </table>
+  </div>`;
+
+  // Full Rep Performance Table
+  const sortedRows = [...rows].sort((a, b) => (b.apptivityScore || 0) - (a.apptivityScore || 0));
+  const kpiHeaders = scorecardKpiKeys.map(k => {
+    const label = kpiLabels?.[k] || prettifyKpiKey(k);
+    return `<th style="padding:6px 8px;text-align:center;font-size:10px;text-transform:uppercase;letter-spacing:0.5px;color:#71717A;border-bottom:2px solid #E4E4E7;white-space:nowrap;">${label}</th>`;
+  }).join('');
+
+  const repRows = sortedRows.map((row, i) => {
+    const score = row.apptivityScore || 0;
+    const kpiCells = scorecardKpiKeys.map(k => {
+      const pct = Math.round(row.kpis?.[k]?.percentage ?? 0);
+      return `<td style="padding:6px 8px;font-size:12px;text-align:center;border-bottom:1px solid #F7F5F2;"><span style="color:${emailScoreColor(pct)};font-weight:600;">${pct}%</span></td>`;
+    }).join('');
+    return `<tr>
+      <td style="padding:6px 8px;font-size:12px;color:#71717A;border-bottom:1px solid #F7F5F2;text-align:center;">${i + 1}</td>
+      <td style="padding:6px 8px;font-size:12px;color:#3F3F46;border-bottom:1px solid #F7F5F2;font-weight:600;">${row.name || 'Unknown'}</td>
+      <td style="padding:6px 8px;font-size:12px;color:#71717A;border-bottom:1px solid #F7F5F2;">${row.team_name || '-'}</td>
+      <td style="padding:6px 8px;font-size:13px;border-bottom:1px solid #F7F5F2;text-align:center;"><strong style="color:${emailScoreColor(score)};">${score}%</strong></td>
+      ${kpiCells}
+    </tr>`;
+  }).join('');
+
+  bodyHtml += `<div style="margin: 20px 0;">
+    <h3 style="margin: 0 0 10px 0; font-size: 16px;">Rep Performance</h3>
+    <div style="overflow-x: auto;">
+      <table style="width:100%;border-collapse:collapse;min-width:500px;">
+        <thead>
+          <tr style="background:#F7F5F2;">
+            <th style="padding:6px 8px;text-align:center;font-size:10px;text-transform:uppercase;letter-spacing:0.5px;color:#71717A;border-bottom:2px solid #E4E4E7;width:30px;">#</th>
+            <th style="padding:6px 8px;text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:0.5px;color:#71717A;border-bottom:2px solid #E4E4E7;">Rep</th>
+            <th style="padding:6px 8px;text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:0.5px;color:#71717A;border-bottom:2px solid #E4E4E7;">Team</th>
+            <th style="padding:6px 8px;text-align:center;font-size:10px;text-transform:uppercase;letter-spacing:0.5px;color:#71717A;border-bottom:2px solid #E4E4E7;">Score</th>
+            ${kpiHeaders}
+          </tr>
+        </thead>
+        <tbody>${repRows}</tbody>
+      </table>
+    </div>
+  </div>`;
+
+  return buildEmailWrapper(
+    'Full Scorecard Report',
+    'Team Performance',
+    bodyHtml,
+    {
+      headerMeta,
+      notesHtml: options.notes ? options.notes.replace(/\n/g, '<br/>') : undefined,
+      ctaUrl: typeof window !== 'undefined' ? `${window.location.origin}/dashboard` : undefined,
+      ctaLabel: 'View Dashboard',
+      footerLabel: 'Apptivia Platform - Team Performance Tracking',
+    },
+  );
+}
+
+export function buildFullScorecardEmailText(data: FullScorecardEmailData, options: ScorecardEmailOptions = {}): string {
+  const { teamAverage, totalMembers, scoreDistribution, rows, scorecardKpiKeys, kpiLabels } = data;
+  const { exactDateRange } = options;
+
+  let text = `Apptivia Full Scorecard Report\n\n`;
+  if (exactDateRange) {
+    text += `${exactDateRange.start} — ${exactDateRange.end} • ${totalMembers} Team Members\n`;
+  } else {
+    text += `${totalMembers} Team Members\n`;
+  }
+  text += `Team Average: ${teamAverage}%\n\n`;
+  text += `Distribution: ${scoreDistribution.excellent} Excellent | ${scoreDistribution.good} Good | ${scoreDistribution.fair} Fair | ${scoreDistribution.poor} Needs Focus\n\n`;
+
+  text += `Rep Performance:\n`;
+  const sortedRows = [...rows].sort((a, b) => (b.apptivityScore || 0) - (a.apptivityScore || 0));
+  sortedRows.forEach((row, i) => {
+    const kpiStr = scorecardKpiKeys.map(k => {
+      const label = kpiLabels?.[k] || prettifyKpiKey(k);
+      const pct = Math.round(row.kpis?.[k]?.percentage ?? 0);
+      return `${label}: ${pct}%`;
+    }).join(' | ');
+    text += `  ${i + 1}. ${row.name || 'Unknown'} (${row.team_name || '-'}) — ${row.apptivityScore || 0}% | ${kpiStr}\n`;
+  });
+
+  if (options.notes) text += `\nNotes:\n${options.notes}\n`;
+  text += `\nGenerated on ${new Date().toLocaleDateString()}`;
+  return text;
+}
+
+// ═════════════════════════════════════════════════════════════════════
 // ACHIEVEMENT SNAPSHOT EMAIL
 // ═════════════════════════════════════════════════════════════════════
 

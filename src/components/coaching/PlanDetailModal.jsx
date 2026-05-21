@@ -5,6 +5,7 @@ import { parseEnrichedContent } from '../../utils/emailTemplates';
 import FeedbackThumb from '../shared/FeedbackThumb';
 import { scoreTextColor } from '../../constants/scoreColors';
 import { buildLabel } from '../../constants/kpiGuidance';
+import { useModalBehavior } from '../../hooks/useModalBehavior';
 
 export default function PlanDetailModal({
   plan,
@@ -23,6 +24,7 @@ export default function PlanDetailModal({
   onShare,
   onSnapshot,
 }) {
+  useModalBehavior(!!plan, onClose);
   const myStatus = getMyAssignmentStatus(plan);
   const myCfg = statusConfig[myStatus] || statusConfig.active;
   const MyStatusIcon = myCfg.icon;

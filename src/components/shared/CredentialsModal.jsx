@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
 import { X, Loader2 } from 'lucide-react';
 import { SUPPORTED_INTEGRATIONS, API_KEY_PROVIDERS } from '../../constants/integrations';
+import { useModalBehavior } from '../../hooks/useModalBehavior';
 
 export default function CredentialsModal({ providerType, onClose, onConnect, error }) {
+  useModalBehavior(!!providerType, onClose);
   const [values, setValues] = useState({});
   const [saving, setSaving] = useState(false);
 

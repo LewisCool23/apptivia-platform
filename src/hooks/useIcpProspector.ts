@@ -1,6 +1,7 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { supabase } from '../supabaseClient';
 import { engageApi } from '../utils/engageApi';
+import { backendFetch } from '../utils/backendFetch';
 
 // ---------------------------------------------------------------------------
 // Apollo headcount bucket mapping
@@ -276,7 +277,7 @@ interface IcpProspectorState {
 // ---------------------------------------------------------------------------
 const PAGE_SIZE = 10;
 
-export function useIcpProspector(organizationId: string, icpConfig: any, signalConfig?: any) {
+export function useIcpProspector(organizationId: string, icpConfig: any, signalConfig?: any, profileId?: string) {
   // Diagnose ICP config status
   const getIcpStatus = useCallback((cfg: any): IcpStatus => {
     if (!cfg) return 'no_config';
@@ -293,6 +294,9 @@ export function useIcpProspector(organizationId: string, icpConfig: any, signalC
     if (!hasDimensions) return 'no_dimensions';
     return 'ready';
   }, []);
+
+  // Resolved ICP config — may come from a specific profile or the org-level config
+  const [resolvedIcpConfig, setResolvedIcpConfig] = useState<any>(icpConfig);
 
   const [state, setState] = useState<IcpProspectorState>({
     results: [],
@@ -318,15 +322,46 @@ export function useIcpProspector(organizationId: string, icpConfig: any, signalC
     [],
   );
 
-  // Seed locations + compute ICP status when config loads
+  // When profileId is provided, fetch that profile's icp_config and use it for scoring.
+  // Falls back to the org-level icpConfig if no profile found or fetch fails.
   useEffect(() => {
-    const status = getIcpStatus(icpConfig);
+    if (!profileId || !organizationId) {
+      setResolvedIcpConfig(icpConfig);
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await backendFetch<{ ok: boolean; profiles: any[] }>(
+          '/api/engage/icp-profiles',
+          undefined,
+          'GET',
+        );
+        if (cancelled) return;
+        const profiles = res?.profiles || [];
+        const match = profiles.find((p: any) => p.id === profileId);
+        if (match?.icp_config && Object.keys(match.icp_config).length > 0) {
+          setResolvedIcpConfig(match.icp_config);
+        } else {
+          // Profile not found or has empty config — fall back to org-level
+          setResolvedIcpConfig(icpConfig);
+        }
+      } catch {
+        if (!cancelled) setResolvedIcpConfig(icpConfig);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [profileId, organizationId, icpConfig]);
+
+  // Seed locations + compute ICP status when resolved config loads
+  useEffect(() => {
+    const status = getIcpStatus(resolvedIcpConfig);
     setState(prev => ({
       ...prev,
       icpStatus: status,
-      ...(icpConfig?.icp_regions?.length ? { filters: { ...prev.filters, locations: icpConfig.icp_regions } } : {}),
+      ...(resolvedIcpConfig?.icp_regions?.length ? { filters: { ...prev.filters, locations: resolvedIcpConfig.icp_regions } } : {}),
     }));
-  }, [icpConfig, getIcpStatus]);
+  }, [resolvedIcpConfig, getIcpStatus]);
 
   // Load existing accounts to flag "already added" companies
   const loadExistingAccounts = useCallback(async () => {
@@ -379,15 +414,15 @@ export function useIcpProspector(organizationId: string, icpConfig: any, signalC
   const buildApolloFilters = useCallback(
     (page: number, currentFilters: IcpProspectorFilters) => {
       const f: Record<string, any> = { page, per_page: PAGE_SIZE };
-      if (icpConfig) {
+      if (resolvedIcpConfig) {
         const ranges = mapHeadcountToApolloRanges(
-          icpConfig.headcount_min || 0,
-          icpConfig.headcount_max || 99999,
+          resolvedIcpConfig.headcount_min || 0,
+          resolvedIcpConfig.headcount_max || 99999,
         );
         if (ranges.length) f.employee_ranges = ranges;
         // Translate ICP industries to Apollo taxonomy terms for precise filtering
-        if (currentFilters.useIndustryKeywords && icpConfig.target_industries?.length) {
-          const apolloTerms = expandToApolloTerms(icpConfig.target_industries as string[]);
+        if (currentFilters.useIndustryKeywords && resolvedIcpConfig.target_industries?.length) {
+          const apolloTerms = expandToApolloTerms(resolvedIcpConfig.target_industries as string[]);
           f.keyword_tags = currentFilters.keywords
             ? [currentFilters.keywords, ...apolloTerms].slice(0, 5)
             : apolloTerms.slice(0, 5);
@@ -399,11 +434,11 @@ export function useIcpProspector(organizationId: string, icpConfig: any, signalC
       }
       if (currentFilters.locations?.length) f.locations = currentFilters.locations;
       // Pass exclusion list so the edge function can post-filter
-      const excludeList = signalConfig?.exclude_industries || icpConfig?.exclude_industries || [];
+      const excludeList = signalConfig?.exclude_industries || resolvedIcpConfig?.exclude_industries || [];
       if (excludeList.length) f.exclude_industries = excludeList;
       return f;
     },
-    [icpConfig, signalConfig, expandToApolloTerms],
+    [resolvedIcpConfig, signalConfig, expandToApolloTerms],
   );
 
   const scoreResults = useCallback(
@@ -411,11 +446,11 @@ export function useIcpProspector(organizationId: string, icpConfig: any, signalC
       const scores: Record<string, number | null> = {};
       companies.forEach(c => {
         const key = c.primary_domain || c.name;
-        scores[key] = computeIcpScoreForApolloCompany(c, icpConfig);
+        scores[key] = computeIcpScoreForApolloCompany(c, resolvedIcpConfig);
       });
       return scores;
     },
-    [icpConfig],
+    [resolvedIcpConfig],
   );
 
   const sortByScore = useCallback(
@@ -432,7 +467,7 @@ export function useIcpProspector(organizationId: string, icpConfig: any, signalC
   // founded_year, and keywords — then re-score and re-sort results.
   const enrichInBackground = useCallback(async (companies: ApolloCompany[]) => {
     const domains = companies.filter(c => c.primary_domain).map(c => c.primary_domain as string);
-    if (!domains.length || !icpConfig) return;
+    if (!domains.length || !resolvedIcpConfig) return;
     try {
       const resp = await engageApi.batchEnrichCompanies(domains);
       const enrichedMap: Record<string, any> = {};
@@ -456,7 +491,7 @@ export function useIcpProspector(organizationId: string, icpConfig: any, signalC
         const newScores: Record<string, number | null> = {};
         updated.forEach(c => {
           const key = c.primary_domain || c.name;
-          newScores[key] = computeIcpScoreForApolloCompany(c, icpConfig);
+          newScores[key] = computeIcpScoreForApolloCompany(c, resolvedIcpConfig);
         });
         // Filter out companies with 0 or null ICP Fit after re-scoring
         const passing = updated.filter(c => {
@@ -468,7 +503,7 @@ export function useIcpProspector(organizationId: string, icpConfig: any, signalC
     } catch (err) {
       console.warn('[ICP Prospector] Background enrichment failed:', err);
     }
-  }, [icpConfig, sortByScore]);
+  }, [resolvedIcpConfig, sortByScore]);
 
   // Fresh search (page 1, replaces results)
   const search = useCallback(
@@ -477,7 +512,7 @@ export function useIcpProspector(organizationId: string, icpConfig: any, signalC
         ? { ...state.filters, ...overrideFilters }
         : state.filters;
       // Validate ICP config before searching
-      const status = getIcpStatus(icpConfig);
+      const status = getIcpStatus(resolvedIcpConfig);
       if (status === 'no_config') {
         patch({ loading: false, error: 'ICP profile not configured. Go to Org Settings → ICP to set up your Ideal Customer Profile.', icpStatus: status });
         return;

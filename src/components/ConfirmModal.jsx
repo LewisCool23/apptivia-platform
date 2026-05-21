@@ -1,5 +1,6 @@
 import React from 'react';
 import { X, AlertTriangle, Trash2, CheckCircle, XCircle } from 'lucide-react';
+import { useModalBehavior } from '../hooks/useModalBehavior';
 
 /**
  * Reusable confirmation modal styled for Apptivia
@@ -25,6 +26,7 @@ export default function ConfirmModal({
   variant = 'danger',
   isLoading = false
 }) {
+  useModalBehavior(isOpen, onClose);
   if (!isOpen) return null;
 
   const variantConfig = {

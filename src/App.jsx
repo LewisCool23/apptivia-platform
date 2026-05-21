@@ -10,6 +10,7 @@ import ProtectedRoute from './ProtectedRoute';
 import { supabaseConfigMissing } from './supabaseClient';
 import ErrorBoundary, { PageErrorBoundary } from './components/ErrorBoundary';
 import DealCelebration from './components/DealCelebration';
+import CelebrationModal from './components/CelebrationModal';
 
 // ── Eagerly-loaded (small, needed immediately) ──────────────────────────────
 import LandingPage from './pages/LandingPage';
@@ -154,6 +155,7 @@ function App() {
             <ErrorBoundary>
               <AppRoutes />
               <DealCelebration />
+              <CelebrationModal />
             </ErrorBoundary>
           </NotificationProvider>
         </AuthProvider>

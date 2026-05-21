@@ -1,6 +1,8 @@
 import React from 'react';
+import { useModalBehavior } from '../../hooks/useModalBehavior';
 
 export default function DisconnectConfirmModal({ isOpen, onClose, onConfirm }) {
+  useModalBehavior(isOpen, onClose);
   if (!isOpen) return null;
 
   return (

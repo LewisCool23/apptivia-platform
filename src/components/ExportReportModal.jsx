@@ -1,5 +1,6 @@
 import React from 'react';
 import { X, FileSpreadsheet, FileText } from 'lucide-react';
+import { useModalBehavior } from '../hooks/useModalBehavior';
 
 /**
  * ExportReportModal — Prompts user to choose between CSV and PDF export formats.
@@ -11,6 +12,7 @@ import { X, FileSpreadsheet, FileText } from 'lucide-react';
  * @param {string}   [props.title]       - Optional title override
  */
 export default function ExportReportModal({ isOpen, onClose, onSelectFormat, title = 'Export Report' }) {
+  useModalBehavior(isOpen, onClose);
   if (!isOpen) return null;
 
   const options = [

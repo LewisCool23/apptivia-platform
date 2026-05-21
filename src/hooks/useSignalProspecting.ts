@@ -865,6 +865,30 @@ export function useSignalProspecting(organizationId: string, userId?: string) {
   const fetchOrgIcp = useCallback(async () => {
     if (!organizationId) return;
     try {
+      // Step 1: Try to load ICP config from engage_icp_profiles (new multi-profile system)
+      let profileIcpConfig: any = null;
+      let profileSignalConfig: any = null;
+      try {
+        const profileRes = await backendFetch<{ ok: boolean; profiles: any[] }>(
+          '/api/engage/icp-profiles',
+          undefined,
+          'GET',
+        );
+        const profiles = profileRes?.profiles || [];
+        if (profiles.length > 0) {
+          const defaultProfile = profiles.find((p: any) => p.is_default) || profiles[0];
+          if (defaultProfile?.icp_config && Object.keys(defaultProfile.icp_config).length > 0) {
+            profileIcpConfig = defaultProfile.icp_config;
+          }
+          if (defaultProfile?.signal_config && Object.keys(defaultProfile.signal_config).length > 0) {
+            profileSignalConfig = defaultProfile.signal_config;
+          }
+        }
+      } catch {
+        // ICP profiles endpoint not available or failed — fall back to org-level
+      }
+
+      // Step 2: Always fetch org-level data for scan timing + fallback config
       const { data } = await supabase
         .from('organizations')
         .select('icp_config, signal_config, last_signal_scan_at')
@@ -875,58 +899,60 @@ export function useSignalProspecting(organizationId: string, userId?: string) {
         const updates: Partial<SignalState> = {};
         let mergedScanConfig = { ...prev.scanConfig };
 
+        // Use profile ICP config if available, otherwise fall back to org-level
+        const rawIcpConfig = profileIcpConfig
+          || (data?.icp_config
+            ? (typeof data.icp_config === 'string' ? JSON.parse(data.icp_config) : data.icp_config)
+            : null);
+
         // Process ICP config
-        if (data?.icp_config) {
-          const cfg = typeof data.icp_config === 'string'
-            ? JSON.parse(data.icp_config)
-            : data.icp_config;
-          updates.orgIcpConfig = cfg;
-          updates.icpEnabled = cfg.enabled ?? false;
+        if (rawIcpConfig) {
+          updates.orgIcpConfig = rawIcpConfig;
+          updates.icpEnabled = rawIcpConfig.enabled ?? false;
           mergedScanConfig = {
             ...mergedScanConfig,
-            icp_industries: cfg.target_industries?.length > 0
-              ? cfg.target_industries
+            icp_industries: rawIcpConfig.target_industries?.length > 0
+              ? rawIcpConfig.target_industries
               : prev.scanConfig.icp_industries,
-            icp_employee_range: cfg.headcount_min != null && cfg.headcount_max != null
-              ? `${cfg.headcount_min}-${cfg.headcount_max}`
+            icp_employee_range: rawIcpConfig.headcount_min != null && rawIcpConfig.headcount_max != null
+              ? `${rawIcpConfig.headcount_min}-${rawIcpConfig.headcount_max}`
               : prev.scanConfig.icp_employee_range,
-            tech_stack_positive: cfg.target_technologies?.length > 0
-              ? cfg.target_technologies
+            tech_stack_positive: rawIcpConfig.target_technologies?.length > 0
+              ? rawIcpConfig.target_technologies
               : prev.scanConfig.tech_stack_positive,
           };
         }
 
-        // Process signal config
-        const sigCfg = data?.signal_config
-          ? (typeof data.signal_config === 'string'
-              ? JSON.parse(data.signal_config)
-              : data.signal_config)
-          : null;
+        // Use profile signal config if available, otherwise fall back to org-level
+        const rawSignalConfig = profileSignalConfig
+          || (data?.signal_config
+            ? (typeof data.signal_config === 'string' ? JSON.parse(data.signal_config) : data.signal_config)
+            : null);
 
-        updates.orgSignalConfig = sigCfg;
-        updates.hasOrgSignalConfig = !!(sigCfg && (
-          (sigCfg.pain_points?.length ?? 0) > 0 ||
-          (sigCfg.solution_keywords?.length ?? 0) > 0 ||
-          (sigCfg.job_titles_to_track?.length ?? 0) > 0 ||
-          (sigCfg.competitors?.length ?? 0) > 0 ||
-          (sigCfg.tech_stack_churning?.length ?? 0) > 0
+        updates.orgSignalConfig = rawSignalConfig;
+        updates.hasOrgSignalConfig = !!(rawSignalConfig && (
+          (rawSignalConfig.pain_points?.length ?? 0) > 0 ||
+          (rawSignalConfig.solution_keywords?.length ?? 0) > 0 ||
+          (rawSignalConfig.job_titles_to_track?.length ?? 0) > 0 ||
+          (rawSignalConfig.competitors?.length ?? 0) > 0 ||
+          (rawSignalConfig.tech_stack_churning?.length ?? 0) > 0
         ));
 
-        if (sigCfg) {
+        if (rawSignalConfig) {
           mergedScanConfig = {
             ...mergedScanConfig,
-            pain_points: sigCfg.pain_points?.length > 0 ? sigCfg.pain_points : prev.scanConfig.pain_points,
-            solution_keywords: sigCfg.solution_keywords?.length > 0 ? sigCfg.solution_keywords : prev.scanConfig.solution_keywords,
-            job_titles_to_track: sigCfg.job_titles_to_track?.length > 0 ? sigCfg.job_titles_to_track : prev.scanConfig.job_titles_to_track,
-            competitors: sigCfg.competitors?.length > 0 ? sigCfg.competitors : prev.scanConfig.competitors,
-            tech_stack_churning: sigCfg.tech_stack_churning?.length > 0 ? sigCfg.tech_stack_churning : prev.scanConfig.tech_stack_churning,
-            exclude_industries: sigCfg.exclude_industries || [],
+            pain_points: rawSignalConfig.pain_points?.length > 0 ? rawSignalConfig.pain_points : prev.scanConfig.pain_points,
+            solution_keywords: rawSignalConfig.solution_keywords?.length > 0 ? rawSignalConfig.solution_keywords : prev.scanConfig.solution_keywords,
+            job_titles_to_track: rawSignalConfig.job_titles_to_track?.length > 0 ? rawSignalConfig.job_titles_to_track : prev.scanConfig.job_titles_to_track,
+            competitors: rawSignalConfig.competitors?.length > 0 ? rawSignalConfig.competitors : prev.scanConfig.competitors,
+            tech_stack_churning: rawSignalConfig.tech_stack_churning?.length > 0 ? rawSignalConfig.tech_stack_churning : prev.scanConfig.tech_stack_churning,
+            exclude_industries: rawSignalConfig.exclude_industries || [],
           };
         }
 
         updates.scanConfig = mergedScanConfig;
 
-        // Scan timing
+        // Scan timing (always from org-level)
         if (data?.last_signal_scan_at) {
           const lastScan = new Date(data.last_signal_scan_at);
           const nextScan = new Date(lastScan.getTime() + 7 * 24 * 60 * 60 * 1000);

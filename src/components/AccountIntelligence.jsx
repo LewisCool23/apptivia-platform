@@ -4,11 +4,16 @@ import {
   ChevronDown, ChevronUp, Plus, Edit3, Trash2, Eye, AlertTriangle,
   Globe, Mail, Linkedin, DollarSign, BarChart3, Filter,
   User, Star, X, ArrowRight, Briefcase, MapPin, Zap, Crown,
-  Phone, Loader, CheckCircle, Search, UserPlus
+  Phone, Loader, CheckCircle, Search, UserPlus, ExternalLink, Calendar, Link2
 } from 'lucide-react';
 import { useAccountIntelligence } from '../hooks/useAccountIntelligence';
 import { supabase } from '../supabaseClient';
+import { backendFetch } from '../utils/backendFetch';
 import SearchWithHistory from './SearchWithHistory';
+import CreateDealModal from './CreateDealModal';
+import ScheduleMeetingModal from './ScheduleMeetingModal';
+import AccountContactsModal from './AccountContactsModal';
+import { useModalBehavior } from '../hooks/useModalBehavior';
 
 // ── ICP Fit Scoring ────────────────────────────────────────
 // Computes a 0–100 ICP fit score for an account against the org's configured criteria.
@@ -84,17 +89,41 @@ function useIcpConfig(organizationId) {
   const [icpConfig, setIcpConfig] = useState(null);
   useEffect(() => {
     if (!organizationId) return;
-    supabase
-      .from('organizations')
-      .select('icp_config')
-      .eq('id', organizationId)
-      .single()
-      .then(({ data }) => {
-        if (data?.icp_config) {
+    let cancelled = false;
+
+    (async () => {
+      // Step 1: Try to load from ICP profiles (new multi-profile system)
+      try {
+        const res = await backendFetch('/api/engage/icp-profiles', undefined, 'GET');
+        const profiles = res?.profiles || [];
+        if (profiles.length > 0) {
+          const defaultProfile = profiles.find(p => p.is_default) || profiles[0];
+          if (defaultProfile?.icp_config && Object.keys(defaultProfile.icp_config).length > 0) {
+            if (!cancelled) setIcpConfig(defaultProfile.icp_config);
+            return;
+          }
+        }
+      } catch {
+        // ICP profiles endpoint not available or failed — fall back to org-level
+      }
+
+      // Step 2: Fall back to org-level icp_config
+      try {
+        const { data } = await supabase
+          .from('organizations')
+          .select('icp_config')
+          .eq('id', organizationId)
+          .single();
+        if (!cancelled && data?.icp_config) {
           const c = typeof data.icp_config === 'string' ? JSON.parse(data.icp_config) : data.icp_config;
           setIcpConfig(c);
         }
-      });
+      } catch {
+        // Non-critical
+      }
+    })();
+
+    return () => { cancelled = true; };
   }, [organizationId]);
   return icpConfig;
 }
@@ -144,6 +173,42 @@ function ScoreBadge({ score, size = 'sm' }) {
   );
 }
 
+// ── Collapsible Section (reusable) ────────────────────────
+
+function CollapsibleSection({ title, icon: Icon, iconColor, count, defaultOpen = true, badge, actions, children, className }) {
+  const [open, setOpen] = useState(defaultOpen);
+  return (
+    <div className={`bg-white rounded-lg border border-apptivia-carbon-100 overflow-hidden ${className || ''}`}>
+      <div className="px-5 py-3 border-b border-apptivia-carbon-100 flex items-center justify-between cursor-pointer hover:bg-apptivia-paper/30 transition-colors" onClick={() => setOpen(!open)}>
+        <div className="flex items-center gap-2">
+          {Icon && <Icon size={14} className={iconColor || 'text-apptivia-carbon-500'} />}
+          <span className="text-sm font-bold text-apptivia-ink">{title}</span>
+          {count != null && <span className="text-[10px] bg-apptivia-carbon-100 text-apptivia-carbon-600 px-1.5 py-0.5 rounded-full font-medium">{count}</span>}
+          {badge}
+        </div>
+        <div className="flex items-center gap-2" onClick={e => e.stopPropagation()}>
+          {actions}
+          <button onClick={() => setOpen(!open)} className="p-0.5">
+            {open ? <ChevronUp size={14} className="text-apptivia-carbon-400" /> : <ChevronDown size={14} className="text-apptivia-carbon-400" />}
+          </button>
+        </div>
+      </div>
+      {open && children}
+    </div>
+  );
+}
+
+// ── Activity Filter Constants ─────────────────────────────
+
+const ACTIVITY_CATEGORIES = [
+  { key: 'all', label: 'All' },
+  { key: 'meetings', label: 'Meetings', types: ['meeting.linked', 'meeting.completed', 'meeting.scheduled'] },
+  { key: 'deals', label: 'Deals', types: ['deal.created', 'deal.linked', 'deal.stage_changed', 'deal.activity'] },
+  { key: 'contacts', label: 'Contacts', types: ['contact.added', 'contact.promoted', 'buying_committee.changed'] },
+  { key: 'signals', label: 'Signals', types: ['signal'] },
+  { key: 'outreach', label: 'Outreach', types: ['outreach'] },
+];
+
 // ── Summary Cards ────────────────────────────────────────
 
 function SummaryCards({ summary }) {
@@ -173,8 +238,9 @@ function SummaryCards({ summary }) {
 
 // ── Buying Committee Panel ───────────────────────────────
 
-function BuyingCommitteePanel({ committee, onUpdate, onFindContacts }) {
+function BuyingCommitteePanel({ committee, onUpdate, onFindContacts, onEmailContact, onViewBrief }) {
   const [adding, setAdding] = useState(false);
+  const [collapsed, setCollapsed] = useState(false);
   const [newMember, setNewMember] = useState({ role: 'influencer', name: '', title: '', influence_level: 'medium', email: '' });
 
   const handleAdd = () => {
@@ -190,13 +256,14 @@ function BuyingCommitteePanel({ committee, onUpdate, onFindContacts }) {
 
   return (
     <div className="bg-white rounded-lg border border-apptivia-carbon-100 overflow-hidden">
-      <div className="px-5 py-3 border-b border-apptivia-carbon-100 flex items-center justify-between bg-apptivia-paper/50">
+      <div className="px-5 py-3 border-b border-apptivia-carbon-100 flex items-center justify-between bg-apptivia-paper/50 cursor-pointer" onClick={() => setCollapsed(!collapsed)}>
         <div className="flex items-center gap-2">
           <Users size={14} className="text-apptivia-carbon-500" />
           <span className="text-sm font-bold text-apptivia-ink">Buying Committee</span>
           <span className="text-[10px] text-apptivia-carbon-400">({committee.length})</span>
+          {collapsed ? <ChevronDown size={14} className="text-apptivia-carbon-400" /> : <ChevronUp size={14} className="text-apptivia-carbon-400" />}
         </div>
-        <div className="flex items-center gap-1.5">
+        <div className="flex items-center gap-1.5" onClick={e => e.stopPropagation()}>
           {onFindContacts && (
             <button onClick={onFindContacts}
               className="flex items-center gap-1 px-2.5 py-1 bg-apptivia-paper text-apptivia-carbon-600 rounded-lg text-[10px] font-medium hover:bg-apptivia-carbon-100 transition-colors">
@@ -210,7 +277,7 @@ function BuyingCommitteePanel({ committee, onUpdate, onFindContacts }) {
         </div>
       </div>
 
-      <div className="divide-y divide-gray-50">
+      {!collapsed && <div className="divide-y divide-gray-50">
         {committee.length === 0 && !adding && (
           <div className="p-6 text-center">
             <Users size={20} className="text-apptivia-carbon-300 mx-auto mb-2" />
@@ -240,9 +307,21 @@ function BuyingCommitteePanel({ committee, onUpdate, onFindContacts }) {
                   </div>
                 </div>
               </div>
-              <button onClick={() => handleRemove(i)} className="text-apptivia-carbon-400 hover:text-red-500 transition-colors">
-                <Trash2 size={12} />
-              </button>
+              <div className="flex items-center gap-1">
+                {member.email && onEmailContact && (
+                  <button onClick={() => onEmailContact(member)}
+                    className="p-1 rounded text-apptivia-coral hover:bg-apptivia-coral-tone-50 transition-colors"
+                    title={`Email ${member.email}`}><Mail size={11} /></button>
+                )}
+                {onViewBrief && (
+                  <button onClick={() => onViewBrief(member)}
+                    className="p-1 rounded text-apptivia-ink hover:text-apptivia-coral hover:bg-apptivia-paper transition-colors"
+                    title="View Brief"><Eye size={11} /></button>
+                )}
+                <button onClick={() => handleRemove(i)} className="p-1 rounded text-apptivia-carbon-300 hover:text-red-500 transition-colors">
+                  <Trash2 size={11} />
+                </button>
+              </div>
             </div>
           );
         })}
@@ -288,7 +367,7 @@ function BuyingCommitteePanel({ committee, onUpdate, onFindContacts }) {
             </div>
           </div>
         )}
-      </div>
+      </div>}
     </div>
   );
 }
@@ -384,14 +463,65 @@ function AccountCard({ account, onSelect, icpConfig, onNavigateDiscover }) {
 
 // ── Account Detail View ──────────────────────────────────
 
-function AccountDetail({ account, onBack, onUpdate, onAnalyze, analyzing, onUpdateCommittee, onDelete, icpConfig, organizationId, userId, onNavigateDiscover }) {
+function AccountDetail({ account, onBack, onUpdate, onAnalyze, analyzing, onUpdateCommittee, onDelete, icpConfig, organizationId, userId, onNavigateDiscover, onEmailContact, onViewBrief, fetchCompanyResearch, fetchAccountActivity, accountHook }) {
   const icpScore = useMemo(() => computeIcpScore(account, icpConfig), [account, icpConfig]);
   const tier = TIER_STYLES[account.tier] || TIER_STYLES.untiered;
   const status = STATUS_STYLES[account.status] || STATUS_STYLES.active;
   const [showCreateDeal, setShowCreateDeal] = useState(false);
-  const [showContacts, setShowContacts] = useState(false);
-  const [analysisMsg, setAnalysisMsg] = useState(null); // { type: 'success'|'error', text }
-  const signalContacts = account.metadata?.signal_contacts || [];
+  const [showScheduleMeeting, setShowScheduleMeeting] = useState(false);
+  const [showContactsModal, setShowContactsModal] = useState(false);
+  const [showActivity, setShowActivity] = useState(true);
+  const [activityFilter, setActivityFilter] = useState('all');
+  const [analysisMsg, setAnalysisMsg] = useState(null);
+  const [companyResearch, setCompanyResearch] = useState(null);
+  const [activityTimeline, setActivityTimeline] = useState([]);
+  const [loadingResearch, setLoadingResearch] = useState(false);
+  const [loadingActivity, setLoadingActivity] = useState(false);
+  const [autoResearchTriggered, setAutoResearchTriggered] = useState(false);
+
+  // Destructure hook data for contacts/meetings/deals
+  const {
+    accountContacts = [], accountMeetings = [], accountDeals = [],
+    loadingContacts = false, loadingMeetings = false, loadingDeals = false,
+    fetchAccountContacts, fetchAccountMeetings, fetchAccountDeals,
+    addAccountContact, updateAccountContact, removeAccountContact,
+    triggerAutoResearch,
+  } = accountHook || {};
+
+  // Load all data on account change
+  useEffect(() => {
+    if (!account?.id) return;
+    // Company research
+    if (fetchCompanyResearch) {
+      setLoadingResearch(true);
+      fetchCompanyResearch(account.account_name, account.company_id, account.domain).then(r => {
+        setCompanyResearch(r);
+        setLoadingResearch(false);
+        // Auto-trigger research if none exists
+        if (!r && triggerAutoResearch && !autoResearchTriggered) {
+          setAutoResearchTriggered(true);
+          setLoadingResearch(true);
+          triggerAutoResearch(account.id).then(() => {
+            // Re-fetch from DB to get the properly structured report
+            return fetchCompanyResearch(account.account_name, account.company_id, account.domain);
+          }).then(report => {
+            if (report) setCompanyResearch(report);
+            setLoadingResearch(false);
+            if (!account.ai_summary && onAnalyze) onAnalyze(account.id).catch(() => {});
+          }).catch(() => setLoadingResearch(false));
+        }
+      }).catch(() => setLoadingResearch(false));
+    }
+    // Activity
+    if (fetchAccountActivity) {
+      setLoadingActivity(true);
+      fetchAccountActivity(account.account_name, 90).then(events => { setActivityTimeline(events); setLoadingActivity(false); }).catch(() => setLoadingActivity(false));
+    }
+    // Contacts, Meetings, Deals
+    if (fetchAccountContacts) fetchAccountContacts(account.id);
+    if (fetchAccountMeetings) fetchAccountMeetings(account.id);
+    if (fetchAccountDeals) fetchAccountDeals(account.id);
+  }, [account?.id, account?.account_name, fetchCompanyResearch, fetchAccountActivity, fetchAccountContacts, fetchAccountMeetings, fetchAccountDeals]);
 
   const handleAnalyze = async () => {
     setAnalysisMsg({ type: 'info', text: 'Analyzing account with AI...' });
@@ -403,6 +533,22 @@ function AccountDetail({ account, onBack, onUpdate, onAnalyze, analyzing, onUpda
       setAnalysisMsg({ type: 'error', text: `Analysis failed: ${err.message || 'Unknown error'}` });
     }
   };
+
+  // Derived: split contacts into committee vs general
+  const committeeContacts = accountContacts.filter(c => c.is_buying_committee);
+  const generalContacts = accountContacts.filter(c => !c.is_buying_committee);
+
+  // Derived: filter activity by category
+  const filteredActivity = useMemo(() => {
+    if (activityFilter === 'all') return activityTimeline;
+    const cat = ACTIVITY_CATEGORIES.find(c => c.key === activityFilter);
+    if (!cat?.types) return activityTimeline;
+    return activityTimeline.filter(e => cat.types.some(t => (e.event_type || '').startsWith(t)));
+  }, [activityTimeline, activityFilter]);
+
+  // Website/LinkedIn URLs
+  const websiteUrl = account.website_url || (account.domain ? `https://${account.domain}` : null);
+  const linkedinUrl = account.linkedin_url || null;
 
   return (
     <div className="space-y-4">
@@ -423,29 +569,56 @@ function AccountDetail({ account, onBack, onUpdate, onAnalyze, analyzing, onUpda
         </div>
       )}
 
-      {/* Header */}
+      {/* ═══ Header Panel (consolidated) ═══ */}
       <div className="bg-white rounded-lg border border-apptivia-carbon-100 p-5">
         <button onClick={onBack} className="text-xs text-apptivia-coral hover:text-apptivia-coral font-medium flex items-center gap-1 mb-3">
           ← Back to accounts
         </button>
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-12 h-12 bg-apptivia-ink rounded-lg flex items-center justify-center">
+        <div className="flex items-start justify-between">
+          <div className="flex items-start gap-3">
+            <div className="w-12 h-12 bg-apptivia-ink rounded-lg flex items-center justify-center flex-shrink-0">
               <Building2 size={22} className="text-white" />
             </div>
-            <div>
-              <h2 className="text-lg font-bold text-apptivia-ink">{account.account_name}</h2>
-              <div className="flex items-center gap-3 mt-0.5 flex-wrap">
-                <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-semibold ${tier.bg} ${tier.text}`}>
-                  <tier.icon size={10} /> {tier.label}
-                </span>
-                <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold ${status.bg} ${status.text}`}>{status.label}</span>
-                {account.domain && <span className="text-xs text-apptivia-carbon-400 flex items-center gap-1"><Globe size={10} /> {account.domain}</span>}
-                {account.industry && <span className="text-xs text-apptivia-carbon-400 flex items-center gap-1"><Briefcase size={10} /> {account.industry}</span>}
+            <div className="space-y-2">
+              <div>
+                <h2 className="text-lg font-bold text-apptivia-ink">{account.account_name}</h2>
+                <div className="flex items-center gap-2 mt-0.5">
+                  <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold ${status.bg} ${status.text}`}>{status.label}</span>
+                  {account.industry && <span className="text-xs text-apptivia-carbon-400 flex items-center gap-1"><Briefcase size={10} /> {account.industry}</span>}
+                  {account.employee_count && <span className="text-xs text-apptivia-carbon-400">{account.employee_count.toLocaleString()} employees</span>}
+                </div>
+              </div>
+              {/* Tier selector (inline) */}
+              <div className="flex items-center gap-1.5">
+                {Object.entries(TIER_STYLES).map(([key, style]) => (
+                  <button key={key} onClick={() => onUpdate(account.id, { tier: key })}
+                    className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-medium transition-all ${
+                      account.tier === key
+                        ? `${style.bg} ${style.text} ring-2 ring-offset-1 ring-current`
+                        : 'bg-apptivia-paper text-apptivia-carbon-400 hover:bg-apptivia-carbon-100'
+                    }`}>
+                    <style.icon size={10} /> {style.label}
+                  </button>
+                ))}
+              </div>
+              {/* Links */}
+              <div className="flex items-center gap-3">
+                {websiteUrl && (
+                  <a href={websiteUrl} target="_blank" rel="noopener noreferrer"
+                    className="text-xs text-apptivia-coral hover:text-apptivia-coral-tone-700 flex items-center gap-1 font-medium">
+                    <Globe size={11} /> {account.domain || 'Website'} <ExternalLink size={9} />
+                  </a>
+                )}
+                {linkedinUrl && (
+                  <a href={linkedinUrl} target="_blank" rel="noopener noreferrer"
+                    className="text-xs text-blue-600 hover:text-blue-700 flex items-center gap-1 font-medium">
+                    <Linkedin size={11} /> LinkedIn <ExternalLink size={9} />
+                  </a>
+                )}
               </div>
             </div>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-shrink-0">
             {onNavigateDiscover && (
               <>
                 <button onClick={() => onNavigateDiscover({ mode: 'company', query: account.domain || account.account_name })}
@@ -458,10 +631,6 @@ function AccountDetail({ account, onBack, onUpdate, onAnalyze, analyzing, onUpda
                 </button>
               </>
             )}
-            <button onClick={() => setShowCreateDeal(true)}
-              className="flex items-center gap-1.5 px-3 py-2 bg-emerald-50 text-emerald-700 rounded-lg text-xs font-medium hover:bg-emerald-100 transition-all">
-              <DollarSign size={14} /> Create Deal
-            </button>
             <button
               onClick={() => {
                 if (window.confirm(`Delete account "${account.account_name}"? This cannot be undone.`)) {
@@ -470,7 +639,7 @@ function AccountDetail({ account, onBack, onUpdate, onAnalyze, analyzing, onUpda
               }}
               className="flex items-center gap-1.5 px-3 py-2 text-red-600 bg-red-50 rounded-lg text-xs font-medium hover:bg-red-100 transition-all"
             >
-              <Trash2 size={14} /> Delete
+              <Trash2 size={14} />
             </button>
             <button onClick={handleAnalyze} disabled={analyzing}
               className="flex items-center gap-1.5 px-4 py-2 bg-gradient-to-r from-orange-500 to-amber-500 text-white rounded-lg text-xs font-semibold hover:from-orange-600 hover:to-amber-600 disabled:opacity-50 transition-all shadow-sm">
@@ -478,321 +647,476 @@ function AccountDetail({ account, onBack, onUpdate, onAnalyze, analyzing, onUpda
               {analyzing ? 'Analyzing...' : 'AI Analysis'}
             </button>
           </div>
-          <CreateDealModal
-            isOpen={showCreateDeal}
-            onClose={() => setShowCreateDeal(false)}
-            account={account}
-            organizationId={organizationId}
-            userId={userId}
-          />
         </div>
       </div>
 
-      {/* Scores */}
-      <div className={`grid gap-3 ${icpScore !== null ? 'grid-cols-4' : 'grid-cols-3'}`}>
-        {[
-          { label: 'Account Score', value: account.account_score, textColor: 'text-apptivia-ink', barColor: 'bg-apptivia-ink' },
-          { label: 'Intent Score', value: account.intent_score, textColor: 'text-amber-600', barColor: 'bg-amber-500' },
-          { label: 'Engagement Score', value: account.engagement_score, textColor: 'text-emerald-600', barColor: 'bg-emerald-500' },
-        ].map((s) => (
-          <div key={s.label} className="bg-white rounded-lg border border-apptivia-carbon-100 p-4 text-center">
-            <span className="text-[10px] text-apptivia-carbon-400 block mb-1">{s.label}</span>
-            <div className={`text-2xl font-bold ${s.textColor}`}>{s.value}</div>
-            <div className="w-full bg-apptivia-carbon-100 rounded-full h-1.5 mt-2">
-              <div className={`h-1.5 rounded-full ${s.barColor}`} style={{ width: `${s.value}%` }} />
+      {/* ═══ Account Scores & ABM Insights (merged) ═══ */}
+      <CollapsibleSection title="Account Scores & Insights" icon={BarChart3} iconColor="text-apptivia-ink">
+        <div className="p-4 space-y-4">
+          {/* Primary Scores */}
+          <div className={`grid gap-3 ${icpScore !== null ? 'grid-cols-4' : 'grid-cols-3'}`}>
+            {[
+              { label: 'Account Score', value: account.account_score, textColor: 'text-apptivia-ink', barColor: 'bg-apptivia-ink' },
+              { label: 'Intent Score', value: account.intent_score, textColor: 'text-amber-600', barColor: 'bg-amber-500' },
+              { label: 'Engagement Score', value: account.engagement_score, textColor: 'text-emerald-600', barColor: 'bg-emerald-500' },
+            ].map((s) => (
+              <div key={s.label} className="bg-apptivia-paper rounded-lg p-3 text-center">
+                <span className="text-[10px] text-apptivia-carbon-400 block mb-1">{s.label}</span>
+                <div className={`text-2xl font-bold ${s.textColor}`}>{s.value}</div>
+                <div className="w-full bg-apptivia-carbon-100 rounded-full h-1.5 mt-2">
+                  <div className={`h-1.5 rounded-full ${s.barColor}`} style={{ width: `${s.value}%` }} />
+                </div>
+              </div>
+            ))}
+            {icpScore !== null && (
+              <div className="bg-apptivia-paper rounded-lg p-3 text-center">
+                <span className="text-[10px] text-apptivia-carbon-400 block mb-1">ICP Fit Score</span>
+                <div className={`text-2xl font-bold ${icpScore >= 75 ? 'text-emerald-600' : icpScore >= 50 ? 'text-amber-600' : 'text-red-500'}`}>{icpScore}</div>
+                <div className="w-full bg-apptivia-carbon-100 rounded-full h-1.5 mt-2">
+                  <div className={`h-1.5 rounded-full ${icpScore >= 75 ? 'bg-emerald-500' : icpScore >= 50 ? 'bg-amber-500' : 'bg-red-400'}`} style={{ width: `${icpScore}%` }} />
+                </div>
+                <span className="text-[9px] text-apptivia-carbon-400">
+                  {icpScore >= 75 ? 'Strong fit' : icpScore >= 50 ? 'Partial fit' : 'Low fit'}
+                </span>
+              </div>
+            )}
+          </div>
+          {/* ABM Insights */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+            <div className="bg-apptivia-paper rounded-lg p-3 text-center">
+              <span className="text-[10px] text-apptivia-carbon-400 block mb-1">Readiness Score</span>
+              <div className={`text-2xl font-bold ${account.readiness_score >= 70 ? 'text-emerald-600' : account.readiness_score >= 40 ? 'text-amber-600' : 'text-apptivia-carbon-400'}`}>
+                {account.readiness_score ?? '—'}
+              </div>
+              <div className="w-full bg-apptivia-carbon-100 rounded-full h-1.5 mt-2">
+                <div className={`h-1.5 rounded-full ${account.readiness_score >= 70 ? 'bg-emerald-500' : account.readiness_score >= 40 ? 'bg-amber-500' : 'bg-apptivia-carbon-300'}`} style={{ width: `${account.readiness_score || 0}%` }} />
+              </div>
             </div>
-          </div>
-        ))}
-        {icpScore !== null && (
-          <div className="bg-white rounded-lg border border-apptivia-carbon-100 p-4 text-center">
-            <span className="text-[10px] text-apptivia-carbon-400 block mb-1">ICP Fit Score</span>
-            <div className={`text-2xl font-bold ${icpScore >= 75 ? 'text-emerald-600' : icpScore >= 50 ? 'text-amber-600' : 'text-red-500'}`}>{icpScore}</div>
-            <div className="w-full bg-apptivia-carbon-100 rounded-full h-1.5 mt-2">
-              <div className={`h-1.5 rounded-full ${icpScore >= 75 ? 'bg-emerald-500' : icpScore >= 50 ? 'bg-amber-500' : 'bg-red-400'}`} style={{ width: `${icpScore}%` }} />
+            <div className="bg-apptivia-paper rounded-lg p-3 text-center">
+              <span className="text-[10px] text-apptivia-carbon-400 block mb-1">Buying Stage</span>
+              {account.buying_stage ? (
+                <span className={`inline-flex px-3 py-1 rounded-full text-xs font-semibold ${
+                  account.buying_stage === 'decision' ? 'bg-emerald-100 text-emerald-700' :
+                  account.buying_stage === 'consideration' ? 'bg-amber-100 text-amber-700' :
+                  'bg-sky-100 text-sky-700'
+                }`}>
+                  {account.buying_stage.charAt(0).toUpperCase() + account.buying_stage.slice(1)}
+                </span>
+              ) : (
+                <span className="text-sm text-apptivia-carbon-400">Not Assessed</span>
+              )}
             </div>
-            <span className="text-[9px] text-apptivia-carbon-400">
-              {icpScore >= 75 ? 'Strong fit' : icpScore >= 50 ? 'Partial fit' : 'Low fit'}
-            </span>
-          </div>
-        )}
-      </div>
-
-      {/* ABM Insights Row */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        {/* Readiness Score */}
-        <div className="bg-white rounded-lg border border-apptivia-carbon-100 p-4 text-center">
-          <span className="text-[10px] text-apptivia-carbon-400 block mb-1">Readiness Score</span>
-          <div className={`text-2xl font-bold ${account.readiness_score >= 70 ? 'text-emerald-600' : account.readiness_score >= 40 ? 'text-amber-600' : 'text-apptivia-carbon-400'}`}>
-            {account.readiness_score ?? '—'}
-          </div>
-          <div className="w-full bg-apptivia-carbon-100 rounded-full h-1.5 mt-2">
-            <div className={`h-1.5 rounded-full ${account.readiness_score >= 70 ? 'bg-emerald-500' : account.readiness_score >= 40 ? 'bg-amber-500' : 'bg-apptivia-carbon-300'}`} style={{ width: `${account.readiness_score || 0}%` }} />
+            <div className="bg-apptivia-paper rounded-lg p-3 text-center">
+              <span className="text-[10px] text-apptivia-carbon-400 block mb-1">Signal Velocity</span>
+              <div className="text-xl font-bold text-apptivia-ink">{account.signal_velocity ?? '—'}</div>
+              <span className="text-[10px] text-apptivia-carbon-400">signals/week</span>
+            </div>
+            <div className="bg-apptivia-paper rounded-lg p-3 text-center">
+              <span className="text-[10px] text-apptivia-carbon-400 block mb-1">Tech Fit Score</span>
+              <div className={`text-xl font-bold ${account.tech_fit_score >= 70 ? 'text-emerald-600' : account.tech_fit_score >= 40 ? 'text-amber-600' : 'text-apptivia-carbon-400'}`}>
+                {account.tech_fit_score ?? '—'}
+              </div>
+            </div>
           </div>
         </div>
+      </CollapsibleSection>
 
-        {/* Buying Stage */}
-        <div className="bg-white rounded-lg border border-apptivia-carbon-100 p-4 text-center">
-          <span className="text-[10px] text-apptivia-carbon-400 block mb-1">Buying Stage</span>
-          {account.buying_stage ? (
-            <span className={`inline-flex px-3 py-1 rounded-full text-xs font-semibold ${
-              account.buying_stage === 'decision' ? 'bg-emerald-100 text-emerald-700' :
-              account.buying_stage === 'consideration' ? 'bg-amber-100 text-amber-700' :
-              'bg-sky-100 text-sky-700'
-            }`}>
-              {account.buying_stage.charAt(0).toUpperCase() + account.buying_stage.slice(1)}
-            </span>
+      {/* ═══ AI Account Intelligence ═══ */}
+      <CollapsibleSection title="AI Account Intelligence" icon={Sparkles} iconColor="text-apptivia-coral"
+        badge={loadingResearch ? <span className="text-[9px] text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded font-medium animate-pulse">Generating...</span> : null}
+        actions={
+          <button onClick={handleAnalyze} disabled={analyzing}
+            className="flex items-center gap-1 px-2.5 py-1 bg-gradient-to-r from-orange-500 to-amber-500 text-white rounded-lg text-[10px] font-semibold hover:from-orange-600 hover:to-amber-600 disabled:opacity-50 transition-all">
+            {analyzing ? <RefreshCw size={10} className="animate-spin" /> : <Sparkles size={10} />}
+            {analyzing ? 'Analyzing...' : 'Refresh'}
+          </button>
+        }
+      >
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-0 md:divide-x divide-apptivia-carbon-100">
+          {/* Left: Company Research */}
+          <div className="p-5 space-y-3">
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] font-semibold text-apptivia-carbon-400 uppercase tracking-wide">Company Research</span>
+              <div className="flex items-center gap-2">
+                {companyResearch?.created_at && (() => {
+                  const daysAgo = Math.floor((Date.now() - new Date(companyResearch.created_at).getTime()) / 86400000);
+                  const label = daysAgo === 0 ? 'Today' : daysAgo === 1 ? '1d ago' : `${daysAgo}d ago`;
+                  const color = daysAgo <= 7 ? 'text-emerald-600 bg-emerald-50' : daysAgo <= 30 ? 'text-amber-600 bg-amber-50' : 'text-red-600 bg-red-50';
+                  return <span className={`text-[9px] font-medium px-1.5 py-0.5 rounded ${color}`}>Researched {label}</span>;
+                })()}
+                {companyResearch?.content && onNavigateDiscover && (
+                  <button onClick={() => onNavigateDiscover({ mode: 'company', query: account.domain || account.account_name })}
+                    className="text-[10px] text-apptivia-coral hover:text-apptivia-coral-tone-700 font-medium flex items-center gap-0.5">
+                    <RefreshCw size={10} /> Refresh
+                  </button>
+                )}
+              </div>
+            </div>
+            {loadingResearch ? (
+              <div className="flex items-center gap-2 py-4 text-xs text-apptivia-carbon-400">
+                <RefreshCw size={12} className="animate-spin" /> {autoResearchTriggered ? 'Auto-generating research...' : 'Loading...'}
+              </div>
+            ) : companyResearch?.content ? (() => {
+              // Brief data may be nested under .brief (Discover saves: { brief: {...} }) or at top level (legacy)
+              // Also handle case where brief is a JSON string (not yet parsed)
+              let rawBrief = companyResearch.content.brief || companyResearch.content;
+              if (typeof rawBrief === 'string') {
+                try { rawBrief = JSON.parse(rawBrief); } catch { /* leave as string */ }
+              }
+              const brief = (typeof rawBrief === 'object' && rawBrief !== null) ? rawBrief : { summary: String(rawBrief) };
+              return (
+              <div className="space-y-2">
+                {brief.summary && <p className="text-xs text-apptivia-carbon-700 leading-relaxed">{brief.summary}</p>}
+                {brief.key_findings?.length > 0 && (
+                  <div>
+                    <span className="text-[10px] font-semibold text-apptivia-carbon-500">Key Findings</span>
+                    <ul className="mt-0.5 space-y-0.5">
+                      {brief.key_findings.slice(0, 4).map((f, i) => (
+                        <li key={i} className="text-[10px] text-apptivia-carbon-600 flex items-start gap-1"><span className="text-apptivia-coral mt-0.5">•</span> {f}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+                {brief.talking_points?.length > 0 && (
+                  <div>
+                    <span className="text-[10px] font-semibold text-apptivia-carbon-500">Outreach Strategy</span>
+                    <ul className="mt-0.5 space-y-0.5">
+                      {brief.talking_points.slice(0, 3).map((p, i) => (
+                        <li key={i} className="text-[10px] text-apptivia-carbon-600 flex items-start gap-1"><span className="text-emerald-500 mt-0.5">{'\u2713'}</span> {p}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+                {brief.tech_stack?.length > 0 && (
+                  <div>
+                    <span className="text-[10px] font-semibold text-apptivia-carbon-500">Tech Stack</span>
+                    <div className="flex flex-wrap gap-1 mt-1">
+                      {brief.tech_stack.slice(0, 8).map((t, i) => (
+                        <span key={i} className="text-[9px] bg-apptivia-carbon-100 text-apptivia-carbon-600 px-1.5 py-0.5 rounded">{t}</span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {brief.competitors?.length > 0 && (
+                  <div>
+                    <span className="text-[10px] font-semibold text-apptivia-carbon-500">Competitors</span>
+                    <p className="text-xs text-apptivia-carbon-600 mt-0.5">{brief.competitors.join(', ')}</p>
+                  </div>
+                )}
+              </div>);
+            })() : (
+              <div className="py-3 text-center">
+                <p className="text-xs text-apptivia-carbon-400 italic">AI research will auto-populate when available.</p>
+              </div>
+            )}
+          </div>
+
+          {/* Right: AI Analysis */}
+          <div className="p-5 space-y-3">
+            <span className="text-[10px] font-semibold text-apptivia-carbon-400 uppercase tracking-wide">AI Analysis</span>
+            {account.ai_summary ? (
+              <div className="space-y-3">
+                <div>
+                  <span className="text-[10px] font-semibold text-apptivia-carbon-500">Summary</span>
+                  <p className="text-xs text-apptivia-carbon-700 leading-relaxed mt-0.5">{account.ai_summary}</p>
+                </div>
+                {account.ai_strategy && (
+                  <div>
+                    <span className="text-[10px] font-semibold text-apptivia-carbon-500">Strategy</span>
+                    <p className="text-xs text-apptivia-carbon-700 leading-relaxed mt-0.5">{account.ai_strategy}</p>
+                  </div>
+                )}
+                {account.ai_risk_factors?.length > 0 && (
+                  <div>
+                    <span className="text-[10px] font-semibold text-apptivia-carbon-500">Risk Factors</span>
+                    <ul className="mt-0.5 space-y-0.5">
+                      {account.ai_risk_factors.map((r, i) => (
+                        <li key={i} className="text-xs text-red-600 flex items-start gap-1.5"><AlertTriangle size={9} className="mt-0.5 flex-shrink-0" /> {r}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <p className="text-xs text-apptivia-carbon-400 italic py-2">AI analysis will auto-generate when research is available.</p>
+            )}
+          </div>
+        </div>
+      </CollapsibleSection>
+
+      {/* ═══ Buying Committee (card layout) ═══ */}
+      <CollapsibleSection title="Buying Committee" icon={Users} iconColor="text-apptivia-carbon-500" count={committeeContacts.length}
+        actions={
+          <button onClick={() => setShowContactsModal(true)}
+            className="flex items-center gap-1 px-2.5 py-1 bg-apptivia-paper text-apptivia-carbon-600 rounded-lg text-[10px] font-medium hover:bg-apptivia-carbon-100">
+            <Plus size={10} /> Add
+          </button>
+        }
+      >
+        <div className="p-4">
+          {committeeContacts.length === 0 ? (
+            <div className="py-4 text-center text-xs text-apptivia-carbon-400">
+              No buying committee members. Add contacts to build your committee map.
+            </div>
           ) : (
-            <span className="text-sm text-apptivia-carbon-400">Not Assessed</span>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+              {committeeContacts.map((contact, i) => {
+                const name = [contact.first_name, contact.last_name].filter(Boolean).join(' ') || contact.email || 'Unknown';
+                const roleStyle = COMMITTEE_ROLES[contact.committee_role] || COMMITTEE_ROLES.influencer;
+                return (
+                  <div key={contact.id || i} className="bg-apptivia-paper rounded-lg border border-apptivia-carbon-100 p-3 hover:border-apptivia-coral/30 hover:shadow-sm transition-all">
+                    <div className="flex items-start gap-3">
+                      <div className="w-9 h-9 rounded-full bg-gradient-to-br from-apptivia-coral to-amber-500 flex items-center justify-center text-white text-[10px] font-bold flex-shrink-0">
+                        {(contact.first_name?.[0] || '?').toUpperCase()}{(contact.last_name?.[0] || '').toUpperCase()}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <span className="text-xs font-semibold text-apptivia-ink truncate block">{name}</span>
+                        {contact.title && <span className="text-[10px] text-apptivia-carbon-500 block truncate">{contact.title}</span>}
+                        <span className={`inline-flex items-center gap-1 mt-1 px-1.5 py-0.5 rounded text-[9px] font-medium ${roleStyle.color}`}>
+                          <roleStyle.icon size={8} /> {roleStyle.label}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-1 mt-2 pt-2 border-t border-apptivia-carbon-100">
+                      {contact.email && onEmailContact && (
+                        <button onClick={() => onEmailContact(contact)} className="text-[10px] text-apptivia-coral hover:bg-apptivia-coral-tone-50 px-2 py-1 rounded font-medium"><Mail size={10} /></button>
+                      )}
+                      {contact.linkedin_url && (
+                        <a href={contact.linkedin_url} target="_blank" rel="noreferrer" className="text-[10px] text-blue-500 hover:bg-blue-50 px-2 py-1 rounded"><Linkedin size={10} /></a>
+                      )}
+                      {contact.phone && (
+                        <button onClick={() => navigator.clipboard.writeText(contact.phone)} className="text-[10px] text-emerald-500 hover:bg-emerald-50 px-2 py-1 rounded"><Phone size={10} /></button>
+                      )}
+                      {removeAccountContact && (
+                        <button onClick={() => removeAccountContact(account.id, contact.id)} className="ml-auto text-[10px] text-apptivia-carbon-400 hover:text-red-500 px-1 py-1 rounded"><X size={10} /></button>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
           )}
         </div>
+      </CollapsibleSection>
 
-        {/* Signal Velocity */}
-        <div className="bg-white rounded-lg border border-apptivia-carbon-100 p-4 text-center">
-          <span className="text-[10px] text-apptivia-carbon-400 block mb-1">Signal Velocity</span>
-          <div className="text-xl font-bold text-apptivia-ink">{account.signal_velocity ?? '—'}</div>
-          <span className="text-[10px] text-apptivia-carbon-400">signals/week</span>
-        </div>
-
-        {/* Tech Fit Score */}
-        <div className="bg-white rounded-lg border border-apptivia-carbon-100 p-4 text-center">
-          <span className="text-[10px] text-apptivia-carbon-400 block mb-1">Tech Fit Score</span>
-          <div className={`text-xl font-bold ${account.tech_fit_score >= 70 ? 'text-emerald-600' : account.tech_fit_score >= 40 ? 'text-amber-600' : 'text-apptivia-carbon-400'}`}>
-            {account.tech_fit_score ?? '—'}
-          </div>
-        </div>
-      </div>
-
-      {/* AI Insights */}
-      {(account.ai_summary || account.ai_strategy) && (
-        <div className="bg-white rounded-lg border border-apptivia-carbon-100 overflow-hidden">
-          <div className="bg-gradient-to-r from-orange-500 to-amber-500 px-5 py-3 flex items-center gap-2">
-            <Sparkles size={14} className="text-white" />
-            <span className="text-sm font-semibold text-white">AI Account Intelligence</span>
-          </div>
-          <div className="p-5 space-y-4">
-            {account.ai_summary && (
-              <div>
-                <span className="text-xs font-semibold text-apptivia-carbon-600 block mb-1">Summary</span>
-                <p className="text-xs text-apptivia-carbon-700 leading-relaxed">{account.ai_summary}</p>
-              </div>
-            )}
-            {account.ai_strategy && (
-              <div>
-                <span className="text-xs font-semibold text-apptivia-carbon-600 block mb-1">Recommended Strategy</span>
-                <p className="text-xs text-apptivia-carbon-700 leading-relaxed">{account.ai_strategy}</p>
-              </div>
-            )}
-            {account.ai_risk_factors?.length > 0 && (
-              <div>
-                <span className="text-xs font-semibold text-apptivia-carbon-600 block mb-1.5">Risk Factors</span>
-                <ul className="space-y-1">
-                  {account.ai_risk_factors.map((r, i) => (
-                    <li key={i} className="text-xs text-red-600 flex items-start gap-1.5">
-                      <AlertTriangle size={10} className="mt-0.5 flex-shrink-0" /> {r}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* Tier Selector */}
-      <div className="bg-white rounded-lg border border-apptivia-carbon-100 p-4">
-        <span className="text-xs font-semibold text-apptivia-carbon-700 block mb-2">Account Tier</span>
-        <div className="flex gap-2">
-          {Object.entries(TIER_STYLES).map(([key, style]) => (
-            <button key={key} onClick={() => onUpdate(account.id, { tier: key })}
-              className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium transition-all ${
-                account.tier === key
-                  ? `${style.bg} ${style.text} ring-2 ring-offset-1 ring-current`
-                  : 'bg-apptivia-paper text-apptivia-carbon-500 hover:bg-apptivia-carbon-100'
-              }`}>
-              <style.icon size={12} /> {style.label}
+      {/* ═══ Account Contacts (list layout) ═══ */}
+      <CollapsibleSection title="Account Contacts" icon={UserPlus} iconColor="text-emerald-600" count={generalContacts.length}
+        defaultOpen={generalContacts.length <= 10}
+        actions={
+          <div className="flex items-center gap-1.5">
+            <button onClick={() => setShowContactsModal(true)}
+              className="flex items-center gap-1 px-2.5 py-1 bg-apptivia-paper text-apptivia-carbon-600 rounded-lg text-[10px] font-medium hover:bg-apptivia-carbon-100">
+              <Plus size={10} /> Add
             </button>
-          ))}
-        </div>
-      </div>
-
-      {/* Buying Committee */}
-      <BuyingCommitteePanel
-        committee={account.buying_committee || []}
-        onUpdate={(committee) => onUpdateCommittee(account.id, committee)}
-        onFindContacts={onNavigateDiscover ? () => onNavigateDiscover({ mode: 'people_search', findPeopleMode: 'company', query: account.domain || account.account_name }) : undefined}
-      />
-
-      {/* Signal Contacts — only shown if promoted from Signal Prospecting */}
-      {signalContacts.length > 0 && (
-        <div className="bg-white rounded-lg border border-apptivia-carbon-100 p-4">
-          <button
-            onClick={() => setShowContacts(!showContacts)}
-            className="flex items-center justify-between w-full"
-          >
-            <span className="flex items-center gap-2 text-xs font-semibold text-apptivia-carbon-700">
-              <Users size={13} className="text-teal-500" />
-              Signal Contacts ({signalContacts.length})
-            </span>
-            {showContacts ? <ChevronUp size={13} className="text-apptivia-carbon-400" /> : <ChevronDown size={13} className="text-apptivia-carbon-400" />}
-          </button>
-          {showContacts && (
-            <div className="mt-3 space-y-2 pt-3 border-t border-apptivia-carbon-100">
-              {signalContacts.map((person, i) => (
-                <div key={person.id || i} className="flex items-center gap-3 group">
-                  <div className="w-8 h-8 rounded-full bg-emerald-500 flex items-center justify-center text-white text-[10px] font-bold flex-shrink-0">
-                    {(person.first_name?.[0] || person.name?.[0] || '?').toUpperCase()}
-                    {(person.last_name?.[0] || '').toUpperCase()}
+            {onNavigateDiscover && (
+              <button onClick={() => onNavigateDiscover({ mode: 'people_search', findPeopleMode: 'company', query: account.domain || account.account_name })}
+                className="flex items-center gap-1 px-2.5 py-1 bg-apptivia-paper text-apptivia-carbon-600 rounded-lg text-[10px] font-medium hover:bg-apptivia-carbon-100">
+                <Search size={10} /> Find
+              </button>
+            )}
+          </div>
+        }
+      >
+        <div className="divide-y divide-apptivia-carbon-50">
+          {loadingContacts ? (
+            <div className="flex items-center justify-center py-6 text-xs text-apptivia-carbon-400"><RefreshCw size={12} className="animate-spin mr-2" /> Loading contacts...</div>
+          ) : generalContacts.length === 0 ? (
+            <div className="py-6 text-center text-xs text-apptivia-carbon-400">No contacts yet. Add contacts or find people via Discover.</div>
+          ) : (
+            generalContacts.slice(0, 25).map((contact, i) => {
+              const name = [contact.first_name, contact.last_name].filter(Boolean).join(' ') || contact.email || 'Unknown';
+              return (
+                <div key={contact.id || i} className="flex items-center gap-3 px-5 py-2.5 hover:bg-apptivia-paper/30 transition-colors">
+                  <div className="w-7 h-7 rounded-full bg-gradient-to-br from-emerald-400 to-cyan-500 flex items-center justify-center text-white text-[9px] font-bold flex-shrink-0">
+                    {(contact.first_name?.[0] || '?').toUpperCase()}{(contact.last_name?.[0] || '').toUpperCase()}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <span className="text-xs font-semibold text-apptivia-ink block truncate">{person.name || `${person.first_name || ''} ${person.last_name || ''}`.trim() || 'Unknown'}</span>
-                    {person.title && <span className="text-[10px] text-apptivia-carbon-500 block truncate">{person.title}</span>}
+                    <span className="text-xs font-medium text-apptivia-ink">{name}</span>
+                    {contact.title && <span className="text-[10px] text-apptivia-carbon-400 ml-2">{contact.title}</span>}
                   </div>
-                  <div className="flex items-center gap-1.5 opacity-50 group-hover:opacity-100 transition-opacity">
-                    {person.email && (
-                      <button onClick={() => navigator.clipboard.writeText(person.email)}
-                        className="p-1 rounded text-apptivia-coral-tone-300 hover:text-apptivia-coral hover:bg-apptivia-coral-tone-50 transition-colors"
-                        title={person.email}><Mail size={12} /></button>
+                  {contact.email && <span className="text-[10px] text-apptivia-carbon-400 truncate max-w-[140px]">{contact.email}</span>}
+                  {contact.is_suggested && <span className="text-[8px] bg-emerald-50 text-emerald-600 px-1.5 py-0.5 rounded font-medium">suggested</span>}
+                  {contact.source === 'signal' && !contact.is_suggested && <span className="text-[8px] bg-blue-50 text-blue-600 px-1.5 py-0.5 rounded font-medium">signal</span>}
+                  <div className="flex items-center gap-1 flex-shrink-0">
+                    {updateAccountContact && (
+                      <button onClick={() => updateAccountContact(account.id, contact.id, { is_buying_committee: true, committee_role: 'influencer' })}
+                        className="text-[9px] text-apptivia-carbon-400 hover:text-apptivia-coral px-1.5 py-0.5 rounded hover:bg-apptivia-paper" title="Promote to committee">
+                        <Crown size={10} />
+                      </button>
                     )}
-                    {person.phone && (
-                      <button onClick={() => navigator.clipboard.writeText(person.phone)}
-                        className="p-1 rounded text-emerald-400 hover:text-emerald-600 hover:bg-emerald-50 transition-colors"
-                        title={person.phone}><Phone size={12} /></button>
-                    )}
-                    {person.linkedin_url && (
-                      <a href={person.linkedin_url} target="_blank" rel="noreferrer"
-                        className="p-1 rounded text-apptivia-coral-tone-300 hover:text-apptivia-coral hover:bg-apptivia-coral-tone-50 transition-colors"
-                        title="LinkedIn"><Linkedin size={12} /></a>
+                    {removeAccountContact && contact.id && !String(contact.id).startsWith('sig-') && (
+                      <button onClick={() => removeAccountContact(account.id, contact.id)}
+                        className="text-[9px] text-apptivia-carbon-400 hover:text-red-500 px-1.5 py-0.5 rounded hover:bg-red-50">
+                        <X size={10} />
+                      </button>
                     )}
                   </div>
                 </div>
-              ))}
-            </div>
+              );
+            })
           )}
         </div>
-      )}
-    </div>
-  );
-}
+      </CollapsibleSection>
 
-// ── Create Deal Modal ────────────────────────────────────
-
-function CreateDealModal({ isOpen, onClose, account, organizationId, userId }) {
-  const defaultCloseDate = new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
-  const [form, setForm] = useState({
-    deal_name: '',
-    deal_value: '',
-    close_date: defaultCloseDate,
-  });
-  const [saving, setSaving] = useState(false);
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState(false);
-
-  useEffect(() => {
-    if (isOpen && account) {
-      setForm(f => ({ ...f, deal_name: account.account_name }));
-      setError('');
-      setSuccess(false);
-    }
-  }, [isOpen, account]);
-
-  if (!isOpen) return null;
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (!form.deal_name.trim()) return;
-    setSaving(true);
-    setError('');
-    try {
-      const { error: insertError } = await supabase
-        .from('engage_pipeline_deals')
-        .insert({
-          organization_id: organizationId,
-          owner_id: userId || null,
-          deal_name: form.deal_name.trim(),
-          deal_value: parseFloat(form.deal_value) || 0,
-          stage: 'discovery',
-          probability: 20,
-          close_date: form.close_date || null,
-          forecast_category: 'pipeline',
-          source: 'signal_prospecting',
-          account_id: account.id,
-        });
-      if (insertError) throw insertError;
-      setSuccess(true);
-      setTimeout(() => { onClose(); setSuccess(false); }, 1200);
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-      <div className="bg-white rounded-lg shadow-2xl w-full max-w-md mx-4 p-6">
-        <div className="flex items-center justify-between mb-4">
-          <div>
-            <h2 className="text-base font-semibold text-apptivia-ink">Create Deal</h2>
-            <p className="text-xs text-apptivia-carbon-500 mt-0.5">{account.account_name} · Starts at Discovery stage</p>
-          </div>
-          <button onClick={onClose} className="text-apptivia-carbon-400 hover:text-apptivia-carbon-600"><X size={16} /></button>
+      {/* ═══ Meetings Section ═══ */}
+      <CollapsibleSection title="Meetings" icon={Calendar} iconColor="text-blue-600" count={accountMeetings.length}
+        actions={
+          <button onClick={() => setShowScheduleMeeting(true)}
+            className="flex items-center gap-1 px-2.5 py-1 bg-blue-50 text-blue-700 rounded-lg text-[10px] font-medium hover:bg-blue-100">
+            <Plus size={10} /> New Meeting
+          </button>
+        }
+      >
+        <div className="divide-y divide-apptivia-carbon-50">
+          {loadingMeetings ? (
+            <div className="flex items-center justify-center py-6 text-xs text-apptivia-carbon-400"><RefreshCw size={12} className="animate-spin mr-2" /> Loading meetings...</div>
+          ) : accountMeetings.length === 0 ? (
+            <div className="py-6 text-center text-xs text-apptivia-carbon-400">No meetings linked to this account.</div>
+          ) : (
+            accountMeetings.slice(0, 20).map((meeting) => {
+              const isPast = new Date(meeting.end_time) < new Date();
+              const date = new Date(meeting.start_time);
+              return (
+                <div key={meeting.id} className="flex items-center gap-3 px-5 py-2.5 hover:bg-apptivia-paper/30 transition-colors">
+                  <div className={`w-2 h-2 rounded-full flex-shrink-0 ${isPast ? 'bg-apptivia-carbon-300' : 'bg-blue-500'}`} />
+                  <div className="flex-1 min-w-0">
+                    <span className="text-xs font-medium text-apptivia-ink truncate block">{meeting.title}</span>
+                    <span className="text-[10px] text-apptivia-carbon-400">
+                      {date.toLocaleDateString([], { month: 'short', day: 'numeric' })} at {date.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}
+                    </span>
+                  </div>
+                  {meeting.attendees?.length > 0 && (
+                    <span className="text-[9px] text-apptivia-carbon-400 bg-apptivia-paper px-1.5 py-0.5 rounded">{meeting.attendees.length} attendees</span>
+                  )}
+                  {meeting.meeting_outcome && (
+                    <span className={`text-[9px] px-1.5 py-0.5 rounded font-medium ${
+                      meeting.meeting_outcome === 'positive' ? 'bg-emerald-50 text-emerald-600' :
+                      meeting.meeting_outcome === 'negative' ? 'bg-red-50 text-red-600' :
+                      'bg-amber-50 text-amber-600'
+                    }`}>{meeting.meeting_outcome}</span>
+                  )}
+                  {meeting.linked_deal_id && <DollarSign size={10} className="text-emerald-500 flex-shrink-0" title="Linked to deal" />}
+                </div>
+              );
+            })
+          )}
         </div>
-        {success ? (
-          <div className="flex items-center justify-center gap-2 py-6 text-emerald-600">
-            <CheckCircle size={18} /> <span className="text-sm font-medium">Deal created!</span>
+      </CollapsibleSection>
+
+      {/* ═══ Deals Section ═══ */}
+      <CollapsibleSection title="Deals" icon={DollarSign} iconColor="text-emerald-600" count={accountDeals.length}
+        actions={
+          <button onClick={() => setShowCreateDeal(true)}
+            className="flex items-center gap-1 px-2.5 py-1 bg-emerald-50 text-emerald-700 rounded-lg text-[10px] font-medium hover:bg-emerald-100">
+            <Plus size={10} /> Create Deal
+          </button>
+        }
+      >
+        <div className="divide-y divide-apptivia-carbon-50">
+          {loadingDeals ? (
+            <div className="flex items-center justify-center py-6 text-xs text-apptivia-carbon-400"><RefreshCw size={12} className="animate-spin mr-2" /> Loading deals...</div>
+          ) : accountDeals.length === 0 ? (
+            <div className="py-6 text-center text-xs text-apptivia-carbon-400">No deals linked to this account.</div>
+          ) : (
+            accountDeals.map((deal) => (
+              <div key={deal.id} className="flex items-center gap-3 px-5 py-2.5 hover:bg-apptivia-paper/30 transition-colors">
+                <DollarSign size={12} className="text-emerald-500 flex-shrink-0" />
+                <div className="flex-1 min-w-0">
+                  <span className="text-xs font-medium text-apptivia-ink truncate block">{deal.deal_name}</span>
+                  <span className="text-[10px] text-apptivia-carbon-400">
+                    {new Date(deal.created_at).toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' })}
+                  </span>
+                </div>
+                {deal.stage && (
+                  <span className="text-[9px] bg-apptivia-paper text-apptivia-carbon-600 px-1.5 py-0.5 rounded font-medium">{deal.stage}</span>
+                )}
+                {deal.deal_value > 0 && (
+                  <span className="text-[10px] font-semibold text-emerald-600">${deal.deal_value.toLocaleString()}</span>
+                )}
+                <span className={`text-[9px] px-1.5 py-0.5 rounded font-medium ${
+                  deal.status === 'won' ? 'bg-emerald-50 text-emerald-700' :
+                  deal.status === 'lost' ? 'bg-red-50 text-red-600' :
+                  'bg-blue-50 text-blue-600'
+                }`}>{deal.status || 'open'}</span>
+              </div>
+            ))
+          )}
+        </div>
+      </CollapsibleSection>
+
+      {/* ═══ Account Activity Timeline ═══ */}
+      <CollapsibleSection title="Account Activity" icon={Zap} iconColor="text-apptivia-coral" badge={<span className="text-[10px] text-apptivia-carbon-400">Last 90 days</span>}>
+        <div>
+          {/* Activity filter pills */}
+          <div className="px-5 py-2 border-b border-apptivia-carbon-50 flex items-center gap-1.5 flex-wrap">
+            {ACTIVITY_CATEGORIES.map(cat => (
+              <button key={cat.key} onClick={() => setActivityFilter(cat.key)}
+                className={`px-2.5 py-1 rounded-full text-[10px] font-medium transition-colors ${
+                  activityFilter === cat.key ? 'bg-apptivia-coral text-white' : 'bg-apptivia-paper text-apptivia-carbon-500 hover:bg-apptivia-carbon-100'
+                }`}>
+                {cat.label}
+              </button>
+            ))}
           </div>
-        ) : (
-          <form onSubmit={handleSubmit} className="space-y-3">
-            <div>
-              <label className="block text-xs font-medium text-apptivia-carbon-600 mb-1">Deal Name</label>
-              <input
-                value={form.deal_name}
-                onChange={e => setForm(f => ({ ...f, deal_name: e.target.value }))}
-                placeholder="e.g. CloudEagle.ai — Discovery"
-                className="w-full text-sm border border-apptivia-carbon-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-apptivia-coral-tone-300"
-                required
-              />
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="block text-xs font-medium text-apptivia-carbon-600 mb-1">Deal Value ($)</label>
-                <input
-                  type="number"
-                  min="0"
-                  value={form.deal_value}
-                  onChange={e => setForm(f => ({ ...f, deal_value: e.target.value }))}
-                  placeholder="0"
-                  className="w-full text-sm border border-apptivia-carbon-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-apptivia-coral-tone-300"
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-medium text-apptivia-carbon-600 mb-1">Target Close Date</label>
-                <input
-                  type="date"
-                  value={form.close_date}
-                  onChange={e => setForm(f => ({ ...f, close_date: e.target.value }))}
-                  className="w-full text-sm border border-apptivia-carbon-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-apptivia-coral-tone-300"
-                />
-              </div>
-            </div>
-            <div className="flex items-center gap-2 px-3 py-2 bg-apptivia-coral-tone-50 rounded-lg">
-              <DollarSign size={12} className="text-apptivia-coral flex-shrink-0" />
-              <span className="text-[11px] text-apptivia-coral">Stage locked to <strong>Discovery</strong> until you validate the opportunity.</span>
-            </div>
-            {error && <p className="text-xs text-red-600">{error}</p>}
-            <div className="flex gap-2 pt-1">
-              <button type="button" onClick={onClose}
-                className="flex-1 py-2 text-sm text-apptivia-carbon-500 border border-apptivia-carbon-200 rounded-lg hover:bg-apptivia-paper">
-                Cancel
-              </button>
-              <button type="submit" disabled={saving}
-                className="flex-1 py-2 text-sm font-semibold text-white bg-apptivia-ink rounded-lg hover:bg-apptivia-coral-tone-600 disabled:opacity-50 flex items-center justify-center gap-2">
-                {saving ? <><Loader size={13} className="animate-spin" /> Creating...</> : 'Create Deal'}
-              </button>
-            </div>
-          </form>
-        )}
-      </div>
+          <div className="divide-y divide-apptivia-carbon-50 max-h-[300px] overflow-y-auto">
+            {loadingActivity ? (
+              <div className="flex items-center justify-center py-6 text-xs text-apptivia-carbon-400"><RefreshCw size={12} className="animate-spin mr-2" /> Loading activity...</div>
+            ) : filteredActivity.length === 0 ? (
+              <div className="py-6 text-center text-xs text-apptivia-carbon-400">No activity recorded{activityFilter !== 'all' ? ` for "${activityFilter}"` : ''}.</div>
+            ) : (
+              filteredActivity.slice(0, 30).map((event, i) => {
+                const daysAgo = Math.floor((Date.now() - new Date(event.created_at).getTime()) / 86400000);
+                const dateLabel = daysAgo === 0 ? 'Today' : daysAgo === 1 ? 'Yesterday' : `${daysAgo}d ago`;
+                const typeColors = {
+                  'outreach.generated': 'bg-apptivia-coral', 'outreach.sent': 'bg-emerald-500',
+                  'deal.activity': 'bg-emerald-500', 'deal.created': 'bg-emerald-500',
+                  'account.researched': 'bg-apptivia-coral', 'contact.added': 'bg-blue-500',
+                  'meeting.linked': 'bg-blue-500', 'meeting.scheduled': 'bg-blue-500',
+                };
+                const dotColor = typeColors[event.event_type] || 'bg-apptivia-carbon-300';
+                return (
+                  <div key={event.id || i} className="flex items-start gap-3 px-5 py-2.5 hover:bg-apptivia-paper/30 transition-colors">
+                    <div className="flex flex-col items-center pt-1">
+                      <div className={`w-2.5 h-2.5 rounded-full ${dotColor} flex-shrink-0`} />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="text-xs font-medium text-apptivia-ink">{event.icon || ''} {event.title}</span>
+                        <span className="text-[9px] text-apptivia-carbon-400 whitespace-nowrap">{dateLabel}</span>
+                      </div>
+                      {event.description && <p className="text-[10px] text-apptivia-carbon-500 mt-0.5 truncate">{event.description}</p>}
+                    </div>
+                  </div>
+                );
+              })
+            )}
+          </div>
+        </div>
+      </CollapsibleSection>
+
+      {/* ═══ Modals ═══ */}
+      <CreateDealModal
+        isOpen={showCreateDeal}
+        onClose={() => setShowCreateDeal(false)}
+        account={account}
+        organizationId={organizationId}
+        userId={userId}
+        onDealCreated={() => { setShowCreateDeal(false); if (fetchAccountDeals) fetchAccountDeals(account.id); }}
+      />
+      <ScheduleMeetingModal
+        isOpen={showScheduleMeeting}
+        onClose={() => setShowScheduleMeeting(false)}
+        linkedAccountId={account.id}
+        linkedAccountName={account.account_name}
+        onMeetingCreated={() => { setShowScheduleMeeting(false); if (fetchAccountMeetings) fetchAccountMeetings(account.id); }}
+      />
+      <AccountContactsModal
+        isOpen={showContactsModal}
+        onClose={() => setShowContactsModal(false)}
+        accountId={account.id}
+        organizationId={organizationId}
+        onContactAdded={() => { if (fetchAccountContacts) fetchAccountContacts(account.id); }}
+      />
     </div>
   );
 }
@@ -800,6 +1124,7 @@ function CreateDealModal({ isOpen, onClose, account, organizationId, userId }) {
 // ── New Account Modal ────────────────────────────────────
 
 function NewAccountModal({ isOpen, onClose, onCreate }) {
+  useModalBehavior(isOpen, onClose);
   const [form, setForm] = useState({ account_name: '', domain: '', industry: '', tier: 'untiered' });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
@@ -908,13 +1233,15 @@ function NewAccountModal({ isOpen, onClose, onCreate }) {
 
 // ── Main Component ───────────────────────────────────────
 
-export default function AccountIntelligence({ organizationId, userId, initialAccountId, onInitialAccountConsumed, onNavigateDiscover }) {
+export default function AccountIntelligence({ organizationId, userId, initialAccountId, onInitialAccountConsumed, onNavigateDiscover, onEmailContact, onViewBrief }) {
+  const accountHook = useAccountIntelligence(organizationId, userId);
   const {
     accounts, summary, activeAccount, loading, analyzing, error,
     fetchAccounts, createAccount, updateAccount, deleteAccount,
     updateBuyingCommittee, setTier, assignAccount, analyzeAccount,
     scoreAllAccounts, importFromCompanies,
-  } = useAccountIntelligence(organizationId, userId);
+    fetchCompanyResearch, fetchAccountActivity,
+  } = accountHook;
 
   const icpConfig = useIcpConfig(organizationId);
 
@@ -977,6 +1304,11 @@ export default function AccountIntelligence({ organizationId, userId, initialAcc
         organizationId={organizationId}
         userId={userId}
         onNavigateDiscover={onNavigateDiscover}
+        onEmailContact={onEmailContact}
+        onViewBrief={onViewBrief}
+        fetchCompanyResearch={fetchCompanyResearch}
+        fetchAccountActivity={fetchAccountActivity}
+        accountHook={accountHook}
       />
     );
   }

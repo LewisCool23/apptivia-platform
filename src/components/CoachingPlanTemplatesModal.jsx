@@ -2,8 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { X, Target, Calendar as CalendarIcon, Users, CheckCircle } from 'lucide-react';
 import { supabase } from '../supabaseClient';
 import { buildLabel } from '../constants/kpiGuidance';
+import { useModalBehavior } from '../hooks/useModalBehavior';
 
 export default function CoachingPlanTemplatesModal({ isOpen, onClose, onTemplateSelect }) {
+  useModalBehavior(isOpen, onClose);
   const [templates, setTemplates] = useState([]);
   const [selectedTemplate, setSelectedTemplate] = useState(null);
   const [loading, setLoading] = useState(true);

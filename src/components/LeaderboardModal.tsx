@@ -1,5 +1,6 @@
 import React from 'react';
 import { getRankChangeIcon, getRankDisplay } from '../utils/contestUtils';
+import { useModalBehavior } from '../hooks/useModalBehavior';
 
 interface LeaderboardEntry {
   rank: number;
@@ -39,6 +40,7 @@ export default function LeaderboardModal({
   status = 'active',
   secondaryKpiName,
 }: LeaderboardModalProps) {
+  useModalBehavior(isOpen, onClose);
   if (!isOpen) return null;
 
   // If leaderboard is empty but we have participants, show them with score 0

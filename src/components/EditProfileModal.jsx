@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { X } from 'lucide-react';
 import { supabase } from '../supabaseClient';
+import { useModalBehavior } from '../hooks/useModalBehavior';
 
 export default function EditProfileModal({ isOpen, onClose, profile, onSuccess }) {
+  useModalBehavior(isOpen, onClose);
   const [formData, setFormData] = useState({
     first_name: '',
     last_name: '',

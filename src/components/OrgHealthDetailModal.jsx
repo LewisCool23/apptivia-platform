@@ -1,6 +1,7 @@
 import React from 'react';
 import { X, ArrowRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { useModalBehavior } from '../hooks/useModalBehavior';
 
 /**
  * Shared detail modal for Org Health Scorecard dimensions.
@@ -19,6 +20,7 @@ export default function OrgHealthDetailModal({
   linkTo,
   linkLabel,
 }) {
+  useModalBehavior(isOpen, onClose);
   const navigate = useNavigate();
 
   if (!isOpen) return null;

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { X, Trophy, Target, Calendar as CalendarIcon } from 'lucide-react';
 import { supabase } from '../supabaseClient';
+import { useModalBehavior } from '../hooks/useModalBehavior';
 
 const CONTEST_TEMPLATES = [
   {
@@ -60,6 +61,7 @@ const CONTEST_TEMPLATES = [
 ];
 
 export default function ContestTemplatesModal({ isOpen, onClose, onTemplateSelect }) {
+  useModalBehavior(isOpen, onClose);
   const [selectedTemplate, setSelectedTemplate] = useState(null);
   const [customData, setCustomData] = useState({
     name: '',

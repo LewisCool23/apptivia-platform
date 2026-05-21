@@ -6,6 +6,7 @@ import FeedbackThumb from './shared/FeedbackThumb';
 import { useNotifications } from '../contexts/NotificationContext';
 import { useAuth } from '../AuthContext';
 import { backendFetch } from '../utils/backendFetch';
+import { useModalBehavior } from '../hooks/useModalBehavior';
 
 export default function Meeting1On1PrepModal({
   isOpen,
@@ -22,6 +23,7 @@ export default function Meeting1On1PrepModal({
   onViewRepPlan,
   onViewDevPlan,
 }) {
+  useModalBehavior(isOpen, onClose);
   const [notes, setNotes] = useState('');
   const [showSharePreview, setShowSharePreview] = useState(false);
   const [synopsisText, setSynopsisText] = useState('');

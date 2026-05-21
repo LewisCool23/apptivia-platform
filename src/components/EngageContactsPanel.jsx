@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Phone, Mail, ExternalLink, Search, X, UserPlus } from 'lucide-react';
+import { Phone, Mail, ExternalLink, Search, X, UserPlus, Eye } from 'lucide-react';
 import { supabase } from '../supabaseClient';
 import Tooltip from './shared/Tooltip';
 
-export default function EngageContactsPanel({ organizationId, onCallContact, onClose, refreshKey, onSeeAll }) {
+export default function EngageContactsPanel({ organizationId, onCallContact, onClose, refreshKey, onSeeAll, onEmailContact, onViewBrief }) {
   const [contacts, setContacts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -124,13 +124,23 @@ export default function EngageContactsPanel({ organizationId, onCallContact, onC
                             </button>
                           </Tooltip>
                         )}
-                        {contact.email && (
-                          <Tooltip text={contact.email} position="right">
+                        {contact.email && onEmailContact && (
+                          <Tooltip text={`Email ${contact.email}`} position="right">
                             <button
-                              onClick={() => navigator.clipboard.writeText(contact.email)}
-                              className="text-apptivia-coral hover:text-apptivia-coral transition-colors"
+                              onClick={() => onEmailContact(contact)}
+                              className="text-apptivia-coral hover:text-apptivia-coral/70 transition-colors"
                             >
                               <Mail size={11} />
+                            </button>
+                          </Tooltip>
+                        )}
+                        {onViewBrief && (
+                          <Tooltip text="View Brief">
+                            <button
+                              onClick={() => onViewBrief(contact)}
+                              className="text-apptivia-ink hover:text-apptivia-coral transition-colors"
+                            >
+                              <Eye size={11} />
                             </button>
                           </Tooltip>
                         )}
@@ -140,7 +150,7 @@ export default function EngageContactsPanel({ organizationId, onCallContact, onC
                               href={contact.linkedin_url}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="text-apptivia-coral hover:text-apptivia-coral transition-colors"
+                              className="text-apptivia-coral hover:text-apptivia-coral/70 transition-colors"
                             >
                               <ExternalLink size={11} />
                             </a>

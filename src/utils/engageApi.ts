@@ -213,7 +213,7 @@ export const engageApi = {
     fetchBackend<{ ok: boolean; companies: any[] }>('/api/engage/search/organizations', { query }),
 
   /** Find people at a specific company — goes directly to backend for Hunter enrichment */
-  findPeopleAtCompany: (domain: string, opts?: { titles?: string[]; seniority?: string[]; per_page?: number }) =>
+  findPeopleAtCompany: (domain: string, opts?: { titles?: string[]; seniority?: string[]; per_page?: number; persona?: string; customTitles?: string[] }) =>
     fetchBackend<{ ok: boolean; data: any }>('/api/engage/search/people-at-company', { domain, ...(opts || {}) }),
 
   /** Get suggested contacts after company research — goes directly to backend for Hunter enrichment */
@@ -418,6 +418,8 @@ export const engageDb = {
     data_sources?: string[];
     tokens_used?: number;
     created_by?: string;
+    subject_name?: string;
+    subject_domain?: string;
   }) {
     return supabase.from('engage_research_reports').insert(report).select().single();
   },

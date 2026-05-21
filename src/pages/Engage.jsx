@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { Search, Building2, Radar, DollarSign, Phone, Activity, UserPlus, X, ListOrdered } from 'lucide-react';
+import { Search, Building2, Radar, DollarSign, Phone, Activity, UserPlus, X, ListOrdered, CalendarDays } from 'lucide-react';
 import DashboardLayout from '../DashboardLayout';
 import { useAuth } from '../AuthContext';
 import PipelineOperator from '../components/PipelineOperator';
@@ -14,13 +14,17 @@ import EngageContactsPanel from '../components/EngageContactsPanel';
 import EngageDialpadPanel from '../components/EngageDialpadPanel';
 import SavedContactsModal from '../components/SavedContactsModal';
 import EngageActivityModal from '../components/EngageActivityModal';
+import SignalOutreachModal from '../components/SignalOutreachModal';
+import SavedBriefModal from '../components/SavedBriefModal';
 import SequenceBuilder from '../components/SequenceBuilder';
+import EngageCalendar from '../components/EngageCalendar';
 
 const TABS = [
   { id: 'signals',  label: 'Signal Prospecting', icon: Radar,     description: 'Detect high-intent buying signals' },
   { id: 'discover', label: 'Discover',            icon: Search,    description: 'AI-powered prospect & company research' },
   { id: 'accounts', label: 'Accounts',            icon: Building2, description: 'Account-based intelligence & scoring' },
   { id: 'pipeline',   label: 'Pipeline Operator',   icon: DollarSign,  description: 'Monitor deals, flag risks, AI forecasts' },
+  { id: 'calendar',   label: 'Calendar',             icon: CalendarDays, description: 'Synced calendar with meeting intelligence' },
 ];
 
 const PANELS = [
@@ -43,6 +47,8 @@ export default function Engage() {
   const [contactsRefreshKey, setContactsRefreshKey] = useState(0);
   const [showContactsModal, setShowContactsModal] = useState(false);
   const [showActivityModal, setShowActivityModal] = useState(false);
+  const [outreachTarget, setOutreachTarget] = useState(null); // { contact, signal? }
+  const [briefTarget, setBriefTarget] = useState(null); // prospect object for SavedBriefModal
 
   // Cross-tab context
   const [discoverContext, setDiscoverContext] = useState(null);
@@ -55,6 +61,11 @@ export default function Engage() {
       setActiveTab(tabFromUrl);
     }
   }, [tabFromUrl, dealFromUrl]);
+
+  // Broadcast active tab to Aaron AI for page-aware presets
+  useEffect(() => {
+    window.dispatchEvent(new CustomEvent('aaron-page-context', { detail: { tab: activeTab } }));
+  }, [activeTab]);
 
   const organizationId = profile?.organization_id || user?.organization_id || '';
   const dialer = useTwilioDialer(organizationId, user?.id ?? '');
@@ -145,10 +156,15 @@ export default function Engage() {
               initialAccountId={accountsContext?.accountId}
               onInitialAccountConsumed={() => setAccountsContext(null)}
               onNavigateDiscover={(ctx) => { setDiscoverContext(ctx); setActiveTab('discover'); }}
+              onEmailContact={(contact) => setOutreachTarget({ contact })}
+              onViewBrief={(prospect) => setBriefTarget(prospect)}
             />
           )}
           {activeTab === 'pipeline' && (
             <PipelineOperator organizationId={organizationId} userId={user?.id} />
+          )}
+          {activeTab === 'calendar' && (
+            <EngageCalendar organizationId={organizationId} userId={user?.id} />
           )}
         </div>
       </div>
@@ -166,6 +182,7 @@ export default function Engage() {
                 onCall={dialer.startCall}
                 isDeviceReady={dialer.isDeviceReady}
                 onClose={() => setActivePanel(null)}
+                userId={user?.id}
               />
             )}
             {activePanel === 'contacts' && (
@@ -175,6 +192,8 @@ export default function Engage() {
                 onClose={() => setActivePanel(null)}
                 refreshKey={contactsRefreshKey}
                 onSeeAll={() => setShowContactsModal(true)}
+                onEmailContact={(contact) => setOutreachTarget({ contact })}
+                onViewBrief={(prospect) => setBriefTarget(prospect)}
               />
             )}
             {activePanel === 'activity' && (
@@ -221,9 +240,10 @@ export default function Engage() {
         }}
         onDraftOutreach={(contact) => {
           setShowContactsModal(false);
-          // Navigate to signals tab to use draft outreach there
-          setDiscoverContext({ mode: 'prospect', query: contact.full_name || contact.first_name || '' });
-          setActiveTab('discover');
+          setOutreachTarget({ contact });
+        }}
+        onViewBrief={(prospect) => {
+          setBriefTarget(prospect);
         }}
       />
 
@@ -232,6 +252,24 @@ export default function Engage() {
         isOpen={showActivityModal}
         onClose={() => setShowActivityModal(false)}
         organizationId={organizationId}
+      />
+
+      {/* Signal Outreach Modal — unified draft modal */}
+      <SignalOutreachModal
+        isOpen={!!outreachTarget}
+        onClose={() => setOutreachTarget(null)}
+        signal={outreachTarget?.signal || null}
+        contact={outreachTarget?.contact || null}
+        organizationId={organizationId}
+      />
+
+      {/* Saved Brief Modal — cached AI prospect briefs */}
+      <SavedBriefModal
+        isOpen={!!briefTarget}
+        onClose={() => setBriefTarget(null)}
+        prospect={briefTarget}
+        organizationId={organizationId}
+        onResearchComplete={() => setContactsRefreshKey(k => k + 1)}
       />
 
       {/* Twilio floating call widget */}

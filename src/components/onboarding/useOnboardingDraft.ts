@@ -8,7 +8,7 @@
  */
 
 import { useEffect, useCallback, useRef } from 'react';
-import type { WizardState } from './onboardingConstants';
+import type { WizardState, IcpProfileDraft } from './onboardingConstants';
 
 const DRAFT_KEY = 'onboarding_draft';
 const DRAFT_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
@@ -23,6 +23,7 @@ interface DraftData {
   selectedTemplate: WizardState['selectedTemplate'];
   icpConfig: WizardState['icpConfig'];
   signalConfig: WizardState['signalConfig'];
+  icpProfiles?: IcpProfileDraft[];
   selectedTier: WizardState['selectedTier'];
   integrationMethod: WizardState['integrationMethod'];
   wallboardSettings: WizardState['wallboardSettings'];
@@ -76,6 +77,7 @@ export function useOnboardingDraft(
         selectedTemplate: state.selectedTemplate,
         icpConfig: state.icpConfig,
         signalConfig: state.signalConfig,
+        icpProfiles: state.icpProfiles,
         selectedTier: state.selectedTier,
         integrationMethod: state.integrationMethod,
         wallboardSettings: state.wallboardSettings,

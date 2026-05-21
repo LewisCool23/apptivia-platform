@@ -660,6 +660,168 @@ export function useAccountIntelligence(organizationId: string, userId?: string) 
     });
   }, []);
 
+  // ── Fetch company research (cached in engage_research_reports) ──
+
+  const fetchCompanyResearch = useCallback(async (accountName: string, companyId?: string, domain?: string) => {
+    if (!organizationId || !accountName) return null;
+    const { data } = await supabase
+      .from('engage_research_reports')
+      .select('*')
+      .eq('organization_id', organizationId)
+      .eq('report_type', 'company')
+      .order('created_at', { ascending: false })
+      .limit(30);
+
+    const name = accountName.toLowerCase();
+    const domainLower = (domain || '').toLowerCase();
+    return (data || []).find((r: any) => {
+      // Primary: match by company_id if available
+      if (companyId && r.company_id === companyId) return true;
+      // Secondary: match by domain in content or subject_domain
+      if (domainLower) {
+        if ((r.content?.company?.domain || '').toLowerCase() === domainLower) return true;
+        if ((r.subject_domain || '').toLowerCase() === domainLower) return true;
+      }
+      // Tertiary: fuzzy subject_name OR title matching
+      const sn = (r.subject_name || r.title || '').toLowerCase();
+      return sn && (sn === name || sn.includes(name) || name.includes(sn));
+    }) || null;
+  }, [organizationId]);
+
+  // ── Fetch account activity timeline ──────────────────────
+
+  const fetchAccountActivity = useCallback(async (accountName: string, days = 90) => {
+    if (!organizationId || !accountName) return [];
+    const since = new Date(Date.now() - days * 86400000).toISOString();
+    const name = accountName.toLowerCase();
+
+    const { data: events } = await supabase
+      .from('engage_activity_events')
+      .select('*')
+      .eq('organization_id', organizationId)
+      .gte('created_at', since)
+      .order('created_at', { ascending: false })
+      .limit(200);
+
+    const filtered = (events || []).filter((e: any) => {
+      const desc = (e.description || '').toLowerCase();
+      const metaAccount = (e.metadata?.company_name || e.metadata?.account_name || '').toLowerCase();
+      return desc.includes(name) || metaAccount === name;
+    });
+
+    const { data: deals } = await supabase
+      .from('engage_pipeline_deals')
+      .select('id, deal_name, deal_value, stage, created_at, updated_at')
+      .eq('organization_id', organizationId)
+      .ilike('deal_name', `%${accountName}%`)
+      .gte('created_at', since)
+      .order('created_at', { ascending: false })
+      .limit(20);
+
+    const dealEvents = (deals || []).map((d: any) => ({
+      id: `deal-${d.id}`,
+      event_type: 'deal.activity',
+      title: `Deal: ${d.deal_name}`,
+      description: `${d.stage} · $${(d.deal_value || 0).toLocaleString()}`,
+      icon: '💰',
+      color: '#10b981',
+      created_at: d.updated_at || d.created_at,
+    }));
+
+    return [...filtered, ...dealEvents].sort((a: any, b: any) =>
+      new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+    );
+  }, [organizationId]);
+
+  // ── Account Contacts, Meetings, Deals (Phase 5) ────────────────────────────
+
+  const [accountContacts, setAccountContacts] = useState<any[]>([]);
+  const [accountMeetings, setAccountMeetings] = useState<any[]>([]);
+  const [accountDeals, setAccountDeals] = useState<any[]>([]);
+  const [loadingContacts, setLoadingContacts] = useState(false);
+  const [loadingMeetings, setLoadingMeetings] = useState(false);
+  const [loadingDeals, setLoadingDeals] = useState(false);
+
+  const fetchAccountContacts = useCallback(async (accountId: string) => {
+    if (!accountId) return [];
+    setLoadingContacts(true);
+    try {
+      const res = await backendFetch(`/api/engage/accounts/${accountId}/contacts`, undefined, 'GET');
+      const contacts = res.contacts || [];
+      setAccountContacts(contacts);
+      return contacts;
+    } catch (err) {
+      console.error('fetchAccountContacts failed:', err);
+      return [];
+    } finally {
+      setLoadingContacts(false);
+    }
+  }, []);
+
+  const addAccountContact = useCallback(async (accountId: string, contact: Record<string, any>) => {
+    const res = await backendFetch(`/api/engage/accounts/${accountId}/contacts`, contact);
+    if (res.contact) setAccountContacts(prev => [res.contact, ...prev]);
+    return res.contact;
+  }, []);
+
+  const bulkImportContacts = useCallback(async (accountId: string, contacts: Record<string, any>[]) => {
+    const res = await backendFetch(`/api/engage/accounts/${accountId}/contacts/bulk`, { contacts });
+    if (res.ok) await fetchAccountContacts(accountId);
+    return res.imported || 0;
+  }, [fetchAccountContacts]);
+
+  const updateAccountContact = useCallback(async (accountId: string, contactId: string, updates: Record<string, any>) => {
+    const res = await backendFetch(`/api/engage/accounts/${accountId}/contacts/${contactId}`, updates, 'PATCH');
+    if (res.contact) setAccountContacts(prev => prev.map(c => c.id === contactId ? res.contact : c));
+    return res.contact;
+  }, []);
+
+  const removeAccountContact = useCallback(async (accountId: string, contactId: string) => {
+    await backendFetch(`/api/engage/accounts/${accountId}/contacts/${contactId}`, undefined, 'DELETE');
+    setAccountContacts(prev => prev.filter(c => c.id !== contactId));
+  }, []);
+
+  const fetchAccountMeetings = useCallback(async (accountId: string) => {
+    if (!accountId) return [];
+    setLoadingMeetings(true);
+    try {
+      const res = await backendFetch(`/api/engage/accounts/${accountId}/meetings`, undefined, 'GET');
+      const meetings = res.meetings || [];
+      setAccountMeetings(meetings);
+      return meetings;
+    } catch (err) {
+      console.error('fetchAccountMeetings failed:', err);
+      return [];
+    } finally {
+      setLoadingMeetings(false);
+    }
+  }, []);
+
+  const fetchAccountDeals = useCallback(async (accountId: string) => {
+    if (!accountId) return [];
+    setLoadingDeals(true);
+    try {
+      const res = await backendFetch(`/api/engage/accounts/${accountId}/deals`, undefined, 'GET');
+      const deals = res.deals || [];
+      setAccountDeals(deals);
+      return deals;
+    } catch (err) {
+      console.error('fetchAccountDeals failed:', err);
+      return [];
+    } finally {
+      setLoadingDeals(false);
+    }
+  }, []);
+
+  const triggerAutoResearch = useCallback(async (accountId: string) => {
+    const res = await backendFetch(`/api/engage/accounts/${accountId}/auto-research`, {});
+    return res;
+  }, []);
+
+  const linkEventToDeal = useCallback(async (eventId: string, dealId: string) => {
+    await backendFetch(`/api/calendar/events/${eventId}/link-deal`, { deal_id: dealId });
+  }, []);
+
   // ── Init ───────────────────────────────────────────────
 
   useEffect(() => {
@@ -692,5 +854,24 @@ export function useAccountIntelligence(organizationId: string, userId?: string) 
     inferBuyingStage,
     updateBuyingStage,
     recordOutcome,
+    // Phase 4: Company research + activity
+    fetchCompanyResearch,
+    fetchAccountActivity,
+    // Phase 5: Account contacts, meetings, deals
+    accountContacts,
+    accountMeetings,
+    accountDeals,
+    loadingContacts,
+    loadingMeetings,
+    loadingDeals,
+    fetchAccountContacts,
+    addAccountContact,
+    bulkImportContacts,
+    updateAccountContact,
+    removeAccountContact,
+    fetchAccountMeetings,
+    fetchAccountDeals,
+    triggerAutoResearch,
+    linkEventToDeal,
   };
 }

@@ -418,10 +418,12 @@ function getAnthropicClient() {
   return new Anthropic({ apiKey: key });
 }
 
-async function generateCompanyBrief(companyData, webResults) {
+async function generateCompanyBrief(companyData, webResults, icpContext) {
   const client = getAnthropicClient();
 
-  const systemPrompt = `You are an expert sales intelligence analyst for Apptivia Engage.
+  const icpInjection = icpContext ? `\n${icpContext}\n\nUse this ICP profile to assess how well this company fits the ideal customer profile. Mention specific ICP criteria matches in your analysis.\n` : '';
+
+  const systemPrompt = `${icpInjection}You are an expert sales intelligence analyst for Apptivia Engage.
 Given company data and recent web search results, produce a structured JSON company brief.
 
 Return ONLY valid JSON with this exact shape:
@@ -459,10 +461,12 @@ Return ONLY valid JSON with this exact shape:
   }
 }
 
-async function generateProspectBrief(prospectData, companyData, webResults) {
+async function generateProspectBrief(prospectData, companyData, webResults, icpContext) {
   const client = getAnthropicClient();
 
-  const systemPrompt = `You are an expert sales intelligence analyst for Apptivia Engage.
+  const icpInjection = icpContext ? `\n${icpContext}\n\nUse this ICP profile to assess how this prospect's role and company align with the ideal buyer persona. Tailor outreach angles to the ICP pain points.\n` : '';
+
+  const systemPrompt = `${icpInjection}You are an expert sales intelligence analyst for Apptivia Engage.
 Given a prospect's profile, their company data, and web search results, produce a structured JSON prospect brief.
 
 Return ONLY valid JSON with this shape:
@@ -505,6 +509,8 @@ async function generateOutreachDraft(prospectData, companyBrief, options = {}) {
 
   const channel = options.channel || 'email';
   const tone = options.tone || 'professional';
+  const salesDna = options.sales_dna || '';
+  const icpCtx = options.icp_context || '';
 
   // If a prompt template was selected, use its prompts with variable substitution
   let systemPrompt, userMessage;
@@ -524,7 +530,10 @@ async function generateOutreachDraft(prospectData, companyBrief, options = {}) {
     systemPrompt = (options.template_system_prompt
       ? replaceVars(options.template_system_prompt)
       : `You are an expert sales copywriter.`) + '\n\n' +
-      `Return ONLY valid JSON. The JSON structure depends on the task.` + AI_STYLE_RULE;
+      `Return ONLY valid JSON. The JSON structure depends on the task.\nIMPORTANT: Do NOT include any email closing, sign-off, or signature in the body — the user\'s signature is appended separately.` +
+      (salesDna ? `\n\n${salesDna}\nUse this organization's value propositions, methodology, and terminology in your outreach. Align messaging with their sales approach.` : '') +
+      (icpCtx ? `\n\n${icpCtx}\nUse this ICP profile to tailor outreach angles to the prospect's pain points and buyer persona.` : '') +
+      AI_STYLE_RULE;
 
     userMessage = options.template_user_prompt
       ? replaceVars(options.template_user_prompt) +
@@ -540,7 +549,9 @@ Rules:
 - Include a clear, low-friction CTA
 - Do NOT be generic or salesy
 - Reference something specific and recent about their company or role
-
+- Do NOT include any email closing, sign-off, or signature (e.g. "Best regards", "Best, [Name]") — the user's signature is appended separately
+${salesDna ? `\n${salesDna}\nUse this organization's value propositions, methodology, and terminology in your outreach. Align messaging with their sales approach.` : ''}
+${icpCtx ? `\n${icpCtx}\nUse this ICP profile to tailor outreach angles to the prospect's pain points and buyer persona.` : ''}
 Return ONLY valid JSON:
 {
   "subject": "Email subject line (omit for LinkedIn)",
@@ -690,11 +701,12 @@ async function researchCompany(domain, context = {}) {
     steps.tavily = { error: err.message };
   }
 
-  // Step 4: AI brief — receives merged Apollo + PDL data
+  // Step 4: AI brief — receives merged Apollo + PDL data + ICP context
   try {
     steps.brief = await generateCompanyBrief(
       mergedCompany,
-      steps.tavily?.results || []
+      steps.tavily?.results || [],
+      context.icpContext || null
     );
   } catch (err) {
     steps.brief = { error: err.message };
@@ -724,7 +736,7 @@ async function researchCompany(domain, context = {}) {
  * 2. AI web search
  * 3. Generate AI brief
  */
-async function researchProspect(identifier) {
+async function researchProspect(identifier, context = {}) {
   const steps = { enrich: null, tavily: null, brief: null };
 
   // Step 1: Enrich — Apollo for email/name, PDL for LinkedIn
@@ -774,12 +786,13 @@ async function researchProspect(identifier) {
     steps.tavily = { error: err.message };
   }
 
-  // Step 3: AI brief
+  // Step 3: AI brief (with optional ICP context)
   try {
     steps.brief = await generateProspectBrief(
       person,
       person.organization || {},
-      steps.tavily?.results || []
+      steps.tavily?.results || [],
+      context.icpContext || null
     );
   } catch (err) {
     steps.brief = { error: err.message };

@@ -95,7 +95,7 @@ export default function DataDrivenPlaybook({ scorecardData, lastWeekScorecardDat
 
           // Strongest KPI for balanced view — must meet LAGGING_THRESHOLD to qualify as a real strength
           const allEntries = Object.entries(repRow.kpis)
-            .map(([k, v]) => ({ key: k, percentage: Number(v?.percentage || 0) }))
+            .map(([k, v]) => ({ key: k, percentage: Number(v?.percentage || 0), value: Number(v?.value || 0) }))
             .filter(e => {
               if (e.percentage < LAGGING_THRESHOLD) return false;
               // Don't show conversation-quality ratios as strength when talk_time is near-zero
@@ -103,6 +103,10 @@ export default function DataDrivenPlaybook({ scorecardData, lastWeekScorecardDat
                 const talkTime = Number(repRow.kpis?.talk_time?.percentage || 0);
                 if (talkTime < 5) return false;
               }
+              // Don't show lower-is-better KPIs (e.g. response_time) as strength when value is 0 (no data = false 200%)
+              if (e.key === 'response_time' && e.value === 0) return false;
+              // General guard: any KPI at near-max percentage with zero actual value is not a real strength
+              if (e.percentage >= 195 && e.value === 0) return false;
               return true;
             })
             .sort((a, b) => b.percentage - a.percentage);
@@ -510,7 +514,8 @@ export default function DataDrivenPlaybook({ scorecardData, lastWeekScorecardDat
                                 )}
                                 <button
                                   onClick={() => openAaronWithPrompt(
-                                    `As a manager, I need coaching advice for ${rep.name}. Their weakest KPI is ${rep.weakestKpi?.label || 'unknown'} at ${rep.weakestKpi?.percentage || 0}% (team avg: ${rep.teamAvgForWeakest || 0}%). ${rep.secondWeakestKpi ? `Also lagging: ${rep.secondWeakestKpi.label} (${rep.secondWeakestKpi.percentage}%).` : ''} Their 5-week avg score is ${rep.avg5w}% with a ${rep.trendDelta >= 0 ? '+' : ''}${rep.trendDelta}% trend. What specific actions should I take in my next 1:1?`
+                                    `As a manager, I need coaching advice for ${rep.name}. Their weakest KPI is ${rep.weakestKpi?.label || 'unknown'} at ${rep.weakestKpi?.percentage || 0}% (team avg: ${rep.teamAvgForWeakest || 0}%). ${rep.secondWeakestKpi ? `Also lagging: ${rep.secondWeakestKpi.label} (${rep.secondWeakestKpi.percentage}%).` : ''} Their 5-week avg score is ${rep.avg5w}% with a ${rep.trendDelta >= 0 ? '+' : ''}${rep.trendDelta}% trend. What specific actions should I take in my next 1:1?`,
+                                    rep.name
                                   )}
                                   className="flex items-center gap-1 px-2 py-1 text-[10px] font-medium text-purple-600 border border-purple-200 rounded hover:bg-purple-50 transition-colors"
                                 >

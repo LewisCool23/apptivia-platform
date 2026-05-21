@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { X, Activity, Filter, Calendar, MessageCircle, ChevronUp, ChevronDown } from 'lucide-react';
 import { supabase } from '../supabaseClient';
+import { useModalBehavior } from '../hooks/useModalBehavior';
 
 const EVENT_TYPE_LABELS = {
   'account.researched': 'Account Researched',
@@ -19,6 +20,21 @@ const EVENT_TYPE_LABELS = {
   'call.analyzed': 'Call Analyzed',
   'badge.earned': 'Badge Earned',
   'signal.detected': 'Signal Detected',
+  'contacts.searched': 'Contacts Searched',
+  'contacts.enriched': 'Contacts Enriched',
+};
+
+const EVENT_TYPE_COLORS = {
+  'account': 'bg-apptivia-coral text-white',
+  'prospect': 'bg-apptivia-coral text-white',
+  'outreach': 'bg-amber-500 text-white',
+  'deal': 'bg-emerald-500 text-white',
+  'call': 'bg-purple-500 text-white',
+  'forecast': 'bg-sky-500 text-white',
+  'playbook': 'bg-sky-500 text-white',
+  'signal': 'bg-apptivia-ink text-white',
+  'badge': 'bg-amber-500 text-white',
+  'contacts': 'bg-blue-500 text-white',
 };
 
 const TYPE_CATEGORIES = [
@@ -31,6 +47,7 @@ const TYPE_CATEGORIES = [
   { id: 'forecast', label: 'Forecasts' },
   { id: 'playbook', label: 'Playbooks' },
   { id: 'signal', label: 'Signals' },
+  { id: 'contacts', label: 'Contacts' },
 ];
 
 function timeAgo(ts) {
@@ -49,10 +66,11 @@ function formatDate(ts) {
 }
 
 export default function EngageActivityModal({ isOpen, onClose, organizationId, onAskAaron }) {
+  useModalBehavior(isOpen, onClose);
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [typeFilter, setTypeFilter] = useState('all');
-  const [dateRange, setDateRange] = useState('7'); // days
+  const [dateRange, setDateRange] = useState('30'); // days — match Activity Feed side panel
   const [sortAsc, setSortAsc] = useState(false);
 
   useEffect(() => {
@@ -104,32 +122,37 @@ export default function EngageActivityModal({ isOpen, onClose, organizationId, o
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-black/50 z-50" onClick={onClose}>
       <div
-        className="bg-white rounded-xl shadow-2xl w-full max-w-5xl max-h-[85vh] flex flex-col"
+        className="bg-apptivia-paper rounded-xl shadow-2xl w-full max-w-7xl max-h-[85vh] flex flex-col"
         onClick={e => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-apptivia-carbon-100">
+        <div className="bg-gradient-to-r from-apptivia-coral to-apptivia-coral/80 px-8 py-5 flex items-center justify-between flex-shrink-0 rounded-t-xl">
           <div className="flex items-center gap-3">
-            <Activity size={18} className="text-apptivia-ink" />
-            <h2 className="text-lg font-bold text-apptivia-ink">Engage Activity</h2>
+            <div className="w-9 h-9 bg-white/20 rounded-lg flex items-center justify-center">
+              <Activity size={18} className="text-white" />
+            </div>
+            <div>
+              <h2 className="text-base font-bold text-white">Engage Activity</h2>
+              <p className="text-white/70 text-xs">{displayed.length} events</p>
+            </div>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
             {onAskAaron && (
               <button
                 onClick={() => onAskAaron('Review my recent Engage activity and suggest what to focus on next')}
-                className="inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg bg-apptivia-ink text-white hover:bg-apptivia-ink/90 transition-colors"
+                className="inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg bg-white/20 text-white hover:bg-white/30 transition-colors"
               >
                 <MessageCircle size={12} /> Ask Aaron
               </button>
             )}
-            <button onClick={onClose} className="text-apptivia-carbon-400 hover:text-apptivia-carbon-600 transition-colors">
-              <X size={20} />
+            <button onClick={onClose} className="p-1.5 hover:bg-white/20 rounded-lg transition-colors">
+              <X size={18} className="text-white" />
             </button>
           </div>
         </div>
 
         {/* Stats row */}
-        <div className="px-6 py-3 border-b border-apptivia-carbon-100 flex items-center gap-4 overflow-x-auto">
+        <div className="px-8 py-4 border-b border-apptivia-carbon-100 flex items-center gap-4 flex-wrap">
           <div className="text-center px-3 py-1.5 bg-apptivia-paper rounded-lg min-w-[80px]">
             <p className="text-lg font-bold text-apptivia-ink">{weekStats.total}</p>
             <p className="text-[10px] text-apptivia-carbon-500">This Week</p>
@@ -231,23 +254,44 @@ export default function EngageActivityModal({ isOpen, onClose, organizationId, o
                   const actorName = event.profiles
                     ? (event.profiles.full_name || `${event.profiles.first_name || ''} ${event.profiles.last_name || ''}`.trim())
                     : null;
+                  const actorInitials = actorName
+                    ? actorName.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
+                    : null;
+                  const eventCategory = event.event_type?.split('.')[0] || 'other';
+                  const typeColor = EVENT_TYPE_COLORS[eventCategory] || 'bg-apptivia-carbon-200 text-apptivia-carbon-600';
 
                   return (
                     <tr key={event.id} className="hover:bg-apptivia-paper/50 transition-colors">
                       <td className="px-4 py-2.5 text-center">
-                        <span className="text-sm">{event.icon || '📌'}</span>
+                        <div className={`w-7 h-7 rounded-lg flex items-center justify-center text-[10px] ${typeColor}`}>
+                          {event.icon || '📌'}
+                        </div>
                       </td>
-                      <td className="px-4 py-2.5 font-medium text-apptivia-ink">
-                        {EVENT_TYPE_LABELS[event.event_type] || event.title}
+                      <td className="px-4 py-2.5">
+                        <span className="font-medium text-apptivia-ink text-xs">
+                          {EVENT_TYPE_LABELS[event.event_type] || event.title}
+                        </span>
+                        <span className={`ml-2 text-[9px] font-medium px-1.5 py-0.5 rounded-full ${typeColor}`}>
+                          {eventCategory}
+                        </span>
                       </td>
                       <td className="px-4 py-2.5 text-apptivia-carbon-600 text-xs max-w-[300px] truncate">
                         {event.description || '—'}
                       </td>
-                      <td className="px-4 py-2.5 text-apptivia-carbon-500 text-xs">
-                        {actorName || '—'}
+                      <td className="px-4 py-2.5">
+                        {actorName ? (
+                          <div className="flex items-center gap-1.5">
+                            <div className="w-5 h-5 rounded-full bg-apptivia-ink flex items-center justify-center text-white text-[8px] font-bold flex-shrink-0">
+                              {actorInitials}
+                            </div>
+                            <span className="text-xs text-apptivia-carbon-500 truncate">{actorName}</span>
+                          </div>
+                        ) : (
+                          <span className="text-xs text-apptivia-carbon-400">System</span>
+                        )}
                       </td>
                       <td className="px-4 py-2.5 text-apptivia-carbon-400 text-xs text-right whitespace-nowrap">
-                        {formatDate(event.created_at)}
+                        {timeAgo(event.created_at)}
                       </td>
                     </tr>
                   );

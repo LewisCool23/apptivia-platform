@@ -77,7 +77,17 @@ async function getSalesDnaContext(orgId) {
     }
 
     // Qualification framework
-    if (raw.qualification_framework) {
+    if (raw.qualification_framework === 'custom') {
+      const qfName = raw.custom_qualification_name || 'Custom Framework';
+      parts.push(`Qualification framework: ${qfName}`);
+      if (raw.custom_qualification_criteria?.length) {
+        parts.push('Qualification criteria:');
+        raw.custom_qualification_criteria.forEach(c => {
+          parts.push(`  - ${c.label}: ${c.description}`);
+        });
+      }
+      parts.push(`IMPORTANT: When coaching on deal qualification, reference ${qfName} criteria by name. Confirm each criterion is addressed before a deal advances.`);
+    } else if (raw.qualification_framework) {
       const qfName = _QUAL_NAMES[raw.qualification_framework] || raw.qualification_framework;
       parts.push(`Qualification framework: ${qfName}`);
     }
@@ -105,6 +115,101 @@ async function getSalesDnaContext(orgId) {
     return result;
   } catch (err) {
     console.error('getSalesDnaContext error:', err.message);
+    return '';
+  }
+}
+
+// ── ICP Profile Context ─────────────────────────────────────────────────────
+const _icpProfileCache = {};
+
+async function getIcpProfileContext(orgId, profileId) {
+  if (!orgId) return '';
+
+  const cacheKey = `icp_profile_${orgId}_${profileId || 'default'}`;
+  const cached = _icpProfileCache[cacheKey];
+  if (cached && (Date.now() - cached.ts) < 300000) return cached.data;
+
+  try {
+    const sb = _getSupabaseAdmin();
+    if (!sb) return '';
+
+    let profile = null;
+
+    if (profileId) {
+      // Fetch specific ICP profile by id
+      const { data } = await sb
+        .from('engage_icp_profiles')
+        .select('name, description, icp_config, signal_config')
+        .eq('id', profileId)
+        .maybeSingle();
+      profile = data;
+    } else {
+      // Fetch default ICP profile for the org
+      const { data } = await sb
+        .from('engage_icp_profiles')
+        .select('name, description, icp_config, signal_config')
+        .eq('organization_id', orgId)
+        .eq('is_default', true)
+        .maybeSingle();
+      profile = data;
+    }
+
+    // Fallback: read from organizations table if no ICP profile found
+    if (!profile) {
+      const { data: org } = await sb
+        .from('organizations')
+        .select('icp_config, signal_config')
+        .eq('id', orgId)
+        .maybeSingle();
+
+      if (!org) {
+        _icpProfileCache[cacheKey] = { data: '', ts: Date.now() };
+        return '';
+      }
+      profile = {
+        name: 'Organization Default',
+        icp_config: org.icp_config,
+        signal_config: org.signal_config,
+      };
+    }
+
+    const icp = profile.icp_config || {};
+    const sig = profile.signal_config || {};
+
+    // Only include non-empty fields
+    const parts = [`--- ICP PROFILE: ${profile.name || 'Unnamed'} ---`];
+
+    if (Array.isArray(icp.target_industries) && icp.target_industries.length) {
+      parts.push(`Target Industries: ${icp.target_industries.join(', ')}`);
+    }
+    if (icp.headcount_min || icp.headcount_max) {
+      parts.push(`Company Size: ${icp.headcount_min || '?'}-${icp.headcount_max || '?'} employees`);
+    }
+    if (icp.revenue_min_m || icp.revenue_max_m) {
+      parts.push(`Revenue Range: $${icp.revenue_min_m || '?'}M - $${icp.revenue_max_m || '?'}M`);
+    }
+    if (Array.isArray(icp.target_technologies) && icp.target_technologies.length) {
+      parts.push(`Target Technologies: ${icp.target_technologies.join(', ')}`);
+    }
+    if (Array.isArray(sig.job_titles_to_track) && sig.job_titles_to_track.length) {
+      parts.push(`Buyer Personas (Job Titles): ${sig.job_titles_to_track.join(', ')}`);
+    }
+    if (Array.isArray(sig.pain_points) && sig.pain_points.length) {
+      parts.push(`Pain Points We Solve: ${sig.pain_points.join(', ')}`);
+    }
+    if (Array.isArray(sig.solution_keywords) && sig.solution_keywords.length) {
+      parts.push(`Solution Keywords: ${sig.solution_keywords.join(', ')}`);
+    }
+    if (Array.isArray(sig.competitors) && sig.competitors.length) {
+      parts.push(`Competitors: ${sig.competitors.join(', ')}`);
+    }
+
+    // Only return if we have more than just the header
+    const result = parts.length > 1 ? parts.join('\n') : '';
+    _icpProfileCache[cacheKey] = { data: result, ts: Date.now() };
+    return result;
+  } catch (err) {
+    console.error('getIcpProfileContext error:', err.message);
     return '';
   }
 }
@@ -978,6 +1083,12 @@ async function fetchAaronOrgContext(organizationId, userId) {
       }
     }
 
+    // Append ICP profile context (from engage_icp_profiles or org fallback)
+    try {
+      const icpCtx = await getIcpProfileContext(organizationId);
+      if (icpCtx) parts.push('\n' + icpCtx);
+    } catch { /* non-blocking — ICP context is supplementary */ }
+
     const result = parts.length > 1 ? parts.join('\n') : '';
     _aaronOrgCache[cacheKey] = { data: result, ts: Date.now() };
     return result;
@@ -999,6 +1110,9 @@ setInterval(() => {
   }
   for (const key of Object.keys(_salesDnaCache)) {
     if (now - _salesDnaCache[key].ts > 300000) { delete _salesDnaCache[key]; evicted++; }
+  }
+  for (const key of Object.keys(_icpProfileCache)) {
+    if (now - _icpProfileCache[key].ts > 300000) { delete _icpProfileCache[key]; evicted++; }
   }
   for (const key of Object.keys(_aaronDailyLimits)) {
     const todayKey = new Date().toISOString().slice(0, 10);
@@ -1707,18 +1821,21 @@ async function fetchAaronOutcomeContext(repProfileId, orgId) {
  * Extract a rep name from a message, match to an org profile, and fetch their
  * detailed KPI data with 4-week trends. Used for coaching plans, 1:1 prep, etc.
  */
-async function fetchRepDetailContext(sb, message, orgId, role) {
-  if (!message || !orgId) return '';
+async function fetchRepDetailContext(sb, message, orgId, role, targetRepName = null) {
+  if (!orgId) return '';
 
-  // 1. Extract candidate rep name from message
-  const patterns = [
-    /(?:for|about|on|with|coach(?:ing)?)\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)/,
-    /([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)'s\s+(?:performance|kpi|scorecard|plan|data|coaching)/i,
-  ];
-  let candidateName = null;
-  for (const p of patterns) {
-    const m = message.match(p);
-    if (m) { candidateName = m[1].trim(); break; }
+  // 1. Use explicitly provided rep name if available; fallback to regex extraction
+  let candidateName = targetRepName || null;
+
+  if (!candidateName && message) {
+    const patterns = [
+      /(?:for|about|on|with|coach(?:ing)?)\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)/,
+      /([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)'s\s+(?:performance|kpi|scorecard|plan|data|coaching)/i,
+    ];
+    for (const p of patterns) {
+      const m = message.match(p);
+      if (m) { candidateName = m[1].trim(); break; }
+    }
   }
   if (!candidateName) return '';
 
@@ -2096,10 +2213,93 @@ function detectStructuredOutputMode(rolePreset, message, page) {
   return null;
 }
 
+// ── Call Intelligence Context for Aaron ──────────────────────────────────────
+
+async function fetchAaronCallContext(profileId, orgId) {
+  if (!profileId || !orgId) return '';
+  try {
+    const sb = _getSupabaseAdmin();
+    if (!sb) return '';
+
+    // Fetch last 5 calls with conversational intelligence for this rep
+    const { data: calls } = await sb
+      .from('engage_call_logs')
+      .select('contact_name, duration_minutes, call_sentiment, conversational_intelligence, created_at')
+      .eq('organization_id', orgId)
+      .eq('user_id', profileId)
+      .not('conversational_intelligence', 'is', null)
+      .order('created_at', { ascending: false })
+      .limit(5);
+
+    if (!calls?.length) return '';
+
+    // Compute aggregates
+    let totalTalkRatio = 0;
+    let totalMethodology = 0;
+    let methodologyCount = 0;
+    const objections = {};
+    const sentiments = [];
+    let totalQuestions = 0;
+    let totalFillers = 0;
+
+    for (const call of calls) {
+      const ci = call.conversational_intelligence;
+      if (!ci) continue;
+      if (ci.talk_ratio?.rep) totalTalkRatio += ci.talk_ratio.rep;
+      if (ci.methodology_adherence?.score != null) {
+        totalMethodology += ci.methodology_adherence.score;
+        methodologyCount++;
+      }
+      if (ci.sentiment) sentiments.push(ci.sentiment);
+      if (ci.questions_asked) totalQuestions += ci.questions_asked;
+      if (ci.filler_word_count) totalFillers += ci.filler_word_count;
+      if (ci.objections) {
+        for (const obj of ci.objections) {
+          const key = obj.toLowerCase().trim();
+          objections[key] = (objections[key] || 0) + 1;
+        }
+      }
+    }
+
+    const avgTalkRatio = Math.round(totalTalkRatio / calls.length);
+    const avgMethodology = methodologyCount > 0 ? Math.round(totalMethodology / methodologyCount) : null;
+    const topObjections = Object.entries(objections).sort((a, b) => b[1] - a[1]).slice(0, 3);
+    const sentimentTrend = sentiments.join(' → ');
+    const framework = calls.find(c => c.conversational_intelligence?.methodology_adherence?.framework)?.conversational_intelligence?.methodology_adherence?.framework || 'N/A';
+
+    const parts = [
+      `CALL INTELLIGENCE (last ${calls.length} calls):`,
+      `- Avg talk ratio: ${avgTalkRatio}% (target 40-50%)`,
+      `- Avg questions/call: ${Math.round(totalQuestions / calls.length)}`,
+      `- Avg filler words/call: ${Math.round(totalFillers / calls.length)}`,
+    ];
+    if (avgMethodology !== null) {
+      parts.push(`- Methodology adherence: ${avgMethodology}% (${framework})`);
+    }
+    if (topObjections.length > 0) {
+      parts.push(`- Top objections: ${topObjections.map(([o, c]) => `${o} (${c}x)`).join(', ')}`);
+    }
+    if (sentimentTrend) {
+      parts.push(`- Sentiment trend: ${sentimentTrend}`);
+    }
+    // Latest coaching suggestions
+    const latestCoaching = calls[0]?.conversational_intelligence?.coaching_suggestions;
+    if (latestCoaching?.length) {
+      parts.push(`- Latest coaching tips: ${latestCoaching.slice(0, 3).join('; ')}`);
+    }
+
+    return parts.join('\n');
+  } catch (err) {
+    console.error('[fetchAaronCallContext] Error:', err.message);
+    return '';
+  }
+}
+
 // ── Module exports ───────────────────────────────────────────────────────────
 module.exports = {
   init,
   getSalesDnaContext,
+  getIcpProfileContext,
   AI_STYLE_RULE,
   AARON_FRAMEWORKS,
   PRESET_FRAMEWORK_MAP,
@@ -2127,6 +2327,7 @@ module.exports = {
   fetchPipelineContext,
   fetchAnalyticsSummaryContext,
   fetchAaronOutcomeContext,
+  fetchAaronCallContext,
   fetchRepDetailContext,
   fetchCalendarContext,
   STRUCTURED_OUTPUT_PROMPTS,

@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
 import { X, Award, Calendar, Trophy, Target, Share2, Mail, Twitter, Linkedin, Copy, Check } from 'lucide-react';
+import { useModalBehavior } from '../hooks/useModalBehavior';
 
 export default function BadgeModal({ isOpen, onClose, badge, profileName }) {
+  useModalBehavior(isOpen, onClose);
   const [showShareMenu, setShowShareMenu] = useState(false);
   const [copied, setCopied] = useState(false);
-  
+
   if (!isOpen || !badge) return null;
 
   const badgeUrl = typeof window !== 'undefined' ? window.location.origin + '/profile#badges' : '';

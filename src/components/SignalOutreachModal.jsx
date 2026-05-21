@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { X, Sparkles, RefreshCw, Copy, Check, Mail, Linkedin, MessageSquare, ChevronDown } from 'lucide-react';
+import { X, Sparkles, RefreshCw, Copy, Check, Mail, Linkedin, MessageSquare, ChevronDown, Settings } from 'lucide-react';
 import { engageApi } from '../utils/engageApi';
+import { useModalBehavior } from '../hooks/useModalBehavior';
 
 const SIGNAL_ICONS_MAP = {
   solution_search: '🔍',
@@ -75,12 +76,20 @@ const SIGNAL_OUTREACH_CONTEXT = {
   icp_prospector: 'This is a direct ICP match found through a company database search. There is no specific trigger event — make the relevance clear upfront by tying your product directly to their industry, team size, and likely pain points.',
 };
 
+const STYLE_INSTRUCTIONS = {
+  direct: 'Write in a DIRECT style — be concise, state the value prop clearly, and make a clear ask.',
+  consultative: 'Write in a CONSULTATIVE style — frame around their challenges, ask a diagnostic question, position as an advisor.',
+  social_proof: 'Write in a SOCIAL PROOF style — lead with specific results from similar companies, mention numbers and outcomes.',
+  outcome: 'Write in an OUTCOME style — lead with the business outcome they can achieve, paint a before/after picture.',
+};
+
 // 4F: Outreach style variants — pre-selected by buying stage
 const OUTREACH_STYLES = [
   { key: 'direct', label: 'Direct', tone: 'direct', description: 'Straight to the point, clear ask' },
   { key: 'consultative', label: 'Consultative', tone: 'professional', description: 'Problem-solving framing, advisory' },
   { key: 'social_proof', label: 'Social Proof', tone: 'casual', description: 'Lead with results & similar companies' },
   { key: 'outcome', label: 'Outcome', tone: 'professional', description: 'Lead with the business outcome' },
+  { key: 'compose', label: 'Compose', tone: null, description: 'Blank compose with your signature' },
 ];
 
 const BUYING_STAGE_DEFAULT_STYLE = {
@@ -89,7 +98,8 @@ const BUYING_STAGE_DEFAULT_STYLE = {
   decision: 'direct',           // late stage → clear ask
 };
 
-export default function SignalOutreachModal({ isOpen, onClose, signal, contact }) {
+export default function SignalOutreachModal({ isOpen, onClose, signal, contact, organizationId }) {
+  useModalBehavior(isOpen, onClose);
   const [channel, setChannel] = useState('email');
   const [tone, setTone] = useState('professional');
   const [activeStyle, setActiveStyle] = useState('direct');
@@ -104,6 +114,8 @@ export default function SignalOutreachModal({ isOpen, onClose, signal, contact }
   const [sendSuccess, setSendSuccess] = useState(false);
   const [sendError, setSendError] = useState(null);
   const [userSignature, setUserSignature] = useState('');
+  const [gmailConnected, setGmailConnected] = useState(null); // null=loading, true/false
+  const [contactBrief, setContactBrief] = useState(null);
 
   // Fetch user profile signature on mount
   useEffect(() => {
@@ -122,10 +134,36 @@ export default function SignalOutreachModal({ isOpen, onClose, signal, contact }
     })();
   }, []);
 
+  // Check Gmail connection status
+  useEffect(() => {
+    (async () => {
+      try {
+        const { supabase } = await import('../supabaseClient');
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+        const orgId = organizationId || signal?.organization_id;
+        if (!orgId) return;
+        const { data } = await supabase
+          .from('integrations')
+          .select('id, scopes')
+          .eq('organization_id', orgId)
+          .eq('integration_type', 'google_calendar')
+          .eq('profile_id', user.id)
+          .eq('status', 'connected')
+          .maybeSingle();
+        setGmailConnected(!!(data && data.scopes?.some(s => s.includes('gmail.send'))));
+      } catch {
+        setGmailConnected(false);
+      }
+    })();
+  }, [organizationId, signal?.organization_id]);
+
   // Reset state when modal opens — pre-select style by buying stage
   useEffect(() => {
-    if (isOpen && signal) {
-      const defaultStyle = BUYING_STAGE_DEFAULT_STYLE[signal.buying_stage_indicator] || 'direct';
+    if (isOpen && (signal || contact)) {
+      const defaultStyle = signal
+        ? (BUYING_STAGE_DEFAULT_STYLE[signal.buying_stage_indicator] || 'direct')
+        : 'direct';
       setActiveStyle(defaultStyle);
       setVariants({});
       setError(null);
@@ -135,38 +173,86 @@ export default function SignalOutreachModal({ isOpen, onClose, signal, contact }
       setRecipientEmail(contact?.email || '');
       setSendSuccess(false);
       setSendError(null);
+      setContactBrief(null);
+
+      // Contact-only mode: load cached brief for AI context
+      if (!signal && contact) {
+        const orgId = organizationId || contact.organization_id;
+        if (orgId) {
+          (async () => {
+            try {
+              const { supabase } = await import('../supabaseClient');
+              const name = (contact.full_name || contact.name || `${contact.first_name || ''} ${contact.last_name || ''}`.trim()).toLowerCase();
+              const email = (contact.email || '').toLowerCase();
+              const { data } = await supabase
+                .from('engage_research_reports')
+                .select('content, created_at, subject_name')
+                .eq('organization_id', orgId)
+                .eq('report_type', 'prospect')
+                .order('created_at', { ascending: false })
+                .limit(50);
+
+              const match = (data || []).find(r => {
+                const sn = (r.subject_name || '').toLowerCase();
+                const ce = (r.content?.prospect?.email || r.content?.email || '').toLowerCase();
+                return (sn && name && (sn === name || sn.includes(name) || name.includes(sn)))
+                  || (email && ce && ce === email);
+              });
+              if (match) setContactBrief(match.content);
+            } catch {}
+          })();
+        }
+      }
     }
-  }, [isOpen, signal?.id]);
+  }, [isOpen, signal?.id, contact?.id, contact?.email]);
 
   const handleGenerate = async (styleKey) => {
-    if (!signal) return;
+    if (!signal && !contact) return;
     const style = OUTREACH_STYLES.find(s => s.key === (styleKey || activeStyle)) || OUTREACH_STYLES[0];
+    if (style.key === 'compose') return; // No AI generation for compose
     setIsGenerating(true);
     setError(null);
 
-    const prospect = contact
-      ? { name: contact.name, title: contact.title, email: contact.email, company: signal.company_name }
-      : { company: signal.company_name };
+    let prospect, companyBrief, enhancedContext;
 
-    const companyBrief = {
-      signal_type: signal.signal_type,
-      signal_title: signal.title,
-      signal_description: signal.description,
-      outreach_angle: signal.ai_outreach_angle,
-      buying_stage: signal.buying_stage_indicator,
-      ai_summary: signal.ai_summary,
-      score: signal.signal_score,
-    };
+    if (signal) {
+      // Signal-based mode (existing behavior)
+      prospect = contact
+        ? { name: contact.name || contact.full_name, title: contact.title, email: contact.email, company: signal.company_name }
+        : { company: signal.company_name };
 
-    const signalContext = SIGNAL_OUTREACH_CONTEXT[signal.signal_type] || signal.ai_outreach_angle || '';
-    // 4F: Append style instruction to the context prompt
-    const styleInstruction = {
-      direct: 'Write in a DIRECT style — be concise, state the value prop clearly, and make a clear ask.',
-      consultative: 'Write in a CONSULTATIVE style — frame around their challenges, ask a diagnostic question, position as an advisor.',
-      social_proof: 'Write in a SOCIAL PROOF style — lead with specific results from similar companies, mention numbers and outcomes.',
-      outcome: 'Write in an OUTCOME style — lead with the business outcome they can achieve, paint a before/after picture.',
-    };
-    const enhancedContext = `${signalContext}\n\nSTYLE: ${styleInstruction[style.key] || ''}`;
+      companyBrief = {
+        signal_type: signal.signal_type,
+        signal_title: signal.title,
+        signal_description: signal.description,
+        outreach_angle: signal.ai_outreach_angle,
+        buying_stage: signal.buying_stage_indicator,
+        ai_summary: signal.ai_summary,
+        score: signal.signal_score,
+      };
+
+      const signalContext = SIGNAL_OUTREACH_CONTEXT[signal.signal_type] || signal.ai_outreach_angle || '';
+      enhancedContext = `${signalContext}\n\nSTYLE: ${STYLE_INSTRUCTIONS[style.key] || ''}`;
+    } else {
+      // Contact-only mode — use cached brief as AI context
+      const cName = contact.full_name || contact.name || `${contact.first_name || ''} ${contact.last_name || ''}`.trim();
+      prospect = { name: cName, title: contact.title, email: contact.email, company: contact.company_name };
+
+      const brief = contactBrief?.brief || {};
+      companyBrief = {
+        signal_type: 'saved_contact',
+        signal_title: `Saved Contact: ${cName}`,
+        signal_description: brief.summary || `${cName} at ${contact.company_name || 'company'}`,
+        outreach_angle: brief.outreach_angles?.[0] || '',
+        buying_stage: 'consideration',
+        ai_summary: brief.professional_background || brief.summary || '',
+      };
+
+      const briefContext = brief.talking_points?.length
+        ? `Use these talking points: ${brief.talking_points.join('; ')}`
+        : '';
+      enhancedContext = `This is a saved contact (no specific signal trigger). Write a cold but personalized outreach. ${briefContext}\n\nSTYLE: ${STYLE_INSTRUCTIONS[style.key] || ''}`;
+    }
 
     try {
       const result = await engageApi.generateOutreach(prospect, companyBrief, {
@@ -178,20 +264,23 @@ export default function SignalOutreachModal({ isOpen, onClose, signal, contact }
       setVariants(prev => ({ ...prev, [style.key]: content }));
       if (content) {
         setEditSubject(content.subject || '');
-        setEditBody((content.body || '') + (userSignature ? '\n\n' + userSignature : ''));
+        // Strip any AI-generated trailing sign-off before appending user signature
+        let body = (content.body || '').replace(/\n{1,2}(?:Best(?:\s+regards?)?,?\s*\n?\s*\[?Your\s+Name\]?|Warm(?:est)?\s+regards?,?\s*\n?\s*\[?Your\s+Name\]?|Sincerely,?\s*\n?\s*\[?Your\s+Name\]?|Cheers,?\s*\n?\s*\[?Your\s+Name\]?)\s*$/i, '').trimEnd();
+        setEditBody(body + (userSignature ? '\n\n' + userSignature : ''));
         setSendSuccess(false);
         setSendError(null);
       }
 
       // Fire-and-forget: log to Activity Feed
-      if (signal.organization_id) {
+      const orgId = signal?.organization_id || organizationId;
+      if (orgId) {
         const { supabase } = await import('../supabaseClient');
         supabase.from('engage_activity_events').insert({
-          organization_id: signal.organization_id,
-          actor_id: signal.actioned_by || undefined,
+          organization_id: orgId,
+          actor_id: signal?.actioned_by || undefined,
           event_type: 'outreach.generated',
           title: 'Outreach Draft Generated',
-          description: `${channel === 'email' ? 'Email' : 'LinkedIn'} ${style.label} draft for ${signal.company_name || 'Unknown'}`,
+          description: `${channel === 'email' ? 'Email' : 'LinkedIn'} ${style.label} draft for ${signal?.company_name || contact?.company_name || 'Unknown'}`,
           icon: channel === 'email' ? '✉️' : '💼',
           color: '#FF4D2E',
         }).then(() => {}, () => {});
@@ -205,18 +294,27 @@ export default function SignalOutreachModal({ isOpen, onClose, signal, contact }
 
   // Sync edit fields when switching style variants — auto-generate if not yet cached
   useEffect(() => {
+    if (activeStyle === 'compose') {
+      // Compose mode: blank fields with signature pre-filled
+      setEditSubject('');
+      setEditBody(userSignature || '');
+      setSendSuccess(false);
+      setSendError(null);
+      return;
+    }
     const d = variants[activeStyle];
     if (d) {
       setEditSubject(d.subject || '');
       setEditBody((d.body || '') + (userSignature ? '\n\n' + userSignature : ''));
       setSendSuccess(false);
       setSendError(null);
-    } else if (signal && !isGenerating) {
+    } else if ((signal || contact) && !isGenerating) {
       handleGenerate(activeStyle);
     }
   }, [activeStyle]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const draft = variants[activeStyle] || null;
+  const showDraftFields = (draft || activeStyle === 'compose') && !isGenerating;
 
   const handleCopy = () => {
     const text = channel === 'email' && editSubject
@@ -249,14 +347,18 @@ export default function SignalOutreachModal({ isOpen, onClose, signal, contact }
     }
   };
 
-  if (!isOpen || !signal) return null;
+  if (!isOpen || (!signal && !contact)) return null;
 
-  const signalIcon = SIGNAL_ICONS_MAP[signal.signal_type] || '📡';
+  const signalIcon = signal ? (SIGNAL_ICONS_MAP[signal.signal_type] || '📡') : '✉️';
   const buyingStageColors = {
     awareness: 'bg-sky-50 text-sky-700',
     consideration: 'bg-amber-50 text-amber-700',
     decision: 'bg-emerald-50 text-emerald-700',
   };
+
+  const contactName = contact
+    ? (contact.full_name || contact.name || `${contact.first_name || ''} ${contact.last_name || ''}`.trim() || 'Unknown')
+    : '';
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
@@ -279,31 +381,68 @@ export default function SignalOutreachModal({ isOpen, onClose, signal, contact }
         </div>
 
         <div className="overflow-y-auto flex-1 p-5 space-y-4">
-          {/* Signal context */}
-          <div className="bg-apptivia-paper rounded-lg p-3 space-y-1.5">
-            <div className="flex items-start gap-2">
-              <span className="text-base leading-none mt-0.5">{signalIcon}</span>
-              <div className="flex-1 min-w-0">
-                <p className="text-xs font-semibold text-apptivia-ink leading-snug">{signal.title}</p>
-                <div className="flex items-center gap-2 mt-1 flex-wrap">
-                  {signal.company_name && (
-                    <span className="text-[10px] text-apptivia-carbon-500 font-medium">{signal.company_name}</span>
+          {/* Signal context or Contact context */}
+          {signal ? (
+            <div className="bg-apptivia-paper rounded-lg p-3 space-y-1.5">
+              <div className="flex items-start gap-2">
+                <span className="text-base leading-none mt-0.5">{signalIcon}</span>
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs font-semibold text-apptivia-ink leading-snug">{signal.title}</p>
+                  <div className="flex items-center gap-2 mt-1 flex-wrap">
+                    {signal.company_name && (
+                      <span className="text-[10px] text-apptivia-carbon-500 font-medium">{signal.company_name}</span>
+                    )}
+                    {signal.buying_stage_indicator && (
+                      <span className={`text-[9px] font-medium px-1.5 py-0.5 rounded-full ${buyingStageColors[signal.buying_stage_indicator] || 'bg-apptivia-carbon-100 text-apptivia-carbon-600'}`}>
+                        {signal.buying_stage_indicator}
+                      </span>
+                    )}
+                    <span className="text-[10px] text-apptivia-carbon-400">Score: {signal.signal_score}</span>
+                  </div>
+                </div>
+              </div>
+              {signal.ai_outreach_angle && (
+                <p className="text-[10px] text-apptivia-carbon-500 italic pl-6 leading-relaxed">
+                  "{signal.ai_outreach_angle}"
+                </p>
+              )}
+            </div>
+          ) : contact && (
+            <div className="bg-apptivia-paper rounded-lg p-3">
+              <div className="flex items-start gap-2">
+                <div className="w-7 h-7 bg-apptivia-ink rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <span className="text-white text-[10px] font-bold">{contactName[0]?.toUpperCase() || '?'}</span>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs font-semibold text-apptivia-ink leading-snug">{contactName}</p>
+                  <div className="flex items-center gap-2 mt-1 flex-wrap">
+                    {contact.title && <span className="text-[10px] text-apptivia-carbon-500">{contact.title}</span>}
+                    {contact.title && contact.company_name && <span className="text-[10px] text-apptivia-carbon-300">·</span>}
+                    {contact.company_name && <span className="text-[10px] text-apptivia-carbon-500 font-medium">{contact.company_name}</span>}
+                  </div>
+                  {contactBrief?.brief?.summary && (
+                    <p className="text-[10px] text-apptivia-carbon-500 italic mt-1.5 leading-relaxed line-clamp-2">
+                      {contactBrief.brief.summary}
+                    </p>
                   )}
-                  {signal.buying_stage_indicator && (
-                    <span className={`text-[9px] font-medium px-1.5 py-0.5 rounded-full ${buyingStageColors[signal.buying_stage_indicator] || 'bg-apptivia-carbon-100 text-apptivia-carbon-600'}`}>
-                      {signal.buying_stage_indicator}
-                    </span>
-                  )}
-                  <span className="text-[10px] text-apptivia-carbon-400">Score: {signal.signal_score}</span>
                 </div>
               </div>
             </div>
-            {signal.ai_outreach_angle && (
-              <p className="text-[10px] text-apptivia-carbon-500 italic pl-6 leading-relaxed">
-                "{signal.ai_outreach_angle}"
-              </p>
-            )}
-          </div>
+          )}
+
+          {/* Gmail connection CTA */}
+          {gmailConnected === false && (
+            <div className="bg-amber-50 border border-amber-200 rounded-lg px-3 py-2.5 flex items-center gap-2">
+              <Settings size={14} className="text-amber-600 flex-shrink-0" />
+              <div className="flex-1 min-w-0">
+                <p className="text-xs font-medium text-amber-800">Gmail not connected</p>
+                <p className="text-[10px] text-amber-600 mt-0.5">Connect Gmail to send emails directly from Apptivia.</p>
+              </div>
+              <a href="/profile?tab=integrations" className="text-[10px] font-semibold text-apptivia-coral hover:underline whitespace-nowrap">
+                Profile &rarr; Integrations
+              </a>
+            </div>
+          )}
 
           {/* Controls row */}
           <div className="grid grid-cols-2 gap-2">
@@ -317,7 +456,7 @@ export default function SignalOutreachModal({ isOpen, onClose, signal, contact }
                 placeholder="email@company.com"
                 className="w-full text-xs border border-apptivia-carbon-200 rounded-lg px-2.5 py-1.5 bg-white focus:outline-none focus:ring-2 focus:ring-apptivia-coral-tone-300"
               />
-              {contact?.name && <span className="text-[9px] text-apptivia-carbon-400 mt-0.5 block">{contact.name}{contact?.title ? ` · ${contact.title}` : ''}</span>}
+              {contactName && <span className="text-[9px] text-apptivia-carbon-400 mt-0.5 block">{contactName}{contact?.title ? ` · ${contact.title}` : ''}</span>}
             </div>
 
             {/* Channel */}
@@ -337,7 +476,7 @@ export default function SignalOutreachModal({ isOpen, onClose, signal, contact }
             </div>
           </div>
 
-          {/* 4F: Outreach Style Variant Pills */}
+          {/* Outreach Style Variant Pills */}
           <div>
             <label className="text-[10px] font-semibold text-apptivia-carbon-500 uppercase tracking-wide block mb-1.5">Outreach Style</label>
             <div className="flex gap-1.5 flex-wrap">
@@ -359,8 +498,8 @@ export default function SignalOutreachModal({ isOpen, onClose, signal, contact }
             </div>
           </div>
 
-          {/* Generate button (shown before first generation or to regenerate) */}
-          {!isGenerating && (
+          {/* Generate button (not shown for compose mode) */}
+          {activeStyle !== 'compose' && !isGenerating && (
             <button
               onClick={() => handleGenerate(activeStyle)}
               className="w-full inline-flex items-center justify-center gap-1.5 text-xs font-medium px-4 py-2 rounded-lg bg-apptivia-ink text-white hover:bg-apptivia-coral-tone-600 transition-all shadow-sm"
@@ -392,16 +531,16 @@ export default function SignalOutreachModal({ isOpen, onClose, signal, contact }
             </div>
           )}
 
-          {/* Draft output — editable */}
-          {draft && !isGenerating && (
+          {/* Draft output — editable (also shown for compose mode) */}
+          {showDraftFields && (
             <div className="border border-apptivia-carbon-200 rounded-lg overflow-hidden">
               <div className="flex items-center justify-between px-3 py-2 bg-apptivia-paper border-b border-apptivia-carbon-200">
                 <span className="text-[10px] font-semibold text-apptivia-carbon-500 uppercase tracking-wide flex items-center gap-1">
                   {channel === 'email' ? <Mail size={10} /> : <Linkedin size={10} />}
-                  {channel === 'email' ? 'Email Draft' : 'LinkedIn Message'}
+                  {activeStyle === 'compose' ? 'Compose Email' : channel === 'email' ? 'Email Draft' : 'LinkedIn Message'}
                 </span>
                 <div className="flex items-center gap-1.5">
-                  {channel === 'email' && (
+                  {channel === 'email' && gmailConnected && (
                     <button
                       onClick={handleSendGmail}
                       disabled={isSending || !recipientEmail || !editBody || sendSuccess}
@@ -433,6 +572,7 @@ export default function SignalOutreachModal({ isOpen, onClose, signal, contact }
                       type="text"
                       value={editSubject}
                       onChange={(e) => setEditSubject(e.target.value)}
+                      placeholder={activeStyle === 'compose' ? 'Enter subject...' : ''}
                       className="w-full text-xs font-medium text-apptivia-ink mt-0.5 border border-apptivia-carbon-200 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-apptivia-coral-tone-300"
                     />
                   </div>
@@ -445,10 +585,11 @@ export default function SignalOutreachModal({ isOpen, onClose, signal, contact }
                     value={editBody}
                     onChange={(e) => setEditBody(e.target.value)}
                     rows={8}
+                    placeholder={activeStyle === 'compose' ? 'Compose your message...' : ''}
                     className="w-full text-xs text-apptivia-carbon-700 leading-relaxed mt-0.5 border border-apptivia-carbon-200 rounded px-2 py-1.5 resize-y focus:outline-none focus:ring-1 focus:ring-apptivia-coral-tone-300"
                   />
                 </div>
-                {draft.personalization_points?.length > 0 && (
+                {draft?.personalization_points?.length > 0 && (
                   <div className="pt-2 border-t border-apptivia-carbon-100">
                     <span className="text-[10px] font-semibold text-apptivia-ink uppercase">Personalization notes</span>
                     <ul className="mt-1 space-y-0.5">

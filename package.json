@@ -10,6 +10,11 @@
     "test": "vitest --passWithNoTests"
   },
   "dependencies": {
+    "@fullcalendar/core": "^6.1.20",
+    "@fullcalendar/daygrid": "^6.1.20",
+    "@fullcalendar/interaction": "^6.1.20",
+    "@fullcalendar/react": "^6.1.20",
+    "@fullcalendar/timegrid": "^6.1.20",
     "@supabase/supabase-js": "^2.0.0",
     "@twilio/voice-sdk": "^2.18.0",
     "ajv": "^6.12.6",

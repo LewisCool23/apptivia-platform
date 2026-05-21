@@ -3,6 +3,7 @@ import { supabase } from '../supabaseClient';
 import { useToast } from '../contexts/ToastContext';
 import { useAuth } from '../AuthContext';
 import ConfirmModal from './ConfirmModal';
+import { useModalBehavior } from '../hooks/useModalBehavior';
 
 interface ConfigureModalProps {
   isOpen: boolean;
@@ -27,6 +28,7 @@ interface KPIConfig {
 }
 
 export default function ConfigureModal({ isOpen, onClose, onSave, currentUserId }: ConfigureModalProps) {
+  useModalBehavior(isOpen, onClose);
   const toast = useToast();
   const { profile } = useAuth();
   const orgId = (profile as any)?.organization_id;

@@ -89,7 +89,7 @@ export default function Resources() {
   const [searchQuery, setSearchQuery] = useState('');
 
   const filtered = useMemo(() => {
-    return FRAMEWORK_PLAYBOOKS.filter(pb => {
+    const result = FRAMEWORK_PLAYBOOKS.filter(pb => {
       if (category !== 'all' && pb.category !== category) return false;
       if (searchQuery) {
         const q = searchQuery.toLowerCase();
@@ -104,6 +104,11 @@ export default function Resources() {
       }
       return true;
     });
+    // Group by category when showing "All" — sort so same-category items are together
+    if (category === 'all') {
+      result.sort((a, b) => a.category.localeCompare(b.category) || a.name.localeCompare(b.name));
+    }
+    return result;
   }, [category, searchQuery]);
 
   return (

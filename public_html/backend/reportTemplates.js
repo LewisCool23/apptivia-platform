@@ -224,6 +224,17 @@ function repName(rep) {
   return `${rep.first_name || ''} ${rep.last_name || ''}`.trim() || 'Team Member';
 }
 
+function reportScoreColor(score) {
+  if (score >= 90) return COLORS.green;
+  if (score >= 70) return COLORS.coral;
+  if (score >= 50) return COLORS.amber;
+  return COLORS.red;
+}
+
+function prettifyKey(k) {
+  return k.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+}
+
 // ── Scorecard helpers shared across reports ──────────────────────────
 
 // Mon-Sun week boundaries matching the frontend scorecard
@@ -278,11 +289,18 @@ async function fetchScorecardData(sb, orgId) {
   const metricIds = metrics.map(m => m.id);
   const { getConfigAt } = await fetchHistoricalConfig(sb, metricIds, priorStart, currEnd);
 
-  const { data: reps } = await sb
-    .from('profiles')
-    .select('id, first_name, last_name, team_id')
-    .eq('organization_id', orgId)
-    .not('role', 'in', '("admin","manager","coach")');
+  const [{ data: reps }, { data: teams }] = await Promise.all([
+    sb.from('profiles')
+      .select('id, first_name, last_name, team_id')
+      .eq('organization_id', orgId)
+      .not('role', 'in', '("admin","manager","coach")'),
+    sb.from('teams')
+      .select('id, name')
+      .eq('organization_id', orgId),
+  ]);
+
+  const teamLookup = {};
+  for (const t of (teams || [])) { teamLookup[t.id] = t.name; }
 
   if (!reps || reps.length === 0) return { metrics, reps: [], scores: [], teamAvg: 0 };
 
@@ -302,14 +320,29 @@ async function fetchScorecardData(sb, orgId) {
   const scores = reps.map(r => {
     const curr  = computeScore(r.id, currSums, metrics, getConfigAt, currStart);
     const prior = computeScore(r.id, priorSums, metrics, getConfigAt, priorStart);
-    return { rep: r, name: repName(r), currentScore: curr, priorScore: prior, delta: curr - prior };
+    // Per-KPI percentages for this rep
+    const kpis = {};
+    for (const metric of metrics) {
+      const cfg  = getConfigAt(metric.id, currStart, metrics);
+      const val  = currSums[`${r.id}:${metric.id}`] || 0;
+      const goal = cfg.goal || 1;
+      const dir  = cfg.direction || 'higher';
+      const pct  = dir === 'lower'
+        ? (val > 0 ? Math.min((goal / val) * 100, 200) : 200)
+        : Math.min((val / goal) * 100, 200);
+      kpis[metric.key] = { value: val, percentage: Math.round(pct) };
+    }
+    return {
+      rep: r, name: repName(r), team_name: teamLookup[r.team_id] || '',
+      currentScore: curr, priorScore: prior, delta: curr - prior, kpis,
+    };
   }).sort((a, b) => b.currentScore - a.currentScore);
 
   const teamAvg = scores.length > 0
     ? Math.round(scores.reduce((s, r) => s + r.currentScore, 0) / scores.length)
     : 0;
 
-  return { metrics, reps, scores, teamAvg, currStart, priorStart };
+  return { metrics, reps, scores, teamAvg, currStart, currEnd, priorStart };
 }
 
 // ═════════════════════════════════════════════════════════════════════
@@ -376,18 +409,64 @@ async function generateScorecardReport(sb, orgId, opts) {
     ), 'card', COLORS.amber);
   }
 
-  const html = buildEmailWrapper('Scorecard Summary', `Week of ${new Date(data.currStart).toLocaleDateString()}`, bodyHtml, {
+  // Full Rep Performance Table
+  const kpiKeys = data.metrics.map(m => m.key);
+  const kpiHeaders = kpiKeys.map(k => {
+    const m = data.metrics.find(mt => mt.key === k);
+    return m?.name || prettifyKey(k);
+  });
+  bodyHtml += `<div style="margin: 20px 0;">
+    <h3 style="margin: 0 0 10px 0; font-size: 16px;">📋 Full Rep Performance</h3>
+    <div style="overflow-x: auto;">
+      <table style="width: 100%; border-collapse: collapse; font-size: 12px;">
+        <thead>
+          <tr style="background: ${COLORS.lightGray};">
+            <th style="padding: 6px 8px; text-align: left; font-size: 11px; text-transform: uppercase; color: ${COLORS.gray}; border-bottom: 2px solid #e5e7eb;">#</th>
+            <th style="padding: 6px 8px; text-align: left; font-size: 11px; text-transform: uppercase; color: ${COLORS.gray}; border-bottom: 2px solid #e5e7eb;">Rep</th>
+            <th style="padding: 6px 8px; text-align: left; font-size: 11px; text-transform: uppercase; color: ${COLORS.gray}; border-bottom: 2px solid #e5e7eb;">Team</th>
+            <th style="padding: 6px 8px; text-align: center; font-size: 11px; text-transform: uppercase; color: ${COLORS.gray}; border-bottom: 2px solid #e5e7eb;">Score</th>
+            ${kpiHeaders.map(h => `<th style="padding: 6px 8px; text-align: center; font-size: 11px; text-transform: uppercase; color: ${COLORS.gray}; border-bottom: 2px solid #e5e7eb;">${h}</th>`).join('')}
+          </tr>
+        </thead>
+        <tbody>
+          ${scores.map((s, idx) => {
+            const sc = reportScoreColor(s.currentScore);
+            return `<tr style="border-bottom: 1px solid #f3f4f6;">
+              <td style="padding: 6px 8px; font-size: 12px;">${idx + 1}</td>
+              <td style="padding: 6px 8px; font-size: 12px; font-weight: 600;">${s.name}</td>
+              <td style="padding: 6px 8px; font-size: 12px; color: ${COLORS.gray};">${s.team_name || '—'}</td>
+              <td style="padding: 6px 8px; text-align: center; font-weight: bold; color: ${sc};">${s.currentScore}%</td>
+              ${kpiKeys.map(k => {
+                const pct = s.kpis?.[k]?.percentage || 0;
+                return `<td style="padding: 6px 8px; text-align: center; color: ${reportScoreColor(pct)};">${pct}%</td>`;
+              }).join('')}
+            </tr>`;
+          }).join('')}
+        </tbody>
+      </table>
+    </div>
+  </div>`;
+
+  const fmtDate = (iso) => new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  const dateSubtitle = data.currEnd
+    ? `${fmtDate(data.currStart)} — ${fmtDate(data.currEnd)}`
+    : `Week of ${fmtDate(data.currStart)}`;
+
+  const html = buildEmailWrapper('Scorecard Summary', dateSubtitle, bodyHtml, {
     ctaUrl: `${FRONTEND_URL}/analytics`,
     ctaLabel: 'View Full Scorecard',
   });
 
   const text = [
-    `Scorecard Summary — Week of ${new Date(data.currStart).toLocaleDateString()}`,
+    `Scorecard Summary — ${dateSubtitle}`,
     `Team Average: ${teamAvg} (${deltaStr} vs last week)`,
     `Reps: ${scores.length} | Excellent: ${dist.excellent} | Good: ${dist.good} | Fair: ${dist.fair} | Poor: ${dist.poor}`,
     '',
     'Top Performers:',
     ...top5.map((s, i) => `  ${i + 1}. ${s.name} — ${s.currentScore} pts (${s.delta >= 0 ? '+' : ''}${s.delta})`),
+    '',
+    'Full Rep Scores:',
+    ...scores.map((s, i) => `  ${i + 1}. ${s.name} ${s.team_name ? `(${s.team_name})` : ''} — ${s.currentScore}%`),
     '',
     `View full report: ${FRONTEND_URL}/analytics`,
   ].join('\n');

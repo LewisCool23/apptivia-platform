@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   DollarSign, AlertTriangle, TrendingUp, Calendar, ChevronDown,
   ChevronUp, Sparkles, Plus, ArrowRight, BarChart3, Clock,
@@ -11,6 +11,8 @@ import { openAaronWithPrompt } from '../utils/openAaron';
 import { backendFetch } from '../utils/backendFetch';
 import { buildForecastEmailHtml, buildForecastEmailText } from '../utils/emailTemplates';
 import ConfirmModal from './ConfirmModal';
+import ActiveDealModal from './ActiveDealModal';
+import CreateDealModal from './CreateDealModal';
 
 // ── Legacy stage colors (fallback when no CEP) ──────────────
 
@@ -755,177 +757,6 @@ function ForecastPanel({ forecast, onGenerate, loading, summary }) {
   );
 }
 
-// ── New Deal Modal ────────────────────────────────────────
-
-function NewDealModal({ onSave, onClose, cepStages }) {
-  const stageOptions = useMemo(() => {
-    if (cepStages && cepStages.length > 0) {
-      return cepStages.filter(s => !s.is_terminal);
-    }
-    return [
-      { stage_key: 'discovery', stage_name: 'Discovery', win_probability: 20 },
-      { stage_key: 'qualification', stage_name: 'Qualification', win_probability: 40 },
-      { stage_key: 'proposal', stage_name: 'Proposal', win_probability: 60 },
-      { stage_key: 'negotiation', stage_name: 'Negotiation', win_probability: 80 },
-    ];
-  }, [cepStages]);
-
-  const defaultStage = stageOptions[0]?.stage_key || 'discovery';
-  const defaultProb = stageOptions[0]?.win_probability ?? 20;
-
-  const [form, setForm] = useState({
-    deal_name: '',
-    deal_value: '',
-    stage: defaultStage,
-    probability: defaultProb,
-    close_date: '',
-    forecast_category: 'pipeline',
-  });
-  const [saving, setSaving] = useState(false);
-  const [error, setError] = useState(null);
-
-  const handleSave = async (e) => {
-    e?.preventDefault?.();
-    if (!form.deal_name || !form.deal_value) return;
-    setSaving(true);
-    setError(null);
-    try {
-      await onSave({
-        deal_name: form.deal_name,
-        deal_value: parseFloat(form.deal_value),
-        stage: form.stage,
-        probability: form.probability,
-        close_date: form.close_date || null,
-        forecast_category: form.forecast_category,
-      });
-      onClose();
-    } catch (err) {
-      setError(err?.message || 'Failed to add deal. Please try again.');
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  return (
-    <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50" onClick={onClose}>
-      <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-lg mx-4" onClick={(e) => e.stopPropagation()}>
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-bold text-apptivia-ink">Add New Deal</h2>
-          <button onClick={onClose} className="text-apptivia-carbon-400 hover:text-apptivia-carbon-600 transition-colors">
-            <X size={24} />
-          </button>
-        </div>
-
-        {error && (
-          <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-md text-red-600 text-sm">
-            {error}
-          </div>
-        )}
-
-        <form onSubmit={handleSave} className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-apptivia-carbon-700 mb-1">Deal Name *</label>
-            <input
-              type="text"
-              value={form.deal_name}
-              onChange={(e) => setForm((f) => ({ ...f, deal_name: e.target.value }))}
-              className="w-full px-3 py-2 border border-apptivia-carbon-300 rounded-md focus:outline-none focus:ring-2 focus:ring-apptivia-coral"
-              placeholder="e.g. Acme Corp — Enterprise License"
-              autoFocus
-            />
-          </div>
-
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="block text-sm font-medium text-apptivia-carbon-700 mb-1">Value ($) *</label>
-              <input
-                type="number"
-                value={form.deal_value}
-                onChange={(e) => setForm((f) => ({ ...f, deal_value: e.target.value }))}
-                className="w-full px-3 py-2 border border-apptivia-carbon-300 rounded-md focus:outline-none focus:ring-2 focus:ring-apptivia-coral"
-                placeholder="25000"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-apptivia-carbon-700 mb-1">Close Date</label>
-              <input
-                type="date"
-                value={form.close_date}
-                onChange={(e) => setForm((f) => ({ ...f, close_date: e.target.value }))}
-                className="w-full px-3 py-2 border border-apptivia-carbon-300 rounded-md focus:outline-none focus:ring-2 focus:ring-apptivia-coral"
-              />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="block text-sm font-medium text-apptivia-carbon-700 mb-1">Stage</label>
-              <select
-                value={form.stage}
-                onChange={(e) => {
-                  const sel = stageOptions.find(s => s.stage_key === e.target.value);
-                  setForm(f => ({
-                    ...f,
-                    stage: e.target.value,
-                    probability: sel?.win_probability ?? f.probability,
-                  }));
-                }}
-                className="w-full px-3 py-2 border border-apptivia-carbon-300 rounded-md focus:outline-none focus:ring-2 focus:ring-apptivia-coral"
-              >
-                {stageOptions.map(s => (
-                  <option key={s.stage_key} value={s.stage_key}>{s.stage_name}</option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-apptivia-carbon-700 mb-1">Probability (%)</label>
-              <input
-                type="number"
-                min="0"
-                max="100"
-                value={form.probability}
-                onChange={(e) => setForm((f) => ({ ...f, probability: parseInt(e.target.value) || 0 }))}
-                className="w-full px-3 py-2 border border-apptivia-carbon-300 rounded-md focus:outline-none focus:ring-2 focus:ring-apptivia-coral"
-              />
-            </div>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-apptivia-carbon-700 mb-1">Forecast Category</label>
-            <select
-              value={form.forecast_category}
-              onChange={(e) => setForm((f) => ({ ...f, forecast_category: e.target.value }))}
-              className="w-full px-3 py-2 border border-apptivia-carbon-300 rounded-md focus:outline-none focus:ring-2 focus:ring-apptivia-coral"
-            >
-              <option value="commit">Commit</option>
-              <option value="best_case">Best Case</option>
-              <option value="pipeline">Pipeline</option>
-              <option value="omitted">Omitted</option>
-            </select>
-          </div>
-
-          <div className="flex justify-end gap-3 mt-6">
-            <button
-              type="button"
-              onClick={onClose}
-              className="px-4 py-2 text-apptivia-carbon-700 bg-apptivia-carbon-100 rounded-md hover:bg-apptivia-carbon-200 transition-colors"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              disabled={!form.deal_name || !form.deal_value || saving}
-              className="px-4 py-2 bg-apptivia-coral text-white rounded-md hover:bg-apptivia-coral transition-colors disabled:opacity-50"
-            >
-              {saving ? 'Adding...' : 'Add Deal'}
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
-  );
-}
-
 // ── Main Component ────────────────────────────────────────
 
 export default function PipelineOperator({ organizationId, userId }) {
@@ -1002,23 +833,12 @@ export default function PipelineOperator({ organizationId, userId }) {
             </div>
             <div className="lg:col-span-2 lg:relative">
               <div className="lg:absolute lg:inset-0">
-                {resolvedSelectedDeal && hasCep ? (
-                  <DealCepPanel
-                    deal={resolvedSelectedDeal}
-                    cepStages={cepConfig.activeStages}
-                    onClose={() => setSelectedDeal(null)}
-                    onAdvance={pipeline.advanceDealStage}
-                    onUpdateChecklist={pipeline.updateDealChecklist}
-                    onAssignStage={pipeline.assignCepStage}
-                  />
-                ) : (
-                  <ForecastPanel
-                    forecast={pipeline.aiForecast}
-                    onGenerate={pipeline.generateForecast}
-                    loading={pipeline.loading}
-                    summary={pipeline.summary}
-                  />
-                )}
+                <ForecastPanel
+                  forecast={pipeline.aiForecast}
+                  onGenerate={pipeline.generateForecast}
+                  loading={pipeline.loading}
+                  summary={pipeline.summary}
+                />
               </div>
             </div>
           </div>
@@ -1035,13 +855,23 @@ export default function PipelineOperator({ organizationId, userId }) {
         </>
       )}
 
-      {showNewDeal && (
-        <NewDealModal
-          onSave={pipeline.createDeal}
-          onClose={() => setShowNewDeal(false)}
-          cepStages={cepConfig.activeStages}
-        />
-      )}
+      <CreateDealModal
+        isOpen={showNewDeal}
+        onClose={() => setShowNewDeal(false)}
+        organizationId={organizationId}
+        userId={userId}
+        cepStages={cepConfig.activeStages}
+        onDealCreated={pipeline.refreshAll}
+      />
+
+      <ActiveDealModal
+        isOpen={!!resolvedSelectedDeal}
+        dealId={resolvedSelectedDeal?.id}
+        onClose={() => setSelectedDeal(null)}
+        onDealUpdated={pipeline.refreshAll}
+        organizationId={organizationId}
+        userId={userId}
+      />
     </div>
   );
 }

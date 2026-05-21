@@ -4,8 +4,10 @@ import html2canvas from 'html2canvas';
 import { backendFetch } from '../utils/backendFetch';
 import { buildAchievementSnapshotEmailHtml, buildAchievementSnapshotEmailText } from '../utils/emailTemplates';
 import { ApptiviaLogo } from './ApptiviaLogo';
+import { useModalBehavior } from '../hooks/useModalBehavior';
 
 export default function ShareSnapshotModal({ isOpen, onClose, userData }) {
+  useModalBehavior(isOpen, onClose);
   const [copied, setCopied] = useState(false);
   const [downloading, setDownloading] = useState(false);
   const [showEmailForm, setShowEmailForm] = useState(false);

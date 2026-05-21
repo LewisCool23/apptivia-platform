@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
 import { X } from 'lucide-react';
 import { supabase } from '../supabaseClient';
+import { useModalBehavior } from '../hooks/useModalBehavior';
 
 export default function ChangePasswordModal({ isOpen, onClose, onSuccess }) {
+  useModalBehavior(isOpen, onClose);
   const [formData, setFormData] = useState({
     currentPassword: '',
     newPassword: '',

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { X, Plus, Loader } from 'lucide-react';
+import { useModalBehavior } from '../hooks/useModalBehavior';
 
 // Signal type options grouped by category (subset of most common for manual add)
 const SIGNAL_TYPE_OPTIONS = [
@@ -41,6 +42,7 @@ const SOURCE_OPTIONS = [
 ];
 
 export default function QuickAddSignalModal({ isOpen, onClose, onSubmit }) {
+  useModalBehavior(isOpen, onClose);
   const [form, setForm] = useState({
     company_name: '',
     signal_type: '',

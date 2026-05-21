@@ -25,6 +25,7 @@ import OrgHealthScorecard from '../components/OrgHealthScorecard';
 import UpgradePrompt from '../components/UpgradePrompt';
 import { backendFetch } from '../utils/backendFetch';
 import { useBilling } from '../hooks/useBilling';
+import AnalyticsRecords from '../components/AnalyticsRecords';
 
 const FUNNEL_KEYS = ['call_connects', 'meetings', 'sourced_opps', 'stage2_opps', 'stage3_opps', 'closed_won'];
 
@@ -237,17 +238,20 @@ export default function Analytics() {
 
         const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
 
-        const [acctRes, signalRes, actionRes, draftRes] = await Promise.all([
+        const [acctRes, signalRes, actionRes, draftRes, draftEventsRes] = await Promise.all([
           supabase.from('engage_accounts').select('id, account_score, tier, status', { count: 'exact' }).eq('organization_id', orgId),
           supabase.from('engage_intent_signals').select('id, status, signal_type, detected_at', { count: 'exact' }).eq('organization_id', orgId).gte('detected_at', thirtyDaysAgo),
           supabase.from('engage_signal_actions').select('id, status, channel, created_at').eq('organization_id', orgId).gte('created_at', thirtyDaysAgo),
           supabase.from('engage_outreach_drafts').select('id, status, channel, created_at').eq('organization_id', orgId).gte('created_at', thirtyDaysAgo),
+          // Fallback: count outreach draft events from activity log (covers drafts logged via Activity Feed)
+          supabase.from('engage_activity_events').select('id', { count: 'exact', head: true }).eq('organization_id', orgId).ilike('event_type', '%outreach%draft%').gte('created_at', thirtyDaysAgo),
         ]);
 
         const accounts = acctRes.data || [];
         const signals = signalRes.data || [];
         const actions = actionRes.data || [];
         const drafts = draftRes.data || [];
+        const draftEventCount = draftEventsRes.count || 0;
 
         const tier1 = accounts.filter(a => a.tier === 'tier_1').length;
         const tier2 = accounts.filter(a => a.tier === 'tier_2').length;
@@ -305,8 +309,8 @@ export default function Analytics() {
             // Action queue
             actionsSent, actionsApproved, actionsDismissed, actionsPending,
             totalActions: actions.length,
-            // Outreach
-            totalDrafts: drafts.length,
+            // Outreach — use higher of dedicated table vs activity events
+            totalDrafts: Math.max(drafts.length, draftEventCount),
             outreachByChannel,
           };
           setEngageStats(stats);
@@ -613,6 +617,7 @@ export default function Analytics() {
     { id: 'watchdog', label: 'KPI Watchdog' },
     { id: 'engage', label: 'Engage' },
     { id: 'benchmarks', label: 'Benchmarks' },
+    { id: 'records', label: 'Records' },
     ...((isAdmin || isManager) ? [{ id: 'org-health', label: 'Org Health' }] : []),
   ]), [isAdmin, isManager]);
 
@@ -742,8 +747,10 @@ export default function Analytics() {
   const topMovers = useMemo(() => {
     if (!data.rows.length) return [];
     const sorted = [...data.rows].sort((a, b) => b.apptivityScore - a.apptivityScore);
-    const top = sorted.slice(0, 3).map(r => ({ ...r, trend: 'Top' }));
-    const bottom = sorted.slice(-3).reverse().map(r => ({ ...r, trend: 'Needs Focus' }));
+    const topCount = Math.min(3, Math.floor(sorted.length / 2));
+    const bottomStart = Math.max(topCount, sorted.length - 3);
+    const top = sorted.slice(0, topCount).map(r => ({ ...r, trend: 'Top' }));
+    const bottom = sorted.slice(bottomStart).reverse().map(r => ({ ...r, trend: 'Needs Focus' }));
     return [...top, ...bottom];
   }, [data.rows]);
 
@@ -1577,6 +1584,17 @@ export default function Analytics() {
                   <div className="text-sm text-apptivia-carbon-500 text-center py-8">No benchmark data available yet.</div>
                 )}
               </div>
+            )}
+
+            {/* Records tab */}
+            {activeTab === 'records' && (
+              <AnalyticsRecords
+                organizationId={profile?.organization_id}
+                dateRange={dateRange}
+                isAdmin={isAdmin}
+                isManager={isManager}
+                teamMembers={data.rows?.map(r => ({ id: r.profile_id, full_name: r.name, avatar_url: r.avatar_url })) || []}
+              />
             )}
 
             {/* 4E: Org Health Scorecard — admins/managers only */}

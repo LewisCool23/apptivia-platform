@@ -38,6 +38,7 @@ import { supabase } from '../supabaseClient';
 import { KPI_GUIDANCE, LAGGING_THRESHOLD, buildLabel } from '../constants/kpiGuidance';
 import { scoreTextColor } from '../constants/scoreColors';
 import FeedbackThumb from '../components/shared/FeedbackThumb';
+import CallReviewModal from '../components/CallReviewModal';
 
 export default function Coach() {
   const location = useLocation();
@@ -134,6 +135,11 @@ export default function Coach() {
   const [buildPlanFor, setBuildPlanFor] = useState(null); // { repId, repName }
   const [startReviewFor, setStartReviewFor] = useState(null); // { repId, repName }
   const [managerTeamMembers, setManagerTeamMembers] = useState([]);
+  // Call Intelligence
+  const [callIntelCalls, setCallIntelCalls] = useState([]);
+  const [callIntelLoading, setCallIntelLoading] = useState(false);
+  const [callIntelOpen, setCallIntelOpen] = useState(false);
+  const [reviewCallId, setReviewCallId] = useState(null);
   const [repActivePlans, setRepActivePlans] = useState({}); // { [repId]: { coaching: [], devPlans: [] } }
 
   useEffect(() => {
@@ -628,6 +634,27 @@ export default function Coach() {
       });
     return () => { cancelled = true; };
   }, [isManager, isAdmin, profile?.organization_id, profile?.team_id]);
+
+  // Fetch recent calls with conversational intelligence for Call Intelligence section
+  useEffect(() => {
+    if ((!isManager && !isAdmin) || !profile?.organization_id) return;
+    let cancelled = false;
+    setCallIntelLoading(true);
+    supabase
+      .from('engage_call_logs')
+      .select('id, contact_name, call_date, duration_minutes, call_direction, call_sentiment, user_id, conversational_intelligence')
+      .eq('organization_id', profile.organization_id)
+      .not('conversational_intelligence', 'is', null)
+      .order('call_date', { ascending: false })
+      .limit(20)
+      .then(({ data, error: err }) => {
+        if (cancelled) return;
+        if (err) console.error('[Coach] Call intelligence fetch error:', err.message);
+        setCallIntelCalls(data || []);
+        setCallIntelLoading(false);
+      });
+    return () => { cancelled = true; };
+  }, [isManager, isAdmin, profile?.organization_id]);
 
   // Fetch active coaching plans + dev plans for all team reps (manager/admin only)
   useEffect(() => {
@@ -1225,6 +1252,120 @@ export default function Coach() {
             onViewRepPlan={(repId, plan) => setViewPlanDetail(plan)}
             onViewDevPlan={(repId, plan) => setViewIdpDetail(plan)}
           />
+        )}
+
+        {/* Call Intelligence Section (Manager/Admin) */}
+        {(isManager || isAdmin) && !loading && (
+          <div className="bg-white rounded-lg shadow-sm overflow-hidden mb-4">
+            <button
+              onClick={() => setCallIntelOpen(!callIntelOpen)}
+              className="w-full px-5 py-3 flex items-center justify-between bg-gradient-to-r from-apptivia-ink to-apptivia-ink/80 text-white hover:from-apptivia-ink/90 transition-colors"
+            >
+              <div className="flex items-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+                <span className="text-sm font-semibold">Call Intelligence</span>
+                <span className="text-[10px] bg-white/20 px-1.5 py-0.5 rounded-full">{callIntelCalls.length} analyzed</span>
+              </div>
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={`transition-transform ${callIntelOpen ? 'rotate-180' : ''}`}><path d="m6 9 6 6 6-6"/></svg>
+            </button>
+            {callIntelOpen && (
+              <div className="p-5">
+                {callIntelLoading ? (
+                  <div className="flex items-center justify-center py-8 text-xs text-apptivia-carbon-400">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="animate-spin mr-2"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
+                    Loading call intelligence...
+                  </div>
+                ) : callIntelCalls.length === 0 ? (
+                  <div className="text-center py-8">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="mx-auto text-apptivia-carbon-300 mb-2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+                    <p className="text-sm text-apptivia-carbon-500">No analyzed calls yet</p>
+                    <p className="text-xs text-apptivia-carbon-400 mt-1">Calls made through the Apptivia dialer will be automatically recorded and analyzed.</p>
+                  </div>
+                ) : (
+                  <div>
+                    {/* Aggregate Stats Row */}
+                    {(() => {
+                      const calls = callIntelCalls;
+                      const sentiments = { positive: 0, neutral: 0, negative: 0 };
+                      let totalTalkRatio = 0, totalMethodology = 0, methodCount = 0, atRiskCount = 0;
+                      calls.forEach(c => {
+                        const ci = c.conversational_intelligence;
+                        if (ci?.sentiment) sentiments[ci.sentiment] = (sentiments[ci.sentiment] || 0) + 1;
+                        if (ci?.talk_ratio?.rep) totalTalkRatio += ci.talk_ratio.rep;
+                        if (ci?.methodology_adherence?.score != null) { totalMethodology += ci.methodology_adherence.score; methodCount++; }
+                        if (ci?.deal_stage_signal === 'at_risk') atRiskCount++;
+                      });
+                      const avgTalk = calls.length ? Math.round(totalTalkRatio / calls.length) : 0;
+                      const avgMethod = methodCount ? Math.round(totalMethodology / methodCount) : null;
+                      return (
+                        <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-4">
+                          <div className="bg-apptivia-paper rounded-lg p-3 text-center">
+                            <div className="text-lg font-bold text-apptivia-ink">{calls.length}</div>
+                            <div className="text-[10px] text-apptivia-carbon-400">Calls Analyzed</div>
+                          </div>
+                          <div className="bg-apptivia-paper rounded-lg p-3 text-center">
+                            <div className={`text-lg font-bold ${avgTalk > 55 ? 'text-red-600' : avgTalk > 45 ? 'text-amber-600' : 'text-emerald-600'}`}>{avgTalk}%</div>
+                            <div className="text-[10px] text-apptivia-carbon-400">Avg Rep Talk Ratio</div>
+                          </div>
+                          <div className="bg-apptivia-paper rounded-lg p-3 text-center">
+                            <div className="text-lg font-bold text-emerald-600">{sentiments.positive}</div>
+                            <div className="text-[10px] text-apptivia-carbon-400">Positive Calls</div>
+                          </div>
+                          {avgMethod !== null && (
+                            <div className="bg-apptivia-paper rounded-lg p-3 text-center">
+                              <div className={`text-lg font-bold ${avgMethod >= 70 ? 'text-emerald-600' : avgMethod >= 50 ? 'text-amber-600' : 'text-red-600'}`}>{avgMethod}%</div>
+                              <div className="text-[10px] text-apptivia-carbon-400">Methodology Score</div>
+                            </div>
+                          )}
+                          {atRiskCount > 0 && (
+                            <div className="bg-red-50 rounded-lg p-3 text-center border border-red-100">
+                              <div className="text-lg font-bold text-red-600">{atRiskCount}</div>
+                              <div className="text-[10px] text-red-500">At-Risk Calls</div>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })()}
+
+                    {/* Recent Analyzed Calls Table */}
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-xs">
+                        <thead>
+                          <tr className="border-b border-apptivia-carbon-100 text-left text-apptivia-carbon-500">
+                            <th className="pb-2 font-medium">Contact</th>
+                            <th className="pb-2 font-medium">Date</th>
+                            <th className="pb-2 font-medium">Duration</th>
+                            <th className="pb-2 font-medium">Sentiment</th>
+                            <th className="pb-2 font-medium">Talk Ratio</th>
+                            <th className="pb-2 font-medium">Stage Signal</th>
+                            <th className="pb-2 font-medium"></th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-apptivia-carbon-50">
+                          {callIntelCalls.map(call => {
+                            const ci = call.conversational_intelligence || {};
+                            const sentColor = ci.sentiment === 'positive' ? 'text-emerald-600 bg-emerald-50' : ci.sentiment === 'negative' ? 'text-red-600 bg-red-50' : 'text-apptivia-carbon-500 bg-apptivia-carbon-50';
+                            const stageColor = ci.deal_stage_signal === 'advancing' ? 'text-emerald-600 bg-emerald-50' : ci.deal_stage_signal === 'at_risk' ? 'text-red-600 bg-red-50' : ci.deal_stage_signal === 'stalled' ? 'text-amber-600 bg-amber-50' : 'text-apptivia-carbon-500 bg-apptivia-carbon-50';
+                            return (
+                              <tr key={call.id} className="hover:bg-apptivia-paper/50 cursor-pointer" onClick={() => setReviewCallId(call.id)}>
+                                <td className="py-2 font-medium text-apptivia-ink">{call.contact_name || 'Unknown'}</td>
+                                <td className="py-2 text-apptivia-carbon-500">{call.call_date ? new Date(call.call_date).toLocaleDateString() : '—'}</td>
+                                <td className="py-2 text-apptivia-carbon-500">{call.duration_minutes ? `${call.duration_minutes}m` : '—'}</td>
+                                <td className="py-2"><span className={`px-1.5 py-0.5 rounded text-[10px] font-medium capitalize ${sentColor}`}>{ci.sentiment || '—'}</span></td>
+                                <td className="py-2 text-apptivia-carbon-500">{ci.talk_ratio?.rep != null ? `${ci.talk_ratio.rep}%` : '—'}</td>
+                                <td className="py-2"><span className={`px-1.5 py-0.5 rounded text-[10px] font-medium capitalize ${stageColor}`}>{(ci.deal_stage_signal || '—').replace(/_/g, ' ')}</span></td>
+                                <td className="py-2 text-apptivia-coral font-medium text-[10px]">Review →</td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
         )}
 
         {/* Power User: Your Performance Insights — 3 accordion sections matching Manager Playbook style */}
@@ -1984,6 +2125,12 @@ export default function Coach() {
         onSuccess={() => {
           if (addNotification) addNotification({ type: 'success', title: 'Report Scheduled', message: 'Your report has been scheduled. Manage it in Settings → Reports.', dedupeKey: 'report-scheduled' });
         }}
+      />
+      <CallReviewModal
+        isOpen={!!reviewCallId}
+        onClose={() => setReviewCallId(null)}
+        callId={reviewCallId}
+        organizationId={profile?.organization_id}
       />
     </DashboardLayout>
   );

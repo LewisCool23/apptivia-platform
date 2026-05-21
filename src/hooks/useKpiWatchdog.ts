@@ -225,14 +225,15 @@ export function useKpiWatchdog(organizationId: string, userId?: string) {
           .from('kpi_values')
           .select('profile_id, kpi_id, value, kpi_metrics!inner(key, name, goal, direction)')
           .in('profile_id', profileIds)
-          .gte('period_start', lastMonday.toISOString().split('T')[0])
-          .lte('period_end', lastSunday.toISOString().split('T')[0]),
+          .lte('period_start', lastSunday.toISOString().split('T')[0])
+          .gte('period_end', lastMonday.toISOString().split('T')[0]),
         supabase
           .from('kpi_values')
           .select('profile_id, kpi_id, value, kpi_metrics!inner(key, name)')
           .in('profile_id', profileIds)
-          .gte('period_start', twoWeeksAgoMon.toISOString().split('T')[0])
-          .lt('period_end', lastMonday.toISOString().split('T')[0]),
+          .lte('period_start', lastSunday.toISOString().split('T')[0])
+          .gte('period_end', twoWeeksAgoMon.toISOString().split('T')[0])
+          .lt('period_start', lastMonday.toISOString().split('T')[0]),
         supabase
           .from('kpi_values')
           .select('profile_id, kpi_id, value, kpi_metrics!inner(key)')

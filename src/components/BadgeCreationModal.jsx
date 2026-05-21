@@ -2,8 +2,10 @@ import React, { useState } from 'react';
 import { X, Award } from 'lucide-react';
 import { supabase } from '../supabaseClient';
 import { useToast } from '../contexts/ToastContext';
+import { useModalBehavior } from '../hooks/useModalBehavior';
 
 export default function BadgeCreationModal({ isOpen, onClose, onBadgeCreated }) {
+  useModalBehavior(isOpen, onClose);
   const toast = useToast();
   const [formData, setFormData] = useState({
     badge_name: '',

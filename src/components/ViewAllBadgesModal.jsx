@@ -2,8 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { X, Filter } from 'lucide-react';
 import { supabase } from '../supabaseClient';
 import SearchWithHistory from './SearchWithHistory';
+import { useModalBehavior } from '../hooks/useModalBehavior';
 
 export default function ViewAllBadgesModal({ isOpen, onClose, userId, refreshKey = 0 }) {
+  useModalBehavior(isOpen, onClose);
   const [allBadges, setAllBadges] = useState([]);
   const [userBadges, setUserBadges] = useState([]);
   const [loading, setLoading] = useState(true);

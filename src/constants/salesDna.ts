@@ -243,6 +243,13 @@ export const QUALIFICATION_FRAMEWORKS: QualificationFramework[] = [
     ],
     coaching_focus: 'Champion development, competitive positioning, procurement navigation, and multi-stakeholder deal management',
   },
+  {
+    key: 'custom',
+    name: 'Custom Framework',
+    short_description: 'Define your own qualification criteria tailored to your sales process',
+    criteria: [],
+    coaching_focus: 'Custom qualification discipline aligned to your unique sales process',
+  },
 ];
 
 // ── Methodology Approach Types ───────────────────────────────────────────────
@@ -269,6 +276,8 @@ export interface SalesDnaConfig {
   custom_methodology_name: string | null;   // custom only
   custom_methodology_principles: string[];  // custom only
   qualification_framework: string | null;   // key from QUALIFICATION_FRAMEWORKS
+  custom_qualification_name?: string | null;
+  custom_qualification_criteria?: { key: string; label: string; description: string }[];
   methodology_stage_mapping: MethodologyStageMapping[]; // hybrid CEP stage overrides
 }
 
@@ -279,6 +288,8 @@ export const DEFAULT_SALES_DNA: SalesDnaConfig = {
   custom_methodology_name: null,
   custom_methodology_principles: [],
   qualification_framework: null,
+  custom_qualification_name: null,
+  custom_qualification_criteria: [],
   methodology_stage_mapping: [],
 };
 
@@ -330,17 +341,32 @@ export function buildSalesDnaCoachingContext(salesDna: SalesDnaConfig | null): s
 
   // Qualification framework context
   if (salesDna.qualification_framework) {
-    const qf = QUALIFICATION_FRAMEWORKS.find(x => x.key === salesDna.qualification_framework);
-    if (qf) {
-      parts.push('');
-      parts.push(`=== QUALIFICATION FRAMEWORK: ${qf.name} ===`);
-      parts.push(`Framework: ${qf.short_description}`);
-      parts.push(`Criteria:`);
-      for (const c of qf.criteria) {
-        parts.push(`  - ${c.label}: ${c.description}`);
+    if (salesDna.qualification_framework === 'custom') {
+      const customName = salesDna.custom_qualification_name || 'Custom Framework';
+      const customCriteria = salesDna.custom_qualification_criteria || [];
+      if (customCriteria.length > 0) {
+        parts.push('');
+        parts.push(`=== QUALIFICATION FRAMEWORK: ${customName} (Custom) ===`);
+        parts.push(`Criteria:`);
+        for (const c of customCriteria) {
+          parts.push(`  - ${c.label}: ${c.description}`);
+        }
+        parts.push(`Coaching Focus: Custom qualification discipline aligned to your unique sales process`);
+        parts.push(`IMPORTANT: When coaching on deal qualification, discovery, or pipeline management, reference ${customName} criteria. Coaching suggestions for lagging qualification KPIs should map back to specific ${customName} elements.`);
       }
-      parts.push(`Coaching Focus: ${qf.coaching_focus}`);
-      parts.push(`IMPORTANT: When coaching on deal qualification, discovery, or pipeline management, reference ${qf.name} criteria. Coaching suggestions for lagging qualification KPIs should map back to specific ${qf.name} elements.`);
+    } else {
+      const qf = QUALIFICATION_FRAMEWORKS.find(x => x.key === salesDna.qualification_framework);
+      if (qf) {
+        parts.push('');
+        parts.push(`=== QUALIFICATION FRAMEWORK: ${qf.name} ===`);
+        parts.push(`Framework: ${qf.short_description}`);
+        parts.push(`Criteria:`);
+        for (const c of qf.criteria) {
+          parts.push(`  - ${c.label}: ${c.description}`);
+        }
+        parts.push(`Coaching Focus: ${qf.coaching_focus}`);
+        parts.push(`IMPORTANT: When coaching on deal qualification, discovery, or pipeline management, reference ${qf.name} criteria. Coaching suggestions for lagging qualification KPIs should map back to specific ${qf.name} elements.`);
+      }
     }
   }
 
@@ -349,8 +375,18 @@ export function buildSalesDnaCoachingContext(salesDna: SalesDnaConfig | null): s
 
 // ── Helper: Get qualification framework exit criteria for CEP ─────────────────
 
-export function getQualificationExitCriteria(frameworkKey: string | null): { key: string; label: string }[] {
+export function getQualificationExitCriteria(
+  frameworkKey: string | null,
+  customCriteria?: { key: string; label: string; description: string }[]
+): { key: string; label: string }[] {
   if (!frameworkKey) return [];
+  if (frameworkKey === 'custom') {
+    if (!customCriteria || customCriteria.length === 0) return [];
+    return customCriteria.map(c => ({
+      key: `qual_${c.key}`,
+      label: `${c.label} confirmed`,
+    }));
+  }
   const qf = QUALIFICATION_FRAMEWORKS.find(x => x.key === frameworkKey);
   if (!qf) return [];
   return qf.criteria.map(c => ({

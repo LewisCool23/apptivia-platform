@@ -16,7 +16,7 @@ import PlanCard from '../components/coaching/PlanCard';
 import PlanDetailModal from '../components/coaching/PlanDetailModal';
 import AssignPlanModal from '../components/coaching/AssignPlanModal';
 import { statusConfig } from '../components/coaching/planStatusConfig';
-import ShareCoachingPlanSnapshotModal from '../components/coaching/ShareCoachingPlanSnapshotModal';
+
 import IdpTab from '../components/coaching/IdpTab';
 import ReviewTab from '../components/coaching/ReviewTab';
 import { useNotifications } from '../contexts/NotificationContext';
@@ -66,6 +66,7 @@ export default function CoachingPlans() {
   const [deleteConfirm, setDeleteConfirm] = useState({ isOpen: false, plan: null, isLoading: false });
   const [planToShare, setPlanToShare] = useState(null);
   const [shareEmail, setShareEmail] = useState('');
+  const [shareSubject, setShareSubject] = useState('');
   const [shareNotes, setShareNotes] = useState('');
   const [sharingPlan, setSharingPlan] = useState(false);
   const [savedCoachingContext, setSavedCoachingContext] = useState(null); // coaching context for enriched content on save
@@ -82,7 +83,7 @@ export default function CoachingPlans() {
   const [actionsLoading, setActionsLoading] = useState(false);
   const [actionsSummary, setActionsSummary] = useState(null);
   const [planRequestsLoading, setPlanRequestsLoading] = useState(false);
-  const [snapshotPlan, setSnapshotPlan] = useState(null);
+
 
   // Auto-generate a complete coaching plan when a person is selected.
   // For Rep Plans: fetches the rep's KPI data, generates a rep-specific plan, and builds skillset preview.
@@ -1176,6 +1177,7 @@ export default function CoachingPlans() {
   const handleSharePlan = (plan) => {
     setPlanToShare(plan);
     setShareEmail('');
+    setShareSubject('');
     setShareNotes('');
   };
 
@@ -1204,9 +1206,12 @@ export default function CoachingPlans() {
       const html = buildCoachingPlanEmailHtml(plan, emailOpts);
       const text = buildCoachingPlanEmailText(plan, emailOpts);
       const recipients = shareEmail.split(',').map(e => e.trim()).filter(e => e);
+      // Build default subject — strip redundant "Coaching Plan:" prefix from plan.name
+      const cleanName = plan.name.replace(/^Coaching Plan:\s*/i, '').trim();
+      const defaultSubject = `Apptivia Coaching Plan: ${cleanName}`;
       await backendFetch('/api/send-coaching-plan', {
         recipients,
-        subject: `Coaching Plan: ${plan.name}`,
+        subject: shareSubject.trim() || defaultSubject,
         html,
         text,
       });
@@ -1780,7 +1785,6 @@ export default function CoachingPlans() {
                     onAssign={handleAssignPlan}
                     onDelete={handleDeletePlan}
                     onShare={handleSharePlan}
-                    onSnapshot={setSnapshotPlan}
                   />
                 ))}
               </div>
@@ -1805,7 +1809,6 @@ export default function CoachingPlans() {
             onEdit={handleEditPlan}
             onAssign={handleAssignPlan}
             onShare={handleSharePlan}
-            onSnapshot={setSnapshotPlan}
           />
         )}
 
@@ -1846,6 +1849,16 @@ export default function CoachingPlans() {
                     className="w-full border border-apptivia-carbon-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-apptivia-coral focus:border-transparent"
                   />
                   <p className="text-xs text-apptivia-carbon-400 mt-1">Separate multiple emails with commas</p>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-apptivia-carbon-700 mb-1">Subject (Optional)</label>
+                  <input
+                    type="text"
+                    value={shareSubject}
+                    onChange={(e) => setShareSubject(e.target.value)}
+                    placeholder={`Apptivia Coaching Plan: ${planToShare.name.replace(/^Coaching Plan:\s*/i, '').trim()}`}
+                    className="w-full border border-apptivia-carbon-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-apptivia-coral focus:border-transparent"
+                  />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-apptivia-carbon-700 mb-1">Additional Notes (Optional)</label>
@@ -1908,20 +1921,6 @@ export default function CoachingPlans() {
         </RightFilterPanel>
       </>)}
       </div>
-      {snapshotPlan && (
-        <ShareCoachingPlanSnapshotModal
-          isOpen={!!snapshotPlan}
-          onClose={() => setSnapshotPlan(null)}
-          plan={snapshotPlan}
-          assigneeName={
-            snapshotPlan.assigned_to?.length > 0
-              ? teamMembers.find(m => m.id === snapshotPlan.assigned_to[0])
-                ? `${teamMembers.find(m => m.id === snapshotPlan.assigned_to[0]).first_name} ${teamMembers.find(m => m.id === snapshotPlan.assigned_to[0]).last_name}`
-                : null
-              : null
-          }
-        />
-      )}
     </DashboardLayout>
   );
 }

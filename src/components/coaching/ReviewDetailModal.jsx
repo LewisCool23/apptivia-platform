@@ -3,6 +3,7 @@ import { X, Printer, Star, Calendar, Award, Trophy, Target, CheckCircle2, BookOp
 import { reviewStatusConfig, reviewTypes, reviewTransitions } from './reviewStatusConfig';
 import { buildLabel } from '../../constants/kpiGuidance';
 import SelfAssessmentForm from './SelfAssessmentForm';
+import { useModalBehavior } from '../../hooks/useModalBehavior';
 
 export default function ReviewDetailModal({
   review,
@@ -17,6 +18,7 @@ export default function ReviewDetailModal({
   onGenerateAiDraft,
   aiGenerating,
 }) {
+  useModalBehavior(!!review, onClose);
   if (!review) return null;
 
   const cfg = reviewStatusConfig[review.status] || reviewStatusConfig.draft;

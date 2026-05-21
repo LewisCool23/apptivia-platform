@@ -63,6 +63,40 @@ const TITLE_PRESETS = {
 // Resolve aliases
 TITLE_PRESETS.sdr = TITLE_PRESETS.bdr;
 
+// Page-contextual presets — shown based on which page/tab is active
+const PAGE_PRESETS = {
+  'engage.accounts': [
+    { label: 'Analyze Account', prompt: (ctx) => `Analyze the account "${ctx.accountName || 'my current account'}" — what signals indicate buying intent and what's the best engagement strategy?` },
+    { label: 'Draft Outreach', prompt: (ctx) => `Draft a personalized outreach email for a decision-maker at ${ctx.accountName || 'my target account'}.` },
+  ],
+  'engage.pipeline': [
+    { label: 'Deal Risk', prompt: 'Which of my current deals are at highest risk of stalling and why?' },
+    { label: 'Forecast', prompt: 'Summarize my pipeline forecast for this quarter — expected close rates and key risks.' },
+  ],
+  'engage.signals': [
+    { label: 'Signal Summary', prompt: 'Summarize the most important buying signals detected this week and which ones I should act on first.' },
+  ],
+  'engage.discover': [
+    { label: 'Research Tips', prompt: 'What are the best strategies for researching a prospect before reaching out?' },
+  ],
+  'engage.sequences': [
+    { label: 'Sequence Review', prompt: 'Help me review my outreach sequence — what makes an effective multi-step cadence?' },
+  ],
+  dashboard: [
+    { label: 'My Priorities', prompt: 'Based on my KPIs, what should I focus on today to have the biggest impact?' },
+    { label: 'Score Breakdown', prompt: 'Break down my current scorecard score — which metrics are dragging me down?' },
+  ],
+  coach: [
+    { label: 'Skill Gap', prompt: 'Identify my biggest skill gaps and recommend a focused development plan for this week.' },
+  ],
+  contests: [
+    { label: 'Contest Strategy', prompt: 'What strategies can I use to climb the leaderboard in the current contest?' },
+  ],
+  analytics: [
+    { label: 'Trend Analysis', prompt: 'Analyze my performance trends over the last 4 weeks — what patterns should I be aware of?' },
+  ],
+};
+
 const BLOCKED_WORDS = [
   'profanity1', 'profanity2', 'abuse1', 'abuse2',
 ];
@@ -191,9 +225,12 @@ const generateOfflineResponse = (message, perms) => {
 
 // ─── Persistence helpers ─────────────────────────────────────────────────────
 const loadMessages = (userId) => {
+  if (!userId) return null; // Never load from un-scoped fallback key
   try {
-    const key = userId ? `${STORAGE_KEY}.${userId}` : STORAGE_KEY;
+    const key = `${STORAGE_KEY}.${userId}`;
     const raw = localStorage.getItem(key);
+    // Clean up any legacy un-scoped key
+    localStorage.removeItem(STORAGE_KEY);
     if (!raw) return null;
     const parsed = JSON.parse(raw);
     return parsed.map(m => ({ ...m, timestamp: new Date(m.timestamp) }));
@@ -201,8 +238,9 @@ const loadMessages = (userId) => {
 };
 
 const saveMessages = (msgs, userId) => {
+  if (!userId) return; // Never save to un-scoped fallback key
   try {
-    const key = userId ? `${STORAGE_KEY}.${userId}` : STORAGE_KEY;
+    const key = `${STORAGE_KEY}.${userId}`;
     const trimmed = msgs.slice(-MAX_PERSISTED);
     localStorage.setItem(key, JSON.stringify(trimmed));
   } catch { /* quota exceeded — silently skip */ }
@@ -716,7 +754,7 @@ OptionChips.displayName = 'OptionChips';
 
 const STARTER_PRESET_LABELS = ['Coach Me', 'My Performance'];
 
-const AaronChatbot = ({ isOpen, onClose, initialPrompt }) => {
+const AaronChatbot = ({ isOpen, onClose, initialPrompt, targetRepName, pageContext }) => {
   const navigate = useNavigate();
   const { user, profile, role } = useAuth();
   const { plan: billingPlan, status: billingStatus } = useBilling();
@@ -759,8 +797,11 @@ const AaronChatbot = ({ isOpen, onClose, initialPrompt }) => {
   const [useOfflineMode, setUseOfflineMode] = useState(true);
   const [connectionStatus, setConnectionStatus] = useState('disconnected'); // connected | disconnected | reconnecting | failed
   const [contentWarning, setContentWarning] = useState('');
+  const [responseTimeout, setResponseTimeout] = useState(false);
+  const [showAllMessages, setShowAllMessages] = useState(false);
   const messagesEndRef = useRef(null);
   const offlineTimerRef = useRef(null);
+  const responseTimerRef = useRef(null);
   const prevUserIdRef = useRef(user?.id);
 
   // [FEATURE 1] Thread state (Pro+ only)
@@ -891,6 +932,8 @@ const AaronChatbot = ({ isOpen, onClose, initialPrompt }) => {
 
     const onAaronMessage = (data) => {
       setIsTyping(false);
+      clearTimeout(responseTimerRef.current);
+      setResponseTimeout(false);
       if (data.limitReached) {
         setAaronDailyCount(11); // Force over-limit display
       }
@@ -1106,7 +1149,7 @@ const AaronChatbot = ({ isOpen, onClose, initialPrompt }) => {
     const userMsg = { id: nextId(), sender: 'user', text, timestamp: new Date() };
     setMessages(prev => [...prev, userMsg]);
 
-    if (isConnected && !useOfflineMode) {
+    if (isConnected && !useOfflineMode && socket.connected) {
       socket.emit('chat_message', {
         userId: user?.id,
         message: text,
@@ -1114,9 +1157,23 @@ const AaronChatbot = ({ isOpen, onClose, initialPrompt }) => {
         permissions: userPermissions,
         context: { page: window.location.pathname, userName: profile?.first_name || 'User', organizationId: profile?.organization_id || null },
         ...(presetLabel ? { rolePreset: presetLabel } : {}),
+        ...(targetRepName ? { target_rep_name: targetRepName } : {}),
       });
       setIsTyping(true);
+      // Response timeout — if no response in 15s, show retry prompt
+      clearTimeout(responseTimerRef.current);
+      setResponseTimeout(false);
+      responseTimerRef.current = setTimeout(() => {
+        setResponseTimeout(true);
+        setIsTyping(false);
+      }, 15000);
     } else {
+      // Socket not truly connected — fall back to offline mode
+      if (isConnected && !socket.connected) {
+        socket.connect();
+        setIsConnected(false);
+        setUseOfflineMode(true);
+      }
       setIsTyping(true);
       offlineTimerRef.current = setTimeout(() => {
         const response = generateOfflineResponse(text, userPermissions);
@@ -1125,7 +1182,7 @@ const AaronChatbot = ({ isOpen, onClose, initialPrompt }) => {
         offlineTimerRef.current = null;
       }, 600 + Math.random() * 800);
     }
-  }, [isConnected, useOfflineMode, user?.id, role, userPermissions, profile?.first_name]);
+  }, [isConnected, useOfflineMode, user?.id, role, userPermissions, profile?.first_name, targetRepName]);
 
   const handleSubmit = useCallback((e) => {
     e.preventDefault();
@@ -1161,11 +1218,13 @@ const AaronChatbot = ({ isOpen, onClose, initialPrompt }) => {
     if (initialPromptSentRef.current === initialPrompt) return; // already sent this prompt
     // Wait for any typing indicator to clear, then send
     if (isTyping) return; // will re-run when isTyping turns false
+    // Wait until socket is connected before sending — prevents silent failures
+    if (!isConnected && !useOfflineMode) return; // will re-run when isConnected becomes true
     initialPromptSentRef.current = initialPrompt;
-    // Longer delay to ensure socket connection is ready
-    const t = setTimeout(() => sendMessage(initialPrompt), 600);
+    // Small delay for render stability, but socket is already confirmed ready
+    const t = setTimeout(() => sendMessage(initialPrompt), 150);
     return () => clearTimeout(t);
-  }, [isOpen, initialPrompt, isTyping, sendMessage]);
+  }, [isOpen, initialPrompt, isTyping, isConnected, useOfflineMode, sendMessage]);
 
   // Keyboard shortcut: Escape to collapse / minimize / close
   useEffect(() => {
@@ -1341,8 +1400,15 @@ const AaronChatbot = ({ isOpen, onClose, initialPrompt }) => {
               )}
 
               <div className="flex-1 overflow-y-auto p-4 bg-apptivia-paper space-y-3">
-                {messages.map((msg, idx) => {
-                  const isLastAaron = msg.sender === 'aaron' && !messages.slice(idx + 1).some(m => m.sender === 'aaron');
+                {/* Pagination: show last 20 messages by default */}
+                {messages.length > 20 && !showAllMessages && (
+                  <button onClick={() => setShowAllMessages(true)}
+                    className="text-[10px] text-apptivia-coral font-medium hover:underline text-center w-full py-2">
+                    Show {messages.length - 20} older messages
+                  </button>
+                )}
+                {(showAllMessages ? messages : messages.slice(-20)).map((msg, idx, arr) => {
+                  const isLastAaron = msg.sender === 'aaron' && !arr.slice(idx + 1).some(m => m.sender === 'aaron');
                   return (
                     <div key={msg.id}>
                       <ChatBubble
@@ -1462,6 +1528,13 @@ const AaronChatbot = ({ isOpen, onClose, initialPrompt }) => {
                 )}
 
                 {isTyping && <TypingIndicator />}
+                {responseTimeout && (
+                  <div className="flex items-center gap-2 px-3 py-2 bg-amber-50 border border-amber-200 rounded-lg">
+                    <span className="text-xs text-amber-700">Aaron didn't respond. Connection may have dropped.</span>
+                    <button onClick={() => { setResponseTimeout(false); const lastUser = messages.filter(m => m.sender === 'user').pop(); if (lastUser) sendMessage(lastUser.text); }}
+                      className="text-xs font-medium text-apptivia-coral hover:underline whitespace-nowrap">Retry</button>
+                  </div>
+                )}
                 <div ref={messagesEndRef} />
               </div>
 
@@ -1471,6 +1544,33 @@ const AaronChatbot = ({ isOpen, onClose, initialPrompt }) => {
                   <span className="text-[10px] text-apptivia-ink">Thread history is a Pro feature — <a href="/organization-settings" className="underline hover:text-apptivia-ink">Upgrade</a></span>
                 </div>
               )}
+
+              {/* Page-contextual presets — always visible when on a relevant page */}
+              {(() => {
+                if (!pageContext?.page || isTyping) return null;
+                const key = pageContext.tab ? `${pageContext.page}.${pageContext.tab}` : pageContext.page;
+                const pagePresets = PAGE_PRESETS[key] || PAGE_PRESETS[pageContext.page];
+                if (!pagePresets?.length) return null;
+                return (
+                  <div className="shrink-0 px-4 py-1.5 bg-apptivia-paper border-t border-apptivia-carbon-100">
+                    <span className="text-[9px] text-apptivia-carbon-400 uppercase font-medium tracking-wide">About this page</span>
+                    <div className="flex flex-wrap gap-1.5 mt-1">
+                      {pagePresets.map(p => (
+                        <button
+                          key={p.label}
+                          onClick={() => {
+                            const prompt = typeof p.prompt === 'function' ? p.prompt(pageContext) : p.prompt;
+                            sendMessage(prompt, p.label);
+                          }}
+                          className="text-xs px-3 py-1.5 rounded-full border border-apptivia-carbon-300 bg-white text-apptivia-ink hover:bg-apptivia-carbon-50 hover:border-apptivia-carbon-400 transition-colors"
+                        >
+                          {p.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })()}
 
               {/* 4B: Title/Role Preset Buttons — Starter: 2 generic only */}
               {(() => {

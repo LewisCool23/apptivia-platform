@@ -2,8 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { X, Award, Users, Search } from 'lucide-react';
 import { supabase } from '../supabaseClient';
 import { useToast } from '../contexts/ToastContext';
+import { useModalBehavior } from '../hooks/useModalBehavior';
 
 export default function BadgeAssignmentModal({ isOpen, onClose, badge }) {
+  useModalBehavior(isOpen, onClose);
   const toast = useToast();
   const [profiles, setProfiles] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');

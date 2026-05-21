@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { X, Zap, Award, Target, TrendingUp, Star, ChevronRight, Trophy, BookOpen, Activity } from 'lucide-react';
 import { SKILLSET_CATEGORIES } from '../constants/skillsets';
 import { ApptiviaLogo } from './ApptiviaLogo';
+import { useModalBehavior } from '../hooks/useModalBehavior';
 
 const APPTIVIA_LEVELS = [
   { name: 'Developing', range: '0 – 999 pts', color: 'bg-apptivia-carbon-300', bg: 'bg-apptivia-carbon-100', border: 'border-apptivia-carbon-300', text: 'text-apptivia-carbon-700', icon: '🌱', description: 'Building foundational habits and early KPI consistency.' },
@@ -27,6 +28,7 @@ const TABS = [
 ];
 
 export default function ApptiviaLevelInfoModal({ isOpen, onClose }) {
+  useModalBehavior(isOpen, onClose);
   const [activeTab, setActiveTab] = useState('overview');
 
   if (!isOpen) return null;
