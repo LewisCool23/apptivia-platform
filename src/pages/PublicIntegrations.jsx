@@ -85,7 +85,7 @@ export default function PublicIntegrations() {
           <Link to="/" className="text-xl font-bold text-apptivia-coral">Apptivia</Link>
           <div className="flex items-center gap-4">
             <Link to="/login" className="text-sm text-apptivia-carbon-600 hover:text-apptivia-ink">Log In</Link>
-            <Link to="/signup" className="bg-apptivia-coral text-white text-sm px-4 py-2 rounded-lg hover:bg-apptivia-coral transition-colors">
+            <Link to="/signup" className="bg-apptivia-coral text-white text-sm px-4 py-2 rounded-lg hover:bg-apptivia-coral/90 transition-colors">
               Start Free Trial
             </Link>
           </div>

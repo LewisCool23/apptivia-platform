@@ -170,7 +170,7 @@ export default function LeaderboardModal({
             <span>Total Participants: {displayEntries.length}</span>
             <button
               onClick={onClose}
-              className="bg-apptivia-coral text-white px-6 py-2 rounded-lg font-semibold hover:bg-apptivia-coral transition-colors"
+              className="bg-apptivia-coral text-white px-6 py-2 rounded-lg font-semibold hover:bg-apptivia-coral/90 transition-colors"
             >
               Close
             </button>

@@ -33,7 +33,7 @@ export default function BadgeCreationModal({ isOpen, onClose, onBadgeCreated }) 
     { value: '#FFD700', label: 'Gold', preview: 'bg-yellow-400' },
     { value: '#10B981', label: 'Green', preview: 'bg-green-500' },
     { value: '#EF4444', label: 'Red', preview: 'bg-red-500' },
-    { value: '#8B5CF6', label: 'Purple', preview: 'bg-apptivia-ink' },
+    { value: '#FF4D2E', label: 'Coral Dark', preview: 'bg-apptivia-coral' },
     { value: '#EC4899', label: 'Pink', preview: 'bg-pink-500' },
     { value: '#F59E0B', label: 'Orange', preview: 'bg-orange-500' },
     { value: '#06B6D4', label: 'Cyan', preview: 'bg-cyan-500' },
@@ -313,7 +313,7 @@ export default function BadgeCreationModal({ isOpen, onClose, onBadgeCreated }) 
             <button
               type="submit"
               disabled={submitting}
-              className="px-4 py-2 bg-apptivia-ink text-white rounded-lg hover:bg-apptivia-ink disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="px-4 py-2 bg-apptivia-ink text-white rounded-lg hover:bg-apptivia-ink/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               {submitting ? 'Creating...' : 'Create Badge'}
             </button>

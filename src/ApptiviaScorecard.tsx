@@ -1387,7 +1387,7 @@ const ApptiviaScorecard: React.FC = () => {
                         openAaronWithPrompt(`Team average score is ${teamAvg}%. ${lagging.length} of ${rows.length} reps are below 80%: ${laggingDetails}. What coaching strategies should I prioritize this week to lift team performance?`);
                       }
                     }}
-                    className="px-3 py-1.5 rounded-md text-xs font-semibold bg-purple-50 text-purple-600 hover:bg-purple-100 flex items-center gap-1"
+                    className="px-3 py-1.5 rounded-md text-xs font-semibold bg-apptivia-paper text-apptivia-coral hover:bg-apptivia-coral-tone-50 flex items-center gap-1"
                   >
                     <Sparkles size={12} />
                     Ask Aaron

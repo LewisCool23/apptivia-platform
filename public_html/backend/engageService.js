@@ -694,7 +694,7 @@ async function researchCompany(domain, context = {}) {
   try {
     const companyName = mergedCompany.name || domain;
     steps.tavily = await tavilySearch(
-      `${companyName} company news funding tech stack 2024 2025`,
+      `${companyName} company news funding tech stack ${new Date().getFullYear() - 1} ${new Date().getFullYear()}`,
       { depth: 'advanced', max_results: 8 }
     );
   } catch (err) {

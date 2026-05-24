@@ -29,11 +29,11 @@ const THEMES = {
     accent: '⭐',
   },
   rare_badge_earned: {
-    border: 'rgba(168, 85, 247, 0.5)',
-    glow: 'rgba(168, 85, 247, 0.25)',
+    border: 'rgba(255, 77, 46, 0.5)',
+    glow: 'rgba(255, 77, 46, 0.25)',
     label: 'Rare Badge!',
-    gradient: 'linear-gradient(90deg, #7C3AED, #A855F7, #C084FC, #A855F7, #7C3AED)',
-    divider: 'rgba(168, 85, 247, 0.3)',
+    gradient: 'linear-gradient(90deg, #FF4D2E, #FF6B54, #FF8A75, #FF6B54, #FF4D2E)',
+    divider: 'rgba(255, 77, 46, 0.3)',
     accent: '💎',
   },
   achievement_earned: {
@@ -113,7 +113,7 @@ function renderRareBadgeContent(c) {
       {pts && (
         <div style={{
           fontSize: 36, fontWeight: 900, lineHeight: 1.1, marginTop: 12,
-          background: 'linear-gradient(90deg, #A855F7 0%, #C084FC 50%, #A855F7 100%)',
+          background: 'linear-gradient(90deg, #FF4D2E 0%, #FF8A75 50%, #FF4D2E 100%)',
           WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text',
         }}>
           {pts}

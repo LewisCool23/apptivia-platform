@@ -276,7 +276,7 @@ export default function TeamManagementPanel({
                 <button
                   onClick={onAddTeam}
                   disabled={addingTeam || !newTeamName.trim()}
-                  className="px-4 py-1.5 text-sm rounded bg-apptivia-coral text-white hover:bg-apptivia-coral disabled:opacity-60"
+                  className="px-4 py-1.5 text-sm rounded bg-apptivia-coral text-white hover:bg-apptivia-coral/90 disabled:opacity-60"
                 >
                   {addingTeam ? 'Creating...' : 'Create Team'}
                 </button>

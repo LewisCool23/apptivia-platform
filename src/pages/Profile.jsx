@@ -957,7 +957,7 @@ export default function Profile() {
                           getInitials(repName)
                         )}
                       </div>
-                      <label className="absolute -bottom-1 -right-1 w-7 h-7 bg-apptivia-coral rounded-full flex items-center justify-center cursor-pointer hover:bg-apptivia-coral transition-colors shadow-sm">
+                      <label className="absolute -bottom-1 -right-1 w-7 h-7 bg-apptivia-coral rounded-full flex items-center justify-center cursor-pointer hover:bg-apptivia-coral/90 transition-colors shadow-sm">
                         <Camera size={14} className="text-white" />
                         <input type="file" accept="image/*" className="hidden" onChange={handlePhotoUpload} disabled={uploadingPhoto} />
                       </label>
@@ -1395,7 +1395,7 @@ export default function Profile() {
               <button
                 onClick={handleSaveNudgePrefs}
                 disabled={savingNudgePrefs}
-                className="px-4 py-2 bg-apptivia-coral text-white text-sm font-semibold rounded-lg hover:bg-apptivia-coral disabled:opacity-50 transition-colors"
+                className="px-4 py-2 bg-apptivia-coral text-white text-sm font-semibold rounded-lg hover:bg-apptivia-coral/90 disabled:opacity-50 transition-colors"
               >
                 {savingNudgePrefs ? 'Saving...' : 'Save Preferences'}
               </button>
@@ -1527,14 +1527,14 @@ export default function Profile() {
                         ) : API_KEY_PROVIDERS[template.integration_type] ? (
                           <button
                             onClick={() => setCredentialsModal(template.integration_type)}
-                            className="w-full flex items-center justify-center gap-1.5 bg-apptivia-coral text-white py-2 rounded-md text-sm font-medium hover:bg-apptivia-coral transition-colors"
+                            className="w-full flex items-center justify-center gap-1.5 bg-apptivia-coral text-white py-2 rounded-md text-sm font-medium hover:bg-apptivia-coral/90 transition-colors"
                           >
                             <Key size={14} /> Connect with API Key
                           </button>
                         ) : (
                           <button
                             onClick={() => connectOAuth(template.integration_type)}
-                            className="w-full bg-apptivia-coral text-white py-2 rounded-md text-sm font-medium hover:bg-apptivia-coral transition-colors"
+                            className="w-full bg-apptivia-coral text-white py-2 rounded-md text-sm font-medium hover:bg-apptivia-coral/90 transition-colors"
                           >
                             Connect
                           </button>

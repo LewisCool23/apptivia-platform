@@ -292,7 +292,7 @@ export default function AddTeamMembersModal({
             disabled={selectedIds.size === 0 || saving}
             className={`flex-1 flex items-center justify-center gap-1.5 px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
               selectedIds.size > 0 && !saving
-                ? 'bg-apptivia-coral text-white hover:bg-apptivia-coral'
+                ? 'bg-apptivia-coral text-white hover:bg-apptivia-coral/90'
                 : 'bg-apptivia-carbon-200 text-apptivia-carbon-400 cursor-not-allowed'
             }`}
           >

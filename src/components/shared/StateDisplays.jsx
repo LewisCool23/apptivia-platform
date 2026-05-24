@@ -27,7 +27,7 @@ export function ErrorState({ message = 'Something went wrong', onRetry, classNam
       {onRetry && (
         <button
           onClick={onRetry}
-          className="px-4 py-2 bg-apptivia-coral text-white rounded-lg text-sm hover:bg-apptivia-coral transition-colors"
+          className="px-4 py-2 bg-apptivia-coral text-white rounded-lg text-sm hover:bg-apptivia-coral/90 transition-colors"
         >
           Try Again
         </button>

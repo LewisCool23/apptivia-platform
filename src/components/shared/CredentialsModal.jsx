@@ -62,7 +62,7 @@ export default function CredentialsModal({ providerType, onClose, onConnect, err
           <button
             disabled={!allFilled || saving}
             onClick={handleSubmit}
-            className="px-4 py-2 text-sm rounded-lg bg-apptivia-coral text-white font-medium hover:bg-apptivia-coral disabled:opacity-50 transition-colors"
+            className="px-4 py-2 text-sm rounded-lg bg-apptivia-coral text-white font-medium hover:bg-apptivia-coral/90 disabled:opacity-50 transition-colors"
           >
             {saving ? <Loader2 size={14} className="animate-spin inline mr-1" /> : null}
             {saving ? 'Connecting...' : 'Connect'}

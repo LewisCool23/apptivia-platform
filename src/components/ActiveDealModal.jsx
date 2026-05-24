@@ -94,8 +94,8 @@ const ACTIVITY_COLORS = {
   task_created:     'bg-amber-500',
   task_completed:   'bg-amber-500',
   meeting_attached: 'bg-blue-500',
-  contact_linked:   'bg-purple-500',
-  account_linked:   'bg-purple-500',
+  contact_linked:   'bg-apptivia-coral',
+  account_linked:   'bg-apptivia-coral',
   note_added:       'bg-apptivia-carbon-400',
   created:          'bg-apptivia-coral',
 };
@@ -143,7 +143,7 @@ export default function ActiveDealModal({ isOpen, onClose, dealId, organizationI
     loadAll, updateDeal, addNote, linkContact, unlinkContact, linkMeeting,
     createTask, updateTask, deleteTask, logCall,
     searchAccounts, searchContacts, searchMeetings,
-  } = useActiveDeal(isOpen ? dealId : null);
+  } = useActiveDeal(isOpen ? dealId : null, organizationId);
 
   /* ── Edit form state ──────────────────────────────────────────────────── */
   const [editForm, setEditForm] = useState({});
@@ -493,7 +493,7 @@ export default function ActiveDealModal({ isOpen, onClose, dealId, organizationI
               </div>
             </div>
           </div>
-          <button onClick={onClose} className="p-1.5 hover:bg-apptivia-carbon-100 rounded-lg transition-colors flex-shrink-0">
+          <button onClick={onClose} aria-label="Close" className="p-1.5 hover:bg-apptivia-carbon-100 rounded-lg transition-colors flex-shrink-0">
             <X size={16} className="text-apptivia-carbon-500" />
           </button>
         </div>

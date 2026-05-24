@@ -159,10 +159,8 @@ async function requireAuth(req, res, next) {
   }
   const sb = getSupabaseAdmin();
   if (!sb) {
-    // If Supabase admin isn't configured, log a warning but let requests through
-    // (avoids locking out dev environments with incomplete config)
-    console.warn('[auth] Supabase admin not configured — skipping token verification');
-    return next();
+    console.error('[auth] Supabase admin not configured — rejecting request');
+    return res.status(503).json({ error: 'Authentication service unavailable' });
   }
   const { data: { user }, error } = await sb.auth.getUser(token);
   if (error || !user) {
@@ -260,13 +258,12 @@ async function loadProfile(req, res, next) {
   if (!req.user?.id) return res.status(401).json({ error: 'Authentication required' });
   const sb = getSupabaseAdmin();
   if (!sb) {
-    // Dev mode — skip role enforcement
-    req.userProfile = { role: 'admin', organization_id: null };
-    return next();
+    console.error('[loadProfile] Supabase admin not configured — rejecting request');
+    return res.status(503).json({ error: 'Profile service unavailable' });
   }
   const { data, error } = await sb
     .from('profiles')
-    .select('id, role, secondary_role, organization_id, organizations(subscription_plan, subscription_status, trial_ends_at)')
+    .select('id, role, secondary_role, organization_id, full_name, first_name, last_name, email, organizations(subscription_plan, subscription_status, trial_ends_at)')
     .eq('id', req.user.id)
     .single();
   if (error || !data) return res.status(403).json({ error: 'User profile not found' });
@@ -275,6 +272,9 @@ async function loadProfile(req, res, next) {
     role:                data.role,
     secondary_role:      data.secondary_role,
     organization_id:     data.organization_id,
+    full_name:           data.full_name || `${data.first_name || ''} ${data.last_name || ''}`.trim() || null,
+    first_name:          data.first_name || null,
+    email:               data.email || req.user?.email || null,
     subscription_plan:   data.organizations?.subscription_plan   || 'Basic',
     subscription_status: data.organizations?.subscription_status || 'active',
     trial_ends_at:       data.organizations?.trial_ends_at       || null,
@@ -1546,6 +1546,7 @@ app.post('/api/billing/webhook', async (req, res) => {
     }
   } catch (err) {
     console.error(`[Stripe] Error processing ${event.type}:`, err.message);
+    return res.status(500).json({ error: 'Webhook processing failed' });
   }
 
   return res.json({ received: true });
@@ -4028,13 +4029,14 @@ app.post('/api/engage/signals/scan', aiLimiter, loadProfile, requireMinRole('man
         .replace(/^https?:\/\//, '').replace(/\/.*/, '').trim();
       if (!name) return;
 
+      const yearRange = `${new Date().getFullYear() - 1} ${new Date().getFullYear()}`;
       const queries = [
-        { q: `"${name}" funding OR raised OR acquisition OR "series A" OR "series B" 2025 2026`, hint: 'funding' },
-        { q: `"${name}" "new VP" OR "new CRO" OR "new CEO" OR "appointed" OR "joins as" 2025 2026`, hint: 'leadership_change' },
-        { q: `"${name}" layoffs OR restructuring OR "laid off" OR "workforce reduction" 2025 2026`, hint: 'layoffs' },
-        { q: `"${name}" "new customer" OR "contract award" OR "selected by" OR "signs with" 2025 2026`, hint: 'contract_win' },
-        { q: `"${name}" product launch OR "new feature" OR "general availability" OR partnership 2025 2026`, hint: 'product_launch' },
-        { q: `"${name}" hiring OR "job opening" OR "we're hiring" site:linkedin.com OR site:greenhouse.io 2025 2026`, hint: 'icp_job_posting' },
+        { q: `"${name}" funding OR raised OR acquisition OR "series A" OR "series B" ${yearRange}`, hint: 'funding' },
+        { q: `"${name}" "new VP" OR "new CRO" OR "new CEO" OR "appointed" OR "joins as" ${yearRange}`, hint: 'leadership_change' },
+        { q: `"${name}" layoffs OR restructuring OR "laid off" OR "workforce reduction" ${yearRange}`, hint: 'layoffs' },
+        { q: `"${name}" "new customer" OR "contract award" OR "selected by" OR "signs with" ${yearRange}`, hint: 'contract_win' },
+        { q: `"${name}" product launch OR "new feature" OR "general availability" OR partnership ${yearRange}`, hint: 'product_launch' },
+        { q: `"${name}" hiring OR "job opening" OR "we're hiring" site:linkedin.com OR site:greenhouse.io ${yearRange}`, hint: 'icp_job_posting' },
         // G2 reviews (dedicated query — separated from competitor_complaint)
         { q: `"${name}" site:g2.com review OR reviews OR "star rating" OR "easy to use" OR "lacks"`, hint: 'g2_review' },
         // Reddit subtypes (three focused queries replacing old combined one)
@@ -4042,11 +4044,11 @@ app.post('/api/engage/signals/scan', aiLimiter, loadProfile, requireMinRole('man
         { q: `"${name}" site:reddit.com "frustrated with" OR "hate" OR "leaving" OR "switching from" OR "canceling" OR "churn"`, hint: 'reddit_churn_risk' },
         { q: `"${name}" site:reddit.com competitor OR "vs " OR "alternative to" OR "compared to"`, hint: 'reddit_competitor_mention' },
         // Product Hunt
-        { q: `"${name}" site:producthunt.com OR "Product Hunt" launch 2025 2026`, hint: 'product_hunt_launch' },
+        { q: `"${name}" site:producthunt.com OR "Product Hunt" launch ${yearRange}`, hint: 'product_hunt_launch' },
         // Hiring velocity — surge/acceleration signal
-        { q: `"${name}" "scaling team" OR "rapid growth" OR "aggressively hiring" OR "50 new roles" hiring 2025 2026`, hint: 'hiring_velocity' },
+        { q: `"${name}" "scaling team" OR "rapid growth" OR "aggressively hiring" OR "50 new roles" hiring ${yearRange}`, hint: 'hiring_velocity' },
         // Department-level expansion
-        { q: `"${name}" "expanding sales team" OR "building out marketing" OR "growing engineering" OR "VP of" 2025 2026`, hint: 'dept_expansion' },
+        { q: `"${name}" "expanding sales team" OR "building out marketing" OR "growing engineering" OR "VP of" ${yearRange}`, hint: 'dept_expansion' },
         // Capterra reviews
         { q: `"${name}" site:capterra.com review OR reviews OR "star rating" OR "easy to use" OR "lacks"`, hint: 'capterra_review' },
         // Glassdoor — employee sentiment with subtype classification
@@ -4461,22 +4463,23 @@ app.post('/api/admin/seed-benchmarks', loadProfile, requireMinRole('admin'), asy
     const sb = getSupabaseAdmin();
     if (!sb) return res.status(503).json({ error: 'Service unavailable' });
 
+    // benchmark_type CHECK constraint allows: 'industry', 'top_quartile', 'custom'
     const INDUSTRY_BENCHMARKS = [
-      { kpi_key: 'calls_made',        benchmark_type: 'industry_median', value: 45 },
-      { kpi_key: 'emails_sent',       benchmark_type: 'industry_median', value: 75 },
-      { kpi_key: 'meetings_booked',   benchmark_type: 'industry_median', value: 8 },
-      { kpi_key: 'connect_rate',      benchmark_type: 'industry_median', value: 12 },
-      { kpi_key: 'meeting_show_rate', benchmark_type: 'industry_median', value: 72 },
-      { kpi_key: 'pipeline_created',  benchmark_type: 'industry_median', value: 85000 },
-      { kpi_key: 'deals_closed',      benchmark_type: 'industry_median', value: 4 },
-      { kpi_key: 'win_rate',          benchmark_type: 'industry_median', value: 24 },
-      { kpi_key: 'avg_deal_size',     benchmark_type: 'industry_median', value: 22000 },
-      { kpi_key: 'sales_cycle_days',  benchmark_type: 'industry_median', value: 45 },
-      { kpi_key: 'calls_made',        benchmark_type: 'industry_top_quartile', value: 70 },
-      { kpi_key: 'emails_sent',       benchmark_type: 'industry_top_quartile', value: 120 },
-      { kpi_key: 'meetings_booked',   benchmark_type: 'industry_top_quartile', value: 14 },
-      { kpi_key: 'win_rate',          benchmark_type: 'industry_top_quartile', value: 35 },
-      { kpi_key: 'pipeline_created',  benchmark_type: 'industry_top_quartile', value: 150000 },
+      { kpi_key: 'calls_made',        benchmark_type: 'industry', value: 45 },
+      { kpi_key: 'emails_sent',       benchmark_type: 'industry', value: 75 },
+      { kpi_key: 'meetings_booked',   benchmark_type: 'industry', value: 8 },
+      { kpi_key: 'connect_rate',      benchmark_type: 'industry', value: 12 },
+      { kpi_key: 'meeting_show_rate', benchmark_type: 'industry', value: 72 },
+      { kpi_key: 'pipeline_created',  benchmark_type: 'industry', value: 85000 },
+      { kpi_key: 'deals_closed',      benchmark_type: 'industry', value: 4 },
+      { kpi_key: 'win_rate',          benchmark_type: 'industry', value: 24 },
+      { kpi_key: 'avg_deal_size',     benchmark_type: 'industry', value: 22000 },
+      { kpi_key: 'sales_cycle_days',  benchmark_type: 'industry', value: 45 },
+      { kpi_key: 'calls_made',        benchmark_type: 'top_quartile', value: 70 },
+      { kpi_key: 'emails_sent',       benchmark_type: 'top_quartile', value: 120 },
+      { kpi_key: 'meetings_booked',   benchmark_type: 'top_quartile', value: 14 },
+      { kpi_key: 'win_rate',          benchmark_type: 'top_quartile', value: 35 },
+      { kpi_key: 'pipeline_created',  benchmark_type: 'top_quartile', value: 150000 },
     ];
 
     const rows = INDUSTRY_BENCHMARKS.map(b => ({ org_id: null, kpi_key: b.kpi_key, benchmark_type: b.benchmark_type, value: b.value }));
@@ -5163,7 +5166,7 @@ app.post('/api/deals/:dealId/contacts', loadProfile, async (req, res) => {
     if (!prospect_id) return res.status(400).json({ error: 'prospect_id is required' });
 
     const { error } = await sb.from('engage_deal_contacts').insert({
-      deal_id: req.params.dealId, prospect_id, role: role || null, added_by: userId,
+      deal_id: req.params.dealId, prospect_id, role: role || null, added_by: userId, organization_id: orgId,
     });
     if (error) {
       if (error.code === '23505') return res.status(409).json({ error: 'Contact already linked to this deal' });
@@ -5202,8 +5205,9 @@ app.delete('/api/deals/:dealId/contacts/:prospectId', loadProfile, async (req, r
   try {
     const sb = getSupabaseAdmin();
     if (!sb) return res.status(503).json({ error: 'Service unavailable' });
+    const orgId = req.userProfile?.organization_id;
     const { error } = await sb.from('engage_deal_contacts')
-      .delete().eq('deal_id', req.params.dealId).eq('prospect_id', req.params.prospectId);
+      .delete().eq('deal_id', req.params.dealId).eq('prospect_id', req.params.prospectId).eq('organization_id', orgId);
     if (error) throw error;
     return res.json({ ok: true });
   } catch (err) {
@@ -5223,7 +5227,7 @@ app.post('/api/deals/:dealId/meetings', loadProfile, async (req, res) => {
     if (!calendar_event_id) return res.status(400).json({ error: 'calendar_event_id is required' });
 
     const { error } = await sb.from('engage_deal_meetings').insert({
-      deal_id: req.params.dealId, calendar_event_id, linked_by: userId,
+      deal_id: req.params.dealId, calendar_event_id, linked_by: userId, organization_id: orgId,
     });
     if (error) {
       if (error.code === '23505') return res.status(409).json({ error: 'Meeting already linked' });
@@ -5374,10 +5378,12 @@ app.get('/api/deals/:dealId/contacts', loadProfile, async (req, res) => {
   try {
     const sb = getSupabaseAdmin();
     if (!sb) return res.status(503).json({ error: 'Service unavailable' });
+    const orgId = req.userProfile?.organization_id;
 
     const { data, error } = await sb.from('engage_deal_contacts')
       .select('*, prospect:prospect_id(id, full_name, first_name, last_name, email, phone, title, company_name)')
       .eq('deal_id', req.params.dealId)
+      .eq('organization_id', orgId)
       .order('added_at', { ascending: false });
 
     if (error) throw error;
@@ -5393,10 +5399,12 @@ app.get('/api/deals/:dealId/meetings', loadProfile, async (req, res) => {
   try {
     const sb = getSupabaseAdmin();
     if (!sb) return res.status(503).json({ error: 'Service unavailable' });
+    const orgId = req.userProfile?.organization_id;
 
     const { data, error } = await sb.from('engage_deal_meetings')
       .select('*, event:calendar_event_id(id, title, start_time, end_time, meeting_outcome, attendees, external_link)')
       .eq('deal_id', req.params.dealId)
+      .eq('organization_id', orgId)
       .order('linked_at', { ascending: false });
 
     if (error) throw error;
@@ -6581,7 +6589,7 @@ async function runKpiAnomalyAlerts() {
       sb.from('kpi_values').select('kpi_id, profile_id, value')
         .in('kpi_id', metricIds).in('profile_id', repIds)
         .lte('period_start', currEnd).gte('period_end', currStart),
-      sb.from('kpi_values').select('kpi_id, profile_id, value')
+      sb.from('kpi_values').select('kpi_id, profile_id, value, period_start')
         .in('kpi_id', metricIds).in('profile_id', repIds)
         .lte('period_start', rollingEnd).gte('period_end', rollingStart),
     ]);
@@ -6598,6 +6606,14 @@ async function runKpiAnomalyAlerts() {
     const currSums    = sumMap(currValues);
     const rollingSums = sumMap(rollingValues);
 
+    // Count distinct weeks per rep+metric in the rolling window
+    const rollingWeekCounts = {};
+    for (const v of (rollingValues || [])) {
+      const k = `${v.profile_id}:${v.kpi_id}`;
+      if (!rollingWeekCounts[k]) rollingWeekCounts[k] = new Set();
+      rollingWeekCounts[k].add(v.period_start);
+    }
+
     let alerts = 0;
     for (const rep of reps) {
       const managerId = rep.team_id ? teamManagerMap[rep.team_id] : null;
@@ -6608,7 +6624,8 @@ async function runKpiAnomalyAlerts() {
       for (const metric of repOrgMetrics) {
         const currVal    = currSums[`${rep.id}:${metric.id}`]    || 0;
         const rollingSum = rollingSums[`${rep.id}:${metric.id}`] || 0;
-        const rollingAvg = rollingSum / 4; // 4-week average
+        const rollingWeeks = (rollingWeekCounts[`${rep.id}:${metric.id}`] || new Set()).size || 0;
+        const rollingAvg = rollingWeeks > 0 ? rollingSum / rollingWeeks : 0; // avg over actual weeks with data
 
         if (rollingAvg <= 0) continue; // Not enough history
 
@@ -7161,16 +7178,15 @@ async function incrementEngageKpi(profileId, kpiKey, delta = 1) {
     sun.setDate(mon.getDate() + 6);
     const periodStart = mon.toISOString().split('T')[0];
     const periodEnd = sun.toISOString().split('T')[0];
-    // Check for existing row
-    const { data: existing } = await sb.from('kpi_values')
-      .select('id, value')
-      .eq('profile_id', profileId).eq('kpi_id', metric.id).eq('period_start', periodStart)
-      .maybeSingle();
-    if (existing) {
-      await sb.from('kpi_values').update({ value: (existing.value || 0) + delta }).eq('id', existing.id);
-    } else {
-      await sb.from('kpi_values').insert({ profile_id: profileId, kpi_id: metric.id, value: delta, period_start: periodStart, period_end: periodEnd });
-    }
+    // Atomic upsert via RPC — eliminates read-then-write race condition
+    await sb.rpc('upsert_kpi_sum', {
+      p_profile_id: profileId,
+      p_kpi_id: metric.id,
+      p_period_start: periodStart,
+      p_period_end: periodEnd,
+      p_increment: delta,
+      p_source: 'engage',
+    });
   } catch (err) {
     console.error(`[engage-kpi-increment] Error incrementing ${kpiKey} for ${profileId}:`, err.message);
   }
@@ -7183,7 +7199,7 @@ function logEngageActivity(orgId, actorId, eventType, title, description, icon, 
     if (!sb || !orgId) return;
     const row = {
       organization_id: orgId,
-      actor_id: actorId || undefined,
+      actor_id: actorId || null,
       event_type: eventType,
       title,
       description: description || null,
@@ -9945,36 +9961,22 @@ app.post('/track/visit', cors({ origin: '*', methods: ['POST', 'OPTIONS'] }), tr
     const now = new Date().toISOString();
     const sessionKey = session_id || `${ip}-${Math.floor(Date.now() / (30 * 60 * 1000))}`;
 
-    // Upsert visitor session (30-min windows)
-    // Check-then-upsert to properly increment page_views
-    const { data: existingVisit } = await sb
-      .from('website_visitors')
-      .select('id, page_views')
-      .eq('session_id', sessionKey)
-      .maybeSingle();
-
-    if (existingVisit) {
-      await sb.from('website_visitors').update({
-        last_seen_url: pageUrl,
-        page_title:    title,
-        last_seen_at:  now,
-        page_views:    (existingVisit.page_views || 1) + 1,
-      }).eq('session_id', sessionKey);
-    } else {
-      await sb.from('website_visitors').insert({
-        organization_id: org.id,
-        session_id:      sessionKey,
-        ip_address:      ip,
-        company_name:    companyName,
-        company_domain:  companyDomain,
-        last_seen_url:   pageUrl,
-        referrer,
-        page_title:      title,
-        page_views:      1,
-        first_seen_at:   now,
-        last_seen_at:    now,
-      });
-    }
+    // Upsert visitor session (30-min windows).
+    // Uses INSERT ... ON CONFLICT DO UPDATE to avoid race conditions where two
+    // concurrent requests both pass a SELECT check and try to INSERT, causing
+    // a duplicate key violation on session_id.
+    const { error: upsertErr } = await sb.rpc('upsert_website_visitor', {
+      p_organization_id: org.id,
+      p_session_id:      sessionKey,
+      p_ip_address:      ip,
+      p_company_name:    companyName,
+      p_company_domain:  companyDomain || null,
+      p_last_seen_url:   pageUrl || null,
+      p_referrer:        referrer || null,
+      p_page_title:      title || null,
+      p_now:             now,
+    });
+    if (upsertErr) console.error('[track/visit] upsert error:', upsertErr.message);
 
     // Emit one website_visit signal per company per day (not per pageview)
     const today = now.slice(0, 10);
@@ -10081,9 +10083,11 @@ app.post('/api/engage/calls/token', loadProfile, async (req, res) => {
 // TwiML webhook — called by Twilio server-to-server when a call is initiated.
 // Returns <Dial> instructions. No auth (Twilio doesn't send a user JWT).
 app.post('/api/engage/calls/twiml', async (req, res) => {
-  // Validate Twilio request signature if auth token is configured
+  // Validate Twilio request signature
   const twilioAuthToken = process.env.TWILIO_AUTH_TOKEN;
-  if (twilioAuthToken) {
+  if (!twilioAuthToken) {
+    console.warn('[twilio/twiml] TWILIO_AUTH_TOKEN not set — skipping signature validation');
+  } else {
     const twilioLib = require('twilio');
     const twilioSignature = req.headers['x-twilio-signature'] || '';
     const fullUrl = `https://${req.headers.host}${req.originalUrl}`;
@@ -10191,7 +10195,7 @@ app.post('/api/engage/calls/track-kpi', loadProfile, async (req, res) => {
       console.error('[calls/track-kpi] call_connects upsert failed:', kpiErr.message);
     }
     // Increment talk_time_minutes
-    const minutes = Math.max(1, Math.round(durationSeconds / 60));
+    const minutes = Math.max(0, Math.round(durationSeconds / 60));
     try {
       await integrations.upsertKpiValue(sb, {
         profileId: req.user.id,
@@ -10217,7 +10221,9 @@ app.post('/api/engage/calls/recording-callback', async (req, res) => {
   try {
     // Validate Twilio signature
     const twilioAuthToken = process.env.TWILIO_AUTH_TOKEN;
-    if (twilioAuthToken) {
+    if (!twilioAuthToken) {
+      console.warn('[twilio/recording-callback] TWILIO_AUTH_TOKEN not set — skipping signature validation');
+    } else {
       const twilioLib = require('twilio');
       const sig = req.headers['x-twilio-signature'] || '';
       const url = `https://${req.headers.host}${req.originalUrl}`;
@@ -10702,7 +10708,9 @@ app.post('/api/engage/calls/voicemail-drop', async (req, res) => {
   try {
     // Validate Twilio signature
     const twilioAuthToken = process.env.TWILIO_AUTH_TOKEN;
-    if (twilioAuthToken) {
+    if (!twilioAuthToken) {
+      console.warn('[twilio/voicemail-drop] TWILIO_AUTH_TOKEN not set — skipping signature validation');
+    } else {
       const twilioLib = require('twilio');
       const sig = req.headers['x-twilio-signature'] || '';
       const url = `https://${req.headers.host}${req.originalUrl}`;
@@ -11494,6 +11502,7 @@ app.post('/api/engage/sequences', loadProfile, requireMinRole('manager'), async 
       if (steps.length > 0) {
         const stepRows = steps.map((s, i) => ({
           sequence_id: seqId,
+          organization_id: orgId,
           step_number: i + 1,
           channel:     s.channel || 'email',
           delay_days:  s.delay_days ?? 1,
@@ -11598,6 +11607,7 @@ app.post('/api/engage/sequences/:id/enroll', loadProfile, async (req, res) => {
 
     const { data: enrollment, error: enrollErr } = await sb.from('engage_sequence_enrollments').insert({
       sequence_id:      seq.id,
+      organization_id:  orgId,
       prospect_id:      prospect_id || null,
       enrolled_by:      req.userProfile.id,
       prospect_name:    prospect_name || null,
@@ -11623,6 +11633,7 @@ app.patch('/api/engage/enrollments/:id/:action', loadProfile, async (req, res) =
   try {
     const sb = getSupabaseAdmin();
     if (!sb) return res.status(503).json({ error: 'Service unavailable' });
+    const orgId = req.userProfile?.organization_id;
     const { action } = req.params;
     if (!['pause', 'resume', 'remove'].includes(action)) return res.status(400).json({ error: 'Invalid action' });
 
@@ -11630,7 +11641,7 @@ app.patch('/api/engage/enrollments/:id/:action', loadProfile, async (req, res) =
                      : action === 'resume' ? { status: 'active' }
                      : action === 'remove' ? { status: 'removed' } : {};
 
-    const { error } = await sb.from('engage_sequence_enrollments').update(updateData).eq('id', req.params.id);
+    const { error } = await sb.from('engage_sequence_enrollments').update(updateData).eq('id', req.params.id).eq('organization_id', orgId);
     if (error) return res.status(500).json({ error: error.message });
     return res.json({ ok: true });
   } catch (err) {
@@ -11644,6 +11655,10 @@ app.get('/api/engage/sequences/:id/stats', loadProfile, async (req, res) => {
     const sb = getSupabaseAdmin();
     if (!sb) return res.status(503).json({ error: 'Service unavailable' });
     const orgId = req.userProfile.organization_id;
+
+    // Verify sequence belongs to this org before returning stats
+    const { data: seqCheck } = await sb.from('engage_sequences').select('id').eq('id', req.params.id).eq('organization_id', orgId).maybeSingle();
+    if (!seqCheck) return res.status(404).json({ error: 'Sequence not found' });
 
     const { data: enrollments } = await sb
       .from('engage_sequence_enrollments')
@@ -11973,6 +11988,10 @@ app.get('/api/integrations/:id/sync-history', loadProfile, async (req, res) => {
   try {
     const sb = getSupabaseAdmin();
     if (!sb) return res.status(503).json({ error: 'Service unavailable' });
+    const orgId = req.userProfile?.organization_id;
+    // Verify integration belongs to caller's org
+    const { data: intCheck } = await sb.from('integrations').select('id').eq('id', req.params.id).eq('organization_id', orgId).maybeSingle();
+    if (!intCheck) return res.status(404).json({ error: 'Integration not found' });
     const data = await integrations.getSyncHistory(sb, req.params.id, parseInt(req.query.limit) || 20);
     return res.json({ ok: true, history: data });
   } catch (err) {
@@ -12300,8 +12319,8 @@ app.post('/api/calendar/events/:eventId/link-deal', loadProfile, async (req, res
         .upsert({ deal_id, calendar_event_id: req.params.eventId }, { onConflict: 'deal_id,calendar_event_id', ignoreDuplicates: true })
         .then(() => {});
       // Log activity — get deal name + linked account for activity feed
-      const { data: deal } = await sb.from('engage_pipeline_deals').select('deal_name, account_id, linked_account_id').eq('id', deal_id).maybeSingle();
-      const accountId = deal?.linked_account_id || deal?.account_id;
+      const { data: deal } = await sb.from('engage_pipeline_deals').select('deal_name, linked_account_id').eq('id', deal_id).maybeSingle();
+      const accountId = deal?.linked_account_id;
       let accountName = '';
       if (accountId) {
         const { data: acct } = await sb.from('engage_accounts').select('account_name').eq('id', accountId).maybeSingle();
@@ -12568,7 +12587,7 @@ app.get('/api/engage/accounts/:id/deals', loadProfile, async (req, res) => {
     const { data, error } = await sb.from('engage_pipeline_deals')
       .select('id, deal_name, deal_value, stage, created_at, updated_at, owner_id, close_date')
       .eq('organization_id', orgId)
-      .or(`account_id.eq.${accountId},linked_account_id.eq.${accountId}`)
+      .eq('linked_account_id', accountId)
       .order('created_at', { ascending: false })
       .limit(50);
     if (error) throw error;
@@ -13065,11 +13084,12 @@ app.post('/api/users/invite', loadProfile, requireMinRole('admin'), async (req, 
           invited++;
         }
 
-        // Record invitation
+        // Record invitation — use toDbRole() to ensure the stored role matches
+        // the roles_enum values used in profiles (e.g. 'power user', not 'power_user')
         const { error: invRecordErr } = await sb.from('invitations').insert({
           organization_id: orgId,
           email,
-          role,
+          role: toDbRole(role),
           team_id: team_id || null,
           invited_by: invitedBy,
           status: 'pending',

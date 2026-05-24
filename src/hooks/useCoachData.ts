@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { supabase } from '../supabaseClient';
 import { SKILLSET_KPI_MAP, LEVELS, getLevelInfo, getEffectiveLevel, difficultyRank, getSkillsetColor } from '../constants/skillsets';
-import { calcPct } from '../utils/kpiCalc';
+import { calcPct, computeWeightedScore } from '../utils/kpiCalc';
 import { LEADERSHIP_ROLE_FILTER } from '../constants/roles';
 
 interface ProfileCoachData {
@@ -294,17 +294,15 @@ export function useCoachData(
         // Scorecard scores for latest period (M12 fix: use historical goals)
         const profileScores = new Map<string, number>();
         profiles.forEach((profile: any) => {
-          let totalScore = 0;
-          let totalWeight = 0;
+          const items: Array<{ percentage: number; weight: number }> = [];
           scorecardMetrics.forEach((metric: any) => {
             const value = latestValueMap.get(`${profile.id}|${metric.id}`) || 0;
             const dir = histDir(metric);
             const w = histWeight(metric);
             const percentage = calcPct(value, histGoal(metric), dir);
-            totalScore += percentage * w;
-            totalWeight += w;
+            items.push({ percentage, weight: w });
           });
-          profileScores.set(profile.id, totalWeight > 0 ? Math.round(totalScore / totalWeight) : 0);
+          profileScores.set(profile.id, computeWeightedScore(items));
         });
 
         const avgScore = totalMembers > 0
@@ -339,17 +337,15 @@ export function useCoachData(
                 const gap = new Date(prevEnd).getTime() - new Date(periodEnd).getTime();
                 if (gap > 8 * 24 * 60 * 60 * 1000) break; // >8 days = skipped week
               }
-              let periodScore = 0;
-              let periodTotalWeight = 0;
+              const periodItems: Array<{ percentage: number; weight: number }> = [];
               scorecardMetrics.forEach((metric: any) => {
                 const value = valueByProfilePeriodMetric.get(`${profile.id}|${periodEnd}|${metric.id}`) || 0;
                 const dir = histDir(metric);
                 const w = histWeight(metric);
                 const percentage = calcPct(value, histGoal(metric), dir);
-                periodScore += percentage * w;
-                periodTotalWeight += w;
+                periodItems.push({ percentage, weight: w });
               });
-              const normalizedScore = periodTotalWeight > 0 ? Math.round(periodScore / periodTotalWeight) : 0;
+              const normalizedScore = computeWeightedScore(periodItems);
               if (normalizedScore >= 100) {
                 streak += 1;
               } else {
@@ -579,6 +575,7 @@ export function useCoachData(
   // When kpi_values change in the DB (e.g. a manager logs activity), invalidate
   // the in-memory cache and trigger a re-fetch so the scorecard updates live.
   useEffect(() => {
+    const orgId = options?.organizationId;
     const channel = supabase
       .channel('coach_data_kpi_values')
       .on(
@@ -591,12 +588,17 @@ export function useCoachData(
       )
       .subscribe();
 
-    // Also subscribe to achievement/skillset changes for real-time updates
+    // Subscribe to achievement/skillset changes — org-scoped when possible
+    const achFilter = orgId ? { event: '*' as const, schema: 'public', table: 'profile_achievements', filter: `organization_id=eq.${orgId}` }
+      : { event: '*' as const, schema: 'public', table: 'profile_achievements' };
+    const skillFilter = orgId ? { event: '*' as const, schema: 'public', table: 'profile_skillsets', filter: `organization_id=eq.${orgId}` }
+      : { event: '*' as const, schema: 'public', table: 'profile_skillsets' };
+
     const channel2 = supabase
-      .channel('coach_data_achievements')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'profile_achievements' },
+      .channel(`coach_data_achievements_${orgId || 'global'}`)
+      .on('postgres_changes', achFilter,
         () => { cacheRef.current.clear(); setRealtimeKey((k) => k + 1); })
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'profile_skillsets' },
+      .on('postgres_changes', skillFilter,
         () => { cacheRef.current.clear(); setRealtimeKey((k) => k + 1); })
       .subscribe();
 
@@ -604,7 +606,7 @@ export function useCoachData(
       supabase.removeChannel(channel);
       supabase.removeChannel(channel2);
     };
-  }, []);
+  }, [options?.organizationId]);
 
   return { data, loading, error };
 }

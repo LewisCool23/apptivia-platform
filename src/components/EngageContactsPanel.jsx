@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Phone, Mail, ExternalLink, Search, X, UserPlus, Eye } from 'lucide-react';
 import { supabase } from '../supabaseClient';
 import Tooltip from './shared/Tooltip';
@@ -59,7 +59,7 @@ export default function EngageContactsPanel({ organizationId, onCallContact, onC
               See All
             </button>
           )}
-        <button onClick={onClose} className="text-apptivia-carbon-400 hover:text-apptivia-carbon-600 transition-colors">
+        <button onClick={onClose} aria-label="Close" className="text-apptivia-carbon-400 hover:text-apptivia-carbon-600 transition-colors">
           <X size={15} />
         </button>
         </div>

@@ -4,7 +4,7 @@ import { supabase } from '../supabaseClient';
 import { useToast } from '../contexts/ToastContext';
 import { useModalBehavior } from '../hooks/useModalBehavior';
 
-export default function BadgeAssignmentModal({ isOpen, onClose, badge }) {
+export default function BadgeAssignmentModal({ isOpen, onClose, badge, organizationId: orgIdProp }) {
   useModalBehavior(isOpen, onClose);
   const toast = useToast();
   const [profiles, setProfiles] = useState([]);
@@ -14,6 +14,18 @@ export default function BadgeAssignmentModal({ isOpen, onClose, badge }) {
   const [loading, setLoading] = useState(false);
   const [departmentFilter, setDepartmentFilter] = useState('all');
   const [departments, setDepartments] = useState([]);
+  const [organizationId, setOrganizationId] = useState(orgIdProp || null);
+
+  // Resolve org from current user if not passed as prop
+  useEffect(() => {
+    if (orgIdProp) { setOrganizationId(orgIdProp); return; }
+    supabase.auth.getUser().then(({ data }) => {
+      if (data?.user?.id) {
+        supabase.from('profiles').select('organization_id').eq('id', data.user.id).single()
+          .then(({ data: p }) => { if (p?.organization_id) setOrganizationId(p.organization_id); });
+      }
+    });
+  }, [orgIdProp]);
 
   useEffect(() => {
     if (isOpen) {
@@ -52,6 +64,8 @@ export default function BadgeAssignmentModal({ isOpen, onClose, badge }) {
           profile_badges!left (badge_name)
         `)
         .order('first_name');
+
+      if (organizationId) query = query.eq('organization_id', organizationId);
 
       const { data, error } = await query;
 
@@ -296,7 +310,7 @@ export default function BadgeAssignmentModal({ isOpen, onClose, badge }) {
             <button
               onClick={handleAssignBadge}
               disabled={submitting || selectedProfiles.length === 0}
-              className="px-4 py-2 bg-apptivia-ink text-white rounded-lg hover:bg-apptivia-ink disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
+              className="px-4 py-2 bg-apptivia-ink text-white rounded-lg hover:bg-apptivia-ink/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
             >
               <Award className="w-4 h-4" />
               {submitting ? 'Assigning...' : `Assign Badge${selectedProfiles.length > 1 ? 's' : ''}`}

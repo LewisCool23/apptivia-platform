@@ -97,7 +97,9 @@ export default function ScheduleMeetingModal({ isOpen, onClose, onCreated, onMee
             deal_id: selectedDeal.id,
             calendar_event_id: result.event.id,
           });
-        } catch {}
+        } catch (linkErr) {
+          console.error('[ScheduleMeeting] Failed to link deal to meeting:', linkErr?.message);
+        }
       }
       setSuccess({ meetLink, provider: result.provider });
       if (onCreated) onCreated(result.event);

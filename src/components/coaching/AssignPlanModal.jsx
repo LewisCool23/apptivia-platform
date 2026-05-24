@@ -44,7 +44,7 @@ export default function AssignPlanModal({
               <p className="text-sm text-apptivia-carbon-500">Select team members</p>
             </div>
           </div>
-          <button onClick={onClose} className="p-2 hover:bg-apptivia-carbon-100 rounded-lg transition-colors">
+          <button onClick={onClose} aria-label="Close" className="p-2 hover:bg-apptivia-carbon-100 rounded-lg transition-colors">
             <X size={20} className="text-apptivia-carbon-400" />
           </button>
         </div>

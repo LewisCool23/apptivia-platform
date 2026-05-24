@@ -8,12 +8,14 @@ const ToastContext = createContext();
 export const useToast = () => {
   const context = useContext(ToastContext);
   if (!context) {
-    // Fallback if not wrapped in provider
+    // Fallback if not wrapped in provider — must match provider shape
     return {
       success: (message) => toast.success(message),
       error: (message) => toast.error(message),
       loading: (message) => toast.loading(message),
       promise: (promise, messages) => toast.promise(promise, messages),
+      info: (message) => toast(message, { icon: 'ℹ️' }),
+      dismiss: (toastId) => toast.dismiss(toastId),
     };
   }
   return context;

@@ -1,5 +1,6 @@
 import React from 'react';
 import { backendFetch } from '../utils/backendFetch';
+import { prettifyKpiKey } from '../constants/kpiGuidance';
 
 const VARIANT_CONFIG = {
   aaron_limit: {
@@ -39,7 +40,7 @@ const COMPARISON_FEATURES = [
 
 export default function UpgradePrompt({ feature, context = 'inline', variant = 'generic', onDismiss }) {
   const config = VARIANT_CONFIG[variant] || VARIANT_CONFIG.generic;
-  const featureLabel = feature ? feature.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) : '';
+  const featureLabel = feature ? prettifyKpiKey(feature) : '';
 
   const handleUpgrade = async () => {
     try {
@@ -63,7 +64,7 @@ export default function UpgradePrompt({ feature, context = 'inline', variant = '
         </div>
         <button
           onClick={handleUpgrade}
-          className="px-4 py-2 bg-apptivia-ink text-white text-sm font-semibold rounded-lg hover:bg-apptivia-ink transition-colors whitespace-nowrap"
+          className="px-4 py-2 bg-apptivia-ink text-white text-sm font-semibold rounded-lg hover:bg-apptivia-ink/90 transition-colors whitespace-nowrap"
         >
           Upgrade to Pro
         </button>
@@ -101,7 +102,7 @@ export default function UpgradePrompt({ feature, context = 'inline', variant = '
             <div className="flex gap-3">
               <button
                 onClick={handleUpgrade}
-                className="flex-1 bg-apptivia-ink text-white text-sm font-medium py-2.5 rounded-lg hover:bg-apptivia-ink transition-colors"
+                className="flex-1 bg-apptivia-ink text-white text-sm font-medium py-2.5 rounded-lg hover:bg-apptivia-ink/90 transition-colors"
               >
                 Upgrade to Pro — $49/seat/mo
               </button>
@@ -128,7 +129,7 @@ export default function UpgradePrompt({ feature, context = 'inline', variant = '
           <p className="text-xs text-apptivia-ink mt-0.5">{config.message}</p>
           <button
             onClick={handleUpgrade}
-            className="mt-2 px-3 py-1.5 bg-apptivia-ink text-white text-xs font-semibold rounded-md hover:bg-apptivia-ink transition-colors"
+            className="mt-2 px-3 py-1.5 bg-apptivia-ink text-white text-xs font-semibold rounded-md hover:bg-apptivia-ink/90 transition-colors"
           >
             Upgrade to Pro
           </button>

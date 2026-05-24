@@ -311,7 +311,7 @@ export default function CoachingPlanTemplatesModal({ isOpen, onClose, onTemplate
               </button>
               <button
                 onClick={handleUseTemplate}
-                className="px-4 py-2 text-sm font-semibold bg-apptivia-coral text-white rounded-md hover:bg-apptivia-coral"
+                className="px-4 py-2 text-sm font-semibold bg-apptivia-coral text-white rounded-md hover:bg-apptivia-coral/90"
               >
                 Use This Template
               </button>

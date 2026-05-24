@@ -98,7 +98,6 @@ export default function CreateDealModal({ isOpen, onClose, organizationId, userI
           source: form.source,
           description: form.description || null,
           linked_account_id: selectedAccount?.id || null,
-          account_id: selectedAccount?.id || null,
         });
       if (insertError) throw insertError;
       onDealCreated?.();
@@ -122,7 +121,7 @@ export default function CreateDealModal({ isOpen, onClose, organizationId, userI
             <DollarSign size={16} className="text-apptivia-coral" />
             <h2 className="text-sm font-semibold text-apptivia-ink">Create Deal</h2>
           </div>
-          <button onClick={onClose} className="p-1 hover:bg-apptivia-paper rounded-lg transition-colors">
+          <button onClick={onClose} aria-label="Close" className="p-1 hover:bg-apptivia-paper rounded-lg transition-colors">
             <X size={16} className="text-apptivia-carbon-400" />
           </button>
         </div>

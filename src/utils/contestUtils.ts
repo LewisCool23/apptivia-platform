@@ -160,6 +160,7 @@ export async function updateContestLeaderboard(contestId: string): Promise<Leade
         profile_id: participant.profile_id,
         team_id: participant.team_id,
         score: Math.round(score * 100) / 100,
+        joined_at: participant.joined_at || participant.created_at || null,
       };
     });
 
@@ -183,11 +184,13 @@ export async function updateContestLeaderboard(contestId: string): Promise<Leade
     }
 
     // Sort by score descending and assign ranks (standard competition ranking — ties share rank)
-    // F7: deterministic tiebreaker — earliest created_at wins ties
+    // F7: deterministic tiebreaker — earliest joined_at wins ties
     scores.sort((a: any, b: any) => {
       const diff = b.score - a.score;
       if (diff !== 0) return diff;
-      return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+      const aTime = a.joined_at ? new Date(a.joined_at).getTime() : Infinity;
+      const bTime = b.joined_at ? new Date(b.joined_at).getTime() : Infinity;
+      return aTime - bTime;
     });
     let currentRank = 1;
     const rankedScores = scores.map((entry: any, index: number, arr: any[]) => {

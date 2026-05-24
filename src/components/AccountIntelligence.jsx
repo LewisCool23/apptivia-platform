@@ -271,7 +271,7 @@ function BuyingCommitteePanel({ committee, onUpdate, onFindContacts, onEmailCont
             </button>
           )}
           <button onClick={() => setAdding(true)}
-            className="flex items-center gap-1 px-2.5 py-1 bg-apptivia-coral text-white rounded-lg text-[10px] font-medium hover:bg-apptivia-coral transition-colors">
+            className="flex items-center gap-1 px-2.5 py-1 bg-apptivia-coral text-white rounded-lg text-[10px] font-medium hover:bg-apptivia-coral/90 transition-colors">
             <Plus size={10} /> Add
           </button>
         </div>
@@ -361,7 +361,7 @@ function BuyingCommitteePanel({ committee, onUpdate, onFindContacts, onEmailCont
             <div className="flex justify-end gap-2">
               <button onClick={() => setAdding(false)} className="px-3 py-1 text-xs text-apptivia-carbon-500 hover:text-apptivia-carbon-700">Cancel</button>
               <button onClick={handleAdd} disabled={!newMember.name.trim()}
-                className="px-3 py-1.5 bg-apptivia-coral text-white rounded-lg text-xs font-medium hover:bg-apptivia-coral disabled:opacity-50">
+                className="px-3 py-1.5 bg-apptivia-coral text-white rounded-lg text-xs font-medium hover:bg-apptivia-coral/90 disabled:opacity-50">
                 Add Member
               </button>
             </div>
@@ -557,7 +557,7 @@ function AccountDetail({ account, onBack, onUpdate, onAnalyze, analyzing, onUpda
         <div className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-xs font-medium ${
           analysisMsg.type === 'success' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' :
           analysisMsg.type === 'error' ? 'bg-red-50 text-red-700 border border-red-200' :
-          'bg-blue-50 text-blue-700 border border-blue-200'
+          'bg-apptivia-coral-tone-50 text-apptivia-coral border border-apptivia-coral/20'
         }`}>
           {analysisMsg.type === 'success' ? <CheckCircle size={14} /> :
            analysisMsg.type === 'error' ? <AlertTriangle size={14} /> :
@@ -611,7 +611,7 @@ function AccountDetail({ account, onBack, onUpdate, onAnalyze, analyzing, onUpda
                 )}
                 {linkedinUrl && (
                   <a href={linkedinUrl} target="_blank" rel="noopener noreferrer"
-                    className="text-xs text-blue-600 hover:text-blue-700 flex items-center gap-1 font-medium">
+                    className="text-xs text-apptivia-carbon-600 hover:text-apptivia-ink flex items-center gap-1 font-medium">
                     <Linkedin size={11} /> LinkedIn <ExternalLink size={9} />
                   </a>
                 )}
@@ -723,7 +723,7 @@ function AccountDetail({ account, onBack, onUpdate, onAnalyze, analyzing, onUpda
 
       {/* ═══ AI Account Intelligence ═══ */}
       <CollapsibleSection title="AI Account Intelligence" icon={Sparkles} iconColor="text-apptivia-coral"
-        badge={loadingResearch ? <span className="text-[9px] text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded font-medium animate-pulse">Generating...</span> : null}
+        badge={loadingResearch ? <span className="text-[9px] text-apptivia-coral bg-apptivia-coral-tone-50 px-1.5 py-0.5 rounded font-medium animate-pulse">Generating...</span> : null}
         actions={
           <button onClick={handleAnalyze} disabled={analyzing}
             className="flex items-center gap-1 px-2.5 py-1 bg-gradient-to-r from-orange-500 to-amber-500 text-white rounded-lg text-[10px] font-semibold hover:from-orange-600 hover:to-amber-600 disabled:opacity-50 transition-all">
@@ -882,7 +882,7 @@ function AccountDetail({ account, onBack, onUpdate, onAnalyze, analyzing, onUpda
                         <button onClick={() => onEmailContact(contact)} className="text-[10px] text-apptivia-coral hover:bg-apptivia-coral-tone-50 px-2 py-1 rounded font-medium"><Mail size={10} /></button>
                       )}
                       {contact.linkedin_url && (
-                        <a href={contact.linkedin_url} target="_blank" rel="noreferrer" className="text-[10px] text-blue-500 hover:bg-blue-50 px-2 py-1 rounded"><Linkedin size={10} /></a>
+                        <a href={contact.linkedin_url} target="_blank" rel="noreferrer" className="text-[10px] text-apptivia-carbon-500 hover:bg-apptivia-paper px-2 py-1 rounded"><Linkedin size={10} /></a>
                       )}
                       {contact.phone && (
                         <button onClick={() => navigator.clipboard.writeText(contact.phone)} className="text-[10px] text-emerald-500 hover:bg-emerald-50 px-2 py-1 rounded"><Phone size={10} /></button>
@@ -936,7 +936,7 @@ function AccountDetail({ account, onBack, onUpdate, onAnalyze, analyzing, onUpda
                   </div>
                   {contact.email && <span className="text-[10px] text-apptivia-carbon-400 truncate max-w-[140px]">{contact.email}</span>}
                   {contact.is_suggested && <span className="text-[8px] bg-emerald-50 text-emerald-600 px-1.5 py-0.5 rounded font-medium">suggested</span>}
-                  {contact.source === 'signal' && !contact.is_suggested && <span className="text-[8px] bg-blue-50 text-blue-600 px-1.5 py-0.5 rounded font-medium">signal</span>}
+                  {contact.source === 'signal' && !contact.is_suggested && <span className="text-[8px] bg-apptivia-coral-tone-50 text-apptivia-coral px-1.5 py-0.5 rounded font-medium">signal</span>}
                   <div className="flex items-center gap-1 flex-shrink-0">
                     {updateAccountContact && (
                       <button onClick={() => updateAccountContact(account.id, contact.id, { is_buying_committee: true, committee_role: 'influencer' })}
@@ -959,10 +959,10 @@ function AccountDetail({ account, onBack, onUpdate, onAnalyze, analyzing, onUpda
       </CollapsibleSection>
 
       {/* ═══ Meetings Section ═══ */}
-      <CollapsibleSection title="Meetings" icon={Calendar} iconColor="text-blue-600" count={accountMeetings.length}
+      <CollapsibleSection title="Meetings" icon={Calendar} iconColor="text-apptivia-coral" count={accountMeetings.length}
         actions={
           <button onClick={() => setShowScheduleMeeting(true)}
-            className="flex items-center gap-1 px-2.5 py-1 bg-blue-50 text-blue-700 rounded-lg text-[10px] font-medium hover:bg-blue-100">
+            className="flex items-center gap-1 px-2.5 py-1 bg-apptivia-paper text-apptivia-ink rounded-lg text-[10px] font-medium hover:bg-apptivia-carbon-100">
             <Plus size={10} /> New Meeting
           </button>
         }
@@ -978,7 +978,7 @@ function AccountDetail({ account, onBack, onUpdate, onAnalyze, analyzing, onUpda
               const date = new Date(meeting.start_time);
               return (
                 <div key={meeting.id} className="flex items-center gap-3 px-5 py-2.5 hover:bg-apptivia-paper/30 transition-colors">
-                  <div className={`w-2 h-2 rounded-full flex-shrink-0 ${isPast ? 'bg-apptivia-carbon-300' : 'bg-blue-500'}`} />
+                  <div className={`w-2 h-2 rounded-full flex-shrink-0 ${isPast ? 'bg-apptivia-carbon-300' : 'bg-apptivia-coral'}`} />
                   <div className="flex-1 min-w-0">
                     <span className="text-xs font-medium text-apptivia-ink truncate block">{meeting.title}</span>
                     <span className="text-[10px] text-apptivia-carbon-400">
@@ -1036,7 +1036,7 @@ function AccountDetail({ account, onBack, onUpdate, onAnalyze, analyzing, onUpda
                 <span className={`text-[9px] px-1.5 py-0.5 rounded font-medium ${
                   deal.status === 'won' ? 'bg-emerald-50 text-emerald-700' :
                   deal.status === 'lost' ? 'bg-red-50 text-red-600' :
-                  'bg-blue-50 text-blue-600'
+                  'bg-apptivia-paper text-apptivia-carbon-600'
                 }`}>{deal.status || 'open'}</span>
               </div>
             ))
@@ -1070,8 +1070,8 @@ function AccountDetail({ account, onBack, onUpdate, onAnalyze, analyzing, onUpda
                 const typeColors = {
                   'outreach.generated': 'bg-apptivia-coral', 'outreach.sent': 'bg-emerald-500',
                   'deal.activity': 'bg-emerald-500', 'deal.created': 'bg-emerald-500',
-                  'account.researched': 'bg-apptivia-coral', 'contact.added': 'bg-blue-500',
-                  'meeting.linked': 'bg-blue-500', 'meeting.scheduled': 'bg-blue-500',
+                  'account.researched': 'bg-apptivia-coral', 'contact.added': 'bg-apptivia-ink',
+                  'meeting.linked': 'bg-apptivia-ink', 'meeting.scheduled': 'bg-apptivia-ink',
                 };
                 const dotColor = typeColors[event.event_type] || 'bg-apptivia-carbon-300';
                 return (
@@ -1151,7 +1151,7 @@ function NewAccountModal({ isOpen, onClose, onCreate }) {
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
       <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-md relative">
-        <button onClick={onClose} className="absolute top-4 right-4 text-apptivia-carbon-400 hover:text-apptivia-carbon-600">
+        <button onClick={onClose} aria-label="Close" className="absolute top-4 right-4 text-apptivia-carbon-400 hover:text-apptivia-carbon-600">
           <X size={20} />
         </button>
 
@@ -1220,7 +1220,7 @@ function NewAccountModal({ isOpen, onClose, onCreate }) {
             <button
               type="submit"
               disabled={!form.account_name.trim() || saving}
-              className="px-4 py-2 text-sm font-medium text-white bg-apptivia-coral rounded-md hover:bg-apptivia-coral disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="px-4 py-2 text-sm font-medium text-white bg-apptivia-coral rounded-md hover:bg-apptivia-coral/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               {saving ? 'Creating...' : 'Create Account'}
             </button>
@@ -1381,7 +1381,7 @@ export default function AccountIntelligence({ organizationId, userId, initialAcc
           {accounts.length === 0 && (
             <div className="flex justify-center gap-3">
               <button onClick={() => setShowNew(true)}
-                className="px-5 py-2.5 bg-apptivia-coral text-white rounded-lg text-xs font-semibold hover:bg-apptivia-coral transition-colors">
+                className="px-5 py-2.5 bg-apptivia-coral text-white rounded-lg text-xs font-semibold hover:bg-apptivia-coral/90 transition-colors">
                 Create Account
               </button>
               <button onClick={importFromCompanies}

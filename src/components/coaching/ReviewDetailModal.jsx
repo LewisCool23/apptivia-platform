@@ -150,7 +150,7 @@ export default function ReviewDetailModal({
             {isManager && transition && transition.actor === 'manager' && (
               <div className="flex flex-wrap gap-2">
                 <button onClick={() => onTransition(transition.next)}
-                  className="px-4 py-2 text-sm font-semibold text-white bg-apptivia-coral rounded-md hover:bg-apptivia-coral" disabled={saving}>
+                  className="px-4 py-2 text-sm font-semibold text-white bg-apptivia-coral rounded-md hover:bg-apptivia-coral/90" disabled={saving}>
                   {saving ? 'Processing...' : transition.action}
                 </button>
                 {transition.alt && transition.alt.actor === 'manager' && (
@@ -470,7 +470,7 @@ export default function ReviewDetailModal({
                     className="w-full border border-apptivia-carbon-300 rounded-md px-3 py-2 text-sm" rows={2} placeholder="Additional comments..." />
                 </div>
                 <button onClick={handleManagerSave} disabled={saving}
-                  className="px-4 py-2 text-sm font-semibold text-white bg-apptivia-ink rounded-md hover:bg-apptivia-ink disabled:opacity-50">
+                  className="px-4 py-2 text-sm font-semibold text-white bg-apptivia-ink rounded-md hover:bg-apptivia-ink/90 disabled:opacity-50">
                   {saving ? 'Saving...' : 'Save Assessment'}
                 </button>
               </div>

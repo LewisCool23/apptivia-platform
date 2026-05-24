@@ -105,7 +105,7 @@ export default function OrgHealthDetailModal({
           </button>
           <button
             onClick={() => { onClose(); navigate(linkTo); }}
-            className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-semibold text-white bg-apptivia-coral hover:bg-apptivia-coral transition-colors"
+            className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-semibold text-white bg-apptivia-coral hover:bg-apptivia-coral/90 transition-colors"
           >
             {linkLabel} <ArrowRight size={12} />
           </button>

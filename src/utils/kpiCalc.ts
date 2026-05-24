@@ -25,3 +25,24 @@ export function calcPct(value: number, goal: number, direction: string = 'higher
   // Higher-is-better: standard ratio with 200% cap
   return Math.min((value / goal) * 100, 200);
 }
+
+/**
+ * Compute a weighted score from metric attainment percentages.
+ *
+ * The formula used in 6+ places across the platform is:
+ *   score = sum(percentage * weight) / sum(weight)
+ *
+ * @param items - Array of { percentage, weight } objects
+ * @returns Rounded integer score (0-200). Returns 0 if total weight is 0.
+ */
+export function computeWeightedScore(
+  items: Array<{ percentage: number; weight: number }>,
+): number {
+  let totalScore = 0;
+  let totalWeight = 0;
+  for (const item of items) {
+    totalScore += item.percentage * item.weight;
+    totalWeight += item.weight;
+  }
+  return totalWeight > 0 ? Math.round(totalScore / totalWeight) : 0;
+}

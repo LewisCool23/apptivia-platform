@@ -758,7 +758,7 @@ export default function OnboardingWizard({ isOpen, onClose, onComplete, organiza
                 type="button"
                 onClick={handleNext}
                 disabled={loading}
-                className="flex items-center gap-2 px-6 py-2.5 bg-apptivia-coral text-white rounded-lg text-sm font-semibold hover:bg-apptivia-coral disabled:opacity-50 transition-colors"
+                className="flex items-center gap-2 px-6 py-2.5 bg-apptivia-coral text-white rounded-lg text-sm font-semibold hover:bg-apptivia-coral/90 disabled:opacity-50 transition-colors"
               >
                 {loading ? <Loader2 size={16} className="animate-spin" /> : null}
                 Next <ArrowRight size={16} />

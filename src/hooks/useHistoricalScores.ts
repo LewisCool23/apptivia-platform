@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { supabase } from '../supabaseClient';
 import { DEFAULT_TREND_WEEKS } from '../constants/kpiGuidance';
 import { getMonday } from '../utils/dateUtils';
-import { calcPct } from '../utils/kpiCalc';
+import { calcPct, computeWeightedScore } from '../utils/kpiCalc';
 import { LEADERSHIP_ROLE_FILTER } from '../constants/roles';
 
 interface HistoricalScorePoint {
@@ -223,18 +223,19 @@ export function useHistoricalScores(
             const repScores: number[] = [];
             const perRepScores: Record<string, number> = {};
             profileIds.forEach((repId: string) => {
-              let repTotal = 0;
+              const repItems: Array<{ percentage: number; weight: number }> = [];
               kpiIds.forEach((kpiId: string) => {
                 const config = getConfigAt(kpiId, weekEnd);
                 if (!config) return;
                 const value = repKpiSums.get(repId)?.get(kpiId) || 0;
                 const dir = config.direction || 'higher';
                 const percentage = calcPct(value, config.goal, dir);
-                repTotal += percentage * (config.weight || 0);
+                repItems.push({ percentage, weight: config.weight || 0 });
               });
-              const score = weekTotalWeight > 0 ? repTotal / weekTotalWeight : 0;
-              repScores.push(score);
-              perRepScores[repId] = Math.round(score);
+              // Unrounded score for team-average precision
+              const rawTotal = repItems.reduce((s, i) => s + i.percentage * i.weight, 0);
+              repScores.push(weekTotalWeight > 0 ? rawTotal / weekTotalWeight : 0);
+              perRepScores[repId] = computeWeightedScore(repItems);
             });
 
             weightedScore = repScores.length > 0

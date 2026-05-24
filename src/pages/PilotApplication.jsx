@@ -2,8 +2,7 @@ import React, { useState } from 'react';
 import { Activity, CheckCircle, ArrowRight, Shield, Clock, Zap, Users, X } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { ApptiviaLogo } from '../components/ApptiviaLogo';
-
-const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || '';
+import { BACKEND_BASE } from '../utils/backendFetch';
 
 const PILOT_BENEFITS = [
   { icon: Clock, title: '90 Days Free', description: 'Full Pro platform access — Scorecard, Coach, Engage, Aaron AI, Contests — no card required.' },
@@ -40,7 +39,7 @@ export default function PilotApplication() {
     if (!form.name.trim() || !form.email.trim()) return;
     setStatus('sending');
     try {
-      const res = await fetch(`${BACKEND_URL}/api/contact/pilot-apply`, {
+      const res = await fetch(`${BACKEND_BASE}/api/contact/pilot-apply`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(form),
@@ -67,7 +66,7 @@ export default function PilotApplication() {
               </Link>
               <Link
                 to="/signup"
-                className="px-5 py-2.5 bg-apptivia-coral text-white rounded-lg hover:bg-apptivia-coral font-medium text-sm transition-colors"
+                className="px-5 py-2.5 bg-apptivia-coral text-white rounded-lg hover:bg-apptivia-coral/90 font-medium text-sm transition-colors"
               >
                 Start Free Trial
               </Link>
@@ -247,7 +246,7 @@ export default function PilotApplication() {
                   <button
                     type="submit"
                     disabled={status === 'sending'}
-                    className="w-full py-3.5 bg-apptivia-coral text-white rounded-lg hover:bg-apptivia-coral font-semibold text-sm transition-colors disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                    className="w-full py-3.5 bg-apptivia-coral text-white rounded-lg hover:bg-apptivia-coral/90 font-semibold text-sm transition-colors disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                   >
                     {status === 'sending' ? 'Submitting...' : (
                       <>Apply for Founding Pilot <ArrowRight size={16} /></>

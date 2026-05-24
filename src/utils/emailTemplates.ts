@@ -4,6 +4,7 @@
  * Centralized HTML email builders for all Apptivia email types.
  * Uses consistent Apptivia branding: coral header, stat boxes, footer.
  */
+import { prettifyKpiKey } from '../constants/kpiGuidance';
 
 // ── Brand Colors ─────────────────────────────────────────────────────
 export const EMAIL_COLORS = {
@@ -277,7 +278,7 @@ export function buildScorecardSnapshotEmailHtml(data: ScorecardData, options: Sc
     {
       headerMeta,
       notesHtml: options.notes ? options.notes.replace(/\n/g, '<br/>') : undefined,
-      ctaUrl: typeof window !== 'undefined' ? `${window.location.origin}/dashboard` : undefined,
+      ctaUrl: typeof window !== 'undefined' ? `${window.location.origin}/dashboard` : 'https://apptivia.app/dashboard',
       ctaLabel: 'View Dashboard',
       footerLabel: 'Apptivia Platform - Team Performance Tracking',
     },
@@ -352,9 +353,6 @@ function emailScoreColor(score: number): string {
   return EMAIL_COLORS.error;
 }
 
-function prettifyKpiKey(k: string): string {
-  return k.replace(/_/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase());
-}
 
 export function buildFullScorecardEmailHtml(data: FullScorecardEmailData, options: ScorecardEmailOptions = {}): string {
   const { teamAverage, totalMembers, scoreDistribution, rows, scorecardKpiKeys, kpiLabels } = data;
@@ -446,7 +444,7 @@ export function buildFullScorecardEmailHtml(data: FullScorecardEmailData, option
     {
       headerMeta,
       notesHtml: options.notes ? options.notes.replace(/\n/g, '<br/>') : undefined,
-      ctaUrl: typeof window !== 'undefined' ? `${window.location.origin}/dashboard` : undefined,
+      ctaUrl: typeof window !== 'undefined' ? `${window.location.origin}/dashboard` : 'https://apptivia.app/dashboard',
       ctaLabel: 'View Dashboard',
       footerLabel: 'Apptivia Platform - Team Performance Tracking',
     },
@@ -504,7 +502,7 @@ export function buildAchievementSnapshotEmailHtml(data: AchievementData): string
     { value: points?.toLocaleString() || '0', label: 'Total Points' },
   ], 2);
 
-  const baseUrl = typeof window !== 'undefined' ? window.location.origin : '';
+  const baseUrl = typeof window !== 'undefined' ? window.location.origin : 'https://apptivia.app';
   return buildEmailWrapper(
     '🎉 Achievement Snapshot',
     name,
@@ -519,7 +517,7 @@ export function buildAchievementSnapshotEmailHtml(data: AchievementData): string
 
 export function buildAchievementSnapshotEmailText(data: AchievementData): string {
   const { name, userId, totalBadges, totalAchievements, avgSkillsetProgress, points } = data;
-  const baseUrl = typeof window !== 'undefined' ? window.location.origin : '';
+  const baseUrl = typeof window !== 'undefined' ? window.location.origin : 'https://apptivia.app';
   return `${name}'s Achievement Snapshot - Apptivia Platform
 
 🏆 Badges Earned: ${totalBadges}
@@ -674,7 +672,7 @@ export function buildCoachingPlanEmailHtml(plan: CoachingPlan, options: Coaching
 
   // Focus KPIs — indigo left border card with badge pills
   if (plan.focus_kpis && plan.focus_kpis.length > 0) {
-    const kpiLabels = plan.focus_kpis.map(k => k.replace(/_/g, ' ').replace(/([a-zA-Z])(\d)/g, '$1 $2').replace(/\b\w/g, c => c.toUpperCase()));
+    const kpiLabels = plan.focus_kpis.map(prettifyKpiKey);
     bodyHtml += `<div style="margin: 20px 0; padding: 16px; background: #FFF5F2; border-left: 4px solid #FF4D2E; border-radius: 8px;">
       <h3 style="margin: 0 0 12px 0; font-size: 16px; color: #0A0A0B;">&#128202; Focus KPIs</h3>
       <div>${buildBadgePills(kpiLabels, '#FFE2DA', '#C8341B')}</div>
@@ -695,7 +693,7 @@ export function buildCoachingPlanEmailHtml(plan: CoachingPlan, options: Coaching
     </div>`;
   }
 
-  // Success Metrics — purple left border card
+  // Success Metrics — ink left border card
   if (plan.success_metrics && plan.success_metrics.length > 0) {
     const metricItems = plan.success_metrics.map(s =>
       `<div style="padding: 8px 0; font-size: 14px; color: #3F3F46;">&#8226; ${s}</div>`
@@ -766,7 +764,7 @@ export function buildCoachingPlanEmailHtml(plan: CoachingPlan, options: Coaching
   // Additional notes from share dialog
   const notesHtml = additionalNotes ? additionalNotes.replace(/\n/g, '<br/>') : undefined;
 
-  const baseUrl = typeof window !== 'undefined' ? window.location.origin : '';
+  const baseUrl = typeof window !== 'undefined' ? window.location.origin : 'https://apptivia.app';
   return buildEmailWrapper(
     '&#128203; Coaching Plan',
     plan.name,
@@ -796,7 +794,7 @@ export function buildCoachingPlanEmailText(plan: CoachingPlan, options: Coaching
     text += `--- Goals ---\n${plan.goals.map((g, i) => `  ${i + 1}. ${g}`).join('\n')}\n\n`;
   }
   if (plan.focus_kpis && plan.focus_kpis.length > 0) {
-    text += `--- Focus KPIs ---\n${plan.focus_kpis.map(k => `  - ${k.replace(/_/g, ' ').replace(/([a-zA-Z])(\d)/g, '$1 $2').replace(/\b\w/g, c => c.toUpperCase())}`).join('\n')}\n\n`;
+    text += `--- Focus KPIs ---\n${plan.focus_kpis.map(k => `  - ${prettifyKpiKey(k)}`).join('\n')}\n\n`;
   }
   if (plan.action_items && plan.action_items.length > 0) {
     text += `--- Action Items ---\n${plan.action_items.map((a, i) => `  ${i + 1}. ${a}`).join('\n')}\n\n`;

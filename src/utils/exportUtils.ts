@@ -1,4 +1,5 @@
 // Utility functions for exporting data to CSV format
+import { prettifyKpiKey } from '../constants/kpiGuidance';
 
 interface ExportData {
   headers: string[];
@@ -61,11 +62,10 @@ export function exportToCSV(data: ExportData) {
 
 export function exportScorecardToCSV(data: any, filters: any, kpiUnits: KpiUnitMap = {}) {
   const kpiKeys: string[] = data.scorecardKpiKeys || [];
-  const prettify = (key: string) => key.replace(/_/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase());
 
   const headers = [
     'Rep Name',
-    ...kpiKeys.flatMap((k: string) => [prettify(k), prettify(k) + ' %']),
+    ...kpiKeys.flatMap((k: string) => [prettifyKpiKey(k), prettifyKpiKey(k) + ' %']),
     'Apptivity Score'
   ];
 
@@ -204,14 +204,13 @@ export function exportBadgesToCSV(badges: any[], profile?: any) {
 export function exportAnalyticsToCSV(data: any, aggregateKPIs: any, filters: any, kpiUnits: KpiUnitMap = {}) {
   // Build KPI columns from scorecard keys
   const kpiKeys: string[] = data.scorecardKpiKeys || [];
-  const prettify = (key: string) => key.replace(/_/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase());
 
   const headers = [
     'Rank',
     'Rep Name',
     'Team',
     'Apptivity Score',
-    ...kpiKeys.flatMap((k: string) => [prettify(k) + ' (Value)', prettify(k) + ' (% Goal)']),
+    ...kpiKeys.flatMap((k: string) => [prettifyKpiKey(k) + ' (Value)', prettifyKpiKey(k) + ' (% Goal)']),
   ];
 
   const rows = data.rows.map((row: any, index: number) => [

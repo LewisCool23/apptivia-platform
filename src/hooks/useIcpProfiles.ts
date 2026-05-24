@@ -42,7 +42,8 @@ export function useIcpProfiles(organizationId: string | null) {
     } finally {
       setLoading(false);
     }
-  }, [organizationId, activeProfileId]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [organizationId]);
 
   useEffect(() => { fetchProfiles(); }, [fetchProfiles]);
 

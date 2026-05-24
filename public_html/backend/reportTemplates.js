@@ -179,14 +179,14 @@ function computeNextScheduledAt(report) {
     next.setMonth(now.getMonth() + 1);
     next.setDate(1);
   }
-  // Apply the report's scheduled time (HH:MM) if set
+  // Apply the report's scheduled time (HH:MM) in UTC to avoid timezone drift
   if (report.time) {
     const [hours, minutes] = report.time.split(':').map(Number);
     if (!isNaN(hours) && !isNaN(minutes)) {
-      next.setHours(hours, minutes, 0, 0);
+      next.setUTCHours(hours, minutes, 0, 0);
     }
   } else {
-    next.setHours(9, 0, 0, 0); // Default to 9:00 AM
+    next.setUTCHours(9, 0, 0, 0); // Default to 9:00 AM UTC
   }
   return next.toISOString();
 }
@@ -707,7 +707,7 @@ async function generateContestsReport(sb, orgId, opts) {
   const since7d = new Date(Date.now() - 7 * 86400000).toISOString();
 
   const { data: contests } = await sb
-    .from('contests')
+    .from('active_contests')
     .select('id, name, kpi_key, status, start_date, end_date')
     .eq('organization_id', orgId)
     .in('status', ['active', 'completed', 'upcoming'])

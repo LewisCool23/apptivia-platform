@@ -92,7 +92,7 @@ export default function CreateReviewModal({ isOpen, onClose, repId, repName, tea
             <h2 className="text-lg font-bold text-apptivia-ink">Start Performance Review</h2>
             {repName && <p className="text-sm text-apptivia-carbon-500">Creating review for {repName}</p>}
           </div>
-          <button onClick={onClose} className="p-2 text-apptivia-carbon-400 hover:text-apptivia-carbon-600 hover:bg-apptivia-carbon-100 rounded-lg">
+          <button onClick={onClose} aria-label="Close" className="p-2 text-apptivia-carbon-400 hover:text-apptivia-carbon-600 hover:bg-apptivia-carbon-100 rounded-lg">
             <X size={18} />
           </button>
         </div>

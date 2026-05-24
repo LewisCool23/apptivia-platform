@@ -365,7 +365,7 @@ export default function IdpTab({ teamMembers }) {
               <LayoutTemplate size={14} /> Templates
             </button>
             <button onClick={() => { setEditingIdp(null); setForm(emptyForm()); setShowBuilder(true); }}
-              className="flex items-center gap-1.5 px-3 py-2 text-sm font-semibold text-white bg-apptivia-coral rounded-lg hover:bg-apptivia-coral">
+              className="flex items-center gap-1.5 px-3 py-2 text-sm font-semibold text-white bg-apptivia-coral rounded-lg hover:bg-apptivia-coral/90">
               <Plus size={14} /> Create IDP
             </button>
           </div>

@@ -80,7 +80,7 @@ export default function PageActionBar({
         <div className="relative group">
           <button
             onClick={() => setActionsOpen(!actionsOpen)}
-            className={`relative p-2 rounded-lg font-semibold text-sm bg-apptivia-coral text-white hover:bg-apptivia-coral transition-all duration-200 hover:scale-105 hover:shadow-md ${
+            className={`relative p-2 rounded-lg font-semibold text-sm bg-apptivia-coral text-white hover:bg-apptivia-coral/90 transition-all duration-200 hover:scale-105 hover:shadow-md ${
               actions.length === 0 ? 'opacity-50 cursor-not-allowed' : ''
             }`}
             aria-label="Actions"

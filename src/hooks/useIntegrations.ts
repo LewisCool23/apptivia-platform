@@ -3,11 +3,8 @@
  */
 
 import { useState, useEffect, useCallback } from 'react';
-import { backendFetch } from '../utils/backendFetch';
+import { backendFetch, BACKEND_BASE } from '../utils/backendFetch';
 import { supabase } from '../supabaseClient';
-import { getEnv } from '../env';
-
-const BACKEND_BASE = getEnv(['VITE_BACKEND_URL', 'REACT_APP_BACKEND_URL'], '');
 
 export interface Integration {
   id: string;
@@ -108,7 +105,12 @@ export function useIntegrations({ personal = false }: UseIntegrationsOptions = {
 
     setConnecting(provider);
 
-    // Open OAuth flow in a popup window
+    // Open OAuth flow in a popup window.
+    // SECURITY NOTE: The auth token is passed as a query parameter because window.open()
+    // cannot set Authorization headers. This is acceptable for OAuth init redirects, but
+    // the backend MUST consume and discard this token immediately on receipt (do not log
+    // it, persist it, or pass it to third parties). The token is short-lived (Supabase JWT)
+    // and the URL is opened in a popup that redirects away immediately.
     const width = 600;
     const height = 700;
     const left = window.screenX + (window.outerWidth - width) / 2;
@@ -126,7 +128,7 @@ export function useIntegrations({ personal = false }: UseIntegrationsOptions = {
     // Listen for postMessage from the callback page
     const handleMessage = (event: MessageEvent) => {
       if (event.data?.type === 'oauth-success') {
-        window.removeEventListener('message', handleMessage);
+        cleanup();
         loadIntegrations().then(() => setConnecting(null));
       }
     };
@@ -135,11 +137,22 @@ export function useIntegrations({ personal = false }: UseIntegrationsOptions = {
     // Fallback: poll for popup close
     const interval = setInterval(() => {
       if (!popup || popup.closed) {
-        clearInterval(interval);
-        window.removeEventListener('message', handleMessage);
+        cleanup();
         loadIntegrations().then(() => setConnecting(null));
       }
     }, 1000);
+
+    // Safety timeout: clean up after 5 minutes if nothing happened
+    const timeout = setTimeout(() => {
+      cleanup();
+      setConnecting(null);
+    }, 5 * 60 * 1000);
+
+    function cleanup() {
+      clearInterval(interval);
+      clearTimeout(timeout);
+      window.removeEventListener('message', handleMessage);
+    }
   }, [loadIntegrations]);
 
   const connectCredentials = useCallback(async (provider: string, credentials: Record<string, string>) => {

@@ -260,7 +260,7 @@ Mike,Johnson,mike.johnson@company.com,power_user,Marketing Team,Marketing,Market
                 </p>
                 <button
                   onClick={() => fileInputRef.current?.click()}
-                  className="px-6 py-2 bg-apptivia-coral text-white rounded-lg hover:bg-apptivia-coral"
+                  className="px-6 py-2 bg-apptivia-coral text-white rounded-lg hover:bg-apptivia-coral/90"
                 >
                   Choose File
                 </button>
@@ -393,7 +393,7 @@ Mike,Johnson,mike.johnson@company.com,power_user,Marketing Team,Marketing,Market
           {step === 2 && (
             <button
               onClick={handleImport}
-              className="px-6 py-2 bg-apptivia-coral text-white rounded-lg hover:bg-apptivia-coral"
+              className="px-6 py-2 bg-apptivia-coral text-white rounded-lg hover:bg-apptivia-coral/90"
             >
               Import {parsedData.length} Users
             </button>
@@ -407,7 +407,7 @@ Mike,Johnson,mike.johnson@company.com,power_user,Marketing Team,Marketing,Market
                 setParsedData([]);
                 setImportResults(null);
               }}
-              className="px-6 py-2 bg-apptivia-coral text-white rounded-lg hover:bg-apptivia-coral"
+              className="px-6 py-2 bg-apptivia-coral text-white rounded-lg hover:bg-apptivia-coral/90"
             >
               Import More Users
             </button>

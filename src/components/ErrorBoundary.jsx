@@ -26,7 +26,7 @@ class ErrorBoundary extends React.Component {
             <p className="text-sm text-apptivia-carbon-500 mb-3">An unexpected error occurred while rendering this page.</p>
             <button
               onClick={() => window.location.reload()}
-              className="mb-3 px-4 py-2 bg-apptivia-coral text-white text-sm rounded-lg hover:bg-apptivia-coral"
+              className="mb-3 px-4 py-2 bg-apptivia-coral text-white text-sm rounded-lg hover:bg-apptivia-coral/90"
             >
               Reload Page
             </button>
@@ -83,7 +83,7 @@ export class PageErrorBoundary extends React.Component {
             <div className="flex items-center justify-center gap-3">
               <button
                 onClick={this.reset}
-                className="px-4 py-2 bg-apptivia-coral text-white text-sm font-medium rounded-lg hover:bg-apptivia-coral transition-colors"
+                className="px-4 py-2 bg-apptivia-coral text-white text-sm font-medium rounded-lg hover:bg-apptivia-coral/90 transition-colors"
               >
                 Try Again
               </button>

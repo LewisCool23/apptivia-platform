@@ -500,21 +500,21 @@ function ProspectBriefPanel({ prospect, brief: rawBrief, dataSources, tokensUsed
                 {prospect.email && (
                   <a
                     href={`mailto:${prospect.email}`}
-                    className="flex items-center gap-1.5 px-3 py-1.5 bg-apptivia-coral hover:bg-apptivia-coral text-white text-xs font-medium rounded-lg transition-colors shadow-sm"
+                    className="flex items-center gap-1.5 px-3 py-1.5 bg-apptivia-coral hover:bg-apptivia-coral/90 text-white text-xs font-medium rounded-lg transition-colors shadow-sm"
                   >
                     <Mail size={11} /> Email
                   </a>
                 )}
                 {onSaveContact && (
                   <button
-                    onClick={() => { console.log('Save Contact clicked', prospect?.email, prospect?.first_name); onSaveContact(prospect); }}
+                    onClick={() => { onSaveContact(prospect); }}
                     disabled={isSaved || savingContact}
                     className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg transition-colors shadow-sm ${
                       isSaved
                         ? 'bg-apptivia-carbon-100 text-apptivia-carbon-400 cursor-default'
                         : savingContact
                           ? 'bg-apptivia-ink text-white cursor-wait'
-                          : 'bg-apptivia-ink hover:bg-apptivia-ink text-white'
+                          : 'bg-apptivia-ink hover:bg-apptivia-ink/90 text-white'
                     }`}
                   >
                     {isSaved ? <><BookmarkCheck size={11} /> Saved</> : savingContact ? <><UserPlus size={11} /> Saving...</> : <><UserPlus size={11} /> Save Contact</>}

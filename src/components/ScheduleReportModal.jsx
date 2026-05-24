@@ -244,7 +244,7 @@ export default function ScheduleReportModal({ isOpen, onClose, onSuccess, editRe
             </button>
             <button
               type="submit"
-              className="px-4 py-2 bg-apptivia-coral text-white rounded-md hover:bg-apptivia-coral transition-colors disabled:opacity-50"
+              className="px-4 py-2 bg-apptivia-coral text-white rounded-md hover:bg-apptivia-coral/90 transition-colors disabled:opacity-50"
               disabled={saving}
             >
               {saving

@@ -55,7 +55,7 @@ const LEVEL_COLORS = {
 
 const RARITY_COLORS = {
   legendary: { border: '#FFD700', glow: 'shadow-yellow-400/40', label: 'text-yellow-300' },
-  epic:      { border: '#9333ea', glow: 'shadow-purple-400/40', label: 'text-apptivia-ink' },
+  epic:      { border: '#FF4D2E', glow: 'shadow-apptivia-coral/40', label: 'text-apptivia-ink' },
   rare:      { border: '#FF4D2E', glow: 'shadow-apptivia-coral', label: 'text-apptivia-coral-tone-300' },
   common:    { border: '#71717A', glow: '',                      label: 'text-apptivia-carbon-400' },
 };

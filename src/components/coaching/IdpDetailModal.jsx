@@ -76,7 +76,7 @@ export default function IdpDetailModal({ idp, onClose, onStatusChange, onMilesto
           {canManage && (
             <div className="flex flex-wrap gap-2">
               {idp.status === 'draft' && (
-                <button onClick={() => onStatusChange('active')} className="px-3 py-1.5 text-xs font-semibold text-white bg-apptivia-coral rounded-md hover:bg-apptivia-coral">Activate Plan</button>
+                <button onClick={() => onStatusChange('active')} className="px-3 py-1.5 text-xs font-semibold text-white bg-apptivia-coral rounded-md hover:bg-apptivia-coral/90">Activate Plan</button>
               )}
               {idp.status === 'active' && (
                 <>

@@ -965,7 +965,7 @@ const AaronChatbot = ({ isOpen, onClose, initialPrompt, targetRepName, pageConte
     socket.on('disconnect', onDisconnect);
     socket.on('aaron_message', onAaronMessage);
     socket.on('aaron_typing', onAaronTyping);
-    socket.on('permission_denied', onPermissionDenied);
+    // Note: permission_denied event removed — backend does not emit this event
     socket.io.on('reconnect_attempt', onReconnectAttempt);
     socket.io.on('reconnect_failed', onReconnectFailed);
 
@@ -978,7 +978,7 @@ const AaronChatbot = ({ isOpen, onClose, initialPrompt, targetRepName, pageConte
       socket.off('disconnect', onDisconnect);
       socket.off('aaron_message', onAaronMessage);
       socket.off('aaron_typing', onAaronTyping);
-      socket.off('permission_denied', onPermissionDenied);
+      // permission_denied listener removed — backend does not emit this event
       socket.io.off('reconnect_attempt', onReconnectAttempt);
       socket.io.off('reconnect_failed', onReconnectFailed);
     };
@@ -1460,7 +1460,7 @@ const AaronChatbot = ({ isOpen, onClose, initialPrompt, targetRepName, pageConte
                                 <button
                                   onClick={() => handleLogAction(msg.text, msg.frameworks)}
                                   disabled={actionSaving}
-                                  className="px-2 py-1 bg-apptivia-coral text-white rounded text-xs font-medium hover:bg-apptivia-coral disabled:opacity-50"
+                                  className="px-2 py-1 bg-apptivia-coral text-white rounded text-xs font-medium hover:bg-apptivia-coral/90 disabled:opacity-50"
                                 >
                                   {actionSaving ? 'Saving...' : 'Log it'}
                                 </button>
@@ -1632,7 +1632,7 @@ const AaronChatbot = ({ isOpen, onClose, initialPrompt, targetRepName, pageConte
                   <button
                     type="submit"
                     disabled={!inputValue.trim() || connectionStatus === 'reconnecting' || connectionStatus === 'failed'}
-                    className="bg-apptivia-coral text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-apptivia-coral transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                    className="bg-apptivia-coral text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-apptivia-coral/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
                   >
                     <Send size={16} />
                   </button>

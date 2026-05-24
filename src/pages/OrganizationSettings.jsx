@@ -19,6 +19,7 @@ import { useTitles } from '../hooks/useTitles';
 import ConfirmModal from '../components/ConfirmModal';
 import { ROLES } from '../constants/roles';
 import { INDUSTRY_OPTIONS } from '../components/onboarding/onboardingConstants';
+import { prettifyKpiKey } from '../constants/kpiGuidance';
 
 function SignalTagField({ label, hint, items, value, onChange, onAdd, onRemove, placeholder, tagClass }) {
   return (
@@ -142,11 +143,11 @@ function SubscriptionTab({ organization, members, teams, setMessage }) {
         </div>
         <div className="flex gap-3">
           {hasStripe ? (
-            <button onClick={handlePortal} disabled={actionLoading} className="px-6 py-2 bg-apptivia-coral text-white rounded-lg hover:bg-apptivia-coral disabled:opacity-50">
+            <button onClick={handlePortal} disabled={actionLoading} className="px-6 py-2 bg-apptivia-coral text-white rounded-lg hover:bg-apptivia-coral/90 disabled:opacity-50">
               {actionLoading ? 'Loading...' : 'Manage Billing'}
             </button>
           ) : (
-            <button onClick={() => handleCheckout(currentTier)} disabled={actionLoading} className="px-6 py-2 bg-apptivia-coral text-white rounded-lg hover:bg-apptivia-coral disabled:opacity-50">
+            <button onClick={() => handleCheckout(currentTier)} disabled={actionLoading} className="px-6 py-2 bg-apptivia-coral text-white rounded-lg hover:bg-apptivia-coral/90 disabled:opacity-50">
               {actionLoading ? 'Loading...' : 'Set Up Billing'}
             </button>
           )}
@@ -177,7 +178,7 @@ function SubscriptionTab({ organization, members, teams, setMessage }) {
                   {(features[tier] || []).map((f, i) => <li key={i} className="flex items-start gap-1.5"><Check size={14} className="text-green-500 mt-0.5 flex-shrink-0" />{f}</li>)}
                 </ul>
                 {!isCurrent && isUpgrade && tier !== 'Enterprise' && (
-                  <button onClick={() => handleCheckout(tier)} disabled={actionLoading} className="w-full py-2 bg-apptivia-coral text-white rounded-lg hover:bg-apptivia-coral text-sm disabled:opacity-50">
+                  <button onClick={() => handleCheckout(tier)} disabled={actionLoading} className="w-full py-2 bg-apptivia-coral text-white rounded-lg hover:bg-apptivia-coral/90 text-sm disabled:opacity-50">
                     {actionLoading ? 'Loading...' : `Upgrade to ${TIER_DISPLAY[tier]}`}
                   </button>
                 )}
@@ -532,7 +533,7 @@ export default function OrganizationSettings() {
       const breakdown = Object.entries(byArea)
         .map(([area, stats]) => ({
           area,
-          label: areaLabels[area] || area.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()),
+          label: areaLabels[area] || prettifyKpiKey(area),
           total: stats.total,
           helpful: stats.helpful,
           pct: Math.round((stats.helpful / stats.total) * 100),
@@ -941,11 +942,14 @@ export default function OrganizationSettings() {
     const results = [];
     try {
       const searchTerm = query.trim().toLowerCase();
-      const { data: profiles } = await supabase
+      const orgId = profile?.organization_id;
+      let profileQuery = supabase
         .from('profiles')
         .select('id, first_name, last_name, email, role')
         .or(`first_name.ilike.%${searchTerm}%,last_name.ilike.%${searchTerm}%,email.ilike.%${searchTerm}%`)
         .limit(5);
+      if (orgId) profileQuery = profileQuery.eq('organization_id', orgId);
+      const { data: profiles } = await profileQuery;
       if (profiles) {
         profiles.forEach((profile) => {
           results.push({
@@ -1379,7 +1383,7 @@ export default function OrganizationSettings() {
                       className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm transition-colors ${
                         showAddSignalForm
                           ? 'bg-apptivia-carbon-200 text-apptivia-carbon-700 hover:bg-apptivia-carbon-300'
-                          : 'bg-apptivia-coral text-white hover:bg-apptivia-coral'
+                          : 'bg-apptivia-coral text-white hover:bg-apptivia-coral/90'
                       }`}
                     >
                       <Plus size={14} />
@@ -1603,7 +1607,7 @@ export default function OrganizationSettings() {
                             type="button"
                             onClick={addCustomSignal}
                             disabled={savingSignal || !newCustomSignal.signal_name.trim() || !newCustomSignal.signal_key.trim()}
-                            className="px-4 py-1.5 bg-apptivia-coral text-white rounded-lg text-sm hover:bg-apptivia-coral disabled:opacity-50"
+                            className="px-4 py-1.5 bg-apptivia-coral text-white rounded-lg text-sm hover:bg-apptivia-coral/90 disabled:opacity-50"
                           >
                             {savingSignal ? 'Saving...' : 'Add Signal'}
                           </button>
@@ -1615,7 +1619,7 @@ export default function OrganizationSettings() {
                     {(() => {
                       const customs = signalLibrary.orgConfigs.filter(c => !c.signal_definition_id);
                       const catLabels = { buyer_intent: 'Buyer Intent', interest: 'Interest', company_event: 'Company / Trigger Events', universal: 'Universal' };
-                      const catColors = { buyer_intent: 'purple', interest: 'cyan', company_event: 'amber', universal: 'gray' };
+                      const catColors = { buyer_intent: 'ink', interest: 'cyan', company_event: 'amber', universal: 'gray' };
                       return (
                         <div className="rounded-lg border border-apptivia-carbon-300 overflow-hidden">
                           <button
@@ -1635,8 +1639,8 @@ export default function OrganizationSettings() {
                               ) : (
                                 <div className="space-y-1.5">
                                   {customs.map(cfg => {
-                                    const colorMap = { purple: 'bg-apptivia-carbon-100 border-apptivia-carbon-300', cyan: 'bg-cyan-50 border-cyan-100', amber: 'bg-amber-50 border-amber-100', gray: 'bg-apptivia-paper border-apptivia-carbon-200' };
-                                    const badgeMap = { purple: 'bg-apptivia-carbon-100 text-apptivia-ink', cyan: 'bg-cyan-100 text-cyan-700', amber: 'bg-amber-100 text-amber-700', gray: 'bg-apptivia-carbon-100 text-apptivia-carbon-600' };
+                                    const colorMap = { ink: 'bg-apptivia-carbon-100 border-apptivia-carbon-300', cyan: 'bg-cyan-50 border-cyan-100', amber: 'bg-amber-50 border-amber-100', gray: 'bg-apptivia-paper border-apptivia-carbon-200' };
+                                    const badgeMap = { ink: 'bg-apptivia-carbon-100 text-apptivia-ink', cyan: 'bg-cyan-100 text-cyan-700', amber: 'bg-amber-100 text-amber-700', gray: 'bg-apptivia-carbon-100 text-apptivia-carbon-600' };
                                     const col = catColors[cfg.category] || 'gray';
                                     return (
                                       <div key={cfg.id} className={`flex items-center justify-between px-3 py-2 rounded-lg border ${colorMap[col]}`}>
@@ -1981,7 +1985,7 @@ export default function OrganizationSettings() {
                     <button
                       type="button"
                       onClick={() => setShowOnboarding(true)}
-                      className="px-4 py-2 bg-apptivia-coral text-white rounded-lg text-sm hover:bg-apptivia-coral"
+                      className="px-4 py-2 bg-apptivia-coral text-white rounded-lg text-sm hover:bg-apptivia-coral/90"
                     >
                       Resume Onboarding
                     </button>
@@ -2000,7 +2004,7 @@ export default function OrganizationSettings() {
             <div className="bg-white rounded-lg shadow-sm p-6">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-lg font-semibold">Teams</h3>
-                <button onClick={teamHook.openAddTeamModal} className="px-4 py-2 bg-apptivia-coral text-white rounded-lg text-sm hover:bg-apptivia-coral">
+                <button onClick={teamHook.openAddTeamModal} className="px-4 py-2 bg-apptivia-coral text-white rounded-lg text-sm hover:bg-apptivia-coral/90">
                   + Add Team
                 </button>
               </div>
@@ -2043,7 +2047,7 @@ export default function OrganizationSettings() {
                     <UserPlus size={14} />
                     Add Existing Users
                   </button>
-                  <button onClick={() => setShowInviteModal(true)} className="px-4 py-2 bg-apptivia-coral text-white rounded-lg text-sm hover:bg-apptivia-coral">
+                  <button onClick={() => setShowInviteModal(true)} className="px-4 py-2 bg-apptivia-coral text-white rounded-lg text-sm hover:bg-apptivia-coral/90">
                     + Invite Members
                   </button>
                 </div>
@@ -2148,7 +2152,7 @@ export default function OrganizationSettings() {
               {isManagerOrAbove && (
                 <button
                   onClick={() => { setEditingReport(null); setShowScheduleModal(true); }}
-                  className="px-4 py-2 bg-apptivia-coral text-white rounded-lg text-sm hover:bg-apptivia-coral flex items-center gap-2"
+                  className="px-4 py-2 bg-apptivia-coral text-white rounded-lg text-sm hover:bg-apptivia-coral/90 flex items-center gap-2"
                 >
                   <Plus size={14} />
                   New Report Schedule
@@ -2306,7 +2310,7 @@ export default function OrganizationSettings() {
                           }
                         }}
                         disabled={applyingTemplate === template.id}
-                        className="px-3 py-1.5 bg-apptivia-coral text-white text-sm rounded-lg hover:bg-apptivia-coral disabled:opacity-50"
+                        className="px-3 py-1.5 bg-apptivia-coral text-white text-sm rounded-lg hover:bg-apptivia-coral/90 disabled:opacity-50"
                       >
                         {applyingTemplate === template.id ? 'Applying...' : 'Apply to Scorecard'}
                       </button>
@@ -2315,7 +2319,7 @@ export default function OrganizationSettings() {
                     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2">
                       {(template.kpi_configs || []).map((cfg, i) => (
                         <div key={i} className="bg-apptivia-paper rounded px-3 py-2 text-center">
-                          <div className="text-xs font-medium text-apptivia-carbon-700 truncate">{cfg.kpi_key.replace(/_/g, ' ')}</div>
+                          <div className="text-xs font-medium text-apptivia-carbon-700 truncate">{prettifyKpiKey(cfg.kpi_key)}</div>
                           <div className="text-sm font-semibold text-apptivia-ink mt-0.5">{cfg.goal}</div>
                           <div className="text-[10px] text-apptivia-carbon-500">Weight: {Math.round(cfg.weight * 100)}%</div>
                         </div>
@@ -2338,7 +2342,7 @@ export default function OrganizationSettings() {
               </div>
               <button
                 onClick={() => setShowKpiImport(true)}
-                className="flex items-center gap-2 px-4 py-2 bg-apptivia-coral text-white rounded-lg text-sm font-medium hover:bg-apptivia-coral transition-colors"
+                className="flex items-center gap-2 px-4 py-2 bg-apptivia-coral text-white rounded-lg text-sm font-medium hover:bg-apptivia-coral/90 transition-colors"
               >
                 <Upload size={16} />
                 Import CSV
@@ -2506,7 +2510,7 @@ export default function OrganizationSettings() {
               <button
                 onClick={handleInviteMembers}
                 disabled={!inviteEmails.trim() || inviteSending}
-                className="px-4 py-2 bg-apptivia-coral text-white rounded-lg text-sm hover:bg-apptivia-coral disabled:opacity-50"
+                className="px-4 py-2 bg-apptivia-coral text-white rounded-lg text-sm hover:bg-apptivia-coral/90 disabled:opacity-50"
               >
                 {inviteSending ? 'Sending...' : 'Send Invitations'}
               </button>
@@ -2569,7 +2573,7 @@ export default function OrganizationSettings() {
               <button
                 onClick={handleAddTeam}
                 disabled={!teamHook.newTeamName.trim() || teamHook.addingTeam}
-                className="px-4 py-2 bg-apptivia-coral text-white rounded-lg text-sm hover:bg-apptivia-coral disabled:opacity-50"
+                className="px-4 py-2 bg-apptivia-coral text-white rounded-lg text-sm hover:bg-apptivia-coral/90 disabled:opacity-50"
               >
                 {teamHook.addingTeam ? 'Creating...' : 'Create Team'}
               </button>
@@ -2657,7 +2661,7 @@ export default function OrganizationSettings() {
               <button
                 onClick={handleSaveMember}
                 disabled={savingMember}
-                className="px-4 py-2 bg-apptivia-coral text-white rounded-lg text-sm hover:bg-apptivia-coral disabled:opacity-50"
+                className="px-4 py-2 bg-apptivia-coral text-white rounded-lg text-sm hover:bg-apptivia-coral/90 disabled:opacity-50"
               >
                 {savingMember ? 'Saving...' : 'Save Changes'}
               </button>
@@ -2809,7 +2813,7 @@ export default function OrganizationSettings() {
                 <button
                   onClick={assignSelectedUsers}
                   disabled={selectedUserIds.length === 0 || assigningUsers}
-                  className="px-4 py-2 bg-apptivia-coral text-white rounded-md text-sm hover:bg-apptivia-coral disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                  className="px-4 py-2 bg-apptivia-coral text-white rounded-md text-sm hover:bg-apptivia-coral/90 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
                 >
                   <UserPlus size={14} />
                   {assigningUsers ? 'Adding...' : `Add ${selectedUserIds.length || ''} User${selectedUserIds.length !== 1 ? 's' : ''}`}

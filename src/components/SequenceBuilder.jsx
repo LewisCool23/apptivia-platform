@@ -24,7 +24,7 @@ function SequenceList({ sequences, onSelect, onNew, loading }) {
         <h2 className="text-base font-semibold text-apptivia-ink">Sequences</h2>
         <button
           onClick={onNew}
-          className="flex items-center gap-1.5 px-3 py-1.5 bg-apptivia-coral text-white text-xs font-medium rounded-lg hover:bg-apptivia-coral transition-colors"
+          className="flex items-center gap-1.5 px-3 py-1.5 bg-apptivia-coral text-white text-xs font-medium rounded-lg hover:bg-apptivia-coral/90 transition-colors"
         >
           <Plus size={14} />
           New Sequence
@@ -297,7 +297,7 @@ function SequenceDetail({ sequenceId, onBack, organizationId }) {
           {editing ? (
             <>
               <button onClick={() => { setEditing(false); load(); }} className="text-xs text-apptivia-carbon-500 hover:text-apptivia-carbon-700 px-2 py-1">Cancel</button>
-              <button onClick={handleSave} disabled={saving} className="flex items-center gap-1 px-3 py-1.5 bg-apptivia-coral text-white text-xs rounded-lg hover:bg-apptivia-coral disabled:opacity-50">
+              <button onClick={handleSave} disabled={saving} className="flex items-center gap-1 px-3 py-1.5 bg-apptivia-coral text-white text-xs rounded-lg hover:bg-apptivia-coral/90 disabled:opacity-50">
                 <Save size={12} />{saving ? 'Saving...' : 'Save'}
               </button>
             </>
@@ -371,7 +371,7 @@ function SequenceDetail({ sequenceId, onBack, organizationId }) {
             <button
               onClick={handleEnroll}
               disabled={enrolling || !enrollEmail}
-              className="flex items-center gap-1 px-3 py-1.5 bg-apptivia-coral text-white text-xs rounded-lg hover:bg-apptivia-coral disabled:opacity-50"
+              className="flex items-center gap-1 px-3 py-1.5 bg-apptivia-coral text-white text-xs rounded-lg hover:bg-apptivia-coral/90 disabled:opacity-50"
             >
               <ArrowRight size={12} />{enrolling ? 'Enrolling...' : 'Enroll'}
             </button>
@@ -449,7 +449,7 @@ export default function SequenceBuilder({ organizationId, userId }) {
             onKeyDown={(e) => e.key === 'Enter' && handleCreate()}
             className="flex-1 text-sm border border-apptivia-carbon-200 rounded-lg px-3 py-2 focus:ring-1 focus:ring-apptivia-coral-tone-300"
           />
-          <button onClick={handleCreate} className="px-3 py-2 bg-apptivia-coral text-white text-xs rounded-lg hover:bg-apptivia-coral">Create</button>
+          <button onClick={handleCreate} className="px-3 py-2 bg-apptivia-coral text-white text-xs rounded-lg hover:bg-apptivia-coral/90">Create</button>
           <button onClick={() => setCreating(false)} className="text-apptivia-carbon-400 hover:text-apptivia-carbon-600"><X size={16} /></button>
         </div>
       ) : null}

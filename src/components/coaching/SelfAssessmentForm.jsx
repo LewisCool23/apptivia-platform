@@ -102,7 +102,7 @@ export default function SelfAssessmentForm({ review, onSubmit, saving }) {
 
       <div className="flex justify-end">
         <button onClick={handleSubmit} disabled={saving || !selfAssessment.trim()}
-          className="px-4 py-2 text-sm font-semibold text-white bg-apptivia-coral rounded-md hover:bg-apptivia-coral disabled:opacity-50">
+          className="px-4 py-2 text-sm font-semibold text-white bg-apptivia-coral rounded-md hover:bg-apptivia-coral/90 disabled:opacity-50">
           {saving ? 'Submitting...' : 'Submit Self-Assessment'}
         </button>
       </div>

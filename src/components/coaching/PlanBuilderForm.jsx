@@ -355,7 +355,7 @@ export default function PlanBuilderForm({
           <button
             onClick={handleSavePlan}
             disabled={savingPlan || inputDisabled}
-            className="px-4 py-2 text-sm font-semibold bg-apptivia-coral text-white rounded-md hover:bg-apptivia-coral disabled:opacity-60"
+            className="px-4 py-2 text-sm font-semibold bg-apptivia-coral text-white rounded-md hover:bg-apptivia-coral/90 disabled:opacity-60"
           >
             {savingPlan ? 'Saving...' : (editingPlan ? (isPlaybook ? 'Update Playbook' : 'Update Plan') : (isPlaybook ? 'Save Playbook' : 'Save Plan'))}
           </button>

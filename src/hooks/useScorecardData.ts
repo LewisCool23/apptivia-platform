@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../supabaseClient';
 import { getMonday } from '../utils/dateUtils';
-import { calcPct } from '../utils/kpiCalc';
+import { calcPct, computeWeightedScore } from '../utils/kpiCalc';
 import { LEADERSHIP_ROLE_FILTER } from '../constants/roles';
 
 interface KPIMetric {
@@ -306,17 +306,10 @@ export function useScorecardData(
           sums[pid][key] = (sums[pid][key] || 0) + (v.value || 0);
         });
 
-        // Normalise by the sum of HISTORICAL scorecard KPI weights so apptivityScore
-        // is a true weighted-average percentage against the goals/weights that were
-        // in effect at the start of this period.
-        const scorecardTotalWeight = metrics
-          .filter((m: any) => m.show_on_scorecard)
-          .reduce((sum: number, m: any) => sum + histWeight(m), 0);
-
         // Build scorecard rows
         const rows: ScorecardRow[] = profiles.map((profile: any) => {
           const kpis: { [key: string]: { value: number; percentage: number } } = {};
-          let totalScore = 0;
+          const scorecardItems: Array<{ percentage: number; weight: number }> = [];
           // M13 fix: distinguish "no data" from "scored zero"
           const hasData = !!sums[profile.id];
 
@@ -334,7 +327,7 @@ export function useScorecardData(
             kpis[metric.key] = { value, percentage };
             // Only scorecard metrics contribute to the Apptivia Score
             if (metric.show_on_scorecard) {
-              totalScore += percentage * histWeight(metric);
+              scorecardItems.push({ percentage, weight: histWeight(metric) });
             }
           });
 
@@ -346,7 +339,7 @@ export function useScorecardData(
             department: profile.department || '',
             email: profile.email || null,
             kpis,
-            apptivityScore: Math.round(scorecardTotalWeight > 0 ? totalScore / scorecardTotalWeight : 0),
+            apptivityScore: computeWeightedScore(scorecardItems),
             hasData,
           };
         });
@@ -427,24 +420,24 @@ export function useScorecardData(
 
         const trendData: TrendData[] = rows.map((row) => {
           // Compute single-week current score
-          let currentWeekScore = 0;
+          const currentItems: Array<{ percentage: number; weight: number }> = [];
           scorecardMetrics.forEach((metric: any) => {
             const val  = currentSums[row.profile_id]?.[metric.key] || 0;
             const goal = histGoal(metric);
             const pct  = calcPct(val, goal, histDirection(metric));
-            currentWeekScore += pct * histWeight(metric);
+            currentItems.push({ percentage: pct, weight: histWeight(metric) });
           });
-          currentWeekScore = Math.round(scorecardTotalWeight > 0 ? currentWeekScore / scorecardTotalWeight : 0);
+          const currentWeekScore = computeWeightedScore(currentItems);
 
           // Compute single-week prior score
-          let priorScore = 0;
+          const priorItems: Array<{ percentage: number; weight: number }> = [];
           scorecardMetrics.forEach((metric: any) => {
             const val  = priorSums[row.profile_id]?.[metric.key] || 0;
             const goal = histGoal(metric);
             const pct  = calcPct(val, goal, histDirection(metric));
-            priorScore += pct * histWeight(metric);
+            priorItems.push({ percentage: pct, weight: histWeight(metric) });
           });
-          priorScore = Math.round(scorecardTotalWeight > 0 ? priorScore / scorecardTotalWeight : 0);
+          const priorScore = computeWeightedScore(priorItems);
 
           const delta     = currentWeekScore - priorScore;
           const direction = delta >  2 ? 'up' : delta < -2 ? 'down' : 'flat';

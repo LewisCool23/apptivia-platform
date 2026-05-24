@@ -10,6 +10,7 @@
 import { jsPDF } from 'jspdf';
 import html2canvas from 'html2canvas';
 import { formatKpiValue, type KpiUnitMap } from './exportUtils';
+import { prettifyKpiKey } from '../constants/kpiGuidance';
 
 // ── Apptivia brand constants ────────────────────────────────
 const BRAND = {
@@ -130,7 +131,6 @@ export async function exportScorecardToPDF(data: any, filters?: any): Promise<vo
 
   // Use only scorecard KPI keys (show_on_scorecard = true), not all KPIs
   const kpiKeys: string[] = data.scorecardKpiKeys || [];
-  const prettify = (k: string) => k.replace(/_/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase());
 
   const repRows = rows
     .sort((a: any, b: any) => (b.apptivityScore || 0) - (a.apptivityScore || 0))
@@ -170,7 +170,7 @@ export async function exportScorecardToPDF(data: any, filters?: any): Promise<vo
       <!-- Full Rep Table -->
       <div style="font-size:13px;font-weight:600;color:${BRAND.ink};margin-bottom:10px;">Rep Performance</div>
       <table style="width:100%;border-collapse:collapse;">
-        ${tableRow(['#', 'Rep', 'Team', 'Score', ...kpiKeys.map(prettify)], true)}
+        ${tableRow(['#', 'Rep', 'Team', 'Score', ...kpiKeys.map(prettifyKpiKey)], true)}
         ${repRows}
       </table>
 
@@ -220,7 +220,6 @@ export async function exportAnalyticsToPDF(data: any, aggregateKPIs: any, filter
   const sortedRows = [...rows].sort((a: any, b: any) => (b.apptivityScore || 0) - (a.apptivityScore || 0));
   const dateLabel = filters?.dateRange || 'Current Week';
   const kpiKeys: string[] = data.scorecardKpiKeys || [];
-  const prettify = (k: string) => k.replace(/_/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase());
 
   // Aggregate KPIs section — format values using unit metadata
   const aggRows = Array.isArray(aggregateKPIs)
@@ -251,7 +250,7 @@ export async function exportAnalyticsToPDF(data: any, aggregateKPIs: any, filter
       <div style="margin-bottom:24px;">
         <div style="font-size:13px;font-weight:600;color:${BRAND.ink};margin-bottom:10px;">Rep Performance${sectionLabel}</div>
         <table style="width:100%;border-collapse:collapse;">
-          ${tableRow(['#', 'Rep', 'Team', 'Score', ...chunk.map(prettify)], true)}
+          ${tableRow(['#', 'Rep', 'Team', 'Score', ...chunk.map(prettifyKpiKey)], true)}
           ${chunkRepRows}
         </table>
       </div>`;
@@ -350,8 +349,8 @@ export async function exportContestToPDF(contest: any): Promise<void> {
       <div style="display:flex;gap:12px;margin-bottom:24px;">
         ${statBox('Status', contest.status || 'N/A', statusColor)}
         ${statBox('Participants', leaderboard.length)}
-        ${statBox('KPI', (contest.kpi_key || 'N/A').replace(/_/g, ' '))}
-        ${statBox('Type', (contest.calculation_type || 'total').replace(/_/g, ' '))}
+        ${statBox('KPI', prettifyKpiKey(contest.kpi_key || 'N/A'))}
+        ${statBox('Type', prettifyKpiKey(contest.calculation_type || 'total'))}
       </div>
 
       <div style="display:flex;gap:12px;margin-bottom:24px;">
@@ -382,7 +381,7 @@ export async function exportBadgesToPDF(badges: any[], profile: any): Promise<vo
   const rarityColor = (r: string) => {
     switch (r) {
       case 'legendary': return '#f59e0b';
-      case 'epic': return '#9333ea';
+      case 'epic': return '#FF4D2E';
       case 'rare': return '#FF4D2E';
       case 'uncommon': return '#16A34A';
       default: return '#71717A';

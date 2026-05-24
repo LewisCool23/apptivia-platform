@@ -70,7 +70,7 @@ function TrialBanner({ billing }) {
         <span>Your Pro trial has ended. Upgrade to unlock Engage, Contests, Coaching Plans, and more.</span>
         <button
           onClick={() => navigate('/organization-settings')}
-          className="bg-apptivia-coral hover:bg-apptivia-coral text-white px-3 py-1 rounded text-xs font-semibold transition-colors"
+          className="bg-apptivia-coral hover:bg-apptivia-coral/90 text-white px-3 py-1 rounded text-xs font-semibold transition-colors"
         >
           Upgrade to Pro
         </button>
@@ -239,15 +239,13 @@ function DashboardLayout({ children }) {
         });
       });
 
-      // Engage tab deep links
+      // Engage tab deep links (must match TABS in Engage.jsx: signals, discover, accounts, pipeline, calendar)
       const engageTabs = [
         { name: 'Pipeline Operator', desc: 'Monitor deals, flag risks, AI forecasts', tab: 'pipeline', keywords: ['pipeline', 'deal', 'forecast', 'risk'] },
-        { name: 'Signal Prospecting', desc: 'Detect high-intent buying signals', tab: 'signals', keywords: ['signal', 'intent', 'buying'] },
+        { name: 'Signal Prospecting', desc: 'Detect high-intent buying signals', tab: 'signals', keywords: ['signal', 'intent', 'buying', 'outreach', 'sequence', 'cadence'] },
         { name: 'Discover', desc: 'AI-powered prospect & company research', tab: 'discover', keywords: ['discover', 'research', 'prospect', 'company'] },
-        { name: 'Sequences', desc: 'Multi-step outreach cadences', tab: 'sequences', keywords: ['sequence', 'cadence', 'outreach'] },
         { name: 'Account Intelligence', desc: 'Account-based scoring & mapping', tab: 'accounts', keywords: ['account', 'scoring', 'buying committee', 'tier'] },
-        { name: 'AI Playbooks', desc: 'AI-generated sales playbooks', tab: 'playbooks', keywords: ['playbook', 'play', 'sales play'] },
-        { name: 'Prompt Library', desc: 'Outbound AI prompt templates', tab: 'prompts', keywords: ['prompt', 'template', 'library', 'outbound prompt', 'ai prompt'] },
+        { name: 'Calendar', desc: 'Meeting scheduling & outcomes', tab: 'calendar', keywords: ['calendar', 'meeting', 'schedule'] },
       ];
       engageTabs.forEach(et => {
         if (et.name.toLowerCase().includes(searchTerm) || et.keywords.some(k => searchTerm.includes(k))) {

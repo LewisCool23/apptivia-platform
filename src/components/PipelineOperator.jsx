@@ -13,6 +13,7 @@ import { buildForecastEmailHtml, buildForecastEmailText } from '../utils/emailTe
 import ConfirmModal from './ConfirmModal';
 import ActiveDealModal from './ActiveDealModal';
 import CreateDealModal from './CreateDealModal';
+import { prettifyKpiKey } from '../constants/kpiGuidance';
 
 // ── Legacy stage colors (fallback when no CEP) ──────────────
 
@@ -60,7 +61,7 @@ function StageBadge({ stage, cepStages }) {
     );
   }
   const colors = STAGE_COLORS[stage] || STAGE_COLORS.discovery;
-  const label = stage.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+  const label = prettifyKpiKey(stage);
   return (
     <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${colors.bg} ${colors.text}`}>
       <span className={`w-1.5 h-1.5 rounded-full ${colors.dot}`} />
@@ -375,7 +376,7 @@ function DealCepPanel({ deal, cepStages, onClose, onAdvance, onUpdateChecklist, 
           {nextStage && (
             <button
               onClick={() => onAdvance(deal.id, currentStage.id, nextStage.id, nextStage.stage_key, nextStage.win_probability)}
-              className="w-full inline-flex items-center justify-center gap-1.5 text-xs font-medium px-3 py-2 rounded-lg bg-apptivia-coral text-white hover:bg-apptivia-coral transition-colors"
+              className="w-full inline-flex items-center justify-center gap-1.5 text-xs font-medium px-3 py-2 rounded-lg bg-apptivia-coral text-white hover:bg-apptivia-coral/90 transition-colors"
             >
               Advance to {nextStage.stage_name} <ArrowRight size={12} />
             </button>
@@ -556,7 +557,7 @@ function DealTable({ deals, onUpdateDeal, onDeleteDeal, cepStages, hasCep, selec
                     </td>
                     <td className="px-3 py-3">
                       <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${fc.bg} ${fc.text}`}>
-                        {deal.forecast_category.replace(/_/g, ' ')}
+                        {prettifyKpiKey(deal.forecast_category)}
                       </span>
                     </td>
                     <td className="px-3 py-3">
@@ -803,7 +804,7 @@ export default function PipelineOperator({ organizationId, userId }) {
           </button>
           <button
             onClick={() => setShowNewDeal(true)}
-            className="inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg bg-apptivia-coral text-white hover:bg-apptivia-coral transition-colors"
+            className="inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg bg-apptivia-coral text-white hover:bg-apptivia-coral/90 transition-colors"
           >
             <Plus size={12} /> Add Deal
           </button>

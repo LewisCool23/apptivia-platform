@@ -115,7 +115,14 @@ export function useRecords(organizationId: string | undefined) {
           fitScores.length > 0
             ? Math.round(fitScores.reduce((s: number, v: number) => s + v, 0) / fitScores.length)
             : 0;
-        return { total, qualified, avgFitScore, newThisPeriod: total } as ContactStats;
+        // newThisPeriod: contacts created within the selected date range
+        // (since the query already filters by dateStart/dateEnd, all rows are "this period")
+        const periodStart = new Date(dateStart).getTime();
+        const newThisPeriod = rows.filter(r => {
+          const created = r.created_at ? new Date(r.created_at).getTime() : 0;
+          return created >= periodStart;
+        }).length;
+        return { total, qualified, avgFitScore, newThisPeriod } as ContactStats;
       }
       default:
         return { total: 0 } as any;
@@ -147,7 +154,11 @@ export function useRecords(organizationId: string | undefined) {
               .order('start_time', { ascending: false });
 
             if (filters.repId) q = q.eq('profile_id', filters.repId);
-            if (filters.status) q = q.eq('meeting_outcome', filters.status);
+            if (filters.status === '__null__') {
+              q = q.is('meeting_outcome', null);
+            } else if (filters.status) {
+              q = q.eq('meeting_outcome', filters.status);
+            }
             if (filters.search) q = q.ilike('title', `%${filters.search}%`);
 
             const { data: rows, error: err } = await q;

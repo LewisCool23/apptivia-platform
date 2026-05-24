@@ -18,6 +18,7 @@ import ConfirmModal from './ConfirmModal';
 import Tooltip from './shared/Tooltip';
 import SignalOutreachModal from './SignalOutreachModal';
 import QuickAddSignalModal from './QuickAddSignalModal';
+import { BACKEND_BASE } from '../utils/backendFetch';
 
 const SIGNAL_ICONS = {
   // === BUYER INTENT (Highest Value) ===
@@ -503,7 +504,7 @@ function ActionQueuePanel({
                     <button
                       onClick={() => handleSend(item)}
                       disabled={isSending}
-                      className="text-[11px] font-medium px-3 py-1.5 rounded-md bg-apptivia-ink text-white hover:bg-apptivia-ink transition-colors flex items-center gap-1 disabled:opacity-50"
+                      className="text-[11px] font-medium px-3 py-1.5 rounded-md bg-apptivia-ink text-white hover:bg-apptivia-ink/90 transition-colors flex items-center gap-1 disabled:opacity-50"
                     >
                       {isSending ? (
                         <><Loader size={10} className="animate-spin" /> Sending...</>
@@ -1249,7 +1250,8 @@ function ScanResultsPanel({ signals, lastScanSignalIds, onAction, onDismiss, onC
 
 // ── Website Visitor Panel ─────────────────────────────────
 
-const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3000';
+// BACKEND_BASE is imported at the top of the file from ../utils/backendFetch
+const BACKEND_URL = BACKEND_BASE;
 
 function TrackingScriptModal({ isOpen, onClose, organizationId }) {
   const [copied, setCopied] = useState(false);

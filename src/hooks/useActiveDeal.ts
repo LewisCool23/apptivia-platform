@@ -92,7 +92,7 @@ interface LogCallData {
 
 /* ── Hook ──────────────────────────────────────────────────────────────────── */
 
-export function useActiveDeal(dealId: string | null) {
+export function useActiveDeal(dealId: string | null, organizationId?: string | null) {
   const [deal, setDeal] = useState<Deal | null>(null);
   const [activities, setActivities] = useState<Activity[]>([]);
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -249,34 +249,40 @@ export function useActiveDeal(dealId: string | null) {
   /* ── Search helpers (direct Supabase queries) ─────────────────────────── */
 
   const searchAccounts = useCallback(async (query: string): Promise<AccountResult[]> => {
-    const { data, error: err } = await supabase
+    let q = supabase
       .from('engage_accounts')
       .select('id, account_name, domain, tier')
       .ilike('account_name', `%${query}%`)
       .limit(5);
+    if (organizationId) q = q.eq('organization_id', organizationId);
+    const { data, error: err } = await q;
     if (err) throw new Error(err.message);
     return (data ?? []) as AccountResult[];
-  }, []);
+  }, [organizationId]);
 
   const searchContacts = useCallback(async (query: string): Promise<ContactResult[]> => {
-    const { data, error: err } = await supabase
+    let q = supabase
       .from('engage_prospects')
       .select('id, full_name, first_name, last_name, email, phone, title, company_name')
       .or(`full_name.ilike.%${query}%,email.ilike.%${query}%`)
       .limit(10);
+    if (organizationId) q = q.eq('organization_id', organizationId);
+    const { data, error: err } = await q;
     if (err) throw new Error(err.message);
     return (data ?? []) as ContactResult[];
-  }, []);
+  }, [organizationId]);
 
   const searchMeetings = useCallback(async (query: string): Promise<MeetingResult[]> => {
-    const { data, error: err } = await supabase
+    let q = supabase
       .from('integration_calendar_events')
       .select('*')
       .ilike('title', `%${query}%`)
       .limit(10);
+    if (organizationId) q = q.eq('organization_id', organizationId);
+    const { data, error: err } = await q;
     if (err) throw new Error(err.message);
     return (data ?? []) as MeetingResult[];
-  }, []);
+  }, [organizationId]);
 
   /* ── Return ───────────────────────────────────────────────────────────── */
 

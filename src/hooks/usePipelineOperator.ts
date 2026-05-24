@@ -47,8 +47,8 @@ export interface PipelineDeal {
   // Populated from join
   owner_name?: string;
   is_at_risk?: boolean;
-  // Signal-to-Pipeline link (migration 051)
-  account_id?: string;
+  // Account link (migration 177; legacy account_id consolidated in migration 185)
+  linked_account_id?: string;
   // CEP (migration 095)
   cep_stage_id?: string;
   currentCepDealStage?: CepDealStageData | null;
@@ -267,7 +267,7 @@ export function usePipelineOperator(
         organization_id: organizationId,
         owner_id: userId || null,
         source: deal.source || 'manual',
-        ...(deal.account_id && { account_id: deal.account_id }),
+        ...(deal.linked_account_id && { linked_account_id: deal.linked_account_id }),
       })
       .select()
       .single();

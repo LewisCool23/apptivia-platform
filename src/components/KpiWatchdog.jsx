@@ -7,6 +7,7 @@ import {
 import { useKpiWatchdog } from '../hooks/useKpiWatchdog';
 import { useNotifications } from '../contexts/NotificationContext';
 import FeedbackThumb from './shared/FeedbackThumb';
+import { prettifyKpiKey } from '../constants/kpiGuidance';
 
 const SEVERITY_STYLES = {
   critical: { bg: 'bg-red-50', border: 'border-red-200', text: 'text-red-700', badge: 'bg-red-100 text-red-700', icon: AlertTriangle, iconColor: 'text-red-500' },
@@ -270,7 +271,7 @@ function KpiBreakdown({ byKpi }) {
       <div className="space-y-2">
         {entries.map(([key, count]) => (
           <div key={key} className="flex items-center justify-between">
-            <span className="text-xs text-apptivia-carbon-600 capitalize">{key.replace(/_/g, ' ')}</span>
+            <span className="text-xs text-apptivia-carbon-600">{prettifyKpiKey(key)}</span>
             <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${
               count >= 5 ? 'bg-red-100 text-red-700' :
               count >= 2 ? 'bg-amber-100 text-amber-700' :

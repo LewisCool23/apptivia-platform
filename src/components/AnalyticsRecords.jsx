@@ -11,6 +11,7 @@ import {
   Search, Download, ChevronUp, ChevronDown, Loader2, FileX,
 } from 'lucide-react';
 import { useRecords } from '../hooks/useRecords';
+import { prettifyKpiKey } from '../constants/kpiGuidance';
 
 // ── Constants ──────────────────────────────────────────────
 
@@ -36,7 +37,7 @@ const STATUS_VALUE_MAP = {
     Completed: 'completed',
     'No Show': 'no_show',
     Cancelled: 'cancelled',
-    Pending: 'pending',
+    Pending: '__null__',
   },
   deals: {
     Discovery: 'discovery',
@@ -184,9 +185,7 @@ function truncateStr(str, max = 60) {
 
 function humanizeSnake(str) {
   if (!str) return '--';
-  return String(str)
-    .replace(/_/g, ' ')
-    .replace(/\b\w/g, c => c.toUpperCase());
+  return prettifyKpiKey(String(str));
 }
 
 // ── Badge colors (no purple/blue — brand compliant) ────────

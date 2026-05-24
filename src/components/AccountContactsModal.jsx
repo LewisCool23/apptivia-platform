@@ -149,7 +149,7 @@ export default function AccountContactsModal({ isOpen, onClose, accountId, organ
             <Users size={18} className="text-apptivia-coral" />
             <h2 className="text-sm font-bold text-apptivia-ink">Add Contacts</h2>
           </div>
-          <button onClick={onClose} className="p-1 hover:bg-apptivia-carbon-100 rounded transition-colors">
+          <button onClick={onClose} aria-label="Close" className="p-1 hover:bg-apptivia-carbon-100 rounded transition-colors">
             <X size={16} className="text-apptivia-carbon-500" />
           </button>
         </div>

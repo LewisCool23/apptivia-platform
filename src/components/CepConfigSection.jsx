@@ -215,7 +215,7 @@ function CepStageEditorModal({ stage, titles, onSave, onClose }) {
       <div className="bg-white rounded-lg shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
         <div className="sticky top-0 bg-white px-6 py-4 border-b flex items-center justify-between z-10">
           <h3 className="text-lg font-semibold">{isNew ? 'Add Stage' : 'Edit Stage'}</h3>
-          <button onClick={onClose} className="text-apptivia-carbon-400 hover:text-apptivia-carbon-600"><X size={20} /></button>
+          <button onClick={onClose} aria-label="Close" className="text-apptivia-carbon-400 hover:text-apptivia-carbon-600"><X size={20} /></button>
         </div>
 
         <div className="px-6 py-4 space-y-4">
@@ -331,7 +331,7 @@ function CepStageEditorModal({ stage, titles, onSave, onClose }) {
           <button
             onClick={handleSave}
             disabled={saving}
-            className="px-4 py-2 text-sm bg-apptivia-coral text-white rounded-lg hover:bg-apptivia-coral disabled:opacity-50"
+            className="px-4 py-2 text-sm bg-apptivia-coral text-white rounded-lg hover:bg-apptivia-coral/90 disabled:opacity-50"
           >
             {saving ? 'Saving...' : isNew ? 'Add Stage' : 'Save Changes'}
           </button>
@@ -493,7 +493,7 @@ export default function CepConfigSection({ organizationId, compact = false }) {
             Configure your Customer Engagement Process to add checklists, exit criteria, and role responsibilities for pipeline deals.
           </p>
           <div className="flex items-center justify-center gap-3">
-            <button onClick={handleSeed} disabled={seeding} className="px-4 py-2 bg-apptivia-coral text-white text-sm font-medium rounded-lg hover:bg-apptivia-coral disabled:opacity-50">
+            <button onClick={handleSeed} disabled={seeding} className="px-4 py-2 bg-apptivia-coral text-white text-sm font-medium rounded-lg hover:bg-apptivia-coral/90 disabled:opacity-50">
               {seeding ? 'Setting up...' : 'Use Standard B2B Template'}
             </button>
             <button onClick={() => setEditorStage({})} className="px-4 py-2 bg-white border border-apptivia-carbon-300 text-apptivia-carbon-700 text-sm font-medium rounded-lg hover:bg-apptivia-paper">

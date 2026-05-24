@@ -1,9 +1,9 @@
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "../supabaseClient";
+import { BACKEND_BASE } from "../utils/backendFetch";
 
 // ── Constants ────────────────────────────────────────────────────────────────
-const API_BASE = import.meta.env.VITE_BACKEND_URL || "";
 
 const WINDOW_OPTIONS = [
   { label: "30d", value: 30 },
@@ -319,7 +319,7 @@ export default function PilotDashboard() {
       if (!session?.access_token) {
         throw new Error("Not authenticated. Please log in and try again.");
       }
-      const res = await fetch(`${API_BASE}/api/pilot/adoption-signals?days=${window}`, {
+      const res = await fetch(`${BACKEND_BASE}/api/pilot/adoption-signals?days=${window}`, {
         credentials: "include",
         headers: {
           "Content-Type": "application/json",

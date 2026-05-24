@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from '../supabaseClient';
 import { SKILLSET_KPI_MAP, difficultyRank, getSkillsetLevel, getSkillsetColor } from '../constants/skillsets';
 import { useModalBehavior } from '../hooks/useModalBehavior';
+import { prettifyKpiKey } from '../constants/kpiGuidance';
 
 interface SkillsetDetailsModalProps {
   isOpen: boolean;
@@ -185,12 +186,7 @@ export default function SkillsetDetailsModal({
       const availableMappedKeys = mappedKeys.filter(key => metricsByKey.has(key));
       const kpiKeys = availableMappedKeys.length > 0 ? availableMappedKeys : scorecardMetricKeys;
 
-      // Format KPI names: convert snake_case to Title Case
-      const formatKpiName = (name: string) => {
-        return name
-          .replace(/_/g, ' ')
-          .replace(/\b\w/g, (c) => c.toUpperCase());
-      };
+      const formatKpiName = prettifyKpiKey;
 
       const labelList = kpiKeys
         .map((key: any) => {

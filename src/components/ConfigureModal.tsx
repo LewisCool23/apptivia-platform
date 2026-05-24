@@ -761,7 +761,7 @@ export default function ConfigureModal({ isOpen, onClose, onSave, currentUserId 
                           </div>
                           <button
                             onClick={() => handleToggleScorecardKpi(kpi.key)}
-                            className="px-4 py-2 bg-apptivia-coral text-white rounded hover:bg-apptivia-coral transition-colors text-sm font-medium"
+                            className="px-4 py-2 bg-apptivia-coral text-white rounded hover:bg-apptivia-coral/90 transition-colors text-sm font-medium"
                           >
                             Add to Scorecard
                           </button>
@@ -928,7 +928,7 @@ export default function ConfigureModal({ isOpen, onClose, onSave, currentUserId 
             <button
               onClick={handleSave}
               disabled={saving || loading}
-              className="px-6 py-2 bg-apptivia-coral text-white rounded-lg hover:bg-apptivia-coral disabled:opacity-50 transition-all duration-200 hover:shadow-lg"
+              className="px-6 py-2 bg-apptivia-coral text-white rounded-lg hover:bg-apptivia-coral/90 disabled:opacity-50 transition-all duration-200 hover:shadow-lg"
             >
               {saving ? 'Saving...' : 'Save All Changes'}
             </button>

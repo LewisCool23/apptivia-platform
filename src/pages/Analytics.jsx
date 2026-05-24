@@ -23,6 +23,7 @@ import KpiWatchdog from '../components/KpiWatchdog';
 import SalesFunnel from '../components/SalesFunnel';
 import OrgHealthScorecard from '../components/OrgHealthScorecard';
 import UpgradePrompt from '../components/UpgradePrompt';
+import { prettifyKpiKey } from '../constants/kpiGuidance';
 import { backendFetch } from '../utils/backendFetch';
 import { useBilling } from '../hooks/useBilling';
 import AnalyticsRecords from '../components/AnalyticsRecords';
@@ -275,7 +276,7 @@ export default function Analytics() {
         const signalTypeCounts = {};
         signals.forEach(s => { signalTypeCounts[s.signal_type] = (signalTypeCounts[s.signal_type] || 0) + 1; });
         const signalTypeBreakdown = Object.entries(signalTypeCounts)
-          .map(([name, score]) => ({ name: name.replace(/_/g, ' '), score }))
+          .map(([name, score]) => ({ name: prettifyKpiKey(name), score }))
           .sort((a, b) => b.score - a.score)
           .slice(0, 6);
 
@@ -679,7 +680,7 @@ export default function Analytics() {
     allKeys.forEach((key) => {
       const val = userRow.kpis[key];
       const pct = Math.round(val?.percentage || 0);
-      const label = labelMap[key] || key.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+      const label = labelMap[key] || prettifyKpiKey(key);
       if (pct >= 100) exceeding.push(label);
       else if (pct >= 80) onTrack.push(label);
       else needsFocus.push(label);
@@ -730,7 +731,7 @@ export default function Analytics() {
         data.rows.reduce((sum, row) => sum + (row.kpis[key]?.percentage || 0), 0) / rowCount
       );
       return {
-        name: labelMap[key] || key.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()),
+        name: labelMap[key] || prettifyKpiKey(key),
         key,
         score: avgPct,
         hasData: data.rows.some(row => row.kpis[key]?.value > 0),
@@ -1212,7 +1213,7 @@ export default function Analytics() {
                                 {metric.description && <div className="text-[10px] text-apptivia-carbon-400 mt-0.5 line-clamp-2" title={metric.description}>{metric.description}</div>}
                               </td>
                               <td className="py-2.5 px-3">
-                                <span className="text-xs text-apptivia-carbon-500 capitalize">{(metric.category || 'general').replace(/_/g, ' ')}</span>
+                                <span className="text-xs text-apptivia-carbon-500">{prettifyKpiKey(metric.category || 'general')}</span>
                               </td>
                               <td className="py-2.5 px-3 font-medium text-apptivia-carbon-700">
                                 {metric.unit === 'currency' ? `$${Number(metric.goal).toLocaleString()}` : metric.goal}
@@ -1387,9 +1388,9 @@ export default function Analytics() {
                         <div className="text-xs text-apptivia-carbon-500">Tier 2 / Tier 3</div>
                         <div className="text-lg font-bold text-cyan-600">{engageStats.tier2} / {engageStats.tier3}</div>
                       </div>
-                      <div className="bg-white rounded-lg p-3 shadow-sm border-l-4 border-purple-400">
+                      <div className="bg-white rounded-lg p-3 shadow-sm border-l-4 border-apptivia-coral">
                         <div className="text-xs text-apptivia-carbon-500">AI Drafts Generated</div>
-                        <div className="text-lg font-bold text-purple-600">{engageStats.totalDrafts}</div>
+                        <div className="text-lg font-bold text-apptivia-coral">{engageStats.totalDrafts}</div>
                         <div className="text-[11px] text-apptivia-carbon-400">Last 30 days</div>
                       </div>
                     </div>

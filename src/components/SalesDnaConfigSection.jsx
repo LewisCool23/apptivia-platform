@@ -61,7 +61,7 @@ export default function SalesDnaConfigSection({ organizationId, cepStages, compa
             <button
               onClick={handleSave}
               disabled={saving || !isDirty}
-              className="px-4 py-2 bg-apptivia-coral text-white rounded-lg hover:bg-apptivia-coral disabled:opacity-50 text-sm flex items-center gap-2"
+              className="px-4 py-2 bg-apptivia-coral text-white rounded-lg hover:bg-apptivia-coral/90 disabled:opacity-50 text-sm flex items-center gap-2"
             >
               {saved ? <><Check size={14} /> Saved</> : saving ? 'Saving...' : 'Save Sales DNA'}
             </button>
@@ -109,7 +109,7 @@ export default function SalesDnaConfigSection({ organizationId, cepStages, compa
             <button
               onClick={handleSave}
               disabled={saving || !isDirty}
-              className="px-4 py-2 bg-apptivia-coral text-white rounded-lg hover:bg-apptivia-coral disabled:opacity-50 text-sm flex items-center gap-2"
+              className="px-4 py-2 bg-apptivia-coral text-white rounded-lg hover:bg-apptivia-coral/90 disabled:opacity-50 text-sm flex items-center gap-2"
             >
               {saved ? <><Check size={14} /> Saved</> : saving ? 'Saving...' : 'Save Sales DNA'}
             </button>

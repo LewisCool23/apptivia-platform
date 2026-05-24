@@ -218,7 +218,7 @@ export default function ContestTemplatesModal({ isOpen, onClose, onTemplateSelec
               </button>
               <button
                 onClick={handleUseTemplate}
-                className="px-4 py-2 bg-apptivia-coral text-white rounded-md hover:bg-apptivia-coral transition-colors"
+                className="px-4 py-2 bg-apptivia-coral text-white rounded-md hover:bg-apptivia-coral/90 transition-colors"
               >
                 Use This Template
               </button>

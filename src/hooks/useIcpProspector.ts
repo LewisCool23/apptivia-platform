@@ -124,7 +124,7 @@ export function computeIcpScoreForApolloCompany(
     let revM = 0;
     if (revStr) {
       const raw = parseFloat(revStr.replace(/[^0-9.]/g, '')) || 0;
-      revM = /b/i.test(revStr) ? raw * 1000 : /k/i.test(revStr) ? raw / 1000 : raw;
+      revM = /\db/i.test(revStr) ? raw * 1000 : /\dk/i.test(revStr) ? raw / 1000 : raw;
     } else if (revNum) {
       revM = revNum / 1_000_000;
     }
@@ -694,6 +694,7 @@ export function useIcpProspector(organizationId: string, icpConfig: any, signalC
 
   // Auto-enrich first ~10 ICP companies when results load
   const autoEnrichedRef = useRef<Set<string>>(new Set());
+  const autoEnrichTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => {
     if (!state.results.length || state.loading) return;
     const toEnrich = state.results.slice(0, 10).filter(c => {
@@ -702,8 +703,17 @@ export function useIcpProspector(organizationId: string, icpConfig: any, signalC
     });
     if (!toEnrich.length) return;
     toEnrich.forEach(c => autoEnrichedRef.current.add(c.primary_domain || c.name));
-    // Fire enrichment calls in parallel (non-blocking)
-    toEnrich.forEach(c => enrichCompanyContacts(c));
+    // Debounce enrichment calls to avoid firing during rapid state transitions;
+    // clear on unmount / re-run to prevent memory leaks.
+    autoEnrichTimerRef.current = setTimeout(() => {
+      toEnrich.forEach(c => enrichCompanyContacts(c));
+    }, 300);
+    return () => {
+      if (autoEnrichTimerRef.current) {
+        clearTimeout(autoEnrichTimerRef.current);
+        autoEnrichTimerRef.current = null;
+      }
+    };
   }, [state.results, state.loading, state.companyContacts, enrichCompanyContacts]);
 
   return {

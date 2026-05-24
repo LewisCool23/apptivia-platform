@@ -23,6 +23,7 @@ import InfoTooltip from '../components/InfoTooltip';
 import { useNotifications } from '../contexts/NotificationContext';
 import ConfirmModal from '../components/ConfirmModal';
 import SearchWithHistory from '../components/SearchWithHistory';
+import { prettifyKpiKey } from '../constants/kpiGuidance';
 import { exportContestResultsToCSV } from '../utils/exportUtils';
 import { exportContestToPDF } from '../utils/exportPdf';
 import ExportReportModal from '../components/ExportReportModal';
@@ -722,8 +723,7 @@ export default function Contests() {
     }
   };
 
-  const formatKpiKey = (key) =>
-    key ? key.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()) : '';
+  const formatKpiKey = (key) => key ? prettifyKpiKey(key) : '';
 
   const formatDateShort = (iso) => {
     if (!iso) return '';
@@ -1378,7 +1378,7 @@ export default function Contests() {
               {canCreateContests && (
                 <button
                   onClick={() => setShowCreateModal(true)}
-                  className="ml-auto px-4 py-1.5 rounded-lg text-xs font-semibold bg-apptivia-coral text-white hover:bg-apptivia-coral transition-colors shadow-sm"
+                  className="ml-auto px-4 py-1.5 rounded-lg text-xs font-semibold bg-apptivia-coral text-white hover:bg-apptivia-coral/90 transition-colors shadow-sm"
                 >
                   + Create Contest
                 </button>
@@ -1595,7 +1595,7 @@ export default function Contests() {
                 <div className="text-apptivia-carbon-500 text-lg font-medium mb-1">No contests yet</div>
                 <p className="text-apptivia-carbon-400 text-sm mb-4">Contests drive friendly competition and boost team performance.</p>
                 {(isAdmin || isManager) && (
-                  <button onClick={() => setShowCreateModal(true)} className="px-4 py-2 bg-apptivia-coral text-white rounded-lg text-sm font-medium hover:bg-apptivia-coral transition-colors">
+                  <button onClick={() => setShowCreateModal(true)} className="px-4 py-2 bg-apptivia-coral text-white rounded-lg text-sm font-medium hover:bg-apptivia-coral/90 transition-colors">
                     Create Your First Contest
                   </button>
                 )}
@@ -1736,7 +1736,7 @@ export default function Contests() {
                     <button
                       onClick={handleDownloadResults}
                       disabled={downloadingResults}
-                      className="flex items-center gap-1.5 px-4 py-2 bg-apptivia-coral text-white rounded-lg text-sm font-medium hover:bg-apptivia-coral transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="flex items-center gap-1.5 px-4 py-2 bg-apptivia-coral text-white rounded-lg text-sm font-medium hover:bg-apptivia-coral/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       <Download size={16} />
                       {downloadingResults ? 'Downloading...' : 'Download PNG'}
@@ -1776,7 +1776,7 @@ export default function Contests() {
                       disabled={!shareRecipients.trim() || sendingResults}
                       className={`flex-1 flex items-center justify-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                         shareRecipients.trim() && !sendingResults
-                          ? 'bg-apptivia-coral hover:bg-apptivia-coral text-white'
+                          ? 'bg-apptivia-coral hover:bg-apptivia-coral/90 text-white'
                           : 'bg-apptivia-carbon-300 text-apptivia-carbon-500 cursor-not-allowed'
                       }`}
                     >

@@ -29,7 +29,7 @@ const EVENT_TYPE_COLORS = {
   'prospect': 'bg-apptivia-coral text-white',
   'outreach': 'bg-amber-500 text-white',
   'deal': 'bg-emerald-500 text-white',
-  'call': 'bg-purple-500 text-white',
+  'call': 'bg-apptivia-coral text-white',
   'forecast': 'bg-sky-500 text-white',
   'playbook': 'bg-sky-500 text-white',
   'signal': 'bg-apptivia-ink text-white',

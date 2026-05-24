@@ -114,7 +114,7 @@ export default function Integrations() {
               <button
                 onClick={handleSyncAll}
                 disabled={syncingAll || !!syncing}
-                className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium bg-apptivia-coral text-white hover:bg-apptivia-coral disabled:opacity-50 transition-colors`}
+                className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium bg-apptivia-coral text-white hover:bg-apptivia-coral/90 disabled:opacity-50 transition-colors`}
               >
                 {syncingAll ? <Loader2 size={14} className="animate-spin" /> : <RefreshCw size={14} />}
                 {syncingAll ? 'Syncing All...' : 'Sync All'}
@@ -252,7 +252,7 @@ export default function Integrations() {
                           <button
                             onClick={() => triggerSync(orgIntegration.id)}
                             disabled={isSyncing || syncingAll}
-                            className="flex-1 flex items-center justify-center gap-1.5 bg-apptivia-coral text-white py-2 rounded-md text-sm font-medium hover:bg-apptivia-coral disabled:opacity-50 transition-colors"
+                            className="flex-1 flex items-center justify-center gap-1.5 bg-apptivia-coral text-white py-2 rounded-md text-sm font-medium hover:bg-apptivia-coral/90 disabled:opacity-50 transition-colors"
                           >
                             {isSyncing ? <Loader2 size={14} className="animate-spin" /> : <RefreshCw size={14} />}
                             {isSyncing ? 'Syncing...' : 'Sync Now'}
@@ -284,7 +284,7 @@ export default function Integrations() {
                           <button
                             onClick={() => triggerPersonalSync(personalIntegration.id)}
                             disabled={isPersonalSyncing || syncingAll}
-                            className="flex-1 flex items-center justify-center gap-1.5 bg-apptivia-coral text-white py-2 rounded-md text-sm font-medium hover:bg-apptivia-coral disabled:opacity-50 transition-colors"
+                            className="flex-1 flex items-center justify-center gap-1.5 bg-apptivia-coral text-white py-2 rounded-md text-sm font-medium hover:bg-apptivia-coral/90 disabled:opacity-50 transition-colors"
                           >
                             {isPersonalSyncing ? <Loader2 size={14} className="animate-spin" /> : <RefreshCw size={14} />}
                             {isPersonalSyncing ? 'Syncing...' : 'Sync Now'}
@@ -313,7 +313,7 @@ export default function Integrations() {
                     ) : API_KEY_PROVIDERS[template.integration_type] ? (
                       <button
                         onClick={() => setCredentialsModal(template.integration_type)}
-                        className="w-full flex items-center justify-center gap-1.5 bg-apptivia-coral text-white py-2 rounded-md text-sm font-medium hover:bg-apptivia-coral transition-colors"
+                        className="w-full flex items-center justify-center gap-1.5 bg-apptivia-coral text-white py-2 rounded-md text-sm font-medium hover:bg-apptivia-coral/90 transition-colors"
                       >
                         <Key size={14} /> Connect with API Key
                       </button>
@@ -321,7 +321,7 @@ export default function Integrations() {
                       <button
                         onClick={() => connectOAuth(template.integration_type)}
                         disabled={connecting === template.integration_type}
-                        className="w-full flex items-center justify-center gap-1.5 bg-apptivia-coral text-white py-2 rounded-md text-sm font-medium hover:bg-apptivia-coral disabled:opacity-50 transition-colors"
+                        className="w-full flex items-center justify-center gap-1.5 bg-apptivia-coral text-white py-2 rounded-md text-sm font-medium hover:bg-apptivia-coral/90 disabled:opacity-50 transition-colors"
                       >
                         {connecting === template.integration_type ? (
                           <><Loader2 size={14} className="animate-spin" /> Connecting...</>

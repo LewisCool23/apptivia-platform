@@ -1606,7 +1606,7 @@ export default function CoachingPlans() {
               setShowBuilder(true);
               window.scrollTo({ top: 0, behavior: 'smooth' });
             }}
-            className="flex items-center gap-2 px-4 py-2 text-sm font-semibold bg-apptivia-coral text-white rounded-lg hover:bg-apptivia-coral transition-colors shadow-sm"
+            className="flex items-center gap-2 px-4 py-2 text-sm font-semibold bg-apptivia-coral text-white rounded-lg hover:bg-apptivia-coral/90 transition-colors shadow-sm"
           >
             <Plus size={16} />
             {activeTab === 'playbooks' ? 'Create Manager Playbook' : 'Create Coaching Plan'}
@@ -1675,7 +1675,7 @@ export default function CoachingPlans() {
                     <div className="flex items-center gap-2 ml-3 shrink-0">
                       <button
                         onClick={() => handleFulfillRequest(req)}
-                        className="px-3 py-1.5 text-xs font-semibold bg-apptivia-coral text-white rounded-md hover:bg-apptivia-coral"
+                        className="px-3 py-1.5 text-xs font-semibold bg-apptivia-coral text-white rounded-md hover:bg-apptivia-coral/90"
                       >
                         Create Plan
                       </button>
@@ -1750,7 +1750,7 @@ export default function CoachingPlans() {
                 {canCreatePlans && (
                   <button
                     onClick={() => { resetPlanForm(); setShowBuilder(true); }}
-                    className="px-4 py-2 text-sm font-semibold bg-apptivia-coral text-white rounded-md hover:bg-apptivia-coral"
+                    className="px-4 py-2 text-sm font-semibold bg-apptivia-coral text-white rounded-md hover:bg-apptivia-coral/90"
                   >
                     {activeTab === 'playbooks' ? 'Create Your First Manager Playbook' : 'Create Your First Plan'}
                   </button>
@@ -1885,7 +1885,7 @@ export default function CoachingPlans() {
                 <button
                   onClick={handleSendShareEmail}
                   disabled={sharingPlan || !shareEmail.trim()}
-                  className="px-4 py-2 text-sm font-semibold text-white bg-apptivia-coral rounded-md hover:bg-apptivia-coral disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="px-4 py-2 text-sm font-semibold text-white bg-apptivia-coral rounded-md hover:bg-apptivia-coral/90 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {sharingPlan ? 'Sending...' : 'Share Plan'}
                 </button>

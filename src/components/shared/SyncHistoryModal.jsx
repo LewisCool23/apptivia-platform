@@ -43,7 +43,9 @@ function CrmPushSection({ integrationId }) {
     try {
       await backendFetch(`/api/integrations/${integrationId}/push`, { _method: 'POST' });
       await loadData('both');
-    } catch { /* silent */ }
+    } catch (err) {
+      console.error('[SyncHistory] CRM push failed:', err?.message);
+    }
     finally { setPushing(false); }
   }
 

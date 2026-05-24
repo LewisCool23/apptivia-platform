@@ -26,7 +26,7 @@ export interface FrameworkPlaybook {
 export const CATEGORY_META: Record<string, { label: string; color: string }> = {
   prospecting:   { label: 'Prospecting',    color: 'bg-emerald-100 text-emerald-700' },
   discovery:     { label: 'Discovery',      color: 'bg-sky-100 text-sky-700' },
-  qualification: { label: 'Qualification',  color: 'bg-violet-100 text-violet-700' },
+  qualification: { label: 'Qualification',  color: 'bg-apptivia-coral-tone-50 text-apptivia-coral' },
   methodology:   { label: 'Methodology',    color: 'bg-amber-100 text-amber-700' },
   negotiation:   { label: 'Negotiation',    color: 'bg-rose-100 text-rose-700' },
   coaching:      { label: 'Coaching',       color: 'bg-indigo-100 text-indigo-700' },

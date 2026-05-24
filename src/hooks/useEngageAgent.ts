@@ -106,6 +106,7 @@ export function useEngageAgent(organizationId: string, userId?: string) {
   const searchProspects = useCallback(
     async (filters: SearchFilters) => {
       resetPipeline();
+      abortRef.current = new AbortController();
       patch({ isRunning: true, error: null, prospectResults: [] });
       pushStep('search', 'Searching prospects via Apollo');
 
@@ -138,6 +139,7 @@ export function useEngageAgent(organizationId: string, userId?: string) {
   const searchCompanies = useCallback(
     async (filters: SearchFilters) => {
       resetPipeline();
+      abortRef.current = new AbortController();
       patch({ isRunning: true, error: null, companyResults: [] });
       pushStep('search', 'Searching companies via Apollo');
 
@@ -169,6 +171,7 @@ export function useEngageAgent(organizationId: string, userId?: string) {
   const researchCompany = useCallback(
     async (domain: string, companyName?: string) => {
       resetPipeline();
+      abortRef.current = new AbortController();
       patch({ isRunning: true, error: null, currentReport: null });
 
       pushStep('enrich', 'Enriching company data');
@@ -251,6 +254,7 @@ export function useEngageAgent(organizationId: string, userId?: string) {
   const researchProspect = useCallback(
     async (identifier: { email?: string; linkedin_url?: string; first_name?: string; last_name?: string; company_name?: string }) => {
       resetPipeline();
+      abortRef.current = new AbortController();
       patch({ isRunning: true, error: null, currentReport: null });
 
       pushStep('enrich', 'Enriching prospect profile');
@@ -332,6 +336,8 @@ export function useEngageAgent(organizationId: string, userId?: string) {
       companyBrief: Record<string, any>,
       options?: { channel?: string; tone?: string }
     ) => {
+      abortRef.current?.abort();
+      abortRef.current = new AbortController();
       patch({ isRunning: true, error: null, currentDraft: null });
       pushStep('draft', `Generating ${options?.channel || 'email'} draft`);
 

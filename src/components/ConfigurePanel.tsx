@@ -374,7 +374,7 @@ export default function ConfigurePanel({
                           <button
                             onClick={() => handleAdd(index)}
                             disabled={!selectedAddKey}
-                            className="flex-1 px-2 py-1.5 text-xs bg-apptivia-coral text-white rounded hover:bg-apptivia-coral disabled:opacity-50"
+                            className="flex-1 px-2 py-1.5 text-xs bg-apptivia-coral text-white rounded hover:bg-apptivia-coral/90 disabled:opacity-50"
                           >
                             Add KPI
                           </button>
@@ -432,7 +432,7 @@ export default function ConfigurePanel({
             <button
               onClick={handleSave}
               disabled={saving || loading || slots.filter(Boolean).length === 0}
-              className="flex-1 px-3 py-2 text-xs bg-apptivia-coral text-white rounded-lg hover:bg-apptivia-coral disabled:opacity-50"
+              className="flex-1 px-3 py-2 text-xs bg-apptivia-coral text-white rounded-lg hover:bg-apptivia-coral/90 disabled:opacity-50"
             >
               {saving ? 'Saving...' : 'Save Changes'}
             </button>

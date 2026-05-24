@@ -30,7 +30,7 @@ export default function AaronMemoryPanel({ isOpen, onClose }) {
       <div className="bg-white rounded-lg shadow-xl w-full max-w-md max-h-[80vh] overflow-y-auto">
         <div className="flex items-center justify-between p-4 border-b">
           <h2 className="font-semibold text-apptivia-ink">Aaron&apos;s Memory</h2>
-          <button onClick={onClose} className="text-apptivia-carbon-400 hover:text-apptivia-carbon-600"><X size={16} /></button>
+          <button onClick={onClose} aria-label="Close" className="text-apptivia-carbon-400 hover:text-apptivia-carbon-600"><X size={16} /></button>
         </div>
         <div className="p-4 space-y-4">
           {loading && <p className="text-sm text-apptivia-carbon-500">Loading memory...</p>}

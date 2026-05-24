@@ -233,7 +233,7 @@ export default function ShareCoachSnapshotModal({ isOpen, onClose, coachData, sc
                 <button
                   onClick={handleDownload}
                   disabled={downloading}
-                  className="flex items-center gap-1.5 px-4 py-2 bg-apptivia-coral text-white rounded-lg text-sm font-medium hover:bg-apptivia-coral transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="flex items-center gap-1.5 px-4 py-2 bg-apptivia-coral text-white rounded-lg text-sm font-medium hover:bg-apptivia-coral/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <Download size={16} />
                   {downloading ? 'Downloading...' : 'Download'}
@@ -241,7 +241,7 @@ export default function ShareCoachSnapshotModal({ isOpen, onClose, coachData, sc
                 
                 <button
                   onClick={handleCopyLink}
-                  className="flex items-center gap-1.5 px-4 py-2 bg-apptivia-ink text-white rounded-lg text-sm font-medium hover:bg-apptivia-ink transition-colors"
+                  className="flex items-center gap-1.5 px-4 py-2 bg-apptivia-ink text-white rounded-lg text-sm font-medium hover:bg-apptivia-ink/90 transition-colors"
                 >
                   {copied ? (
                     <>
@@ -327,7 +327,7 @@ export default function ShareCoachSnapshotModal({ isOpen, onClose, coachData, sc
                 <button
                   onClick={handleSendEmail}
                   disabled={sending}
-                  className="flex-1 flex items-center justify-center gap-1.5 px-4 py-2 bg-apptivia-coral text-white rounded-lg text-sm font-medium hover:bg-apptivia-coral transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="flex-1 flex items-center justify-center gap-1.5 px-4 py-2 bg-apptivia-coral text-white rounded-lg text-sm font-medium hover:bg-apptivia-coral/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <Mail size={16} />
                   {sending ? 'Sending...' : 'Send Email'}

@@ -3,8 +3,7 @@ import { Activity, Trophy, CheckCircle, ArrowRight, BarChart3, Brain, Target, Tr
 import { Link } from 'react-router-dom';
 import AskAIFooter from '../components/AskAIFooter';
 import { ApptiviaLogo } from '../components/ApptiviaLogo';
-
-const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || '';
+import { BACKEND_BASE } from '../utils/backendFetch';
 
 function DemoRequestModal({ isOpen, onClose, planHint }) {
   const [form, setForm] = useState({ name: '', email: '', company: '', teamSize: '', message: '' });
@@ -17,7 +16,7 @@ function DemoRequestModal({ isOpen, onClose, planHint }) {
     if (!form.name.trim() || !form.email.trim()) return;
     setStatus('sending');
     try {
-      const res = await fetch(`${BACKEND_URL}/api/contact/demo-request`, {
+      const res = await fetch(`${BACKEND_BASE}/api/contact/demo-request`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -52,7 +51,7 @@ function DemoRequestModal({ isOpen, onClose, planHint }) {
             <p className="text-apptivia-carbon-600 mb-6">
               Thanks for your interest in Apptivia. We'll reach out within 24 hours to schedule your personalized demo.
             </p>
-            <button onClick={onClose} className="px-6 py-2.5 bg-apptivia-coral text-white rounded-lg hover:bg-apptivia-coral font-medium text-sm transition-colors">
+            <button onClick={onClose} className="px-6 py-2.5 bg-apptivia-coral text-white rounded-lg hover:bg-apptivia-coral/90 font-medium text-sm transition-colors">
               Close
             </button>
           </div>
@@ -130,7 +129,7 @@ function DemoRequestModal({ isOpen, onClose, planHint }) {
               <button
                 type="submit"
                 disabled={status === 'sending'}
-                className="w-full py-3 bg-apptivia-coral text-white rounded-lg hover:bg-apptivia-coral font-semibold text-sm transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                className="w-full py-3 bg-apptivia-coral text-white rounded-lg hover:bg-apptivia-coral/90 font-semibold text-sm transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
               >
                 {status === 'sending' ? 'Submitting...' : 'Submit Request'}
               </button>
@@ -179,7 +178,7 @@ export default function LandingPage() {
               </button>
               <Link
                 to="/signup"
-                className="px-5 py-2.5 bg-apptivia-coral text-white rounded-lg hover:bg-apptivia-coral font-medium text-sm transition-colors"
+                className="px-5 py-2.5 bg-apptivia-coral text-white rounded-lg hover:bg-apptivia-coral/90 font-medium text-sm transition-colors"
               >
                 Start Free Trial
               </Link>
@@ -208,7 +207,7 @@ export default function LandingPage() {
             <div className="flex gap-4 justify-center">
               <Link
                 to="/signup"
-                className="px-8 py-3.5 bg-apptivia-coral text-white rounded-lg hover:bg-apptivia-coral font-semibold flex items-center gap-2 transition-colors"
+                className="px-8 py-3.5 bg-apptivia-coral text-white rounded-lg hover:bg-apptivia-coral/90 font-semibold flex items-center gap-2 transition-colors"
               >
                 Start Free Trial <ArrowRight size={18} />
               </Link>
@@ -451,7 +450,7 @@ export default function LandingPage() {
                   onClick={() => openDemo(plan.price === 'Custom' ? 'Enterprise Plan' : `${plan.name} Plan`)}
                   className={`block w-full py-3 rounded-lg font-medium mb-6 text-center text-sm transition-colors ${
                     plan.highlighted
-                      ? 'bg-apptivia-coral text-white hover:bg-apptivia-coral'
+                      ? 'bg-apptivia-coral text-white hover:bg-apptivia-coral/90'
                       : 'bg-apptivia-carbon-100 text-apptivia-ink hover:bg-apptivia-carbon-200'
                   }`}
                 >

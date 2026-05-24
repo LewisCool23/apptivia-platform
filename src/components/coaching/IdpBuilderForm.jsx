@@ -296,7 +296,7 @@ export default function IdpBuilderForm({
         <div className="flex justify-end gap-3 pt-2">
           <button onClick={onCancel} className="px-4 py-2 text-sm text-apptivia-carbon-600 border border-apptivia-carbon-300 rounded-md hover:bg-apptivia-paper">Cancel</button>
           <button onClick={onSave} disabled={saving || !form.name}
-            className="px-4 py-2 text-sm font-semibold text-white bg-apptivia-coral rounded-md hover:bg-apptivia-coral disabled:opacity-50">
+            className="px-4 py-2 text-sm font-semibold text-white bg-apptivia-coral rounded-md hover:bg-apptivia-coral/90 disabled:opacity-50">
             {saving ? 'Saving...' : (editingIdp ? 'Update Plan' : 'Create Plan')}
           </button>
         </div>

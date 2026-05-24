@@ -326,7 +326,7 @@ export default function DataDrivenPlaybook({ scorecardData, lastWeekScorecardDat
                             onClick={() => openAaronWithPrompt(
                               `As a manager, my team's biggest weakness is ${kpi.label} at ${kpi.avgPercentage}% average (${kpi.belowTargetCount} of ${rows.length} reps below target). The diagnosis is: ${guidance.diagnosis}. Key coaching question: ${guidance.coachingQuestion}. What specific coaching exercises or techniques should I use in team meetings and 1:1s to improve this KPI?`
                             )}
-                            className="flex items-center gap-1 px-2 py-1 text-[10px] font-medium text-purple-600 border border-purple-200 rounded hover:bg-purple-50 transition-colors"
+                            className="flex items-center gap-1 px-2 py-1 text-[10px] font-medium text-apptivia-coral border border-apptivia-carbon-200 rounded hover:bg-apptivia-paper transition-colors"
                           >
                             <Sparkles size={12} />
                             Ask Aaron
@@ -517,7 +517,7 @@ export default function DataDrivenPlaybook({ scorecardData, lastWeekScorecardDat
                                     `As a manager, I need coaching advice for ${rep.name}. Their weakest KPI is ${rep.weakestKpi?.label || 'unknown'} at ${rep.weakestKpi?.percentage || 0}% (team avg: ${rep.teamAvgForWeakest || 0}%). ${rep.secondWeakestKpi ? `Also lagging: ${rep.secondWeakestKpi.label} (${rep.secondWeakestKpi.percentage}%).` : ''} Their 5-week avg score is ${rep.avg5w}% with a ${rep.trendDelta >= 0 ? '+' : ''}${rep.trendDelta}% trend. What specific actions should I take in my next 1:1?`,
                                     rep.name
                                   )}
-                                  className="flex items-center gap-1 px-2 py-1 text-[10px] font-medium text-purple-600 border border-purple-200 rounded hover:bg-purple-50 transition-colors"
+                                  className="flex items-center gap-1 px-2 py-1 text-[10px] font-medium text-apptivia-coral border border-apptivia-carbon-200 rounded hover:bg-apptivia-paper transition-colors"
                                 >
                                   <Sparkles size={12} />
                                   Ask Aaron
@@ -624,7 +624,7 @@ export default function DataDrivenPlaybook({ scorecardData, lastWeekScorecardDat
                     onClick={() => openAaronWithPrompt(
                       `As a manager, here are my team's priority issues: ${priorities.map((p, i) => `${i + 1}. ${p.text} (${p.detail})`).join('; ')}. Give me a concrete coaching game plan for this week.`
                     )}
-                    className="flex items-center gap-1 px-2.5 py-1 text-[10px] font-medium text-purple-600 border border-purple-200 rounded hover:bg-purple-50 transition-colors"
+                    className="flex items-center gap-1 px-2.5 py-1 text-[10px] font-medium text-apptivia-coral border border-apptivia-carbon-200 rounded hover:bg-apptivia-paper transition-colors"
                   >
                     <Sparkles size={12} />
                     Ask Aaron for a Game Plan

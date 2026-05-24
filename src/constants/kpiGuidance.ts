@@ -9,8 +9,12 @@ export const DECLINING_TREND_THRESHOLD = -5;
 export const DEFAULT_TREND_WEEKS = 5;
 
 // ── Shared utility ──────────────────────────────────────────────────
-export const buildLabel = (key: string): string =>
+/** Convert snake_case KPI key to Title Case label (e.g. 'pipeline_created' → 'Pipeline Created') */
+export const prettifyKpiKey = (key: string): string =>
   key.replace(/_/g, ' ').replace(/([a-zA-Z])(\d)/g, '$1 $2').replace(/\b\w/g, (c) => c.toUpperCase());
+
+/** @deprecated Use prettifyKpiKey instead */
+export const buildLabel = prettifyKpiKey;
 
 export interface KpiGuidanceEntry {
   title: string;

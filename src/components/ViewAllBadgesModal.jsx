@@ -141,7 +141,7 @@ export default function ViewAllBadgesModal({ isOpen, onClose, userId, refreshKey
   const getRarityColor = (rarity) => {
     switch (rarity?.toLowerCase()) {
       case 'legendary': return '#FFD700';  // Gold
-      case 'epic': return '#9333ea';       // Purple
+      case 'epic': return '#FF4D2E';       // Coral (brand)
       case 'rare': return '#FF4D2E';       // Coral
       case 'common': return '#71717A';     // Carbon-500
       default: return '#E4E4E7';
@@ -151,7 +151,7 @@ export default function ViewAllBadgesModal({ isOpen, onClose, userId, refreshKey
   const getRarityGlow = (rarity) => {
     switch (rarity?.toLowerCase()) {
       case 'legendary': return 'shadow-lg shadow-yellow-200';
-      case 'epic': return 'shadow-lg shadow-purple-200';
+      case 'epic': return 'shadow-lg shadow-apptivia-coral/20';
       case 'rare': return 'shadow-md shadow-blue-200';
       default: return '';
     }

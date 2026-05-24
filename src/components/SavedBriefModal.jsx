@@ -359,7 +359,7 @@ export default function SavedBriefModal({ isOpen, onClose, prospect, organizatio
 
               {/* Fit Reasoning */}
               {brief.fit_reasoning && (
-                <CollapsibleSection title="Fit Analysis" icon={<Target size={12} className="text-purple-500" />}>
+                <CollapsibleSection title="Fit Analysis" icon={<Target size={12} className="text-apptivia-coral" />}>
                   <p className="text-xs text-apptivia-carbon-600 leading-relaxed mt-2">{brief.fit_reasoning}</p>
                 </CollapsibleSection>
               )}

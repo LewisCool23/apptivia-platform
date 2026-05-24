@@ -8,7 +8,8 @@
 import { supabase } from '../supabaseClient';
 import { getEnv } from '../env';
 
-const BACKEND_BASE = getEnv(['VITE_BACKEND_URL', 'REACT_APP_BACKEND_URL'], '');
+/** Canonical backend URL — every frontend file should import this instead of reading env vars directly. */
+export const BACKEND_BASE = getEnv(['VITE_BACKEND_URL', 'REACT_APP_BACKEND_URL'], '');
 
 async function getAuthHeaders(): Promise<Record<string, string>> {
   const { data: { session } } = await supabase.auth.getSession();

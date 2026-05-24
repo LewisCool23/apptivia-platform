@@ -57,6 +57,7 @@ export function usePromptLibrary(options: UsePromptLibraryOptions = {}) {
         .order('sort_order', { ascending: true })
         .order('created_at', { ascending: false });
 
+      if (organizationId) query = query.eq('organization_id', organizationId);
       if (activeOnly) query = query.eq('is_active', true);
       if (category !== 'all') query = query.eq('category', category);
       if (aiModel !== 'all') query = query.eq('ai_model', aiModel);

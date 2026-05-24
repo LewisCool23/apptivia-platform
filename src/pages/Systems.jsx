@@ -381,7 +381,7 @@ export default function Systems() {
                     {isConnected ? (
                       <>
                         <div className="flex gap-2">
-                          <button onClick={() => triggerSync(integration.id)} disabled={isSyncing} className="flex-1 flex items-center justify-center gap-1.5 bg-apptivia-coral text-white py-2 rounded-md text-sm font-medium hover:bg-apptivia-coral disabled:opacity-50 transition-colors">
+                          <button onClick={() => triggerSync(integration.id)} disabled={isSyncing} className="flex-1 flex items-center justify-center gap-1.5 bg-apptivia-coral text-white py-2 rounded-md text-sm font-medium hover:bg-apptivia-coral/90 disabled:opacity-50 transition-colors">
                             {isSyncing ? <Loader2 size={14} className="animate-spin" /> : <RefreshCw size={14} />}
                             {isSyncing ? 'Syncing...' : 'Sync Now'}
                           </button>
@@ -406,12 +406,12 @@ export default function Systems() {
                     ) : API_KEY_PROVIDERS[template.integration_type] ? (
                       <button
                         onClick={() => setCredentialsModal(template.integration_type)}
-                        className="w-full bg-apptivia-coral text-white py-2 rounded-md text-sm font-medium hover:bg-apptivia-coral transition-colors flex items-center justify-center gap-2"
+                        className="w-full bg-apptivia-coral text-white py-2 rounded-md text-sm font-medium hover:bg-apptivia-coral/90 transition-colors flex items-center justify-center gap-2"
                       >
                         <Key size={14} /> Connect with API Key
                       </button>
                     ) : (
-                      <button onClick={() => connectOAuth(template.integration_type)} className="w-full bg-apptivia-coral text-white py-2 rounded-md text-sm font-medium hover:bg-apptivia-coral transition-colors">
+                      <button onClick={() => connectOAuth(template.integration_type)} className="w-full bg-apptivia-coral text-white py-2 rounded-md text-sm font-medium hover:bg-apptivia-coral/90 transition-colors">
                         Connect
                       </button>
                     )}

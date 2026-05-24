@@ -288,7 +288,7 @@ export default function RequestCoachingPlanModal({ isOpen, onClose }) {
           <button
             onClick={handleSubmit}
             disabled={submitting || loading}
-            className="flex items-center gap-1.5 px-4 py-2 text-sm font-semibold bg-apptivia-coral text-white rounded-md hover:bg-apptivia-coral disabled:opacity-60"
+            className="flex items-center gap-1.5 px-4 py-2 text-sm font-semibold bg-apptivia-coral text-white rounded-md hover:bg-apptivia-coral/90 disabled:opacity-60"
           >
             {submitting ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />}
             {submitting ? 'Sending...' : 'Send Request'}
