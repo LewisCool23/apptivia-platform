@@ -174,6 +174,7 @@ async function syncActivities(integration, cursor, sb) {
   const result = await gongPost(integration, '/v2/calls', requestBody);
   const calls = result.calls || [];
   const kpiMappings = [];
+  const activityRecords = [];
   const { resolveProfileByEmail } = require('../integrationService');
 
   for (const call of calls) {
@@ -200,10 +201,29 @@ async function syncActivities(integration, cursor, sb) {
       });
       if (talkTimeMapping) kpiMappings.push(talkTimeMapping);
     }
+
+    // Activity record — Gong web URL serves as recording link (opens Gong player)
+    const gongCallId = call.metaData?.id || call.id;
+    activityRecords.push({
+      profileId,
+      activityType: 'call',
+      activityDate: call.metaData?.started,
+      source: 'gong',
+      externalId: String(gongCallId),
+      subject: call.metaData?.title || call.metaData?.purpose || null,
+      direction: call.metaData?.direction === 'Inbound' ? 'inbound' : 'outbound',
+      durationSeconds: durationSec || null,
+      status: 'completed',
+      notes: call.metaData?.purpose || null,
+      recordingUrl: call.metaData?.url || null,
+      recordingSource: call.metaData?.url ? 'gong' : null,
+      crmUrl: call.metaData?.url || null,
+      metadata: { system: call.metaData?.system, mediaType: call.metaData?.mediaType },
+    });
   }
 
   const nextCursor = result.records?.cursor || null;
-  return { records: calls, nextCursor, kpiMappings };
+  return { records: calls, nextCursor, kpiMappings, activityRecords };
 }
 
 // ── Sync: Meetings ───────────────────────────────────────────

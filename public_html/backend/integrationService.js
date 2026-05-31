@@ -453,6 +453,14 @@ async function runIntegrationSync(sb, integrationId, entityTypes) {
         console.log(`[sync:${integration.integration_type}:${entityType}] Upserted ${syncResult.pipelineDeals.length} pipeline deals`);
       }
 
+      // Process activity records if returned (calls, emails from CRM)
+      if (syncResult.activityRecords?.length) {
+        for (const actRecord of syncResult.activityRecords) {
+          await upsertActivityRecord(sb, actRecord, integration);
+        }
+        console.log(`[sync:${integration.integration_type}:${entityType}] Upserted ${syncResult.activityRecords.length} activity records`);
+      }
+
       // Update cursor
       await sb.from('integration_sync_cursors').upsert({
         integration_id: integrationId,
@@ -727,6 +735,37 @@ async function upsertDeal(sb, deal, integration) {
     updated_at: new Date().toISOString(),
   }, { onConflict: 'organization_id,source,external_id', ignoreDuplicates: false });
   if (error) console.warn(`[sync:upsertDeal] ${deal.externalId}: ${error.message}`);
+}
+
+// ── Activity Record Upsert ───────────────────────────────────
+// Persists individual call/email records from CRM sync into crm_activity_records.
+// Providers return activityRecords array; sync handler iterates and upserts
+// with dedup on (org, source, external_id).
+
+async function upsertActivityRecord(sb, record, integration) {
+  const { error } = await sb.from('crm_activity_records').upsert({
+    organization_id: integration.organization_id,
+    profile_id: record.profileId || null,
+    integration_id: integration.id,
+    activity_type: record.activityType,
+    activity_date: record.activityDate,
+    source: record.source,
+    external_id: record.externalId,
+    subject: record.subject || null,
+    contact_name: record.contactName || null,
+    contact_email: record.contactEmail || null,
+    direction: record.direction || null,
+    duration_seconds: record.durationSeconds || null,
+    status: record.status || null,
+    notes: record.notes || null,
+    recording_url: record.recordingUrl || null,
+    recording_source: record.recordingSource || null,
+    crm_url: record.crmUrl || null,
+    metadata: record.metadata || {},
+    synced_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  }, { onConflict: 'organization_id,source,external_id', ignoreDuplicates: false });
+  if (error) console.warn(`[sync:upsertActivityRecord] ${record.externalId}: ${error.message}`);
 }
 
 // ── Date Helpers ─────────────────────────────────────────────
@@ -1130,26 +1169,68 @@ async function runScheduledSyncs(sb) {
   if (!sb) return { synced: 0, checked: 0 };
 
   const { data: integrations } = await sb.from('integrations')
-    .select('id, integration_type, sync_config, last_sync_at')
+    .select('id, integration_type, sync_config, last_sync_at, token_expires_at, organization_id')
     .eq('status', 'connected')
     .eq('is_enabled', true);
 
   let synced = 0;
   const list = integrations || [];
 
+  // Proactive token expiry warning: notify admins if token expires within 14 days
+  const warningThreshold = new Date(Date.now() + 14 * 86400000).toISOString();
   for (const integ of list) {
+    if (integ.token_expires_at && integ.token_expires_at < warningThreshold) {
+      const daysRemaining = Math.ceil(
+        (new Date(integ.token_expires_at).getTime() - Date.now()) / 86400000
+      );
+      if (daysRemaining <= 0) continue; // already expired — handled by ensureFreshToken
+      // Resolve org admin to send notification
+      const { data: adminProfile } = await sb.from('profiles')
+        .select('id')
+        .eq('organization_id', integ.organization_id)
+        .eq('role', 'admin')
+        .limit(1)
+        .single()
+        .then(r => r)
+        .catch(() => ({ data: null }));
+      if (adminProfile?.id) {
+        sb.from('notifications').insert({
+          profile_id: adminProfile.id,
+          organization_id: integ.organization_id,
+          type: 'integration_expiring',
+          title: `${integ.integration_type} connection expiring soon`,
+          message: `Your ${integ.integration_type} integration will expire in ${daysRemaining} day${daysRemaining === 1 ? '' : 's'}. Reconnect to avoid sync interruptions.`,
+          icon: '⚠️', color: '#B85C0A', priority: 2,
+          dedupe_key: `integration_expiry_warning_${integ.id}_${new Date().toISOString().slice(0, 10)}`,
+        }).then(() => {}).catch(() => {});
+      }
+    }
+  }
+
+  // Filter to integrations due for sync
+  const dueForSync = list.filter(integ => {
     const freq = integ.sync_config?.frequency || 'daily';
     const lastSync = integ.last_sync_at ? new Date(integ.last_sync_at) : new Date(0);
-
     const intervals = { hourly: 3600000, daily: 86400000, weekly: 604800000 };
     const intervalMs = intervals[freq] || intervals.daily;
+    return Date.now() - lastSync.getTime() >= intervalMs;
+  });
 
-    if (Date.now() - lastSync.getTime() >= intervalMs) {
-      try {
+  // Parallel execution with concurrency cap of 5
+  const CONCURRENCY = 5;
+  for (let i = 0; i < dueForSync.length; i += CONCURRENCY) {
+    const batch = dueForSync.slice(i, i + CONCURRENCY);
+    const results = await Promise.allSettled(
+      batch.map(async (integ) => {
         await runIntegrationSync(sb, integ.id);
+        return integ.id;
+      })
+    );
+    for (const r of results) {
+      if (r.status === 'fulfilled') {
         synced++;
-      } catch (err) {
-        console.error(`[cron:integration-sync] Error syncing ${integ.id}:`, err.message);
+      } else {
+        console.error(`[cron:integration-sync] Error syncing:`, r.reason?.message || r.reason);
       }
     }
   }
@@ -1530,9 +1611,10 @@ module.exports = {
   runHistoricalBackfill,
   notifySyncFailure,
 
-  // KPI / Calendar helpers
+  // KPI / Calendar / Activity helpers
   upsertKpiValue,
   upsertCalendarEvent,
+  upsertActivityRecord,
   resolveProfileByEmail,
   shouldSkipProfile,
 

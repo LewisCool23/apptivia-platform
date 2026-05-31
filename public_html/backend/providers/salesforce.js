@@ -216,9 +216,10 @@ async function syncActivities(integration, cursor, sb) {
     : `AND SystemModstamp > ${getISODateDaysAgo(90)}`;
 
   // Broadened query: ALL calls (any status for dials) + completed emails
+  // Includes Description and CallType for activity record detail
   const query = `
     SELECT Id, Subject, TaskSubtype, Status, ActivityDate, OwnerId,
-           CallDurationInSeconds, WhoId, WhatId, SystemModstamp
+           CallDurationInSeconds, CallType, Description, WhoId, WhatId, SystemModstamp
     FROM Task
     WHERE ((TaskSubtype = 'Call') OR (TaskSubtype = 'Email' AND Status = 'Completed'))
     ${sinceFilter}
@@ -237,6 +238,7 @@ async function syncActivities(integration, cursor, sb) {
     throw err;
   }
   const kpiMappings = [];
+  const activityRecords = [];
   const { resolveProfileByEmail, shouldSkipProfile } = require('../integrationService');
 
   for (const record of records) {
@@ -283,12 +285,43 @@ async function syncActivities(integration, cursor, sb) {
         });
         if (discMapping) kpiMappings.push(discMapping);
       }
+
+      // Activity record for crm_activity_records table
+      activityRecords.push({
+        profileId,
+        activityType: 'call',
+        activityDate: record.ActivityDate || record.SystemModstamp,
+        source: 'salesforce',
+        externalId: record.Id,
+        subject: record.Subject || null,
+        direction: record.CallType === 'Inbound' ? 'inbound' : 'outbound',
+        durationSeconds: record.CallDurationInSeconds || null,
+        status: record.Status || null,
+        notes: record.Description ? record.Description.slice(0, 2000) : null,
+        crmUrl: `${creds.instance_url}/${record.Id}`,
+        metadata: { whoId: record.WhoId, whatId: record.WhatId },
+      });
     } else if (record.TaskSubtype === 'Email') {
       const emailMapping = buildKpiMapping({
         profileId, kpiKey: 'emails_sent', rawValue: 1, fromUnit: 'Count',
         source: 'salesforce', externalEventId: `salesforce:task:${record.Id}:emails_sent`, weekStart,
       });
       if (emailMapping) kpiMappings.push(emailMapping);
+
+      // Activity record for email
+      activityRecords.push({
+        profileId,
+        activityType: 'email',
+        activityDate: record.ActivityDate || record.SystemModstamp,
+        source: 'salesforce',
+        externalId: record.Id,
+        subject: record.Subject || null,
+        direction: 'outbound',
+        status: record.Status || null,
+        notes: record.Description ? record.Description.slice(0, 2000) : null,
+        crmUrl: `${creds.instance_url}/${record.Id}`,
+        metadata: { whoId: record.WhoId, whatId: record.WhatId },
+      });
     }
   }
 
@@ -335,6 +368,7 @@ async function syncActivities(integration, cursor, sb) {
     records: allRecords,
     nextCursor: lastStamp || cursor,
     kpiMappings,
+    activityRecords,
   };
 }
 
@@ -702,6 +736,78 @@ function getISODateDaysAgo(days) {
   return d.toISOString();
 }
 
+// ── Sync Tasks (open/overdue Salesforce Tasks → engage_tasks) ────────────────
+
+async function syncTasks(integration, cursor, sb) {
+  const creds = integration.decryptedCreds;
+  const sinceFilter = cursor
+    ? `AND SystemModstamp > ${cursor}`
+    : `AND SystemModstamp > ${getISODateDaysAgo(90)}`;
+
+  const query = `
+    SELECT Id, Subject, Description, Status, Priority, ActivityDate,
+           OwnerId, WhoId, WhatId, SystemModstamp, IsDeleted
+    FROM Task
+    WHERE Status != 'Completed' AND IsDeleted = false
+    ${sinceFilter}
+    ORDER BY SystemModstamp ASC
+    LIMIT 500
+  `.replace(/\s+/g, ' ').trim();
+
+  let records;
+  try {
+    records = await soqlQueryAll(creds, query);
+  } catch (err) {
+    if (isSkippableError(err)) {
+      console.warn(`[salesforce:tasks] Skipping — ${err.message}`);
+      return { records: [], nextCursor: cursor, kpiMappings: [] };
+    }
+    throw err;
+  }
+
+  const { resolveProfileByEmail } = require('../integrationService');
+  const orgId = integration.organization_id;
+  const taskRows = [];
+
+  for (const r of records) {
+    const email = await resolveUserEmail(creds, r.OwnerId);
+    if (!email) continue;
+    const profileId = await resolveProfileByEmail(sb, orgId, email);
+    if (!profileId) continue;
+
+    const priority = (r.Priority || 'Normal').toLowerCase();
+    const mappedPriority = priority === 'high' ? 'high' : priority === 'low' ? 'low' : 'medium';
+    const instanceUrl = creds.instance_url || '';
+
+    taskRows.push({
+      organization_id: orgId,
+      created_by: profileId,
+      assigned_to: profileId,
+      title: r.Subject || 'Salesforce Task',
+      description: r.Description || null,
+      due_date: r.ActivityDate || null,
+      priority: mappedPriority,
+      status: 'pending',
+      source: 'salesforce',
+      external_id: r.Id,
+      external_url: instanceUrl ? `${instanceUrl}/${r.Id}` : null,
+      integration_id: integration.id,
+      synced_at: new Date().toISOString(),
+    });
+  }
+
+  // Upsert to prevent duplicates
+  if (taskRows.length > 0) {
+    const { error } = await sb.from('engage_tasks')
+      .upsert(taskRows, { onConflict: 'organization_id,source,external_id', ignoreDuplicates: false });
+    if (error) console.warn('[salesforce:tasks] Upsert error:', error.message);
+  }
+
+  const nextCursor = records.length > 0 ? records[records.length - 1].SystemModstamp : cursor;
+  console.log(`[salesforce:tasks] Synced ${taskRows.length} tasks`);
+  return { records: taskRows, nextCursor, kpiMappings: [] };
+}
+
 // ── Export ────────────────────────────────────────────────────
 
 module.exports = {
@@ -714,6 +820,7 @@ module.exports = {
     meetings: syncMeetings,
     deals: syncDeals,
     contacts: syncContacts,
+    tasks: syncTasks,
   },
   push: {
     createMeeting,

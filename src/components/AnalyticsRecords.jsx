@@ -67,16 +67,19 @@ const COLUMNS = {
   ],
   calls: [
     { key: 'contact_name',     label: 'Contact' },
-    { key: 'call_date',        label: 'Date',      format: 'date' },
-    { key: 'duration_minutes', label: 'Duration',  format: 'duration' },
-    { key: 'call_direction',   label: 'Direction', format: 'badge' },
-    { key: 'notes',            label: 'Notes',     format: 'truncate' },
+    { key: 'subject',          label: 'Subject' },
+    { key: 'call_date',        label: 'Date',       format: 'date' },
+    { key: 'duration_minutes', label: 'Duration',   format: 'duration' },
+    { key: 'call_direction',   label: 'Direction',  format: 'badge' },
+    { key: 'source',           label: 'Source',      format: 'source_badge' },
+    { key: 'recording_url',    label: 'Recording',  format: 'recording_link' },
+    { key: 'notes',            label: 'Notes',      format: 'truncate' },
   ],
   emails: [
     { key: 'subject',    label: 'Subject' },
     { key: 'to_name',    label: 'To Name' },
     { key: 'to_email',   label: 'To Email' },
-    { key: 'channel',    label: 'Channel',   format: 'badge' },
+    { key: 'channel',    label: 'Source',    format: 'source_badge' },
     { key: 'created_at', label: 'Date',      format: 'date' },
   ],
   deals: [
@@ -219,6 +222,29 @@ function badgeClasses(value) {
   }
 }
 
+// ── Source badge colors ─────────────────────────────────────
+
+function sourceBadgeClasses(source) {
+  switch ((source || '').toLowerCase()) {
+    case 'salesforce': return 'bg-blue-100 text-blue-700';
+    case 'hubspot':    return 'bg-orange-100 text-orange-700';
+    case 'gong':       return 'bg-violet-100 text-violet-700';
+    case 'apollo':     return 'bg-cyan-100 text-cyan-700';
+    case 'outreach':   return 'bg-teal-100 text-teal-700';
+    case 'salesloft':  return 'bg-indigo-100 text-indigo-700';
+    case 'apptivia':   return 'bg-apptivia-coral-tone-50 text-apptivia-coral-tone-700';
+    default:           return 'bg-apptivia-carbon-100 text-apptivia-carbon-600';
+  }
+}
+
+function formatSourceLabel(source) {
+  const labels = {
+    salesforce: 'Salesforce', hubspot: 'HubSpot', gong: 'Gong',
+    apollo: 'Apollo', outreach: 'Outreach', salesloft: 'SalesLoft', apptivia: 'Apptivia',
+  };
+  return labels[(source || '').toLowerCase()] || source || '--';
+}
+
 // ── Cell renderer ──────────────────────────────────────────
 
 function renderCell(value, format) {
@@ -246,6 +272,25 @@ function renderCell(value, format) {
         <span className={`inline-block px-2 py-0.5 rounded-full text-[10px] font-semibold ${badgeClasses(value)}`}>
           {humanizeSnake(value)}
         </span>
+      );
+    case 'source_badge':
+      if (!value) return <span className="text-apptivia-carbon-400">--</span>;
+      return (
+        <span className={`inline-block px-2 py-0.5 rounded-full text-[10px] font-semibold ${sourceBadgeClasses(value)}`}>
+          {formatSourceLabel(value)}
+        </span>
+      );
+    case 'recording_link':
+      if (!value) return <span className="text-apptivia-carbon-400">--</span>;
+      return (
+        <a
+          href={value}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-apptivia-coral hover:text-apptivia-coral-tone-700 underline text-[10px] font-semibold"
+        >
+          Play ▶
+        </a>
       );
     default:
       if (value == null) return '--';

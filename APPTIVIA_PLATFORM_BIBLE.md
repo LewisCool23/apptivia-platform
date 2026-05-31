@@ -1,6 +1,6 @@
 # Apptivia Platform Bible
 > Comprehensive reference for the Apptivia sales performance intelligence platform.
-> Last updated: April 26, 2026 (Aaron Tier 2 modes 1/2/4 shipped, Pipeline Operator CRM deal sync, BP v3.2, 47 signals, 23 crons, 167 migrations, ~110 API endpoints)
+> Last updated: May 29, 2026 (Engage expansion, deal management, task system, org playbooks, onboarding drip, contest org-hardening, signal auto-archive, Aaron Sonnet 4.6 upgrade, 207 migrations, 199 API endpoints, 113 components, 25 hooks, 25 crons)
 
 ---
 
@@ -42,7 +42,7 @@ Apptivia replaces a $180K-$250K RevOps hire with a productized system covering 1
 - **File:** `public_html/backend/server.js` (~8,665 lines — monolith)
 - **Supporting files:** emailService.js, engageService.js, integrationService.js, reportTemplates.js
 - **Provider modules:** `providers/` directory — 10 provider modules auto-loaded at startup (see Section 3.7). Canonical KPI layer in `providers/kpiCanonical.js`
-- **AI:** Anthropic Claude SDK — model IDs: `claude-sonnet-4-20250514` (Aaron, coaching plans, signal classification), `claude-haiku-4-5-20251001` (outreach drafts, follow-up nudges, competitive briefs, IDP auto-drafts)
+- **AI:** Anthropic Claude SDK — model IDs: `claude-sonnet-4-6-20250514` (Aaron, coaching plans, signal classification), `claude-haiku-4-5-20251001` (outreach drafts, follow-up nudges, competitive briefs, IDP auto-drafts)
 - **Database:** Supabase (PostgreSQL with RLS)
 - **Real-time:** Socket.IO server
 - **Scheduling:** Custom CronManager with overlap guards
@@ -78,7 +78,7 @@ Apptivia replaces a $180K-$250K RevOps hire with a productized system covering 1
 
 ## 3. Source File Inventory
 
-### 3.1 Pages (21)
+### 3.1 Pages (23)
 
 | File | Description |
 |------|-------------|
@@ -92,9 +92,11 @@ Apptivia replaces a $180K-$250K RevOps hire with a productized system covering 1
 | `Integrations.jsx` | Integration management — connect/disconnect, OAuth, API keys, sync, history |
 | `LandingPage.jsx` | Public marketing page — hero, features, pricing, demo request |
 | `OrganizationSettings.jsx` | Multi-tab admin — General (ICP, signals, CEP, Sales DNA, wallboard, reports, KPI import), Teams, Billing |
+| `PilotApplication.jsx` | Pilot application form for prospective pilot customers |
 | `PilotDashboard.jsx` | Admin-only pilot validation dashboard — 3 Cornell assumption cards, health score ring, signal breakdown (route: /admin/pilot) |
 | `PermissionsTeams.jsx` | Per-user granular permission toggle grid |
 | `Profile.jsx` | User profile — info, badges, achievements, skillsets, photo upload, CSV/PDF export |
+| `Resources.jsx` | Resources and documentation page for users |
 | `Systems.jsx` | Unified admin — Integrations, Teams, Permissions tabs |
 | `Wallboard.jsx` | Full-screen TV display — 8 auto-rotating slides with confetti and keyboard controls |
 | `UpdatePassword.jsx` | Password update form (post-reset-link) |
@@ -104,20 +106,29 @@ Apptivia replaces a $180K-$250K RevOps hire with a productized system covering 1
 | `TermsOfService.jsx` | Terms of service page |
 | `Security.jsx` | Security practices page |
 
-### 3.2 Components (91)
+### 3.2 Components (113)
 
-#### Top-Level Components (54)
+#### Top-Level Components (77)
 
 | File | Description |
 |------|-------------|
+| `AaronMemoryPanel.jsx` | Aaron rep memory viewer — summaries, goals, challenges, strengths, preferences |
+| `AccountContactsModal.jsx` | Account contacts modal — view/manage contacts associated with account |
 | `AccountIntelligence.jsx` | ICP scoring, buying committee, territory management, AI account analysis |
+| `ActiveDealModal.jsx` | Active deal view/edit — stage, value, close date, contacts, activities |
 | `ActivityFeed.jsx` | Real-time feed — deals, calls, badges, signals with filtering and auto-refresh |
-| `AddTeamMembersModal.tsx` | Add team members to contest with search and department filtering |
+| `AddTeamMembersModal.tsx` | Add team members to contest with search, department filtering, org-scoping |
+| `AddToSequenceModal.jsx` | Add prospect to outreach sequence — sequence picker, step preview |
+| `AnalyticsRecords.jsx` | Analytics record browser — CRM activity and event records with filtering |
 | `ApptiviaLevelInfoModal.jsx` | Educational modal explaining progression system (5 levels, skillsets, achievements) |
+| `ApptiviaLogo.jsx` | Apptivia logo component (rebrand) |
+| `ApptiviaMark.jsx` | Apptivia mark/icon component (rebrand) |
+| `AskAIFooter.jsx` | Ask AI footer bar — inline AI query from any page |
 | `BadgeAssignmentModal.jsx` | Assign badge to team members (manager/admin) |
 | `BadgeCreationModal.jsx` | Create custom badge with icon, color, rarity, points |
 | `BadgeModal.jsx` | Badge detail view with social sharing (email, Twitter, LinkedIn) |
-| `CallIntelligence.jsx` | Call analytics — sentiment, signal detection, talk-time, AI insights |
+| `CallReviewModal.jsx` | Call review — recording playback, AI analysis, sentiment, talk-time |
+| `CelebrationModal.jsx` | Animated celebration overlay for achievements and milestones |
 | `CepConfigSection.jsx` | CEP stage configuration — drag-reorder, color picker, checklists, exit criteria |
 | `ChangePasswordModal.jsx` | In-app password change |
 | `Charts.jsx` | Recharts components — TrendChart, ScoreDistribution, TeamPerformance, HistoricalScores |
@@ -127,45 +138,59 @@ Apptivia replaces a $180K-$250K RevOps hire with a productized system covering 1
 | `ConfirmModal.jsx` | Reusable confirmation dialog (danger/warning/success variants) |
 | `ContestCreationModal.tsx` | Contest creation/edit — template, KPI, dates, rewards, enrollment |
 | `ContestTemplatesModal.jsx` | Pre-built contest template gallery |
+| `CreateDealModal.jsx` | Deal creation form — stage, value, close date, account linking |
+| `CreateTaskModal.jsx` | Task creation for prospect follow-up — type, due date, priority, assignment |
 | `DataDrivenPlaybook.jsx` | AI coaching playbook — 5-week KPI trends, weakness detection, tiered recommendations |
 | `DealCelebration.jsx` | Confetti overlay for closed-won deals (Supabase realtime trigger) |
 | `EditProfileModal.jsx` | Profile edit form |
+| `EngageActivityModal.jsx` | Engage activity log — view activity history for accounts/prospects |
+| `EngageCalendar.jsx` | Calendar view for Engage — meetings, tasks, scheduled outreach |
+| `EngageContacts.jsx` | Contacts tab — detail panel, notes with auto-save, meetings, deal cross-navigation |
 | `EngageContactsPanel.jsx` | Side panel — prospect list with call/email/LinkedIn actions |
 | `EngageDialpadPanel.jsx` | Phone dialpad with numpad and recent call history |
-| `EngageDiscover.jsx` | AI research tool — Apollo search, ICP filtering, enrichment, auto-research from Eye icon, Generate Draft modal with template overrides, multi-angle outreach (4 color-coded draft cards) |
+| `EngageDiscover.jsx` | AI research tool — Apollo search, ICP filtering, enrichment, auto-research, multi-angle outreach (4 draft cards), Hunter email fallback |
 | `ErrorBoundary.jsx` | React error boundary with friendly fallback UI |
 | `ExportReportModal.jsx` | CSV vs PDF export format selector |
 | `InfoTooltip.jsx` | Info icon with hover tooltip |
+| `IntegrationLogo.jsx` | Dynamic integration provider logo component |
 | `KpiImportModal.jsx` | CSV KPI import wizard — upload, map columns, preview, validate, process |
 | `KpiWatchdog.jsx` | Anomaly detection — drops/spikes/stagnation with severity, AI analysis, actions |
 | `LeaderboardModal.tsx` | Full-screen contest leaderboard with rank changes |
 | `Meeting1On1PrepModal.jsx` | 1:1 meeting prep — structured agenda from KPI data, shareable synopsis |
+| `MeetingsModal.jsx` | Meeting detail modal — attendees, agenda, notes, calendar integration |
 | `NotificationPanel.jsx` | Slide-out notification panel with categories, mark-read, delete |
 | `OrgHealthDetailModal.jsx` | Org health dimension detail — score breakdown, data points, navigation |
 | `OrgHealthScorecard.jsx` | 5-dimension health check (Performance, Configuration, Coaching, Engagement, Outbound) |
 | `PageActionBar.jsx` | Unified top-right action bar (Filter, Configure, Export, Notifications, Actions) |
-| `PipelineOperator.jsx` | Deal pipeline — CEP stages, risk flags, AI forecast, CRUD, forecast categories |
-| `PlaybookBuilder.jsx` | AI playbook builder — trigger conditions, action sequences, execution tracking |
+| `PipelineOperator.jsx` | Deal pipeline — CEP stages, risk flags, AI forecast, CRUD, initialDealId cross-tab navigation |
 | `PromptLibrary.jsx` | Prompt template CRUD — categories, AI model tags, variables, search |
 | `PromptTemplateSelector.jsx` | Dropdown selector for prompt templates |
+| `QuickAddSignalModal.jsx` | Quick-add signal to account — type, score, notes |
 | `RightFilterPanel.jsx` | Reusable slide-out right panel wrapper |
 | `SalesDnaConfigSection.jsx` | Sales DNA configuration — methodology, qualification framework, hybrid mapping |
 | `SalesFunnel.jsx` | Visual funnel chart — stage conversions with deltas and benchmarks |
+| `SavedBriefModal.jsx` | AI research brief — save persistence (saved_by_user), enrichment writeback, fit score |
+| `SavedContactsModal.jsx` | Saved contacts browser — manage saved/bookmarked contacts |
+| `ScheduleMeetingModal.jsx` | Schedule meeting — calendar integration, attendee picker, agenda |
 | `ScheduleReportModal.jsx` | Schedule automated email reports — type, frequency, recipients |
 | `ScorecardFilters.tsx` | Multi-select filter bar — date, department, team, member with org-scoping |
 | `SearchWithHistory.jsx` | Search input with localStorage autocomplete history |
+| `SequenceBuilder.jsx` | Multi-step outreach sequence — step editor, channel routing, send windows |
 | `ShareCoachSnapshotModal.jsx` | Coach data sharing — image, clipboard, email |
 | `ShareScorecardSnapshotModal.jsx` | Scorecard data sharing — image, clipboard, email |
 | `ShareSnapshotModal.jsx` | Profile achievement sharing — image, clipboard, email |
+| `SharedAgendaModal.jsx` | Shared 1:1 agenda — collaborative meeting prep with manager |
 | `SignalOutreachModal.jsx` | AI outreach from signal — email/LinkedIn/call scripts |
-| `SignalProspecting.jsx` | Signal-based prospecting — intent signals, tier badges, category filter, action queue |
+| `SignalProspecting.jsx` | Signal-based prospecting — intent signals, tier badges, category filter, action queue, stale signal dismiss |
 | `Skeleton.jsx` | Loading skeleton components with shimmer animation |
 | `SkillsetDetailsModal.tsx` | Skillset deep-dive — achievements, completion progress, difficulty ranking |
+| `TaskPanel.jsx` | Task management panel — create, assign, track, complete tasks |
 | `TwilioDialerWidget.jsx` | Floating in-call widget — status, timer, mute, hang-up |
+| `UpgradePrompt.jsx` | Upgrade prompts — 4 variants (aaron_limit/feature_gate/team_size/generic), 3 contexts |
 | `UserImportModal.jsx` | CSV user import wizard — parse, review, create profiles |
 | `ViewAllBadgesModal.jsx` | Full badge catalog — earned + locked with search and filtering |
 
-#### Coaching Components (18)
+#### Coaching Components (17) + Config Files (3)
 
 | File | Description |
 |------|-------------|
@@ -175,7 +200,7 @@ Apptivia replaces a $180K-$250K RevOps hire with a productized system covering 1
 | `IdpBuilderForm.jsx` | IDP form — milestones, actions, career goals, AI generation |
 | `IdpCard.jsx` | IDP card — status, milestone progress, overdue detection |
 | `IdpDetailModal.jsx` | IDP detail view — milestone toggle, status transitions |
-| `IdpTab.jsx` | IDP management tab — CRUD, templates, AI, filtering |
+| `IdpTab.jsx` | IDP management tab — CRUD, templates, AI, filtering, card/list view toggle |
 | `IdpTemplatesModal.jsx` | IDP template picker |
 | `PlanBuilderForm.jsx` | Coaching plan form — KPIs, goals, milestones, AI generation |
 | `PlanCard.jsx` | Coaching plan card — status, KPIs, assignments, actions |
@@ -184,9 +209,11 @@ Apptivia replaces a $180K-$250K RevOps hire with a productized system covering 1
 | `ReviewBuilderForm.jsx` | Review creation form — type, dates, rep assignment |
 | `ReviewCard.jsx` | Review card — type badge, status, rating |
 | `ReviewDetailModal.jsx` | Review detail — self-assessment, manager scoring, AI drafts |
-| `ReviewTab.jsx` | Review management tab — lifecycle, AI, trends |
+| `ReviewTab.jsx` | Review management tab — lifecycle, AI, trends, card/list view toggle |
 | `SelfAssessmentForm.jsx` | Rep self-assessment for reviews |
-| `ShareCoachingPlanSnapshotModal.jsx` | Coaching plan snapshot sharing |
+| `idpStatusConfig.js` | IDP status definitions — labels, colors, transitions |
+| `planStatusConfig.js` | Coaching plan status definitions — labels, colors, transitions |
+| `reviewStatusConfig.js` | Review status definitions — labels, colors, transitions |
 
 #### Onboarding Components (11)
 
@@ -217,34 +244,31 @@ Apptivia replaces a $180K-$250K RevOps hire with a productized system covering 1
 | `CredentialsModal.jsx` | API key credential entry for integrations |
 | `TeamManagementPanel.jsx` | Team CRUD UI with member assignment |
 
-### 3.3 Hooks (27)
+### 3.3 Hooks (25)
 
 | Hook | Description |
 |------|-------------|
 | `useAccountIntelligence.ts` | Account scoring, buying committee, territory, AI analysis |
+| `useActiveDeal.ts` | Active deal state management — selection, CRUD, linking |
 | `useBilling.ts` | Subscription state, Stripe checkout/portal integration |
-| `useCalendarEvents.ts` | Calendar CRUD from Google/Microsoft integrations |
 | `useCepConfig.ts` | CEP stages + org titles with default seeding |
 | `useCoachData.ts` | Rep profiles with levels, skillsets, achievements, badges |
-| `useContests.ts` | Contest CRUD, leaderboards, enrollment, real-time updates |
+| `useContests.ts` | Contest CRUD, leaderboards, enrollment, real-time updates, org-scoped |
 | `useEngageAgent.ts` | Research/prospecting workflow orchestration (Apollo + Tavily + Claude) |
-| `useEngageNotifications.ts` | Engage-specific notification emission |
+| `useEngageCalendar.ts` | Calendar integration — meetings, scheduling, Google/Microsoft sync |
 | `useHistoricalScores.ts` | 5-week historical scorecard trend data |
+| `useIcpProfiles.ts` | ICP profile management — persona definitions, scoring criteria |
 | `useIcpProspector.ts` | Apollo ICP prospecting with fit scoring |
 | `useIntegrations.ts` | Integration lifecycle — OAuth, credentials, sync, status |
 | `useKpiTemplates.ts` | KPI role templates (global + org-specific) |
-| `useKpiWatchdog.ts` | Anomaly detection — rolling averages, AI recommendations |
-| `useNotificationsDB.ts` | DB-backed notifications with Supabase realtime |
-| `usePageFilters.js` | Centralized role-based filter defaults |
-| `usePageState.js` | Generic page UI state (filter/config panels, refresh) |
+| `useModalBehavior.ts` | Shared modal behavior — ESC close, scroll lock, focus trap |
 | `usePipelineOperator.ts` | Pipeline deals, CEP stages, AI forecast, risk flags |
 | `usePlaybooks.ts` | AI playbook CRUD with trigger conditions |
 | `usePromptLibrary.ts` | Prompt template CRUD and filtering |
-| `useRoleFlags.ts` | Boolean role flags (isAdmin, isManager, canViewTeam, etc.) |
+| `useRecords.ts` | CRM activity records — fetch, filter, paginate |
 | `useSalesDna.ts` | Sales DNA config persistence |
 | `useScorecardData.ts` | Core scorecard — KPI metrics, values, scores, attainment, trends |
-| `useSearchWithDebounce.ts` | Generic debounced search |
-| `useSignalProspecting.ts` | Signal detection, definitions, action queue operations |
+| `useSignalProspecting.ts` | Signal detection, definitions, action queue, stale dismiss |
 | `useTeamManagement.ts` | Team CRUD, member management, org-scoped |
 | `useTitles.ts` | Job titles (global + org-specific) from DB |
 | `useTwilioDialer.ts` | Twilio WebRTC calling — device, state, mute, auto-logging |
@@ -575,7 +599,7 @@ Global data tables allow NULL organization_id for system records.
 
 ---
 
-## 5. API Endpoints (106 total)
+## 5. API Endpoints (199 total)
 
 ### Auth & Onboarding (4)
 | Method | Path | Description |
@@ -729,7 +753,7 @@ Global data tables allow NULL organization_id for system records.
 
 ---
 
-## 6. Cron Jobs (23 total)
+## 6. Cron Jobs (25 total)
 
 | Job | Interval | Description |
 |-----|----------|-------------|
@@ -742,20 +766,22 @@ Global data tables allow NULL organization_id for system records.
 | `achievement-check` | 24h | Evaluate all achievements, award via DB RPC, fire notifications, then run badge auto-award |
 | `coaching-nudges` | 7d | Detect Tier 1 KPIs below 80% for 2+ consecutive weeks → manager notification + IDP auto-draft (3+ weeks). Delivers via `deliverNudge()` (email/slack/in_app). |
 | `follow-up-nudges` | 24h | Detect stale approved/sent signal actions (7+ days) → AI follow-up drafts via Haiku |
-| `competitive-intel` | 7d | Tavily web search for competitor signals → Haiku brief → competitive_brief notification |
 | `leaderboard-refresh` | 6h | Recalculate all active contest leaderboards |
 | `integration-sync` | 30m | Run scheduled syncs for all connected integrations (reduced from 6h for Planera pilot near-real-time feedback) |
+| `competitive-intel` | 7d | Tavily web search for competitor signals → Haiku brief → competitive_brief notification |
 | `integration-push` | 15m | Process push queue for CRM write-back |
 | `sequence-execution` | 1h | Execute pending sequence steps for enrolled prospects |
 | `upgrade-triggers` | 24h | Check Basic-tier orgs for upgrade signals (Aaron limits, signal volume, team size, feature gates) → nudge notification |
-| `competitor-news-scan` | 24h | Tavily news scan for each org's competitor domains → surfaces Competitor Takedown signals with 48h SLA |
-| `outreach-style-memory-recompute` | 7d | Aggregate per-rep edit diffs and dismissal feedback into outreach style preferences for Engage drafting |
+| `notification-cleanup` | 24h | Clean up old read notifications to prevent table bloat |
+| `trial-expiry` | 24h | Detect expiring trials, send reminder notifications, enforce trial-to-paid conversion gates |
+| `outreach-style-memory` | 7d | Aggregate per-rep edit diffs and dismissal feedback into outreach style preferences for Engage drafting |
 | `aaron-outcome-attribution` | 24h | Measure coaching recommendation outcomes at +14d/+30d/+60d windows against KPI baselines |
-| `pre-call-prep-generation` | 1h | Auto-generate Aaron Pre-Call Prep cards for meetings starting within 60 minutes |
-| `daily-briefing-notification` | 24h | Fire daily operating summary notification for reps with upcoming meetings or KPI anomalies |
-| `aaron-memory-consolidation` | 7d | Consolidate per-rep Aaron interaction patterns into persistent memory for personalized coaching |
-| `trial-expiry-check` | 24h | Detect expiring trials, send reminder notifications, enforce trial-to-paid conversion gates |
-| `kpi-metric-history-backfill` | 24h | Ensure kpi_metric_history has complete weekly snapshots for all active reps and KPIs |
+| `competitor-takedown-scan` | 24h | Tavily news scan for each org's competitor domains → surfaces Competitor Takedown signals with 48h SLA |
+| `play-step-execution` | 1h | Execute due org playbook steps — automated coaching and engagement workflows |
+| `pre-call-prep` | 1h | Auto-generate Aaron Pre-Call Prep cards for meetings starting within 60 minutes |
+| `daily-briefing-notify` | 24h | Fire daily operating summary notification for reps with upcoming meetings or KPI anomalies |
+| `onboarding-drip` | 24h | Send onboarding drip emails based on user signup date and engagement milestones |
+| `signal-auto-archive` | 24h | Archive signals with status='new' older than 14 days → status='archived' |
 
 All jobs use CronManager with overlap guards (prevents concurrent runs) + stale guard safety valve (force-clears jobs running > 2× interval).
 
@@ -764,7 +790,7 @@ All jobs use CronManager with overlap guards (prevents concurrent runs) + stale 
 ## 7. Aaron AI Chatbot
 
 ### Architecture
-- **Model:** Claude Sonnet 4 (max_tokens: 800, 30-msg history, 60-msg cap)
+- **Model:** Claude Sonnet 4.6 (max_tokens: 800, 30-msg history, 60-msg cap)
 - **Transport:** Socket.IO events (`chat_message` → `aaron_message`)
 - **14 proprietary B2B sales coaching frameworks**
 - **Framework detection:** `detectFrameworks()` — keyword + preset scoring → top 3 per message
@@ -924,7 +950,7 @@ Categories: Volume (17), Achievement Milestones (5), Revenue (5), Scorecard Exce
 - 9-step onboarding wizard
 - Org health scorecard
 - KPI Watchdog anomaly detection
-- 23 automated cron jobs (including follow-up nudges, competitive intel, integration-push, sequence-execution, pre-call prep gen, aaron outcome attribution, style memory, daily briefing)
+- 25 automated cron jobs (including follow-up nudges, competitive intel, integration-push, sequence-execution, pre-call prep, aaron outcome attribution, style memory, daily briefing, signal auto-archive, onboarding drip, play-step execution, notification cleanup)
 - Website visitor tracking
 - Twilio click-to-call
 - CSV import for KPIs and users
@@ -962,19 +988,73 @@ Categories: Volume (17), Achievement Milestones (5), Revenue (5), Scorecard Exce
 - Salesforce broadened SOQL (April 21, 2026): Changed syncActivities query from `TaskSubtype IN ('Call', 'Email') AND Status = 'Completed'` to `(TaskSubtype = 'Call') OR (TaskSubtype = 'Email' AND Status = 'Completed')` — captures all calls (not just completed) for `dials` KPI. Added separate SOQL for `follow_ups` (non-call/email completed tasks).
 - Aaron Tier 2 — Rep-Facing Daily Surface (April 25, 2026): Mode 1 (Daily Operating Mode — KPI summary, anomalies, pipeline alerts, coaching nudges), Mode 2 (Pre-Call Prep Mode — auto-generated 60min before meetings via calendar integration, renders structured prep cards), Mode 4 (Skill Builder Mode — Sales Performance Pyramid diagnosis with 8 skill dimensions, rubric scoring, practice loops). 2 new tables (`aaron_pre_call_prep_cards`, `aaron_skill_practice_logs`), 2 new crons (`pre-call-prep-generation` hourly, `daily-briefing-notification` daily), 4 new API endpoints, 3 structured output card renderers in AaronChatbot.jsx. Tiered model routing: Haiku for data lookups, Sonnet for coaching responses.
 - Pipeline Operator CRM deal sync (April 26, 2026): All 3 CRM providers (Salesforce, Apollo, HubSpot) now insert deal records into `engage_pipeline_deals` during sync. `upsertDeal()` function in `integrationService.js` follows the `upsertCalendarEvent()` pattern. Migration 167 adds unique index on `(organization_id, source, external_id)` for upsert dedup. Regular (non-partial) index — PostgreSQL treats NULLs as distinct, so manual deals with NULL external_id don't conflict. Apollo lookback extended from 7 to 90 days to capture older deals.
+- Contest leaderboard date filter fix (May 2026): Migration 168 fixes contest leaderboard date filtering edge case
+- Contest secondary KPI support (May 2026): Migration 169 adds secondary KPI tracking for contests
+- Action queue Gmail fields (May 2026): Migration 170 adds Gmail-specific fields to action queue
+- Microsoft Calendar rename (May 2026): Migration 171 renames Microsoft Calendar to Outlook for consistency
+- Profile email signature (May 2026): Migration 172 adds email signature field to profiles
+- RLS and security definer fixes (May 2026): Migration 173 comprehensive RLS policy audit and security definer fixes
+- Engage research persistence (May 2026): Migration 174 adds persistent storage for AI research results
+- Calendar meeting outcomes (May 2026): Migration 175 tracks meeting outcomes (completed, cancelled, rescheduled)
+- Deal management tables (May 2026): Migrations 176-177 add deal management infrastructure — junction tables, linking columns, account associations
+- Call recording and presence (May 2026): Migration 178 adds call recording metadata and presence tracking
+- ICP profiles (May 2026): Migration 179 adds `engage_icp_profiles` table for persona definitions
+- Account page overhaul (May 2026): Migration 180 restructures account-level data for expanded Account Intelligence
+- Notification action URL fix (May 2026): Migration 181 fixes notification action URL routing
+- Website visitor RPC (May 2026): Migration 182 adds `upsert_website_visitor` RPC for idempotent visitor tracking
+- Deal junction org scoping (May 2026): Migration 183 adds organization_id and RLS to deal junction tables
+- Profile FK cascade fix (May 2026): Migration 184 fixes profile foreign key ON DELETE behavior
+- Deal account consolidation (May 2026): Migration 185 consolidates deal-account ID references
+- Super admin support (May 2026): Migration 186 adds super_admin role capabilities for cross-org management
+- Global tasks system (May 2026): Migration 187 adds `global_tasks` table — task creation, assignment, tracking, priority, due dates
+- Prospect tenure and influence scoring (May 2026): Migration 188 adds tenure_months and influence_score to engage_prospects
+- Coaching effectiveness snapshots (May 2026): Migration 189 adds coaching plan effectiveness tracking snapshots
+- Onboarding email drip system (May 2026): Migration 190 adds `onboarding_email_log` table for drip campaign tracking with dedup
+- Org playbooks (May 2026): Migration 191 adds org-level playbook definitions and step execution tracking
+- API keys management (May 2026): Migration 192 adds API key generation, storage, and rotation for org integrations
+- External task sync (May 2026): Migration 193 adds external task sync infrastructure for CRM task bidirectional sync
+- KPI org config history backfill (May 2026): Migration 194 backfills kpi_org_config_history for complete audit trail
+- CRM activity records (May 2026): Migration 195 adds CRM activity record storage for detailed activity logging
+- Deal qualification data (May 2026): Migration 196 adds deal qualification scoring data (MEDDPICC, BANT, etc.)
+- Deal software-in-use tracking (May 2026): Migration 197 tracks software/tech stack associated with deals
+- Task achievements expansion (May 2026): Migration 198 expands achievement definitions for task-based metrics
+- Sequence clicked_at tracking (May 2026): Migration 199 adds click tracking timestamps for sequence emails
+- Prospect secondary fields (May 2026): Migration 200 adds secondary contact fields (phone2, email2, LinkedIn, etc.)
+- Cross-org contest participant cleanup (May 2026): Migration 201 removes orphaned contest participants from cross-org data leak
+- Contest org-hardening (May 2026): Migration 202 cleans orphaned contest data, enables RLS on contest_participants and contest_leaderboards
+- Research report save persistence (May 2026): Migration 203 adds saved_by_user boolean and saved_at timestamp to engage_research_reports
+- Signal auto-archive (May 2026): Migration 204 adds 'archived' status to engage_intent_signals, creates partial index for cleanup queries
+- Fit score enrichment writeback (May 2026): SavedBriefModal now writes fit_score, department, tenure_months, influence_score back to engage_prospects after research completes
+- Notes race condition fix (May 2026): EngageContacts ContactDetailPanel uses onContactUpdate callback to sync notes state with parent, preventing stale read on contact switch
+- Cross-tab deal navigation (May 2026): PipelineOperator accepts initialDealId prop for auto-selection when navigating from contact side panel
+- Hunter email fallback (May 2026): engageService.js researchProspect() adds Hunter.io email fallback after PDL phone fallback
+- Aaron model upgrade (May 2026): SONNET_MODEL updated from claude-sonnet-4-20250514 to claude-sonnet-4-6-20250514
+- Signal auto-archive cron (May 2026): New runSignalAutoArchive() daily cron archives 'new' signals older than 14 days
+- Dismiss stale signals (May 2026): useSignalProspecting.ts exposes dismissStaleSignals() function, SignalProspecting.jsx adds "Dismiss Stale" button
+- Welcome email logging (May 2026): server.js logs welcome emails to onboarding_email_log table after sendWelcomeEmail()
+- Coaching card/list view toggle (May 2026): IdpTab.jsx and ReviewTab.jsx support card and list view modes with localStorage persistence
+- Brief save persistence (May 2026): SavedBriefModal save button persists saved_by_user and saved_at to DB instead of UI-only state
+- Contest Add Members org-scoping fix (May 2026): AddTeamMembersModal.tsx accepts organizationId prop and filters profiles query by org
 
 ### Known Gaps
-- **Admins appear in scorecard** — should be filtered out of KPI views
+- ~~**Admins appear in scorecard**~~ — FIXED (useScorecardData.ts LEADERSHIP_ROLE_FILTER excludes admin/manager/coach)
 - **Team-based achievements** — deferred to Coach phase
 - **3 KPIs not yet wired** — `qualified_leads` (needs syncLeads handler), `pipeline_advanced` (needs stage-change history tracking), `response_time` (needs lead-to-first-activity timestamp correlation)
 - **Gmail email sync** — Google Calendar integration exists (meetings only). No Gmail provider for tracking emails_sent. Planera pilot TBD based on workflow confirmation.
 - **LinkedIn Sales Navigator** — No provider exists (LinkedIn API requires partnership approval). LinkedIn URLs populated via Apollo enrichment. UI references are display-only.
 
+### Schema Warnings (Gap Analysis Wave 6)
+- **kpi_values has NO organization_id column.** All queries must scope through `profiles.organization_id` JOIN. Never filter directly by org_id.
+- **kpi_benchmarks uses `org_id`** (not `organization_id`). Use `org_id` in all queries against this table.
+- **aaron_rep_memory uses `user_id`** — same UUID as `profiles.id` (Supabase auth). Column name differs, not a functional bug.
+- **engage_signal_actions uses `organization_id`** (standard naming, not `org_id`).
+- **aaron_token_logs table** — added in Gap Analysis Wave 3 for queryable AI cost analysis (user_id, org_id, model, tokens, intents).
+
 ---
 
 ## 15. Migration Summary
 
-167 migrations (000–167) applied. Recent additions:
+207 migrations (000–204 + diagnostic) applied. Recent additions:
 - **121** `signal_tier_columns` — `signal_tier` (text) + `respond_by` (timestamptz) on engage_intent_signals, backfill by score
 - **122** `idp_drafts` — new table for AI-auto-drafted IDPs (profile_id, manager_id, organization_id, draft_content jsonb, status, generated_by, trigger_reason, review fields, RLS)
 - **123** `notifications_metadata` — `metadata` (jsonb) column + GIN index + 3 new notification_type enum values (competitive_brief, idp_auto_drafted, follow_up_ready)
@@ -1009,6 +1089,43 @@ Categories: Volume (17), Achievement Milestones (5), Revenue (5), Scorecard Exce
 - **165** `aaron_pre_call_prep_cards` — Pre-Call Prep cards for Aaron Mode 2 (calendar integration, auto-generated 60min before meetings)
 - **166** `aaron_skill_practice_logs` — Skill Practice logs for Aaron Mode 4 (8 skill dimensions, rubric scores, improvements tracking)
 - **167** `pipeline_deal_sync_upsert` — Unique index on engage_pipeline_deals (organization_id, source, external_id) for CRM deal upsert dedup
+- **168** `fix_contest_leaderboard_date_filter` — Contest leaderboard date filtering edge case fix
+- **169** `contest_secondary_kpi` — Secondary KPI tracking for contests
+- **170** `action_queue_gmail_fields` — Gmail-specific fields on action queue entries
+- **171** `rename_microsoft_calendar_to_outlook` — Rename Microsoft Calendar to Outlook for consistency
+- **172** `profile_email_signature` — Email signature field on profiles
+- **173** `fix_rls_and_security_definer` — Comprehensive RLS policy audit and security definer fixes
+- **174** `engage_research_persistence` — Persistent storage for AI research results
+- **175** `calendar_meeting_outcomes` — Meeting outcome tracking (completed, cancelled, rescheduled)
+- **176** `deal_management_tables` — Deal management infrastructure — junction tables, contact linking
+- **177** `deal_linking_columns` — Additional deal-to-account and deal-to-contact linking columns
+- **178** `call_recording_and_presence` — Call recording metadata and user presence tracking
+- **179** `engage_icp_profiles` — ICP profile/persona definitions table
+- **180** `account_page_overhaul` — Account-level data restructure for expanded Account Intelligence
+- **181** `notification_action_url_fix` — Notification action URL routing correction
+- **182** `upsert_website_visitor_rpc` — Idempotent website visitor upsert RPC function
+- **183** `deal_junction_org_id_and_rls` — Organization ID + RLS on deal junction tables
+- **184** `profile_fk_on_delete` — Profile foreign key ON DELETE cascade behavior fix
+- **185** `consolidate_deal_account_id` — Consolidate deal-account ID references
+- **186** `super_admin` — Super admin role for cross-org management
+- **187** `global_tasks` — Global tasks table with assignment, priority, due dates
+- **188** `prospect_tenure_influence` — Tenure months and influence score on engage_prospects
+- **189** `coaching_effectiveness_snapshots` — Coaching plan effectiveness tracking snapshots
+- **190** `onboarding_emails` — Onboarding email log table for drip campaign tracking with dedup
+- **191** `org_playbooks` — Org-level playbook definitions and step execution tracking
+- **192** `api_keys` — API key generation, storage, and rotation for org integrations
+- **193** `external_task_sync` — External task sync infrastructure for CRM task bidirectional sync
+- **194** `backfill_kpi_org_config_history` — Complete audit trail backfill for KPI org config history
+- **195** `crm_activity_records` — CRM activity record storage for detailed activity logging
+- **196** `deal_qualification_data` — Deal qualification scoring (MEDDPICC, BANT, etc.)
+- **197** `deal_software_in_use` — Software/tech stack tracking associated with deals
+- **198** `task_achievements_expansion` — Achievement definition expansion for task-based metrics
+- **199** `sequence_clicked_at` — Click tracking timestamps for sequence emails
+- **200** `prospect_secondary_fields` — Secondary contact fields (phone2, email2, LinkedIn, etc.)
+- **201** `cleanup_cross_org_contest_participants` — Remove orphaned contest participants from cross-org data leak
+- **202** `contest_org_hardening` — Clean orphaned contest data, enable RLS on contest_participants/contest_leaderboards
+- **203** `research_report_saved` — saved_by_user boolean + saved_at timestamp on engage_research_reports
+- **204** `signal_auto_archive` — 'archived' status for engage_intent_signals + partial cleanup index
 
 All migrations cover:
 - Core schema (profiles, teams, organizations)
@@ -1026,4 +1143,4 @@ All migrations cover:
 
 ---
 
-*This document was generated from the Apptivia codebase and updated April 26, 2026 (migrations 000–167, 10 provider modules, 35 canonical KPIs, ~110 API endpoints, 23 cron jobs, 47 signals, Aaron Tier 2 modes shipped, Pipeline Operator CRM deal sync). For implementation-specific details, refer to the source files directly.*
+*This document was generated from the Apptivia codebase and updated May 29, 2026 (migrations 000–204, 10 provider modules, 35 canonical KPIs, 199 API endpoints, 25 cron jobs, 47 signals, 113 components, 25 hooks, 23 pages, Aaron Sonnet 4.6, deal management, global tasks, org playbooks, onboarding drip, signal auto-archive, contest org-hardening). For implementation-specific details, refer to the source files directly.*

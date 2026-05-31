@@ -1,5 +1,6 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { X, Eye, RefreshCw, Sparkles, ChevronDown, ChevronRight, Clock, Loader2, Search, User, Briefcase, Building2, Target, MessageSquare, Phone, Mail, Linkedin, ExternalLink, AlertCircle } from 'lucide-react';
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
+import { X, Eye, RefreshCw, Sparkles, ChevronDown, ChevronRight, Clock, Loader2, Search, User, Briefcase, Building2, Target, MessageSquare, Phone, Mail, Linkedin, ExternalLink, AlertCircle, Save, CheckCircle } from 'lucide-react';
+import toast from 'react-hot-toast';
 import { supabase } from '../supabaseClient';
 import { engageApi, engageDb } from '../utils/engageApi';
 import { useAuth } from '../AuthContext';
@@ -36,6 +37,8 @@ export default function SavedBriefModal({ isOpen, onClose, prospect, organizatio
   const [loading, setLoading] = useState(false);
   const [researching, setResearching] = useState(false);
   const [error, setError] = useState(null);
+  const [briefSaved, setBriefSaved] = useState(false);
+  const autoTriggeredRef = useRef(false);
 
   const prospectName = useMemo(() => {
     if (!prospect) return 'Unknown';
@@ -71,6 +74,7 @@ export default function SavedBriefModal({ isOpen, onClose, prospect, organizatio
       });
 
       setReport(match || null);
+      setBriefSaved(match?.saved_by_user || false);
     } catch (err) {
       console.error('Failed to load cached report:', err);
     } finally {
@@ -80,13 +84,24 @@ export default function SavedBriefModal({ isOpen, onClose, prospect, organizatio
 
   useEffect(() => {
     if (isOpen && prospect) {
+      autoTriggeredRef.current = false;
+      setBriefSaved(false);
       lookupCachedReport();
     }
     if (!isOpen) {
       setReport(null);
       setError(null);
+      autoTriggeredRef.current = false;
     }
   }, [isOpen, prospect, lookupCachedReport]);
+
+  // Auto-trigger research once when no cached brief exists
+  useEffect(() => {
+    if (isOpen && !loading && !report && !researching && !error && prospect && !autoTriggeredRef.current) {
+      autoTriggeredRef.current = true;
+      handleResearch();
+    }
+  }, [isOpen, loading, report, researching, error, prospect]);
 
   const handleResearch = async () => {
     if (!prospect) return;
@@ -107,6 +122,7 @@ export default function SavedBriefModal({ isOpen, onClose, prospect, organizatio
       await engageDb.saveReport({
         organization_id: organizationId,
         report_type: 'prospect',
+        prospect_id: prospect.id || undefined,
         title: `Prospect Brief: ${prospectName}`,
         subject_name: prospectName,
         content: { prospect: result.prospect, brief: result.brief, data_sources: result.data_sources, tokens_used: result.tokens_used },
@@ -116,9 +132,20 @@ export default function SavedBriefModal({ isOpen, onClose, prospect, organizatio
         created_by: user?.id,
       });
 
-      // Update last_researched_at on the prospect
+      // Write enrichment data back to the prospect row
       if (prospect.id) {
-        await supabase.from('engage_prospects').update({ last_researched_at: new Date().toISOString() }).eq('id', prospect.id);
+        const prospectUpdates = { last_researched_at: new Date().toISOString() };
+        // Fit score from AI brief
+        if (result.brief?.fit_score) prospectUpdates.fit_score = result.brief.fit_score;
+        // Enrichment fields from person data
+        const person = result.prospect || {};
+        if (person.department) prospectUpdates.department = person.department;
+        if (person.tenure_months) prospectUpdates.tenure_months = person.tenure_months;
+        // Derive influence score from seniority
+        const seniorityMap = { c_suite: 95, vp: 85, director: 70, manager: 55, senior: 40, entry: 20 };
+        const sen = (person.seniority || person.seniority_level || '').toLowerCase();
+        if (seniorityMap[sen]) prospectUpdates.influence_score = seniorityMap[sen];
+        await supabase.from('engage_prospects').update(prospectUpdates).eq('id', prospect.id);
       }
 
       // Reload the cached report
@@ -373,6 +400,44 @@ export default function SavedBriefModal({ isOpen, onClose, prospect, organizatio
             </>
           )}
         </div>
+
+        {/* Footer — Save / Refresh actions when brief is displayed */}
+        {!loading && report && brief && !researching && (
+          <div className="px-6 py-3 border-t border-apptivia-carbon-100 flex items-center justify-between flex-shrink-0 bg-white">
+            <div className="text-[10px] text-apptivia-carbon-400">
+              {briefSaved ? (
+                <span className="flex items-center gap-1 text-emerald-600"><CheckCircle size={10} /> Saved{report?.saved_at ? ` ${new Date(report.saved_at).toLocaleDateString()}` : ''}</span>
+              ) : (
+                <span>Brief auto-saved on research</span>
+              )}
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={async () => {
+                  if (!report?.id) return;
+                  const { error } = await supabase.from('engage_research_reports')
+                    .update({ saved_by_user: true, saved_at: new Date().toISOString() })
+                    .eq('id', report.id);
+                  if (error) { toast.error('Failed to save brief'); return; }
+                  setBriefSaved(true);
+                  setReport(prev => prev ? { ...prev, saved_by_user: true, saved_at: new Date().toISOString() } : prev);
+                  toast.success('Brief saved');
+                }}
+                disabled={briefSaved}
+                className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${briefSaved ? 'text-apptivia-carbon-400 bg-apptivia-carbon-100 cursor-not-allowed' : 'text-apptivia-ink bg-apptivia-paper border border-apptivia-carbon-200 hover:bg-apptivia-carbon-100'}`}
+              >
+                <Save size={12} /> {briefSaved ? 'Saved' : 'Save Brief'}
+              </button>
+              <button
+                onClick={() => { autoTriggeredRef.current = false; handleResearch(); }}
+                disabled={researching}
+                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-white bg-apptivia-coral rounded-lg hover:bg-apptivia-coral/90 transition-colors disabled:opacity-50"
+              >
+                <RefreshCw size={12} className={researching ? 'animate-spin' : ''} /> Refresh Brief
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

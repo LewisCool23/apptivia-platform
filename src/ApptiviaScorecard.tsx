@@ -669,9 +669,13 @@ const ApptiviaScorecard: React.FC = () => {
             const val = sums[k.id] || 0;
             const dir = k.direction || 'higher';
             const pct = k.goal > 0
-              ? (dir === 'lower' ? (val > 0 ? (k.goal / val) * 100 : 200) : (val / k.goal) * 100)
+              ? (dir === 'lower' ? (val > 0 ? Math.min((k.goal / val) * 100, 200) : null) : Math.min((val / k.goal) * 100, 200))
               : 0;
-            repTotal += pct * (k.weight || 0);
+            if (pct !== null) {
+              repTotal += pct * (k.weight || 0);
+            } else {
+              totalWeight -= (k.weight || 0); // exclude no-data KPIs from denominator
+            }
           });
           const score = totalWeight > 0 ? Math.round(repTotal / totalWeight) : 0;
           return { week: `${wEnd.getMonth() + 1}/${wEnd.getDate()}`, score };

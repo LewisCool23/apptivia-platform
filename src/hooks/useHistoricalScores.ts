@@ -41,22 +41,28 @@ export function useHistoricalScores(
         setLoading(true);
         setError(null);
 
-        // Current scorecard KPI list — org-scoped via kpi_org_configs.
-        // Falls back to global kpi_metrics if no organizationId.
+        // Scorecard KPI list — org-scoped via kpi_org_configs.
+        // Fetch ALL configs (no is_active/show_on_scorecard filter) so we can
+        // include KPIs that were historically on the scorecard but have since
+        // been deactivated. Point-in-time filtering is applied after overlaying
+        // kpi_org_config_history.
         let scorecardKpis: any[] = [];
+        let allOrgConfigs: any[] = []; // full catalog for history overlay
         if (organizationId) {
           const { data, error: kpiError } = await supabase
             .from('kpi_org_configs')
-            .select('kpi_id, goal, weight, show_on_scorecard, kpi_metrics!inner(id, direction)')
-            .eq('organization_id', organizationId)
-            .eq('is_active', true)
-            .eq('show_on_scorecard', true);
+            .select('id, kpi_id, goal, weight, is_active, show_on_scorecard, kpi_metrics!inner(id, direction)')
+            .eq('organization_id', organizationId);
           if (kpiError) throw kpiError;
-          scorecardKpis = (data || []).map((c: any) => ({
+          allOrgConfigs = data || [];
+          scorecardKpis = allOrgConfigs.map((c: any) => ({
+            orgConfigId: c.id,
             id: (c.kpi_metrics as any).id,
             weight: c.weight,
             goal: c.goal,
             direction: (c.kpi_metrics as any).direction,
+            is_active: c.is_active,
+            show_on_scorecard: c.show_on_scorecard,
           }));
         } else {
           const { data, error: kpiError } = await supabase
@@ -140,23 +146,58 @@ export function useHistoricalScores(
         const rangeStart = isAllTime ? chartRangeStart : (start < chartRangeStart ? start : chartRangeStart);
         const rangeEnd = endDate;
 
-        const { data: historyRows, error: historyError } = await supabase
-          .from('kpi_metric_history')
-          .select('kpi_id, goal, weight, direction, valid_from, valid_to')
-          .in('kpi_id', kpiIds)
-          .lte('valid_from', rangeEnd.toISOString())
-          .or(`valid_to.is.null,valid_to.gte.${rangeStart.toISOString()}`);
+        // Org-scoped: use kpi_org_config_history for per-org point-in-time config.
+        // Global fallback: use kpi_metric_history (no org context).
+        let historyRows: any[] = [];
+        if (organizationId) {
+          const { data, error: histErr } = await supabase
+            .from('kpi_org_config_history')
+            .select('org_config_id, kpi_id, goal, weight, show_on_scorecard, is_active, valid_from, valid_to')
+            .eq('organization_id', organizationId)
+            .lte('valid_from', rangeEnd.toISOString())
+            .or(`valid_to.is.null,valid_to.gte.${rangeStart.toISOString()}`);
+          if (histErr) throw histErr;
+          historyRows = data || [];
+        } else {
+          const { data, error: histErr } = await supabase
+            .from('kpi_metric_history')
+            .select('kpi_id, goal, weight, direction, valid_from, valid_to')
+            .in('kpi_id', kpiIds)
+            .lte('valid_from', rangeEnd.toISOString())
+            .or(`valid_to.is.null,valid_to.gte.${rangeStart.toISOString()}`);
+          if (histErr) throw histErr;
+          historyRows = data || [];
+        }
 
-        if (historyError) throw historyError;
-
+        // getConfigAt returns the config in effect for a KPI at a specific date.
+        // For org-scoped, looks up kpi_org_config_history by kpi_id.
+        // Falls back to the current scorecardKpis if no history match.
         function getConfigAt(kpiId: string, atDate: Date) {
-          const row = (historyRows || []).find((h: any) =>
+          const row = historyRows.find((h: any) =>
             h.kpi_id === kpiId &&
             new Date(h.valid_from) <= atDate &&
             (h.valid_to === null || new Date(h.valid_to) > atDate)
           );
-          if (row) return row;
+          if (row) {
+            return {
+              goal: row.goal,
+              weight: row.weight,
+              direction: row.direction || (scorecardKpis.find((k: any) => k.id === kpiId) as any)?.direction || 'higher',
+              show_on_scorecard: row.show_on_scorecard ?? true,
+              is_active: row.is_active ?? true,
+            };
+          }
           return (scorecardKpis || []).find((k: any) => k.id === kpiId);
+        }
+
+        // Determine which KPIs were on the scorecard at each week boundary.
+        // For the trend chart, filter to only KPIs active at chart start.
+        // This prevents removed KPIs from appearing in the denominator.
+        function getActiveScorecardKpiIds(atDate: Date): string[] {
+          return kpiIds.filter((id: string) => {
+            const cfg = getConfigAt(id, atDate);
+            return cfg && cfg.is_active !== false && cfg.show_on_scorecard !== false;
+          });
         }
 
         // ── H3 fix: Single batched query for all weeks ────────────────────────
@@ -211,9 +252,12 @@ export function useHistoricalScores(
               kpiMap.set(kv.kpi_id, (kpiMap.get(kv.kpi_id) || 0) + (kv.value || 0));
             });
 
+            // Determine which KPIs were active on the scorecard during this week
+            const weekActiveKpiIds = getActiveScorecardKpiIds(weekEnd);
+
             // Compute week-specific totalWeight from historical config
             let weekTotalWeight = 0;
-            kpiIds.forEach((id: string) => {
+            weekActiveKpiIds.forEach((id: string) => {
               const config = getConfigAt(id, weekEnd);
               if (config) weekTotalWeight += (config.weight || 0);
             });
@@ -224,7 +268,7 @@ export function useHistoricalScores(
             const perRepScores: Record<string, number> = {};
             profileIds.forEach((repId: string) => {
               const repItems: Array<{ percentage: number; weight: number }> = [];
-              kpiIds.forEach((kpiId: string) => {
+              weekActiveKpiIds.forEach((kpiId: string) => {
                 const config = getConfigAt(kpiId, weekEnd);
                 if (!config) return;
                 const value = repKpiSums.get(repId)?.get(kpiId) || 0;

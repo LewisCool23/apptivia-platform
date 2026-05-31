@@ -116,6 +116,7 @@ async function syncActivities(integration, cursor) {
   const result = await outreachGet(creds, path);
   const records = result.data || [];
   const kpiMappings = [];
+  const activityRecords = [];
   const { resolveProfileByEmail } = require('../integrationService');
 
   for (const record of records) {
@@ -128,28 +129,63 @@ async function syncActivities(integration, cursor) {
 
     const weekStart = getWeekStart(attrs.updatedAt || attrs.createdAt);
 
-    if (attrs.activityType === 'call' && attrs.disposition === 'Answered') {
-      const connectMapping = buildKpiMapping({
-        profileId, kpiKey: 'call_connects', rawValue: 1, fromUnit: 'Count',
-        source: 'outreach', externalEventId: `outreach:activity:${record.id}:call_connects`, weekStart,
+    if (attrs.activityType === 'call') {
+      // Activity record for all calls
+      activityRecords.push({
+        profileId,
+        activityType: 'call',
+        activityDate: attrs.updatedAt || attrs.createdAt,
+        source: 'outreach',
+        externalId: String(record.id),
+        subject: attrs.taskNote || attrs.subject || null,
+        direction: attrs.direction === 'in' || attrs.direction === 'inbound' ? 'inbound' : 'outbound',
+        durationSeconds: attrs.duration || null,
+        status: attrs.disposition || null,
+        notes: attrs.body || null,
+        recordingUrl: attrs.recordingUrl || attrs.voicemailUrl || null,
+        recordingSource: attrs.recordingUrl ? 'outreach' : null,
+        metadata: {},
       });
-      if (connectMapping) kpiMappings.push(connectMapping);
 
-      if (attrs.duration > 0) {
-        const talkTimeMapping = buildKpiMapping({
-          profileId, kpiKey: 'talk_time_minutes', rawValue: attrs.duration, fromUnit: 'Seconds',
-          source: 'outreach', externalEventId: `outreach:activity:${record.id}:talk_time`, weekStart,
+      if (attrs.disposition === 'Answered') {
+        const connectMapping = buildKpiMapping({
+          profileId, kpiKey: 'call_connects', rawValue: 1, fromUnit: 'Count',
+          source: 'outreach', externalEventId: `outreach:activity:${record.id}:call_connects`, weekStart,
         });
-        if (talkTimeMapping) kpiMappings.push(talkTimeMapping);
+        if (connectMapping) kpiMappings.push(connectMapping);
+
+        if (attrs.duration > 0) {
+          const talkTimeMapping = buildKpiMapping({
+            profileId, kpiKey: 'talk_time_minutes', rawValue: attrs.duration, fromUnit: 'Seconds',
+            source: 'outreach', externalEventId: `outreach:activity:${record.id}:talk_time`, weekStart,
+          });
+          if (talkTimeMapping) kpiMappings.push(talkTimeMapping);
+        }
       }
     }
 
-    if (attrs.activityType === 'email' && attrs.direction === 'reply') {
-      const replyMapping = buildKpiMapping({
-        profileId, kpiKey: 'sequence_replies', rawValue: 1, fromUnit: 'Count',
-        source: 'outreach', externalEventId: `outreach:activity:${record.id}:sequence_replies`, weekStart,
+    if (attrs.activityType === 'email') {
+      // Activity record for email activities
+      activityRecords.push({
+        profileId,
+        activityType: 'email',
+        activityDate: attrs.updatedAt || attrs.createdAt,
+        source: 'outreach',
+        externalId: `activity_${record.id}`,
+        subject: attrs.subject || null,
+        direction: attrs.direction === 'in' || attrs.direction === 'inbound' ? 'inbound' : 'outbound',
+        status: attrs.direction === 'reply' ? 'replied' : 'sent',
+        notes: attrs.body ? attrs.body.slice(0, 500) : null,
+        metadata: {},
       });
-      if (replyMapping) kpiMappings.push(replyMapping);
+
+      if (attrs.direction === 'reply') {
+        const replyMapping = buildKpiMapping({
+          profileId, kpiKey: 'sequence_replies', rawValue: 1, fromUnit: 'Count',
+          source: 'outreach', externalEventId: `outreach:activity:${record.id}:sequence_replies`, weekStart,
+        });
+        if (replyMapping) kpiMappings.push(replyMapping);
+      }
     }
 
     if (attrs.activityType === 'sequence' || attrs.action === 'sequence_start') {
@@ -162,7 +198,7 @@ async function syncActivities(integration, cursor) {
   }
 
   const lastRecord = records[records.length - 1];
-  return { records, nextCursor: lastRecord?.attributes?.updatedAt || cursor, kpiMappings };
+  return { records, nextCursor: lastRecord?.attributes?.updatedAt || cursor, kpiMappings, activityRecords };
 }
 
 // ── Sync: Meetings ───────────────────────────────────────────
@@ -257,6 +293,8 @@ async function syncEmails(integration, cursor) {
   const kpiMappings = [];
   const { resolveProfileByEmail } = require('../integrationService');
 
+  const activityRecords = [];
+
   for (const record of records) {
     const attrs = record.attributes || {};
     const ownerEmail = attrs.userEmail || null;
@@ -264,6 +302,19 @@ async function syncEmails(integration, cursor) {
 
     const profileId = await resolveProfileByEmail(null, integration.organization_id, ownerEmail);
     if (!profileId) continue;
+
+    // Activity record for mailing
+    activityRecords.push({
+      profileId,
+      activityType: 'email',
+      activityDate: attrs.updatedAt || attrs.createdAt,
+      source: 'outreach',
+      externalId: `mailing_${record.id}`,
+      subject: attrs.subject || null,
+      direction: 'outbound',
+      status: attrs.openedAt ? 'opened' : 'sent',
+      metadata: { openCount: attrs.openCount },
+    });
 
     if (attrs.openCount > 0 || attrs.openedAt) {
       const openedMapping = buildKpiMapping({
@@ -276,29 +327,29 @@ async function syncEmails(integration, cursor) {
   }
 
   const lastRecord = records[records.length - 1];
-  return { records, nextCursor: lastRecord?.attributes?.updatedAt || cursor, kpiMappings };
+  return { records, nextCursor: lastRecord?.attributes?.updatedAt || cursor, kpiMappings, activityRecords };
 }
 
 // ── Sync: Tasks (Completed) ─────────────────────────────────
 
-async function syncTasks(integration, cursor) {
+async function syncTasks(integration, cursor, sb) {
   const creds = integration.decryptedCreds;
-  let path = '/tasks?page[size]=100&sort=updatedAt&filter[state]=complete';
-  if (cursor) path += `&filter[updatedAt]=${cursor}..`;
-
-  const result = await outreachGet(creds, path);
-  const records = result.data || [];
   const kpiMappings = [];
   const { resolveProfileByEmail } = require('../integrationService');
+  const orgId = integration.organization_id;
 
-  for (const record of records) {
+  // Sync completed tasks for KPI credit
+  let completedPath = '/tasks?page[size]=100&sort=updatedAt&filter[state]=complete';
+  if (cursor) completedPath += `&filter[updatedAt]=${cursor}..`;
+  const completedResult = await outreachGet(creds, completedPath);
+  const completedRecords = completedResult.data || [];
+
+  for (const record of completedRecords) {
     const attrs = record.attributes || {};
     const ownerEmail = attrs.ownerEmail || attrs.userEmail || null;
     if (!ownerEmail) continue;
-
-    const profileId = await resolveProfileByEmail(null, integration.organization_id, ownerEmail);
+    const profileId = await resolveProfileByEmail(sb, orgId, ownerEmail);
     if (!profileId) continue;
-
     const taskMapping = buildKpiMapping({
       profileId, kpiKey: 'tasks_completed', rawValue: 1, fromUnit: 'Count',
       source: 'outreach', externalEventId: `outreach:task:${record.id}:tasks_completed`,
@@ -307,8 +358,42 @@ async function syncTasks(integration, cursor) {
     if (taskMapping) kpiMappings.push(taskMapping);
   }
 
-  const lastRecord = records[records.length - 1];
-  return { records, nextCursor: lastRecord?.attributes?.updatedAt || cursor, kpiMappings };
+  // Sync open tasks into engage_tasks for TaskPanel display
+  let openPath = '/tasks?page[size]=100&sort=updatedAt&filter[state]=pending,incomplete';
+  if (cursor) openPath += `&filter[updatedAt]=${cursor}..`;
+  let openRecords = [];
+  try {
+    const openResult = await outreachGet(creds, openPath);
+    openRecords = openResult.data || [];
+  } catch { /* skip if filter not supported */ }
+
+  const taskRows = [];
+  for (const record of openRecords) {
+    const attrs = record.attributes || {};
+    const ownerEmail = attrs.ownerEmail || attrs.userEmail || null;
+    if (!ownerEmail) continue;
+    const profileId = await resolveProfileByEmail(sb, orgId, ownerEmail);
+    if (!profileId) continue;
+    taskRows.push({
+      organization_id: orgId, created_by: profileId, assigned_to: profileId,
+      title: attrs.subject || 'Outreach Task', description: attrs.note || null,
+      due_date: attrs.dueAt ? attrs.dueAt.slice(0, 10) : null,
+      priority: 'medium', status: 'pending', source: 'outreach',
+      external_id: String(record.id), external_url: null,
+      integration_id: integration.id, synced_at: new Date().toISOString(),
+    });
+  }
+
+  if (taskRows.length > 0 && sb) {
+    const { error } = await sb.from('engage_tasks')
+      .upsert(taskRows, { onConflict: 'organization_id,source,external_id', ignoreDuplicates: false });
+    if (error) console.warn('[outreach:tasks] Upsert error:', error.message);
+  }
+
+  const allRecords = [...completedRecords, ...openRecords];
+  const lastRecord = allRecords[allRecords.length - 1];
+  console.log(`[outreach:tasks] Synced ${taskRows.length} open, ${completedRecords.length} completed`);
+  return { records: allRecords, nextCursor: lastRecord?.attributes?.updatedAt || cursor, kpiMappings };
 }
 
 // ── Push: Create Task ────────────────────────────────────────

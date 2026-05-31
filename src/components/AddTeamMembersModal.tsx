@@ -23,6 +23,7 @@ interface AddTeamMembersModalProps {
   contestName: string;
   existingParticipantIds: string[];
   onMembersAdded: () => void;
+  organizationId?: string;
 }
 
 export default function AddTeamMembersModal({
@@ -32,6 +33,7 @@ export default function AddTeamMembersModal({
   contestName,
   existingParticipantIds,
   onMembersAdded,
+  organizationId,
 }: AddTeamMembersModalProps) {
   useModalBehavior(isOpen, onClose);
   const toast = useToast();
@@ -54,10 +56,11 @@ export default function AddTeamMembersModal({
   const fetchProfiles = async () => {
     try {
       setLoading(true);
-      const { data, error } = await supabase
+      let query = supabase
         .from('profiles')
-        .select('id, first_name, last_name, email, team_id, role, team:teams(name)')
-        .order('first_name');
+        .select('id, first_name, last_name, email, team_id, role, team:teams(name)');
+      if (organizationId) query = query.eq('organization_id', organizationId);
+      const { data, error } = await query.order('first_name');
 
       if (error) throw error;
 

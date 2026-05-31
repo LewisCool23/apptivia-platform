@@ -4,10 +4,12 @@ import { supabase } from '../supabaseClient';
 import { useModalBehavior } from '../hooks/useModalBehavior';
 
 const DEFAULT_STAGES = [
-  { stage_key: 'discovery', stage_name: 'Discovery', win_probability: 20 },
-  { stage_key: 'qualification', stage_name: 'Qualification', win_probability: 40 },
-  { stage_key: 'proposal', stage_name: 'Proposal', win_probability: 60 },
-  { stage_key: 'negotiation', stage_name: 'Negotiation', win_probability: 80 },
+  { stage_key: 'lead', stage_name: 'Lead', win_probability: 5 },
+  { stage_key: 'opp_creation', stage_name: 'Opp Creation', win_probability: 10 },
+  { stage_key: 'qualification', stage_name: 'Qualification', win_probability: 20 },
+  { stage_key: 'best_case', stage_name: 'Best Case', win_probability: 40 },
+  { stage_key: 'forecast', stage_name: 'Forecast', win_probability: 60 },
+  { stage_key: 'commit', stage_name: 'Commit', win_probability: 80 },
 ];
 
 export default function CreateDealModal({ isOpen, onClose, organizationId, userId, cepStages, account, onDealCreated }) {

@@ -380,20 +380,12 @@ export function useSignalProspecting(organizationId: string, userId?: string) {
       const signals: IntentSignal[] = data || [];
       const summary = computeSignalSummary(signals);
 
-      // Hydrate companyContacts cache from raw_data.suggested_contacts (no extra API calls)
-      const contactsFromDb: Record<string, SuggestedContact[]> = {};
-      signals.forEach((s) => {
-        if (s.company_name && s.raw_data?.suggested_contacts?.length > 0) {
-          if (!contactsFromDb[s.company_name]) {
-            contactsFromDb[s.company_name] = s.raw_data.suggested_contacts;
-          }
-        }
-      });
-
+      // Don't pre-hydrate contacts from stale DB cache — fetch fresh on demand
+      // so contacts always reflect the org's current ICP job title configuration
       patch({
         signals,
         summary,
-        companyContacts: contactsFromDb,
+        companyContacts: {},
         loading: false,
       });
     } catch (err: any) {
@@ -662,6 +654,30 @@ export function useSignalProspecting(organizationId: string, userId?: string) {
       patch({ error: err.message, loading: false });
     }
   }, [organizationId, patch, state.signals]);
+
+  // ── Dismiss stale signals (>7 days with status 'new') ────
+
+  const dismissStaleSignals = useCallback(async () => {
+    if (!organizationId) return;
+    const cutoff = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+    try {
+      await supabase
+        .from('engage_intent_signals')
+        .update({ status: 'dismissed' })
+        .eq('organization_id', organizationId)
+        .eq('status', 'new')
+        .lt('detected_at', cutoff);
+
+      const updatedSignals = state.signals.map((s: IntentSignal) =>
+        s.status === 'new' && s.detected_at && new Date(s.detected_at) < new Date(cutoff)
+          ? { ...s, status: 'dismissed' as const }
+          : s
+      );
+      patch({ signals: updatedSignals, summary: computeSignalSummary(updatedSignals) });
+    } catch (err: any) {
+      patch({ error: err.message });
+    }
+  }, [organizationId, state.signals, patch]);
 
   // ── Fetch signal definitions (universal + org-specific) ──
 
@@ -1043,6 +1059,7 @@ export function useSignalProspecting(organizationId: string, userId?: string) {
     updateSignalStatus,
     dismissSignal,
     dismissAllSignals,
+    dismissStaleSignals,
     setScanConfig,
     clearLastScan,
     clearAllSignals,

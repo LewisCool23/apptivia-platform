@@ -196,7 +196,7 @@ async function resolveOwnerEmail(creds, ownerId) {
 
 async function syncActivities(integration, cursor, sb) {
   const creds = integration.decryptedCreds;
-  const properties = 'hs_call_status,hs_call_duration,hs_timestamp,hubspot_owner_id,hs_call_direction';
+  const properties = 'hs_call_status,hs_call_duration,hs_timestamp,hubspot_owner_id,hs_call_direction,hs_call_title,hs_call_body,hs_call_recording_url';
 
   const params = {
     properties,
@@ -208,6 +208,7 @@ async function syncActivities(integration, cursor, sb) {
   const result = await hsGet(creds, '/crm/v3/objects/calls', params);
   const records = result.results || [];
   const kpiMappings = [];
+  const activityRecords = [];
   const { resolveProfileByEmail, shouldSkipProfile } = require('../integrationService');
 
   for (const record of records) {
@@ -247,10 +248,28 @@ async function syncActivities(integration, cursor, sb) {
         if (talkTimeMapping) kpiMappings.push(talkTimeMapping);
       }
     }
+
+    // Activity record for crm_activity_records table
+    const durationMs = props.hs_call_duration ? parseInt(props.hs_call_duration) : null;
+    activityRecords.push({
+      profileId,
+      activityType: 'call',
+      activityDate: props.hs_timestamp || record.createdAt,
+      source: 'hubspot',
+      externalId: String(record.id),
+      subject: props.hs_call_title || null,
+      direction: props.hs_call_direction === 'INBOUND' ? 'inbound' : 'outbound',
+      durationSeconds: durationMs ? Math.round(durationMs / 1000) : null,
+      status: props.hs_call_status || null,
+      notes: props.hs_call_body ? props.hs_call_body.slice(0, 2000) : null,
+      recordingUrl: props.hs_call_recording_url || null,
+      recordingSource: props.hs_call_recording_url ? 'hubspot' : null,
+      metadata: {},
+    });
   }
 
   const nextCursor = result.paging?.next?.after || null;
-  return { records, nextCursor, kpiMappings };
+  return { records, nextCursor, kpiMappings, activityRecords };
 }
 
 // ── Sync: Meetings ───────────────────────────────────────────
@@ -533,6 +552,74 @@ function verifyWebhook(req, explicitSecret = null) {
   }
 }
 
+// ── Sync: Tasks (open HubSpot tasks → engage_tasks) ─────────────────────────
+
+async function syncTasks(integration, cursor, sb) {
+  const creds = integration.decryptedCreds;
+  const properties = 'hs_task_subject,hs_task_body,hs_task_status,hs_task_priority,hs_timestamp,hubspot_owner_id';
+
+  const params = {
+    properties,
+    limit: 100,
+    sorts: JSON.stringify([{ propertyName: 'hs_lastmodifieddate', direction: 'ASCENDING' }]),
+  };
+  if (cursor) params.after = cursor;
+
+  let result;
+  try {
+    result = await hsGet(creds, '/crm/v3/objects/tasks', params);
+  } catch (err) {
+    console.warn(`[hubspot:tasks] Skipping — ${err.message}`);
+    return { records: [], nextCursor: cursor, kpiMappings: [] };
+  }
+
+  const records = result.results || [];
+  const { resolveProfileByEmail } = require('../integrationService');
+  const orgId = integration.organization_id;
+  const taskRows = [];
+
+  for (const record of records) {
+    const props = record.properties || {};
+    if (props.hs_task_status === 'COMPLETED') continue;
+
+    const ownerId = props.hubspot_owner_id;
+    const email = await resolveOwnerEmail(creds, ownerId);
+    if (!email) continue;
+    const profileId = await resolveProfileByEmail(sb, orgId, email);
+    if (!profileId) continue;
+
+    const priority = (props.hs_task_priority || 'MEDIUM').toUpperCase();
+    const mappedPriority = priority === 'HIGH' ? 'high' : priority === 'LOW' ? 'low' : 'medium';
+    const portalId = creds.portal_id || creds.hub_id || '';
+
+    taskRows.push({
+      organization_id: orgId,
+      created_by: profileId,
+      assigned_to: profileId,
+      title: props.hs_task_subject || 'HubSpot Task',
+      description: props.hs_task_body || null,
+      due_date: props.hs_timestamp ? props.hs_timestamp.slice(0, 10) : null,
+      priority: mappedPriority,
+      status: 'pending',
+      source: 'hubspot',
+      external_id: record.id,
+      external_url: portalId ? `https://app.hubspot.com/contacts/${portalId}/task/${record.id}` : null,
+      integration_id: integration.id,
+      synced_at: new Date().toISOString(),
+    });
+  }
+
+  if (taskRows.length > 0) {
+    const { error } = await sb.from('engage_tasks')
+      .upsert(taskRows, { onConflict: 'organization_id,source,external_id', ignoreDuplicates: false });
+    if (error) console.warn('[hubspot:tasks] Upsert error:', error.message);
+  }
+
+  const nextCursor = result.paging?.next?.after || null;
+  console.log(`[hubspot:tasks] Synced ${taskRows.length} tasks`);
+  return { records: taskRows, nextCursor, kpiMappings: [] };
+}
+
 // ── Export ────────────────────────────────────────────────────
 
 module.exports = {
@@ -544,6 +631,7 @@ module.exports = {
     activities: syncActivities,
     meetings: syncMeetings,
     deals: syncDeals,
+    tasks: syncTasks,
   },
   push: {
     createMeeting,

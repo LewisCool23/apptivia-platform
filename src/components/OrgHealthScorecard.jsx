@@ -65,7 +65,7 @@ export default function OrgHealthScorecard() {
           { count: kpiCount },
           { count: scorecardKpiCount },
           { count: teamCount },
-          { count: coachingPlanCount },
+          { data: coachingAssignments },
           { count: idpCount },
           { count: contestCount },
           { count: badgeAwardCount },
@@ -78,15 +78,16 @@ export default function OrgHealthScorecard() {
           supabase.from('kpi_org_configs').select('*', { count: 'exact', head: true })
             .eq('organization_id', orgId).eq('show_on_scorecard', true),
           supabase.from('teams').select('*', { count: 'exact', head: true }).eq('organization_id', orgId),
-          supabase.from('coaching_plans').select('*', { count: 'exact', head: true })
-            .eq('organization_id', orgId).in('status', ['active', 'in_progress', 'pending_review']),
+          // Coaching: count active plans via assignments (coaching_plans.status is unreliable)
+          supabase.from('coaching_plan_assignments').select('plan_id', { count: 'exact', head: false })
+            .eq('organization_id', orgId).in('status', ['active', 'in_progress']),
           supabase.from('individual_development_plans').select('*', { count: 'exact', head: true })
-            .eq('organization_id', orgId).in('status', ['active', 'in_progress', 'pending_review']),
-          supabase.from('contests').select('*', { count: 'exact', head: true })
-            .eq('organization_id', orgId).in('status', ['active', 'running', 'completed']),
-          // Badge count — org-scoped via repIds
+            .eq('organization_id', orgId).in('status', ['active', 'in_progress']),
+          supabase.from('active_contests').select('*', { count: 'exact', head: true })
+            .eq('organization_id', orgId).in('status', ['active', 'upcoming']),
+          // Badge count — org-scoped via profile_badges
           repIds.length > 0
-            ? supabase.from('user_badges').select('*', { count: 'exact', head: true })
+            ? supabase.from('profile_badges').select('*', { count: 'exact', head: true })
                 .in('profile_id', repIds)
                 .gte('earned_at', thirtyDaysAgo)
             : Promise.resolve({ count: 0 }),
@@ -95,14 +96,17 @@ export default function OrgHealthScorecard() {
             .gte('detected_at', thirtyDaysAgo),
           supabase.from('engage_sequences').select('*', { count: 'exact', head: true })
             .eq('organization_id', orgId).eq('status', 'active'),
-          // KPI values — org-scoped via repIds
+          // KPI values — org-scoped via repIds, fall back to most recent data if no data in last week
           repIds.length > 0
             ? supabase.from('kpi_values').select('value, kpi_id')
                 .in('profile_id', repIds)
-                .gte('period_start', oneWeekAgo)
+                .order('period_start', { ascending: false })
                 .limit(500)
             : Promise.resolve({ data: [] }),
         ]);
+
+        // Derive coaching plan count from distinct plan_ids in assignments
+        const coachingPlanCount = new Set((coachingAssignments || []).map(a => a.plan_id)).size;
 
         // 1. Team Performance: compare KPI values vs org goals
         // Fetch org KPI goals for comparison
@@ -115,6 +119,7 @@ export default function OrgHealthScorecard() {
         let performanceScore = 0;
         if (recentScores?.length) {
           // Group values by kpi_id and compute avg pct-of-goal per KPI
+          // Use only the most recent period's data (since we fetch all, sorted desc)
           const kpiVals = {};
           recentScores.forEach(r => {
             if (!kpiVals[r.kpi_id]) kpiVals[r.kpi_id] = [];

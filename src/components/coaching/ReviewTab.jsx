@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { Plus, Search, X } from 'lucide-react';
+import { Plus, Search, X, LayoutGrid, List, Edit, Trash2, Star } from 'lucide-react';
 import { supabase } from '../../supabaseClient';
 import { backendFetch } from '../../utils/backendFetch';
 import { useAuth } from '../../AuthContext';
@@ -38,6 +38,7 @@ export default function ReviewTab({ teamMembers, startForRepId }) {
   const isManager = role === ROLES.ADMIN || role === ROLES.MANAGER;
   const isPowerUser = role === ROLES.POWER_USER;
   const [aiGenerating, setAiGenerating] = useState(false);
+  const [viewMode, setViewMode] = useState(() => localStorage.getItem('apptivia_review_view_mode') || 'card');
 
   // Generate AI draft for manager assessment with 5-week trend analysis
   const handleGenerateReviewDraft = useCallback(async () => {
@@ -256,6 +257,14 @@ export default function ReviewTab({ teamMembers, startForRepId }) {
               <button onClick={() => setSearchQuery('')} className="absolute right-2 top-1/2 -translate-y-1/2 text-apptivia-carbon-400 hover:text-apptivia-carbon-600"><X size={14} /></button>
             )}
           </div>
+          <div className="flex items-center border border-apptivia-carbon-200 rounded-lg overflow-hidden ml-2">
+            <button onClick={() => { setViewMode('card'); localStorage.setItem('apptivia_review_view_mode', 'card'); }}
+              className={`p-1.5 ${viewMode === 'card' ? 'bg-apptivia-ink text-white' : 'bg-white text-apptivia-carbon-400 hover:bg-apptivia-carbon-50'}`}
+              title="Card view"><LayoutGrid size={14} /></button>
+            <button onClick={() => { setViewMode('list'); localStorage.setItem('apptivia_review_view_mode', 'list'); }}
+              className={`p-1.5 ${viewMode === 'list' ? 'bg-apptivia-ink text-white' : 'bg-white text-apptivia-carbon-400 hover:bg-apptivia-carbon-50'}`}
+              title="List view"><List size={14} /></button>
+          </div>
         </div>
         {isManager && (
           <button onClick={() => { setEditingReview(null); setForm(emptyForm()); setShowBuilder(true); }}
@@ -326,6 +335,65 @@ export default function ReviewTab({ teamMembers, startForRepId }) {
               Create Your First Review
             </button>
           )}
+        </div>
+      ) : viewMode === 'list' ? (
+        <div className="bg-white rounded-lg border border-apptivia-carbon-100 overflow-hidden">
+          <table className="w-full text-xs">
+            <thead>
+              <tr className="bg-apptivia-paper border-b border-apptivia-carbon-100">
+                <th className="text-left px-4 py-2.5 font-semibold text-apptivia-carbon-500">Title</th>
+                <th className="text-left px-3 py-2.5 font-semibold text-apptivia-carbon-500">Rep</th>
+                <th className="text-left px-3 py-2.5 font-semibold text-apptivia-carbon-500">Type</th>
+                <th className="text-center px-3 py-2.5 font-semibold text-apptivia-carbon-500">Status</th>
+                <th className="text-center px-3 py-2.5 font-semibold text-apptivia-carbon-500">Rating</th>
+                <th className="text-left px-3 py-2.5 font-semibold text-apptivia-carbon-500">Date Range</th>
+                {isManager && <th className="text-center px-3 py-2.5 font-semibold text-apptivia-carbon-500">Actions</th>}
+              </tr>
+            </thead>
+            <tbody>
+              {filtered.map(review => {
+                const cfg = reviewStatusConfig[review.status] || reviewStatusConfig.draft;
+                const rep = teamMembers?.find(m => m.id === review.profile_id);
+                const repName = rep ? `${rep.first_name || ''} ${rep.last_name || ''}`.trim() || rep.email : '—';
+                const rating = review.final_rating || review.manager_rating || 0;
+                return (
+                  <tr key={review.id} onClick={() => setSelectedReview(review)}
+                    className="border-b border-apptivia-carbon-50 hover:bg-apptivia-paper/50 cursor-pointer transition-colors">
+                    <td className="px-4 py-3 font-semibold text-apptivia-ink">{review.title || 'Untitled'}</td>
+                    <td className="px-3 py-3 text-apptivia-carbon-600">{repName}</td>
+                    <td className="px-3 py-3 text-apptivia-carbon-500 capitalize">{(review.review_type || '').replace('_', '-')}</td>
+                    <td className="px-3 py-3 text-center">
+                      <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold ${cfg.color}`}>{cfg.label}</span>
+                    </td>
+                    <td className="px-3 py-3 text-center">
+                      {rating > 0 ? (
+                        <span className="flex items-center justify-center gap-0.5 text-amber-500">
+                          {Array.from({ length: 5 }, (_, i) => (
+                            <Star key={i} size={10} className={i < rating ? 'fill-amber-400' : 'fill-none text-apptivia-carbon-300'} />
+                          ))}
+                        </span>
+                      ) : <span className="text-apptivia-carbon-400">—</span>}
+                    </td>
+                    <td className="px-3 py-3 text-apptivia-carbon-500 whitespace-nowrap">
+                      {review.period_start ? `${review.period_start.slice(0, 10)} → ${(review.period_end || '').slice(0, 10)}` : '—'}
+                    </td>
+                    {isManager && (
+                      <td className="px-3 py-3 text-center">
+                        <div className="flex items-center justify-center gap-1">
+                          {review.status === 'draft' && (
+                            <>
+                              <button onClick={e => { e.stopPropagation(); handleEdit(review); }} className="text-apptivia-carbon-400 hover:text-apptivia-ink p-1" title="Edit"><Edit size={12} /></button>
+                              <button onClick={e => { e.stopPropagation(); setDeleteConfirm({ isOpen: true, review }); }} className="text-apptivia-carbon-400 hover:text-red-500 p-1" title="Delete"><Trash2 size={12} /></button>
+                            </>
+                          )}
+                        </div>
+                      </td>
+                    )}
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">

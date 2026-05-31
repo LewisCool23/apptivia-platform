@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { Plus, Search, X, LayoutTemplate } from 'lucide-react';
+import { Plus, Search, X, LayoutTemplate, LayoutGrid, List, Edit, Trash2 } from 'lucide-react';
 import { supabase } from '../../supabaseClient';
 import { backendFetch } from '../../utils/backendFetch';
 import { useAuth } from '../../AuthContext';
@@ -45,6 +45,7 @@ export default function IdpTab({ teamMembers }) {
   const canManage = role === ROLES.ADMIN || role === ROLES.MANAGER || role === ROLES.COACH;
   const isPowerUser = role === ROLES.POWER_USER;
   const [autoGenerating, setAutoGenerating] = useState(false);
+  const [viewMode, setViewMode] = useState(() => localStorage.getItem('apptivia_idp_view_mode') || 'card');
 
   // AI auto-generate IDP using 5-week trend analysis
   const handleAutoGenerate = useCallback(async (repId) => {
@@ -358,6 +359,14 @@ export default function IdpTab({ teamMembers }) {
               </button>
             )}
           </div>
+          <div className="flex items-center border border-apptivia-carbon-200 rounded-lg overflow-hidden ml-2">
+            <button onClick={() => { setViewMode('card'); localStorage.setItem('apptivia_idp_view_mode', 'card'); }}
+              className={`p-1.5 ${viewMode === 'card' ? 'bg-apptivia-ink text-white' : 'bg-white text-apptivia-carbon-400 hover:bg-apptivia-carbon-50'}`}
+              title="Card view"><LayoutGrid size={14} /></button>
+            <button onClick={() => { setViewMode('list'); localStorage.setItem('apptivia_idp_view_mode', 'list'); }}
+              className={`p-1.5 ${viewMode === 'list' ? 'bg-apptivia-ink text-white' : 'bg-white text-apptivia-carbon-400 hover:bg-apptivia-carbon-50'}`}
+              title="List view"><List size={14} /></button>
+          </div>
         </div>
         {canManage && (
           <div className="flex items-center gap-2">
@@ -422,6 +431,57 @@ export default function IdpTab({ teamMembers }) {
               Create Your First IDP
             </button>
           )}
+        </div>
+      ) : viewMode === 'list' ? (
+        <div className="bg-white rounded-lg border border-apptivia-carbon-100 overflow-hidden">
+          <table className="w-full text-xs">
+            <thead>
+              <tr className="bg-apptivia-paper border-b border-apptivia-carbon-100">
+                <th className="text-left px-4 py-2.5 font-semibold text-apptivia-carbon-500">Plan Name</th>
+                <th className="text-left px-3 py-2.5 font-semibold text-apptivia-carbon-500">Type</th>
+                <th className="text-center px-3 py-2.5 font-semibold text-apptivia-carbon-500">Status</th>
+                <th className="text-left px-3 py-2.5 font-semibold text-apptivia-carbon-500">Focus KPIs</th>
+                <th className="text-center px-3 py-2.5 font-semibold text-apptivia-carbon-500">Milestones</th>
+                <th className="text-left px-3 py-2.5 font-semibold text-apptivia-carbon-500">Date Range</th>
+                {canManage && <th className="text-center px-3 py-2.5 font-semibold text-apptivia-carbon-500">Actions</th>}
+              </tr>
+            </thead>
+            <tbody>
+              {filtered.map(idp => {
+                const isOverdue = idp.period_end && new Date() > new Date(idp.period_end) && idp.status !== 'completed' && idp.status !== 'cancelled';
+                const displayStatus = isOverdue ? 'overdue' : idp.status;
+                const cfg = idpStatusConfig[displayStatus] || idpStatusConfig.draft;
+                const completedMs = (idp.milestones || []).filter(m => m.status === 'completed').length;
+                const totalMs = (idp.milestones || []).length;
+                return (
+                  <tr key={idp.id} onClick={() => setSelectedIdp(idp)}
+                    className="border-b border-apptivia-carbon-50 hover:bg-apptivia-paper/50 cursor-pointer transition-colors">
+                    <td className="px-4 py-3 font-semibold text-apptivia-ink">{idp.name || 'Untitled'}</td>
+                    <td className="px-3 py-3 text-apptivia-carbon-600 capitalize">{idp.plan_type || '—'}</td>
+                    <td className="px-3 py-3 text-center">
+                      <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold ${cfg.color}`}>{cfg.label}</span>
+                    </td>
+                    <td className="px-3 py-3 text-apptivia-carbon-500">
+                      {(idp.focus_kpis || []).slice(0, 2).map(k => buildLabel(k)).join(', ')}
+                      {(idp.focus_kpis || []).length > 2 && ` +${idp.focus_kpis.length - 2}`}
+                    </td>
+                    <td className="px-3 py-3 text-center text-apptivia-carbon-600">{completedMs}/{totalMs}</td>
+                    <td className="px-3 py-3 text-apptivia-carbon-500 whitespace-nowrap">
+                      {idp.period_start ? `${idp.period_start.slice(0, 10)} → ${(idp.period_end || '').slice(0, 10)}` : '—'}
+                    </td>
+                    {canManage && (
+                      <td className="px-3 py-3 text-center">
+                        <div className="flex items-center justify-center gap-1">
+                          <button onClick={e => { e.stopPropagation(); handleEdit(idp); }} className="text-apptivia-carbon-400 hover:text-apptivia-ink p-1" title="Edit"><Edit size={12} /></button>
+                          <button onClick={e => { e.stopPropagation(); setDeleteConfirm({ isOpen: true, idp }); }} className="text-apptivia-carbon-400 hover:text-red-500 p-1" title="Delete"><Trash2 size={12} /></button>
+                        </div>
+                      </td>
+                    )}
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">

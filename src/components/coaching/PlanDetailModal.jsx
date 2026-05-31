@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { X, Target, Users, UserPlus, TrendingUp, TrendingDown, BarChart3, Mail, Share2, Zap, ClipboardCheck, MessageSquare } from 'lucide-react';
+import { X, Target, Users, UserPlus, TrendingUp, TrendingDown, BarChart3, Mail, Zap, ClipboardCheck, MessageSquare } from 'lucide-react';
 import { statusConfig } from './planStatusConfig';
 import { parseEnrichedContent } from '../../utils/emailTemplates';
 import FeedbackThumb from '../shared/FeedbackThumb';
@@ -22,7 +22,6 @@ export default function PlanDetailModal({
   onEdit,
   onAssign,
   onShare,
-  onSnapshot,
 }) {
   useModalBehavior(!!plan, onClose);
   const myStatus = getMyAssignmentStatus(plan);
@@ -56,9 +55,9 @@ export default function PlanDetailModal({
             </div>
             <div>
               <h3 className="text-lg font-bold text-apptivia-ink">{plan.name}</h3>
-              {plan.date_range_start && plan.date_range_end && (
+              {(plan.date_range_start || plan.date_range_end) && (
                 <p className="text-sm text-apptivia-carbon-500 mt-0.5">
-                  {plan.date_range_start} to {plan.date_range_end}
+                  {plan.date_range_start || '—'} to {plan.date_range_end || '—'}
                 </p>
               )}
             </div>
@@ -267,7 +266,7 @@ export default function PlanDetailModal({
                 </span>
               </div>
               <div className="flex gap-2 flex-wrap">
-                {(myStatus === 'active' || myStatus === 'draft') && (
+                {myStatus === 'draft' && (
                   <button
                     onClick={() => handleStatusChange(plan, 'in_progress')}
                     className="px-3 py-1.5 text-xs font-semibold rounded-md transition-colors bg-yellow-500 text-white hover:bg-yellow-600"
@@ -399,22 +398,13 @@ export default function PlanDetailModal({
             </button>
           )}
           {(canCreatePlans || canManagePlans) && (
-            <>
-              <button
-                onClick={() => { onClose(); onSnapshot && onSnapshot(plan); }}
-                className="flex items-center gap-1.5 px-4 py-2 text-sm font-semibold border border-apptivia-carbon-300 text-apptivia-ink rounded-md hover:bg-apptivia-carbon-100"
-              >
-                <Share2 size={14} />
-                Snapshot
-              </button>
-              <button
-                onClick={() => { onClose(); onShare(plan); }}
-                className="flex items-center gap-1.5 px-4 py-2 text-sm font-semibold border border-apptivia-coral-tone-100 text-apptivia-coral rounded-md hover:bg-apptivia-coral-tone-50"
-              >
-                <Mail size={14} />
-                Email
-              </button>
-            </>
+            <button
+              onClick={() => { onClose(); onShare(plan); }}
+              className="flex items-center gap-1.5 px-4 py-2 text-sm font-semibold border border-apptivia-coral-tone-100 text-apptivia-coral rounded-md hover:bg-apptivia-coral-tone-50"
+            >
+              <Mail size={14} />
+              Email
+            </button>
           )}
           <button onClick={onClose} className="px-4 py-2 text-sm font-semibold border border-apptivia-carbon-300 text-apptivia-carbon-700 rounded-md hover:bg-apptivia-paper">
             Close

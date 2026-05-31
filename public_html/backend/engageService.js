@@ -13,6 +13,7 @@
  */
 
 const Anthropic = require('@anthropic-ai/sdk');
+const { SONNET_MODEL } = require('./modelConstants');
 
 // ── Anti-AI-Slop Style Rule ──────────────────────────────────
 const AI_STYLE_RULE = `\nSTYLE RULE: Write in plain, direct business language. Never use these words or phrases: "delve", "unleash", "game-changer", "transformative", "unlock potential", "leverage" (as a verb), "cutting-edge", "revolutionary", "paradigm shift", "synergy", "elevate", "empower", "holistic", "robust", "seamless", "streamline", "harness". Be specific and concrete — not vague or generic.`;
@@ -190,11 +191,12 @@ async function apolloSearchOrganizations(query) {
 
 /** Enrich people via Apollo people/match to get email + phone */
 async function enrichPeopleBatch(apiKey, people) {
+  const hasWebhook = !!env('APOLLO_WEBHOOK_URL');
   const enrichPromises = people.map(person => {
     const matchBody = {
       reveal_personal_emails: true,
-      reveal_phone_number: true,
     };
+    if (hasWebhook) matchBody.reveal_phone_number = true;
     if (person.id) matchBody.id = person.id;
     if (person.first_name) matchBody.first_name = person.first_name;
     if (person.last_name) matchBody.last_name = person.last_name;
@@ -207,19 +209,6 @@ async function enrichPeopleBatch(apiKey, people) {
       headers: { 'X-Api-Key': apiKey },
       body: JSON.stringify(matchBody),
     }).catch((err) => {
-      // Apollo requires webhook_url for reveal_phone_number on some plans — retry without
-      if (err.message?.includes('webhook_url') || err.message?.includes('reveal_phone_number')) {
-        console.warn(`Apollo reveal_phone_number requires webhook for ${person.first_name} ${person.last_name || ''} — retrying without`);
-        delete matchBody.reveal_phone_number;
-        return fetchJson(`${APOLLO_BASE}/people/match`, {
-          method: 'POST',
-          headers: { 'X-Api-Key': apiKey },
-          body: JSON.stringify(matchBody),
-        }).catch((err2) => {
-          console.warn(`Enrichment failed for ${person.id} (${person.first_name} ${person.last_name}):`, err2.message);
-          return { person };
-        });
-      }
       console.warn(`Enrichment failed for ${person.id} (${person.first_name} ${person.last_name}):`, err.message);
       return { person };
     });
@@ -288,8 +277,8 @@ async function apolloEnrichPerson(identifier) {
 
   const body = {
     reveal_personal_emails: true,
-    reveal_phone_number: true,
   };
+  if (env('APOLLO_WEBHOOK_URL')) body.reveal_phone_number = true;
   if (typeof identifier === 'string') {
     body.email = identifier;
   } else {
@@ -300,25 +289,11 @@ async function apolloEnrichPerson(identifier) {
     if (identifier.linkedin_url) body.linkedin_url = identifier.linkedin_url;
   }
 
-  try {
-    return await fetchJson(`${APOLLO_BASE}/people/match`, {
-      method: 'POST',
-      headers: { 'X-Api-Key': key },
-      body: JSON.stringify(body),
-    });
-  } catch (err) {
-    // Apollo requires webhook_url for reveal_phone_number on some plans — retry without
-    if (err.message?.includes('webhook_url') || err.message?.includes('reveal_phone_number')) {
-      console.warn('Apollo reveal_phone_number requires webhook — retrying without phone reveal');
-      delete body.reveal_phone_number;
-      return fetchJson(`${APOLLO_BASE}/people/match`, {
-        method: 'POST',
-        headers: { 'X-Api-Key': key },
-        body: JSON.stringify(body),
-      });
-    }
-    throw err;
-  }
+  return fetchJson(`${APOLLO_BASE}/people/match`, {
+    method: 'POST',
+    headers: { 'X-Api-Key': key },
+    body: JSON.stringify(body),
+  });
 }
 
 async function apolloEnrichCompany(domain) {
@@ -443,7 +418,7 @@ Return ONLY valid JSON with this exact shape:
   const userMessage = `Company data:\n${JSON.stringify(companyData, null, 2)}\n\nWeb search results:\n${JSON.stringify(webResults, null, 2)}`;
 
   const response = await client.messages.create({
-    model: 'claude-sonnet-4-20250514',
+    model: SONNET_MODEL,
     max_tokens: 2000,
     system: systemPrompt,
     messages: [{ role: 'user', content: userMessage }],
@@ -454,10 +429,10 @@ Return ONLY valid JSON with this exact shape:
     return {
       content: JSON.parse(text),
       tokens_used: response.usage?.input_tokens + response.usage?.output_tokens || 0,
-      model_used: 'claude-sonnet-4-20250514',
+      model_used: SONNET_MODEL,
     };
   } catch {
-    return { content: { summary: text }, tokens_used: 0, model_used: 'claude-sonnet-4-20250514' };
+    return { content: { summary: text }, tokens_used: 0, model_used: SONNET_MODEL };
   }
 }
 
@@ -486,7 +461,7 @@ Return ONLY valid JSON with this shape:
   const userMessage = `Prospect:\n${JSON.stringify(prospectData, null, 2)}\n\nCompany:\n${JSON.stringify(companyData, null, 2)}\n\nWeb results:\n${JSON.stringify(webResults, null, 2)}`;
 
   const response = await client.messages.create({
-    model: 'claude-sonnet-4-20250514',
+    model: SONNET_MODEL,
     max_tokens: 2000,
     system: systemPrompt,
     messages: [{ role: 'user', content: userMessage }],
@@ -497,10 +472,10 @@ Return ONLY valid JSON with this shape:
     return {
       content: JSON.parse(text),
       tokens_used: response.usage?.input_tokens + response.usage?.output_tokens || 0,
-      model_used: 'claude-sonnet-4-20250514',
+      model_used: SONNET_MODEL,
     };
   } catch {
-    return { content: { summary: text }, tokens_used: 0, model_used: 'claude-sonnet-4-20250514' };
+    return { content: { summary: text }, tokens_used: 0, model_used: SONNET_MODEL };
   }
 }
 
@@ -564,7 +539,7 @@ Return ONLY valid JSON:
   }
 
   const response = await client.messages.create({
-    model: 'claude-sonnet-4-20250514',
+    model: SONNET_MODEL,
     max_tokens: 1000,
     system: systemPrompt,
     messages: [{ role: 'user', content: userMessage }],
@@ -575,10 +550,10 @@ Return ONLY valid JSON:
     return {
       content: JSON.parse(text),
       tokens_used: response.usage?.input_tokens + response.usage?.output_tokens || 0,
-      model_used: 'claude-sonnet-4-20250514',
+      model_used: SONNET_MODEL,
     };
   } catch {
-    return { content: { body: text }, tokens_used: 0, model_used: 'claude-sonnet-4-20250514' };
+    return { content: { body: text }, tokens_used: 0, model_used: SONNET_MODEL };
   }
 }
 
@@ -770,6 +745,19 @@ async function researchProspect(identifier, context = {}) {
         const pdlPhone = pdlData?.data?.mobile_phone || pdlData?.data?.phone_numbers?.[0] || null;
         if (pdlPhone) person = { ...person, sanitized_phone: pdlPhone, phone_number: pdlPhone };
         if (!person.email && pdlData?.data?.work_email) person = { ...person, email: pdlData.data.work_email };
+      } catch { /* non-blocking */ }
+    }
+  }
+
+  // Hunter.io email fallback — runs if email still missing after Apollo + PDL
+  if (!person.email && process.env.HUNTER_API_KEY) {
+    const domain = person.organization?.primary_domain
+      || (person.organization?.website_url || '').replace(/^https?:\/\//, '').split('/')[0]
+      || '';
+    if (domain && (person.first_name || identifier.first_name)) {
+      try {
+        const hunterResult = await hunterEnrichPeople(domain, [person]);
+        if (hunterResult?.[0]?.email) person = { ...person, email: hunterResult[0].email };
       } catch { /* non-blocking */ }
     }
   }

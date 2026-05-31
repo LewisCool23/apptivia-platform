@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Building2, Users, CreditCard, Bell, Shield, Save, Search, X, UserPlus, Check, Plus, ChevronDown, ChevronRight, Maximize2, CalendarClock, FileText, Play, Pause, Trash2, Pencil, Send, Calendar, Clock, Mail, Layers, Database, Upload } from 'lucide-react';
+import { Building2, Users, CreditCard, Bell, Shield, Save, Search, X, UserPlus, Check, Plus, ChevronDown, ChevronRight, Maximize2, CalendarClock, FileText, Play, Pause, Trash2, Pencil, Send, Calendar, Clock, Mail, Layers, Database, Upload, KeyRound, Copy, Eye, EyeOff } from 'lucide-react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import DashboardLayout from '../DashboardLayout';
 import { useAuth } from '../AuthContext';
@@ -240,6 +240,16 @@ export default function OrganizationSettings() {
   const [inviteTitleKey, setInviteTitleKey] = useState('');
   const [inviteTeamId, setInviteTeamId] = useState('');
   const [inviteSending, setInviteSending] = useState(false);
+
+  // API Keys state
+  const [apiKeys, setApiKeys] = useState([]);
+  const [apiKeysLoading, setApiKeysLoading] = useState(false);
+  const [showCreateKeyModal, setShowCreateKeyModal] = useState(false);
+  const [newKeyName, setNewKeyName] = useState('');
+  const [newKeyScopes, setNewKeyScopes] = useState(['read']);
+  const [newKeyExpiry, setNewKeyExpiry] = useState('');
+  const [createdKey, setCreatedKey] = useState(null);
+  const [keyVisible, setKeyVisible] = useState(false);
 
   // Add Team — delegated to teamHook
 
@@ -833,6 +843,52 @@ export default function OrganizationSettings() {
     }
   };
 
+  // ── API Key handlers ─────────────────────────────────
+  const loadApiKeys = useCallback(async () => {
+    setApiKeysLoading(true);
+    try {
+      const data = await backendFetch('/api/api-keys', undefined, 'GET');
+      setApiKeys(data || []);
+    } catch (err) {
+      console.error('Failed to load API keys:', err);
+    } finally {
+      setApiKeysLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (activeTab === 'api_access' && isAdmin) loadApiKeys();
+  }, [activeTab, isAdmin, loadApiKeys]);
+
+  const handleCreateApiKey = async () => {
+    if (!newKeyName.trim()) return;
+    try {
+      const result = await backendFetch('/api/api-keys', {
+        name: newKeyName.trim(),
+        scopes: newKeyScopes,
+        expires_in_days: newKeyExpiry ? Number(newKeyExpiry) : undefined,
+      });
+      setCreatedKey(result.key);
+      setNewKeyName('');
+      setNewKeyScopes(['read']);
+      setNewKeyExpiry('');
+      await loadApiKeys();
+    } catch (err) {
+      setMessage({ type: 'error', text: 'Failed to create API key: ' + err.message });
+    }
+  };
+
+  const handleRevokeApiKey = async (id) => {
+    if (!window.confirm('Revoke this API key? This cannot be undone.')) return;
+    try {
+      await backendFetch(`/api/api-keys/${id}`, {}, 'DELETE');
+      await loadApiKeys();
+      setMessage({ type: 'success', text: 'API key revoked' });
+    } catch (err) {
+      setMessage({ type: 'error', text: 'Failed to revoke key: ' + err.message });
+    }
+  };
+
   // ── Add Team (via shared hook) ────────────────────────
   const handleAddTeam = async () => {
     const teamName = teamHook.newTeamName.trim();
@@ -1083,6 +1139,7 @@ export default function OrganizationSettings() {
               ...(isManagerOrAbove ? [{ id: 'kpi_templates', label: 'KPI Templates', icon: Layers }] : []),
               ...(isAdmin ? [{ id: 'data', label: 'Data Import', icon: Database }] : []),
               { id: 'notifications', label: 'Notifications', icon: Bell },
+              ...(isAdmin ? [{ id: 'api_access', label: 'API Access', icon: KeyRound }] : []),
             ].map((tab) => (
               <button
                 key={tab.id}
@@ -2444,6 +2501,195 @@ export default function OrganizationSettings() {
           </div>
         )}
       </div>
+
+        {activeTab === 'api_access' && isAdmin && (
+          <div className="space-y-6">
+            {/* Header + Generate */}
+            <div className="bg-white rounded-lg shadow-sm p-6">
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <h3 className="text-lg font-semibold text-apptivia-ink">API Keys</h3>
+                  <p className="text-sm text-apptivia-carbon-500 mt-1">
+                    Generate API keys to access Apptivia data from external tools, scripts, or Claude MCP integrations.
+                  </p>
+                </div>
+                <button
+                  onClick={() => { setShowCreateKeyModal(true); setCreatedKey(null); setKeyVisible(false); }}
+                  className="flex items-center gap-2 px-4 py-2 bg-apptivia-coral text-white rounded-lg text-sm font-medium hover:bg-apptivia-coral/90"
+                >
+                  <Plus size={16} /> Generate API Key
+                </button>
+              </div>
+
+              {/* Created key display */}
+              {createdKey && (
+                <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg">
+                  <div className="flex items-center gap-2 text-green-800 font-medium text-sm mb-2">
+                    <Check size={16} /> API Key Created — Copy it now. You won't see it again.
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <code className="flex-1 bg-white border rounded px-3 py-2 text-sm font-mono select-all break-all">
+                      {keyVisible ? createdKey : '••••••••••••••••••••••••••••••••••••••••'}
+                    </code>
+                    <button onClick={() => setKeyVisible(!keyVisible)} className="p-2 hover:bg-green-100 rounded" title={keyVisible ? 'Hide' : 'Show'}>
+                      {keyVisible ? <EyeOff size={16} /> : <Eye size={16} />}
+                    </button>
+                    <button onClick={() => { navigator.clipboard.writeText(createdKey); setMessage({ type: 'success', text: 'API key copied!' }); }} className="p-2 hover:bg-green-100 rounded" title="Copy">
+                      <Copy size={16} />
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Keys table */}
+              {apiKeysLoading ? (
+                <div className="text-center py-8 text-apptivia-carbon-400">Loading API keys...</div>
+              ) : apiKeys.length === 0 ? (
+                <div className="text-center py-8 text-apptivia-carbon-400">
+                  <KeyRound size={32} className="mx-auto mb-2 opacity-40" />
+                  <p>No API keys yet. Generate one to get started.</p>
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b text-left text-apptivia-carbon-500">
+                        <th className="pb-2 font-medium">Name</th>
+                        <th className="pb-2 font-medium">Key Prefix</th>
+                        <th className="pb-2 font-medium">Scopes</th>
+                        <th className="pb-2 font-medium">Created</th>
+                        <th className="pb-2 font-medium">Last Used</th>
+                        <th className="pb-2 font-medium">Expires</th>
+                        <th className="pb-2 font-medium">Status</th>
+                        <th className="pb-2 font-medium"></th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y">
+                      {apiKeys.map(k => (
+                        <tr key={k.id} className={!k.is_active ? 'opacity-50' : ''}>
+                          <td className="py-3 font-medium">{k.name}</td>
+                          <td className="py-3"><code className="bg-apptivia-carbon-100 px-2 py-0.5 rounded text-xs">{k.key_prefix}...</code></td>
+                          <td className="py-3">
+                            {(k.scopes || []).map(s => (
+                              <span key={s} className="inline-block px-2 py-0.5 bg-blue-50 text-blue-700 rounded text-xs mr-1">{s}</span>
+                            ))}
+                          </td>
+                          <td className="py-3 text-apptivia-carbon-500">{new Date(k.created_at).toLocaleDateString()}</td>
+                          <td className="py-3 text-apptivia-carbon-500">{k.last_used_at ? new Date(k.last_used_at).toLocaleDateString() : 'Never'}</td>
+                          <td className="py-3 text-apptivia-carbon-500">{k.expires_at ? new Date(k.expires_at).toLocaleDateString() : 'Never'}</td>
+                          <td className="py-3">
+                            {k.is_active
+                              ? <span className="px-2 py-0.5 bg-green-50 text-green-700 rounded text-xs">Active</span>
+                              : <span className="px-2 py-0.5 bg-apptivia-carbon-100 text-apptivia-carbon-500 rounded text-xs">Revoked</span>}
+                          </td>
+                          <td className="py-3">
+                            {k.is_active && (
+                              <button onClick={() => handleRevokeApiKey(k.id)} className="text-red-500 hover:text-red-700 text-xs font-medium">Revoke</button>
+                            )}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+
+            {/* API Documentation quick reference */}
+            <div className="bg-white rounded-lg shadow-sm p-6">
+              <h3 className="text-lg font-semibold text-apptivia-ink mb-3">API Quick Reference</h3>
+              <p className="text-sm text-apptivia-carbon-500 mb-4">Use your API key as a Bearer token in the Authorization header.</p>
+              <div className="bg-apptivia-carbon-900 rounded-lg p-4 overflow-x-auto">
+                <pre className="text-green-400 text-xs font-mono whitespace-pre">{`# Example: List prospects
+curl -H "Authorization: Bearer aptv_your_key_here" \\
+     https://api.apptivia.app:3000/api/v1/prospects
+
+# Available endpoints (read scope):
+GET  /api/v1/prospects?search=&limit=50&offset=0
+GET  /api/v1/accounts?limit=50&offset=0
+GET  /api/v1/scorecard/:userId
+
+# Available endpoints (write scope):
+POST /api/v1/prospects    { email, first_name, last_name, title, company }
+POST /api/v1/kpi-values   { user_id, kpi_key, value, week_start }
+POST /api/v1/signals      { signal_type, title, account_id, score }
+POST /api/v1/deals        { name, account_id, stage, amount }
+POST /api/v1/activities   { activity_type, description, user_id }`}</pre>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Create API Key Modal */}
+        {showCreateKeyModal && (
+          <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+            <div className="bg-white rounded-lg shadow-xl w-full max-w-md p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-lg font-bold text-apptivia-ink">Generate API Key</h2>
+                <button onClick={() => setShowCreateKeyModal(false)} className="p-1 hover:bg-apptivia-carbon-100 rounded"><X size={18} /></button>
+              </div>
+
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-apptivia-carbon-700 mb-1">Name</label>
+                  <input
+                    type="text"
+                    value={newKeyName}
+                    onChange={e => setNewKeyName(e.target.value)}
+                    placeholder="e.g., Claude MCP Integration"
+                    className="w-full border border-apptivia-carbon-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-apptivia-coral focus:border-apptivia-coral"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-apptivia-carbon-700 mb-1">Scopes</label>
+                  <div className="flex gap-3">
+                    {['read', 'write', 'admin'].map(scope => (
+                      <label key={scope} className="flex items-center gap-1.5 text-sm">
+                        <input
+                          type="checkbox"
+                          checked={newKeyScopes.includes(scope)}
+                          onChange={e => {
+                            if (e.target.checked) setNewKeyScopes([...newKeyScopes, scope]);
+                            else setNewKeyScopes(newKeyScopes.filter(s => s !== scope));
+                          }}
+                          className="rounded"
+                        />
+                        {scope.charAt(0).toUpperCase() + scope.slice(1)}
+                      </label>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-apptivia-carbon-700 mb-1">Expiry (optional)</label>
+                  <select
+                    value={newKeyExpiry}
+                    onChange={e => setNewKeyExpiry(e.target.value)}
+                    className="w-full border border-apptivia-carbon-300 rounded-lg px-3 py-2 text-sm"
+                  >
+                    <option value="">Never expires</option>
+                    <option value="30">30 days</option>
+                    <option value="90">90 days</option>
+                    <option value="180">6 months</option>
+                    <option value="365">1 year</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="flex justify-end gap-2 mt-6">
+                <button onClick={() => setShowCreateKeyModal(false)} className="px-4 py-2 bg-apptivia-carbon-100 text-apptivia-carbon-700 rounded-lg text-sm hover:bg-apptivia-carbon-200">Cancel</button>
+                <button
+                  onClick={() => { handleCreateApiKey(); setShowCreateKeyModal(false); }}
+                  disabled={!newKeyName.trim()}
+                  className="px-4 py-2 bg-apptivia-coral text-white rounded-lg text-sm hover:bg-apptivia-coral/90 disabled:opacity-50"
+                >
+                  Generate Key
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
       {/* Invite Members Modal */}
       {showInviteModal && (

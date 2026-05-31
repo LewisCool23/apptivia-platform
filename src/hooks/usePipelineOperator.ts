@@ -49,6 +49,8 @@ export interface PipelineDeal {
   is_at_risk?: boolean;
   // Account link (migration 177; legacy account_id consolidated in migration 185)
   linked_account_id?: string;
+  // Qualification data (migration 196)
+  qualification_data?: Record<string, boolean>;
   // CEP (migration 095)
   cep_stage_id?: string;
   currentCepDealStage?: CepDealStageData | null;
@@ -91,7 +93,7 @@ interface PipelineState {
   error: string | null;
 }
 
-export const DEFAULT_PIPELINE_STAGES = ['discovery', 'qualification', 'proposal', 'negotiation', 'closed_won', 'closed_lost'];
+export const DEFAULT_PIPELINE_STAGES = ['lead', 'opp_creation', 'qualification', 'best_case', 'forecast', 'commit', 'closed_won', 'closed_lost'];
 const AT_RISK_DAYS = 7;
 const AT_RISK_MIN_VALUE = 10000;
 
@@ -296,7 +298,7 @@ export function usePipelineOperator(
       }
     }
 
-    // Fire-and-forget: log to Activity Feed
+    // Fire-and-forget: log to Activity Feed + Deal Activity panel
     if (organizationId && data) {
       supabase.from('engage_activity_events').insert({
         organization_id: organizationId, actor_id: userId,
@@ -304,6 +306,16 @@ export function usePipelineOperator(
         title: 'Deal Created',
         description: `${data.deal_name} — $${((data.deal_value || 0) / 1000).toFixed(0)}K`,
         icon: '\uD83D\uDCB0', color: '#FF4D2E',
+      }).then(() => {}, () => {});
+
+      // Log creation in deal-specific activity panel
+      supabase.from('engage_deal_activities').insert({
+        organization_id: organizationId,
+        deal_id: data.id,
+        actor_id: userId,
+        activity_type: 'deal_created',
+        title: 'Deal Created',
+        description: `Created deal "${data.deal_name}" with value $${(data.deal_value || 0).toLocaleString()} in ${data.stage || 'discovery'} stage`,
       }).then(() => {}, () => {});
     }
 

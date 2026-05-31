@@ -603,7 +603,7 @@ export function useIcpProspector(organizationId: string, icpConfig: any, signalC
     [],
   );
 
-  // Enrich contacts for a given company (same Apollo /search/prospects pattern)
+  // Enrich contacts for a given company — uses org's ICP job titles via suggested-contacts
   const enrichCompanyContacts = useCallback(
     async (company: ApolloCompany) => {
       const key = company.primary_domain || company.name;
@@ -613,11 +613,9 @@ export function useIcpProspector(organizationId: string, icpConfig: any, signalC
       patch({ enrichingCompanies: Array.from(enrichingRef.current) });
       try {
         const domain = company.primary_domain || '';
-        const resp = await engageApi.searchProspects({
-          domains: domain ? [domain] : [],
-          per_page: 3,
-        });
-        const people: any[] = resp?.data?.people ?? [];
+        if (!domain) throw new Error('No domain');
+        const resp = await engageApi.getSuggestedContacts(domain);
+        const people: any[] = resp?.data?.people || resp?.data?.contacts || (Array.isArray(resp?.data) ? resp.data : []);
         const contacts = people.slice(0, 3).map((p: any) => ({
           id: p.id,
           name: p.name || `${p.first_name || ''} ${p.last_name || ''}`.trim(),

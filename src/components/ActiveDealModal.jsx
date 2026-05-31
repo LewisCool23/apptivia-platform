@@ -1,10 +1,15 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
+import ReactDOM from 'react-dom';
 import {
   X, Search, Plus, Trash2, Check, Calendar, Phone, Users, Building2,
-  FileText, ChevronDown, ChevronUp, Clock, Loader2,
+  FileText, ChevronDown, ChevronUp, Clock, Loader2, Pencil,
 } from 'lucide-react';
+import { supabase } from '../supabaseClient';
 import { useActiveDeal } from '../hooks/useActiveDeal';
 import { useModalBehavior } from '../hooks/useModalBehavior';
+import { useCepConfig } from '../hooks/useCepConfig';
+import { useSalesDna } from '../hooks/useSalesDna';
+import { QUALIFICATION_FRAMEWORKS } from '../constants/salesDna';
 
 /* ── Helpers ─────────────────────────────────────────────────────────────── */
 
@@ -41,13 +46,15 @@ function formatDateTime(ts) {
 
 /* ── Constants ───────────────────────────────────────────────────────────── */
 
-const CEP_STAGES = [
-  { key: 'connect',    label: 'Connect',    order: 0 },
-  { key: 'explore',    label: 'Explore',    order: 1 },
-  { key: 'present',    label: 'Present',    order: 2 },
-  { key: 'negotiate',  label: 'Negotiate',  order: 3 },
-  { key: 'close_won',  label: 'Closed Won', order: 4, terminal: true },
-  { key: 'close_lost', label: 'Closed Lost', order: 5, terminal: true },
+const FALLBACK_STAGES = [
+  { key: 'lead',          label: 'Lead',         order: 1 },
+  { key: 'opp_creation',  label: 'Opp Creation', order: 2 },
+  { key: 'qualification', label: 'Qualification', order: 3 },
+  { key: 'best_case',     label: 'Best Case',    order: 4 },
+  { key: 'forecast',      label: 'Forecast',     order: 5 },
+  { key: 'commit',        label: 'Commit',       order: 6 },
+  { key: 'closed_won',    label: 'Closed Won',   order: 7, terminal: true },
+  { key: 'closed_lost',   label: 'Closed Lost',  order: 8, terminal: true },
 ];
 
 const FORECAST_CATEGORIES = [
@@ -71,6 +78,19 @@ const PRIORITY_OPTIONS = [
   { value: 'low',    label: 'Low' },
   { value: 'medium', label: 'Medium' },
   { value: 'high',   label: 'High' },
+];
+
+const CLOSED_LOST_REASONS = [
+  'Price / Budget',
+  'Chose Competitor',
+  'No Decision / Stalled',
+  'Timing Not Right',
+  'Product Fit',
+  'Lost to Status Quo',
+  'Champion Left',
+  'Internal Priorities Changed',
+  'Went Dark / Unresponsive',
+  'Other',
 ];
 
 const ROLE_COLORS = {
@@ -145,6 +165,102 @@ export default function ActiveDealModal({ isOpen, onClose, dealId, organizationI
     searchAccounts, searchContacts, searchMeetings,
   } = useActiveDeal(isOpen ? dealId : null, organizationId);
 
+  // Load org's configured CEP stages — single source of truth
+  const cepConfig = useCepConfig(organizationId || '');
+  const dealStages = React.useMemo(() => {
+    if (cepConfig.activeStages?.length > 0) {
+      return cepConfig.activeStages.map(s => ({
+        key: s.stage_key,
+        label: s.stage_name,
+        order: s.stage_order,
+        terminal: s.is_terminal,
+        color: s.color,
+      }));
+    }
+    return FALLBACK_STAGES;
+  }, [cepConfig.activeStages]);
+
+  // Load org's qualification framework from Sales DNA
+  const { salesDna } = useSalesDna(organizationId || '');
+  const qualificationCriteria = React.useMemo(() => {
+    if (!salesDna?.qualification_framework) return [];
+    if (salesDna.qualification_framework === 'custom') {
+      return (salesDna.custom_qualification_criteria || []).map(c => ({
+        key: c.key, label: c.label, description: c.description || '',
+      }));
+    }
+    const fw = QUALIFICATION_FRAMEWORKS.find(f => f.key === salesDna.qualification_framework);
+    return fw?.criteria || [];
+  }, [salesDna]);
+
+  const [qualData, setQualData] = useState({});
+  useEffect(() => {
+    if (deal?.qualification_data && typeof deal.qualification_data === 'object') {
+      setQualData(deal.qualification_data);
+    } else {
+      setQualData({});
+    }
+  }, [deal]);
+
+  const qualMet = Object.values(qualData).filter(Boolean).length;
+  const qualTotal = qualificationCriteria.length;
+
+  const handleQualToggle = async (criterionKey) => {
+    const updated = { ...qualData, [criterionKey]: !qualData[criterionKey] };
+    setQualData(updated);
+    try {
+      await updateDeal({ qualification_data: updated });
+    } catch (err) {
+      console.error('Failed to update qualification:', err);
+    }
+  };
+
+  /* ── Software in Use ──────────────────────────────────────────────────── */
+  const [softwareOptions, setSoftwareOptions] = useState([]);
+  const [softwareInUse, setSoftwareInUse] = useState([]);
+  const [showSoftwareDropdown, setShowSoftwareDropdown] = useState(false);
+  const [softwareSearch, setSoftwareSearch] = useState('');
+
+  useEffect(() => {
+    if (!organizationId) return;
+    (async () => {
+      const { data } = await supabase
+        .from('organizations')
+        .select('icp_config, signal_config')
+        .eq('id', organizationId)
+        .single();
+      if (data) {
+        const techs = data.icp_config?.target_technologies || [];
+        const competitors = data.signal_config?.competitors || [];
+        const combined = [...new Set([...techs, ...competitors])].sort((a, b) => a.localeCompare(b));
+        setSoftwareOptions(combined);
+      }
+    })();
+  }, [organizationId]);
+
+  useEffect(() => {
+    if (deal?.software_in_use && Array.isArray(deal.software_in_use)) {
+      setSoftwareInUse(deal.software_in_use);
+    } else {
+      setSoftwareInUse([]);
+    }
+  }, [deal]);
+
+  const handleAddSoftware = async (item) => {
+    if (softwareInUse.includes(item)) return;
+    const updated = [...softwareInUse, item];
+    setSoftwareInUse(updated);
+    setShowSoftwareDropdown(false);
+    setSoftwareSearch('');
+    try { await updateDeal({ software_in_use: updated }); } catch (err) { console.error('Failed to update software:', err); }
+  };
+
+  const handleRemoveSoftware = async (item) => {
+    const updated = softwareInUse.filter(s => s !== item);
+    setSoftwareInUse(updated);
+    try { await updateDeal({ software_in_use: updated }); } catch (err) { console.error('Failed to update software:', err); }
+  };
+
   /* ── Edit form state ──────────────────────────────────────────────────── */
   const [editForm, setEditForm] = useState({});
   const [formDirty, setFormDirty] = useState(false);
@@ -200,11 +316,12 @@ export default function ActiveDealModal({ isOpen, onClose, dealId, organizationI
   };
 
   /* ── CEP Stage ────────────────────────────────────────────────────────── */
-  const [showReasonPrompt, setShowReasonPrompt] = useState(null); // 'close_won' | 'close_lost' | null
+  const [showReasonPrompt, setShowReasonPrompt] = useState(null); // 'closed_won' | 'closed_lost' | null
   const [reasonText, setReasonText] = useState('');
+  const [closedLostReason, setClosedLostReason] = useState('');
 
-  const currentStageKey = deal?.cep_stage || deal?.stage || '';
-  const currentStageOrder = CEP_STAGES.find(s => s.key === currentStageKey)?.order ?? -1;
+  const currentStageKey = deal?.stage || '';
+  const currentStageOrder = dealStages.find(s => s.key === currentStageKey)?.order ?? -1;
 
   const handleStageClick = async (stage) => {
     if (stage.terminal) {
@@ -213,7 +330,7 @@ export default function ActiveDealModal({ isOpen, onClose, dealId, organizationI
       return;
     }
     try {
-      await updateDeal({ cep_stage: stage.key });
+      await updateDeal({ stage: stage.key });
       if (onDealUpdated) onDealUpdated();
     } catch (err) {
       console.error('Failed to update stage:', err);
@@ -223,11 +340,17 @@ export default function ActiveDealModal({ isOpen, onClose, dealId, organizationI
   const handleConfirmTerminal = async () => {
     if (!showReasonPrompt) return;
     try {
-      const fields = { cep_stage: showReasonPrompt };
-      if (reasonText.trim()) fields.win_loss_reason = reasonText.trim();
+      const fields = { stage: showReasonPrompt };
+      if (showReasonPrompt === 'closed_won' && reasonText.trim()) {
+        fields.win_loss_reason = reasonText.trim();
+      }
+      if (showReasonPrompt === 'closed_lost' && closedLostReason) {
+        fields.win_loss_reason = closedLostReason;
+      }
       await updateDeal(fields);
       setShowReasonPrompt(null);
       setReasonText('');
+      setClosedLostReason('');
       if (onDealUpdated) onDealUpdated();
     } catch (err) {
       console.error('Failed to mark terminal:', err);
@@ -402,6 +525,34 @@ export default function ActiveDealModal({ isOpen, onClose, dealId, organizationI
     }
   };
 
+  const [editingTaskId, setEditingTaskId] = useState(null);
+  const [editingTask, setEditingTask] = useState({ title: '', due_date: '', priority: 'medium' });
+
+  const startEditTask = (t) => {
+    setEditingTaskId(t.id);
+    setEditingTask({ title: t.title, due_date: t.due_date || '', priority: t.priority || 'medium' });
+  };
+
+  const handleSaveEditTask = async () => {
+    if (!editingTask.title.trim()) return;
+    try {
+      await updateTask(editingTaskId, {
+        title: editingTask.title.trim(),
+        due_date: editingTask.due_date || null,
+        priority: editingTask.priority,
+      });
+      setEditingTaskId(null);
+      if (onDealUpdated) onDealUpdated();
+    } catch (err) {
+      console.error('Failed to update task:', err);
+    }
+  };
+
+  const cyclePriority = (current) => {
+    const order = ['low', 'medium', 'high'];
+    return order[(order.indexOf(current) + 1) % order.length];
+  };
+
   /* ── Calls ────────────────────────────────────────────────────────────── */
   const [showLogCall, setShowLogCall] = useState(false);
   const [newCall, setNewCall] = useState({ contact_name: '', duration_minutes: '', notes: '', call_direction: 'outbound' });
@@ -445,17 +596,17 @@ export default function ActiveDealModal({ isOpen, onClose, dealId, organizationI
   if (!isOpen || !dealId) return null;
 
   /* ── Derived values ───────────────────────────────────────────────────── */
-  const isTerminal = currentStageKey === 'close_won' || currentStageKey === 'close_lost';
+  const isTerminal = currentStageKey === 'closed_won' || currentStageKey === 'closed_lost';
 
   const stageBadgeClass = (() => {
     switch (currentStageKey) {
-      case 'close_won':  return 'bg-emerald-100 text-emerald-700';
-      case 'close_lost': return 'bg-red-100 text-red-700';
-      default:           return 'bg-apptivia-coral/10 text-apptivia-coral';
+      case 'closed_won':  return 'bg-emerald-100 text-emerald-700';
+      case 'closed_lost': return 'bg-red-100 text-red-700';
+      default:            return 'bg-apptivia-coral/10 text-apptivia-coral';
     }
   })();
 
-  const currentStageLabel = CEP_STAGES.find(s => s.key === currentStageKey)?.label || currentStageKey || 'Unknown';
+  const currentStageLabel = dealStages.find(s => s.key === currentStageKey)?.label || currentStageKey || 'Unknown';
 
   const isTaskOverdue = (task) => {
     if (!task.due_date || task.status === 'completed') return false;
@@ -465,10 +616,10 @@ export default function ActiveDealModal({ isOpen, onClose, dealId, organizationI
   const sortedActivities = [...activities].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
 
   /* ── Render ───────────────────────────────────────────────────────────── */
-  return (
-    <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center" onClick={onClose}>
+  return ReactDOM.createPortal(
+    <div className="fixed inset-0 z-[100] bg-black/40 flex items-center justify-center" onClick={onClose}>
       <div
-        className="max-w-5xl w-full max-h-[90vh] bg-white rounded-xl shadow-2xl flex flex-col"
+        className="max-w-5xl w-full max-h-[90vh] bg-white rounded-xl shadow-2xl flex flex-col overflow-hidden"
         onClick={e => e.stopPropagation()}
       >
         {/* ── Header ──────────────────────────────────────────────────────── */}
@@ -517,7 +668,7 @@ export default function ActiveDealModal({ isOpen, onClose, dealId, organizationI
               <div>
                 <p className="text-[10px] font-semibold text-apptivia-carbon-400 uppercase tracking-wider mb-2">Deal Stage</p>
                 <div className="flex flex-wrap gap-1.5">
-                  {CEP_STAGES.map((stage) => {
+                  {dealStages.map((stage) => {
                     const isCurrent = currentStageKey === stage.key;
                     const isPast = stage.order < currentStageOrder && !stage.terminal;
                     const isFuture = stage.order > currentStageOrder && !stage.terminal;
@@ -527,9 +678,9 @@ export default function ActiveDealModal({ isOpen, onClose, dealId, organizationI
                       pillClass = 'bg-apptivia-coral text-white';
                     } else if (isPast) {
                       pillClass = 'bg-apptivia-coral/15 text-apptivia-coral';
-                    } else if (stage.key === 'close_won') {
+                    } else if (stage.key === 'closed_won' || stage.key === 'close_won') {
                       pillClass = 'bg-apptivia-carbon-100 text-apptivia-carbon-500 hover:bg-emerald-100 hover:text-emerald-700';
-                    } else if (stage.key === 'close_lost') {
+                    } else if (stage.key === 'closed_lost' || stage.key === 'close_lost') {
                       pillClass = 'bg-apptivia-carbon-100 text-apptivia-carbon-500 hover:bg-red-100 hover:text-red-700';
                     } else {
                       pillClass = 'bg-apptivia-carbon-100 text-apptivia-carbon-500 hover:bg-apptivia-carbon-200';
@@ -547,18 +698,16 @@ export default function ActiveDealModal({ isOpen, onClose, dealId, organizationI
                   })}
                 </div>
 
-                {/* Win/Loss Reason Prompt */}
-                {showReasonPrompt && (
-                  <div className="mt-3 bg-apptivia-paper border border-apptivia-carbon-200 rounded-lg p-3 space-y-2">
-                    <p className="text-xs font-medium text-apptivia-ink">
-                      {showReasonPrompt === 'close_won' ? 'Why did we win this deal?' : 'Why did we lose this deal?'}
-                    </p>
+                {/* Closed Won Reason Prompt */}
+                {showReasonPrompt === 'closed_won' && (
+                  <div className="mt-3 bg-emerald-50 border border-emerald-200 rounded-lg p-3 space-y-2">
+                    <p className="text-xs font-medium text-emerald-800">Why did we win this deal?</p>
                     <textarea
                       rows={2}
                       value={reasonText}
                       onChange={e => setReasonText(e.target.value)}
-                      placeholder="Enter reason (optional)..."
-                      className="w-full border border-apptivia-carbon-200 rounded-lg px-3 py-2 text-xs text-apptivia-ink focus:ring-1 focus:ring-apptivia-coral focus:border-apptivia-coral outline-none resize-none"
+                      placeholder="e.g. Strong champion, competitive pricing, product fit..."
+                      className="w-full border border-emerald-200 rounded-lg px-3 py-2 text-xs text-apptivia-ink focus:ring-1 focus:ring-emerald-400 focus:border-emerald-400 outline-none resize-none"
                       autoFocus
                     />
                     <div className="flex items-center gap-2 justify-end">
@@ -570,20 +719,95 @@ export default function ActiveDealModal({ isOpen, onClose, dealId, organizationI
                       </button>
                       <button
                         onClick={handleConfirmTerminal}
-                        className={`text-[10px] font-medium px-3 py-1 rounded-lg text-white transition-colors ${
-                          showReasonPrompt === 'close_won'
-                            ? 'bg-emerald-600 hover:bg-emerald-700'
-                            : 'bg-red-600 hover:bg-red-700'
-                        }`}
+                        className="text-[10px] font-medium px-3 py-1 rounded-lg text-white bg-emerald-600 hover:bg-emerald-700 transition-colors"
                       >
-                        {showReasonPrompt === 'close_won' ? 'Mark Won' : 'Mark Lost'}
+                        Mark Won
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* Closed Lost Reason Prompt */}
+                {showReasonPrompt === 'closed_lost' && (
+                  <div className="mt-3 bg-red-50 border border-red-200 rounded-lg p-3 space-y-2">
+                    <p className="text-xs font-medium text-red-800">Why did we lose this deal?</p>
+                    <select
+                      value={closedLostReason}
+                      onChange={e => setClosedLostReason(e.target.value)}
+                      className="w-full border border-red-200 rounded-lg px-3 py-2 text-xs text-apptivia-ink focus:ring-1 focus:ring-red-400 focus:border-red-400 outline-none bg-white"
+                      autoFocus
+                    >
+                      <option value="">Select a reason...</option>
+                      {CLOSED_LOST_REASONS.map(r => (
+                        <option key={r} value={r}>{r}</option>
+                      ))}
+                    </select>
+                    <div className="flex items-center gap-2 justify-end">
+                      <button
+                        onClick={() => { setShowReasonPrompt(null); setClosedLostReason(''); }}
+                        className="text-[10px] font-medium px-3 py-1 rounded-lg text-apptivia-carbon-500 hover:bg-apptivia-carbon-100 transition-colors"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        onClick={handleConfirmTerminal}
+                        disabled={!closedLostReason}
+                        className="text-[10px] font-medium px-3 py-1 rounded-lg text-white bg-red-600 hover:bg-red-700 transition-colors disabled:opacity-50"
+                      >
+                        Mark Lost
                       </button>
                     </div>
                   </div>
                 )}
               </div>
 
-              {/* 2. Deal Details Form */}
+              {/* 2. Qualification Checklist */}
+              {qualificationCriteria.length > 0 && (
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <p className="text-[10px] font-semibold text-apptivia-carbon-400 uppercase tracking-wider">
+                      Qualification — {salesDna?.qualification_framework === 'custom'
+                        ? (salesDna?.custom_qualification_name || 'Custom')
+                        : (salesDna?.qualification_framework || '').toUpperCase()}
+                    </p>
+                    <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${
+                      qualMet === qualTotal
+                        ? 'bg-emerald-100 text-emerald-700'
+                        : qualMet > 0
+                          ? 'bg-amber-100 text-amber-700'
+                          : 'bg-apptivia-carbon-100 text-apptivia-carbon-500'
+                    }`}>
+                      {qualMet}/{qualTotal}
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-2 gap-1.5">
+                    {qualificationCriteria.map((criterion) => {
+                      const met = !!qualData[criterion.key];
+                      return (
+                        <button
+                          key={criterion.key}
+                          onClick={() => handleQualToggle(criterion.key)}
+                          className={`flex items-center gap-2 text-left px-2.5 py-1.5 rounded-lg text-[10px] font-medium transition-all ${
+                            met
+                              ? 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200'
+                              : 'bg-apptivia-carbon-50 text-apptivia-carbon-500 hover:bg-apptivia-carbon-100'
+                          }`}
+                          title={criterion.description}
+                        >
+                          <span className={`w-3.5 h-3.5 flex-shrink-0 rounded border flex items-center justify-center ${
+                            met ? 'bg-emerald-500 border-emerald-500' : 'border-apptivia-carbon-300'
+                          }`}>
+                            {met && <Check size={8} className="text-white" />}
+                          </span>
+                          {criterion.label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* 3. Deal Details Form */}
               <Section title="Deal Details" defaultOpen={true}>
                 <div className="space-y-3">
                   {/* Deal Name */}
@@ -619,31 +843,17 @@ export default function ActiveDealModal({ isOpen, onClose, dealId, organizationI
                     </div>
                   </div>
 
-                  {/* Probability + Forecast */}
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <label className="text-[10px] font-semibold text-apptivia-carbon-400 uppercase tracking-wider">Probability (%)</label>
-                      <input
-                        type="number"
-                        min="0"
-                        max="100"
-                        value={editForm.probability ?? ''}
-                        onChange={e => handleFormChange('probability', e.target.value)}
-                        className="mt-1 w-full border border-apptivia-carbon-200 rounded-lg px-3 py-2 text-xs focus:ring-1 focus:ring-apptivia-coral focus:border-apptivia-coral outline-none"
-                      />
-                    </div>
-                    <div>
-                      <label className="text-[10px] font-semibold text-apptivia-carbon-400 uppercase tracking-wider">Forecast Category</label>
-                      <select
-                        value={editForm.forecast_category || 'pipeline'}
-                        onChange={e => handleFormChange('forecast_category', e.target.value)}
-                        className="mt-1 w-full border border-apptivia-carbon-200 rounded-lg px-3 py-2 text-xs focus:ring-1 focus:ring-apptivia-coral focus:border-apptivia-coral outline-none"
-                      >
-                        {FORECAST_CATEGORIES.map(fc => (
-                          <option key={fc.value} value={fc.value}>{fc.label}</option>
-                        ))}
-                      </select>
-                    </div>
+                  {/* Probability */}
+                  <div>
+                    <label className="text-[10px] font-semibold text-apptivia-carbon-400 uppercase tracking-wider">Probability (%)</label>
+                    <input
+                      type="number"
+                      min="0"
+                      max="100"
+                      value={editForm.probability ?? ''}
+                      onChange={e => handleFormChange('probability', e.target.value)}
+                      className="mt-1 w-full border border-apptivia-carbon-200 rounded-lg px-3 py-2 text-xs focus:ring-1 focus:ring-apptivia-coral focus:border-apptivia-coral outline-none"
+                    />
                   </div>
 
                   {/* Source (read-only if CRM-synced) */}
@@ -695,19 +905,86 @@ export default function ActiveDealModal({ isOpen, onClose, dealId, organizationI
                     />
                   </div>
 
-                  {/* Win/Loss Reason (conditional) */}
-                  {isTerminal && (
+                  {/* Software in Use */}
+                  <div className="relative">
+                    <label className="text-[10px] font-semibold text-apptivia-carbon-400 uppercase tracking-wider">Software in Use</label>
+                    {softwareInUse.length > 0 && (
+                      <div className="flex flex-wrap gap-1 mt-1 mb-1">
+                        {softwareInUse.map(s => (
+                          <span key={s} className="inline-flex items-center gap-1 text-[10px] bg-apptivia-paper border border-apptivia-carbon-200 rounded-full px-2 py-0.5">
+                            {s}
+                            <button onClick={() => handleRemoveSoftware(s)} className="hover:text-red-500 transition-colors"><X size={8} /></button>
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                    <button
+                      onClick={() => setShowSoftwareDropdown(!showSoftwareDropdown)}
+                      className="mt-1 w-full border border-apptivia-carbon-200 rounded-lg px-3 py-2 text-xs text-left text-apptivia-carbon-400 hover:border-apptivia-carbon-300 transition-colors"
+                    >
+                      + Add software...
+                    </button>
+                    {showSoftwareDropdown && (
+                      <div className="absolute z-10 mt-1 w-full bg-white border border-apptivia-carbon-200 rounded-lg shadow-lg max-h-40 overflow-y-auto">
+                        <input
+                          type="text"
+                          value={softwareSearch}
+                          onChange={e => setSoftwareSearch(e.target.value)}
+                          placeholder="Search..."
+                          className="w-full border-b border-apptivia-carbon-100 px-3 py-1.5 text-xs focus:outline-none"
+                          autoFocus
+                        />
+                        {softwareOptions
+                          .filter(s => !softwareInUse.includes(s) && s.toLowerCase().includes(softwareSearch.toLowerCase()))
+                          .map(s => (
+                            <button
+                              key={s}
+                              onClick={() => handleAddSoftware(s)}
+                              className="w-full text-left px-3 py-1.5 text-xs hover:bg-apptivia-paper transition-colors"
+                            >
+                              {s}
+                            </button>
+                          ))}
+                        {softwareSearch.trim() && !softwareOptions.includes(softwareSearch.trim()) && (
+                          <button
+                            onClick={() => handleAddSoftware(softwareSearch.trim())}
+                            className="w-full text-left px-3 py-1.5 text-xs text-apptivia-coral hover:bg-apptivia-paper transition-colors"
+                          >
+                            + Add "{softwareSearch.trim()}"
+                          </button>
+                        )}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Closed Won Reason (free-text) */}
+                  {currentStageKey === 'closed_won' && (
                     <div>
-                      <label className="text-[10px] font-semibold text-apptivia-carbon-400 uppercase tracking-wider">
-                        {currentStageKey === 'close_won' ? 'Win Reason' : 'Loss Reason'}
-                      </label>
+                      <label className="text-[10px] font-semibold text-emerald-600 uppercase tracking-wider">Closed Won Reason</label>
                       <textarea
                         rows={2}
                         value={editForm.win_loss_reason || ''}
                         onChange={e => handleFormChange('win_loss_reason', e.target.value)}
-                        placeholder={currentStageKey === 'close_won' ? 'Why did we win?' : 'Why did we lose?'}
-                        className="mt-1 w-full border border-apptivia-carbon-200 rounded-lg px-3 py-2 text-xs focus:ring-1 focus:ring-apptivia-coral focus:border-apptivia-coral outline-none resize-none"
+                        placeholder="Why did we win this deal?"
+                        className="mt-1 w-full border border-emerald-200 rounded-lg px-3 py-2 text-xs focus:ring-1 focus:ring-emerald-400 focus:border-emerald-400 outline-none resize-none"
                       />
+                    </div>
+                  )}
+
+                  {/* Closed Lost Reason (preset dropdown) */}
+                  {currentStageKey === 'closed_lost' && (
+                    <div>
+                      <label className="text-[10px] font-semibold text-red-600 uppercase tracking-wider">Closed Lost Reason</label>
+                      <select
+                        value={editForm.win_loss_reason || ''}
+                        onChange={e => handleFormChange('win_loss_reason', e.target.value)}
+                        className="mt-1 w-full border border-red-200 rounded-lg px-3 py-2 text-xs focus:ring-1 focus:ring-red-400 focus:border-red-400 outline-none bg-white"
+                      >
+                        <option value="">Select a reason...</option>
+                        {CLOSED_LOST_REASONS.map(r => (
+                          <option key={r} value={r}>{r}</option>
+                        ))}
+                      </select>
                     </div>
                   )}
 
@@ -934,6 +1211,42 @@ export default function ActiveDealModal({ isOpen, onClose, dealId, organizationI
                   <div className="space-y-1 mb-3">
                     {tasks.map(t => {
                       const overdue = isTaskOverdue(t);
+                      const isEditing = editingTaskId === t.id;
+
+                      if (isEditing) {
+                        return (
+                          <div key={t.id} className="flex items-center gap-2 py-1 bg-apptivia-paper rounded-lg px-2">
+                            <input
+                              type="text"
+                              value={editingTask.title}
+                              onChange={e => setEditingTask(prev => ({ ...prev, title: e.target.value }))}
+                              className="flex-1 min-w-0 border border-apptivia-carbon-200 rounded px-2 py-0.5 text-xs focus:ring-1 focus:ring-apptivia-coral focus:border-apptivia-coral outline-none"
+                              autoFocus
+                              onKeyDown={e => { if (e.key === 'Enter') handleSaveEditTask(); if (e.key === 'Escape') setEditingTaskId(null); }}
+                            />
+                            <input
+                              type="date"
+                              value={editingTask.due_date || ''}
+                              onChange={e => setEditingTask(prev => ({ ...prev, due_date: e.target.value }))}
+                              className="border border-apptivia-carbon-200 rounded px-1.5 py-0.5 text-[10px] focus:ring-1 focus:ring-apptivia-coral focus:border-apptivia-coral outline-none"
+                            />
+                            <button
+                              onClick={() => setEditingTask(prev => ({ ...prev, priority: cyclePriority(prev.priority) }))}
+                              className={`text-[9px] font-medium px-1.5 py-0.5 rounded-full whitespace-nowrap cursor-pointer ${PRIORITY_COLORS[editingTask.priority] || PRIORITY_COLORS.medium}`}
+                              title="Click to cycle priority"
+                            >
+                              {editingTask.priority}
+                            </button>
+                            <button onClick={handleSaveEditTask} className="p-1 hover:bg-emerald-50 rounded" title="Save">
+                              <Check size={10} className="text-emerald-600" />
+                            </button>
+                            <button onClick={() => setEditingTaskId(null)} className="p-1 hover:bg-apptivia-carbon-100 rounded" title="Cancel">
+                              <X size={10} className="text-apptivia-carbon-400" />
+                            </button>
+                          </div>
+                        );
+                      }
+
                       return (
                         <div key={t.id} className="flex items-center gap-2 group py-1">
                           <button onClick={() => handleToggleTask(t)} className="flex-shrink-0">
@@ -962,6 +1275,13 @@ export default function ActiveDealModal({ isOpen, onClose, dealId, organizationI
                               {t.priority}
                             </span>
                           )}
+                          <button
+                            onClick={() => startEditTask(t)}
+                            className="p-1 opacity-0 group-hover:opacity-100 hover:bg-apptivia-paper rounded transition-all flex-shrink-0"
+                            title="Edit task"
+                          >
+                            <Pencil size={10} className="text-apptivia-carbon-400" />
+                          </button>
                           <button
                             onClick={() => handleDeleteTask(t.id)}
                             className="p-1 opacity-0 group-hover:opacity-100 hover:bg-red-50 rounded transition-all flex-shrink-0"
@@ -1178,7 +1498,13 @@ export default function ActiveDealModal({ isOpen, onClose, dealId, organizationI
                           {a.description && (
                             <p className="text-[10px] text-apptivia-carbon-500 mt-0.5 line-clamp-2">{a.description}</p>
                           )}
-                          <p className="text-[10px] text-apptivia-carbon-400 mt-0.5">{timeAgo(a.created_at)}</p>
+                          <p className="text-[10px] text-apptivia-carbon-400 mt-0.5">
+                            {(a.profiles?.full_name || a.profiles?.first_name) && (
+                              <span className="font-medium text-apptivia-carbon-500">{a.profiles.full_name || `${a.profiles.first_name} ${a.profiles.last_name || ''}`.trim()}</span>
+                            )}
+                            {(a.profiles?.full_name || a.profiles?.first_name) && ' · '}
+                            {timeAgo(a.created_at)}
+                          </p>
                         </div>
                       </div>
                     );
@@ -1217,6 +1543,7 @@ export default function ActiveDealModal({ isOpen, onClose, dealId, organizationI
           </div>
         )}
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

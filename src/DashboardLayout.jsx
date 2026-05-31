@@ -2,9 +2,10 @@ import React, { useEffect, useState } from 'react';
 import { useLocation, useNavigate, Link } from 'react-router-dom';
 import { useAuth } from './AuthContext';
 import { supabase } from './supabaseClient';
-import { Home, Trophy, Gamepad2, BarChart3, Settings, User, Menu, LogOut, X, Zap, Building2, ChevronDown, ChevronRight, Search, Radar, Monitor, Sparkles, Clock, FlaskConical, BookOpen } from 'lucide-react';
+import { Home, Trophy, Gamepad2, BarChart3, Settings, User, Menu, LogOut, X, Zap, Building2, ChevronDown, ChevronRight, Search, Radar, Monitor, Sparkles, Clock, FlaskConical, BookOpen, ClipboardList } from 'lucide-react';
 import NotificationPanel from './components/NotificationPanel';
 import AaronChatbot from './AaronChatbot';
+import TaskPanel from './components/TaskPanel';
 import SetupChecklist from './components/onboarding/SetupChecklist';
 import { useBilling } from './hooks/useBilling';
 import { ApptiviaLogo } from './components/ApptiviaLogo';
@@ -30,7 +31,7 @@ const navigation = [
       { id: 'permissions-teams', name: 'Permissions', icon: Settings, route: '/permissions-teams', description: 'Manage access' }
     ]
   },
-  { id: 'pilot', name: 'Pilot Dashboard', icon: FlaskConical, route: '/admin/pilot', description: 'Pilot validation', adminOnly: true },
+  { id: 'pilot', name: 'Pilot Dashboard', icon: FlaskConical, route: '/admin/pilot', description: 'Pilot validation', superAdminOnly: true },
   { id: 'profile', name: 'Profile', icon: User, route: '/profile', description: 'Personal settings' }
 ];
 
@@ -341,6 +342,7 @@ function DashboardLayout({ children }) {
   }, [location.pathname, aaronPageExtra]);
 
   const [chatbotOpen, setChatbotOpen] = useState(false);
+  const [taskPanelOpen, setTaskPanelOpen] = useState(false);
   const [aaronInitialPrompt, setAaronInitialPrompt] = useState(null);
   const [aaronTargetRepName, setAaronTargetRepName] = useState(null);
   const [expandedMenus, setExpandedMenus] = useState({});
@@ -354,6 +356,13 @@ function DashboardLayout({ children }) {
     };
     window.addEventListener('open-aaron', handler);
     return () => window.removeEventListener('open-aaron', handler);
+  }, []);
+
+  // Listen for "open-tasks" custom events from any component
+  React.useEffect(() => {
+    const handler = () => setTaskPanelOpen(true);
+    window.addEventListener('open-tasks', handler);
+    return () => window.removeEventListener('open-tasks', handler);
   }, []);
   
   const navPermissions = {
@@ -378,6 +387,7 @@ function DashboardLayout({ children }) {
 
   const filteredNavigation = navigation.filter((item) => {
     if (item.adminOnly && profile?.role !== 'admin') return false;
+    if (item.superAdminOnly && !profile?.is_super_admin) return false;
     const perm = navPermissions[item.id];
     if (perm && !hasPermission(perm)) return false;
     return true;
@@ -421,7 +431,7 @@ function DashboardLayout({ children }) {
       <div className={`
         ${sidebarOpen ? 'w-64' : 'w-16'}
         hidden lg:flex
-        bg-white shadow-lg transition-all duration-300 flex-col fixed left-0 top-0 bottom-0 h-screen
+        bg-white shadow-lg transition-all duration-300 flex-col fixed left-0 top-0 bottom-0 h-screen z-30
       `}>
         <div className={`${sidebarOpen ? 'px-3' : 'px-0'} py-2 border-b`}>
           <div className={`relative flex items-center mb-2 ${sidebarOpen ? '' : 'justify-center'}`}>
@@ -434,14 +444,19 @@ function DashboardLayout({ children }) {
                 </div>
               </div>
             ) : (
-              <button
-                onClick={() => setSidebarOpen(true)}
-                className="flex items-center justify-center"
-                aria-label="Expand sidebar"
-                title="Expand sidebar"
-              >
-                <ApptiviaMark className="w-7 h-7 rounded-lg" />
-              </button>
+              <div className="flex flex-col items-center gap-2">
+                <button
+                  onClick={() => setSidebarOpen(true)}
+                  className="flex items-center justify-center"
+                  aria-label="Expand sidebar"
+                  title="Expand sidebar"
+                >
+                  <ApptiviaMark className="w-7 h-7 rounded-lg" />
+                </button>
+                <div className="w-7 h-7 bg-apptivia-coral rounded-full flex items-center justify-center flex-shrink-0">
+                  <span className="text-white font-bold text-xs">{getProfileInitials()}</span>
+                </div>
+              </div>
             )}
             {sidebarOpen && (
               <button
@@ -453,18 +468,18 @@ function DashboardLayout({ children }) {
               </button>
             )}
           </div>
-          {/* User Info Section */}
-          <div className={`flex items-center ${sidebarOpen ? 'gap-2' : 'justify-center'} mt-1 mb-1`}>
-            <div className="w-7 h-7 bg-apptivia-coral rounded-full flex items-center justify-center flex-shrink-0">
-              <span className="text-white font-bold text-xs">{getProfileInitials()}</span>
-            </div>
-            {sidebarOpen && (
+          {/* User Info Section — only when expanded */}
+          {sidebarOpen && (
+            <div className="flex items-center gap-2 mt-1 mb-1">
+              <div className="w-7 h-7 bg-apptivia-coral rounded-full flex items-center justify-center flex-shrink-0">
+                <span className="text-white font-bold text-xs">{getProfileInitials()}</span>
+              </div>
               <div>
                 <div className="font-semibold text-apptivia-ink leading-tight text-xs">Welcome, {getProfileFirstName()}</div>
                 <div className="text-[10px] text-apptivia-carbon-500">{profile?.title || 'N/A'}</div>
               </div>
-            )}
-          </div>
+            </div>
+          )}
         </div>
         <nav className={`flex-1 ${sidebarOpen ? 'px-3' : 'px-0'} py-2 overflow-y-auto`}>
           <div className="space-y-1">
@@ -719,26 +734,41 @@ function DashboardLayout({ children }) {
         <TrialBanner billing={billing} />
         {children}
       </div>
-      {/* Floating Setup Checklist — next to Aaron */}
-      {profile && (
-        <SetupChecklist
-          organizationId={profile.organization_id}
-          userRole={profile.role}
-        />
-      )}
-      {/* AaronChatbot Floating Button and Modal */}
-      {!chatbotOpen && (
-        <button
-          onClick={() => setChatbotOpen(true)}
-          className="fixed bottom-6 right-6 w-12 h-12 sm:w-14 sm:h-14 bg-apptivia-coral text-white rounded-full fab-3d flex items-center justify-center z-40 transition-all duration-300 hover:scale-110 group"
-          aria-label="Open Aaron AI Coach"
-        >
-          <div className="relative">
-            <span className="text-lg sm:text-xl font-bold">A</span>
-            <Sparkles size={10} className="absolute -top-1 -right-2.5 text-yellow-300 opacity-90 group-hover:opacity-100 transition-opacity" />
-          </div>
-        </button>
-      )}
+      {/* Floating Action Buttons — bottom-right flex container */}
+      <div className="fixed bottom-6 right-6 flex items-center gap-2 z-40">
+        {/* Setup Checklist — only for admin */}
+        {profile && (
+          <SetupChecklist
+            organizationId={profile.organization_id}
+            userRole={profile.role}
+            inline
+          />
+        )}
+        {/* Tasks */}
+        {!taskPanelOpen && (
+          <button
+            onClick={() => setTaskPanelOpen(true)}
+            className="w-12 h-12 sm:w-14 sm:h-14 bg-apptivia-coral text-white rounded-full fab-3d flex items-center justify-center transition-all duration-300 hover:scale-110"
+            aria-label="Open Tasks"
+          >
+            <ClipboardList size={20} />
+          </button>
+        )}
+        {/* Aaron */}
+        {!chatbotOpen && (
+          <button
+            onClick={() => setChatbotOpen(true)}
+            className="w-12 h-12 sm:w-14 sm:h-14 bg-apptivia-coral text-white rounded-full fab-3d flex items-center justify-center transition-all duration-300 hover:scale-110 group"
+            aria-label="Open Aaron AI Coach"
+          >
+            <div className="relative">
+              <span className="text-lg sm:text-xl font-bold">A</span>
+              <Sparkles size={10} className="absolute -top-1 -right-2.5 text-yellow-300 opacity-90 group-hover:opacity-100 transition-opacity" />
+            </div>
+          </button>
+        )}
+      </div>
+      <TaskPanel isOpen={taskPanelOpen} onClose={() => setTaskPanelOpen(false)} />
       <AaronChatbot isOpen={chatbotOpen} onClose={() => { setChatbotOpen(false); setAaronInitialPrompt(null); setAaronTargetRepName(null); }} initialPrompt={aaronInitialPrompt} targetRepName={aaronTargetRepName} pageContext={aaronPageContext} />
       <NotificationPanel />
     </div>

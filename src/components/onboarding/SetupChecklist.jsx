@@ -44,7 +44,7 @@ const SETUP_ITEMS = [
   },
 ];
 
-export default function SetupChecklist({ organizationId, userRole }) {
+export default function SetupChecklist({ organizationId, userRole, inline = false }) {
   const [org, setOrg] = useState(null);
   const [dismissed, setDismissed] = useState([]);
   const [panelOpen, setPanelOpen] = useState(false);
@@ -85,10 +85,10 @@ export default function SetupChecklist({ organizationId, userRole }) {
 
   return (
     <>
-      {/* Floating button — positioned to the left of Aaron AI */}
+      {/* Checklist button */}
       <button
         onClick={() => setPanelOpen(!panelOpen)}
-        className="fixed bottom-6 right-20 sm:right-[5.5rem] w-12 h-12 sm:w-14 sm:h-14 bg-apptivia-coral text-white rounded-full fab-3d flex items-center justify-center z-40 transition-all duration-300 hover:scale-110"
+        className={`${inline ? '' : 'fixed bottom-6 right-[5.25rem] sm:right-[5.75rem] z-40'} relative w-12 h-12 sm:w-14 sm:h-14 bg-apptivia-coral text-white rounded-full fab-3d flex items-center justify-center transition-all duration-300 hover:scale-110`}
         aria-label="Setup checklist"
       >
         <ClipboardCheck size={22} />
@@ -100,7 +100,7 @@ export default function SetupChecklist({ organizationId, userRole }) {
 
       {/* Flyout panel */}
       {panelOpen && (
-        <div className="fixed bottom-24 right-20 sm:right-[5.5rem] w-80 bg-white rounded-lg shadow-2xl border border-apptivia-carbon-200 z-50 animate-in slide-in-from-bottom-2 duration-200">
+        <div className="fixed bottom-24 right-6 w-80 bg-white rounded-lg shadow-2xl border border-apptivia-carbon-200 z-50 animate-in slide-in-from-bottom-2 duration-200">
           {/* Header */}
           <div className="flex items-center justify-between px-4 py-3 border-b border-apptivia-carbon-100 bg-apptivia-coral-tone-50 rounded-t-xl">
             <div className="flex items-center gap-2">

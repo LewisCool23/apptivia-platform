@@ -169,43 +169,52 @@ export function useRecords(organizationId: string | undefined) {
 
           case 'calls': {
             let q = supabase
-              .from('engage_call_logs')
-              .select('id, contact_name, call_date, duration_minutes, call_direction, notes, ai_analysis')
+              .from('crm_activity_records')
+              .select('id, subject, contact_name, activity_date, duration_seconds, direction, status, source, recording_url, notes')
               .eq('organization_id', organizationId)
-              .gte('call_date', filters.dateStart)
-              .lte('call_date', filters.dateEnd)
-              .order('call_date', { ascending: false });
+              .eq('activity_type', 'call')
+              .gte('activity_date', filters.dateStart)
+              .lte('activity_date', filters.dateEnd)
+              .order('activity_date', { ascending: false });
 
-            if (filters.repId) q = q.eq('user_id', filters.repId);
-            if (filters.search) q = q.ilike('contact_name', `%${filters.search}%`);
+            if (filters.repId) q = q.eq('profile_id', filters.repId);
+            if (filters.search) q = q.or(`contact_name.ilike.%${filters.search}%,subject.ilike.%${filters.search}%`);
 
             const { data: rows, error: err } = await q;
             if (err) throw err;
-            data = rows || [];
+            // Map fields for display compatibility with existing columns/stats
+            data = (rows || []).map((r: any) => ({
+              ...r,
+              call_date: r.activity_date,
+              duration_minutes: r.duration_seconds ? Math.round(r.duration_seconds / 60 * 10) / 10 : null,
+              call_direction: r.direction,
+            }));
             break;
           }
 
           case 'emails': {
             let q = supabase
-              .from('engage_outreach_drafts')
-              .select('id, subject, body, channel, status, created_at, engage_prospects(full_name, email)')
+              .from('crm_activity_records')
+              .select('id, subject, contact_name, contact_email, activity_date, direction, status, source, notes')
               .eq('organization_id', organizationId)
-              .eq('status', 'sent')
-              .gte('created_at', filters.dateStart)
-              .lte('created_at', filters.dateEnd)
-              .order('created_at', { ascending: false });
+              .eq('activity_type', 'email')
+              .gte('activity_date', filters.dateStart)
+              .lte('activity_date', filters.dateEnd)
+              .order('activity_date', { ascending: false });
 
             if (filters.search) {
-              q = q.ilike('subject', `%${filters.search}%`);
+              q = q.or(`subject.ilike.%${filters.search}%,contact_name.ilike.%${filters.search}%`);
             }
 
             const { data: rows, error: err } = await q;
             if (err) throw err;
-            // Flatten prospect email into top-level for display
+            // Map fields for display compatibility
             data = (rows || []).map((r: any) => ({
               ...r,
-              to_name: r.engage_prospects?.full_name || '',
-              to_email: r.engage_prospects?.email || '',
+              to_name: r.contact_name || '',
+              to_email: r.contact_email || '',
+              channel: r.source,
+              created_at: r.activity_date,
             }));
             break;
           }
@@ -289,16 +298,19 @@ export function useRecords(organizationId: string | undefined) {
       ],
       calls: [
         { key: 'contact_name', header: 'Contact' },
+        { key: 'subject', header: 'Subject' },
         { key: 'call_date', header: 'Date' },
         { key: 'duration_minutes', header: 'Duration (min)' },
         { key: 'call_direction', header: 'Direction' },
+        { key: 'source', header: 'Source' },
+        { key: 'recording_url', header: 'Recording URL' },
         { key: 'notes', header: 'Notes' },
       ],
       emails: [
         { key: 'subject', header: 'Subject' },
         { key: 'to_name', header: 'To Name' },
         { key: 'to_email', header: 'To Email' },
-        { key: 'channel', header: 'Channel' },
+        { key: 'channel', header: 'Source' },
         { key: 'created_at', header: 'Date' },
       ],
       deals: [

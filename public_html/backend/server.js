@@ -8,7 +8,7 @@ const Anthropic = require('@anthropic-ai/sdk');
 const { createClient } = require('@supabase/supabase-js');
 const { rateLimit, ipKeyGenerator } = require('express-rate-limit');
 const crypto = require('crypto');
-const { sendEmail, verifyConnection } = require('./emailService');
+const { sendEmail, verifyConnection, sendWelcomeEmail, sendOnboardingEmail } = require('./emailService');
 const { generateReport, computeNextScheduledAt, buildEmailWrapper } = require('./reportTemplates');
 const engage = require('./engageService');
 const integrations = require('./integrationService');
@@ -300,6 +300,57 @@ function requireMinRole(minRole) {
   };
 }
 
+// ── API Key authentication middleware (for public v1 API) ──────────────────
+const _apiKeyRateMap = new Map(); // key_prefix -> { count, resetAt }
+async function requireApiKey(req, res, next) {
+  const authHeader = req.headers.authorization || '';
+  const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7).trim() : '';
+  if (!token || !token.startsWith('aptv_')) {
+    return res.status(401).json({ error: 'Missing or invalid API key. Use Authorization: Bearer aptv_...' });
+  }
+
+  const keyHash = crypto.createHash('sha256').update(token).digest('hex');
+  const sb = getSupabaseAdmin();
+  const { data: keyRow } = await sb.from('api_keys')
+    .select('id, organization_id, scopes, rate_limit_per_minute, is_active, expires_at')
+    .eq('key_hash', keyHash).eq('is_active', true).maybeSingle();
+
+  if (!keyRow) return res.status(401).json({ error: 'Invalid API key' });
+  if (keyRow.expires_at && new Date(keyRow.expires_at) < new Date()) {
+    return res.status(401).json({ error: 'API key has expired' });
+  }
+
+  // Rate limiting per key
+  const prefix = token.slice(0, 12);
+  const now = Date.now();
+  let bucket = _apiKeyRateMap.get(prefix);
+  if (!bucket || now > bucket.resetAt) {
+    bucket = { count: 0, resetAt: now + 60000 };
+    _apiKeyRateMap.set(prefix, bucket);
+  }
+  bucket.count++;
+  if (bucket.count > (keyRow.rate_limit_per_minute || 60)) {
+    return res.status(429).json({ error: 'Rate limit exceeded' });
+  }
+
+  // Update last_used_at (non-blocking)
+  sb.from('api_keys').update({ last_used_at: new Date().toISOString() }).eq('id', keyRow.id).then(() => {}).catch(() => {});
+
+  req.apiKey = keyRow;
+  req.organizationId = keyRow.organization_id;
+  req.apiScopes = keyRow.scopes || ['read'];
+  next();
+}
+
+function requireScope(scope) {
+  return (req, res, next) => {
+    if (!req.apiScopes?.includes(scope) && !req.apiScopes?.includes('admin')) {
+      return res.status(403).json({ error: `This endpoint requires '${scope}' scope` });
+    }
+    next();
+  };
+}
+
 const fs = require('fs');
 const https = require('https');
 
@@ -334,13 +385,16 @@ function getAnthropic() {
   return anthropic;
 }
 
+// ── Model constants (single source of truth) ─────────────────────────────────
+const { SONNET_MODEL, HAIKU_MODEL } = require('./modelConstants');
+
 // ── Aaron AI Service (extracted module) ──────────────────────────────────────
 const aaronService = require('./aaronService');
 aaronService.init({ getSupabaseAdmin, getAnthropic });
 const {
   getSalesDnaContext, AI_STYLE_RULE, AARON_FRAMEWORKS, PRESET_FRAMEWORK_MAP,
   PAGE_CATEGORY_BOOSTS, detectFrameworks, buildFrameworkSystemPrompt, classifyAaronIntent,
-  classifyAaronModelTier, selectAaronModel, SONNET_MODEL, HAIKU_MODEL,
+  classifyAaronModelTier, selectAaronModel,
   _aaronDailyLimits, _aaronLiveCache, _aaronOrgCache, _aaronDataCache,
   fetchAaronLiveContext, fetchAaronOrgContext, fetchAaronRepMemory, updateAaronRepMemory,
   fetchScorecardContext, fetchTeamComparisonContext, fetchContestContext,
@@ -351,6 +405,7 @@ const {
   fetchCalendarContext,
   detectStructuredOutputMode,
   getIcpProfileContext,
+  clearSalesDnaCache,
 } = aaronService;
 
 // GET Aaron rep memory — fetch current memory for the authenticated user
@@ -389,6 +444,19 @@ app.delete('/api/aaron/memory', loadProfile, requireFeature('coach'), async (req
   } catch (err) {
     console.error('DELETE /api/aaron/memory error:', err.message);
     return res.status(500).json({ error: 'Internal error' });
+  }
+});
+
+// POST /api/admin/clear-sales-dna-cache — call after saving Sales DNA config
+app.post('/api/admin/clear-sales-dna-cache', loadProfile, requireMinRole('admin'), async (req, res) => {
+  try {
+    const orgId = req.userProfile?.organization_id;
+    if (!orgId) return res.status(400).json({ error: 'No organization found' });
+    clearSalesDnaCache(orgId);
+    return res.json({ ok: true });
+  } catch (err) {
+    console.error('[admin/clear-sales-dna-cache] Error:', err.message);
+    return res.status(500).json({ error: err.message });
   }
 });
 
@@ -465,7 +533,7 @@ app.post('/api/aaron/coaching-action', loadProfile, requireFeature('coach'), asy
       try {
         const client = getAnthropic();
         const resp = await client.messages.create({
-          model: 'claude-haiku-4-5-20251001',
+          model: HAIKU_MODEL,
           max_tokens: 50,
           messages: [{
             role: 'user',
@@ -1297,7 +1365,7 @@ app.get('/api/aaron/daily-briefing', loadProfile, requireFeature('coach'), async
 
     // Gather context in parallel
     const [liveData, calendarData, salesDna, repMemoryResult] = await Promise.all([
-      fetchAaronLiveContext(userId, orgId),
+      fetchAaronLiveContext(userId, orgId, req.userProfile?.role),
       fetchCalendarContext(userId, orgId),
       getSalesDnaContext(orgId),
       fetchAaronRepMemory(userId, orgId),
@@ -1725,6 +1793,19 @@ app.post('/api/auth/signup', signupLimiter, async (req, res) => {
       console.error('[Signup] Notification email failed:', emailErr.message);
     }
 
+    // Send welcome email to the new user
+    try {
+      await sendWelcomeEmail({ email: email.toLowerCase(), first_name: first_name.trim() }, { name: 'your team' });
+      // Log welcome email to onboarding_email_log for tracking
+      await sb.from('onboarding_email_log').insert({
+        user_id: userId,
+        organization_id: null,
+        email_type: 'welcome',
+      }).then(() => {}, () => {});
+    } catch (welcomeErr) {
+      console.error('[Signup] Welcome email failed:', welcomeErr.message);
+    }
+
     console.log(`[Signup] New user: ${first_name} ${last_name} <${email}>`);
     return res.json({ ok: true });
   } catch (err) {
@@ -1908,13 +1989,28 @@ app.post('/api/onboarding/link-org', requireAuth, async (req, res) => {
 });
 
 // ─── Onboarding: Save KPI configs (admin client, bypasses RLS) ───────────────
-app.post('/api/onboarding/save-kpis', requireAuth, async (req, res) => {
+app.post('/api/onboarding/save-kpis', requireAuth, loadProfile, async (req, res) => {
   try {
     const sb = getSupabaseAdmin();
     if (!sb) return res.status(503).json({ error: 'Service unavailable' });
     const { organization_id, kpiGoals } = req.body;
     if (!organization_id) return res.status(400).json({ error: 'organization_id is required' });
     if (!Array.isArray(kpiGoals) || kpiGoals.length === 0) return res.status(400).json({ error: 'kpiGoals array is required' });
+
+    // P0: Verify caller belongs to the target org
+    if (req.userProfile.organization_id !== organization_id) {
+      console.warn(`[onboarding/save-kpis] Org mismatch: user ${req.user.id} (org ${req.userProfile.organization_id}) tried to write org ${organization_id}`);
+      return res.status(403).json({ error: 'Cannot modify another organization\'s KPIs' });
+    }
+
+    // P0: Validate enabled KPI weights sum to 100 (±1 tolerance for rounding)
+    const enabledKpis = kpiGoals.filter(k => k.enabled);
+    if (enabledKpis.length > 0) {
+      const weightSum = enabledKpis.reduce((sum, k) => sum + (Number(k.weight) || 0), 0);
+      if (Math.abs(weightSum - 100) > 1) {
+        return res.status(400).json({ error: `Enabled KPI weights must sum to 100 (got ${weightSum})` });
+      }
+    }
 
     // Resolve kpi_key → kpi_id from global catalog
     const { data: allMetrics } = await sb.from('kpi_metrics').select('id, key').eq('is_active', true);
@@ -2237,7 +2333,7 @@ app.post('/api/ai-draft', aiLimiter, loadProfile, requireMinRole('coach'), requi
 
     const client = getAnthropic();
     const message = await client.messages.create({
-      model: 'claude-sonnet-4-20250514',
+      model: SONNET_MODEL,
       max_tokens: 512,
       messages: [
         { role: 'user', content: `${contextParts}\n\n${prompt}` }
@@ -2425,7 +2521,7 @@ app.post('/api/ai/coaching-plan', aiLimiter, loadProfile, requireMinRole('power_
 
     const client = getAnthropic();
     const message = await client.messages.create({
-      model: 'claude-sonnet-4-20250514',
+      model: SONNET_MODEL,
       max_tokens: 1500,
       messages: [{ role: 'user', content: prompt }]
     });
@@ -2556,7 +2652,7 @@ app.post('/api/ai/idp-plan', aiLimiter, loadProfile, requireMinRole('power_user'
 
     const client = getAnthropic();
     const message = await client.messages.create({
-      model: 'claude-sonnet-4-20250514',
+      model: SONNET_MODEL,
       max_tokens: 2000,
       messages: [{ role: 'user', content: prompt }]
     });
@@ -2725,7 +2821,7 @@ app.post('/api/ai/review-draft', aiLimiter, loadProfile, requireMinRole('power_u
 
     const client = getAnthropic();
     const message = await client.messages.create({
-      model: 'claude-sonnet-4-20250514',
+      model: SONNET_MODEL,
       max_tokens: 2000,
       messages: [{ role: 'user', content: prompt }]
     });
@@ -2909,6 +3005,221 @@ app.post('/api/reviews/:id/transition', loadProfile, requireMinRole('power_user'
 // Example route
 app.get('/', (req, res) => {
   res.send('Apptivia Backend Running');
+});
+
+// GET /api/coaching/effectiveness — Coaching plan effectiveness metrics
+app.get('/api/coaching/effectiveness', loadProfile, requireMinRole('manager'), async (req, res) => {
+  try {
+    const orgId = req.userProfile?.organization_id;
+    if (!orgId) return res.status(400).json({ error: 'organization_id required' });
+
+    const sb = getSupabaseAdmin();
+    // Fetch ALL plans for the org — coaching_plans.status is unreliable (UI derives status from assignments)
+    const { data: plans, error: plansErr } = await sb.from('coaching_plans')
+      .select('*')
+      .eq('organization_id', orgId)
+      .order('created_at', { ascending: false })
+      .limit(50);
+
+    if (plansErr) return res.status(500).json({ error: plansErr.message });
+    if (!plans?.length) return res.json({ plans: [], summary: { total: 0, completed: 0, active: 0, avg_effectiveness: 0, most_effective_framework: null } });
+
+    // Fetch assignment statuses to derive real plan status (matching frontend getPlanStatus logic)
+    const planIds = plans.map(p => p.id);
+    const { data: assignments } = await sb.from('coaching_plan_assignments')
+      .select('plan_id, assigned_to, status')
+      .in('plan_id', planIds);
+
+    const assignmentsByPlan = {};
+    (assignments || []).forEach(a => {
+      if (!assignmentsByPlan[a.plan_id]) assignmentsByPlan[a.plan_id] = [];
+      assignmentsByPlan[a.plan_id].push(a);
+    });
+
+    // Derive real status from assignments (same logic as frontend getPlanStatus)
+    function derivePlanStatus(plan) {
+      const planAssignments = assignmentsByPlan[plan.id] || [];
+      if (!planAssignments.length) return plan.status || 'draft';
+      const statuses = planAssignments.map(a => a.status);
+      if (statuses.every(s => s === 'completed')) return 'completed';
+      if (statuses.some(s => s === 'active' || s === 'in_progress')) return 'in_progress';
+      return plan.status || 'active';
+    }
+
+    // Filter to only plans that are active/in_progress/completed (exclude drafts with no assignments)
+    const activePlans = plans.filter(p => {
+      const s = derivePlanStatus(p);
+      return s === 'active' || s === 'in_progress' || s === 'completed';
+    });
+
+    if (!activePlans.length) return res.json({ plans: [], summary: { total: 0, completed: 0, active: 0, avg_effectiveness: 0, most_effective_framework: null } });
+
+    // Resolve rep names from assigned_to UUIDs
+    const allAssignedIds = [...new Set(activePlans.flatMap(p => p.assigned_to || []))];
+    let profileMap = {};
+    if (allAssignedIds.length > 0) {
+      const { data: profiles } = await sb.from('profiles')
+        .select('id, first_name, last_name, full_name')
+        .in('id', allAssignedIds);
+      (profiles || []).forEach(p => {
+        profileMap[p.id] = p.full_name || [p.first_name, p.last_name].filter(Boolean).join(' ') || 'Unknown';
+      });
+    }
+
+    // Compute effectiveness per plan
+    const planMetrics = activePlans.map(plan => {
+      const realStatus = derivePlanStatus(plan);
+      const start = plan.kpi_snapshot_start || {};
+      const end = plan.kpi_snapshot_end || {};
+      let totalDelta = 0;
+      let kpiCount = 0;
+      const kpiDeltas = {};
+
+      for (const kpi of (plan.focus_kpis || [])) {
+        const s = start[kpi] ?? null;
+        const e = end[kpi] ?? null;
+        if (s !== null && e !== null) {
+          const delta = e - s;
+          kpiDeltas[kpi] = { start: s, end: e, delta, pctChange: s > 0 ? Math.round((delta / s) * 100) : 0 };
+          totalDelta += delta;
+          kpiCount++;
+        }
+      }
+
+      const avgDelta = kpiCount > 0 ? Math.round(totalDelta / kpiCount) : 0;
+      const repName = (plan.assigned_to || []).map(id => profileMap[id] || 'Unknown').join(', ') || 'Unassigned';
+      const planTypeLabel = plan.plan_type === 'auto' ? 'AI Generated' : plan.template_id ? 'Template' : 'Custom';
+
+      return {
+        id: plan.id,
+        name: plan.name,
+        rep_name: repName,
+        framework: planTypeLabel,
+        status: realStatus,
+        start_date: plan.date_range_start,
+        end_date: plan.date_range_end,
+        completed_at: plan.completed_at,
+        focus_kpis: plan.focus_kpis || [],
+        kpi_deltas: kpiDeltas,
+        avg_kpi_delta: avgDelta,
+        effectiveness_score: Math.max(0, Math.min(100, 50 + avgDelta)),
+      };
+    });
+
+    const completed = planMetrics.filter(p => p.status === 'completed');
+    const avgEff = completed.length > 0 ? Math.round(completed.reduce((s, p) => s + p.effectiveness_score, 0) / completed.length) : 0;
+
+    // Most effective framework
+    const fwCounts = {};
+    completed.forEach(p => {
+      if (p.framework) {
+        fwCounts[p.framework] = fwCounts[p.framework] || { count: 0, totalEff: 0 };
+        fwCounts[p.framework].count++;
+        fwCounts[p.framework].totalEff += p.effectiveness_score;
+      }
+    });
+    const topFw = Object.entries(fwCounts).sort((a, b) => (b[1].totalEff / b[1].count) - (a[1].totalEff / a[1].count))[0];
+
+    return res.json({
+      plans: planMetrics,
+      summary: {
+        total: plans.length,
+        completed: completed.length,
+        active: planMetrics.filter(p => p.status === 'active' || p.status === 'in_progress').length,
+        avg_effectiveness: avgEff,
+        most_effective_framework: topFw ? { name: topFw[0], avg_score: Math.round(topFw[1].totalEff / topFw[1].count), count: topFw[1].count } : null,
+      },
+    });
+  } catch (err) {
+    console.error('Coaching effectiveness error:', err.message);
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+// ── Custom Org Playbooks CRUD ──────────────────────────────────────────────
+app.get('/api/playbooks', loadProfile, requireMinRole('power_user'), async (req, res) => {
+  try {
+    const orgId = req.userProfile?.organization_id;
+    if (!orgId) return res.status(400).json({ error: 'organization_id required' });
+
+    const sb = getSupabaseAdmin();
+    const { data, error } = await sb.from('org_playbooks')
+      .select('*')
+      .eq('organization_id', orgId)
+      .eq('is_active', true)
+      .order('created_at', { ascending: false });
+
+    if (error) return res.status(500).json({ error: error.message });
+    return res.json(data || []);
+  } catch (err) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/playbooks', loadProfile, requireMinRole('manager'), async (req, res) => {
+  try {
+    const orgId = req.userProfile?.organization_id;
+    if (!orgId) return res.status(400).json({ error: 'organization_id required' });
+
+    const { name, category, framework, tagline, sections } = req.body || {};
+    if (!name || !category) return res.status(400).json({ error: 'name and category are required' });
+
+    const sb = getSupabaseAdmin();
+    const { data, error } = await sb.from('org_playbooks').insert({
+      organization_id: orgId,
+      created_by: req.user.id,
+      name,
+      category,
+      framework: framework || null,
+      tagline: tagline || null,
+      sections: sections || [],
+    }).select().single();
+
+    if (error) return res.status(500).json({ error: error.message });
+    return res.json(data);
+  } catch (err) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+app.put('/api/playbooks/:id', loadProfile, requireMinRole('manager'), async (req, res) => {
+  try {
+    const orgId = req.userProfile?.organization_id;
+    const { name, category, framework, tagline, sections, is_active } = req.body || {};
+
+    const sb = getSupabaseAdmin();
+    const updates = {};
+    if (name !== undefined) updates.name = name;
+    if (category !== undefined) updates.category = category;
+    if (framework !== undefined) updates.framework = framework;
+    if (tagline !== undefined) updates.tagline = tagline;
+    if (sections !== undefined) updates.sections = sections;
+    if (is_active !== undefined) updates.is_active = is_active;
+    updates.updated_at = new Date().toISOString();
+
+    const { data, error } = await sb.from('org_playbooks')
+      .update(updates).eq('id', req.params.id).eq('organization_id', orgId).select().single();
+
+    if (error) return res.status(500).json({ error: error.message });
+    return res.json(data);
+  } catch (err) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+app.delete('/api/playbooks/:id', loadProfile, requireMinRole('manager'), async (req, res) => {
+  try {
+    const orgId = req.userProfile?.organization_id;
+    const sb = getSupabaseAdmin();
+    const { error } = await sb.from('org_playbooks')
+      .update({ is_active: false, updated_at: new Date().toISOString() })
+      .eq('id', req.params.id).eq('organization_id', orgId);
+
+    if (error) return res.status(500).json({ error: error.message });
+    return res.json({ ok: true });
+  } catch (err) {
+    return res.status(500).json({ error: err.message });
+  }
 });
 
 app.post('/api/send-coaching-plan', loadProfile, requireMinRole('manager'), requireFeature('coaching_plans'), async (req, res) => {
@@ -3360,9 +3671,9 @@ const LEADERSHIP_SENIORITY = ['c_suite', 'vp', 'head', 'director'];
 
 // Helper: resolve titles/seniority based on persona mode
 async function resolvePersonaFilters(orgId, persona, explicitTitles) {
-  if (persona === 'leadership') return { titles: [], seniority: LEADERSHIP_SENIORITY };
-  if (persona === 'all') return { titles: [], seniority: [] };
-  if (persona === 'custom' && explicitTitles?.length) return { titles: explicitTitles, seniority: FALLBACK_SENIORITY };
+  if (persona === 'leadership') return { titles: [], seniority: LEADERSHIP_SENIORITY, source: 'leadership' };
+  if (persona === 'all') return { titles: [], seniority: [], source: 'all' };
+  if (persona === 'custom' && explicitTitles?.length) return { titles: explicitTitles, seniority: [], source: 'custom' };
 
   // persona === 'icp' (default) — try org's default ICP profile titles
   if (orgId) {
@@ -3375,11 +3686,14 @@ async function resolvePersonaFilters(orgId, persona, explicitTitles) {
         .limit(1);
       const sc = profiles?.[0]?.signal_config;
       if (sc?.job_titles_to_track?.length) {
-        return { titles: sc.job_titles_to_track, seniority: FALLBACK_SENIORITY };
+        // Org has configured specific titles — use them WITHOUT seniority filter
+        // so Apollo matches on title alone (seniority AND title can exclude valid contacts)
+        return { titles: sc.job_titles_to_track, seniority: [], source: 'org_icp' };
       }
     } catch (e) { /* fall through to defaults */ }
   }
-  return { titles: FALLBACK_SALES_TITLES, seniority: FALLBACK_SENIORITY };
+  // Fallback: broad sales titles + seniority filter
+  return { titles: FALLBACK_SALES_TITLES, seniority: FALLBACK_SENIORITY, source: 'fallback' };
 }
 
 // Find people at a specific company by domain (fallback for engage-research edge fn)
@@ -3420,7 +3734,7 @@ app.post('/api/engage/search/suggested-contacts', loadProfile, async (req, res) 
     const { domain } = req.body;
     if (!domain) return res.status(400).json({ error: 'domain is required' });
 
-    // Use org's ICP profile titles for suggested contacts too
+    // Use org's ICP profile titles for suggested contacts
     const orgId = req.userProfile?.organization_id;
     const resolved = await resolvePersonaFilters(orgId, 'icp');
 
@@ -3429,7 +3743,7 @@ app.post('/api/engage/search/suggested-contacts', loadProfile, async (req, res) 
       per_page: 5,
     };
     if (resolved.titles?.length) filters.titles = resolved.titles;
-    filters.seniority = ['vp', 'head', 'director', 'manager', 'c_suite'];
+    if (resolved.seniority?.length) filters.seniority = resolved.seniority;
 
     const data = await engage.apolloSearchPeople(filters);
     return res.json({ ok: true, data });
@@ -3617,6 +3931,47 @@ app.post('/api/engage/search/organizations', loadProfile, async (req, res) => {
     return res.json({ ok: true, companies });
   } catch (err) {
     console.error('Engage organizations search error:', err.message);
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+// NLP Persona Search — parse natural language into structured Apollo filters
+app.post('/api/engage/discover/parse-persona', aiLimiter, loadProfile, requireMinRole('power_user'), async (req, res) => {
+  try {
+    const { query } = req.body || {};
+    if (!query) return res.status(400).json({ error: 'query is required' });
+
+    const client = getAnthropic();
+    const msg = await client.messages.create({
+      model: HAIKU_MODEL,
+      max_tokens: 300,
+      system: `Extract structured search filters from a natural language people search query.
+Return a JSON object with these fields (include only fields that can be extracted):
+{
+  "titles": ["array of job title strings to search for"],
+  "seniority": ["array of seniority levels: owner, founder, c_suite, partner, vp, director, manager, senior, entry"],
+  "department": "string — Sales, Engineering, Marketing, Finance, Operations, HR, IT, Legal, etc.",
+  "min_tenure_years": <number or null>,
+  "keywords": ["any other relevant keywords"]
+}
+Only return the JSON object, no explanation.`,
+      messages: [{ role: 'user', content: query }],
+    });
+
+    const text = msg.content?.[0]?.text || '';
+    const jsonMatch = text.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) return res.json({ titles: [], seniority: [] });
+
+    const parsed = JSON.parse(jsonMatch[0]);
+    return res.json({
+      titles: parsed.titles || [],
+      seniority: parsed.seniority || [],
+      department: parsed.department || null,
+      min_tenure_years: parsed.min_tenure_years || null,
+      keywords: parsed.keywords || [],
+    });
+  } catch (err) {
+    console.error('Parse persona error:', err.message);
     return res.status(500).json({ error: err.message });
   }
 });
@@ -3818,7 +4173,7 @@ ${deals.map(d => `- ${d.deal_name}: $${d.deal_value?.toLocaleString()} | Stage: 
     let fullText = '';
 
     const stream = client.messages.stream({
-      model: 'claude-sonnet-4-20250514',
+      model: SONNET_MODEL,
       max_tokens: 1500,
       system: systemPrompt,
       messages: [{ role: 'user', content: userMessage }],
@@ -3861,13 +4216,63 @@ app.post('/api/engage/analyze-account', aiLimiter, loadProfile, requireMinRole('
     const { account, signals, deals } = req.body || {};
     if (!account || !account.id) return res.status(400).json({ error: 'account is required' });
 
-    // Fetch ICP context for account analysis
     const orgId = req.userProfile?.organization_id;
     const icpCtx = orgId ? await getIcpProfileContext(orgId).catch(() => '') : '';
 
+    // ── Fetch enriched context server-side ──────────────────────────
+    const sb = getSupabaseAdmin();
+    const [
+      { data: committeeRaw },
+      { data: contactsRaw },
+      { data: meetingsRaw },
+      { data: activityRaw },
+      { data: tasksRaw },
+      { data: enrollmentsRaw },
+      { data: researchRaw },
+    ] = await Promise.all([
+      // Buying committee members (from account data — already embedded)
+      sb.from('engage_prospects').select('first_name, last_name, title, email, engagement_status')
+        .eq('organization_id', orgId).ilike('company', `%${account.account_name}%`).limit(20),
+      // Account contacts
+      sb.from('engage_prospects').select('first_name, last_name, title, email, engagement_status, linkedin_url')
+        .eq('organization_id', orgId).ilike('company', `%${account.account_name}%`).limit(30),
+      // Recent meetings (last 30 days)
+      sb.from('engage_meetings').select('title, meeting_date, notes, outcome')
+        .eq('organization_id', orgId).eq('account_id', account.id)
+        .gte('meeting_date', new Date(Date.now() - 30 * 86400000).toISOString())
+        .order('meeting_date', { ascending: false }).limit(10),
+      // Account activity (last 30 days)
+      sb.from('engage_account_activity').select('activity_type, title, description, created_at')
+        .eq('account_id', account.id)
+        .gte('created_at', new Date(Date.now() - 30 * 86400000).toISOString())
+        .order('created_at', { ascending: false }).limit(15),
+      // Active tasks for account
+      sb.from('engage_tasks').select('title, status, due_date, priority')
+        .eq('organization_id', orgId).eq('account_id', account.id)
+        .in('status', ['pending', 'in_progress']).limit(10),
+      // Active sequence enrollments for account contacts
+      sb.from('engage_sequence_enrollments').select('prospect_email, status, current_step, engage_sequences(name)')
+        .eq('organization_id', orgId).eq('status', 'active').limit(20),
+      // Cached company research
+      sb.from('engage_companies').select('key_findings, tech_stack, description, employee_count_range')
+        .eq('organization_id', orgId)
+        .or(`domain.eq.${account.domain || '___'},name.ilike.%${account.account_name}%`)
+        .limit(1),
+    ]);
+
+    const committee = account.buying_committee || [];
+    const contacts = contactsRaw || [];
+    const meetings = meetingsRaw || [];
+    const activity = activityRaw || [];
+    const tasks = tasksRaw || [];
+    const enrollments = (enrollmentsRaw || []).filter(e =>
+      contacts.some(c => c.email && e.prospect_email === c.email)
+    );
+    const research = researchRaw?.[0] || null;
+
     const client = getAnthropic();
     const systemPrompt = `You are a senior account strategist in Apptivia, a sales performance platform.
-${icpCtx ? icpCtx + '\nUse this ICP profile to assess how well this account matches the ideal customer profile. Reference specific ICP criteria in your analysis.\n' : ''}Analyze the provided account data, intent signals, and pipeline deals to produce actionable intelligence.
+${icpCtx ? icpCtx + '\nUse this ICP profile to assess how well this account matches the ideal customer profile. Reference specific ICP criteria in your analysis.\n' : ''}Analyze the provided account data comprehensively — buying committee, contacts, signals, deals, meetings, activity, tasks, and research — to produce actionable intelligence.
 
 Return a JSON object with these exact fields:
 {
@@ -3875,39 +4280,70 @@ Return a JSON object with these exact fields:
   "strategy": "Recommended next-best-action strategy in 2-3 sentences",
   "risk_factors": ["array of 1-4 specific risk strings, or empty array if none"],
   "account_score": <integer 0-100 representing overall account health/fit>,
-  "intent_score": <integer 0-100 representing buying intent level>
+  "intent_score": <integer 0-100 representing buying intent level>,
+  "outbound_guidance": ["array of 2-4 specific next actions with contact names where applicable"],
+  "outreach_strategy": [{"contact_name": "string", "channel": "email|linkedin|phone|call", "angle": "string", "priority": "high|medium|low"}],
+  "suggested_key_contacts": [{"title": "string", "department": "string", "reason": "string"}],
+  "deal_risk_assessment": [{"deal_name": "string", "risk": "string", "mitigation": "string"}]
 }
 
 Scoring guidelines:
-- account_score: based on fit (company size, industry match, tech stack), engagement level, deal progression
-- intent_score: based on signal recency, signal strength, deal activity, multi-threading
+- account_score: fit (company size, industry, tech stack), engagement level, deal progression, committee coverage
+- intent_score: signal recency/strength, deal activity, multi-threading, meeting cadence
 
+For outreach_strategy, recommend specific channels + angles for each known contact based on their role and engagement status.
+For suggested_key_contacts, identify ICP-matched roles MISSING from the current buying committee/contacts.
+For deal_risk_assessment, only include entries if there are active deals with identifiable risks.
 Be specific, actionable, and concise. Reference data points from the input.` + AI_STYLE_RULE;
 
     const userMessage = `Account: ${account.account_name}
 Domain: ${account.domain || 'Unknown'}
 Industry: ${account.industry || 'Unknown'}
 Employee Count: ${account.employee_count || 'Unknown'}
+Annual Revenue: ${account.annual_revenue || 'Unknown'}
 Current Score: ${account.account_score || 'Not scored'}
 Current Intent: ${account.intent_score || 'Not scored'}
 Status: ${account.status || 'active'}
-Buying Committee: ${account.buying_committee?.length || 0} members
+Tier: ${account.tier || 'untiered'}
+Territory: ${account.territory || 'Not assigned'}
+
+Buying Committee (${committee.length}):
+${committee.map(m => `- ${m.name || 'Unknown'} | ${m.title || 'No title'} | Role: ${m.role || 'member'} | ${m.email || 'no email'}`).join('\n') || 'None'}
+
+Account Contacts (${contacts.length}):
+${contacts.slice(0, 15).map(c => `- ${c.first_name} ${c.last_name} | ${c.title || 'No title'} | ${c.email || 'no email'} | Status: ${c.engagement_status || 'unknown'}`).join('\n') || 'None'}
 
 Intent Signals (${(signals || []).length}):
 ${(signals || []).slice(0, 10).map(s => `- ${s.signal_type}: score ${s.signal_score} (${s.detected_at || 'recent'})`).join('\n') || 'None detected'}
 
 Pipeline Deals (${(deals || []).length}):
-${(deals || []).slice(0, 5).map(d => `- ${d.deal_name}: $${d.deal_value?.toLocaleString()} | Stage: ${d.stage} | Prob: ${d.probability}%`).join('\n') || 'No active deals'}`;
+${(deals || []).slice(0, 5).map(d => `- ${d.deal_name}: $${d.deal_value?.toLocaleString()} | Stage: ${d.stage} | Prob: ${d.probability}% | Created: ${d.created_at?.slice(0, 10) || 'unknown'}`).join('\n') || 'No active deals'}
+
+Recent Meetings (${meetings.length}, last 30 days):
+${meetings.slice(0, 5).map(m => `- ${m.title || 'Meeting'} on ${m.meeting_date?.slice(0, 10) || '?'} | Outcome: ${m.outcome || 'pending'}`).join('\n') || 'None'}
+
+Account Activity (${activity.length}, last 30 days):
+${activity.slice(0, 8).map(a => `- [${a.activity_type}] ${a.title} (${a.created_at?.slice(0, 10)})`).join('\n') || 'No recent activity'}
+
+Active Tasks (${tasks.length}):
+${tasks.slice(0, 5).map(t => `- ${t.title} | ${t.priority} priority | Due: ${t.due_date || 'no date'} | Status: ${t.status}`).join('\n') || 'None'}
+
+Sequence Enrollments (${enrollments.length} active):
+${enrollments.slice(0, 5).map(e => `- ${e.prospect_email} in "${e.engage_sequences?.name || 'sequence'}" (step ${e.current_step})`).join('\n') || 'None'}
+
+${research ? `Company Research (cached):
+- Description: ${research.description || 'N/A'}
+- Key Findings: ${JSON.stringify(research.key_findings || []).slice(0, 300)}
+- Tech Stack: ${JSON.stringify(research.tech_stack || []).slice(0, 200)}` : 'No cached company research'}`;
 
     const msg = await client.messages.create({
-      model: 'claude-sonnet-4-20250514',
-      max_tokens: 600,
+      model: SONNET_MODEL,
+      max_tokens: 1200,
       system: systemPrompt,
       messages: [{ role: 'user', content: userMessage }],
     });
 
     const text = msg.content?.[0]?.text || '';
-    // Extract JSON from response (handle markdown code fences)
     const jsonMatch = text.match(/\{[\s\S]*\}/);
     if (!jsonMatch) return res.status(500).json({ error: 'AI returned invalid response format' });
 
@@ -4119,7 +4555,7 @@ app.post('/api/engage/signals/scan', aiLimiter, loadProfile, requireMinRole('man
       const batch = dedupedResults.slice(i, i + BATCH_SIZE);
       try {
         const response = await client.messages.create({
-          model: 'claude-sonnet-4-20250514',
+          model: SONNET_MODEL,
           max_tokens: 4000,
           system: `You are a B2B sales intelligence analyst. Classify each search result as a buyer intent signal.
 
@@ -4312,7 +4748,7 @@ app.post('/api/engage/watchdog/analyze', aiLimiter, loadProfile, requireMinRole(
     const salesDnaCtx = await getSalesDnaContext(req.userProfile?.organization_id);
     const client = getAnthropic();
     const response = await client.messages.create({
-      model: 'claude-sonnet-4-20250514',
+      model: SONNET_MODEL,
       max_tokens: 2000,
       system: `You are an expert sales coach in Apptivia, a sales performance platform.
 ${salesDnaCtx ? salesDnaCtx + '\n' : ''}For each KPI anomaly, provide:
@@ -4349,6 +4785,10 @@ Return ONLY valid JSON array with objects having keys: analysis, recommendation`
 // 3. Subscription conversion timing from trial to paid (willingness-to-pay signal)
 app.get('/api/pilot/adoption-signals', loadProfile, requireMinRole('admin'), async (req, res) => {
   try {
+    // Super admin gate — only is_super_admin profiles can access pilot data
+    if (!req.userProfile?.is_super_admin) {
+      return res.status(403).json({ error: 'Super admin access required' });
+    }
     const sb = getSupabaseAdmin();
     if (!sb) return res.status(503).json({ error: 'Service unavailable' });
 
@@ -4358,13 +4798,43 @@ app.get('/api/pilot/adoption-signals', loadProfile, requireMinRole('admin'), asy
     const { days = 90 } = req.query;
     const since = new Date(Date.now() - parseInt(days) * 86400000).toISOString();
 
-    // ── Signal 1: Active Users — distinct users with any notification activity in window ──
-    const { data: activeUserRows } = await sb
-      .from('notifications')
-      .select('profile_id')
+    // ── Signal 1: Unprompted manager Aaron sessions ──
+    // Counts distinct managers who opened Aaron without a prior system-generated
+    // coaching_suggestion notification in the 24h before the session.
+    const { data: managerThreads } = await sb
+      .from('aaron_conversation_threads')
+      .select('user_id, last_active_at, organization_id')
       .eq('organization_id', orgId)
-      .gte('created_at', since);
-    const activeUsers = new Set((activeUserRows || []).map(r => r.profile_id).filter(Boolean)).size;
+      .gte('last_active_at', since)
+      .then(r => r)
+      .catch(() => ({ data: [] }));
+
+    const { data: managerProfiles } = await sb
+      .from('profiles')
+      .select('id')
+      .eq('organization_id', orgId)
+      .in('role', ['admin', 'manager', 'coach'])
+      .then(r => r)
+      .catch(() => ({ data: [] }));
+    const managerProfileIds = new Set((managerProfiles || []).map(p => p.id));
+
+    let unpromptedSessions = 0;
+    for (const thread of (managerThreads || [])) {
+      if (!managerProfileIds.has(thread.user_id)) continue;
+      const threadTime = new Date(thread.last_active_at);
+      const windowStart = new Date(threadTime.getTime() - 24 * 3600 * 1000).toISOString();
+      const { count: promptCount } = await sb
+        .from('notifications')
+        .select('id', { count: 'exact', head: true })
+        .eq('profile_id', thread.user_id)
+        .eq('type', 'coaching_suggestion')
+        .gte('created_at', windowStart)
+        .lte('created_at', thread.last_active_at)
+        .then(r => r)
+        .catch(() => ({ count: 0 }));
+      if (!promptCount || promptCount === 0) unpromptedSessions++;
+    }
+    const activeUsers = unpromptedSessions;
 
     // ── Signal 2: Aaron AI Usage — conversations and total messages in window ──
     const { data: aaronThreads } = await sb
@@ -4498,7 +4968,7 @@ app.post('/api/admin/seed-benchmarks', loadProfile, requireMinRole('admin'), asy
 
 // ── Analytics: Cross-Org Benchmarks ─────────────────────────────────────
 // [FEATURE 4] Shared helper for peer benchmarking (used by both Pro and Enterprise endpoints)
-async function fetchPeerBenchmarks(sb, orgId, { weeksBack = 4, minOrgs = 2 } = {}) {
+async function fetchPeerBenchmarks(sb, orgId, { weeksBack = 4, minOrgs = 5 } = {}) {
   const since = new Date(Date.now() - weeksBack * 7 * 86400000).toISOString();
   const priorSince = new Date(Date.now() - weeksBack * 2 * 7 * 86400000).toISOString();
 
@@ -4534,7 +5004,15 @@ async function fetchPeerBenchmarks(sb, orgId, { weeksBack = 4, minOrgs = 2 } = {
     .eq('is_active', true)
     .neq('organization_id', orgId);
 
-  const peerOrgIds = [...new Set((allOrgConfigs || []).map(c => c.organization_id))];
+  const rawPeerOrgIds = [...new Set((allOrgConfigs || []).map(c => c.organization_id))];
+
+  // Exclude internal/test orgs from peer benchmarks
+  const { data: internalOrgs } = await sb
+    .from('organizations')
+    .select('id')
+    .eq('is_internal', true);
+  const internalOrgIds = new Set((internalOrgs || []).map(o => o.id));
+  const peerOrgIds = rawPeerOrgIds.filter(id => !internalOrgIds.has(id));
 
   if (peerOrgIds.length < minOrgs) {
     // Fall back to industry benchmarks (org_id IS NULL = global system records)
@@ -4558,6 +5036,40 @@ async function fetchPeerBenchmarks(sb, orgId, { weeksBack = 4, minOrgs = 2 } = {
   const topQuartile = arr => arr.length ? arr[Math.floor(arr.length * 0.75)] : 0;
   const avg = arr => arr.length ? Math.round(arr.reduce((a, b) => a + b, 0) / arr.length) : 0;
 
+  // Bulk-fetch ALL peer kpi_values in one query (replaces sequential per-metric loop)
+  const { data: allPeerValues } = await withTimeout(
+    sb.from('kpi_values')
+      .select('profile_id, value, kpi_id, profiles!inner(organization_id)')
+      .in('kpi_id', metricIds)
+      .in('profiles.organization_id', peerOrgIds)
+      .gte('period_start', since),
+    10000, 'peer-benchmarks:all-peer-values'
+  );
+
+  // Fetch this org's profiles and values (bulk, one query each)
+  const { data: thisOrgProfiles } = await sb.from('profiles').select('id').eq('organization_id', orgId);
+  const thisOrgProfileIds = (thisOrgProfiles || []).map(p => p.id);
+  const { data: allThisOrgValues } = thisOrgProfileIds.length
+    ? await withTimeout(
+        sb.from('kpi_values').select('value, period_start, kpi_id').in('kpi_id', metricIds).gte('period_start', priorSince).in('profile_id', thisOrgProfileIds),
+        10000, 'peer-benchmarks:this-org-values'
+      )
+    : { data: [] };
+
+  // Group peer values by kpi_id
+  const peerValuesByKpi = {};
+  for (const v of (allPeerValues || [])) {
+    if (!peerValuesByKpi[v.kpi_id]) peerValuesByKpi[v.kpi_id] = [];
+    peerValuesByKpi[v.kpi_id].push(v);
+  }
+
+  // Group this org values by kpi_id
+  const thisOrgValuesByKpi = {};
+  for (const v of (allThisOrgValues || [])) {
+    if (!thisOrgValuesByKpi[v.kpi_id]) thisOrgValuesByKpi[v.kpi_id] = [];
+    thisOrgValuesByKpi[v.kpi_id].push(v);
+  }
+
   const benchmarks = [];
   for (const metricDef of kpiMetricDefs) {
     const peerConfigs = (allOrgConfigs || []).filter(c => c.kpi_id === metricDef.id);
@@ -4568,36 +5080,24 @@ async function fetchPeerBenchmarks(sb, orgId, { weeksBack = 4, minOrgs = 2 } = {
     const calcAttainment = (value, goal) => {
       const ratio = value / (goal || 1);
       return Math.min(
-        metricDirection === 'lower' ? (ratio > 0 ? (1 / ratio) * 100 : 200) : ratio * 100,
+        metricDirection === 'lower' ? (ratio > 0 ? (1 / ratio) * 100 : null) : ratio * 100,
         200
       );
     };
 
-    // Fetch peer values (current window)
-    const { data: peerValues } = await sb
-      .from('kpi_values')
-      .select('profile_id, value, kpi_id, profiles!inner(organization_id)')
-      .eq('kpi_id', metricDef.id)
-      .in('profiles.organization_id', peerOrgIds)
-      .gte('period_start', since);
+    const peerValues = peerValuesByKpi[metricDef.id] || [];
+    const thisOrgValues = thisOrgValuesByKpi[metricDef.id] || [];
 
-    // Fetch this org's values (current + prior window for trend)
-    const { data: thisOrgProfiles } = await sb.from('profiles').select('id').eq('organization_id', orgId);
-    const thisOrgProfileIds = (thisOrgProfiles || []).map(p => p.id);
-    const { data: thisOrgValues } = thisOrgProfileIds.length
-      ? await sb.from('kpi_values').select('value, period_start').eq('kpi_id', metricDef.id).gte('period_start', priorSince).in('profile_id', thisOrgProfileIds)
-      : { data: [] };
+    const currentValues = thisOrgValues.filter(v => v.period_start >= since);
+    const priorValues = thisOrgValues.filter(v => v.period_start < since);
 
-    const currentValues = (thisOrgValues || []).filter(v => v.period_start >= since);
-    const priorValues = (thisOrgValues || []).filter(v => v.period_start < since);
-
-    const peerAttainments = (peerValues || []).map(v => {
+    const peerAttainments = peerValues.map(v => {
       const goal = peerGoalMap[v.profiles?.organization_id] || 1;
       return calcAttainment(v.value, goal);
-    }).sort((a, b) => a - b);
+    }).filter(a => a !== null).sort((a, b) => a - b);
 
-    const currentAttainments = currentValues.map(v => calcAttainment(v.value, thisOrgGoal));
-    const priorAttainments = priorValues.map(v => calcAttainment(v.value, thisOrgGoal));
+    const currentAttainments = currentValues.map(v => calcAttainment(v.value, thisOrgGoal)).filter(a => a !== null);
+    const priorAttainments = priorValues.map(v => calcAttainment(v.value, thisOrgGoal)).filter(a => a !== null);
 
     const orgAvg = avg(currentAttainments);
     const priorAvg = avg(priorAttainments);
@@ -4766,7 +5266,7 @@ app.post('/api/engage/accounts/analyze', aiLimiter, loadProfile, async (req, res
     } catch { /* Web enrichment is optional */ }
 
     const response = await client.messages.create({
-      model: 'claude-sonnet-4-20250514',
+      model: SONNET_MODEL,
       max_tokens: 1500,
       system: `You are a strategic account analyst for an enterprise sales team.
 ${salesDnaCtxAcct ? salesDnaCtxAcct + '\nAlign your engagement strategy recommendations with the organization\'s sales methodology.\n' : ''}Analyze the target account and provide actionable intelligence.
@@ -4818,7 +5318,7 @@ app.post('/api/engage/accounts/score', aiLimiter, loadProfile, requireMinRole('m
 
     const client = getAnthropic();
     const response = await client.messages.create({
-      model: 'claude-sonnet-4-20250514',
+      model: SONNET_MODEL,
       max_tokens: 2000,
       system: `You are an account scoring engine. Score each account on three dimensions (0-100):
 - account_score: Overall account quality/fit
@@ -4864,7 +5364,7 @@ app.post('/api/engage/playbooks/generate', aiLimiter, loadProfile, async (req, r
 
     const client = getAnthropic();
     const response = await client.messages.create({
-      model: 'claude-sonnet-4-20250514',
+      model: SONNET_MODEL,
       max_tokens: 2500,
       system: `You are an expert sales strategist who builds structured sales playbooks.
 ${salesDnaCtxPlaybook ? salesDnaCtxPlaybook + '\nAlign playbook steps and language with the organization\'s chosen sales methodology and qualification framework.\n' : ''}Given a sales scenario, generate a complete playbook with:
@@ -5110,7 +5610,7 @@ app.put('/api/deals/:dealId', loadProfile, async (req, res) => {
     const allowedFields = [
       'deal_name', 'deal_value', 'close_date', 'probability', 'forecast_category',
       'description', 'next_steps', 'competitor', 'win_loss_reason',
-      'linked_account_id', 'linked_company_id', 'stage',
+      'linked_account_id', 'linked_company_id', 'stage', 'qualification_data', 'software_in_use',
     ];
     const updates = {};
     for (const f of allowedFields) {
@@ -5258,7 +5758,7 @@ app.get('/api/deals/:dealId/tasks', loadProfile, async (req, res) => {
     if (!sb) return res.status(503).json({ error: 'Service unavailable' });
     const orgId = req.userProfile?.organization_id;
 
-    const { data, error } = await sb.from('engage_deal_tasks')
+    const { data, error } = await sb.from('engage_tasks')
       .select('*, assigned_profile:assigned_to(full_name, first_name, last_name)')
       .eq('deal_id', req.params.dealId)
       .eq('organization_id', orgId)
@@ -5283,9 +5783,9 @@ app.post('/api/deals/:dealId/tasks', loadProfile, async (req, res) => {
     const { title, description, due_date, assigned_to, priority } = req.body;
     if (!title) return res.status(400).json({ error: 'title is required' });
 
-    const { data: task, error } = await sb.from('engage_deal_tasks').insert({
+    const { data: task, error } = await sb.from('engage_tasks').insert({
       organization_id: orgId, deal_id: req.params.dealId, created_by: userId,
-      assigned_to: assigned_to || null, title, description: description || null,
+      assigned_to: assigned_to || userId, title, description: description || null,
       due_date: due_date || null, priority: priority || 'medium',
     }).select().single();
 
@@ -5328,7 +5828,7 @@ app.put('/api/deals/:dealId/tasks/:taskId', loadProfile, async (req, res) => {
     if (updates.status === 'completed') updates.completed_at = new Date().toISOString();
     if (updates.status && updates.status !== 'completed') updates.completed_at = null;
 
-    const { data: task, error } = await sb.from('engage_deal_tasks')
+    const { data: task, error } = await sb.from('engage_tasks')
       .update(updates).eq('id', req.params.taskId).eq('deal_id', req.params.dealId)
       .eq('organization_id', orgId).select().single();
 
@@ -5340,6 +5840,20 @@ app.put('/api/deals/:dealId/tasks/:taskId', loadProfile, async (req, res) => {
         activityType: 'task_completed', title: `Completed: ${task.title}`,
         metadata: { task_id: task.id },
       });
+
+      // Increment tasks_completed KPI for scorecard + skillset mastery
+      try {
+        await integrations.upsertKpiValue(sb, {
+          profileId: req.userProfile.id,
+          weekStart: integrations.getWeekStart(),
+          kpiId: 'tasks_completed',
+          value: 1,
+          organizationId: orgId,
+          source: 'apptivia',
+        });
+      } catch (kpiErr) {
+        console.warn('[deals/task-complete] KPI increment failed:', kpiErr.message);
+      }
 
       try {
         await sb.from('engage_activity_events').insert({
@@ -5363,12 +5877,179 @@ app.delete('/api/deals/:dealId/tasks/:taskId', loadProfile, async (req, res) => 
     const sb = getSupabaseAdmin();
     if (!sb) return res.status(503).json({ error: 'Service unavailable' });
     const orgId = req.userProfile?.organization_id;
-    const { error } = await sb.from('engage_deal_tasks')
+    const { error } = await sb.from('engage_tasks')
       .delete().eq('id', req.params.taskId).eq('deal_id', req.params.dealId).eq('organization_id', orgId);
     if (error) throw error;
     return res.json({ ok: true });
   } catch (err) {
     console.error('[deals/delete-task]', err.message);
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// GLOBAL TASKS (engage_tasks — standalone, not deal-scoped)
+// ═══════════════════════════════════════════════════════════════════════════════
+
+// GET /api/tasks — list user's tasks
+app.get('/api/tasks', loadProfile, async (req, res) => {
+  try {
+    const sb = getSupabaseAdmin();
+    if (!sb) return res.status(503).json({ error: 'Service unavailable' });
+    const orgId = req.userProfile?.organization_id;
+    const userId = req.userProfile?.id;
+    const { status, filter } = req.query; // filter: mine | created | overdue
+
+    let query = sb.from('engage_tasks')
+      .select('*, prospect:prospect_id(id, full_name, first_name, last_name, email, title, company_name), account:account_id(id, account_name)')
+      .eq('organization_id', orgId)
+      .order('due_date', { ascending: true, nullsFirst: false })
+      .order('created_at', { ascending: false });
+
+    if (filter === 'created') {
+      query = query.eq('created_by', userId);
+    } else if (filter === 'overdue') {
+      query = query.eq('assigned_to', userId).in('status', ['pending', 'in_progress']).lt('due_date', new Date().toISOString().slice(0, 10));
+    } else {
+      // default: my tasks (assigned to me OR created by me)
+      query = query.or(`assigned_to.eq.${userId},created_by.eq.${userId}`);
+    }
+
+    if (status && status !== 'all') {
+      query = query.eq('status', status);
+    }
+
+    const { data, error } = await query.limit(100);
+    if (error) throw error;
+    return res.json(data || []);
+  } catch (err) {
+    console.error('[tasks/list]', err.message);
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+// POST /api/tasks — create task
+app.post('/api/tasks', loadProfile, async (req, res) => {
+  try {
+    const sb = getSupabaseAdmin();
+    if (!sb) return res.status(503).json({ error: 'Service unavailable' });
+    const orgId = req.userProfile?.organization_id;
+    const userId = req.userProfile?.id;
+    const { title, description, due_date, priority, assigned_to, prospect_id, deal_id, account_id, sequence_id } = req.body;
+    if (!title) return res.status(400).json({ error: 'Title is required' });
+
+    const { data, error } = await sb.from('engage_tasks').insert({
+      organization_id: orgId,
+      created_by: userId,
+      assigned_to: assigned_to || userId,
+      title, description,
+      due_date: due_date || null,
+      priority: priority || 'medium',
+      prospect_id: prospect_id || null,
+      deal_id: deal_id || null,
+      account_id: account_id || null,
+      sequence_id: sequence_id || null,
+    }).select().single();
+    if (error) throw error;
+
+    // Log activity event for account activity feed
+    if (data.account_id) {
+      try {
+        const { data: acct } = await sb.from('engage_accounts').select('account_name').eq('id', data.account_id).single();
+        await sb.from('engage_activity_events').insert({
+          organization_id: orgId,
+          event_type: 'task.created',
+          account_name: acct?.account_name || null,
+          title: `Task created: ${data.title}`,
+          description: data.description || null,
+          metadata: { task_id: data.id, prospect_id: data.prospect_id },
+          profile_id: userId,
+        });
+      } catch (actErr) { /* non-blocking */ }
+    }
+
+    return res.json(data);
+  } catch (err) {
+    console.error('[tasks/create]', err.message);
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+// PUT /api/tasks/:id — update task
+app.put('/api/tasks/:id', loadProfile, async (req, res) => {
+  try {
+    const sb = getSupabaseAdmin();
+    if (!sb) return res.status(503).json({ error: 'Service unavailable' });
+    const orgId = req.userProfile?.organization_id;
+    const { title, description, due_date, priority, status, assigned_to } = req.body;
+    const updates = { updated_at: new Date().toISOString() };
+    if (title !== undefined) updates.title = title;
+    if (description !== undefined) updates.description = description;
+    if (due_date !== undefined) updates.due_date = due_date || null;
+    if (priority !== undefined) updates.priority = priority;
+    if (assigned_to !== undefined) updates.assigned_to = assigned_to;
+    if (status !== undefined) {
+      updates.status = status;
+      if (status === 'completed') updates.completed_at = new Date().toISOString();
+      else if (status !== 'completed') updates.completed_at = null;
+    }
+
+    const { data, error } = await sb.from('engage_tasks').update(updates)
+      .eq('id', req.params.id).eq('organization_id', orgId).select().single();
+    if (error) throw error;
+    return res.json(data);
+  } catch (err) {
+    console.error('[tasks/update]', err.message);
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+// DELETE /api/tasks/:id — delete task
+app.delete('/api/tasks/:id', loadProfile, async (req, res) => {
+  try {
+    const sb = getSupabaseAdmin();
+    if (!sb) return res.status(503).json({ error: 'Service unavailable' });
+    const orgId = req.userProfile?.organization_id;
+    const { error } = await sb.from('engage_tasks').delete()
+      .eq('id', req.params.id).eq('organization_id', orgId);
+    if (error) throw error;
+    return res.json({ ok: true });
+  } catch (err) {
+    console.error('[tasks/delete]', err.message);
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+// PATCH /api/tasks/:id/complete — quick-complete a task + log KPI
+app.patch('/api/tasks/:id/complete', loadProfile, async (req, res) => {
+  try {
+    const sb = getSupabaseAdmin();
+    if (!sb) return res.status(503).json({ error: 'Service unavailable' });
+    const orgId = req.userProfile?.organization_id;
+    const userId = req.userProfile?.id;
+
+    const { data, error } = await sb.from('engage_tasks').update({
+      status: 'completed', completed_at: new Date().toISOString(), updated_at: new Date().toISOString(),
+    }).eq('id', req.params.id).eq('organization_id', orgId).select().single();
+    if (error) throw error;
+
+    // Increment tasks_completed KPI
+    try {
+      await integrations.upsertKpiValue(sb, {
+        profileId: userId,
+        weekStart: integrations.getWeekStart(),
+        kpiId: 'tasks_completed',
+        value: 1,
+        organizationId: orgId,
+        source: 'apptivia',
+      });
+    } catch (kpiErr) {
+      console.warn('[tasks/complete] KPI increment failed:', kpiErr.message);
+    }
+
+    return res.json(data);
+  } catch (err) {
+    console.error('[tasks/complete]', err.message);
     return res.status(500).json({ error: err.message });
   }
 });
@@ -5445,14 +6126,30 @@ app.post('/api/deals/:dealId/calls', loadProfile, async (req, res) => {
     const userId = req.user?.id;
     const { contact_name, duration_minutes, notes, call_direction } = req.body;
 
+    const callDate = new Date().toISOString();
     const { data: callLog, error } = await sb.from('engage_call_logs').insert({
       organization_id: orgId, user_id: userId, deal_id: req.params.dealId,
       contact_name: contact_name || 'Unknown', duration_minutes: duration_minutes || 0,
       notes: notes || null, call_direction: call_direction || 'outbound',
-      call_date: new Date().toISOString(),
+      call_date: callDate,
     }).select().single();
 
     if (error) throw error;
+
+    // Dual-write to crm_activity_records for unified Records Tab
+    try {
+      await sb.from('crm_activity_records').upsert({
+        organization_id: orgId, profile_id: userId,
+        activity_type: 'call', activity_date: callDate,
+        source: 'apptivia', external_id: callLog.id,
+        contact_name: contact_name || 'Unknown',
+        direction: call_direction || 'outbound',
+        duration_seconds: (duration_minutes || 0) * 60,
+        status: 'completed', notes: notes || null,
+        metadata: { deal_id: req.params.dealId },
+        synced_at: callDate, updated_at: callDate,
+      }, { onConflict: 'organization_id,source,external_id', ignoreDuplicates: false });
+    } catch (dualErr) { console.warn('[deals/call] crm_activity_records dual-write failed:', dualErr.message); }
 
     await logDealActivity(sb, {
       orgId, dealId: req.params.dealId, actorId: userId,
@@ -5512,7 +6209,7 @@ app.get('/api/deals/:dealId/full', loadProfile, async (req, res) => {
       sb.from('engage_call_logs').select('*')
         .eq('deal_id', req.params.dealId).eq('organization_id', orgId)
         .order('call_date', { ascending: false }).limit(20),
-      sb.from('engage_deal_tasks').select('*, assigned_profile:assigned_to(full_name, first_name, last_name)')
+      sb.from('engage_tasks').select('*, assigned_profile:assigned_to(full_name, first_name, last_name)')
         .eq('deal_id', req.params.dealId).eq('organization_id', orgId)
         .order('due_date', { ascending: true, nullsFirst: false }),
       sb.from('engage_deal_activities')
@@ -5610,10 +6307,16 @@ function classifySignalTier(signal) {
 // ── CronManager ────────────────────────────────────────────────────────────
 // Lightweight scheduler that replaces the copy-paste setTimeout/setInterval pattern.
 // Each job fires once at boot (after initialDelayMs), then on its interval.
-// NOTE: Cron job DB queries have no per-query timeout. If Supabase is degraded, jobs
-// can run for their full 2× stale-guard window before being force-cleared. At > 500 reps
-// or > 50 orgs, consider wrapping large kpi_values queries with a Promise.race timeout
-// similar to the pattern in fetchAaronLiveContext (3s timeout via AbortSignal).
+// Shared timeout wrapper for cron DB queries (prevents stale-guard lockup on Supabase degradation)
+function withTimeout(promise, ms = 15000, label = 'query') {
+  return Promise.race([
+    promise,
+    new Promise((_, reject) =>
+      setTimeout(() => reject(new Error(`[timeout] ${label} exceeded ${ms}ms`)), ms)
+    )
+  ]);
+}
+
 const CronManager = {
   _jobs: [],
   _running: {},   // Per-job overlap guard (H4/H7): tracks which jobs are currently executing
@@ -5704,6 +6407,36 @@ async function fetchHistoricalConfig(sb, metricIds, rangeStart, rangeEnd) {
   return { historyRows: historyRows || [], getConfigAt };
 }
 
+// ── Org-scoped point-in-time config (kpi_org_config_history) ────────────────
+// Fetches per-org config history across ALL orgs in one batch.
+// Returns getOrgConfigAt(orgId, kpiId, atDate, fallbackMetrics) which returns
+// the goal/weight that were in effect for that org's KPI at that date.
+async function fetchHistoricalOrgConfig(sb, rangeStart, rangeEnd) {
+  const { data: historyRows } = await sb
+    .from('kpi_org_config_history')
+    .select('organization_id, kpi_id, goal, weight, show_on_scorecard, is_active, valid_from, valid_to')
+    .lte('valid_from', rangeEnd)
+    .or(`valid_to.is.null,valid_to.gte.${rangeStart}`);
+
+  function getOrgConfigAt(orgId, kpiId, atDate, fallbackMetrics) {
+    const rows = historyRows || [];
+    const dt = typeof atDate === 'string' ? new Date(atDate) : atDate;
+    const match = rows.find(h =>
+      h.organization_id === orgId &&
+      h.kpi_id === kpiId &&
+      new Date(h.valid_from) <= dt &&
+      (h.valid_to === null || new Date(h.valid_to) > dt)
+    );
+    // Direction is inherent to the metric (not org-configurable) — get from fallback
+    const fb = (fallbackMetrics || []).find(m => m.id === kpiId);
+    const direction = fb?.direction || 'higher';
+    if (match) return { goal: match.goal, weight: match.weight, direction };
+    return fb ? { goal: fb.goal, weight: fb.weight, direction } : { goal: 1, weight: 1, direction: 'higher' };
+  }
+
+  return { historyRows: historyRows || [], getOrgConfigAt };
+}
+
 /**
  * Shared weighted-score computation used by scorecard-alerts, contest-complete,
  * achievement-check, and coaching-nudges cron jobs.
@@ -5722,10 +6455,12 @@ function computeWeightedScore(kpiSums, weekDate, orgMetrics, getConfigAtFn) {
     const w = cfg.weight || 1;
     const dir = cfg.direction || 'higher';
     const pct = dir === 'lower'
-      ? (val > 0 ? Math.min((goal / val) * 100, 200) : 200)
+      ? (val > 0 ? Math.min((goal / val) * 100, 200) : null)
       : Math.min((val / goal) * 100, 200);
-    score += pct * w;
-    totalWeight += w;
+    if (pct !== null) {
+      score += pct * w;
+      totalWeight += w;
+    }
   }
   return totalWeight > 0 ? Math.round(score / totalWeight) : 0;
 }
@@ -5889,7 +6624,7 @@ ${allAvoided.length > 0 ? `- Phrases this team removes (avoid these): ${allAvoid
         ].filter(Boolean).join('\n');
 
         const response = await ai.messages.create({
-          model: 'claude-haiku-4-5-20251001',
+          model: HAIKU_MODEL,
           max_tokens: 800,
           // [ENHANCEMENT 3B] Messaging Equation framework + signal tier urgency injected
           system: `You are a B2B sales outreach specialist. Write concise, personalized outreach based on a buying signal.
@@ -6097,44 +6832,8 @@ async function runSignalScan() {
         const supabaseUrl = process.env.SUPABASE_URL;
         const serviceKey  = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-        if (supabaseUrl && serviceKey) {
-          try {
-            const edgeResp = await fetch(`${supabaseUrl}/functions/v1/engage-signals`, {
-              method:  'POST',
-              headers: {
-                'Authorization': `Bearer ${serviceKey}`,
-                'Content-Type':  'application/json',
-              },
-              body: JSON.stringify({
-                organization_id: org.id,
-                config: (() => {
-                  // Merge configs from all ICP profiles, falling back to org-level
-                  const profs = profilesByOrg[org.id];
-                  if (profs?.length) {
-                    const merged = { ...(org.icp_config || {}) };
-                    const arrKeys = ['pain_points', 'solution_keywords', 'job_titles_to_track', 'competitors', 'tech_stack_churning', 'exclude_industries', 'target_industries', 'target_technologies'];
-                    for (const p of profs) {
-                      const sc = p.signal_config || {};
-                      const ic = p.icp_config || {};
-                      for (const k of arrKeys) {
-                        const vals = sc[k] || ic[k] || [];
-                        if (vals.length) merged[k] = [...new Set([...(merged[k] || []), ...vals])];
-                      }
-                    }
-                    return { ...(org.signal_config || {}), ...merged };
-                  }
-                  return { ...(org.signal_config || {}), ...(org.icp_config || {}) };
-                })(),
-              }),
-              signal: AbortSignal.timeout(30000), // 30s — edge function cold start budget
-            });
-            if (!edgeResp.ok) {
-              console.warn(`[signal-scan:${org.id}] Edge function returned HTTP ${edgeResp.status} — proceeding with local scan data only`);
-            }
-          } catch (edgeFetchErr) {
-            console.warn(`[signal-scan:${org.id}] Edge function unreachable: ${edgeFetchErr.message} — proceeding`);
-          }
-        }
+        // Edge function engage-signals removed — all signal scanning
+        // is handled locally via runAutoQualification + runActionQueueBuilder
 
         // Run qualification and queue building first
         await runAutoQualification(org.id);
@@ -6196,8 +6895,8 @@ async function runScorecardAlerts() {
     const metrics = Object.values(orgMetricsMap)[0] || [];
     const metricIds = allMetricIds;
 
-    // Fetch historical config covering both weeks
-    const { getConfigAt } = await fetchHistoricalConfig(sb, metricIds, priorStart, currEnd);
+    // Fetch per-org historical config covering both weeks
+    const { getOrgConfigAt } = await fetchHistoricalOrgConfig(sb, priorStart, currEnd);
 
     // Get all rep profiles (+ player-coaches with carries_quota)
     const { data: reps } = await sb
@@ -6217,14 +6916,20 @@ async function runScorecardAlerts() {
 
     const repIds = reps.map(r => r.id);
 
-    // Fetch KPI values for current and prior week
+    // Fetch KPI values for current and prior week (with timeout)
     const [{ data: currValues }, { data: priorValues }] = await Promise.all([
-      sb.from('kpi_values').select('kpi_id, profile_id, value')
-        .in('kpi_id', metricIds).in('profile_id', repIds)
-        .lte('period_start', currEnd).gte('period_end', currStart),
-      sb.from('kpi_values').select('kpi_id, profile_id, value')
-        .in('kpi_id', metricIds).in('profile_id', repIds)
-        .lte('period_start', priorEnd).gte('period_end', priorStart),
+      withTimeout(
+        sb.from('kpi_values').select('kpi_id, profile_id, value')
+          .in('kpi_id', metricIds).in('profile_id', repIds)
+          .lte('period_start', currEnd).gte('period_end', currStart),
+        15000, 'scorecard-alerts:curr-kpi_values'
+      ),
+      withTimeout(
+        sb.from('kpi_values').select('kpi_id, profile_id, value')
+          .in('kpi_id', metricIds).in('profile_id', repIds)
+          .lte('period_start', priorEnd).gte('period_end', priorStart),
+        15000, 'scorecard-alerts:prior-kpi_values'
+      ),
     ]);
 
     // Sum values per (profile, kpi) for each period
@@ -6240,18 +6945,19 @@ async function runScorecardAlerts() {
     const priorSums = sumByProfileKpi(priorValues);
 
     // Extract per-profile KPI sums and delegate to shared computeWeightedScore
-    function computeScore(profileId, sums, weekDate, orgMetrics) {
+    function computeScore(profileId, orgId, sums, weekDate, orgMetrics) {
       const kpiSums = {};
       for (const m of orgMetrics) kpiSums[m.id] = sums[`${profileId}:${m.id}`] || 0;
-      return computeWeightedScore(kpiSums, weekDate, orgMetrics, getConfigAt);
+      return computeWeightedScore(kpiSums, weekDate, orgMetrics,
+        (kpiId, atDate, fb) => getOrgConfigAt(orgId, kpiId, atDate, fb));
     }
 
     let notified = 0;
     for (const rep of reps) {
       const repMetrics = orgMetricsMap[rep.organization_id] || metrics;
       if (!repMetrics.length) continue;
-      const currentScore = computeScore(rep.id, currSums, currStart, repMetrics);
-      const priorScore   = computeScore(rep.id, priorSums, priorStart, repMetrics);
+      const currentScore = computeScore(rep.id, rep.organization_id, currSums, currStart, repMetrics);
+      const priorScore   = computeScore(rep.id, rep.organization_id, priorSums, priorStart, repMetrics);
       const delta        = currentScore - priorScore;
       const managerId    = rep.team_id ? teamManagerMap[rep.team_id] : null;
       const repName      = `${rep.first_name || ''} ${rep.last_name || ''}`.trim() || 'A rep';
@@ -6934,11 +7640,11 @@ async function runBadgeAutoAward() {
         .from('kpi_values').select('profile_id, kpi_id, value, period_start')
         .in('profile_id', repIds).in('kpi_id', scAllMetricIds);
 
-      // Fetch historical config covering all-time range
+      // Fetch per-org historical config covering all-time range
       const allWeekStarts = [...new Set((allScVals || []).map(v => v.period_start))].sort();
       const scHistRangeStart = allWeekStarts[0] || new Date().toISOString();
       const scHistRangeEnd = new Date().toISOString();
-      const { getConfigAt: scGetConfigAt } = await fetchHistoricalConfig(sb, scAllMetricIds, scHistRangeStart, scHistRangeEnd);
+      const { getOrgConfigAt: scGetOrgConfigAt } = await fetchHistoricalOrgConfig(sb, scHistRangeStart, scHistRangeEnd);
 
       // Group: profileId → weekStart → kpiId → summed value
       const weekMap = {};
@@ -6949,15 +7655,16 @@ async function runBadgeAutoAward() {
           (weekMap[v.profile_id][v.period_start][v.kpi_id] || 0) + (v.value || 0);
       }
 
-      function calcWeekScore(kpiSums, weekDate, orgMetrics) {
-        return computeWeightedScore(kpiSums, weekDate, orgMetrics, scGetConfigAt);
+      function calcWeekScore(kpiSums, weekDate, orgId, orgMetrics) {
+        return computeWeightedScore(kpiSums, weekDate, orgMetrics,
+          (kpiId, atDate, fb) => scGetOrgConfigAt(orgId, kpiId, atDate, fb));
       }
 
       for (const rep of reps) {
         const repOrgMetrics = scOrgMetricsMap[rep.organization_id] || [];
         if (repOrgMetrics.length === 0) continue;
         const weeks  = weekMap[rep.id] || {};
-        const scores = Object.keys(weeks).sort().map(w => calcWeekScore(weeks[w], w, repOrgMetrics));
+        const scores = Object.keys(weeks).sort().map(w => calcWeekScore(weeks[w], w, rep.organization_id, repOrgMetrics));
         const perfectCount = scores.filter(s => s >= 100).length;
         let maxStreak = 0, cur = 0;
         for (const s of scores) {
@@ -6998,20 +7705,22 @@ async function runBadgeAutoAward() {
       const cSums = sumPK(cV);
       const pSums = sumPK(pV);
 
-      function scScore(pid, sums, weekDate, orgMetrics) {
+      function scScore(pid, orgId, sums, weekDate, orgMetrics) {
         let s = 0;
         let totalWeight = 0;
         for (const m of orgMetrics) {
-          const cfg = scGetConfigAt(m.id, weekDate, orgMetrics);
+          const cfg = scGetOrgConfigAt(orgId, m.id, weekDate, orgMetrics);
           const val = sums[`${pid}:${m.id}`] || 0;
           const goal = cfg.goal || 1;
           const w = cfg.weight || 1;
           const dir = cfg.direction || 'higher';
           const pct = dir === 'lower'
-            ? (val > 0 ? Math.min((goal / val) * 100, 200) : 200)
+            ? (val > 0 ? Math.min((goal / val) * 100, 200) : null)
             : Math.min((val / goal) * 100, 200);
-          s += pct * w;
-          totalWeight += w;
+          if (pct !== null) {
+            s += pct * w;
+            totalWeight += w;
+          }
         }
         return totalWeight > 0 ? Math.round(s / totalWeight) : 0;
       }
@@ -7019,8 +7728,8 @@ async function runBadgeAutoAward() {
       for (const rep of reps) {
         const repOrgMetrics = scOrgMetricsMap[rep.organization_id] || [];
         if (repOrgMetrics.length === 0) continue;
-        const curr = scScore(rep.id, cSums, currStB, repOrgMetrics);
-        const prev = scScore(rep.id, pSums, prevStB, repOrgMetrics);
+        const curr = scScore(rep.id, rep.organization_id, cSums, currStB, repOrgMetrics);
+        const prev = scScore(rep.id, rep.organization_id, pSums, prevStB, repOrgMetrics);
         if (curr >= 150) await awardBadge(rep.id, 'Overachiever');
         if (prev > 0 && curr > 0 && ((curr - prev) / prev) * 100 >= 30) {
           await awardBadge(rep.id, 'Comeback Kid');
@@ -7471,7 +8180,7 @@ async function runAchievementCheck() {
     const { data: reps } = await sb
       .from('profiles')
       .select('id, first_name, last_name, team_id, apptivia_level, organization_id, role, carries_quota')
-      .eq('role', 'power user');  // F17: only reps earn achievements (excludes admin/manager/coach)
+      .or('role.eq.power user,carries_quota.eq.true');  // F17: reps + player-coaches earn achievements
     if (!reps || reps.length === 0) return { reps: 0, achieved: 0, notified: 0 };
     const repIds = reps.map(r => r.id);
 
@@ -7501,8 +8210,10 @@ async function runAchievementCheck() {
 
     // 6. Cumulative (all-time) KPI totals per profile (period_start also fetched for scorecard stats)
     // F27: safety limit to prevent unbounded queries
-    const { data: allTimeVals } = await sb
-      .from('kpi_values').select('profile_id, kpi_id, value, period_start').in('profile_id', repIds).limit(50000);
+    const { data: allTimeVals } = await withTimeout(
+      sb.from('kpi_values').select('profile_id, kpi_id, value, period_start').in('profile_id', repIds).limit(50000),
+      15000, 'achievement-check:kpi_values'
+    );
     const cumTotals = {};
     for (const v of (allTimeVals || [])) {
       if (!cumTotals[v.profile_id]) cumTotals[v.profile_id] = {};
@@ -7541,7 +8252,7 @@ async function runAchievementCheck() {
         weeklyByRep[v.profile_id][wk][v.kpi_id] = (weeklyByRep[v.profile_id][wk][v.kpi_id] || 0) + (v.value || 0);
       }
 
-      // Fetch historical config for achievement scoring
+      // Fetch per-org historical config for achievement scoring
       const allAchWeeks = new Set();
       for (const repId of repIds) {
         Object.keys(weeklyByRep[repId] || {}).forEach(wk => allAchWeeks.add(wk));
@@ -7549,12 +8260,13 @@ async function runAchievementCheck() {
       const sortedAchWeeks = [...allAchWeeks].sort();
       const achHistStart = sortedAchWeeks[0] || new Date().toISOString();
       const achHistEnd = new Date().toISOString();
-      const { getConfigAt: achGetConfigAt } = await fetchHistoricalConfig(sb, [...allScIds], achHistStart, achHistEnd);
+      const { getOrgConfigAt: achGetOrgConfigAt } = await fetchHistoricalOrgConfig(sb, achHistStart, achHistEnd);
 
       for (const repId of repIds) {
         const rep = reps.find(r => r.id === repId);
         const repOrgMetrics = (rep && achOrgMetricsMap[rep.organization_id]) || scorecardMetrics;
         if (!repOrgMetrics.length) continue;
+        const repOrgId = rep?.organization_id;
         const weeks = Object.keys(weeklyByRep[repId] || {}).sort();
         let totalPerfect = 0, maxPerfectStreak = 0, curP = 0;
         let maxAbove90Streak = 0, curA90 = 0;
@@ -7562,7 +8274,8 @@ async function runAchievementCheck() {
         let hasAbove80 = 0, maxWeekImprovement = 0, prevScore = null;
         for (const wk of weeks) {
           const sums = weeklyByRep[repId][wk];
-          const s = computeWeightedScore(sums, wk, repOrgMetrics, achGetConfigAt);
+          const s = computeWeightedScore(sums, wk, repOrgMetrics,
+            (kpiId, atDate, fb) => achGetOrgConfigAt(repOrgId, kpiId, atDate, fb));
           if (s >= 100) { totalPerfect++; curP++; if (curP > maxPerfectStreak) maxPerfectStreak = curP; } else { curP = 0; }
           if (s >= 90)  { curA90++; if (curA90 > maxAbove90Streak) maxAbove90Streak = curA90; } else { curA90 = 0; }
           if (s >= 80)  { hasAbove80 = 1; curA80++; if (curA80 > maxAbove80Streak) maxAbove80Streak = curA80; } else { curA80 = 0; }
@@ -7922,8 +8635,8 @@ async function runCoachingNudges() {
     const earliestStart = weekBounds[weekBounds.length - 1].start;
     const latestEnd     = weekBounds[0].end;
 
-    // Fetch historical config covering the 3-week lookback
-    const { getConfigAt: nudgeGetConfigAt } = await fetchHistoricalConfig(sb, allMetricIds, earliestStart, latestEnd);
+    // Fetch per-org historical config covering the 3-week lookback
+    const { getOrgConfigAt: nudgeGetOrgConfigAt } = await fetchHistoricalOrgConfig(sb, earliestStart, latestEnd);
 
     const { data: allValues } = await sb
       .from('kpi_values')
@@ -7964,14 +8677,14 @@ async function runCoachingNudges() {
         const vals = repMetricWeekVals[`${rep.id}:${metric.id}`];
         if (!vals) continue;
 
-        // Direction-aware pct helper — uses historical config for each week
+        // Direction-aware pct helper — uses per-org historical config for each week
         function metricPct(val, weekIdx) {
           const weekDate = weekBounds[weekIdx]?.start || now.toISOString();
-          const cfg = nudgeGetConfigAt(metric.id, weekDate, metrics);
+          const cfg = nudgeGetOrgConfigAt(rep.organization_id, metric.id, weekDate, metrics);
           const goal = cfg.goal || 1;
           const dir  = cfg.direction || 'higher';
           return dir === 'lower'
-            ? (val > 0 ? Math.min(Math.round((goal / val) * 100), 200) : 200)
+            ? (val > 0 ? Math.min(Math.round((goal / val) * 100), 200) : null)
             : Math.min(Math.round((val / goal) * 100), 200);
         }
 
@@ -7979,7 +8692,7 @@ async function runCoachingNudges() {
         let consecutiveBelow = 0;
         for (let w = 0; w < WEEKS_TO_CHECK; w++) {
           const pct = metricPct(vals[w], w);
-          if (pct < KPI_TARGET_PCT) {
+          if (pct === null || pct < KPI_TARGET_PCT) {
             consecutiveBelow++;
           } else {
             break;
@@ -8040,7 +8753,7 @@ async function runCoachingNudges() {
           const ai = getAnthropic();
           const salesDnaCtxIdp = await getSalesDnaContext(rep.organization_id);
           const idpResponse = await ai.messages.create({
-            model: 'claude-haiku-4-5-20251001',
+            model: HAIKU_MODEL,
             max_tokens: 600,
             system: `You are a sales performance coach. Generate a concise draft Individual Development Plan for a rep who has been below their KPI targets. Be specific and actionable — not generic.
 ${salesDnaCtxIdp ? salesDnaCtxIdp + '\nAlign development recommendations with the organization\'s sales methodology.\n' : ''}Return ONLY valid JSON with exactly these keys:
@@ -8144,7 +8857,7 @@ async function runFollowUpNudges() {
           ].filter(Boolean).join('\n');
 
           const response = await ai.messages.create({
-            model: 'claude-haiku-4-5-20251001',
+            model: HAIKU_MODEL,
             max_tokens: 500,
             system: `You are a B2B sales follow-up specialist. Draft a concise, context-aware follow-up based on a prior outreach that has gone quiet.
 ${salesDnaCtxFollowUp ? salesDnaCtxFollowUp + '\nAlign follow-up tone with the organization\'s sales methodology.\n' : ''}Rules: Do not repeat the original pitch. Add new value or a new angle. Keep it under 100 words. One clear ask.
@@ -8280,7 +8993,7 @@ async function runCompetitiveIntelligence() {
         if (!webContext) continue; // Skip if no search results — avoid hallucinated briefs
 
         const response = await ai.messages.create({
-          model: 'claude-haiku-4-5-20251001',
+          model: HAIKU_MODEL,
           max_tokens: 700,
           system: `You are a competitive intelligence analyst for a B2B sales performance platform. Summarize recent competitor developments into a concise brief for a sales leader.
 Competitors being tracked: ${competitors.join(', ')}
@@ -8536,6 +9249,18 @@ function calculateNextStepTime(fromDate, delayDays, windowStart, windowEnd, time
   return target;
 }
 
+// ── Sequence Token Substitution ──────────────────────────────────────────
+/**
+ * Replace {{namespace.field}} tokens in subject/body with actual data.
+ * Available namespaces: prospect, sender, sequence
+ */
+function substituteSequenceTokens(text, context) {
+  if (!text) return text;
+  return text.replace(/\{\{(\w+)\.(\w+)\}\}/g, (match, ns, field) => {
+    return context[ns]?.[field] || match;
+  });
+}
+
 // ── Sequence Execution Engine (Cron) ─────────────────────────────────────
 /**
  * Hourly cron: process active enrollments whose next_step_at <= NOW.
@@ -8558,7 +9283,7 @@ async function runSequenceExecution() {
         id, sequence_id, prospect_id, prospect_name, prospect_email, prospect_company,
         current_step, status, metadata,
         engage_sequences:sequence_id(
-          id, organization_id, name, status,
+          id, organization_id, name, status, created_by,
           send_window_start, send_window_end, send_timezone, skip_weekends, total_steps
         )
       `)
@@ -8569,6 +9294,7 @@ async function runSequenceExecution() {
     if (fetchErr || !dueEnrollments?.length) return { processed: 0, sent: 0, skipped: 0 };
 
     let sent = 0, skipped = 0;
+    const senderCache = {}; // Cache sender profiles per created_by to avoid N+1
 
     for (const enrollment of dueEnrollments) {
       const seq = enrollment.engage_sequences;
@@ -8621,15 +9347,48 @@ async function runSequenceExecution() {
         }
       }
 
+      // ── Token substitution ──────────────────────────────────────────────
+      // Cache sender profile per sequence creator (avoid N+1 queries)
+      if (!senderCache[seq.created_by]) {
+        const { data: sp } = await sb.from('profiles')
+          .select('first_name, last_name, email')
+          .eq('id', seq.created_by).single();
+        senderCache[seq.created_by] = sp || { first_name: '', last_name: '', email: '' };
+      }
+      const senderProfile = senderCache[seq.created_by];
+
+      // Build prospect context — enrich from engage_prospects if linked
+      let prospectCtx = {
+        first_name: enrollment.prospect_name?.split(' ')[0] || '',
+        last_name: enrollment.prospect_name?.split(' ').slice(1).join(' ') || '',
+        company_name: enrollment.prospect_company || '',
+        title: '',
+      };
+      if (enrollment.prospect_id) {
+        const { data: fp } = await sb.from('engage_prospects')
+          .select('first_name, last_name, company_name, title')
+          .eq('id', enrollment.prospect_id).single();
+        if (fp) prospectCtx = { ...prospectCtx, ...fp };
+      }
+
+      const tokenCtx = {
+        prospect: prospectCtx,
+        sender: { first_name: senderProfile.first_name || '', last_name: senderProfile.last_name || '', email: senderProfile.email || '' },
+        sequence: { name: seq.name },
+      };
+
+      const resolvedSubject = substituteSequenceTokens(step.subject, tokenCtx);
+      const resolvedBody = substituteSequenceTokens(step.body, tokenCtx);
+
       // Route by channel
       let execStatus = 'sent';
       try {
         if (step.channel === 'email' && enrollment.prospect_email) {
           await sendEmail({
             recipients: [enrollment.prospect_email],
-            subject:    step.subject || `Following up: ${seq.name}`,
-            text:       step.body || '',
-            html:       step.body ? `<div>${step.body.replace(/\n/g, '<br>')}</div>` : undefined,
+            subject:    resolvedSubject || `Following up: ${seq.name}`,
+            text:       resolvedBody || '',
+            html:       resolvedBody ? `<div>${resolvedBody.replace(/\n/g, '<br>')}</div>` : undefined,
           });
         } else if (['outreach', 'salesloft'].includes(step.channel)) {
           // Route through CRM push queue
@@ -8642,27 +9401,43 @@ async function runSequenceExecution() {
               step_number: step.step_number,
               channel: step.channel,
               prospect_email: enrollment.prospect_email,
-              subject: step.subject,
-              body: step.body,
+              subject: resolvedSubject,
+              body: resolvedBody,
             },
             sourceEvent: 'sequence_step_executed',
           });
         } else if (['call', 'task'].includes(step.channel)) {
           execStatus = 'pending'; // Manual channels — create as pending
+          // Create a visible task in engage_tasks so it appears in the Task panel
+          try {
+            await sb.from('engage_tasks').insert({
+              organization_id: seq.organization_id,
+              created_by: seq.created_by,
+              assigned_to: seq.created_by,
+              title: resolvedSubject || `${step.channel === 'call' ? 'Call' : 'Task'}: ${seq.name} (Step ${step.step_number})`,
+              description: resolvedBody || null,
+              due_date: new Date().toISOString().split('T')[0],
+              priority: 'medium',
+              sequence_id: seq.id,
+              prospect_id: enrollment.prospect_id || null,
+            });
+          } catch (taskErr) {
+            console.warn(`[sequence-exec] Failed to create task for step ${step.step_number}:`, taskErr.message);
+          }
         }
       } catch (sendErr) {
         console.error(`[sequence-exec] Step ${step.step_number} failed for enrollment ${enrollment.id}:`, sendErr.message);
         execStatus = 'failed';
       }
 
-      // Log execution
+      // Log execution (store resolved content, not template)
       await sb.from('engage_sequence_executions').insert({
         enrollment_id: enrollment.id,
         step_id:       step.id,
         step_number:   step.step_number,
         channel:       step.channel,
-        subject:       step.subject,
-        body:          step.body,
+        subject:       resolvedSubject,
+        body:          resolvedBody,
         status:        execStatus,
         sent_at:       execStatus === 'sent' ? new Date().toISOString() : null,
       });
@@ -8965,7 +9740,22 @@ async function cleanupOldNotifications() {
     const deleted = count || 0;
     if (error) console.error('[cleanup-notifications] Error:', error.message);
     else if (deleted > 0) console.log(`[cleanup-notifications] Deleted ${deleted} read notifications older than 30 days`);
-    return { deleted };
+
+    // Also clean very old unread notifications (> 60 days) to prevent unbounded accumulation
+    const unreadCutoff = new Date(Date.now() - 60 * 86400000).toISOString();
+    const { count: unreadCleaned, error: unreadErr } = await sb
+      .from('notifications')
+      .delete({ count: 'exact' })
+      .lt('created_at', unreadCutoff)
+      .eq('is_read', false);
+    if (unreadErr) console.error('[cron:notification-cleanup] Unread cleanup error:', unreadErr.message);
+    else if ((unreadCleaned || 0) > 0) console.log(`[cron:notification-cleanup] Cleaned ${unreadCleaned} old unread notifications`);
+
+    // Per-type cap: keep only 5 most recent unread per profile per type
+    const { error: capErr } = await sb.rpc('cleanup_excess_notifications', { max_per_type: 5 });
+    if (capErr) console.warn('[cron:notification-cleanup] Per-type cap RPC error:', capErr.message);
+
+    return { deleted, unread_cleaned: unreadCleaned || 0 };
   } catch (err) {
     console.error('[cleanup-notifications] Error:', err.message);
     return { deleted: 0 };
@@ -9208,13 +9998,24 @@ async function runAaronOutcomeAttribution() {
 
     if (currentValue === null) continue;
 
+    // Count baseline samples (require >= 2 for meaningful lift)
+    const { count: baselineSamples } = await sb
+      .from('kpi_values')
+      .select('id', { count: 'exact', head: true })
+      .eq('profile_id', row.rep_profile_id)
+      .eq('kpi_id', kpiDef.id)
+      .lt('period_start', row.recommendation_at);
+
+    const hasBaseline = (baselineSamples || 0) >= 2;
+
     const update = {
       [measureField]: currentValue,
       last_measured_at: new Date().toISOString(),
+      baseline_sample_count: baselineSamples || 0,
     };
 
-    // Compute lift percentage if we have a nonzero baseline
-    if (row.baseline_value && row.baseline_value > 0) {
+    // Only compute lift if baseline is sufficient and nonzero
+    if (hasBaseline && row.baseline_value && row.baseline_value > 0) {
       const liftField = measureField.replace('value_at_', 'lift_pct_');
       update[liftField] = ((currentValue - row.baseline_value) / row.baseline_value) * 100;
     }
@@ -9247,7 +10048,7 @@ async function runPreCallPrepGeneration() {
       `)
       .gte('start_time', twoHoursFromNow)
       .lte('start_time', sixHoursFromNow)
-      .eq('profiles.role', 'power_user')
+      .eq('profiles.role', 'power user')
       .eq('organizations.subscription_plan', 'Pro');
 
     if (meetErr || !meetings?.length) {
@@ -9355,7 +10156,7 @@ async function runDailyBriefingNotification() {
     const { data: reps, error } = await sb
       .from('profiles')
       .select('id, organization_id, first_name, organizations!inner(subscription_plan)')
-      .eq('role', 'power_user')
+      .eq('role', 'power user')
       .eq('organizations.subscription_plan', 'Pro');
 
     if (error || !reps?.length) return { notified: 0 };
@@ -9382,6 +10183,89 @@ async function runDailyBriefingNotification() {
   } catch (err) {
     console.error('[cron:daily-briefing-notify] Error:', err.message);
     return { notified: 0 };
+  }
+}
+
+// ── Onboarding Drip Email Cron ────────────────────────────────────────────
+async function runOnboardingDrip() {
+  const sb = getSupabaseAdmin();
+  if (!sb) return;
+
+  // Get all users with their onboarding state and last login
+  const { data: users } = await sb.from('profiles')
+    .select('id, email, first_name, organization_id, created_at, onboarding_completed_at, last_sign_in_at, organizations(trial_ends_at)')
+    .not('email', 'is', null);
+
+  if (!users?.length) return;
+
+  let sent = 0;
+  for (const user of users) {
+    if (!user.email) continue;
+    const now = Date.now();
+    const created = new Date(user.created_at).getTime();
+    const hoursSinceCreated = (now - created) / (3600 * 1000);
+    const lastLogin = user.last_sign_in_at ? new Date(user.last_sign_in_at).getTime() : created;
+    const hoursSinceLogin = (now - lastLogin) / (3600 * 1000);
+    const onboardingDone = !!user.onboarding_completed_at;
+    const trialEnds = user.organizations?.trial_ends_at ? new Date(user.organizations.trial_ends_at).getTime() : null;
+    const daysUntilTrialEnd = trialEnds ? (trialEnds - now) / (86400 * 1000) : null;
+
+    // Determine which email to send
+    let emailType = null;
+    if (!onboardingDone && hoursSinceCreated >= 24 && hoursSinceCreated < 48) {
+      emailType = 'nudge_start';
+    } else if (!onboardingDone && hoursSinceCreated >= 48 && hoursSinceCreated < 72) {
+      emailType = 'nudge_complete';
+    } else if (onboardingDone && hoursSinceLogin >= 72 && hoursSinceCreated >= 72 && hoursSinceCreated < 96) {
+      emailType = 'nudge_first_action';
+    } else if (hoursSinceLogin >= 72 && hoursSinceCreated >= 72 && hoursSinceCreated < 168) {
+      emailType = 'feature_highlight';
+    } else if (daysUntilTrialEnd !== null && daysUntilTrialEnd <= 7 && daysUntilTrialEnd > 3) {
+      emailType = 'trial_halfway';
+    } else if (daysUntilTrialEnd !== null && daysUntilTrialEnd <= 3 && daysUntilTrialEnd > 0) {
+      emailType = 'trial_expiring';
+    } else if (daysUntilTrialEnd !== null && daysUntilTrialEnd <= 0 && daysUntilTrialEnd > -1) {
+      emailType = 'trial_expired';
+    }
+
+    if (!emailType) continue;
+
+    // Check if already sent (dedup via unique constraint)
+    const { data: existing } = await sb.from('onboarding_email_log')
+      .select('id').eq('user_id', user.id).eq('email_type', emailType).maybeSingle();
+    if (existing) continue;
+
+    try {
+      await sendOnboardingEmail(emailType, { email: user.email, first_name: user.first_name });
+      await sb.from('onboarding_email_log').insert({
+        user_id: user.id,
+        organization_id: user.organization_id,
+        email_type: emailType,
+      });
+      sent++;
+    } catch (err) {
+      console.error(`[OnboardingDrip] Failed to send ${emailType} to ${user.email}:`, err.message);
+    }
+  }
+  if (sent > 0) console.log(`[OnboardingDrip] Sent ${sent} emails`);
+}
+
+// ── Signal Auto-Archive ───────────────────────────────────────────────────
+async function runSignalAutoArchive() {
+  const sb = getSupabaseAdmin();
+  if (!sb) return;
+  const cutoff = new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString();
+  try {
+    const { data, error } = await sb.from('engage_intent_signals')
+      .update({ status: 'archived' })
+      .eq('status', 'new')
+      .lt('detected_at', cutoff)
+      .select('id');
+    if (!error && data?.length) {
+      console.log(`[SignalAutoArchive] Archived ${data.length} stale signals (>14 days)`);
+    }
+  } catch (err) {
+    console.error('[SignalAutoArchive] Error:', err.message);
   }
 }
 
@@ -9423,6 +10307,8 @@ CronManager.register('play-step-execution', runPlayStepExecution, ONE_HOUR, 570_
 CronManager.register('pre-call-prep', runPreCallPrepGeneration, ONE_HOUR, 600_000);
 // Spec 11: Daily briefing morning notification
 CronManager.register('daily-briefing-notify', runDailyBriefingNotification, ONE_DAY, 630_000);
+CronManager.register('onboarding-drip', runOnboardingDrip, ONE_DAY, 660_000);
+CronManager.register('signal-auto-archive', runSignalAutoArchive, ONE_DAY, 690_000);
 CronManager.start();
 
 // ── Conversation Intelligence ──────────────────────────────────────────────
@@ -9444,7 +10330,7 @@ app.post('/api/engage/calls/analyze', aiLimiter, loadProfile, requireMinRole('co
     ].filter(Boolean).join('\n');
 
     const response = await client.messages.create({
-      model: 'claude-sonnet-4-20250514',
+      model: SONNET_MODEL,
       max_tokens: 1024,
       system: `You are an expert sales conversation analyst. Extract key intelligence from call notes or transcripts.
 ${salesDnaCtxCall ? salesDnaCtxCall + '\nAnalyze calls through the lens of the organization\'s sales methodology — flag when reps follow or miss methodology principles.\n' : ''}Return ONLY valid JSON with exactly these keys:
@@ -9641,7 +10527,7 @@ io.on('connection', (socket) => {
         ? ['', '', '', { block: '' }, '', '']
         : await Promise.all([
             getSalesDnaContext(orgId || null),
-            fetchAaronLiveContext(userId, orgId),
+            fetchAaronLiveContext(userId, orgId, role),
             fetchAaronOrgContext(orgId, userId),
             fetchAaronRepMemory(userId, orgId),
             fetchAaronOutcomeContext(userId, orgId),
@@ -9745,22 +10631,43 @@ io.on('connection', (socket) => {
 
       let responseText = response.content[0]?.text || "I'm sorry, I couldn't process that. Could you try rephrasing?";
 
-      // Parse structured JSON output if in structured mode
+      // Parse structured JSON output if in structured mode (with 1 retry on parse failure)
       let structuredData = null;
       if (structuredMode) {
+        let jsonText = responseText.trim();
+        if (jsonText.startsWith('```')) {
+          jsonText = jsonText.replace(/^```(?:json)?\n?/, '').replace(/\n?```$/, '').trim();
+        }
         try {
-          // Strip markdown fences if LLM added them despite instructions
-          let jsonText = responseText.trim();
-          if (jsonText.startsWith('```')) {
-            jsonText = jsonText.replace(/^```(?:json)?\n?/, '').replace(/\n?```$/, '').trim();
-          }
           structuredData = JSON.parse(jsonText);
           structuredData.type = structuredData.type || structuredMode.key;
           console.log(JSON.stringify({ event: 'aaron_structured_output', type: structuredMode.key, ts: new Date().toISOString(), userId, orgId }));
         } catch (parseErr) {
-          // JSON parse failed — fall back to rendering as markdown
-          console.warn(`[aaron] Structured output parse failed for ${structuredMode.key}:`, parseErr.message);
-          structuredData = null;
+          console.warn(`[aaron] Structured output parse failed for ${structuredMode.key}, attempting retry:`, parseErr.message);
+          // One retry: explicitly instruct the model to return only JSON
+          try {
+            const retryResponse = await client.messages.create({
+              model: selectedModel,
+              max_tokens: 2000,
+              system: systemPrompt + '\n\nCRITICAL: Your previous response could not be parsed as JSON. Return ONLY valid JSON. No markdown fences, no preamble, no explanation. Raw JSON only.',
+              messages: [
+                ...historyWindow,
+                { role: 'user', content: message },
+                { role: 'assistant', content: responseText },
+                { role: 'user', content: 'Your response was not valid JSON. Please return only the raw JSON object with no formatting.' }
+              ]
+            });
+            const retryText = (retryResponse.content[0]?.text || '').trim()
+              .replace(/^```(?:json)?\n?/, '').replace(/\n?```$/, '').trim();
+            structuredData = JSON.parse(retryText);
+            structuredData.type = structuredData.type || structuredMode.key;
+            console.log(JSON.stringify({ event: 'aaron_structured_output_retry_success', type: structuredMode.key, ts: new Date().toISOString() }));
+          } catch (retryErr) {
+            console.error(`[aaron] Structured output retry failed for ${structuredMode.key}:`, retryErr.message);
+            structuredData = null;
+            // Override responseText with a user-friendly error rather than raw JSON
+            responseText = `I had trouble formatting that response. Please try again or rephrase your request.`;
+          }
         }
       }
 
@@ -9783,14 +10690,38 @@ io.on('connection', (socket) => {
         is_starter: isStarterAaron,
       }));
 
+      // Log to Supabase for queryable cost analysis (non-blocking, fire-and-forget)
+      const sbLog = getSupabaseAdmin();
+      if (sbLog) {
+        sbLog.from('aaron_token_logs').insert({
+          user_id: verifiedUserId || null,
+          org_id: orgId || null,
+          role,
+          model: selectedModel,
+          model_tier: structuredMode ? `structured_${structuredMode.key}` : modelTier,
+          input_tokens: usage.input_tokens || 0,
+          output_tokens: usage.output_tokens || 0,
+          intents: intents.join(',') || 'none',
+          data_functions: dataFnKeys.join(',') || 'none',
+          page: context?.page || 'unknown',
+          is_starter: isStarterAaron,
+        }).then(({ error }) => {
+          if (error) console.error('[aaron-token-log] Insert failed:', error.message);
+        }).catch(() => {});
+      }
+
       // Resolve framework names for frontend badge display
       const activeFrameworkNames = frameworkKeys
         .map(k => AARON_FRAMEWORKS[k]?.name)
         .filter(Boolean);
 
       // Update conversation history for this socket
+      // For structured outputs, store a compact summary stub instead of the full JSON blob
+      const assistantHistoryContent = (structuredData && structuredMode)
+        ? `[${structuredMode.key} generated${structuredData.rep_name ? ' for ' + structuredData.rep_name : ''}]`
+        : responseText;
       socket.chatHistory.push({ role: 'user', content: message });
-      socket.chatHistory.push({ role: 'assistant', content: responseText });
+      socket.chatHistory.push({ role: 'assistant', content: assistantHistoryContent });
       if (socket.chatHistory.length > 60) socket.chatHistory = socket.chatHistory.slice(-60);
 
       socket.emit('aaron_message', {
@@ -9799,21 +10730,43 @@ io.on('connection', (socket) => {
         ...(activeFrameworkNames.length > 0 ? { frameworks: activeFrameworkNames } : {}),
       });
 
-      // Increment daily message count AFTER successful response (fire-and-forget)
+      // Increment daily message count AFTER successful response (1 retry on failure)
       if (isStarterAaron && verifiedUserId && orgId) {
         const sbInc = getSupabaseAdmin();
         if (sbInc) {
           const todayInc = new Date().toISOString().slice(0, 10);
-          sbInc.rpc('increment_aaron_daily_count', {
-            p_user_id: verifiedUserId,
-            p_organization_id: orgId,
-            p_date: todayInc,
-          }).then(
-            ({ error }) => {
-              if (error) console.error('[aaron-limit] Increment failed:', error.message);
-            },
-            err => console.error('[aaron-limit] Increment threw:', err.message)
-          );
+          const attemptIncrement = async (attempt = 1) => {
+            try {
+              const { error } = await sbInc.rpc('increment_aaron_daily_count', {
+                p_user_id: verifiedUserId,
+                p_organization_id: orgId,
+                p_date: todayInc,
+              });
+              if (error) {
+                if (attempt < 2) {
+                  await new Promise(r => setTimeout(r, 500));
+                  return attemptIncrement(2);
+                }
+                console.error(JSON.stringify({
+                  event: 'aaron_limit_increment_failed',
+                  userId: verifiedUserId,
+                  orgId,
+                  date: todayInc,
+                  attempt,
+                  error: error.message,
+                  ts: new Date().toISOString(),
+                }));
+              }
+            } catch (err) {
+              console.error(JSON.stringify({
+                event: 'aaron_limit_increment_threw',
+                userId: verifiedUserId,
+                error: err.message,
+                ts: new Date().toISOString(),
+              }));
+            }
+          };
+          attemptIncrement();
         }
       }
 
@@ -9829,7 +10782,7 @@ io.on('connection', (socket) => {
             const nameClient = getAnthropic();
             if (sbName && nameClient) {
               const nameResp = await nameClient.messages.create({
-                model: 'claude-haiku-4-5-20251001',
+                model: HAIKU_MODEL,
                 max_tokens: 20,
                 messages: [{ role: 'user', content: `Generate a 3-5 word title for a sales coaching conversation that starts with: "${message.slice(0, 200)}". Return ONLY the title, no quotes.` }],
               });
@@ -10208,6 +11161,23 @@ app.post('/api/engage/calls/track-kpi', loadProfile, async (req, res) => {
     } catch (kpiErr) {
       console.error('[calls/track-kpi] talk_time_minutes upsert failed:', kpiErr.message);
     }
+    // Dual-write to crm_activity_records for Twilio dialer calls
+    try {
+      const orgId = req.userProfile?.organization_id;
+      if (orgId) {
+        await sb.from('crm_activity_records').upsert({
+          organization_id: orgId, profile_id: req.user.id,
+          activity_type: 'call', activity_date: new Date().toISOString(),
+          source: 'apptivia', external_id: `twilio_${dedupKey}`,
+          direction: 'outbound',
+          duration_seconds: durationSeconds,
+          status: 'completed',
+          metadata: { call_sid: callSid, origin: 'twilio_dialer' },
+          synced_at: new Date().toISOString(), updated_at: new Date().toISOString(),
+        }, { onConflict: 'organization_id,source,external_id', ignoreDuplicates: false });
+      }
+    } catch (dualErr) { console.warn('[calls/track-kpi] crm_activity_records dual-write failed:', dualErr.message); }
+
     return res.json({ ok: true, tracked: true });
   } catch (err) {
     console.error('[calls/track-kpi]', err.message);
@@ -10257,6 +11227,15 @@ app.post('/api/engage/calls/recording-callback', async (req, res) => {
       transcribeRecording(callLog.id, `${RecordingUrl}.mp3`, sb).catch(err => {
         console.error('[recording-callback] Transcription failed:', err.message);
       });
+
+      // Update crm_activity_records with recording URL
+      try {
+        await sb.from('crm_activity_records').update({
+          recording_url: `${RecordingUrl}.mp3`,
+          recording_source: 'twilio',
+          updated_at: new Date().toISOString(),
+        }).eq('source', 'apptivia').eq('external_id', callLog.id);
+      } catch (dualErr) { console.warn('[recording-callback] crm_activity_records update failed:', dualErr.message); }
     }
 
     console.log(`[recording-callback] Saved recording ${RecordingSid} for call ${CallSid}`);
@@ -10382,7 +11361,7 @@ async function analyzeCallIntelligence(callLogId, transcript, segments, sb) {
   }).join('\n');
 
   const response = await client.messages.create({
-    model: 'claude-sonnet-4-20250514',
+    model: SONNET_MODEL,
     max_tokens: 2048,
     system: `You are an expert sales call analyst with deep expertise in conversational intelligence. Analyze this sales call transcript and return ONLY valid JSON.
 ${salesDnaCtx ? salesDnaCtx + '\nAnalyze methodology adherence against the org\'s sales framework.\n' : ''}
@@ -11283,7 +12262,7 @@ ${salesDnaCtx ? `\n${salesDnaCtx}\nAlign outreach tone with this organization's 
 Return ONLY a valid JSON array. Each element: {"step_order": number, "subject": "..." or null, "body": "..."}` + AI_STYLE_RULE;
 
   const response = await client.messages.create({
-    model: 'claude-haiku-4-5-20251001',
+    model: HAIKU_MODEL,
     max_tokens: 1500,
     system: systemPrompt,
     messages: [{ role: 'user', content: context }],
@@ -11449,20 +12428,56 @@ app.get('/api/engage/sequences', loadProfile, async (req, res) => {
     const sb = getSupabaseAdmin();
     if (!sb) return res.status(503).json({ error: 'Service unavailable' });
     const orgId = req.userProfile.organization_id;
-    const { data, error } = await sb
+    const { data: sequences, error } = await sb
       .from('engage_sequences')
-      .select('*')
+      .select('*, profiles:created_by(id, first_name, last_name)')
       .eq('organization_id', orgId)
       .order('updated_at', { ascending: false });
     if (error) return res.status(500).json({ error: error.message });
-    return res.json({ data: data || [] });
+
+    // Compute open/reply rates from executions
+    if (sequences?.length) {
+      const seqIds = sequences.map(s => s.id);
+      const { data: enrollmentIds } = await sb.from('engage_sequence_enrollments').select('id, sequence_id').in('sequence_id', seqIds);
+      if (enrollmentIds?.length) {
+        const eIdMap = {};
+        for (const e of enrollmentIds) { eIdMap[e.id] = e.sequence_id; }
+        const eIds = enrollmentIds.map(e => e.id);
+        // Batch fetch executions (limit to recent 5000 for perf)
+        const { data: execs } = await sb.from('engage_sequence_executions').select('enrollment_id, status').in('enrollment_id', eIds).limit(5000);
+        const statsMap = {};
+        for (const ex of (execs || [])) {
+          const sid = eIdMap[ex.enrollment_id];
+          if (!sid) continue;
+          if (!statsMap[sid]) statsMap[sid] = { total: 0, opened: 0, clicked: 0, replied: 0, bounced: 0 };
+          const s = statsMap[sid];
+          s.total++;
+          if (['opened', 'clicked', 'replied'].includes(ex.status)) s.opened++;
+          if (['clicked', 'replied'].includes(ex.status)) s.clicked++;
+          if (ex.status === 'replied') s.replied++;
+          if (ex.status === 'bounced') s.bounced++;
+        }
+        sequences.forEach(seq => {
+          const st = statsMap[seq.id] || { total: 0, opened: 0, clicked: 0, replied: 0, bounced: 0 };
+          seq.open_rate = st.total > 0 ? Math.round((st.opened / st.total) * 100) : null;
+          seq.click_rate = st.total > 0 ? Math.round((st.clicked / st.total) * 100) : null;
+          seq.reply_rate = st.total > 0 ? Math.round((st.replied / st.total) * 100) : null;
+          seq.bounce_rate = st.total > 0 ? Math.round((st.bounced / st.total) * 100) : null;
+          seq.execution_count = st.total;
+          seq.creator = seq.profiles || null;
+          delete seq.profiles;
+        });
+      }
+    }
+
+    return res.json({ data: sequences || [] });
   } catch (err) {
     return res.status(500).json({ error: err.message });
   }
 });
 
 // Create / update a sequence
-app.post('/api/engage/sequences', loadProfile, requireMinRole('manager'), async (req, res) => {
+app.post('/api/engage/sequences', loadProfile, requireMinRole('power_user'), async (req, res) => {
   try {
     const sb = getSupabaseAdmin();
     if (!sb) return res.status(503).json({ error: 'Service unavailable' });
@@ -11520,6 +12535,7 @@ app.post('/api/engage/sequences', loadProfile, requireMinRole('manager'), async 
 
     return res.json({ ok: true, id: seqId });
   } catch (err) {
+    console.error('[engage/sequences] create/update failed:', err.message, err.stack);
     return res.status(500).json({ error: err.message });
   }
 });
@@ -11549,14 +12565,36 @@ app.get('/api/engage/sequences/:id', loadProfile, async (req, res) => {
       paused:    enrollments.filter(e => e.status === 'paused').length,
     };
 
-    return res.json({ data: { ...seqRes.data, steps: stepsRes.data || [], enrollment_stats: stats } });
+    // Per-step execution stats
+    const stepsData = stepsRes.data || [];
+    if (enrollments.length > 0 && stepsData.length > 0) {
+      const eIds = enrollments.map(e => e.id);
+      const { data: execs } = await sb.from('engage_sequence_executions')
+        .select('step_id, status').in('enrollment_id', eIds).limit(5000);
+      const stepStatsMap = {};
+      for (const ex of (execs || [])) {
+        if (!stepStatsMap[ex.step_id]) stepStatsMap[ex.step_id] = { sent: 0, opened: 0, clicked: 0, replied: 0, bounced: 0, failed: 0 };
+        const s = stepStatsMap[ex.step_id];
+        s.sent++;
+        if (['opened', 'clicked', 'replied'].includes(ex.status)) s.opened++;
+        if (['clicked', 'replied'].includes(ex.status)) s.clicked++;
+        if (ex.status === 'replied') s.replied++;
+        if (ex.status === 'bounced') s.bounced++;
+        if (ex.status === 'failed') s.failed++;
+      }
+      stepsData.forEach(step => {
+        step.exec_stats = stepStatsMap[step.id] || { sent: 0, opened: 0, clicked: 0, replied: 0, bounced: 0, failed: 0 };
+      });
+    }
+
+    return res.json({ data: { ...seqRes.data, steps: stepsData, enrollment_stats: stats } });
   } catch (err) {
     return res.status(500).json({ error: err.message });
   }
 });
 
 // Delete a sequence
-app.delete('/api/engage/sequences/:id', loadProfile, requireMinRole('manager'), async (req, res) => {
+app.delete('/api/engage/sequences/:id', loadProfile, requireMinRole('power_user'), async (req, res) => {
   try {
     const sb = getSupabaseAdmin();
     if (!sb) return res.status(503).json({ error: 'Service unavailable' });
@@ -11649,6 +12687,93 @@ app.patch('/api/engage/enrollments/:id/:action', loadProfile, async (req, res) =
   }
 });
 
+// Push prospect to external sequence (Outreach / SalesLoft)
+app.post('/api/engage/sequences/push-external', loadProfile, async (req, res) => {
+  try {
+    const sb = getSupabaseAdmin();
+    if (!sb) return res.status(503).json({ error: 'Service unavailable' });
+    const orgId = req.userProfile?.organization_id;
+    const { prospect_email, prospect_name, provider, sequence_id_external } = req.body || {};
+    if (!prospect_email || !provider) return res.status(400).json({ error: 'prospect_email and provider required' });
+    if (!['outreach', 'salesloft'].includes(provider)) return res.status(400).json({ error: 'Provider must be outreach or salesloft' });
+
+    // Look up the org's integration for this provider
+    const { data: integration } = await sb.from('integrations')
+      .select('id, credentials, status')
+      .eq('organization_id', orgId)
+      .eq('integration_type', provider)
+      .eq('status', 'connected')
+      .single();
+    if (!integration) return res.status(400).json({ error: `No connected ${provider} integration found. Connect ${provider} in Settings > Integrations first.` });
+
+    // Decrypt credentials
+    const creds = integrations.decryptCredentials(integration.credentials);
+    if (!creds?.access_token) return res.status(400).json({ error: `${provider} integration missing access token. Re-authorize in Settings.` });
+
+    if (provider === 'outreach') {
+      // Outreach API: Create prospect + add to sequence
+      const prospectRes = await fetch('https://api.outreach.io/api/v2/prospects', {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${creds.access_token}`, 'Content-Type': 'application/vnd.api+json' },
+        body: JSON.stringify({
+          data: {
+            type: 'prospect',
+            attributes: { emails: [prospect_email], firstName: prospect_name?.split(' ')[0] || '', lastName: prospect_name?.split(' ').slice(1).join(' ') || '' },
+          }
+        }),
+      });
+      const prospectData = await prospectRes.json();
+      const prospectId = prospectData?.data?.id;
+      if (!prospectId) return res.status(500).json({ error: 'Failed to create prospect in Outreach', detail: prospectData });
+
+      if (sequence_id_external) {
+        // Add to specific sequence
+        await fetch('https://api.outreach.io/api/v2/sequenceStates', {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${creds.access_token}`, 'Content-Type': 'application/vnd.api+json' },
+          body: JSON.stringify({
+            data: {
+              type: 'sequenceState',
+              relationships: {
+                prospect: { data: { type: 'prospect', id: prospectId } },
+                sequence: { data: { type: 'sequence', id: parseInt(sequence_id_external) } },
+              }
+            }
+          }),
+        });
+      }
+      return res.json({ ok: true, provider, prospect_id: prospectId });
+
+    } else if (provider === 'salesloft') {
+      // SalesLoft API: Create person + add to cadence
+      const personRes = await fetch('https://api.salesloft.com/v2/people.json', {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${creds.access_token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email_address: prospect_email,
+          first_name: prospect_name?.split(' ')[0] || '',
+          last_name: prospect_name?.split(' ').slice(1).join(' ') || '',
+        }),
+      });
+      const personData = await personRes.json();
+      const personId = personData?.data?.id;
+      if (!personId) return res.status(500).json({ error: 'Failed to create person in SalesLoft', detail: personData });
+
+      if (sequence_id_external) {
+        await fetch(`https://api.salesloft.com/v2/cadence_memberships.json`, {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${creds.access_token}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ person_id: personId, cadence_id: parseInt(sequence_id_external) }),
+        });
+      }
+      return res.json({ ok: true, provider, person_id: personId });
+    }
+  } catch (err) {
+    console.error('[sequences/push-external]', err.message);
+    return res.status(500).json({ error: err.message });
+  }
+});
+
 // Sequence stats
 app.get('/api/engage/sequences/:id/stats', loadProfile, async (req, res) => {
   try {
@@ -11677,6 +12802,212 @@ app.get('/api/engage/sequences/:id/stats', loadProfile, async (req, res) => {
     };
     return res.json({ data: stats });
   } catch (err) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+// Get sequence enrollments list
+app.get('/api/engage/sequences/:id/enrollments', loadProfile, async (req, res) => {
+  try {
+    const sb = getSupabaseAdmin();
+    if (!sb) return res.status(503).json({ error: 'Service unavailable' });
+    const orgId = req.userProfile.organization_id;
+    const { data: seqCheck } = await sb.from('engage_sequences').select('id').eq('id', req.params.id).eq('organization_id', orgId).maybeSingle();
+    if (!seqCheck) return res.status(404).json({ error: 'Sequence not found' });
+
+    const { data, error } = await sb
+      .from('engage_sequence_enrollments')
+      .select('*')
+      .eq('sequence_id', req.params.id)
+      .order('enrolled_at', { ascending: false });
+    if (error) return res.status(500).json({ error: error.message });
+    return res.json({ data: data || [] });
+  } catch (err) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+// Duplicate a sequence
+app.post('/api/engage/sequences/:id/duplicate', loadProfile, requireMinRole('power_user'), async (req, res) => {
+  try {
+    const sb = getSupabaseAdmin();
+    if (!sb) return res.status(503).json({ error: 'Service unavailable' });
+    const orgId = req.userProfile.organization_id;
+
+    // Fetch original sequence + steps
+    const { data: orig } = await sb.from('engage_sequences').select('*').eq('id', req.params.id).eq('organization_id', orgId).single();
+    if (!orig) return res.status(404).json({ error: 'Sequence not found' });
+
+    const { data: origSteps } = await sb.from('engage_sequence_steps').select('*').eq('sequence_id', orig.id).order('step_number');
+
+    // Create copy
+    const { data: newSeq, error: insErr } = await sb.from('engage_sequences').insert({
+      organization_id: orgId,
+      created_by: req.userProfile.id,
+      name: `${orig.name} (Copy)`,
+      description: orig.description,
+      status: 'draft',
+      default_channel: orig.default_channel,
+      send_window_start: orig.send_window_start,
+      send_window_end: orig.send_window_end,
+      send_timezone: orig.send_timezone,
+      skip_weekends: orig.skip_weekends,
+      tags: orig.tags || [],
+      total_steps: (origSteps || []).length,
+    }).select('id').single();
+    if (insErr) return res.status(500).json({ error: insErr.message });
+
+    // Copy steps
+    if (origSteps?.length) {
+      const stepCopies = origSteps.map(s => ({
+        sequence_id: newSeq.id,
+        organization_id: orgId,
+        step_number: s.step_number,
+        channel: s.channel,
+        delay_days: s.delay_days,
+        subject: s.subject,
+        body: s.body,
+        tone: s.tone,
+        send_if: s.send_if,
+        skip_if_replied: s.skip_if_replied,
+        ai_generated: s.ai_generated,
+        ai_prompt: s.ai_prompt,
+      }));
+      await sb.from('engage_sequence_steps').insert(stepCopies);
+    }
+
+    return res.json({ ok: true, id: newSeq.id });
+  } catch (err) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+// Bulk enroll prospects into a sequence
+app.post('/api/engage/sequences/:id/enroll-bulk', loadProfile, requireMinRole('power_user'), async (req, res) => {
+  try {
+    const sb = getSupabaseAdmin();
+    if (!sb) return res.status(503).json({ error: 'Service unavailable' });
+    const orgId = req.userProfile.organization_id;
+    const { prospect_ids } = req.body || {};
+
+    if (!Array.isArray(prospect_ids) || prospect_ids.length === 0) {
+      return res.status(400).json({ error: 'prospect_ids array is required' });
+    }
+    if (prospect_ids.length > 200) {
+      return res.status(400).json({ error: 'Maximum 200 prospects per bulk enrollment' });
+    }
+
+    // Verify sequence
+    const { data: seq } = await sb.from('engage_sequences')
+      .select('id, status, send_window_start, send_window_end, send_timezone, skip_weekends')
+      .eq('id', req.params.id).eq('organization_id', orgId).single();
+    if (!seq) return res.status(404).json({ error: 'Sequence not found' });
+    if (seq.status !== 'active') return res.status(400).json({ error: 'Sequence must be active to enroll prospects' });
+
+    // Get first step delay
+    const { data: firstStep } = await sb.from('engage_sequence_steps')
+      .select('delay_days').eq('sequence_id', seq.id).eq('step_number', 1).single();
+
+    // Fetch prospect details
+    const { data: prospects } = await sb.from('engage_prospects')
+      .select('id, first_name, last_name, email, company_name')
+      .in('id', prospect_ids).eq('organization_id', orgId);
+    if (!prospects?.length) return res.status(400).json({ error: 'No valid prospects found' });
+
+    // Deduplicate against existing enrollments
+    const { data: existing } = await sb.from('engage_sequence_enrollments')
+      .select('prospect_id').eq('sequence_id', seq.id).in('prospect_id', prospect_ids)
+      .in('status', ['active', 'paused']);
+    const existingIds = new Set((existing || []).map(e => e.prospect_id));
+
+    const nextStepAt = calculateNextStepTime(new Date(), firstStep?.delay_days || 0,
+      seq.send_window_start, seq.send_window_end, seq.send_timezone, seq.skip_weekends);
+
+    const enrollments = prospects
+      .filter(p => p.email && !existingIds.has(p.id))
+      .map(p => ({
+        sequence_id: seq.id,
+        organization_id: orgId,
+        prospect_id: p.id,
+        enrolled_by: req.userProfile.id,
+        prospect_name: [p.first_name, p.last_name].filter(Boolean).join(' ') || null,
+        prospect_email: p.email,
+        prospect_company: p.company_name || null,
+        next_step_at: nextStepAt.toISOString(),
+      }));
+
+    if (enrollments.length === 0) {
+      return res.json({ ok: true, enrolled: 0, skipped: prospect_ids.length, already_enrolled: existingIds.size });
+    }
+
+    const { error: insertErr } = await sb.from('engage_sequence_enrollments').insert(enrollments);
+    if (insertErr) return res.status(500).json({ error: insertErr.message });
+
+    // Update total_enrolled counter
+    const { count } = await sb.from('engage_sequence_enrollments')
+      .select('id', { count: 'exact', head: true }).eq('sequence_id', seq.id);
+    await sb.from('engage_sequences').update({ total_enrolled: count || 0 }).eq('id', seq.id);
+
+    return res.json({ ok: true, enrolled: enrollments.length, skipped: prospect_ids.length - enrollments.length, already_enrolled: existingIds.size });
+  } catch (err) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+// AI-generate sequence step content
+app.post('/api/engage/sequences/generate-step', aiLimiter, loadProfile, async (req, res) => {
+  try {
+    const { sequence_name, sequence_description, step_number, channel, tone, previous_steps } = req.body || {};
+    if (!sequence_name) return res.status(400).json({ error: 'sequence_name is required' });
+
+    const orgId = req.userProfile.organization_id;
+    let salesDnaCtx = '';
+    try { salesDnaCtx = orgId ? await getSalesDnaContext(orgId) : ''; } catch {}
+
+    const channelLabel = channel || 'email';
+    const toneLabel = tone || 'professional';
+
+    const systemPrompt = `You are a B2B sales outreach expert. Generate a ${channelLabel} message for step ${step_number || 1} of a multi-step sales sequence.
+${salesDnaCtx ? `\nOrg Sales DNA:\n${salesDnaCtx}` : ''}
+
+Rules:
+- Tone: ${toneLabel}
+- Keep it concise (3-5 sentences for email body, 2-3 for LinkedIn)
+- Use {{prospect.first_name}} and {{prospect.company_name}} tokens for personalization
+- If step > 1, reference previous touchpoints naturally
+- For calls: provide a brief script with opener, value prop, and close
+- For tasks: provide a clear action item description
+- NEVER use placeholder company names — use {{prospect.company_name}} token
+- Do NOT include greetings like "Hi {{prospect.first_name}}" in the subject line`;
+
+    const userPrompt = `Sequence: "${sequence_name}"${sequence_description ? `\nDescription: ${sequence_description}` : ''}
+Step: ${step_number || 1}
+Channel: ${channelLabel}
+${previous_steps?.length ? `\nPrevious steps:\n${previous_steps.map((s, i) => `Step ${i + 1}: ${s}`).join('\n')}` : ''}
+
+Generate the ${channelLabel === 'email' ? 'subject line and body' : 'message content'}.
+${channelLabel === 'email' ? 'Format your response as:\nSUBJECT: <subject line>\nBODY:\n<email body>' : ''}`;
+
+    const client = getAnthropic();
+    const response = await client.messages.create({
+      model: SONNET_MODEL,
+      max_tokens: 500,
+      system: systemPrompt,
+      messages: [{ role: 'user', content: userPrompt }],
+    });
+
+    const text = response.content[0]?.text || '';
+    let subject = null, body = text;
+    if (channelLabel === 'email') {
+      const subjectMatch = text.match(/SUBJECT:\s*(.+?)(?:\n|$)/i);
+      const bodyMatch = text.match(/BODY:\s*([\s\S]+)/i);
+      if (subjectMatch) subject = subjectMatch[1].trim();
+      if (bodyMatch) body = bodyMatch[1].trim();
+    }
+
+    return res.json({ ok: true, subject, body, tone: toneLabel });
+  } catch (err) {
+    console.error('[sequences/generate-step]', err.message);
     return res.status(500).json({ error: err.message });
   }
 });
@@ -12553,6 +13884,166 @@ app.delete('/api/engage/accounts/:id/contacts/:contactId', loadProfile, async (r
   }
 });
 
+// ── Contacts Page Endpoints ─────────────────────────────────────────────
+
+function applyContactFilters(query, params, userId) {
+  if (params.search) {
+    const s = params.search.trim();
+    query = query.or(`full_name.ilike.%${s}%,email.ilike.%${s}%,company_name.ilike.%${s}%,title.ilike.%${s}%`);
+  }
+  if (params.view === 'mine') query = query.eq('assigned_to', userId);
+  else if (params.view === 'recent') query = query.gte('created_at', new Date(Date.now() - 7 * 86400000).toISOString());
+  else if (params.view === 'high_fit') query = query.gte('fit_score', 70);
+  if (params.status) query = query.in('status', params.status.split(','));
+  if (params.fitScoreMin) query = query.gte('fit_score', parseInt(params.fitScoreMin));
+  if (params.fitScoreMax) query = query.lte('fit_score', parseInt(params.fitScoreMax));
+  if (params.source) query = query.in('source', params.source.split(','));
+  if (params.seniority) query = query.in('seniority_level', params.seniority.split(','));
+  if (params.company) query = query.ilike('company_name', `%${params.company}%`);
+  if (params.owner) {
+    if (params.owner === 'me') query = query.eq('assigned_to', userId);
+    else if (params.owner === 'unassigned') query = query.is('assigned_to', null);
+    else query = query.eq('assigned_to', params.owner);
+  }
+  if (params.tags) query = query.overlaps('tags', params.tags.split(','));
+  return query;
+}
+
+// GET /api/engage/contacts — paginated, filtered, sorted contacts list
+app.get('/api/engage/contacts', loadProfile, async (req, res) => {
+  try {
+    const sb = getSupabaseAdmin();
+    if (!sb) return res.status(503).json({ error: 'Service unavailable' });
+    const orgId = req.userProfile?.organization_id;
+    const userId = req.userProfile?.id;
+    const page = Math.max(1, parseInt(req.query.page) || 1);
+    const pageSize = Math.min(100, Math.max(10, parseInt(req.query.pageSize) || 50));
+    const offset = (page - 1) * pageSize;
+    const sortDir = req.query.sortDir === 'asc';
+    const validSorts = ['full_name','title','company_name','email','status','fit_score','influence_score','created_at'];
+    const sortField = validSorts.includes(req.query.sortField) ? req.query.sortField : 'created_at';
+
+    let countQ = sb.from('engage_prospects').select('id', { count: 'exact', head: true }).eq('organization_id', orgId);
+    let dataQ = sb.from('engage_prospects')
+      .select('id, first_name, last_name, full_name, email, phone, linkedin_url, title, seniority_level, department, company_name, company_id, fit_score, intent_score, status, tags, source, assigned_to, last_called_at, last_researched_at, influence_score, tenure_months, notes, secondary_email, secondary_phone, created_at, updated_at, created_by, owner:profiles!engage_prospects_assigned_to_fkey(id, full_name, first_name, last_name)')
+      .eq('organization_id', orgId);
+
+    countQ = applyContactFilters(countQ, req.query, userId);
+    dataQ = applyContactFilters(dataQ, req.query, userId);
+
+    dataQ = dataQ.order(sortField, { ascending: sortDir, nullsFirst: false })
+      .range(offset, offset + pageSize - 1);
+
+    const [countRes, dataRes] = await Promise.all([countQ, dataQ]);
+    if (countRes.error) console.error('[contacts] count error:', countRes.error.message);
+    if (dataRes.error) throw dataRes.error;
+
+    return res.json({
+      ok: true,
+      data: dataRes.data || [],
+      total: countRes.count || 0,
+      page,
+      pageSize,
+      totalPages: Math.ceil((countRes.count || 0) / pageSize),
+    });
+  } catch (err) {
+    console.error('[contacts] GET error:', err.message);
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+// PATCH /api/engage/contacts/bulk — bulk update status, owner, tags
+app.patch('/api/engage/contacts/bulk', loadProfile, async (req, res) => {
+  try {
+    const sb = getSupabaseAdmin();
+    if (!sb) return res.status(503).json({ error: 'Service unavailable' });
+    const orgId = req.userProfile?.organization_id;
+    const { contactIds, updates } = req.body;
+    if (!Array.isArray(contactIds) || contactIds.length === 0) return res.status(400).json({ error: 'contactIds required' });
+    if (contactIds.length > 500) return res.status(400).json({ error: 'Max 500 contacts per operation' });
+
+    const updatePayload = {};
+    if (updates.status) updatePayload.status = updates.status;
+    if (updates.assigned_to !== undefined) updatePayload.assigned_to = updates.assigned_to || null;
+
+    if (Object.keys(updatePayload).length > 0) {
+      const { error } = await sb.from('engage_prospects').update(updatePayload).eq('organization_id', orgId).in('id', contactIds);
+      if (error) throw error;
+    }
+
+    if (updates.addTags?.length || updates.removeTags?.length) {
+      const { data: existing } = await sb.from('engage_prospects').select('id, tags').eq('organization_id', orgId).in('id', contactIds);
+      for (const c of (existing || [])) {
+        let tags = Array.isArray(c.tags) ? [...c.tags] : [];
+        if (updates.addTags?.length) tags = [...new Set([...tags, ...updates.addTags])];
+        if (updates.removeTags?.length) tags = tags.filter(t => !updates.removeTags.includes(t));
+        await sb.from('engage_prospects').update({ tags }).eq('id', c.id);
+      }
+    }
+
+    return res.json({ ok: true, updated: contactIds.length });
+  } catch (err) {
+    console.error('[contacts/bulk] PATCH error:', err.message);
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+// DELETE /api/engage/contacts/bulk — bulk delete contacts
+app.delete('/api/engage/contacts/bulk', loadProfile, requireMinRole('manager'), async (req, res) => {
+  try {
+    const sb = getSupabaseAdmin();
+    if (!sb) return res.status(503).json({ error: 'Service unavailable' });
+    const orgId = req.userProfile?.organization_id;
+    const { contactIds } = req.body;
+    if (!Array.isArray(contactIds) || contactIds.length === 0) return res.status(400).json({ error: 'contactIds required' });
+    if (contactIds.length > 200) return res.status(400).json({ error: 'Max 200 contacts per delete' });
+
+    const { error } = await sb.from('engage_prospects').delete().eq('organization_id', orgId).in('id', contactIds);
+    if (error) throw error;
+    return res.json({ ok: true, deleted: contactIds.length });
+  } catch (err) {
+    console.error('[contacts/bulk] DELETE error:', err.message);
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+// POST /api/engage/contacts/export — CSV export with filters
+app.post('/api/engage/contacts/export', loadProfile, async (req, res) => {
+  try {
+    const sb = getSupabaseAdmin();
+    if (!sb) return res.status(503).json({ error: 'Service unavailable' });
+    const orgId = req.userProfile?.organization_id;
+    const userId = req.userProfile?.id;
+
+    let q = sb.from('engage_prospects')
+      .select('first_name, last_name, full_name, email, phone, title, seniority_level, department, company_name, fit_score, intent_score, status, tags, source, linkedin_url, created_at')
+      .eq('organization_id', orgId)
+      .order('created_at', { ascending: false })
+      .limit(5000);
+
+    q = applyContactFilters(q, req.body, userId);
+    const { data, error } = await q;
+    if (error) throw error;
+
+    const headers = ['First Name','Last Name','Email','Phone','Title','Seniority','Department','Company','Fit Score','Intent Score','Status','Tags','Source','LinkedIn','Created'];
+    const rows = (data || []).map(c => [
+      c.first_name || '', c.last_name || '', c.email || '', c.phone || '',
+      c.title || '', c.seniority_level || '', c.department || '', c.company_name || '',
+      c.fit_score ?? '', c.intent_score ?? '', c.status || '',
+      (c.tags || []).join(';'), c.source || '', c.linkedin_url || '',
+      c.created_at ? new Date(c.created_at).toISOString().slice(0, 10) : ''
+    ]);
+    const csv = [headers, ...rows].map(r => r.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(',')).join('\n');
+
+    res.setHeader('Content-Type', 'text/csv');
+    res.setHeader('Content-Disposition', 'attachment; filename=contacts_export.csv');
+    return res.send(csv);
+  } catch (err) {
+    console.error('[contacts/export] error:', err.message);
+    return res.status(500).json({ error: err.message });
+  }
+});
+
 // GET meetings linked to account
 app.get('/api/engage/accounts/:id/meetings', loadProfile, async (req, res) => {
   try {
@@ -13176,6 +14667,274 @@ app.post('/api/users/resend-invite', loadProfile, requireMinRole('admin'), async
     res.json({ ok: true });
   } catch (err) {
     console.error('[invite:resend] Error:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ══════════════════════════════════════════════════════════════════════════════
+// PUBLIC API v1 — authenticated via API key (Bearer aptv_...)
+// ══════════════════════════════════════════════════════════════════════════════
+
+// ── API Key Management (session-auth, admin only) ────────────────────────────
+
+app.post('/api/api-keys', loadProfile, requireMinRole('admin'), async (req, res) => {
+  try {
+    const sb = getSupabaseAdmin();
+    const orgId = req.userProfile.organization_id;
+    const { name, scopes, expires_in_days } = req.body;
+    if (!name) return res.status(400).json({ error: 'name is required' });
+
+    // Generate a random API key
+    const rawKey = 'aptv_' + crypto.randomBytes(32).toString('hex');
+    const keyHash = crypto.createHash('sha256').update(rawKey).digest('hex');
+    const keyPrefix = rawKey.slice(0, 12);
+
+    const row = {
+      organization_id: orgId,
+      created_by: req.userProfile.id,
+      name,
+      key_hash: keyHash,
+      key_prefix: keyPrefix,
+      scopes: scopes || ['read'],
+      rate_limit_per_minute: 60,
+      is_active: true,
+    };
+    if (expires_in_days) {
+      row.expires_at = new Date(Date.now() + expires_in_days * 86400000).toISOString();
+    }
+
+    const { error } = await sb.from('api_keys').insert(row);
+    if (error) return res.status(500).json({ error: error.message });
+
+    // Return the raw key ONCE — it is never stored
+    res.json({ key: rawKey, prefix: keyPrefix, name, scopes: row.scopes, expires_at: row.expires_at || null });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/api/api-keys', loadProfile, requireMinRole('admin'), async (req, res) => {
+  try {
+    const sb = getSupabaseAdmin();
+    const orgId = req.userProfile.organization_id;
+    const { data, error } = await sb.from('api_keys')
+      .select('id, name, key_prefix, scopes, rate_limit_per_minute, last_used_at, expires_at, is_active, created_at')
+      .eq('organization_id', orgId)
+      .order('created_at', { ascending: false });
+    if (error) return res.status(500).json({ error: error.message });
+    res.json(data || []);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.delete('/api/api-keys/:id', loadProfile, requireMinRole('admin'), async (req, res) => {
+  try {
+    const sb = getSupabaseAdmin();
+    const orgId = req.userProfile.organization_id;
+    const { error } = await sb.from('api_keys')
+      .update({ is_active: false })
+      .eq('id', req.params.id)
+      .eq('organization_id', orgId);
+    if (error) return res.status(500).json({ error: error.message });
+    res.json({ ok: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ── v1 Prospects ─────────────────────────────────────────────────────────────
+
+app.get('/api/v1/prospects', requireApiKey, requireScope('read'), async (req, res) => {
+  try {
+    const sb = getSupabaseAdmin();
+    const { limit = 50, offset = 0, search } = req.query;
+    let q = sb.from('engage_prospects')
+      .select('id, first_name, last_name, email, title, company, status, influence_score, tenure_months, created_at')
+      .eq('organization_id', req.organizationId)
+      .order('created_at', { ascending: false })
+      .range(Number(offset), Number(offset) + Number(limit) - 1);
+    if (search) q = q.or(`first_name.ilike.%${search}%,last_name.ilike.%${search}%,email.ilike.%${search}%,company.ilike.%${search}%`);
+    const { data, error } = await q;
+    if (error) return res.status(500).json({ error: error.message });
+    res.json({ data: data || [], limit: Number(limit), offset: Number(offset) });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/v1/prospects', requireApiKey, requireScope('write'), async (req, res) => {
+  try {
+    const sb = getSupabaseAdmin();
+    const { first_name, last_name, email, title, company, phone, linkedin_url } = req.body;
+    if (!email) return res.status(400).json({ error: 'email is required' });
+    const row = {
+      organization_id: req.organizationId,
+      first_name, last_name, email: email.toLowerCase().trim(),
+      title, company, phone, linkedin_url, status: 'new',
+    };
+    const { data, error } = await sb.from('engage_prospects').upsert(row, { onConflict: 'organization_id,email' }).select().single();
+    if (error) return res.status(500).json({ error: error.message });
+    res.json(data);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ── v1 Accounts ──────────────────────────────────────────────────────────────
+
+app.get('/api/v1/accounts', requireApiKey, requireScope('read'), async (req, res) => {
+  try {
+    const sb = getSupabaseAdmin();
+    const { limit = 50, offset = 0 } = req.query;
+    const { data, error } = await sb.from('engage_accounts')
+      .select('id, name, domain, tier, status, icp_score, owner_id, created_at')
+      .eq('organization_id', req.organizationId)
+      .order('created_at', { ascending: false })
+      .range(Number(offset), Number(offset) + Number(limit) - 1);
+    if (error) return res.status(500).json({ error: error.message });
+    res.json({ data: data || [], limit: Number(limit), offset: Number(offset) });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ── v1 KPI Values ────────────────────────────────────────────────────────────
+
+app.post('/api/v1/kpi-values', requireApiKey, requireScope('write'), async (req, res) => {
+  try {
+    const sb = getSupabaseAdmin();
+    const { user_id, kpi_key, value, week_start } = req.body;
+    if (!user_id || !kpi_key || value === undefined) {
+      return res.status(400).json({ error: 'user_id, kpi_key, and value are required' });
+    }
+    const weekStart = week_start || new Date().toISOString().slice(0, 10);
+    const { data, error } = await sb.from('kpi_values').upsert({
+      profile_id: user_id,
+      organization_id: req.organizationId,
+      kpi_key,
+      value: Number(value),
+      week_start: weekStart,
+    }, { onConflict: 'profile_id,kpi_key,week_start' }).select().single();
+    if (error) return res.status(500).json({ error: error.message });
+    res.json(data);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ── v1 Signals ───────────────────────────────────────────────────────────────
+
+app.post('/api/v1/signals', requireApiKey, requireScope('write'), async (req, res) => {
+  try {
+    const sb = getSupabaseAdmin();
+    const { account_id, signal_type, signal_source, title, description, score } = req.body;
+    if (!signal_type || !title) {
+      return res.status(400).json({ error: 'signal_type and title are required' });
+    }
+    const row = {
+      organization_id: req.organizationId,
+      account_id: account_id || null,
+      signal_type,
+      signal_source: signal_source || 'api',
+      title,
+      description: description || '',
+      score: score || 50,
+      status: 'new',
+    };
+    const { data, error } = await sb.from('engage_intent_signals').insert(row).select().single();
+    if (error) return res.status(500).json({ error: error.message });
+    res.json(data);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ── v1 Deals ─────────────────────────────────────────────────────────────────
+
+app.post('/api/v1/deals', requireApiKey, requireScope('write'), async (req, res) => {
+  try {
+    const sb = getSupabaseAdmin();
+    const { name, account_id, stage, amount, close_date, owner_id } = req.body;
+    if (!name) return res.status(400).json({ error: 'name is required' });
+    const row = {
+      organization_id: req.organizationId,
+      name, account_id: account_id || null,
+      stage: stage || 'prospect',
+      amount: amount || 0,
+      close_date: close_date || null,
+      owner_id: owner_id || null,
+    };
+    const { data, error } = await sb.from('engage_pipeline_deals').insert(row).select().single();
+    if (error) return res.status(500).json({ error: error.message });
+
+    // Log creation in deal activity panel
+    if (data) {
+      await logDealActivity(sb, {
+        orgId: req.organizationId, dealId: data.id,
+        actorId: row.owner_id, activityType: 'deal_created',
+        title: 'Deal Created',
+        description: `Created deal "${data.name}" with value $${(data.amount || 0).toLocaleString()} in ${data.stage || 'prospect'} stage`,
+      });
+    }
+
+    res.json(data);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ── v1 Activities ────────────────────────────────────────────────────────────
+
+app.post('/api/v1/activities', requireApiKey, requireScope('write'), async (req, res) => {
+  try {
+    const sb = getSupabaseAdmin();
+    const { user_id, activity_type, description, deal_id, prospect_id } = req.body;
+    if (!activity_type) return res.status(400).json({ error: 'activity_type is required' });
+    const row = {
+      organization_id: req.organizationId,
+      profile_id: user_id || null,
+      activity_type,
+      description: description || '',
+      deal_id: deal_id || null,
+      prospect_id: prospect_id || null,
+    };
+    const { data, error } = await sb.from('engage_activities').insert(row).select().single();
+    if (error) return res.status(500).json({ error: error.message });
+    res.json(data);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ── v1 Scorecard ─────────────────────────────────────────────────────────────
+
+app.get('/api/v1/scorecard/:userId', requireApiKey, requireScope('read'), async (req, res) => {
+  try {
+    const sb = getSupabaseAdmin();
+    const userId = req.params.userId;
+    // Verify user belongs to this org
+    const { data: profile } = await sb.from('profiles')
+      .select('id, first_name, last_name, email, title')
+      .eq('id', userId).eq('organization_id', req.organizationId).single();
+    if (!profile) return res.status(404).json({ error: 'User not found in your organization' });
+
+    // Get latest week's KPI values
+    const { data: kpis } = await sb.from('kpi_values')
+      .select('kpi_key, value, week_start')
+      .eq('profile_id', userId)
+      .order('week_start', { ascending: false })
+      .limit(20);
+
+    // Get scorecard scores
+    const { data: scores } = await sb.from('scorecard_scores')
+      .select('score, week_start')
+      .eq('profile_id', userId)
+      .order('week_start', { ascending: false })
+      .limit(8);
+
+    res.json({ profile, kpis: kpis || [], scores: scores || [] });
+  } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });

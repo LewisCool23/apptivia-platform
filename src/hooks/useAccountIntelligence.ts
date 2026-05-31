@@ -346,13 +346,20 @@ export function useAccountIntelligence(organizationId: string, userId?: string) 
       });
       if (data?.error) throw new Error(data.error);
 
-      // Save AI analysis back to account
+      // Save AI analysis back to account (basic + enhanced fields)
+      const enhanced = {
+        outbound_guidance: data.outbound_guidance || [],
+        outreach_strategy: data.outreach_strategy || [],
+        suggested_key_contacts: data.suggested_key_contacts || [],
+        deal_risk_assessment: data.deal_risk_assessment || [],
+      };
       await supabase.from('engage_accounts').update({
         ai_summary: data.summary,
         ai_strategy: data.strategy,
         ai_risk_factors: data.risk_factors || [],
         account_score: data.account_score || account.account_score,
         intent_score: data.intent_score || account.intent_score,
+        ai_enhanced_analysis: enhanced,
         updated_at: new Date().toISOString(),
       }).eq('id', accountId);
 
@@ -368,24 +375,38 @@ export function useAccountIntelligence(organizationId: string, userId?: string) 
   // ── Auto-score all accounts ────────────────────────────
 
   const scoreAllAccounts = useCallback(async () => {
+    const accounts = state.accounts;
+    if (!accounts?.length) return;
     patch({ analyzing: true });
     try {
-      const { data, error } = await supabase.functions.invoke('engage-accounts', {
-        body: {
-          action: 'score_all',
-          organization_id: organizationId,
-        },
-      });
-      if (error) throw new Error(error.message);
-      if (data?.error) throw new Error(data.error);
-      patch({ analyzing: false });
+      // Process in batches of 20 (backend limit)
+      for (let i = 0; i < accounts.length; i += 20) {
+        const batch = accounts.slice(i, i + 20);
+        const data = await backendFetch('/api/engage/accounts/score', { accounts: batch });
+        if (data?.error) throw new Error(data.error);
+        // Update each account with returned scores
+        if (data?.scores?.length) {
+          for (const scored of data.scores) {
+            const match = batch.find((a: any) => a.account_name === scored.account_name);
+            if (match) {
+              await supabase.from('engage_accounts').update({
+                account_score: scored.account_score,
+                intent_score: scored.intent_score,
+                engagement_score: scored.engagement_score,
+                recommended_tier: scored.recommended_tier,
+                updated_at: new Date().toISOString(),
+              }).eq('id', match.id);
+            }
+          }
+        }
+      }
       await fetchAccounts();
-      return data;
+      patch({ analyzing: false });
     } catch (err: any) {
       patch({ error: err.message, analyzing: false });
       throw err;
     }
-  }, [organizationId, patch, fetchAccounts]);
+  }, [organizationId, state.accounts, patch, fetchAccounts]);
 
   // ── Import from companies ──────────────────────────────
 

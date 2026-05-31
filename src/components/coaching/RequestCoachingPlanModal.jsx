@@ -113,9 +113,12 @@ export default function RequestCoachingPlanModal({ isOpen, onClose }) {
           metrics.forEach(m => {
             const dir = m.direction || 'higher';
             const val = sums[m.id] || 0;
-            const pct = Math.round(calcPct(val, m.goal, dir));
-            totalWPct += pct * (m.weight || 0);
-            totalW += m.weight || 0;
+            const rawPct = calcPct(val, m.goal, dir);
+            const pct = rawPct !== null ? Math.round(rawPct) : 0;
+            if (rawPct !== null) {
+              totalWPct += pct * (m.weight || 0);
+              totalW += m.weight || 0;
+            }
             kpiWeeklyPcts[m.key].push(pct);
           });
 

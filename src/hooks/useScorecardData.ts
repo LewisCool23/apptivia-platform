@@ -137,6 +137,10 @@ export function useScorecardData(
           }
         }
 
+        // ── Determine if viewing live vs historical period ────────────────────
+        const isLivePeriod = new Date(periodEnd) >= new Date(new Date().toISOString().split('T')[0]);
+        const refDate = isLivePeriod ? new Date().toISOString() : new Date(qStart).toISOString();
+
         // ── STAGE 1: Independent queries in parallel ──────────────────────────
         // kpi_metrics and profiles have no dependencies on each other.
         let profilesQuery = supabase
@@ -148,38 +152,56 @@ export function useScorecardData(
         if (selectedTeams.length > 0) profilesQuery = profilesQuery.in('team_id', selectedTeams);
         if (selectedMembers.length > 0) profilesQuery = profilesQuery.in('id', selectedMembers);
 
-        // Org-scoped query: kpi_org_configs joined with kpi_metrics catalog.
-        // Falls back to global kpi_metrics if no organizationId (shouldn't happen in practice).
+        // Org-scoped: fetch ALL kpi_org_configs (no is_active filter) to include
+        // KPIs that were historically active but may be deactivated now.
+        // Point-in-time is_active is applied after overlaying history.
         const metricsQuery = organizationId
           ? supabase
               .from('kpi_org_configs')
-              .select('kpi_id, goal, weight, is_active, show_on_scorecard, scorecard_position, kpi_metrics!inner(id, key, name, description, unit, category, direction)')
+              .select('id, kpi_id, goal, weight, is_active, show_on_scorecard, scorecard_position, kpi_metrics!inner(id, key, name, description, unit, category, direction)')
               .eq('organization_id', organizationId)
-              .eq('is_active', true)
               .order('scorecard_position')
           : supabase.from('kpi_metrics').select('*').eq('is_active', true).order('scorecard_position');
 
-        const [metricsResult, profilesResult] = await Promise.all([
+        // Point-in-time org config history — for historical periods only.
+        // Returns the goal/weight/flags that were in effect at refDate.
+        const orgHistoryQuery = (organizationId && !isLivePeriod)
+          ? supabase.from('kpi_org_config_history')
+              .select('org_config_id, kpi_id, goal, weight, show_on_scorecard, is_active, valid_from, valid_to')
+              .eq('organization_id', organizationId)
+              .lte('valid_from', refDate)
+              .or(`valid_to.is.null,valid_to.gt.${refDate}`)
+          : Promise.resolve({ data: [] });
+
+        const [metricsResult, profilesResult, orgHistResult] = await Promise.all([
           metricsQuery,
           profilesQuery,
+          orgHistoryQuery,
         ]);
 
         if (metricsResult.error) throw metricsResult.error;
         if (profilesResult.error) throw profilesResult.error;
 
-        // Map org-scoped result to same KPIMetric shape used downstream
+        // Apply point-in-time config overrides for historical periods.
+        // For each org config, if a history row exists at refDate, use its
+        // goal/weight/show_on_scorecard/is_active instead of the current values.
+        const orgHistoryData = (orgHistResult as any)?.data || [];
         const metrics: KPIMetric[] = organizationId
-          ? (metricsResult.data || []).map((c: any) => ({
-              id: (c.kpi_metrics as any).id,
-              key: (c.kpi_metrics as any).key,
-              name: (c.kpi_metrics as any).name,
-              goal: c.goal,
-              weight: c.weight,
-              unit: (c.kpi_metrics as any).unit,
-              direction: (c.kpi_metrics as any).direction,
-              show_on_scorecard: c.show_on_scorecard,
-              scorecard_position: c.scorecard_position,
-            }))
+          ? (metricsResult.data || []).map((c: any) => {
+              const histRow = orgHistoryData.find((h: any) => h.org_config_id === c.id);
+              return {
+                id: (c.kpi_metrics as any).id,
+                key: (c.kpi_metrics as any).key,
+                name: (c.kpi_metrics as any).name,
+                goal: histRow ? histRow.goal : c.goal,
+                weight: histRow ? histRow.weight : c.weight,
+                unit: (c.kpi_metrics as any).unit,
+                direction: (c.kpi_metrics as any).direction,
+                show_on_scorecard: histRow ? histRow.show_on_scorecard : c.show_on_scorecard,
+                is_active: histRow ? histRow.is_active : c.is_active,
+                scorecard_position: c.scorecard_position,
+              };
+            }).filter((m: any) => m.is_active) // Filter by point-in-time is_active
           : (metricsResult.data || []);
         const profiles: ProfileData[] = profilesResult.data || [];
 
@@ -212,14 +234,12 @@ export function useScorecardData(
 
         // ── STAGE 2: Dependent queries in parallel ──────────────────────────────
         // All depend on Stage 1 results but are independent of each other.
-        const isLivePeriod = new Date(periodEnd) >= new Date(new Date().toISOString().split('T')[0]);
-        const refDate = isLivePeriod ? new Date().toISOString() : new Date(qStart).toISOString();
+        // isLivePeriod and refDate computed above in Stage 1 setup.
 
         const stage2: Promise<any>[] = [
           // 2a: kpi_metric_history — only used when NO organizationId (global fallback).
-          // When org is set, kpi_org_configs (from Stage 1) is the sole source of truth
-          // for goals/weights. Querying kpi_metric_history would return stale global
-          // defaults that override correct per-org values.
+          // When org is set, kpi_org_config_history (from Stage 1) provides
+          // point-in-time goals/weights per org.
           (!organizationId && scorecardMetricIds.length > 0)
             ? supabase.from('kpi_metric_history')
                 .select('kpi_id, goal, weight, direction, valid_from, valid_to')

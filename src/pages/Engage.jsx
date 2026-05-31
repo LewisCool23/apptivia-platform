@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { Search, Building2, Radar, DollarSign, Phone, Activity, UserPlus, X, ListOrdered, CalendarDays } from 'lucide-react';
+import { Search, Building2, Radar, DollarSign, Phone, Activity, UserPlus, Users, X, ListOrdered, CalendarDays, GitBranch } from 'lucide-react';
 import DashboardLayout from '../DashboardLayout';
 import { useAuth } from '../AuthContext';
 import PipelineOperator from '../components/PipelineOperator';
@@ -18,12 +18,16 @@ import SignalOutreachModal from '../components/SignalOutreachModal';
 import SavedBriefModal from '../components/SavedBriefModal';
 import SequenceBuilder from '../components/SequenceBuilder';
 import EngageCalendar from '../components/EngageCalendar';
+import EngageContacts from '../components/EngageContacts';
+import { supabase } from '../supabaseClient';
 
 const TABS = [
   { id: 'signals',  label: 'Signal Prospecting', icon: Radar,     description: 'Detect high-intent buying signals' },
   { id: 'discover', label: 'Discover',            icon: Search,    description: 'AI-powered prospect & company research' },
   { id: 'accounts', label: 'Accounts',            icon: Building2, description: 'Account-based intelligence & scoring' },
+  { id: 'contacts', label: 'Contacts',            icon: Users,     description: 'Manage saved contacts' },
   { id: 'pipeline',   label: 'Pipeline Operator',   icon: DollarSign,  description: 'Monitor deals, flag risks, AI forecasts' },
+  { id: 'sequences',  label: 'Sequences',            icon: GitBranch,    description: 'Multi-step outreach cadences' },
   { id: 'calendar',   label: 'Calendar',             icon: CalendarDays, description: 'Synced calendar with meeting intelligence' },
 ];
 
@@ -53,6 +57,7 @@ export default function Engage() {
   // Cross-tab context
   const [discoverContext, setDiscoverContext] = useState(null);
   const [accountsContext, setAccountsContext] = useState(null);
+  const [pipelineContext, setPipelineContext] = useState(null);
 
   useEffect(() => {
     if (dealFromUrl) {
@@ -71,6 +76,34 @@ export default function Engage() {
   const dialer = useTwilioDialer(organizationId, user?.id ?? '');
 
   const togglePanel = (id) => setActivePanel(prev => prev === id ? null : id);
+
+  const handleSaveAsAccount = async (company) => {
+    if (!company || !organizationId) return;
+    try {
+      const { error } = await supabase.from('engage_accounts').insert({
+        organization_id: organizationId,
+        account_name: company.name || company.domain,
+        domain: company.primary_domain || company.domain || null,
+        industry: company.industry || null,
+        employee_count: company.estimated_num_employees || company.employee_count || null,
+        annual_revenue: company.annual_revenue_printed || company.annual_revenue || null,
+        tier: 'untiered',
+        status: 'active',
+        account_score: 0,
+        intent_score: 0,
+        engagement_score: 0,
+        signals_count: 0,
+        buying_committee: [],
+        tags: [],
+        metadata: { source: 'company_research' },
+      });
+      if (!error) {
+        setActiveTab('accounts');
+      }
+    } catch (err) {
+      console.error('Save as account error:', err);
+    }
+  };
 
   return (
     <DashboardLayout>
@@ -147,6 +180,8 @@ export default function Engage() {
               onInitialSearchConsumed={() => setDiscoverContext(null)}
               onCallContact={dialer.startCall}
               onContactSaved={() => setContactsRefreshKey(k => k + 1)}
+              onEmailContact={(contact) => setOutreachTarget({ contact })}
+              onSaveAsAccount={handleSaveAsAccount}
             />
           )}
           {activeTab === 'accounts' && (
@@ -160,8 +195,26 @@ export default function Engage() {
               onViewBrief={(prospect) => setBriefTarget(prospect)}
             />
           )}
+          {activeTab === 'contacts' && (
+            <EngageContacts
+              organizationId={organizationId}
+              userId={user?.id}
+              onCallContact={dialer.startCall}
+              onEmailContact={(contact) => setOutreachTarget({ contact })}
+              onViewBrief={(prospect) => setBriefTarget(prospect)}
+              onNavigateDiscover={(ctx) => { setDiscoverContext(ctx); setActiveTab('discover'); }}
+              onNavigateTab={(tab, ctx) => {
+                if (tab === 'accounts' && ctx?.accountId) setAccountsContext(ctx);
+                if (tab === 'pipeline' && ctx?.dealId) setPipelineContext(ctx);
+                setActiveTab(tab);
+              }}
+            />
+          )}
           {activeTab === 'pipeline' && (
-            <PipelineOperator organizationId={organizationId} userId={user?.id} />
+            <PipelineOperator organizationId={organizationId} userId={user?.id} initialDealId={pipelineContext?.dealId} onInitialDealConsumed={() => setPipelineContext(null)} />
+          )}
+          {activeTab === 'sequences' && (
+            <SequenceBuilder organizationId={organizationId} userId={user?.id} />
           )}
           {activeTab === 'calendar' && (
             <EngageCalendar organizationId={organizationId} userId={user?.id} />
@@ -191,7 +244,7 @@ export default function Engage() {
                 onCallContact={dialer.startCall}
                 onClose={() => setActivePanel(null)}
                 refreshKey={contactsRefreshKey}
-                onSeeAll={() => setShowContactsModal(true)}
+                onSeeAll={() => { setActivePanel(null); setActiveTab('contacts'); }}
                 onEmailContact={(contact) => setOutreachTarget({ contact })}
                 onViewBrief={(prospect) => setBriefTarget(prospect)}
               />

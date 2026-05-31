@@ -2028,6 +2028,12 @@ export default function SignalProspecting({ organizationId, userId, onCallContac
     return signals.signals.filter((s) => s.status !== 'dismissed').length;
   }, [signals.signals]);
 
+  // Count of stale signals (>7 days, still 'new')
+  const staleSignalCount = useMemo(() => {
+    const cutoff = Date.now() - 7 * 24 * 60 * 60 * 1000;
+    return signals.signals.filter((s) => s.status === 'new' && s.detected_at && new Date(s.detected_at).getTime() < cutoff).length;
+  }, [signals.signals]);
+
   const handleAction = (id) => signals.updateSignalStatus(id, 'actioned');
   const handleDismiss = (id) => signals.dismissSignal(id);
   const handleMarkOutcome = (signalId, outcome) => signals.markSignalOutcome(signalId, outcome);
@@ -2219,15 +2225,26 @@ export default function SignalProspecting({ organizationId, userId, onCallContac
           <h2 className="text-base font-semibold text-apptivia-ink">Signal-Based Prospecting</h2>
           <p className="text-xs text-apptivia-carbon-500 mt-0.5">Detect high-intent signals from competitors, job changes, funding, and more</p>
         </div>
-        {activeSignalCount > 0 && (
-          <button
-            onClick={() => setShowDismissConfirm(true)}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-xs text-amber-600 hover:bg-amber-50 rounded-lg transition-colors"
-          >
-            <EyeOff className="w-3.5 h-3.5" />
-            Dismiss All ({activeSignalCount})
-          </button>
-        )}
+        <div className="flex items-center gap-2">
+          {staleSignalCount > 0 && (
+            <button
+              onClick={() => signals.dismissStaleSignals()}
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs text-apptivia-carbon-500 hover:bg-apptivia-carbon-50 rounded-lg transition-colors"
+            >
+              <Clock className="w-3.5 h-3.5" />
+              Dismiss Stale ({staleSignalCount})
+            </button>
+          )}
+          {activeSignalCount > 0 && (
+            <button
+              onClick={() => setShowDismissConfirm(true)}
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs text-amber-600 hover:bg-amber-50 rounded-lg transition-colors"
+            >
+              <EyeOff className="w-3.5 h-3.5" />
+              Dismiss All ({activeSignalCount})
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Error */}

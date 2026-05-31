@@ -1801,6 +1801,7 @@ export default function Contests() {
         onClose={() => setAddMembersModal({ isOpen: false, contest: null })}
         contestId={addMembersModal.contest?.id || ''}
         contestName={addMembersModal.contest?.name || ''}
+        organizationId={orgId}
         existingParticipantIds={(addMembersModal.contest?.participants || []).map(p => p.profile_id)}
         onMembersAdded={async () => {
           await refetch();

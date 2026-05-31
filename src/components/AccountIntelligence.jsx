@@ -4,15 +4,19 @@ import {
   ChevronDown, ChevronUp, Plus, Edit3, Trash2, Eye, AlertTriangle,
   Globe, Mail, Linkedin, DollarSign, BarChart3, Filter,
   User, Star, X, ArrowRight, Briefcase, MapPin, Zap, Crown,
-  Phone, Loader, CheckCircle, Search, UserPlus, ExternalLink, Calendar, Link2
+  Phone, Loader, CheckCircle, Search, UserPlus, ExternalLink, Calendar, Link2,
+  GitBranch, ClipboardList, LayoutGrid, List
 } from 'lucide-react';
 import { useAccountIntelligence } from '../hooks/useAccountIntelligence';
 import { supabase } from '../supabaseClient';
 import { backendFetch } from '../utils/backendFetch';
 import SearchWithHistory from './SearchWithHistory';
+import ConfirmModal from './ConfirmModal';
 import CreateDealModal from './CreateDealModal';
 import ScheduleMeetingModal from './ScheduleMeetingModal';
 import AccountContactsModal from './AccountContactsModal';
+import AddToSequenceModal from './AddToSequenceModal';
+import CreateTaskModal from './CreateTaskModal';
 import { useModalBehavior } from '../hooks/useModalBehavior';
 
 // ── ICP Fit Scoring ────────────────────────────────────────
@@ -374,7 +378,7 @@ function BuyingCommitteePanel({ committee, onUpdate, onFindContacts, onEmailCont
 
 // ── Account Card ─────────────────────────────────────────
 
-function AccountCard({ account, onSelect, icpConfig, onNavigateDiscover }) {
+function AccountCard({ account, onSelect, icpConfig, onNavigateDiscover, onClaim }) {
   const tier = TIER_STYLES[account.tier] || TIER_STYLES.untiered;
   const status = STATUS_STYLES[account.status] || STATUS_STYLES.active;
   const icpScore = useMemo(() => computeIcpScore(account, icpConfig), [account, icpConfig]);
@@ -412,7 +416,7 @@ function AccountCard({ account, onSelect, icpConfig, onNavigateDiscover }) {
           <ScoreBadge score={account.intent_score} />
         </div>
         <div>
-          <span className="text-[10px] text-apptivia-carbon-400 block">Engage</span>
+          <span className="text-[10px] text-apptivia-carbon-400 block">Engagement</span>
           <ScoreBadge score={account.engagement_score} />
         </div>
         <div>
@@ -434,12 +438,23 @@ function AccountCard({ account, onSelect, icpConfig, onNavigateDiscover }) {
         </div>
       )}
 
-      {account.assigned_name && (
-        <div className="mt-2 text-[10px] text-apptivia-carbon-400 flex items-center gap-1">
-          <User size={8} /> {account.assigned_name}
-          {account.territory && <><MapPin size={8} className="ml-2" /> {account.territory}</>}
-        </div>
-      )}
+      <div className="mt-2 text-[10px] text-apptivia-carbon-400 flex items-center gap-1">
+        {account.assigned_to ? (
+          <>
+            <User size={8} /> {account.assigned_name || 'Assigned'}
+            {account.territory && <><MapPin size={8} className="ml-2" /> {account.territory}</>}
+          </>
+        ) : onClaim ? (
+          <button
+            onClick={(e) => onClaim(account.id, e)}
+            className="inline-flex items-center gap-1 text-[10px] font-medium text-apptivia-coral hover:underline"
+          >
+            <UserPlus size={10} /> Claim Account
+          </button>
+        ) : (
+          <span className="text-apptivia-carbon-300">Unowned</span>
+        )}
+      </div>
 
       {onNavigateDiscover && (
         <div className="mt-3 pt-3 border-t border-apptivia-carbon-50 flex items-center gap-2">
@@ -478,6 +493,10 @@ function AccountDetail({ account, onBack, onUpdate, onAnalyze, analyzing, onUpda
   const [loadingResearch, setLoadingResearch] = useState(false);
   const [loadingActivity, setLoadingActivity] = useState(false);
   const [autoResearchTriggered, setAutoResearchTriggered] = useState(false);
+  const [sequenceTarget, setSequenceTarget] = useState(null); // contact for AddToSequenceModal
+  const [taskTarget, setTaskTarget] = useState(null); // contact for CreateTaskModal
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deleteLoading, setDeleteLoading] = useState(false);
 
   // Destructure hook data for contacts/meetings/deals
   const {
@@ -632,11 +651,7 @@ function AccountDetail({ account, onBack, onUpdate, onAnalyze, analyzing, onUpda
               </>
             )}
             <button
-              onClick={() => {
-                if (window.confirm(`Delete account "${account.account_name}"? This cannot be undone.`)) {
-                  onDelete(account.id);
-                }
-              }}
+              onClick={() => setShowDeleteConfirm(true)}
               className="flex items-center gap-1.5 px-3 py-2 text-red-600 bg-red-50 rounded-lg text-xs font-medium hover:bg-red-100 transition-all"
             >
               <Trash2 size={14} />
@@ -732,115 +747,173 @@ function AccountDetail({ account, onBack, onUpdate, onAnalyze, analyzing, onUpda
           </button>
         }
       >
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-0 md:divide-x divide-apptivia-carbon-100">
-          {/* Left: Company Research */}
-          <div className="p-5 space-y-3">
-            <div className="flex items-center justify-between">
-              <span className="text-[10px] font-semibold text-apptivia-carbon-400 uppercase tracking-wide">Company Research</span>
-              <div className="flex items-center gap-2">
-                {companyResearch?.created_at && (() => {
-                  const daysAgo = Math.floor((Date.now() - new Date(companyResearch.created_at).getTime()) / 86400000);
-                  const label = daysAgo === 0 ? 'Today' : daysAgo === 1 ? '1d ago' : `${daysAgo}d ago`;
-                  const color = daysAgo <= 7 ? 'text-emerald-600 bg-emerald-50' : daysAgo <= 30 ? 'text-amber-600 bg-amber-50' : 'text-red-600 bg-red-50';
-                  return <span className={`text-[9px] font-medium px-1.5 py-0.5 rounded ${color}`}>Researched {label}</span>;
-                })()}
-                {companyResearch?.content && onNavigateDiscover && (
-                  <button onClick={() => onNavigateDiscover({ mode: 'company', query: account.domain || account.account_name })}
-                    className="text-[10px] text-apptivia-coral hover:text-apptivia-coral-tone-700 font-medium flex items-center gap-0.5">
-                    <RefreshCw size={10} /> Refresh
-                  </button>
-                )}
+        <div className="p-5 space-y-4">
+          {/* AI Analysis (primary) */}
+          {account.ai_summary ? (
+            <div className="space-y-3">
+              <div>
+                <span className="text-[10px] font-semibold text-apptivia-carbon-500">Summary</span>
+                <p className="text-xs text-apptivia-carbon-700 leading-relaxed mt-0.5">{account.ai_summary}</p>
               </div>
-            </div>
-            {loadingResearch ? (
-              <div className="flex items-center gap-2 py-4 text-xs text-apptivia-carbon-400">
-                <RefreshCw size={12} className="animate-spin" /> {autoResearchTriggered ? 'Auto-generating research...' : 'Loading...'}
-              </div>
-            ) : companyResearch?.content ? (() => {
-              // Brief data may be nested under .brief (Discover saves: { brief: {...} }) or at top level (legacy)
-              // Also handle case where brief is a JSON string (not yet parsed)
-              let rawBrief = companyResearch.content.brief || companyResearch.content;
-              if (typeof rawBrief === 'string') {
-                try { rawBrief = JSON.parse(rawBrief); } catch { /* leave as string */ }
-              }
-              const brief = (typeof rawBrief === 'object' && rawBrief !== null) ? rawBrief : { summary: String(rawBrief) };
-              return (
-              <div className="space-y-2">
-                {brief.summary && <p className="text-xs text-apptivia-carbon-700 leading-relaxed">{brief.summary}</p>}
-                {brief.key_findings?.length > 0 && (
-                  <div>
-                    <span className="text-[10px] font-semibold text-apptivia-carbon-500">Key Findings</span>
-                    <ul className="mt-0.5 space-y-0.5">
-                      {brief.key_findings.slice(0, 4).map((f, i) => (
-                        <li key={i} className="text-[10px] text-apptivia-carbon-600 flex items-start gap-1"><span className="text-apptivia-coral mt-0.5">•</span> {f}</li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-                {brief.talking_points?.length > 0 && (
-                  <div>
-                    <span className="text-[10px] font-semibold text-apptivia-carbon-500">Outreach Strategy</span>
-                    <ul className="mt-0.5 space-y-0.5">
-                      {brief.talking_points.slice(0, 3).map((p, i) => (
-                        <li key={i} className="text-[10px] text-apptivia-carbon-600 flex items-start gap-1"><span className="text-emerald-500 mt-0.5">{'\u2713'}</span> {p}</li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-                {brief.tech_stack?.length > 0 && (
-                  <div>
-                    <span className="text-[10px] font-semibold text-apptivia-carbon-500">Tech Stack</span>
-                    <div className="flex flex-wrap gap-1 mt-1">
-                      {brief.tech_stack.slice(0, 8).map((t, i) => (
-                        <span key={i} className="text-[9px] bg-apptivia-carbon-100 text-apptivia-carbon-600 px-1.5 py-0.5 rounded">{t}</span>
-                      ))}
-                    </div>
-                  </div>
-                )}
-                {brief.competitors?.length > 0 && (
-                  <div>
-                    <span className="text-[10px] font-semibold text-apptivia-carbon-500">Competitors</span>
-                    <p className="text-xs text-apptivia-carbon-600 mt-0.5">{brief.competitors.join(', ')}</p>
-                  </div>
-                )}
-              </div>);
-            })() : (
-              <div className="py-3 text-center">
-                <p className="text-xs text-apptivia-carbon-400 italic">AI research will auto-populate when available.</p>
-              </div>
-            )}
-          </div>
-
-          {/* Right: AI Analysis */}
-          <div className="p-5 space-y-3">
-            <span className="text-[10px] font-semibold text-apptivia-carbon-400 uppercase tracking-wide">AI Analysis</span>
-            {account.ai_summary ? (
-              <div className="space-y-3">
+              {account.ai_strategy && (
                 <div>
-                  <span className="text-[10px] font-semibold text-apptivia-carbon-500">Summary</span>
-                  <p className="text-xs text-apptivia-carbon-700 leading-relaxed mt-0.5">{account.ai_summary}</p>
+                  <span className="text-[10px] font-semibold text-apptivia-carbon-500">Strategy</span>
+                  <p className="text-xs text-apptivia-carbon-700 leading-relaxed mt-0.5">{account.ai_strategy}</p>
                 </div>
-                {account.ai_strategy && (
-                  <div>
-                    <span className="text-[10px] font-semibold text-apptivia-carbon-500">Strategy</span>
-                    <p className="text-xs text-apptivia-carbon-700 leading-relaxed mt-0.5">{account.ai_strategy}</p>
+              )}
+              {account.ai_risk_factors?.length > 0 && (
+                <div>
+                  <span className="text-[10px] font-semibold text-apptivia-carbon-500">Risk Factors</span>
+                  <ul className="mt-0.5 space-y-0.5">
+                    {account.ai_risk_factors.map((r, i) => (
+                      <li key={i} className="text-xs text-red-600 flex items-start gap-1.5"><AlertTriangle size={9} className="mt-0.5 flex-shrink-0" /> {r}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+              {account.ai_enhanced_analysis?.outbound_guidance?.length > 0 && (
+                <div>
+                  <span className="text-[10px] font-semibold text-apptivia-carbon-500">Outbound Guidance</span>
+                  <ul className="mt-0.5 space-y-0.5">
+                    {account.ai_enhanced_analysis.outbound_guidance.map((g, i) => (
+                      <li key={i} className="text-xs text-apptivia-carbon-700 flex items-start gap-1.5"><Zap size={9} className="text-apptivia-coral mt-0.5 flex-shrink-0" /> {g}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+              {account.ai_enhanced_analysis?.outreach_strategy?.length > 0 && (
+                <div>
+                  <span className="text-[10px] font-semibold text-apptivia-carbon-500">Outreach Strategy</span>
+                  <div className="mt-1 space-y-1.5">
+                    {account.ai_enhanced_analysis.outreach_strategy.map((s, i) => (
+                      <div key={i} className="flex items-center gap-2 bg-apptivia-paper rounded px-2 py-1.5">
+                        <span className="text-xs font-semibold text-apptivia-ink">{s.contact_name}</span>
+                        <span className={`px-1.5 py-0.5 rounded text-[9px] font-medium ${
+                          s.channel === 'email' ? 'bg-blue-50 text-blue-600' :
+                          s.channel === 'linkedin' ? 'bg-sky-50 text-sky-600' :
+                          s.channel === 'phone' || s.channel === 'call' ? 'bg-green-50 text-green-600' :
+                          'bg-apptivia-carbon-50 text-apptivia-carbon-600'
+                        }`}>{s.channel}</span>
+                        <span className={`px-1.5 py-0.5 rounded text-[9px] font-medium ${
+                          s.priority === 'high' ? 'bg-red-50 text-red-600' :
+                          s.priority === 'medium' ? 'bg-amber-50 text-amber-600' :
+                          'bg-apptivia-carbon-50 text-apptivia-carbon-500'
+                        }`}>{s.priority}</span>
+                        <span className="text-[10px] text-apptivia-carbon-500 flex-1">{s.angle}</span>
+                      </div>
+                    ))}
                   </div>
-                )}
-                {account.ai_risk_factors?.length > 0 && (
-                  <div>
-                    <span className="text-[10px] font-semibold text-apptivia-carbon-500">Risk Factors</span>
-                    <ul className="mt-0.5 space-y-0.5">
-                      {account.ai_risk_factors.map((r, i) => (
-                        <li key={i} className="text-xs text-red-600 flex items-start gap-1.5"><AlertTriangle size={9} className="mt-0.5 flex-shrink-0" /> {r}</li>
-                      ))}
-                    </ul>
+                </div>
+              )}
+              {account.ai_enhanced_analysis?.suggested_key_contacts?.length > 0 && (
+                <div>
+                  <span className="text-[10px] font-semibold text-apptivia-carbon-500">Suggested Key Contacts</span>
+                  <div className="mt-1 space-y-1">
+                    {account.ai_enhanced_analysis.suggested_key_contacts.map((c, i) => (
+                      <div key={i} className="flex items-start gap-2 text-xs">
+                        <UserPlus size={10} className="text-emerald-500 mt-0.5 flex-shrink-0" />
+                        <div>
+                          <span className="font-semibold text-apptivia-ink">{c.title}</span>
+                          {c.department && <span className="text-apptivia-carbon-400"> ({c.department})</span>}
+                          <p className="text-[10px] text-apptivia-carbon-500 mt-0.5">{c.reason}</p>
+                        </div>
+                      </div>
+                    ))}
                   </div>
-                )}
+                </div>
+              )}
+              {account.ai_enhanced_analysis?.deal_risk_assessment?.length > 0 && (
+                <div>
+                  <span className="text-[10px] font-semibold text-apptivia-carbon-500">Deal Risk Assessment</span>
+                  <div className="mt-1 space-y-1.5">
+                    {account.ai_enhanced_analysis.deal_risk_assessment.map((d, i) => (
+                      <div key={i} className="bg-red-50/50 border border-red-100 rounded px-2.5 py-2">
+                        <span className="text-xs font-semibold text-apptivia-ink">{d.deal_name}</span>
+                        <p className="text-[10px] text-red-600 mt-0.5">{d.risk}</p>
+                        <p className="text-[10px] text-emerald-600 mt-0.5">Mitigation: {d.mitigation}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          ) : (
+            <p className="text-xs text-apptivia-carbon-400 italic py-2">Click "Refresh" above to generate AI analysis for this account.</p>
+          )}
+
+          {/* Company Research (secondary, collapsible) */}
+          {(loadingResearch || companyResearch?.content) && (
+            <div className="border-t border-apptivia-carbon-100 pt-4 space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] font-semibold text-apptivia-carbon-400 uppercase tracking-wide">Company Research</span>
+                <div className="flex items-center gap-2">
+                  {companyResearch?.created_at && (() => {
+                    const daysAgo = Math.floor((Date.now() - new Date(companyResearch.created_at).getTime()) / 86400000);
+                    const label = daysAgo === 0 ? 'Today' : daysAgo === 1 ? '1d ago' : `${daysAgo}d ago`;
+                    const color = daysAgo <= 7 ? 'text-emerald-600 bg-emerald-50' : daysAgo <= 30 ? 'text-amber-600 bg-amber-50' : 'text-red-600 bg-red-50';
+                    return <span className={`text-[9px] font-medium px-1.5 py-0.5 rounded ${color}`}>Researched {label}</span>;
+                  })()}
+                  {companyResearch?.content && onNavigateDiscover && (
+                    <button onClick={() => onNavigateDiscover({ mode: 'company', query: account.domain || account.account_name })}
+                      className="text-[10px] text-apptivia-coral hover:text-apptivia-coral-tone-700 font-medium flex items-center gap-0.5">
+                      <RefreshCw size={10} /> Refresh
+                    </button>
+                  )}
+                </div>
               </div>
-            ) : (
-              <p className="text-xs text-apptivia-carbon-400 italic py-2">AI analysis will auto-generate when research is available.</p>
-            )}
-          </div>
+              {loadingResearch ? (
+                <div className="flex items-center gap-2 py-4 text-xs text-apptivia-carbon-400">
+                  <RefreshCw size={12} className="animate-spin" /> {autoResearchTriggered ? 'Auto-generating research...' : 'Loading...'}
+                </div>
+              ) : companyResearch?.content ? (() => {
+                let rawBrief = companyResearch.content.brief || companyResearch.content;
+                if (typeof rawBrief === 'string') {
+                  try { rawBrief = JSON.parse(rawBrief); } catch { /* leave as string */ }
+                }
+                const brief = (typeof rawBrief === 'object' && rawBrief !== null) ? rawBrief : { summary: String(rawBrief) };
+                return (
+                <div className="space-y-2">
+                  {brief.summary && <p className="text-xs text-apptivia-carbon-700 leading-relaxed">{brief.summary}</p>}
+                  {brief.key_findings?.length > 0 && (
+                    <div>
+                      <span className="text-[10px] font-semibold text-apptivia-carbon-500">Key Findings</span>
+                      <ul className="mt-0.5 space-y-0.5">
+                        {brief.key_findings.slice(0, 4).map((f, i) => (
+                          <li key={i} className="text-[10px] text-apptivia-carbon-600 flex items-start gap-1"><span className="text-apptivia-coral mt-0.5">•</span> {f}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                  {brief.talking_points?.length > 0 && (
+                    <div>
+                      <span className="text-[10px] font-semibold text-apptivia-carbon-500">Talking Points</span>
+                      <ul className="mt-0.5 space-y-0.5">
+                        {brief.talking_points.slice(0, 3).map((p, i) => (
+                          <li key={i} className="text-[10px] text-apptivia-carbon-600 flex items-start gap-1"><span className="text-emerald-500 mt-0.5">{'\u2713'}</span> {p}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                  {brief.tech_stack?.length > 0 && (
+                    <div>
+                      <span className="text-[10px] font-semibold text-apptivia-carbon-500">Tech Stack</span>
+                      <div className="flex flex-wrap gap-1 mt-1">
+                        {brief.tech_stack.slice(0, 8).map((t, i) => (
+                          <span key={i} className="text-[9px] bg-apptivia-carbon-100 text-apptivia-carbon-600 px-1.5 py-0.5 rounded">{t}</span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  {brief.competitors?.length > 0 && (
+                    <div>
+                      <span className="text-[10px] font-semibold text-apptivia-carbon-500">Competitors</span>
+                      <p className="text-xs text-apptivia-carbon-600 mt-0.5">{brief.competitors.join(', ')}</p>
+                    </div>
+                  )}
+                </div>);
+              })() : null}
+            </div>
+          )}
         </div>
       </CollapsibleSection>
 
@@ -872,23 +945,38 @@ function AccountDetail({ account, onBack, onUpdate, onAnalyze, analyzing, onUpda
                       <div className="flex-1 min-w-0">
                         <span className="text-xs font-semibold text-apptivia-ink truncate block">{name}</span>
                         {contact.title && <span className="text-[10px] text-apptivia-carbon-500 block truncate">{contact.title}</span>}
-                        <span className={`inline-flex items-center gap-1 mt-1 px-1.5 py-0.5 rounded text-[9px] font-medium ${roleStyle.color}`}>
-                          <roleStyle.icon size={8} /> {roleStyle.label}
-                        </span>
+                        <div className="flex items-center gap-1.5 mt-1">
+                          <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-medium ${roleStyle.color}`}>
+                            <roleStyle.icon size={8} /> {roleStyle.label}
+                          </span>
+                          {contact.influence_score > 0 && (() => {
+                            const s = contact.influence_score;
+                            const c = s >= 70 ? 'bg-emerald-100 text-emerald-700' : s >= 40 ? 'bg-amber-100 text-amber-700' : 'bg-red-100 text-red-600';
+                            return <span className={`px-1.5 py-0.5 rounded text-[9px] font-bold ${c}`}>{s}</span>;
+                          })()}
+                        </div>
                       </div>
                     </div>
                     <div className="flex items-center gap-1 mt-2 pt-2 border-t border-apptivia-carbon-100">
                       {contact.email && onEmailContact && (
-                        <button onClick={() => onEmailContact(contact)} className="text-[10px] text-apptivia-coral hover:bg-apptivia-coral-tone-50 px-2 py-1 rounded font-medium"><Mail size={10} /></button>
+                        <button onClick={() => onEmailContact(contact)} className="text-[10px] text-apptivia-coral hover:bg-apptivia-coral-tone-50 px-2 py-1 rounded font-medium" title="Draft outreach"><Mail size={10} /></button>
+                      )}
+                      {onNavigateDiscover && (
+                        <button onClick={() => onNavigateDiscover({ mode: 'prospect', query: [contact.first_name, contact.last_name].filter(Boolean).join(' ') })}
+                          className="text-[10px] text-apptivia-carbon-500 hover:bg-apptivia-paper px-2 py-1 rounded" title="Research"><Eye size={10} /></button>
                       )}
                       {contact.linkedin_url && (
-                        <a href={contact.linkedin_url} target="_blank" rel="noreferrer" className="text-[10px] text-apptivia-carbon-500 hover:bg-apptivia-paper px-2 py-1 rounded"><Linkedin size={10} /></a>
+                        <a href={contact.linkedin_url} target="_blank" rel="noreferrer" className="text-[10px] text-apptivia-carbon-500 hover:bg-apptivia-paper px-2 py-1 rounded" title="LinkedIn"><Linkedin size={10} /></a>
                       )}
                       {contact.phone && (
-                        <button onClick={() => navigator.clipboard.writeText(contact.phone)} className="text-[10px] text-emerald-500 hover:bg-emerald-50 px-2 py-1 rounded"><Phone size={10} /></button>
+                        <button onClick={() => navigator.clipboard.writeText(contact.phone)} className="text-[10px] text-emerald-500 hover:bg-emerald-50 px-2 py-1 rounded" title="Copy phone"><Phone size={10} /></button>
                       )}
+                      {contact.email && (
+                        <button onClick={() => setSequenceTarget(contact)} className="text-[10px] text-apptivia-ink hover:bg-apptivia-carbon-100 px-2 py-1 rounded" title="Add to sequence"><GitBranch size={10} /></button>
+                      )}
+                      <button onClick={() => setTaskTarget(contact)} className="text-[10px] text-apptivia-carbon-500 hover:bg-apptivia-carbon-100 px-2 py-1 rounded" title="Create task"><ClipboardList size={10} /></button>
                       {removeAccountContact && (
-                        <button onClick={() => removeAccountContact(account.id, contact.id)} className="ml-auto text-[10px] text-apptivia-carbon-400 hover:text-red-500 px-1 py-1 rounded"><X size={10} /></button>
+                        <button onClick={() => removeAccountContact(account.id, contact.id)} className="ml-auto text-[10px] text-apptivia-carbon-400 hover:text-red-500 px-1 py-1 rounded" title="Remove"><X size={10} /></button>
                       )}
                     </div>
                   </div>
@@ -938,6 +1026,23 @@ function AccountDetail({ account, onBack, onUpdate, onAnalyze, analyzing, onUpda
                   {contact.is_suggested && <span className="text-[8px] bg-emerald-50 text-emerald-600 px-1.5 py-0.5 rounded font-medium">suggested</span>}
                   {contact.source === 'signal' && !contact.is_suggested && <span className="text-[8px] bg-apptivia-coral-tone-50 text-apptivia-coral px-1.5 py-0.5 rounded font-medium">signal</span>}
                   <div className="flex items-center gap-1 flex-shrink-0">
+                    {contact.email && onEmailContact && (
+                      <button onClick={() => onEmailContact(contact)} className="text-[9px] text-apptivia-coral hover:bg-apptivia-coral-tone-50 px-1.5 py-0.5 rounded" title="Draft outreach"><Mail size={10} /></button>
+                    )}
+                    {onNavigateDiscover && (
+                      <button onClick={() => onNavigateDiscover({ mode: 'prospect', query: [contact.first_name, contact.last_name].filter(Boolean).join(' ') })}
+                        className="text-[9px] text-apptivia-carbon-400 hover:text-apptivia-ink px-1.5 py-0.5 rounded hover:bg-apptivia-paper" title="Research"><Eye size={10} /></button>
+                    )}
+                    {contact.linkedin_url && (
+                      <a href={contact.linkedin_url} target="_blank" rel="noreferrer" className="text-[9px] text-apptivia-carbon-400 hover:text-apptivia-ink px-1.5 py-0.5 rounded hover:bg-apptivia-paper" title="LinkedIn"><Linkedin size={10} /></a>
+                    )}
+                    {contact.phone && (
+                      <button onClick={() => navigator.clipboard.writeText(contact.phone)} className="text-[9px] text-emerald-500 hover:bg-emerald-50 px-1.5 py-0.5 rounded" title="Copy phone"><Phone size={10} /></button>
+                    )}
+                    {contact.email && (
+                      <button onClick={() => setSequenceTarget(contact)} className="text-[9px] text-apptivia-carbon-400 hover:text-apptivia-ink px-1.5 py-0.5 rounded hover:bg-apptivia-paper" title="Add to sequence"><GitBranch size={10} /></button>
+                    )}
+                    <button onClick={() => setTaskTarget(contact)} className="text-[9px] text-apptivia-carbon-400 hover:text-apptivia-ink px-1.5 py-0.5 rounded hover:bg-apptivia-paper" title="Create task"><ClipboardList size={10} /></button>
                     {updateAccountContact && (
                       <button onClick={() => updateAccountContact(account.id, contact.id, { is_buying_committee: true, committee_role: 'influencer' })}
                         className="text-[9px] text-apptivia-carbon-400 hover:text-apptivia-coral px-1.5 py-0.5 rounded hover:bg-apptivia-paper" title="Promote to committee">
@@ -946,7 +1051,7 @@ function AccountDetail({ account, onBack, onUpdate, onAnalyze, analyzing, onUpda
                     )}
                     {removeAccountContact && contact.id && !String(contact.id).startsWith('sig-') && (
                       <button onClick={() => removeAccountContact(account.id, contact.id)}
-                        className="text-[9px] text-apptivia-carbon-400 hover:text-red-500 px-1.5 py-0.5 rounded hover:bg-red-50">
+                        className="text-[9px] text-apptivia-carbon-400 hover:text-red-500 px-1.5 py-0.5 rounded hover:bg-red-50" title="Remove">
                         <X size={10} />
                       </button>
                     )}
@@ -1117,6 +1222,35 @@ function AccountDetail({ account, onBack, onUpdate, onAnalyze, analyzing, onUpda
         organizationId={organizationId}
         onContactAdded={() => { if (fetchAccountContacts) fetchAccountContacts(account.id); }}
       />
+      <AddToSequenceModal
+        isOpen={!!sequenceTarget}
+        onClose={() => setSequenceTarget(null)}
+        contact={sequenceTarget}
+        organizationId={organizationId}
+      />
+      <CreateTaskModal
+        isOpen={!!taskTarget}
+        onClose={() => setTaskTarget(null)}
+        contact={taskTarget}
+        accountId={account.id}
+        organizationId={organizationId}
+      />
+      <ConfirmModal
+        isOpen={showDeleteConfirm}
+        onClose={() => setShowDeleteConfirm(false)}
+        onConfirm={async () => {
+          setDeleteLoading(true);
+          await onDelete(account.id);
+          setDeleteLoading(false);
+          setShowDeleteConfirm(false);
+        }}
+        title="Delete Account"
+        message={`Are you sure you want to delete "${account.account_name}"? This will permanently remove the account, including all associated contacts, signals, and analysis data. This action cannot be undone.`}
+        confirmText="Delete Account"
+        cancelText="Cancel"
+        variant="danger"
+        isLoading={deleteLoading}
+      />
     </div>
   );
 }
@@ -1249,7 +1383,9 @@ export default function AccountIntelligence({ organizationId, userId, initialAcc
   const [view, setView] = useState('list');
   const [selectedAccount, setSelectedAccount] = useState(null);
   const [filterTier, setFilterTier] = useState('all');
+  const [ownerFilter, setOwnerFilter] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
+  const [accountsViewMode, setAccountsViewMode] = useState(() => localStorage.getItem('apptivia_accounts_view_mode') || 'card');
 
   // Auto-select account when navigated from Signal Prospecting
   useEffect(() => {
@@ -1265,6 +1401,8 @@ export default function AccountIntelligence({ organizationId, userId, initialAcc
   const filteredAccounts = useMemo(() => {
     let filtered = accounts;
     if (filterTier !== 'all') filtered = filtered.filter(a => a.tier === filterTier);
+    if (ownerFilter === 'mine') filtered = filtered.filter(a => a.assigned_to === userId);
+    if (ownerFilter === 'unclaimed') filtered = filtered.filter(a => !a.assigned_to);
     if (searchQuery) {
       const q = searchQuery.toLowerCase();
       filtered = filtered.filter(a =>
@@ -1274,11 +1412,30 @@ export default function AccountIntelligence({ organizationId, userId, initialAcc
       );
     }
     return filtered;
-  }, [accounts, filterTier, searchQuery]);
+  }, [accounts, filterTier, ownerFilter, userId, searchQuery]);
+
+  // Keep selectedAccount in sync when accounts array refreshes (e.g. after AI analysis)
+  useEffect(() => {
+    if (!selectedAccount) return;
+    const updated = accounts.find(a => a.id === selectedAccount.id);
+    if (updated && JSON.stringify(updated) !== JSON.stringify(selectedAccount)) {
+      setSelectedAccount(updated);
+    }
+  }, [accounts]);
 
   const handleSelectAccount = (account) => {
     setSelectedAccount(account);
     setView('detail');
+  };
+
+  const handleClaimAccount = async (accountId, e) => {
+    if (e) e.stopPropagation();
+    try {
+      await supabase.from('engage_accounts').update({ assigned_to: userId }).eq('id', accountId);
+      fetchAccounts();
+    } catch (err) {
+      console.error('Failed to claim account:', err);
+    }
   };
 
   if (loading && accounts.length === 0) {
@@ -1347,6 +1504,33 @@ export default function AccountIntelligence({ organizationId, userId, initialAcc
               </button>
             ))}
           </div>
+          <div className="flex items-center rounded-lg border border-apptivia-carbon-200 overflow-hidden">
+            {[{ key: 'all', label: 'All' }, { key: 'mine', label: 'Mine' }, { key: 'unclaimed', label: 'Unclaimed' }].map(opt => (
+              <button
+                key={opt.key}
+                onClick={() => setOwnerFilter(opt.key)}
+                className={`px-2.5 py-1 text-[10px] font-medium transition-colors ${
+                  ownerFilter === opt.key
+                    ? 'bg-apptivia-ink text-white'
+                    : 'bg-white text-apptivia-carbon-500 hover:bg-apptivia-carbon-50'
+                }`}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
+          <div className="flex items-center border border-apptivia-carbon-200 rounded-lg overflow-hidden">
+            <button onClick={() => { setAccountsViewMode('card'); localStorage.setItem('apptivia_accounts_view_mode', 'card'); }}
+              className={`p-1.5 ${accountsViewMode === 'card' ? 'bg-apptivia-ink text-white' : 'bg-white text-apptivia-carbon-400 hover:bg-apptivia-carbon-50'}`}
+              title="Card view">
+              <LayoutGrid size={14} />
+            </button>
+            <button onClick={() => { setAccountsViewMode('list'); localStorage.setItem('apptivia_accounts_view_mode', 'list'); }}
+              className={`p-1.5 ${accountsViewMode === 'list' ? 'bg-apptivia-ink text-white' : 'bg-white text-apptivia-carbon-400 hover:bg-apptivia-carbon-50'}`}
+              title="List view">
+              <List size={14} />
+            </button>
+          </div>
         </div>
         <div className="flex items-center gap-2">
           <button onClick={importFromCompanies}
@@ -1391,10 +1575,68 @@ export default function AccountIntelligence({ organizationId, userId, initialAcc
             </div>
           )}
         </div>
+      ) : accountsViewMode === 'list' ? (
+        <div className="bg-white rounded-lg border border-apptivia-carbon-100 overflow-hidden">
+          <table className="w-full text-xs">
+            <thead>
+              <tr className="bg-apptivia-paper border-b border-apptivia-carbon-100">
+                <th className="text-left px-4 py-2.5 font-semibold text-apptivia-carbon-500">Account</th>
+                <th className="text-left px-3 py-2.5 font-semibold text-apptivia-carbon-500">Tier</th>
+                <th className="text-left px-3 py-2.5 font-semibold text-apptivia-carbon-500">Status</th>
+                <th className="text-center px-3 py-2.5 font-semibold text-apptivia-carbon-500">ICP</th>
+                <th className="text-center px-3 py-2.5 font-semibold text-apptivia-carbon-500">Intent</th>
+                <th className="text-center px-3 py-2.5 font-semibold text-apptivia-carbon-500">Signals</th>
+                <th className="text-left px-3 py-2.5 font-semibold text-apptivia-carbon-500">Owner</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredAccounts.map((account) => {
+                const tier = TIER_STYLES[account.tier] || TIER_STYLES.untiered;
+                const st = STATUS_STYLES[account.status] || STATUS_STYLES.active;
+                const icp = computeIcpScore(account, icpConfig);
+                return (
+                  <tr key={account.id} onClick={() => handleSelectAccount(account)}
+                    className="border-b border-apptivia-carbon-50 hover:bg-apptivia-paper/50 cursor-pointer transition-colors">
+                    <td className="px-4 py-3">
+                      <div className="flex items-center gap-2.5">
+                        <div className="w-8 h-8 bg-apptivia-ink rounded-lg flex items-center justify-center flex-shrink-0">
+                          <Building2 size={14} className="text-white" />
+                        </div>
+                        <div>
+                          <div className="font-bold text-apptivia-ink">{account.account_name}</div>
+                          <div className="text-[10px] text-apptivia-carbon-400 flex items-center gap-2">
+                            {account.domain && <span className="flex items-center gap-0.5"><Globe size={8} /> {account.domain}</span>}
+                            {account.industry && <span className="flex items-center gap-0.5"><Briefcase size={8} /> {account.industry}</span>}
+                          </div>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-3 py-3"><span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold ${tier.bg} ${tier.text}`}>{tier.label}</span></td>
+                    <td className="px-3 py-3"><span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold ${st.bg} ${st.text}`}>{st.label}</span></td>
+                    <td className="px-3 py-3 text-center">{icp !== null ? <IcpBadge score={icp} /> : <span className="text-apptivia-carbon-300">—</span>}</td>
+                    <td className="px-3 py-3 text-center"><ScoreBadge score={account.intent_score} /></td>
+                    <td className="px-3 py-3 text-center"><span className="font-bold text-apptivia-carbon-700">{account.signals_count}</span></td>
+                    <td className="px-3 py-3 text-[10px] text-apptivia-carbon-500">
+                      {account.assigned_to
+                        ? (account.assigned_name || 'Assigned')
+                        : <button
+                            onClick={(e) => handleClaimAccount(account.id, e)}
+                            className="inline-flex items-center gap-1 text-[10px] font-medium text-apptivia-coral hover:underline"
+                          >
+                            <UserPlus size={10} /> Claim
+                          </button>
+                      }
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
           {filteredAccounts.map((account) => (
-            <AccountCard key={account.id} account={account} onSelect={handleSelectAccount} icpConfig={icpConfig} onNavigateDiscover={onNavigateDiscover} />
+            <AccountCard key={account.id} account={account} onSelect={handleSelectAccount} icpConfig={icpConfig} onNavigateDiscover={onNavigateDiscover} onClaim={handleClaimAccount} />
           ))}
         </div>
       )}

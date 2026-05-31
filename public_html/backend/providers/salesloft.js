@@ -113,6 +113,7 @@ async function syncActivities(integration, cursor, sb) {
   const result = await slGet(creds, '/activities/calls.json', params);
   const records = result.data || [];
   const kpiMappings = [];
+  const activityRecords = [];
   const { resolveProfileByEmail } = require('../integrationService');
 
   for (const record of records) {
@@ -121,6 +122,23 @@ async function syncActivities(integration, cursor, sb) {
 
     const profileId = await resolveProfileByEmail(sb, integration.organization_id, userEmail);
     if (!profileId) continue;
+
+    // Activity record for ALL calls
+    activityRecords.push({
+      profileId,
+      activityType: 'call',
+      activityDate: record.created_at || record.updated_at,
+      source: 'salesloft',
+      externalId: String(record.id),
+      subject: record.to || null,
+      contactName: record.person?.display_name || null,
+      contactEmail: record.person?.email_address || null,
+      direction: 'outbound',
+      durationSeconds: record.duration || null,
+      status: record.disposition || record.status || null,
+      notes: record.note ? record.note.slice(0, 2000) : null,
+      metadata: {},
+    });
 
     if (record.disposition === 'connected' || record.status === 'completed') {
       const weekStart = getWeekStart(record.created_at || record.updated_at);
@@ -146,6 +164,7 @@ async function syncActivities(integration, cursor, sb) {
     records,
     nextCursor: lastRecord?.updated_at || cursor,
     kpiMappings,
+    activityRecords,
   };
 }
 
@@ -211,6 +230,7 @@ async function syncEmails(integration, cursor, sb) {
   const result = await slGet(creds, '/activities/emails.json', params);
   const records = result.data || [];
   const kpiMappings = [];
+  const activityRecords = [];
   const { resolveProfileByEmail } = require('../integrationService');
 
   for (const record of records) {
@@ -219,6 +239,20 @@ async function syncEmails(integration, cursor, sb) {
 
     const profileId = await resolveProfileByEmail(sb, integration.organization_id, userEmail);
     if (!profileId) continue;
+
+    // Activity record for ALL emails
+    activityRecords.push({
+      profileId,
+      activityType: 'email',
+      activityDate: record.created_at || record.updated_at,
+      source: 'salesloft',
+      externalId: `email_${record.id}`,
+      subject: record.subject || null,
+      contactEmail: record.recipient_email_address || null,
+      direction: 'outbound',
+      status: record.status || null,
+      metadata: {},
+    });
 
     const weekStart = getWeekStart(record.created_at || record.updated_at);
 
@@ -242,7 +276,7 @@ async function syncEmails(integration, cursor, sb) {
   }
 
   const lastRecord = records[records.length - 1];
-  return { records, nextCursor: lastRecord?.updated_at || cursor, kpiMappings };
+  return { records, nextCursor: lastRecord?.updated_at || cursor, kpiMappings, activityRecords };
 }
 
 // ── Webhook Support ──────────────────────────────────────────
@@ -279,6 +313,64 @@ function verifyWebhook(req, explicitSecret = null) {
   }
 }
 
+// ── Sync: Tasks (open SalesLoft action items → engage_tasks) ─────────────────
+
+async function syncTasks(integration, cursor, sb) {
+  const creds = integration.decryptedCreds;
+  const params = { per_page: 100, sort_by: 'updated_at', sort_direction: 'asc' };
+  if (cursor) params['updated_at[gte]'] = cursor;
+
+  let result;
+  try {
+    result = await slGet(creds, '/actions.json', params);
+  } catch (err) {
+    console.warn(`[salesloft:tasks] Skipping — ${err.message}`);
+    return { records: [], nextCursor: cursor, kpiMappings: [] };
+  }
+
+  const records = result.data || [];
+  const { resolveProfileByEmail } = require('../integrationService');
+  const orgId = integration.organization_id;
+  const taskRows = [];
+  const kpiMappings = [];
+
+  for (const record of records) {
+    const userEmail = record.user?.email || null;
+    if (!userEmail) continue;
+    const profileId = await resolveProfileByEmail(sb, orgId, userEmail);
+    if (!profileId) continue;
+
+    if (record.status === 'completed') {
+      const mapping = buildKpiMapping({
+        profileId, kpiKey: 'tasks_completed', rawValue: 1, fromUnit: 'Count',
+        source: 'salesloft', externalEventId: `salesloft:action:${record.id}:tasks_completed`,
+        weekStart: getWeekStart(record.completed_at || record.updated_at),
+      });
+      if (mapping) kpiMappings.push(mapping);
+    } else {
+      taskRows.push({
+        organization_id: orgId, created_by: profileId, assigned_to: profileId,
+        title: record.subject || record.action_type || 'SalesLoft Task',
+        description: record.notes || null,
+        due_date: record.due_on || null,
+        priority: 'medium', status: 'pending', source: 'salesloft',
+        external_id: String(record.id), external_url: null,
+        integration_id: integration.id, synced_at: new Date().toISOString(),
+      });
+    }
+  }
+
+  if (taskRows.length > 0) {
+    const { error } = await sb.from('engage_tasks')
+      .upsert(taskRows, { onConflict: 'organization_id,source,external_id', ignoreDuplicates: false });
+    if (error) console.warn('[salesloft:tasks] Upsert error:', error.message);
+  }
+
+  const lastRecord = records[records.length - 1];
+  console.log(`[salesloft:tasks] Synced ${taskRows.length} open, ${kpiMappings.length} completed`);
+  return { records, nextCursor: lastRecord?.updated_at || cursor, kpiMappings };
+}
+
 // ── Export ────────────────────────────────────────────────────
 
 module.exports = {
@@ -290,6 +382,7 @@ module.exports = {
     activities: syncActivities,
     meetings: syncMeetings,
     emails: syncEmails,
+    tasks: syncTasks,
   },
   push: {},
   kpiMap,

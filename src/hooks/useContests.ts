@@ -153,14 +153,17 @@ export function useContests(currentUserId?: string, organizationId?: string) {
 
       if (participantError) throw participantError;
 
+      // Filter out participants with null/missing profiles (cross-org orphans from legacy seed)
+      const validParticipants = (participantRows || []).filter((p: any) => p.profile && (p.profile.first_name || p.profile.last_name || p.profile.email));
+
       // Group participant counts by contest
-      const countsByContest = participantRows.reduce((acc: Record<string, number>, p: any) => {
+      const countsByContest = validParticipants.reduce((acc: Record<string, number>, p: any) => {
         acc[p.contest_id] = (acc[p.contest_id] || 0) + 1;
         return acc;
       }, {} as Record<string, number>);
 
       // Group participant details by contest for fallback leaderboard display
-      const participantsByContest = participantRows.reduce((acc: Record<string, ContestParticipant[]>, p: any) => {
+      const participantsByContest = validParticipants.reduce((acc: Record<string, ContestParticipant[]>, p: any) => {
         if (!acc[p.contest_id]) acc[p.contest_id] = [];
         acc[p.contest_id].push({
           profile_id: p.profile_id,

@@ -14,14 +14,18 @@ import ConfirmModal from './ConfirmModal';
 import ActiveDealModal from './ActiveDealModal';
 import CreateDealModal from './CreateDealModal';
 import { prettifyKpiKey } from '../constants/kpiGuidance';
+import { useSalesDna } from '../hooks/useSalesDna';
+import { QUALIFICATION_FRAMEWORKS } from '../constants/salesDna';
 
 // ── Legacy stage colors (fallback when no CEP) ──────────────
 
 const STAGE_COLORS = {
-  discovery: { bg: 'bg-apptivia-coral-tone-50', text: 'text-apptivia-coral', dot: 'bg-apptivia-coral' },
+  lead: { bg: 'bg-apptivia-carbon-100', text: 'text-apptivia-carbon-600', dot: 'bg-apptivia-carbon-400' },
+  opp_creation: { bg: 'bg-apptivia-coral-tone-50', text: 'text-apptivia-coral', dot: 'bg-apptivia-coral' },
   qualification: { bg: 'bg-apptivia-carbon-100', text: 'text-apptivia-ink', dot: 'bg-apptivia-ink' },
-  proposal: { bg: 'bg-apptivia-carbon-100', text: 'text-apptivia-ink', dot: 'bg-apptivia-ink' },
-  negotiation: { bg: 'bg-amber-100', text: 'text-amber-700', dot: 'bg-amber-500' },
+  best_case: { bg: 'bg-blue-100', text: 'text-blue-700', dot: 'bg-blue-500' },
+  forecast: { bg: 'bg-amber-100', text: 'text-amber-700', dot: 'bg-amber-500' },
+  commit: { bg: 'bg-emerald-100', text: 'text-emerald-700', dot: 'bg-emerald-600' },
   closed_won: { bg: 'bg-emerald-100', text: 'text-emerald-700', dot: 'bg-emerald-500' },
   closed_lost: { bg: 'bg-red-100', text: 'text-red-700', dot: 'bg-red-500' },
 };
@@ -60,7 +64,7 @@ function StageBadge({ stage, cepStages }) {
       </span>
     );
   }
-  const colors = STAGE_COLORS[stage] || STAGE_COLORS.discovery;
+  const colors = STAGE_COLORS[stage] || { bg: 'bg-apptivia-carbon-100', text: 'text-apptivia-ink', dot: 'bg-apptivia-ink' };
   const label = prettifyKpiKey(stage);
   return (
     <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${colors.bg} ${colors.text}`}>
@@ -203,6 +207,30 @@ function CepProgressBadge({ deal, cepStages }) {
       {allRequiredMet && checklistItems.some(i => i.required) && (
         <CheckSquare size={10} className="text-emerald-500" />
       )}
+    </div>
+  );
+}
+
+// ── Qualification Progress Badge ─────────────────────────────
+
+function QualificationProgressBadge({ deal, qualCriteria }) {
+  const qd = deal.qualification_data;
+  if (!qd || typeof qd !== 'object' || !qualCriteria || qualCriteria.length === 0) {
+    return <span className="text-[10px] text-apptivia-carbon-400">-</span>;
+  }
+  const met = qualCriteria.filter(c => qd[c.key]).length;
+  const total = qualCriteria.length;
+  const pct = Math.round((met / total) * 100);
+  return (
+    <div className="flex items-center gap-1.5">
+      <div className="w-12 bg-apptivia-carbon-100 rounded-full h-1.5 overflow-hidden">
+        <div
+          className="h-full rounded-full transition-all"
+          style={{ width: `${pct}%`, backgroundColor: met === total ? '#16A34A' : met > 0 ? '#F59E0B' : '#D1D5DB' }}
+        />
+      </div>
+      <span className="text-[10px] text-apptivia-carbon-500">{met}/{total}</span>
+      {met === total && <CheckSquare size={10} className="text-emerald-500" />}
     </div>
   );
 }
@@ -407,10 +435,11 @@ function DealCepPanel({ deal, cepStages, onClose, onAdvance, onUpdateChecklist, 
 
 // ── Deal Table ────────────────────────────────────────────
 
-function DealTable({ deals, onUpdateDeal, onDeleteDeal, cepStages, hasCep, selectedDealId, onSelectDeal }) {
+function DealTable({ deals, onUpdateDeal, onDeleteDeal, cepStages, hasCep, hasQual, qualCriteria, userId, selectedDealId, onSelectDeal }) {
   const [sortField, setSortField] = useState('close_date');
   const [sortDir, setSortDir] = useState('asc');
   const [filterStage, setFilterStage] = useState('all');
+  const [ownerFilter, setOwnerFilter] = useState('all');
   const [deleteConfirm, setDeleteConfirm] = useState({ isOpen: false, deal: null });
 
   const stageOptions = useMemo(() => {
@@ -428,6 +457,8 @@ function DealTable({ deals, onUpdateDeal, onDeleteDeal, cepStages, hasCep, selec
   const filteredDeals = useMemo(() => {
     let d = [...deals];
     if (filterStage !== 'all') d = d.filter((deal) => deal.stage === filterStage);
+    if (ownerFilter === 'mine') d = d.filter((deal) => deal.owner_id === userId);
+    if (ownerFilter === 'unclaimed') d = d.filter((deal) => !deal.owner_id);
     d.sort((a, b) => {
       const aVal = a[sortField] ?? '';
       const bVal = b[sortField] ?? '';
@@ -435,7 +466,7 @@ function DealTable({ deals, onUpdateDeal, onDeleteDeal, cepStages, hasCep, selec
       return aVal < bVal ? 1 : -1;
     });
     return d;
-  }, [deals, filterStage, sortField, sortDir]);
+  }, [deals, filterStage, ownerFilter, userId, sortField, sortDir]);
 
   const toggleSort = (field) => {
     if (sortField === field) setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'));
@@ -476,6 +507,21 @@ function DealTable({ deals, onUpdateDeal, onDeleteDeal, cepStages, hasCep, selec
               <option key={s.key} value={s.key}>{s.label}</option>
             ))}
           </select>
+          <div className="flex items-center rounded-lg border border-apptivia-carbon-200 overflow-hidden">
+            {[{ key: 'all', label: 'All' }, { key: 'mine', label: 'Mine' }, { key: 'unclaimed', label: 'Unclaimed' }].map(opt => (
+              <button
+                key={opt.key}
+                onClick={() => setOwnerFilter(opt.key)}
+                className={`px-2.5 py-1 text-[10px] font-medium transition-colors ${
+                  ownerFilter === opt.key
+                    ? 'bg-apptivia-ink text-white'
+                    : 'bg-white text-apptivia-carbon-500 hover:bg-apptivia-carbon-50'
+                }`}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 
@@ -496,7 +542,7 @@ function DealTable({ deals, onUpdateDeal, onDeleteDeal, cepStages, hasCep, selec
                   <div className="flex items-center gap-1">Value <SortIcon field="deal_value" /></div>
                 </th>
                 <th className="px-3 py-2.5 font-medium">Stage</th>
-                {hasCep && <th className="px-3 py-2.5 font-medium">Progress</th>}
+                {(hasQual || hasCep) && <th className="px-3 py-2.5 font-medium">Progress</th>}
                 <th className="px-3 py-2.5 font-medium cursor-pointer" onClick={() => toggleSort('close_date')}>
                   <div className="flex items-center gap-1">Close Date <SortIcon field="close_date" /></div>
                 </th>
@@ -504,14 +550,12 @@ function DealTable({ deals, onUpdateDeal, onDeleteDeal, cepStages, hasCep, selec
                 <th className="px-3 py-2.5 font-medium cursor-pointer" onClick={() => toggleSort('days_inactive')}>
                   <div className="flex items-center gap-1">Inactive <SortIcon field="days_inactive" /></div>
                 </th>
-                <th className="px-3 py-2.5 font-medium">Forecast</th>
                 <th className="px-3 py-2.5 font-medium">Risk</th>
                 <th className="px-3 py-2.5 font-medium">Actions</th>
               </tr>
             </thead>
             <tbody>
               {filteredDeals.map((deal) => {
-                const fc = FORECAST_BADGES[deal.forecast_category] || FORECAST_BADGES.pipeline;
                 return (
                   <tr
                     key={deal.id}
@@ -532,11 +576,13 @@ function DealTable({ deals, onUpdateDeal, onDeleteDeal, cepStages, hasCep, selec
                     </td>
                     <td className="px-3 py-3 text-sm font-semibold text-apptivia-ink">{formatCurrency(deal.deal_value)}</td>
                     <td className="px-3 py-3"><StageBadge stage={deal.stage} cepStages={cepStages} /></td>
-                    {hasCep && (
+                    {(hasQual || hasCep) && (
                       <td className="px-3 py-3">
-                        {deal.cep_stage_id
-                          ? <CepProgressBadge deal={deal} cepStages={cepStages} />
-                          : <span className="text-[10px] text-amber-500 font-medium">Assign</span>
+                        {hasQual
+                          ? <QualificationProgressBadge deal={deal} qualCriteria={qualCriteria} />
+                          : deal.cep_stage_id
+                            ? <CepProgressBadge deal={deal} cepStages={cepStages} />
+                            : <span className="text-[10px] text-amber-500 font-medium">Assign</span>
                         }
                       </td>
                     )}
@@ -554,11 +600,6 @@ function DealTable({ deals, onUpdateDeal, onDeleteDeal, cepStages, hasCep, selec
                           {deal.days_inactive}d
                         </span>
                       </div>
-                    </td>
-                    <td className="px-3 py-3">
-                      <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${fc.bg} ${fc.text}`}>
-                        {prettifyKpiKey(deal.forecast_category)}
-                      </span>
                     </td>
                     <td className="px-3 py-3">
                       {deal.is_at_risk ? (
@@ -760,13 +801,37 @@ function ForecastPanel({ forecast, onGenerate, loading, summary }) {
 
 // ── Main Component ────────────────────────────────────────
 
-export default function PipelineOperator({ organizationId, userId }) {
+export default function PipelineOperator({ organizationId, userId, initialDealId, onInitialDealConsumed }) {
   const cepConfig = useCepConfig(organizationId);
   const pipeline = usePipelineOperator(organizationId, userId, cepConfig.activeStages);
+  const { salesDna } = useSalesDna(organizationId || '');
   const [showNewDeal, setShowNewDeal] = useState(false);
   const [selectedDeal, setSelectedDeal] = useState(null);
 
   const hasCep = cepConfig.hasCep;
+
+  // Auto-open deal when navigated from contact side panel
+  useEffect(() => {
+    if (!initialDealId || !pipeline.deals?.length) return;
+    const found = pipeline.deals.find(d => d.id === initialDealId);
+    if (found) {
+      setSelectedDeal(found);
+      onInitialDealConsumed?.();
+    }
+  }, [initialDealId, pipeline.deals]);
+
+  // Qualification criteria from Sales DNA
+  const qualCriteria = useMemo(() => {
+    if (!salesDna?.qualification_framework) return [];
+    if (salesDna.qualification_framework === 'custom') {
+      return (salesDna.custom_qualification_criteria || []).map(c => ({
+        key: c.key, label: c.label, description: c.description || '',
+      }));
+    }
+    const fw = QUALIFICATION_FRAMEWORKS.find(f => f.key === salesDna.qualification_framework);
+    return fw?.criteria || [];
+  }, [salesDna]);
+  const hasQual = qualCriteria.length > 0;
 
   // Keep selectedDeal in sync with refreshed deal data
   const resolvedSelectedDeal = useMemo(() => {
@@ -850,6 +915,9 @@ export default function PipelineOperator({ organizationId, userId }) {
             onDeleteDeal={pipeline.deleteDeal}
             cepStages={cepConfig.activeStages}
             hasCep={hasCep}
+            hasQual={hasQual}
+            qualCriteria={qualCriteria}
+            userId={userId}
             selectedDealId={selectedDeal?.id}
             onSelectDeal={setSelectedDeal}
           />

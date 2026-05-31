@@ -5,6 +5,9 @@
  * Call init({ getSupabaseAdmin, getAnthropic }) before using any function.
  */
 
+// ── Model constants (single source of truth) ─────────────────────────────────
+const { SONNET_MODEL, HAIKU_MODEL } = require('./modelConstants');
+
 // ── Dependency injection ─────────────────────────────────────────────────────
 let _getSupabaseAdmin;
 let _getAnthropic;
@@ -109,6 +112,25 @@ async function getSalesDnaContext(orgId) {
     }
 
     parts.push('IMPORTANT: When coaching, use this organization\'s methodology and terminology. Reference their specific stages, qualification criteria, and coaching philosophy when relevant.');
+
+    // Inject org custom playbooks
+    try {
+      const { data: playbooks } = await sb.from('org_playbooks')
+        .select('name, category, framework, tagline, sections')
+        .eq('organization_id', orgId).eq('is_active', true).limit(10);
+      if (playbooks?.length) {
+        parts.push('\n[ORGANIZATION PLAYBOOKS]');
+        for (const pb of playbooks) {
+          parts.push(`\n--- ${pb.name} (${pb.category}${pb.framework ? ` / ${pb.framework}` : ''}) ---`);
+          if (pb.tagline) parts.push(pb.tagline);
+          for (const sec of (pb.sections || [])) {
+            parts.push(`  ${sec.title}:`);
+            for (const item of (sec.items || [])) parts.push(`    - ${item}`);
+          }
+        }
+        parts.push('Reference these playbooks when coaching. Use their specific terminology and frameworks.');
+      }
+    } catch { /* non-fatal — playbooks are supplementary */ }
 
     const result = parts.length > 1 ? parts.join('\n') : '';
     _salesDnaCache[orgId] = { data: result, ts: Date.now() };
@@ -881,13 +903,15 @@ const _aaronLiveCache = {};
 const _aaronOrgCache = {};
 
 // ── Fetch live KPI data, anomalies, and signal count for Aaron context ───────
-async function fetchAaronLiveContext(userId, organizationId) {
+async function fetchAaronLiveContext(userId, organizationId, role) {
   if (!userId || !organizationId) return '';
 
-  // Check cache (60s TTL)
-  const cacheKey = `${userId}_${organizationId}`;
+  // Manager/admin/coach cache key is org-level (not per-user); TTL 120s vs 60s for reps
+  const isManager = role === 'admin' || role === 'manager' || role === 'coach';
+  const cacheKey = isManager ? `org_${organizationId}` : `${userId}_${organizationId}`;
+  const TTL = isManager ? 120000 : 60000;
   const cached = _aaronLiveCache[cacheKey];
-  if (cached && (Date.now() - cached.ts) < 60000) return cached.data;
+  if (cached && (Date.now() - cached.ts) < TTL) return cached.data;
 
   try {
     const sb = _getSupabaseAdmin();
@@ -902,20 +926,29 @@ async function fetchAaronLiveContext(userId, organizationId) {
     const { start: curStart, end: curEnd } = getCurrentWeekRange();
     const { start: priorStart, end: priorEnd } = getPriorWeekRange();
 
+    // For managers: get visible profile IDs for org-wide KPI aggregation
+    let profileIds = [userId];
+    if (isManager) {
+      try {
+        const visResult = await timeout(getVisibleProfiles(sb, userId, organizationId, role === 'power user' ? 'power_user' : role));
+        if (visResult?.data?.length) profileIds = visResult.data.map(p => p.id);
+      } catch (_) { /* timeout — fall back to self */ }
+    }
+
     const [kpiResult, priorKpiResult, anomalyResult, signalResult, orgConfigResult] = await Promise.allSettled([
-      // 1. Current week KPIs for this user
+      // 1. Current week KPIs (manager: all visible reps, rep: self only)
       timeout(
         sb.from('kpi_values')
           .select('kpi_id, value, kpi_metrics:kpi_id(name, key)')
-          .eq('profile_id', userId)
+          .in('profile_id', profileIds)
           .gte('period_start', curStart)
           .lte('period_end', curEnd)
       ),
-      // 2. Prior week KPIs for this user
+      // 2. Prior week KPIs (manager: all visible reps, rep: self only)
       timeout(
         sb.from('kpi_values')
           .select('kpi_id, value, kpi_metrics:kpi_id(name, key)')
-          .eq('profile_id', userId)
+          .in('profile_id', profileIds)
           .gte('period_start', priorStart)
           .lte('period_end', priorEnd)
       ),
@@ -1182,7 +1215,7 @@ Return ONLY valid JSON (no markdown, no code blocks) with these fields. Preserve
 {"summary":"1-2 sentence coaching summary","goals":["array"],"challenges":["array"],"strengths":["array"],"preferences":{"coaching_style":"direct|supportive|analytical"},"last_topics":["last 3-5 topics"]}`;
 
     const response = await client.messages.create({
-      model: 'claude-sonnet-4-20250514',
+      model: SONNET_MODEL,
       max_tokens: 500,
       messages: [{ role: 'user', content: extractionPrompt }],
     });
@@ -1252,8 +1285,7 @@ function classifyAaronIntent(message, page) {
 // Routes simple lookups/format requests to Haiku, coaching/complex to Sonnet.
 // Spec 01: 50-70% cost reduction with no UX change for coaching interactions.
 
-const SONNET_MODEL = 'claude-sonnet-4-20250514';
-const HAIKU_MODEL  = 'claude-haiku-4-5-20251001';
+// SONNET_MODEL and HAIKU_MODEL imported from modelConstants.js at top of file
 const HAIKU_ELIGIBLE_TIERS = new Set(['lookup', 'format', 'summarize']);
 
 /**
@@ -1405,12 +1437,14 @@ async function fetchScorecardContext(sb, userId, orgId, role) {
         const w = c.weight || 1;
         const dir = c.kpi_metrics?.direction || 'higher';
         const pct = dir === 'lower'
-          ? (val > 0 ? Math.min((goal / val) * 100, 200) : (goal > 0 ? 200 : 100))
+          ? (val > 0 ? Math.min((goal / val) * 100, 200) : null)
           : Math.min((val / goal) * 100, 200);
-        score += pct * w;
-        totalWeight += w;
+        if (pct !== null) {
+          score += pct * w;
+          totalWeight += w;
+        }
         const name = c.kpi_metrics?.name || c.kpi_metrics?.key || 'KPI';
-        kpiLines.push(`${name}: ${Math.round(val)}/${goal} (${Math.round(pct)}%)`);
+        kpiLines.push(`${name}: ${Math.round(val)}/${goal} (${pct !== null ? Math.round(pct) + '%' : 'no data'})`);
       }
       const weighted = totalWeight > 0 ? Math.round(score / totalWeight) : 0;
 
@@ -1422,10 +1456,12 @@ async function fetchScorecardContext(sb, userId, orgId, role) {
         const w = c.weight || 1;
         const dir = c.kpi_metrics?.direction || 'higher';
         const pct = dir === 'lower'
-          ? (val > 0 ? Math.min((goal / val) * 100, 200) : (goal > 0 ? 200 : 100))
+          ? (val > 0 ? Math.min((goal / val) * 100, 200) : null)
           : Math.min((val / goal) * 100, 200);
-        priorScore += pct * w;
-        priorTotalW += w;
+        if (pct !== null) {
+          priorScore += pct * w;
+          priorTotalW += w;
+        }
       }
       const priorWeighted = priorTotalW > 0 ? Math.round(priorScore / priorTotalW) : 0;
       const delta = weighted - priorWeighted;
@@ -1499,10 +1535,12 @@ async function fetchTeamComparisonContext(sb, orgId) {
         const w = c.weight || 1;
         const dir = c.kpi_metrics?.direction || 'higher';
         const pct = dir === 'lower'
-          ? (raw > 0 ? Math.min((goal / raw) * 100, 200) : (goal > 0 ? 200 : 100))
+          ? (raw > 0 ? Math.min((goal / raw) * 100, 200) : null)
           : Math.min((raw / goal) * 100, 200);
-        score += pct * w;
-        totalW += w;
+        if (pct !== null) {
+          score += pct * w;
+          totalW += w;
+        }
       }
       return totalW > 0 ? Math.round(score / totalW) : 0;
     };
@@ -1751,10 +1789,12 @@ async function fetchAnalyticsSummaryContext(sb, orgId) {
         const w = c.weight || 1;
         const dir = c.kpi_metrics?.direction || 'higher';
         const pct = dir === 'lower'
-          ? (raw > 0 ? Math.min((goal / raw) * 100, 200) : (goal > 0 ? 200 : 100))
+          ? (raw > 0 ? Math.min((goal / raw) * 100, 200) : null)
           : Math.min((raw / goal) * 100, 200);
-        score += pct * w;
-        totalW += w;
+        if (pct !== null) {
+          score += pct * w;
+          totalW += w;
+        }
       }
       return totalW > 0 ? Math.round(score / totalW) : 0;
     };
@@ -1902,9 +1942,9 @@ async function fetchRepDetailContext(sb, message, orgId, role, targetRepName = n
       const name = c.kpi_metrics?.name || c.kpi_metrics?.key || 'KPI';
       const dir = c.kpi_metrics?.direction || 'higher';
       const pct = dir === 'lower'
-        ? (val > 0 ? Math.min((goal / val) * 100, 200) : (goal > 0 ? 200 : 100))
+        ? (val > 0 ? Math.min((goal / val) * 100, 200) : null)
         : Math.min((val / goal) * 100, 200);
-      block += `\n  ${name}: ${Math.round(val)} / ${goal} (${Math.round(pct)}% attainment)`;
+      block += `\n  ${name}: ${Math.round(val)} / ${goal} (${pct !== null ? Math.round(pct) + '% attainment' : 'no data recorded yet'})`;
     }
 
     // 4-week trend for each KPI
@@ -1917,9 +1957,9 @@ async function fetchRepDetailContext(sb, message, orgId, role, targetRepName = n
           const raw = weekBuckets[w]?.[c.kpi_id] || 0;
           const dir = c.kpi_metrics?.direction || 'higher';
           const pct = dir === 'lower'
-            ? (raw > 0 ? Math.min((goal / raw) * 100, 200) : (goal > 0 ? 200 : 100))
+            ? (raw > 0 ? Math.min((goal / raw) * 100, 200) : null)
             : Math.min((raw / goal) * 100, 200);
-          return `${Math.round(pct)}%`;
+          return pct !== null ? `${Math.round(pct)}%` : '—';
         });
         block += `\n  ${name}: ${weekVals.join(' → ')}`;
       }
@@ -1931,9 +1971,9 @@ async function fetchRepDetailContext(sb, message, orgId, role, targetRepName = n
       const goal = c.goal || 1;
       const dir = c.kpi_metrics?.direction || 'higher';
       const pct = dir === 'lower'
-        ? (val > 0 ? Math.min((goal / val) * 100, 200) : (goal > 0 ? 200 : 100))
+        ? (val > 0 ? Math.min((goal / val) * 100, 200) : null)
         : Math.min((val / goal) * 100, 200);
-      return pct < 50;
+      return pct === null || pct < 50;
     }).map(c => c.kpi_metrics?.name || c.kpi_metrics?.key);
 
     if (weakKpis.length > 0) {
@@ -2295,6 +2335,14 @@ async function fetchAaronCallContext(profileId, orgId) {
   }
 }
 
+// ── Sales DNA cache invalidation (call after saving Sales DNA config) ────────
+function clearSalesDnaCache(orgId) {
+  if (orgId && _salesDnaCache[orgId]) {
+    delete _salesDnaCache[orgId];
+    console.log(`[aaron-cache] Cleared Sales DNA cache for org ${orgId}`);
+  }
+}
+
 // ── Module exports ───────────────────────────────────────────────────────────
 module.exports = {
   init,
@@ -2332,4 +2380,5 @@ module.exports = {
   fetchCalendarContext,
   STRUCTURED_OUTPUT_PROMPTS,
   detectStructuredOutputMode,
+  clearSalesDnaCache,
 };

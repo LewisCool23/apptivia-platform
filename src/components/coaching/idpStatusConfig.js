@@ -2,7 +2,7 @@ import { CheckCircle, Clock, AlertTriangle, Play, XCircle } from 'lucide-react';
 
 export const idpStatusConfig = {
   draft:       { label: 'Draft',       color: 'bg-apptivia-carbon-100 text-apptivia-carbon-700',     icon: Clock,         borderColor: 'border-l-gray-400' },
-  active:      { label: 'Active',      color: 'bg-apptivia-coral-tone-50 text-apptivia-coral',     icon: Play,          borderColor: 'border-l-blue-500' },
+  active:      { label: 'In Progress', color: 'bg-yellow-100 text-yellow-700', icon: Clock,         borderColor: 'border-l-yellow-500' },
   in_progress: { label: 'In Progress', color: 'bg-yellow-100 text-yellow-700', icon: Clock,         borderColor: 'border-l-yellow-500' },
   completed:   { label: 'Completed',   color: 'bg-green-100 text-green-700',   icon: CheckCircle,   borderColor: 'border-l-green-500' },
   overdue:     { label: 'Overdue',     color: 'bg-red-100 text-red-700',       icon: AlertTriangle, borderColor: 'border-l-red-500' },

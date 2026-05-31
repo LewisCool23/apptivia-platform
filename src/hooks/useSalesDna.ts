@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../supabaseClient';
 import { SalesDnaConfig, DEFAULT_SALES_DNA } from '../constants/salesDna';
+import { backendFetch } from '../utils/backendFetch';
 
 interface UseSalesDnaReturn {
   salesDna: SalesDnaConfig;
@@ -62,6 +63,8 @@ export function useSalesDna(organizationId: string | null | undefined): UseSales
       .eq('id', organizationId);
     if (updateError) throw updateError;
     setSalesDna(config);
+    // Invalidate backend Sales DNA cache so Aaron picks up changes immediately
+    backendFetch('/api/admin/clear-sales-dna-cache', { method: 'POST' }).catch(() => {});
   }, [organizationId]);
 
   const updateSalesDna = useCallback(async (updates: Partial<SalesDnaConfig>) => {

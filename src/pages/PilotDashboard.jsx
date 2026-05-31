@@ -337,7 +337,7 @@ export default function PilotDashboard() {
         throw new Error("Session expired. Please log out and log back in.");
       }
       if (res.status === 403) {
-        throw new Error("Admin access required. This dashboard is restricted to admin users.");
+        throw new Error("Super admin access required. This dashboard is restricted to platform administrators.");
       }
       if (!res.ok) {
         throw new Error(json?.error || `HTTP ${res.status}`);

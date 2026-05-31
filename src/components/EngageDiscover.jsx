@@ -5,11 +5,14 @@ import {
   AlertTriangle, TrendingUp, Target, Briefcase, DollarSign,
   Star, Clock, Send, BookOpen, Trash2, History, Eye,
   Phone, UserPlus, Cpu, ArrowRight, ChevronRight, Bookmark, BookmarkCheck,
-  MapPin, Twitter, PhoneCall, ClipboardList, X, FileText
+  MapPin, Twitter, PhoneCall, ClipboardList, X, FileText, GitBranch
 } from 'lucide-react';
 import { engageApi, engageDb } from '../utils/engageApi';
 import PromptTemplateSelector from './PromptTemplateSelector';
 import { supabase } from '../supabaseClient';
+import { backendFetch } from '../utils/backendFetch';
+import AddToSequenceModal from './AddToSequenceModal';
+import CreateTaskModal from './CreateTaskModal';
 
 // ── Default titles/seniority are now resolved server-side via ICP profiles ───
 // These are only used as client-side fallback for technology search mode
@@ -34,6 +37,7 @@ const PERSONA_MODES = [
   { key: 'leadership', label: 'Leadership', icon: 'Briefcase', desc: 'C-suite, VP, Director' },
   { key: 'all', label: 'All Contacts', icon: 'Users', desc: 'No title/seniority filter' },
   { key: 'custom', label: 'Custom', icon: 'ClipboardList', desc: 'Specify your own titles' },
+  { key: 'nlp', label: 'AI Search', icon: 'Sparkles', desc: 'Describe who you want to find in plain English' },
 ];
 
 // ── Helpers ──────────────────────────────────────────────────
@@ -224,7 +228,7 @@ function CompanyBriefPanel({ company, brief: rawBrief, dataSources, tokensUsed, 
             {/* Outreach Strategy */}
             {(brief.talking_points?.length > 0 || brief.outreach_angles?.length > 0) && (
               <CollapsibleSection title="Outreach Strategy" icon={Target} expanded={expanded.outreach} onToggle={() => toggle('outreach')}>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-4">
                   {brief.talking_points?.length > 0 && (
                     <div>
                       <span className="text-[10px] uppercase font-semibold text-apptivia-carbon-400 block mb-2">Talking Points</span>
@@ -237,21 +241,21 @@ function CompanyBriefPanel({ company, brief: rawBrief, dataSources, tokensUsed, 
                       </ul>
                     </div>
                   )}
-                  <div>
-                    {brief.outreach_angles?.length > 0 && (
-                      <div>
-                        <span className="text-[10px] uppercase font-semibold text-apptivia-carbon-400 block mb-2">Approach Angles</span>
-                        <ul className="space-y-1">
-                          {brief.outreach_angles.slice(0, 3).map((a, i) => (
-                            <li key={i} className="text-xs text-apptivia-carbon-700 flex items-start gap-2">
-                              <span className="text-apptivia-coral mt-0.5 flex-shrink-0">{'\u2022'}</span> {a}
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    )}
+                  {brief.outreach_angles?.length > 0 && (
+                    <div>
+                      <span className="text-[10px] uppercase font-semibold text-apptivia-carbon-400 block mb-2">Approach Angles</span>
+                      <ul className="space-y-1">
+                        {brief.outreach_angles.slice(0, 3).map((a, i) => (
+                          <li key={i} className="text-xs text-apptivia-carbon-700 flex items-start gap-2">
+                            <span className="text-apptivia-coral mt-0.5 flex-shrink-0">{'\u2022'}</span> {a}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                  <div className="flex items-center gap-6">
                     {brief.best_channel && (
-                      <div className="flex items-center gap-2 mt-2">
+                      <div className="flex items-center gap-2">
                         <span className="text-[10px] font-medium text-apptivia-carbon-500">Best Channel:</span>
                         <span className="text-xs font-semibold text-apptivia-ink capitalize">{brief.best_channel}</span>
                       </div>
@@ -353,7 +357,7 @@ function CompanyBriefPanel({ company, brief: rawBrief, dataSources, tokensUsed, 
 
 // ── Prospect Brief Panel ─────────────────────────────────────
 
-function ProspectBriefPanel({ prospect, brief: rawBrief, dataSources, tokensUsed, errors, onCallContact, onSaveContact, isSaved, savingContact, onGenerateDraft }) {
+function ProspectBriefPanel({ prospect, brief: rawBrief, dataSources, tokensUsed, errors, onCallContact, onSaveContact, isSaved, savingContact, onGenerateDraft, onEmailContact }) {
   const [copied, setCopied] = React.useState(null); // tracks which field was copied
   // If brief arrived as a JSON string (e.g. Claude wrapped in markdown fences), try to parse it
   const brief = React.useMemo(() => {
@@ -497,13 +501,17 @@ function ProspectBriefPanel({ prospect, brief: rawBrief, dataSources, tokensUsed
                     <PhoneCall size={11} /> Call
                   </button>
                 )}
-                {prospect.email && (
-                  <a
-                    href={`mailto:${prospect.email}`}
+                {prospect.email && onEmailContact && (
+                  <button
+                    onClick={() => onEmailContact({
+                      first_name: prospect.first_name, last_name: prospect.last_name,
+                      email: prospect.email, title: prospect.title,
+                      company_name: prospect.organization?.name || prospect.company_name,
+                    })}
                     className="flex items-center gap-1.5 px-3 py-1.5 bg-apptivia-coral hover:bg-apptivia-coral/90 text-white text-xs font-medium rounded-lg transition-colors shadow-sm"
                   >
                     <Mail size={11} /> Email
-                  </a>
+                  </button>
                 )}
                 {onSaveContact && (
                   <button
@@ -527,15 +535,6 @@ function ProspectBriefPanel({ prospect, brief: rawBrief, dataSources, tokensUsed
                 >
                   {copied === 'all' ? <><Check size={11} className="text-emerald-500" /> Copied!</> : <><ClipboardList size={11} /> Copy All</>}
                 </button>
-                {onGenerateDraft && (
-                  <button
-                    onClick={onGenerateDraft}
-                    className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-500 hover:opacity-90 text-white text-xs font-medium rounded-lg transition-opacity shadow-sm"
-                    title="Generate AI outreach draft"
-                  >
-                    <FileText size={11} /> Generate Draft
-                  </button>
-                )}
               </div>
             </div>
           </div>
@@ -921,7 +920,7 @@ function CollapsibleSection({ title, icon: Icon, expanded, onToggle, children })
 
 // ── Main Discover Component ─────────────────────────────────
 
-export default function EngageDiscover({ organizationId, userId, initialSearch, onInitialSearchConsumed, onCallContact, onContactSaved }) {
+export default function EngageDiscover({ organizationId, userId, initialSearch, onInitialSearchConsumed, onCallContact, onContactSaved, onEmailContact, onSaveAsAccount }) {
   const [mode, setMode] = useState('company'); // 'company' | 'prospect' | 'people_search'
   const [searchInput, setSearchInput] = useState('');
   const [loading, setLoading] = useState(false);
@@ -1070,6 +1069,8 @@ export default function EngageDiscover({ organizationId, userId, initialSearch, 
   const [outreachTone, setOutreachTone] = useState('professional');
   const [selectedTemplate, setSelectedTemplate] = useState(null);
   const [outreachModalOpen, setOutreachModalOpen] = useState(false);
+  const [sequenceTarget, setSequenceTarget] = useState(null);
+  const [taskTarget, setTaskTarget] = useState(null);
 
   // Track whether we've consumed the initial search to avoid re-triggering
   const [initialSearchApplied, setInitialSearchApplied] = useState(false);
@@ -1309,6 +1310,47 @@ export default function EngageDiscover({ organizationId, userId, initialSearch, 
     if (savedContactIds.has(key)) return;
     setSavingContact(true);
     try {
+      // Compute tenure from employment history
+      let tenureMonths = null;
+      const empHistory = person.employment_history || person.experience || [];
+      if (empHistory.length > 0 && empHistory[0]?.start_date) {
+        const start = new Date(empHistory[0].start_date);
+        if (!isNaN(start.getTime())) {
+          tenureMonths = Math.round((Date.now() - start.getTime()) / (30.44 * 86400000));
+        }
+      }
+
+      // Compute influence score (0-100)
+      let influence = 0;
+      const title = (person.title || person.headline || '').toLowerCase();
+      // Seniority (max 30)
+      if (/\b(ceo|cto|cfo|coo|cmo|cro|chief|founder|co-founder)\b/.test(title)) influence += 30;
+      else if (/\b(vp|vice president|svp|evp)\b/.test(title)) influence += 25;
+      else if (/\bdir(ector)?\b/.test(title)) influence += 20;
+      else if (/\b(manager|head of|lead)\b/.test(title)) influence += 15;
+      else influence += 5;
+      // Department relevance (max 20)
+      if (/\b(sales|revenue|business development|account)\b/.test(title)) influence += 20;
+      else if (/\b(marketing|growth|demand|gtm)\b/.test(title)) influence += 15;
+      else if (/\b(operations|enablement|success|strategy)\b/.test(title)) influence += 10;
+      // Tenure (max 15)
+      const tenureYrs = tenureMonths ? tenureMonths / 12 : 0;
+      if (tenureYrs >= 5) influence += 15;
+      else if (tenureYrs >= 3) influence += 12;
+      else if (tenureYrs >= 1) influence += 8;
+      else if (tenureMonths) influence += 3;
+      // Engagement (max 10)
+      if (person.email) influence += 5;
+      if (person.linkedin_url) influence += 3;
+      if (person.phone || person.sanitized_phone || person.phone_number) influence += 2;
+      // Org size factor (max 10)
+      const empCount = person.organization?.estimated_num_employees || person.organization?.employee_count || 0;
+      if (empCount >= 1000) influence += 10;
+      else if (empCount >= 200) influence += 7;
+      else if (empCount >= 50) influence += 4;
+      else influence += 2;
+      influence = Math.min(100, influence);
+
       const row = {
         organization_id: organizationId,
         first_name: person.first_name || null,
@@ -1319,6 +1361,8 @@ export default function EngageDiscover({ organizationId, userId, initialSearch, 
         title: person.title || person.headline || null,
         company_name: person.organization?.name || person.organization_name || null,
         source: 'discover',
+        tenure_months: tenureMonths,
+        influence_score: influence,
       };
       const { error } = await supabase.from('engage_prospects').insert(row);
       if (error) {
@@ -1463,7 +1507,7 @@ export default function EngageDiscover({ organizationId, userId, initialSearch, 
         const looksLikeDomain = input.includes('.') && !input.includes(' ');
         if (looksLikeDomain) {
           const result = await fetchCompanyResearchWithCache(input);
-          setCompanyResult(result);
+          setCompanyResult({ ...result, researched_at: result._cached ? result.cached_at || new Date().toISOString() : new Date().toISOString() });
           if (!result._cached) saveToHistory('company', input, result);
           // Fetch suggested contacts in background
           fetchSuggestedContacts(input);
@@ -1516,6 +1560,18 @@ export default function EngageDiscover({ organizationId, userId, initialSearch, 
           const companyOpts = {};
           if (peopleSearchFilters?.titles?.length) {
             companyOpts.titles = peopleSearchFilters.titles;
+          } else if (personaMode === 'nlp' && customPersonaTitles.trim()) {
+            // NLP persona search — parse natural language into structured filters
+            try {
+              const parsed = await backendFetch('/api/engage/discover/parse-persona', { query: customPersonaTitles.trim() });
+              if (parsed?.titles?.length) companyOpts.customTitles = parsed.titles;
+              if (parsed?.seniority?.length) companyOpts.seniority = parsed.seniority;
+              companyOpts.persona = 'custom';
+            } catch {
+              // Fallback: treat as custom comma-separated titles
+              companyOpts.customTitles = customPersonaTitles.split(',').map(t => t.trim()).filter(Boolean);
+              companyOpts.persona = 'custom';
+            }
           } else {
             companyOpts.persona = personaMode;
             if (personaMode === 'custom' && customPersonaTitles.trim()) {
@@ -1742,6 +1798,7 @@ export default function EngageDiscover({ organizationId, userId, initialSearch, 
                     {pm.key === 'leadership' && <Briefcase size={10} />}
                     {pm.key === 'all' && <Users size={10} />}
                     {pm.key === 'custom' && <ClipboardList size={10} />}
+                    {pm.key === 'nlp' && <Sparkles size={10} />}
                     {pm.label}
                   </button>
                 ))}
@@ -1753,6 +1810,16 @@ export default function EngageDiscover({ organizationId, userId, initialSearch, 
                   value={customPersonaTitles}
                   onChange={(e) => setCustomPersonaTitles(e.target.value)}
                   placeholder="e.g. Project Manager, VDC Leader, Preconstruction Manager"
+                  className="w-full px-3 py-2 rounded-lg bg-white/10 text-white text-xs placeholder-white/40 border border-white/20 focus:outline-none focus:ring-1 focus:ring-white/40"
+                />
+              )}
+              {/* NLP persona search input */}
+              {personaMode === 'nlp' && (
+                <input
+                  type="text"
+                  value={customPersonaTitles}
+                  onChange={(e) => setCustomPersonaTitles(e.target.value)}
+                  placeholder="e.g. VP of Sales with 5+ years at the company, or Director of Engineering in fintech"
                   className="w-full px-3 py-2 rounded-lg bg-white/10 text-white text-xs placeholder-white/40 border border-white/20 focus:outline-none focus:ring-1 focus:ring-white/40"
                 />
               )}
@@ -2024,7 +2091,41 @@ export default function EngageDiscover({ organizationId, userId, initialSearch, 
 
       {/* Company Research: side-by-side layout — Brief (left ~75%) + Suggested Contacts (right ~25%) */}
       {!loading && companyResult && (
-        <div className="flex gap-4 items-start">
+        <div className="space-y-3">
+          {/* Research header: freshness + Save as Account */}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              {companyResult.researched_at && (() => {
+                const mins = Math.round((Date.now() - new Date(companyResult.researched_at).getTime()) / 60000);
+                const label = mins < 1 ? 'Just now' : mins < 60 ? `${mins}m ago` : mins < 1440 ? `${Math.round(mins / 60)}h ago` : `${Math.round(mins / 1440)}d ago`;
+                return (
+                  <span className="text-[10px] text-apptivia-carbon-400 flex items-center gap-1">
+                    <Clock size={10} /> Generated {label}
+                  </span>
+                );
+              })()}
+              <button
+                onClick={() => {
+                  setSearchInput(companyResult.company?.primary_domain || companyResult.company?.domain || searchInput);
+                  setCompanyResult(null);
+                  setSuggestedContacts(null);
+                  setTimeout(() => handleResearchRef.current?.(), 200);
+                }}
+                className="text-[10px] text-apptivia-coral hover:text-apptivia-coral-tone-700 flex items-center gap-0.5 font-medium"
+              >
+                <RefreshCw size={9} /> Refresh
+              </button>
+            </div>
+            {onSaveAsAccount && (
+              <button
+                onClick={() => onSaveAsAccount(companyResult.company)}
+                className="flex items-center gap-1 px-3 py-1.5 bg-apptivia-ink text-white rounded-lg text-[10px] font-semibold hover:bg-apptivia-coral-tone-600 transition-colors"
+              >
+                <Building2 size={10} /> Save as Account
+              </button>
+            )}
+          </div>
+          <div className="flex gap-4 items-start">
           {/* Company Research Brief — main column */}
           <div className="flex-1 min-w-0">
             <CompanyBriefPanel
@@ -2093,8 +2194,12 @@ export default function EngageDiscover({ organizationId, userId, initialSearch, 
                           <span className="text-[9px] text-apptivia-carbon-500 block truncate">{person.title || ''}</span>
                         </div>
                         <div className="flex items-center gap-1 flex-shrink-0">
-                          {email && (
-                            <button onClick={() => navigator.clipboard.writeText(email)} className="text-apptivia-coral hover:text-apptivia-coral" title={email}>
+                          {email && onEmailContact && (
+                            <button onClick={() => onEmailContact({
+                              first_name: person.first_name, last_name: person.last_name,
+                              email, title: person.title,
+                              company_name: person.organization?.name || person.organization_name || person.company_name,
+                            })} className="text-apptivia-coral hover:text-apptivia-coral" title={`Draft outreach to ${email}`}>
                               <Mail size={10} />
                             </button>
                           )}
@@ -2137,6 +2242,16 @@ export default function EngageDiscover({ organizationId, userId, initialSearch, 
                           >
                             <Eye size={10} />
                           </button>
+                          {email && (
+                            <button onClick={() => setSequenceTarget({ first_name: person.first_name, last_name: person.last_name, email, title: person.title, company_name: person.organization?.name || person.organization_name })}
+                              className="text-apptivia-carbon-300 hover:text-apptivia-ink opacity-0 group-hover:opacity-100 transition-all" title="Add to sequence">
+                              <GitBranch size={10} />
+                            </button>
+                          )}
+                          <button onClick={() => setTaskTarget({ first_name: person.first_name, last_name: person.last_name, email, title: person.title, company_name: person.organization?.name || person.organization_name })}
+                            className="text-apptivia-carbon-300 hover:text-apptivia-ink opacity-0 group-hover:opacity-100 transition-all" title="Create task">
+                            <ClipboardList size={10} />
+                          </button>
                         </div>
                       </div>
                     );
@@ -2149,6 +2264,7 @@ export default function EngageDiscover({ organizationId, userId, initialSearch, 
               ) : null}
             </div>
           </div>
+        </div>
         </div>
       )}
 
@@ -2163,7 +2279,7 @@ export default function EngageDiscover({ organizationId, userId, initialSearch, 
           onSaveContact={saveContact}
           savingContact={savingContact}
           isSaved={savedContactIds.has(getSavedKey(prospectResult.prospect || {}))}
-          onGenerateDraft={() => setOutreachModalOpen(true)}
+          onEmailContact={onEmailContact}
         />
       )}
 
@@ -2211,6 +2327,8 @@ export default function EngageDiscover({ organizationId, userId, initialSearch, 
                   <th className="text-left px-4 py-2.5 font-semibold text-apptivia-carbon-600">Email</th>
                   <th className="text-left px-4 py-2.5 font-semibold text-apptivia-carbon-600">Phone</th>
                   <th className="text-left px-4 py-2.5 font-semibold text-apptivia-carbon-600">Location</th>
+                  <th className="text-center px-4 py-2.5 font-semibold text-apptivia-carbon-600">Tenure</th>
+                  <th className="text-center px-4 py-2.5 font-semibold text-apptivia-carbon-600">Influence</th>
                   <th className="text-center px-4 py-2.5 font-semibold text-apptivia-carbon-600">Links</th>
                 </tr>
               </thead>
@@ -2245,15 +2363,27 @@ export default function EngageDiscover({ organizationId, userId, initialSearch, 
                       </td>
                       <td className="px-4 py-3">
                         {email ? (
-                          <button
-                            onClick={() => { navigator.clipboard.writeText(email); }}
-                            className="flex items-center gap-1 text-apptivia-coral hover:text-apptivia-coral-tone-700 transition-colors group/email"
-                            title={`Copy: ${email}`}
-                          >
-                            <Mail size={11} className="flex-shrink-0" />
-                            <span className="truncate max-w-[160px]">{email}</span>
-                            <Copy size={9} className="opacity-0 group-hover/email:opacity-100 transition-opacity flex-shrink-0" />
-                          </button>
+                          <div className="flex items-center gap-1 group/email">
+                            <button
+                              onClick={() => onEmailContact && onEmailContact({
+                                first_name: person.first_name, last_name: person.last_name,
+                                email, title: person.title,
+                                company_name: person.organization?.name || person.organization_name || org,
+                              })}
+                              className="flex items-center gap-1 text-apptivia-coral hover:text-apptivia-coral-tone-700 transition-colors"
+                              title={`Draft outreach to ${email}`}
+                            >
+                              <Mail size={11} className="flex-shrink-0" />
+                              <span className="truncate max-w-[160px]">{email}</span>
+                            </button>
+                            <button
+                              onClick={(e) => { e.stopPropagation(); navigator.clipboard.writeText(email); }}
+                              className="opacity-0 group-hover/email:opacity-100 transition-opacity flex-shrink-0 text-apptivia-carbon-400 hover:text-apptivia-carbon-600"
+                              title={`Copy: ${email}`}
+                            >
+                              <Copy size={9} />
+                            </button>
+                          </div>
                         ) : (
                           <span className="text-apptivia-carbon-300">—</span>
                         )}
@@ -2277,6 +2407,47 @@ export default function EngageDiscover({ organizationId, userId, initialSearch, 
                       </td>
                       <td className="px-4 py-3 text-apptivia-carbon-500 whitespace-nowrap max-w-[150px]">
                         <span className="block truncate" title={location}>{location || '—'}</span>
+                      </td>
+                      <td className="px-4 py-3 text-center text-xs text-apptivia-carbon-500 whitespace-nowrap">
+                        {(() => {
+                          const empHistory = person.employment_history || person.experience || [];
+                          if (empHistory.length > 0 && empHistory[0]?.start_date) {
+                            const start = new Date(empHistory[0].start_date);
+                            if (!isNaN(start.getTime())) {
+                              const months = Math.round((Date.now() - start.getTime()) / (30.44 * 86400000));
+                              const yrs = Math.floor(months / 12);
+                              const mo = months % 12;
+                              return yrs > 0 ? `${yrs}yr${mo > 0 ? ` ${mo}mo` : ''}` : `${mo}mo`;
+                            }
+                          }
+                          return <span className="text-apptivia-carbon-300">—</span>;
+                        })()}
+                      </td>
+                      <td className="px-4 py-3 text-center">
+                        {(() => {
+                          // Quick inline influence calc for display
+                          let inf = 0;
+                          const t = (person.title || person.headline || '').toLowerCase();
+                          if (/\b(ceo|cto|cfo|coo|cmo|cro|chief|founder)\b/.test(t)) inf += 30;
+                          else if (/\b(vp|vice president|svp|evp)\b/.test(t)) inf += 25;
+                          else if (/\bdir(ector)?\b/.test(t)) inf += 20;
+                          else if (/\b(manager|head of|lead)\b/.test(t)) inf += 15;
+                          else inf += 5;
+                          if (/\b(sales|revenue|business development|account)\b/.test(t)) inf += 20;
+                          else if (/\b(marketing|growth|demand|gtm)\b/.test(t)) inf += 15;
+                          else if (/\b(operations|enablement|success|strategy)\b/.test(t)) inf += 10;
+                          if (person.email) inf += 5;
+                          if (person.linkedin_url) inf += 3;
+                          if (person.phone || person.sanitized_phone || person.phone_number) inf += 2;
+                          const empCount = person.organization?.estimated_num_employees || 0;
+                          if (empCount >= 1000) inf += 10;
+                          else if (empCount >= 200) inf += 7;
+                          else if (empCount >= 50) inf += 4;
+                          else inf += 2;
+                          inf = Math.min(100, inf);
+                          const color = inf >= 70 ? 'bg-emerald-100 text-emerald-700' : inf >= 40 ? 'bg-amber-100 text-amber-700' : 'bg-red-100 text-red-600';
+                          return <span className={`inline-flex px-1.5 py-0.5 rounded-full text-[10px] font-bold ${color}`}>{inf}</span>;
+                        })()}
                       </td>
                       <td className="px-4 py-3">
                         <div className="flex items-center justify-center gap-2">
@@ -2320,6 +2491,16 @@ export default function EngageDiscover({ organizationId, userId, initialSearch, 
                             title="Add to Buying Committee"
                           >
                             <UserPlus size={13} />
+                          </button>
+                          {email && (
+                            <button onClick={() => setSequenceTarget({ first_name: person.first_name, last_name: person.last_name, email, title: person.title, company_name: person.organization?.name || org })}
+                              className="text-apptivia-carbon-300 hover:text-apptivia-ink transition-colors" title="Add to sequence">
+                              <GitBranch size={13} />
+                            </button>
+                          )}
+                          <button onClick={() => setTaskTarget({ first_name: person.first_name, last_name: person.last_name, email, title: person.title, company_name: person.organization?.name || org })}
+                            className="text-apptivia-carbon-300 hover:text-apptivia-ink transition-colors" title="Create task">
+                            <ClipboardList size={13} />
                           </button>
                         </div>
                       </td>
@@ -2410,6 +2591,22 @@ export default function EngageDiscover({ organizationId, userId, initialSearch, 
           }}
         />
       )}
+
+      {/* Add to Sequence Modal */}
+      <AddToSequenceModal
+        isOpen={!!sequenceTarget}
+        onClose={() => setSequenceTarget(null)}
+        contact={sequenceTarget}
+        organizationId={organizationId}
+      />
+
+      {/* Create Task Modal */}
+      <CreateTaskModal
+        isOpen={!!taskTarget}
+        onClose={() => setTaskTarget(null)}
+        contact={taskTarget}
+        organizationId={organizationId}
+      />
     </div>
   );
 }

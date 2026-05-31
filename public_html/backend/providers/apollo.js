@@ -84,6 +84,7 @@ module.exports = {
       });
 
       const kpiMappings = [];
+      const activityRecords = [];
 
       for (const call of calls) {
         const callId = call.id;
@@ -95,6 +96,23 @@ module.exports = {
           source: 'apollo', externalEventId: `apollo:call:${callId}:dials`, weekStart,
         });
         if (dialMapping) kpiMappings.push(dialMapping);
+
+        // Activity record for ALL calls (before KPI-completion filter)
+        activityRecords.push({
+          profileId,
+          activityType: 'call',
+          activityDate: call.start_time,
+          source: 'apollo',
+          externalId: String(callId),
+          subject: call.note ? call.note.slice(0, 200) : null,
+          contactName: call.contact?.name || null,
+          contactEmail: call.contact?.email || null,
+          direction: 'outbound',
+          durationSeconds: call.duration || null,
+          status: call.status || null,
+          notes: call.note ? call.note.slice(0, 2000) : null,
+          metadata: { opportunity_id: call.opportunity_id },
+        });
 
         // Only completed calls for remaining KPIs
         if (call.status !== 'completed' || !call.logged) continue;
@@ -132,7 +150,7 @@ module.exports = {
         : since;
 
       console.log(`[apollo:calls] Processed ${calls.length} calls, ${kpiMappings.length} KPI mappings`);
-      return { records: calls, nextCursor: latestCallTime, kpiMappings };
+      return { records: calls, nextCursor: latestCallTime, kpiMappings, activityRecords };
     },
 
     // === EMAILS ===
@@ -167,11 +185,29 @@ module.exports = {
       });
 
       const kpiMappings = [];
+      const activityRecords = [];
 
       for (const email of emails) {
+        const emailId = email.id;
+
+        // Activity record for ALL emails (including inbound)
+        activityRecords.push({
+          profileId,
+          activityType: 'email',
+          activityDate: email.created_at,
+          source: 'apollo',
+          externalId: String(emailId),
+          subject: email.subject || null,
+          contactName: email.contact?.name || null,
+          contactEmail: email.contact?.email || null,
+          direction: email.direction === 'inbound' ? 'inbound' : 'outbound',
+          status: 'sent',
+          notes: email.body ? email.body.slice(0, 500) : null,
+          metadata: {},
+        });
+
         if (email.direction === 'inbound') continue;
 
-        const emailId = email.id;
         const weekStart = getWeekStart(email.created_at);
 
         // emails_sent
@@ -185,7 +221,7 @@ module.exports = {
       }
 
       console.log(`[apollo:emails] Processed ${emails.length} emails, ${kpiMappings.length} KPI mappings`);
-      return { records: emails, nextCursor: latestTimestamp(emails, 'created_at', since), kpiMappings };
+      return { records: emails, nextCursor: latestTimestamp(emails, 'created_at', since), kpiMappings, activityRecords };
     },
 
     // === OPPORTUNITIES / DEALS (Pipeline) ===

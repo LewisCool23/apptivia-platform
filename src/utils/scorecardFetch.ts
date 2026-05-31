@@ -4,6 +4,10 @@
  * but work imperatively (no React hooks) so they can be called from event handlers.
  *
  * Primary use: feeding buildPlaybookSummary() in handleAutoGenerate.
+ *
+ * Point-in-time scoring: when organizationId is set, these functions fetch
+ * kpi_org_config_history to use the goals/weights/flags that were in effect
+ * at the time of each historical week — not the current config.
  */
 import { supabase } from '../supabaseClient';
 import { getMonday } from './dateUtils';
@@ -46,6 +50,80 @@ export interface HistoricalScorePoint {
   [repId: string]: number | string | boolean;
 }
 
+// ── Shared: fetch org config history and build per-week config resolver ──────
+
+interface OrgConfigHistoryResult {
+  allMetrics: any[];
+  getConfigAt: (kpiId: string, atDate: Date) => any;
+  getActiveScorecardMetrics: (atDate: Date) => any[];
+}
+
+async function fetchOrgConfigWithHistory(
+  organizationId: string,
+  rangeStart: Date,
+  rangeEnd: Date
+): Promise<OrgConfigHistoryResult> {
+  // Fetch ALL org configs (no is_active filter) for the full KPI catalog
+  const { data: orgConfigs } = await supabase
+    .from('kpi_org_configs')
+    .select('id, kpi_id, goal, weight, is_active, show_on_scorecard, scorecard_position, kpi_metrics!inner(id, key, name, direction)')
+    .eq('organization_id', organizationId)
+    .order('scorecard_position');
+
+  const allMetrics = (orgConfigs || []).map((c: any) => ({
+    orgConfigId: c.id,
+    id: (c.kpi_metrics as any).id,
+    key: (c.kpi_metrics as any).key,
+    name: (c.kpi_metrics as any).name,
+    direction: (c.kpi_metrics as any).direction,
+    goal: c.goal,
+    weight: c.weight,
+    is_active: c.is_active,
+    show_on_scorecard: c.show_on_scorecard,
+    scorecard_position: c.scorecard_position,
+  }));
+
+  // Fetch point-in-time config history
+  const { data: historyRows } = await supabase
+    .from('kpi_org_config_history')
+    .select('org_config_id, kpi_id, goal, weight, show_on_scorecard, is_active, valid_from, valid_to')
+    .eq('organization_id', organizationId)
+    .lte('valid_from', rangeEnd.toISOString())
+    .or(`valid_to.is.null,valid_to.gte.${rangeStart.toISOString()}`);
+
+  const history = historyRows || [];
+
+  function getConfigAt(kpiId: string, atDate: Date) {
+    // Find the history row active at atDate for this kpiId
+    const histRow = history.find((h: any) =>
+      h.kpi_id === kpiId &&
+      new Date(h.valid_from) <= atDate &&
+      (h.valid_to === null || new Date(h.valid_to) > atDate)
+    );
+    const baseMet = allMetrics.find((m: any) => m.id === kpiId);
+    if (!baseMet) return null;
+    if (histRow) {
+      return {
+        ...baseMet,
+        goal: histRow.goal,
+        weight: histRow.weight,
+        is_active: histRow.is_active,
+        show_on_scorecard: histRow.show_on_scorecard,
+      };
+    }
+    return baseMet;
+  }
+
+  function getActiveScorecardMetrics(atDate: Date) {
+    return allMetrics.filter((m: any) => {
+      const cfg = getConfigAt(m.id, atDate);
+      return cfg && cfg.is_active !== false && cfg.show_on_scorecard !== false;
+    });
+  }
+
+  return { allMetrics, getConfigAt, getActiveScorecardMetrics };
+}
+
 /**
  * Fetch scorecard data for a specific team for a single week.
  * Returns shapes compatible with buildPlaybookSummary's `scorecardData` param.
@@ -56,32 +134,30 @@ export async function fetchScorecardDataForTeam(
   weekEnd: string,
   organizationId?: string | null
 ): Promise<ScorecardResult> {
-  // 1. Fetch active KPI metrics — org-scoped via kpi_org_configs when possible
-  let metrics: any[] = [];
+  // 1. Fetch KPI metrics with point-in-time config
+  const weekDate = new Date(weekEnd);
+  let scorecardMetrics: any[] = [];
+  let scorecardKpiKeys: string[] = [];
+
   if (organizationId) {
-    const { data } = await supabase
-      .from('kpi_org_configs')
-      .select('kpi_id, goal, weight, is_active, show_on_scorecard, scorecard_position, kpi_metrics!inner(id, key, name, direction)')
-      .eq('organization_id', organizationId)
-      .eq('is_active', true)
-      .order('scorecard_position');
-    metrics = (data || []).map((c: any) => ({
-      id: (c.kpi_metrics as any).id, key: (c.kpi_metrics as any).key,
-      name: (c.kpi_metrics as any).name, direction: (c.kpi_metrics as any).direction,
-      goal: c.goal, weight: c.weight, show_on_scorecard: c.show_on_scorecard,
-    }));
+    const { getActiveScorecardMetrics } = await fetchOrgConfigWithHistory(
+      organizationId,
+      new Date(weekStart),
+      weekDate
+    );
+    scorecardMetrics = getActiveScorecardMetrics(weekDate);
+    scorecardKpiKeys = scorecardMetrics.map(m => m.key);
   } else {
     const { data } = await supabase
       .from('kpi_metrics')
       .select('id, key, name, goal, weight, direction, show_on_scorecard')
       .eq('is_active', true)
       .order('scorecard_position');
-    metrics = data || [];
+    const metrics = data || [];
+    scorecardMetrics = metrics.filter((m: any) => m.show_on_scorecard);
+    scorecardKpiKeys = scorecardMetrics.map((m: any) => m.key);
   }
-  if (!metrics.length) return { rows: [], scorecardKpiKeys: [], teamAverage: 0, topPerformer: null };
-
-  const scorecardMetrics = metrics.filter(m => m.show_on_scorecard);
-  const scorecardKpiKeys = scorecardMetrics.map(m => m.key);
+  if (!scorecardMetrics.length) return { rows: [], scorecardKpiKeys: [], teamAverage: 0, topPerformer: null };
 
   // 2. Fetch profiles in this team (reps only) — org-scoped
   let profilesQ = supabase
@@ -104,8 +180,8 @@ export async function fetchScorecardDataForTeam(
     .gte('period_end', weekStart);
 
   // 4. Build metric lookup
-  const metricById: Record<string, typeof metrics[0]> = {};
-  metrics.forEach(m => { metricById[m.id] = m; });
+  const metricById: Record<string, any> = {};
+  scorecardMetrics.forEach(m => { metricById[m.id] = m; });
 
   // 5. Aggregate values per (profile, kpi)
   const valMap: Record<string, Record<string, number>> = {};
@@ -117,7 +193,7 @@ export async function fetchScorecardDataForTeam(
     valMap[v.profile_id][key] = (valMap[v.profile_id][key] || 0) + (v.value || 0);
   });
 
-  // 6. Compute rows
+  // 6. Compute rows using point-in-time config
   const rows: ScorecardRow[] = profiles.map((p: any) => {
     const vals = valMap[p.id] || {};
     const kpis: Record<string, { value: number; percentage: number }> = {};
@@ -165,35 +241,36 @@ export async function fetchHistoricalScoresForTeam(
   weeks: number = 5,
   organizationId?: string | null
 ): Promise<{ data: HistoricalScorePoint[]; repNames: Record<string, string> }> {
-  // 1. Fetch scorecard metrics — org-scoped via kpi_org_configs when possible
-  let metrics: any[] = [];
+  // 1. Compute week boundaries first so we know the date range for history
+  const now = new Date();
+  const thisMonday = getMonday(now);
+  const anchorMonday = new Date(thisMonday.getTime() - 7 * 86400000);
+  const oldestMonday = new Date(anchorMonday.getTime() - (weeks - 1) * 7 * 86400000);
+  const newestSunday = new Date(anchorMonday.getTime() + 6 * 86400000);
+
+  // 2. Fetch scorecard metrics with point-in-time history
+  let allMetrics: any[] = [];
+  let getConfigAt: ((kpiId: string, atDate: Date) => any) | null = null;
+  let getActiveScorecardMetrics: ((atDate: Date) => any[]) | null = null;
+
   if (organizationId) {
-    const { data } = await supabase
-      .from('kpi_org_configs')
-      .select('kpi_id, goal, weight, show_on_scorecard, kpi_metrics!inner(id, key, direction)')
-      .eq('organization_id', organizationId)
-      .eq('is_active', true)
-      .eq('show_on_scorecard', true);
-    metrics = (data || []).map((c: any) => ({
-      id: (c.kpi_metrics as any).id, key: (c.kpi_metrics as any).key,
-      direction: (c.kpi_metrics as any).direction,
-      goal: c.goal, weight: c.weight,
-    }));
+    const result = await fetchOrgConfigWithHistory(organizationId, oldestMonday, newestSunday);
+    allMetrics = result.allMetrics;
+    getConfigAt = result.getConfigAt;
+    getActiveScorecardMetrics = result.getActiveScorecardMetrics;
   } else {
     const { data } = await supabase
       .from('kpi_metrics')
       .select('id, key, goal, weight, direction')
       .eq('is_active', true)
       .eq('show_on_scorecard', true);
-    metrics = data || [];
+    allMetrics = data || [];
   }
-  if (!metrics.length) return { data: [], repNames: {} };
+  if (!allMetrics.length) return { data: [], repNames: {} };
 
-  const kpiIds = metrics.map(m => m.id);
-  const metricById: Record<string, typeof metrics[0]> = {};
-  metrics.forEach(m => { metricById[m.id] = m; });
+  const kpiIds = allMetrics.map(m => m.id);
 
-  // 2. Fetch profiles — org-scoped
+  // 3. Fetch profiles — org-scoped
   let profQ = supabase
     .from('profiles')
     .select('id, first_name, last_name')
@@ -207,16 +284,7 @@ export async function fetchHistoricalScoresForTeam(
   const repNames: Record<string, string> = {};
   profiles.forEach((p: any) => { repNames[p.id] = `${p.first_name} ${p.last_name}`; });
 
-  // 3. Compute week boundaries (most recent complete weeks)
-  const now = new Date();
-  const thisMonday = getMonday(now);
-  // Anchor = last completed week's Monday
-  const anchorMonday = new Date(thisMonday.getTime() - 7 * 86400000);
-
-  // 4. H3 fix: single batched query instead of N+1 per-week queries
-  const oldestMonday = new Date(anchorMonday.getTime() - (weeks - 1) * 7 * 86400000);
-  const newestSunday = new Date(anchorMonday.getTime() + 6 * 86400000);
-
+  // 4. Single batched query for all weeks
   const { data: allVals } = await supabase
     .from('kpi_values')
     .select('value, kpi_id, profile_id, period_start')
@@ -246,6 +314,11 @@ export async function fetchHistoricalScoresForTeam(
       continue;
     }
 
+    // Determine which metrics were on the scorecard this week
+    const weekMetrics = getActiveScorecardMetrics
+      ? getActiveScorecardMetrics(wSunday)
+      : allMetrics;
+
     // Aggregate per (profile, kpi)
     const repKpiSums: Record<string, Record<string, number>> = {};
     vals.forEach((v: any) => {
@@ -253,7 +326,7 @@ export async function fetchHistoricalScoresForTeam(
       repKpiSums[v.profile_id][v.kpi_id] = (repKpiSums[v.profile_id][v.kpi_id] || 0) + (v.value || 0);
     });
 
-    // Compute per-rep scores
+    // Compute per-rep scores using point-in-time config
     const point: HistoricalScorePoint = { week: weekLabel(wSunday), score: 0, hasData: true };
     let totalScore = 0;
     let repCount = 0;
@@ -263,12 +336,14 @@ export async function fetchHistoricalScoresForTeam(
       if (!sums) continue;
       let wSum = 0;
       let wWeight = 0;
-      for (const m of metrics) {
+      for (const m of weekMetrics) {
+        const cfg = getConfigAt ? getConfigAt(m.id, wSunday) : m;
+        if (!cfg) continue;
         const val = sums[m.id] || 0;
-        const dir = (m as any).direction || 'higher';
-        const pct = calcPct(val, m.goal, dir);
-        wSum += pct * (m.weight || 0);
-        wWeight += m.weight || 0;
+        const dir = cfg.direction || 'higher';
+        const pct = calcPct(val, cfg.goal, dir);
+        wSum += pct * (cfg.weight || 0);
+        wWeight += cfg.weight || 0;
       }
       const repScore = wWeight > 0 ? Math.round(wSum / wWeight) : 0;
       (point as any)[pid] = repScore;
@@ -312,43 +387,38 @@ export async function fetchRepTrend(
   weeks: number = 5,
   organizationId?: string | null
 ): Promise<RepTrendResult> {
-  // 1. Fetch scorecard metrics — org-scoped via kpi_org_configs when possible
-  let metrics: any[] = [];
+  // 1. Compute week boundaries first
+  const now = new Date();
+  const thisMonday = getMonday(now);
+  const anchorMonday = new Date(thisMonday.getTime() - 7 * 86400000);
+  const oldestMonday = new Date(anchorMonday.getTime() - (weeks - 1) * 7 * 86400000);
+  const newestSunday = new Date(anchorMonday.getTime() + 6 * 86400000);
+
+  // 2. Fetch scorecard metrics with point-in-time history
+  let allMetrics: any[] = [];
+  let getConfigAt: ((kpiId: string, atDate: Date) => any) | null = null;
+  let getActiveScorecardMetrics: ((atDate: Date) => any[]) | null = null;
+
   if (organizationId) {
-    const { data } = await supabase
-      .from('kpi_org_configs')
-      .select('kpi_id, goal, weight, show_on_scorecard, kpi_metrics!inner(id, key, name, direction)')
-      .eq('organization_id', organizationId)
-      .eq('is_active', true)
-      .eq('show_on_scorecard', true);
-    metrics = (data || []).map((c: any) => ({
-      id: (c.kpi_metrics as any).id, key: (c.kpi_metrics as any).key,
-      name: (c.kpi_metrics as any).name, direction: (c.kpi_metrics as any).direction,
-      goal: c.goal, weight: c.weight, show_on_scorecard: c.show_on_scorecard,
-    }));
+    const result = await fetchOrgConfigWithHistory(organizationId, oldestMonday, newestSunday);
+    allMetrics = result.allMetrics;
+    getConfigAt = result.getConfigAt;
+    getActiveScorecardMetrics = result.getActiveScorecardMetrics;
   } else {
     const { data } = await supabase
       .from('kpi_metrics')
       .select('id, key, name, goal, weight, direction, show_on_scorecard')
       .eq('is_active', true)
       .eq('show_on_scorecard', true);
-    metrics = data || [];
+    allMetrics = data || [];
   }
-  if (!metrics.length) return { weeks: [], currentScore: 0, oldestScore: 0, trendDelta: 0, avg5w: 0, laggingKpis: [], onTrackCount: 0, exceedingCount: 0 };
+  if (!allMetrics.length) return { weeks: [], currentScore: 0, oldestScore: 0, trendDelta: 0, avg5w: 0, laggingKpis: [], onTrackCount: 0, exceedingCount: 0 };
 
-  const kpiIds = metrics.map(m => m.id);
-  const metricById: Record<string, typeof metrics[0]> = {};
-  metrics.forEach(m => { metricById[m.id] = m; });
+  const kpiIds = allMetrics.map(m => m.id);
+  const metricById: Record<string, any> = {};
+  allMetrics.forEach(m => { metricById[m.id] = m; });
 
-  // 2. Compute week boundaries
-  const now = new Date();
-  const thisMonday = getMonday(now);
-  const anchorMonday = new Date(thisMonday.getTime() - 7 * 86400000);
-
-  // 3. H3 fix: single batched query instead of N+1 per-week queries
-  const oldestMonday = new Date(anchorMonday.getTime() - (weeks - 1) * 7 * 86400000);
-  const newestSunday = new Date(anchorMonday.getTime() + 6 * 86400000);
-
+  // 3. Single batched query for all weeks
   const { data: allVals } = await supabase
     .from('kpi_values')
     .select('value, kpi_id, period_start')
@@ -379,25 +449,34 @@ export async function fetchRepTrend(
       continue;
     }
 
+    // Determine which metrics were on the scorecard this week
+    const weekMetrics = getActiveScorecardMetrics
+      ? getActiveScorecardMetrics(wSunday)
+      : allMetrics;
+
     // Aggregate per KPI
     const kpiSums: Record<string, number> = {};
+    const kpiSumsById: Record<string, number> = {};
     vals.forEach((v: any) => {
       const m = metricById[v.kpi_id];
       if (!m) return;
       kpiSums[m.key] = (kpiSums[m.key] || 0) + (v.value || 0);
+      kpiSumsById[v.kpi_id] = (kpiSumsById[v.kpi_id] || 0) + (v.value || 0);
     });
 
     let weightedSum = 0;
     let totalWeight = 0;
     const kpis: Record<string, { value: number; percentage: number }> = {};
 
-    metrics.forEach(m => {
-      const value = kpiSums[m.key] || 0;
-      const dir = (m as any).direction || 'higher';
-      const percentage = calcPct(value, m.goal, dir);
+    weekMetrics.forEach(m => {
+      const cfg = getConfigAt ? getConfigAt(m.id, wSunday) : m;
+      if (!cfg) return;
+      const value = kpiSumsById[m.id] || 0;
+      const dir = cfg.direction || 'higher';
+      const percentage = calcPct(value, cfg.goal, dir);
       kpis[m.key] = { value, percentage };
-      weightedSum += percentage * (m.weight || 0);
-      totalWeight += m.weight || 0;
+      weightedSum += percentage * (cfg.weight || 0);
+      totalWeight += cfg.weight || 0;
     });
 
     const score = totalWeight > 0 ? Math.round(weightedSum / totalWeight) : 0;
@@ -411,24 +490,27 @@ export async function fetchRepTrend(
   const trendDelta = currentScore - oldestScore;
   const avg5w = withData.length > 0 ? Math.round(withData.reduce((s, w) => s + w.score, 0) / withData.length) : 0;
 
-  // 5. Per-KPI trend analysis using the most recent week with data
+  // 5. Per-KPI trend analysis using the most recent week's config
   const latestWeek = withData.length > 0 ? withData[withData.length - 1] : null;
+  const latestMetrics = getActiveScorecardMetrics
+    ? getActiveScorecardMetrics(newestSunday)
+    : allMetrics;
   const laggingKpis: RepTrendResult['laggingKpis'] = [];
   let onTrackCount = 0;
   let exceedingCount = 0;
 
   if (latestWeek) {
-    // Import tier info inline
     const tierForKey = (key: string): { tier: number; tierLabel: string } => {
-      // Check if it's a scorecard priority based on weight
-      const m = metrics.find(met => met.key === key);
-      const weight = m?.weight || 0;
+      const m = latestMetrics.find(met => met.key === key);
+      const cfg = getConfigAt && m ? getConfigAt(m.id, newestSunday) : m;
+      const weight = cfg?.weight || 0;
       if (weight >= 15) return { tier: 1, tierLabel: 'Scorecard Priority' };
       if (key.startsWith('engage_')) return { tier: 3, tierLabel: 'Engage Adoption' };
       return { tier: 2, tierLabel: 'Core Skill' };
     };
 
-    metrics.forEach(m => {
+    latestMetrics.forEach(m => {
+      const cfg = getConfigAt ? getConfigAt(m.id, newestSunday) : m;
       const current = latestWeek.kpis[m.key]?.percentage || 0;
 
       // Compute 5-week average for this KPI
@@ -442,7 +524,7 @@ export async function fetchRepTrend(
       const { tier, tierLabel } = tierForKey(m.key);
 
       if (current < 80) {
-        laggingKpis.push({ key: m.key, label: m.name || m.key, percentage: current, goal: m.goal, tier, tierLabel, avg5wPct: kpiAvg5w, trendDelta: kpiTrendDelta });
+        laggingKpis.push({ key: m.key, label: m.name || m.key, percentage: current, goal: cfg?.goal || m.goal, tier, tierLabel, avg5wPct: kpiAvg5w, trendDelta: kpiTrendDelta });
       } else if (current >= 100) {
         exceedingCount++;
       } else {

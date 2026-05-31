@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { backendFetch } from '../utils/backendFetch';
 import { calcPct } from '../utils/kpiCalc';
 import { useNavigate, useSearchParams, useLocation } from 'react-router-dom';
-import { Search, X } from 'lucide-react';
+import { Search, X, LayoutGrid, List } from 'lucide-react';
 import DashboardLayout from '../DashboardLayout';
 import RightFilterPanel from '../components/RightFilterPanel';
 import PageActionBar from '../components/PageActionBar';
@@ -77,6 +77,11 @@ export default function CoachingPlans() {
   const [skillsetPreview, setSkillsetPreview] = useState(null);
   const [fulfillingRequestId, setFulfillingRequestId] = useState(null);
   const [planRequests, setPlanRequests] = useState([]);
+  const [plansViewMode, setPlansViewMode] = useState(() => localStorage.getItem('apptivia_plans_view_mode') || 'card');
+
+  // Effectiveness data
+  const [effectivenessData, setEffectivenessData] = useState(null);
+  const [effectivenessLoading, setEffectivenessLoading] = useState(false);
 
   // [FEATURE 5] Aaron coaching actions
   const [coachingActions, setCoachingActions] = useState([]);
@@ -184,10 +189,13 @@ export default function CoachingPlans() {
           const rawSum = kpiSums[metric.id] || 0;
           const weeklyAvg = rawSum / numWeeks;
           const dir = metric.direction || 'higher';
-          const pct = Math.round(calcPct(weeklyAvg, metric.goal, dir));
+          const rawPct = calcPct(weeklyAvg, metric.goal, dir);
+          const pct = rawPct !== null ? Math.round(rawPct) : 0;
           const weight = metric.weight || 0;
-          totalWeightedPct += pct * weight;
-          totalWeight += weight;
+          if (rawPct !== null) {
+            totalWeightedPct += pct * weight;
+            totalWeight += weight;
+          }
 
           const guidance = KPI_GUIDANCE[metric.key];
           const tier = guidance?.tier || 4;
@@ -336,11 +344,27 @@ export default function CoachingPlans() {
     const hash = location.hash?.replace('#', '');
     if (hash === 'idps' || hash === 'reviews') {
       setActiveTab(hash);
-    } else if (isPowerUser && !canManagePlans && activeTab === 'rep-plans') {
-      // Power users default to IDPs since they can't see rep-plans/playbooks tabs
-      setActiveTab('idps');
+    } else if (isPowerUser && !canManagePlans && activeTab === 'playbooks') {
+      // Power users can see rep-plans (read-only) but not playbooks
+      setActiveTab('rep-plans');
     }
   }, [location.hash]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Load effectiveness data when Effectiveness tab is active
+  useEffect(() => {
+    if (activeTab !== 'effectiveness') return;
+    let mounted = true;
+    async function loadEffectiveness() {
+      setEffectivenessLoading(true);
+      try {
+        const data = await backendFetch('/api/coaching/effectiveness', undefined, 'GET');
+        if (mounted) setEffectivenessData(data);
+      } catch { /* non-fatal */ }
+      finally { if (mounted) setEffectivenessLoading(false); }
+    }
+    loadEffectiveness();
+    return () => { mounted = false; };
+  }, [activeTab]);
 
   // [FEATURE 5] Load coaching actions when Aaron Actions tab is active
   useEffect(() => {
@@ -491,8 +515,7 @@ export default function CoachingPlans() {
   const planStats = useMemo(() => {
     const total = coachingPlans.length;
     const draft = coachingPlans.filter(p => getPlanStatus(p) === 'draft').length;
-    const active = coachingPlans.filter(p => getPlanStatus(p) === 'active').length;
-    const inProgress = coachingPlans.filter(p => getPlanStatus(p) === 'in_progress').length;
+    const inProgress = coachingPlans.filter(p => { const s = getPlanStatus(p); return s === 'active' || s === 'in_progress'; }).length;
     const completed = coachingPlans.filter(p => getPlanStatus(p) === 'completed').length;
     const effScores = Object.values(assignmentEffectiveness)
       .flatMap(planEff => Object.values(planEff))
@@ -501,7 +524,7 @@ export default function CoachingPlans() {
     const avgEffectiveness = effScores.length > 0
       ? Math.round(effScores.reduce((s, v) => s + v, 0) / effScores.length)
       : null;
-    return { total, draft, active, inProgress, completed, avgEffectiveness };
+    return { total, draft, inProgress, completed, avgEffectiveness };
   }, [coachingPlans, assignmentStatuses, assignmentEffectiveness]);
 
   // Filter plans by active tab (rep-plans vs playbooks), status tab, and search query
@@ -513,8 +536,16 @@ export default function CoachingPlans() {
     } else {
       plans = plans.filter(p => p.visibility !== 'team');
     }
+    // Power users only see plans assigned to them (read-only view)
+    if (isPowerUser && !canManagePlans && activeTab === 'rep-plans') {
+      plans = plans.filter(p => p.assigned_to === user?.id);
+    }
     if (statusTab !== 'all') {
-      plans = plans.filter(p => getPlanStatus(p) === statusTab);
+      if (statusTab === 'in_progress') {
+        plans = plans.filter(p => { const s = getPlanStatus(p); return s === 'active' || s === 'in_progress'; });
+      } else {
+        plans = plans.filter(p => getPlanStatus(p) === statusTab);
+      }
     }
     if (searchQuery.trim()) {
       const q = searchQuery.trim().toLowerCase();
@@ -1481,13 +1512,16 @@ export default function CoachingPlans() {
       <div className="bg-white rounded-lg p-2 shadow-sm border border-apptivia-carbon-100 mb-4">
         <div className="flex flex-wrap gap-2">
           {[
-            ...(canManagePlans ? [
+            ...(canManagePlans || isPowerUser ? [
               { id: 'rep-plans', label: 'Rep Plans' },
+            ] : []),
+            ...(canManagePlans ? [
               { id: 'playbooks', label: 'Manager Playbooks' },
             ] : []),
             { id: 'idps', label: 'Development Plans' },
             { id: 'reviews', label: 'Performance Reviews' },
             { id: 'aaron-actions', label: 'Aaron Actions' },
+            ...(canManagePlans ? [{ id: 'effectiveness', label: 'Effectiveness' }] : []),
           ].map((tab) => (
             <button
               key={tab.id}
@@ -1520,6 +1554,100 @@ export default function CoachingPlans() {
       {/* Reviews Tab */}
       {activeTab === 'reviews' && (
         <ReviewTab teamMembers={teamMembers} startForRepId={searchParams.get('startReviewFor')} />
+      )}
+
+      {/* Effectiveness Tab */}
+      {activeTab === 'effectiveness' && (
+        <div className="space-y-4">
+          {effectivenessLoading ? (
+            <div className="text-center py-12 text-apptivia-carbon-500">Loading effectiveness data...</div>
+          ) : effectivenessData ? (
+            <>
+              {/* Summary Cards */}
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div className="bg-white rounded-lg border border-apptivia-carbon-100 p-5">
+                  <span className="text-[10px] text-apptivia-carbon-400 uppercase font-medium">Total Plans</span>
+                  <p className="text-2xl font-bold text-apptivia-ink mt-1">{effectivenessData.summary?.total || 0}</p>
+                </div>
+                <div className="bg-white rounded-lg border border-apptivia-carbon-100 p-5">
+                  <span className="text-[10px] text-apptivia-carbon-400 uppercase font-medium">Completed</span>
+                  <p className="text-2xl font-bold text-emerald-600 mt-1">{effectivenessData.summary?.completed || 0}</p>
+                </div>
+                <div className="bg-white rounded-lg border border-apptivia-carbon-100 p-5">
+                  <span className="text-[10px] text-apptivia-carbon-400 uppercase font-medium">Avg Effectiveness</span>
+                  <p className="text-2xl font-bold text-apptivia-coral mt-1">{effectivenessData.summary?.avg_effectiveness || 0}%</p>
+                </div>
+                <div className="bg-white rounded-lg border border-apptivia-carbon-100 p-5">
+                  <span className="text-[10px] text-apptivia-carbon-400 uppercase font-medium">Top Framework</span>
+                  <p className="text-lg font-bold text-apptivia-ink mt-1">{effectivenessData.summary?.most_effective_framework?.name || '—'}</p>
+                  {effectivenessData.summary?.most_effective_framework && (
+                    <span className="text-[10px] text-apptivia-carbon-400">{effectivenessData.summary.most_effective_framework.avg_score}% avg across {effectivenessData.summary.most_effective_framework.count} plans</span>
+                  )}
+                </div>
+              </div>
+
+              {/* Plan-by-plan breakdown */}
+              <div className="bg-white rounded-lg border border-apptivia-carbon-100 overflow-hidden">
+                <div className="px-5 py-3 border-b border-apptivia-carbon-100 bg-apptivia-paper">
+                  <h3 className="text-sm font-semibold text-apptivia-ink">Plan-by-Plan Breakdown</h3>
+                </div>
+                {effectivenessData.plans?.length > 0 ? (
+                  <table className="w-full text-xs">
+                    <thead>
+                      <tr className="border-b border-apptivia-carbon-100">
+                        <th className="text-left px-4 py-2.5 font-semibold text-apptivia-carbon-500">Plan</th>
+                        <th className="text-left px-3 py-2.5 font-semibold text-apptivia-carbon-500">Rep</th>
+                        <th className="text-left px-3 py-2.5 font-semibold text-apptivia-carbon-500">Framework</th>
+                        <th className="text-center px-3 py-2.5 font-semibold text-apptivia-carbon-500">Status</th>
+                        <th className="text-center px-3 py-2.5 font-semibold text-apptivia-carbon-500">Effectiveness</th>
+                        <th className="text-left px-3 py-2.5 font-semibold text-apptivia-carbon-500">KPI Changes</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {effectivenessData.plans.map((plan) => (
+                        <tr key={plan.id} className="border-b border-apptivia-carbon-50 hover:bg-apptivia-paper/50">
+                          <td className="px-4 py-3 font-semibold text-apptivia-ink">{plan.name}</td>
+                          <td className="px-3 py-3 text-apptivia-carbon-600">{plan.rep_name}</td>
+                          <td className="px-3 py-3 text-apptivia-carbon-500">{plan.framework || '—'}</td>
+                          <td className="px-3 py-3 text-center">
+                            <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold ${
+                              plan.status === 'completed' ? 'bg-emerald-100 text-emerald-700' :
+                              plan.status === 'active' || plan.status === 'in_progress' ? 'bg-yellow-100 text-yellow-700' :
+                              'bg-apptivia-carbon-100 text-apptivia-carbon-600'
+                            }`}>{plan.status === 'active' || plan.status === 'in_progress' ? 'In Progress' : plan.status === 'completed' ? 'Completed' : plan.status}</span>
+                          </td>
+                          <td className="px-3 py-3 text-center">
+                            <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                              plan.effectiveness_score >= 70 ? 'bg-emerald-100 text-emerald-700' :
+                              plan.effectiveness_score >= 40 ? 'bg-amber-100 text-amber-700' :
+                              'bg-red-100 text-red-600'
+                            }`}>{plan.effectiveness_score}%</span>
+                          </td>
+                          <td className="px-3 py-3">
+                            <div className="flex flex-wrap gap-1">
+                              {Object.entries(plan.kpi_deltas || {}).map(([kpi, d]) => (
+                                <span key={kpi} className={`px-1.5 py-0.5 rounded text-[9px] font-medium ${
+                                  d.delta > 0 ? 'bg-emerald-50 text-emerald-600' : d.delta < 0 ? 'bg-red-50 text-red-600' : 'bg-apptivia-carbon-50 text-apptivia-carbon-500'
+                                }`}>
+                                  {kpi}: {d.delta > 0 ? '+' : ''}{d.delta}
+                                </span>
+                              ))}
+                              {Object.keys(plan.kpi_deltas || {}).length === 0 && <span className="text-apptivia-carbon-300">No data</span>}
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                ) : (
+                  <div className="p-8 text-center text-apptivia-carbon-400 text-sm">No plans with effectiveness data yet. Complete coaching plans to see metrics.</div>
+                )}
+              </div>
+            </>
+          ) : (
+            <div className="text-center py-12 text-apptivia-carbon-400">No effectiveness data available</div>
+          )}
+        </div>
       )}
 
       {/* [FEATURE 5] Aaron Actions Tab */}
@@ -1596,9 +1724,20 @@ export default function CoachingPlans() {
 
       {/* Coaching Plans content (rep-plans + playbooks) */}
       {(activeTab === 'rep-plans' || activeTab === 'playbooks') && (<>
-      {/* Saved Plans header with persistent Create button */}
+      {/* Saved Plans header with persistent Create button + view toggle */}
       <div className="flex items-center justify-between mb-4">
-        <div />
+        <div className="flex items-center border border-apptivia-carbon-200 rounded-lg overflow-hidden">
+          <button onClick={() => { setPlansViewMode('card'); localStorage.setItem('apptivia_plans_view_mode', 'card'); }}
+            className={`p-1.5 ${plansViewMode === 'card' ? 'bg-apptivia-ink text-white' : 'bg-white text-apptivia-carbon-400 hover:bg-apptivia-carbon-50'}`}
+            title="Card view">
+            <LayoutGrid size={14} />
+          </button>
+          <button onClick={() => { setPlansViewMode('list'); localStorage.setItem('apptivia_plans_view_mode', 'list'); }}
+            className={`p-1.5 ${plansViewMode === 'list' ? 'bg-apptivia-ink text-white' : 'bg-white text-apptivia-carbon-400 hover:bg-apptivia-carbon-50'}`}
+            title="List view">
+            <List size={14} />
+          </button>
+        </div>
         {canCreatePlans && (
           <button
             onClick={() => {
@@ -1699,7 +1838,6 @@ export default function CoachingPlans() {
             {[
               { key: 'all', label: 'All' },
               { key: 'draft', label: `Draft (${planStats.draft})` },
-              { key: 'active', label: `Active (${planStats.active})` },
               { key: 'in_progress', label: `In Progress (${planStats.inProgress})` },
               { key: 'completed', label: `Completed (${planStats.completed})` },
             ].map(tab => (
@@ -1766,6 +1904,63 @@ export default function CoachingPlans() {
                 >
                   Clear filters
                 </button>
+              </div>
+            ) : plansViewMode === 'list' ? (
+              <div className="bg-white rounded-lg border border-apptivia-carbon-100 overflow-hidden">
+                <table className="w-full text-xs">
+                  <thead>
+                    <tr className="bg-apptivia-paper border-b border-apptivia-carbon-100">
+                      <th className="text-left px-4 py-2.5 font-semibold text-apptivia-carbon-500">Plan Name</th>
+                      <th className="text-left px-3 py-2.5 font-semibold text-apptivia-carbon-500">Rep</th>
+                      <th className="text-center px-3 py-2.5 font-semibold text-apptivia-carbon-500">Status</th>
+                      <th className="text-left px-3 py-2.5 font-semibold text-apptivia-carbon-500">Framework</th>
+                      <th className="text-left px-3 py-2.5 font-semibold text-apptivia-carbon-500">Date Range</th>
+                      <th className="text-center px-3 py-2.5 font-semibold text-apptivia-carbon-500">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredPlans.map((plan) => {
+                      const status = getPlanStatus(plan);
+                      const sc = statusConfig[status] || statusConfig.draft;
+                      const assignedMember = plan.assigned_to?.length
+                        ? teamMembers.find(m => m.id === plan.assigned_to[0])
+                        : null;
+                      const assignedName = assignedMember
+                        ? `${assignedMember.first_name || ''} ${assignedMember.last_name || ''}`.trim() || assignedMember.email || '—'
+                        : '—';
+                      return (
+                        <tr key={plan.id} onClick={() => setSelectedPlan(plan)}
+                          className="border-b border-apptivia-carbon-50 hover:bg-apptivia-paper/50 cursor-pointer transition-colors">
+                          <td className="px-4 py-3 font-semibold text-apptivia-ink">{plan.name || 'Untitled Plan'}</td>
+                          <td className="px-3 py-3 text-apptivia-carbon-600">{assignedName}</td>
+                          <td className="px-3 py-3 text-center">
+                            <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold ${sc.bg} ${sc.text}`}>{sc.label}</span>
+                          </td>
+                          <td className="px-3 py-3 text-apptivia-carbon-500">{plan.plan_type === 'auto' ? 'AI Generated' : plan.template_id ? 'Template' : 'Custom'}</td>
+                          <td className="px-3 py-3 text-apptivia-carbon-500 whitespace-nowrap">
+                            {plan.date_range_start ? `${plan.date_range_start.slice(0, 10)} → ${plan.date_range_end?.slice(0, 10) || '—'}` : '—'}
+                          </td>
+                          <td className="px-3 py-3 text-center">
+                            <div className="flex items-center justify-center gap-1">
+                              {canCreatePlans && (
+                                <button onClick={(e) => { e.stopPropagation(); handleEditPlan(plan); }}
+                                  className="text-apptivia-carbon-400 hover:text-apptivia-ink p-1" title="Edit">
+                                  <Edit size={12} />
+                                </button>
+                              )}
+                              {canCreatePlans && (
+                                <button onClick={(e) => { e.stopPropagation(); handleDeletePlan(plan); }}
+                                  className="text-apptivia-carbon-400 hover:text-red-500 p-1" title="Delete">
+                                  <Trash2 size={12} />
+                                </button>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">

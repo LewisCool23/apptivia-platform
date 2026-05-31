@@ -469,7 +469,8 @@ export default function Coach() {
             // Use historical config for this week
             const cfg = getConfigAt(metric.id, wEnd);
             const dir = cfg.direction || 'higher';
-            const pct = Math.round(calcPct(weekVal, cfg.goal, dir));
+            const rawPct = calcPct(weekVal, cfg.goal, dir);
+            const pct = rawPct !== null ? Math.round(rawPct) : 0;
             weeklyData.push({ week: weekLabel, value: Math.round(weekVal * 10) / 10, pct });
           }
           const latestPct = weeklyData[weeklyData.length - 1]?.pct || 0;
@@ -797,7 +798,7 @@ export default function Coach() {
           for (const m of metrics) {
             const val = (vals || []).filter(v => v.kpi_id === m.id).reduce((s, v) => s + (v.value || 0), 0);
             const { goal, dir } = getGoalAndDir(m.id);
-            const pct = Math.round(calcPct(val, goal, dir));
+            const pct = Math.round(calcPct(val, goal, dir) ?? 0);
             finalSnapshot[m.key] = { value: val, pct };
           }
           const baseline = myAssignments[plan.id]?.baseline_kpi_snapshot || {};
@@ -1528,13 +1529,13 @@ export default function Coach() {
                     className="w-full flex items-center gap-3 px-4 py-3 text-left"
                   >
                     <svg className="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" /></svg>
-                    <span className="font-semibold text-sm text-apptivia-ink">Active Coaching Plans</span>
+                    <span className="font-semibold text-sm text-apptivia-ink">Coaching Plans</span>
                     <span className="ml-auto flex items-center gap-2">
                       {activePlansLoading ? (
                         <span className="text-[10px] font-medium text-apptivia-carbon-400">Loading...</span>
                       ) : totalPlans > 0 ? (
                         <span className="text-[10px] font-medium text-apptivia-carbon-500">
-                          {activePlans.length > 0 && <span className="text-green-600">{activePlans.length} active</span>}
+                          {activePlans.length > 0 && <span className="text-green-600">{activePlans.length} in progress</span>}
                           {activePlans.length > 0 && completedPlans.length > 0 && <span className="mx-1">·</span>}
                           {completedPlans.length > 0 && <span className="text-apptivia-carbon-400">{completedPlans.length} completed</span>}
                         </span>
@@ -1558,7 +1559,7 @@ export default function Coach() {
                         <div className="text-xs text-apptivia-carbon-500 py-4">Loading coaching plans...</div>
                       ) : totalPlans === 0 ? (
                         <div className="border border-dashed border-apptivia-carbon-200 rounded-lg p-4 text-center">
-                          <div className="text-sm text-apptivia-carbon-500 mb-2">No active coaching plans</div>
+                          <div className="text-sm text-apptivia-carbon-500 mb-2">No coaching plans in progress</div>
                           <button type="button" onClick={() => setRequestPlanOpen(true)} className="text-xs text-apptivia-coral hover:text-apptivia-coral-tone-700 font-medium">
                             Request Coaching Plan
                           </button>
@@ -1568,8 +1569,8 @@ export default function Coach() {
                           {activePlans.map(plan => {
                             const assignment = myAssignments[plan.id] || {};
                             const status = assignment.status || 'active';
-                            const statusColor = status === 'in_progress' ? 'bg-apptivia-coral-tone-50 text-apptivia-coral' : 'bg-apptivia-carbon-100 text-apptivia-carbon-600';
-                            const statusLabel = status === 'in_progress' ? 'In Progress' : 'Active';
+                            const statusColor = 'bg-yellow-100 text-yellow-700';
+                            const statusLabel = 'In Progress';
                             return (
                               <div key={plan.id} className="border border-apptivia-carbon-100 rounded-lg p-3 hover:shadow-sm transition-all">
                                 <div className="flex items-center justify-between mb-2">
@@ -1732,12 +1733,12 @@ export default function Coach() {
                             const displayStatus = isOverdue ? 'overdue' : idp.status;
                             const statusStyles = {
                               draft: 'bg-apptivia-carbon-100 text-apptivia-carbon-600',
-                              active: 'bg-apptivia-coral-tone-50 text-apptivia-coral',
+                              active: 'bg-yellow-100 text-yellow-700',
                               in_progress: 'bg-yellow-100 text-yellow-700',
                               completed: 'bg-green-100 text-green-700',
                               overdue: 'bg-red-100 text-red-700',
                             };
-                            const statusLabels = { draft: 'Draft', active: 'Active', in_progress: 'In Progress', completed: 'Completed', overdue: 'Overdue' };
+                            const statusLabels = { draft: 'Draft', active: 'In Progress', in_progress: 'In Progress', completed: 'Completed', overdue: 'Overdue' };
                             return (
                               <div key={idp.id} className="border border-apptivia-carbon-100 rounded-lg p-3 hover:shadow-sm transition-all">
                                 <div className="flex items-center justify-between mb-2">
@@ -1931,7 +1932,7 @@ export default function Coach() {
                         </span>
                       </Tooltip>
                       </div>
-                      <p className="text-xs text-apptivia-carbon-600 break-words line-clamp-2 min-h-[2.5rem]">{skillset.description}</p>
+                      <p className="text-xs text-apptivia-carbon-600 break-words min-h-[2.5rem]">{skillset.description}</p>
                     </div>
                   </div>
                   <div className="mb-3">
